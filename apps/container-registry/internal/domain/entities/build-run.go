@@ -1,9 +1,11 @@
 package entities
 
 import (
+	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	distributionv1 "github.com/kloudlite/operator/apis/distribution/v1"
+	"github.com/kloudlite/operator/pkg/operator"
 )
 
 type BuildRun struct {
@@ -13,6 +15,19 @@ type BuildRun struct {
 	AccountName             string       `json:"accountName" graphql:"noinput"`
 	ClusterName             string       `json:"clusterName" graphql:"noinput"`
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+	common.ResourceMetadata `json:",inline"`
+}
+
+func (a *BuildRun) GetDisplayName() string {
+	return a.ResourceMetadata.DisplayName
+}
+
+func (a *BuildRun) GetGeneration() int64 {
+	return a.ObjectMeta.Generation
+}
+
+func (a *BuildRun) GetStatus() operator.Status {
+	return a.BuildRun.Status
 }
 
 var BuildRunIndices = []repos.IndexField{
