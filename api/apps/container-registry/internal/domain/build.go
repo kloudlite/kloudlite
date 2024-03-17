@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/google/uuid"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -236,7 +237,6 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 }
 
 func (d *Impl) TriggerBuild(ctx RegistryContext, buildId repos.ID) error {
-
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
@@ -300,12 +300,16 @@ func (d *Impl) TriggerBuild(ctx RegistryContext, buildId repos.ID) error {
 		return errors.Newf("provider %s not supported", b.Source.Provider)
 	}
 
+	b.Name = string(buildId)
+
+	uid := uuid.NewString()
+
 	if err := d.CreateBuildRun(ctx, b, &GitWebhookPayload{
 		GitProvider: string(b.Source.Provider),
 		RepoUrl:     b.Source.Repository,
 		GitBranch:   b.Source.Branch,
 		CommitHash:  commitHash,
-	}, pullToken); err != nil {
+	}, pullToken, uid); err != nil {
 		return errors.NewE(err)
 	}
 

@@ -35,11 +35,11 @@ func NewResourceEventPublisher(cli *nats.Client, logger logging.Logger) domain.R
 }
 
 func clusterBuildRunUpdateSubject(buildRun *entities.BuildRun) string {
-	return fmt.Sprintf("res-updates.account.%s.cluster.%s.repo.%s.build-config.%s.build-run.%s",
+	return fmt.Sprintf("res-updates.account.%s.repo.%s.build-run.%s",
 		buildRun.AccountName,
-		buildRun.ClusterName,
 		buildRun.Spec.Registry.Repo.Name,
-		buildRun.Spec.BuildOptions)
+		buildRun.Id,
+	)
 }
 
 func clusterBuildCacheUpdateSubject(buildCache *entities.BuildCacheKey) string {
