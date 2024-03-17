@@ -3,6 +3,7 @@ package domain
 import (
 	"crypto/md5"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,6 +23,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
+
+	t2 "github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 func (d *Impl) ListBuildRuns(ctx RegistryContext, repoName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error) {
@@ -49,15 +52,62 @@ func (d *Impl) GetBuildRun(ctx RegistryContext, repoName string, buildRunName st
 	return brun, nil
 }
 
-func (d *Impl) OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.BuildRun) error {
-	if _, err := d.buildRunRepo.Upsert(ctx, repos.Filter{
+func (d *Impl) parseRecordVersionFromAnnotations(annotations map[string]string) (int, error) {
+	annotatedVersion, ok := annotations[constants.RecordVersionKey]
+	if !ok {
+		return 0, errors.Newf("no annotation with record version key (%s), found on the resource", constants.RecordVersionKey)
+	}
+
+	annVersion, err := strconv.ParseInt(annotatedVersion, 10, 32)
+	if err != nil {
+		return 0, errors.NewE(err)
+	}
+
+	return int(annVersion), nil
+}
+
+func (d *Impl) MatchRecordVersion(annotations map[string]string, rv int) (int, error) {
+	annVersion, err := d.parseRecordVersionFromAnnotations(annotations)
+	if err != nil {
+		return -1, errors.NewE(err)
+	}
+
+	if annVersion != rv {
+		return -1, errors.Newf("record version mismatch, expected %d, got %d", rv, annVersion)
+	}
+
+	return annVersion, nil
+}
+
+func (d *Impl) OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.BuildRun, status t2.ResourceStatus, opts UpdateAndDeleteOpts) error {
+
+	xBr, err := d.buildRunRepo.FindOne(ctx, repos.Filter{
+		fields.AccountName:       ctx.AccountName,
 		fields.MetadataName:      buildRun.Name,
 		fields.MetadataNamespace: buildRun.Namespace,
-		fields.AccountName:       ctx.AccountName,
 		fields.ClusterName:       buildRun.ClusterName,
-	}, &buildRun); err != nil {
+	})
+	if err != nil {
 		return errors.NewE(err)
 	}
+	if xBr == nil {
+		return errors.Newf("build run with name %q not found", buildRun.Name)
+	}
+
+	recordVersion, err := d.MatchRecordVersion(xBr.Annotations, xBr.RecordVersion)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if _, err = d.buildRunRepo.PatchById(
+		ctx,
+		xBr.Id,
+		common.PatchForSyncFromAgent(&buildRun, recordVersion, status, common.PatchOpts{
+			MessageTimestamp: opts.MessageTimestamp,
+		})); err != nil {
+		return errors.NewE(err)
+	}
+
 	d.resourceEventPublisher.PublishBuildRunEvent(&buildRun, PublishAdd)
 
 	return nil
@@ -96,13 +146,13 @@ func (d *Impl) OnBuildRunApplyErrorMessage(ctx RegistryContext, clusterName stri
 	return errors.NewE(err)
 }
 
-func getUniqueKey(build *entities.Build, hook *GitWebhookPayload) string {
-	uid := fmt.Sprint(build.Id, hook.CommitHash)
+func getUniqueKey(build *entities.Build, hook *GitWebhookPayload, seed string) string {
+	uid := fmt.Sprint(build.Id, hook.CommitHash, seed)
 	return fmt.Sprintf("%x", md5.Sum([]byte(uid)))
 }
 
-func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *GitWebhookPayload, pullToken string) error {
-	uniqueKey := getUniqueKey(build, hook)
+func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *GitWebhookPayload, pullToken string, seed string) error {
+	uniqueKey := getUniqueKey(build, hook, seed)
 	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", 1, "d"))
 	if err != nil {
 		return errors.NewE(err)
@@ -179,7 +229,7 @@ func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *
 	br := entities.BuildRun{
 		BuildRun:   brRaw,
 		BuildName:  build.Name,
-		SyncStatus: t.SyncStatus{},
+		SyncStatus: t.GenSyncStatus(t.SyncActionApply, build.RecordVersion),
 	}
 	br.AccountName = build.Spec.AccountName
 	br.ClusterName = build.BuildClusterName
