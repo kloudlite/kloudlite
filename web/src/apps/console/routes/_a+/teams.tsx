@@ -30,7 +30,7 @@ export const loader = async (ctx: IRemixCtx) => {
       {}
     );
     if (errors) {
-      return handleError(errors[0]);
+      throw errors[0];
     }
     accounts = data;
 
@@ -55,6 +55,7 @@ export const loader = async (ctx: IRemixCtx) => {
   } catch (err) {
     return handleError(err);
   }
+
   return {
     accounts: accounts || [],
     invites: invites || [],
