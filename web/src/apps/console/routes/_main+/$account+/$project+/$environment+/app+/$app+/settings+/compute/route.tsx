@@ -13,9 +13,12 @@ import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { Button } from '~/components/atoms/button';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { parseNodes } from '~/console/server/r-utils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { registryHost } from '~/lib/configs/base-url.cjs';
 import { Checkbox } from '~/components/atoms/checkbox';
+import { useMapper } from '~/components/utils';
+import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
+import { useOutletContext } from '@remix-run/react';
 import { plans } from '../../../../new-app/datas';
 
 const valueRender = ({
@@ -50,6 +53,7 @@ const SettingCompute = () => {
     getImageTag,
   } = useAppState();
   const { setPerformAction, hasChanges, loading } = useUnsavedChanges();
+  const { cluster } = useOutletContext<IProjectContext>();
 
   const api = useConsoleApi();
 
@@ -59,6 +63,21 @@ const SettingCompute = () => {
     error: repoLoadingError,
   } = useCustomSwr('/repos', async () => {
     return api.listRepo({});
+  });
+
+  const {
+    data: nodepoolData,
+    isLoading: nodepoolLoading,
+    error: nodepoolLoadingError,
+  } = useCustomSwr('/nodepools', async () => {
+    return api.listNodePools({
+      clusterName: parseName(cluster),
+      pagination: {
+        first: 100,
+        orderBy: 'updateTime',
+        sortDirection: 'DESC',
+      },
+    });
   });
 
   const { values, errors, handleChange, submit, resetValues } = useForm({
@@ -104,6 +123,8 @@ const SettingCompute = () => {
         app.spec.containers[activeContIndex].resourceMemory?.max,
         0
       ),
+
+      nodepoolName: app.spec.nodeSelector?.[keyconstants.nodepoolName] || '',
     },
     validationSchema: Yup.object({
       imageUrl: Yup.string().required(),
@@ -125,6 +146,10 @@ const SettingCompute = () => {
         },
         spec: {
           ...s.spec,
+          nodeSelector: {
+            ...(s.spec.nodeSelector || {}),
+            [keyconstants.nodepoolName]: val.nodepoolName,
+          },
           containers: [
             {
               ...(s.spec.containers?.[0] || {}),
@@ -165,6 +190,11 @@ const SettingCompute = () => {
   });
 
   const repos = getRepoMapper(data);
+
+  const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
+    label: val.metadata?.name || '',
+    value: val.metadata?.name || '',
+  }));
 
   const {
     data: digestData,
@@ -265,8 +295,25 @@ const SettingCompute = () => {
             loading={digestLoading}
           />
 
+          <Select
+            label="Nodepool Name"
+            size="lg"
+            placeholder="Select Nodepool"
+            value={values.nodepoolName}
+            creatable
+            onChange={(val) => {
+              handleChange('nodepoolName')(dummyEvent(val.value));
+            }}
+            options={async () => [...nodepools]}
+            error={!!errors.repos || !!nodepoolLoadingError}
+            message={
+              nodepoolLoadingError ? 'Error fetching nodepools.' : errors.app
+            }
+            loading={nodepoolLoading}
+          />
+
           <Checkbox
-            label="Image Pull Policy"
+            label="Always pull image on restart"
             checked={values.imagePullPolicy === 'Always'}
             onChange={(val) => {
               const imagePullPolicy = val ? 'Always' : 'IfNotPresent';

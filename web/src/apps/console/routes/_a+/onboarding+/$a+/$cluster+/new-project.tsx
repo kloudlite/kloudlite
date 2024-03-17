@@ -4,7 +4,6 @@ import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 
-
 const _NewProject = () => {
   return <NewProject />;
 };

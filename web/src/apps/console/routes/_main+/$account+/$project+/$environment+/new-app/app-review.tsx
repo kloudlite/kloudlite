@@ -114,16 +114,20 @@ const AppReview = () => {
             </div>
           </div>
         </ReviewComponent>
-        <ReviewComponent title="Nodepool Details" onEdit={() => {}}>
-          <div className="flex flex-col p-xl gap-md rounded border border-border-default">
-            <div className="bodyMd-semibold text-text-default">
-              Nodepool Selector
+
+        {app.spec.nodeSelector[keyconstants.nodepoolName] !== '' && (
+          <ReviewComponent title="Nodepool Details" onEdit={() => {}}>
+            <div className="flex flex-col p-xl gap-md rounded border border-border-default">
+              <div className="bodyMd-semibold text-text-default">
+                Nodepool Selector
+              </div>
+              <div className="bodySm text-text-soft">
+                {app.spec.nodeSelector[keyconstants.nodepoolName]}
+              </div>
             </div>
-            <div className="bodySm text-text-soft">
-              {app.spec.nodeSelector[keyconstants.nodepoolName]}
-            </div>
-          </div>
-        </ReviewComponent>
+          </ReviewComponent>
+        )}
+
         <ReviewComponent
           title="Environment"
           onEdit={() => {

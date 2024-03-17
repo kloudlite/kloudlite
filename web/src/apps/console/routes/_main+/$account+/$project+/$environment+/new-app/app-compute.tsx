@@ -16,6 +16,8 @@ import { BottomNavigation } from '~/console/components/commons';
 import { useOutletContext } from '@remix-run/react';
 import { useLog } from '~/root/lib/client/hooks/use-log';
 import { Checkbox } from '~/components/atoms/checkbox';
+import { useState } from 'react';
+import { Button } from '~/components/atoms/button';
 import { plans } from './datas';
 import { IProjectContext } from '../../_layout';
 
@@ -52,6 +54,7 @@ const AppCompute = () => {
   } = useAppState();
   const api = useConsoleApi();
   const { cluster } = useOutletContext<IProjectContext>();
+  const [advancedOptions, setAdvancedOptions] = useState(false);
 
   const {
     data,
@@ -248,23 +251,6 @@ const AppCompute = () => {
       </div>
       <div className="flex flex-col gap-3xl">
         <Select
-          label="Nodepool Name"
-          size="lg"
-          placeholder="Select Nodepool"
-          value={values.nodepoolName}
-          creatable
-          onChange={(val) => {
-            handleChange('nodepoolName')(dummyEvent(val.value));
-          }}
-          options={async () => [...nodepools]}
-          error={!!errors.repos || !!nodepoolLoadingError}
-          message={
-            nodepoolLoadingError ? 'Error fetching nodepools.' : errors.app
-          }
-          loading={nodepoolLoading}
-        />
-
-        <Select
           label="Repo Name"
           size="lg"
           placeholder="Select Repo"
@@ -319,15 +305,46 @@ const AppCompute = () => {
           loading={digestLoading}
         />
 
-        <Checkbox
-          label="Image Pull Policy"
-          checked={values.imagePullPolicy === 'Always'}
-          onChange={(val) => {
-            const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
-            console.log(imagePullPolicy);
-            handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
+        <Button
+          size="sm"
+          content={<span className="truncate text-left">Advanced options</span>}
+          variant="primary-plain"
+          className="truncate"
+          onClick={() => {
+            setAdvancedOptions(!advancedOptions);
           }}
         />
+
+        {advancedOptions && (
+          <Select
+            label="Nodepool Name"
+            size="lg"
+            placeholder="Select Nodepool"
+            value={values.nodepoolName}
+            creatable
+            onChange={(val) => {
+              handleChange('nodepoolName')(dummyEvent(val.value));
+            }}
+            options={async () => [...nodepools]}
+            error={!!errors.repos || !!nodepoolLoadingError}
+            message={
+              nodepoolLoadingError ? 'Error fetching nodepools.' : errors.app
+            }
+            loading={nodepoolLoading}
+          />
+        )}
+
+        {advancedOptions && (
+          <Checkbox
+            label="Always pull image on restart"
+            checked={values.imagePullPolicy === 'Always'}
+            onChange={(val) => {
+              const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
+              console.log(imagePullPolicy);
+              handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
+            }}
+          />
+        )}
       </div>
 
       <div className="flex flex-col">
