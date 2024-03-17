@@ -10,6 +10,7 @@ import (
 	"github.com/kloudlite/api/apps/container-registry/internal/domain"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -55,6 +56,24 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 			"accountName/clusterName", fmt.Sprintf("%s/%s", su.AccountName, su.ClusterName),
 		)
 
+		resStatus, err := func() (types.ResourceStatus, error) {
+			v, ok := su.Object[types.ResourceStatusKey]
+			if !ok {
+				return "", errors.NewE(fmt.Errorf("field %s not found in object", types.ResourceStatusKey))
+			}
+			s, ok := v.(string)
+			if !ok {
+				return "", errors.NewE(fmt.Errorf("field value %v is not a string", v))
+			}
+
+			return types.ResourceStatus(s), nil
+		}()
+		if err != nil {
+			return err
+		}
+
+		opts := domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp}
+
 		mLogger.Infof("received message")
 		defer func() {
 			mLogger.Infof("processed message")
@@ -71,10 +90,15 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				if err := fn.JsonConversion(su.Object, &buildRun); err != nil {
 					return err
 				}
+
+				buildRun.AccountName = su.AccountName
+				buildRun.ClusterName = su.ClusterName
+
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnBuildRunDeleteMessage(dctx, buildRun)
 				}
-				return d.OnBuildRunUpdateMessage(dctx, buildRun)
+
+				return d.OnBuildRunUpdateMessage(dctx, buildRun, resStatus, opts)
 			}
 
 		default:
