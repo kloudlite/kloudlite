@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { NumberInput } from '~/components/atoms/input';
 import Slider from '~/components/atoms/slider';
 import { useAppState } from '~/console/page-components/app-states';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { parseValue } from '~/console/page-components/util';
@@ -14,12 +13,14 @@ import { Button } from '~/components/atoms/button';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
-import { registryHost } from '~/lib/configs/base-url.cjs';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { useMapper } from '~/components/utils';
 import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
 import { useOutletContext } from '@remix-run/react';
 import { plans } from '../../../../new-app/datas';
+import appInitialFormValues, {
+  mapFormValuesToApp,
+} from '../../../../new-app/app-utils';
 
 const valueRender = ({
   label,
@@ -43,27 +44,11 @@ const valueRender = ({
 };
 
 const SettingCompute = () => {
-  const {
-    app,
-    setApp,
-    getContainer,
-    activeContIndex,
-    getRepoMapper,
-    getRepoName,
-    getImageTag,
-  } = useAppState();
+  const { app, setApp, getContainer } = useAppState();
   const { setPerformAction, hasChanges, loading } = useUnsavedChanges();
   const { cluster } = useOutletContext<IProjectContext>();
 
   const api = useConsoleApi();
-
-  const {
-    data,
-    isLoading: repoLoading,
-    error: repoLoadingError,
-  } = useCustomSwr('/repos', async () => {
-    return api.listRepo({});
-  });
 
   const {
     data: nodepoolData,
@@ -81,51 +66,10 @@ const SettingCompute = () => {
   });
 
   const { values, errors, handleChange, submit, resetValues } = useForm({
-    initialValues: {
-      imageUrl: getContainer(0)?.image || '',
-      imagePullPolicy:
-        app.spec.containers[activeContIndex]?.imagePullPolicy || 'IfNotPresent',
-      pullSecret: 'TODO',
-      cpuMode: app.metadata?.annotations?.[keyconstants.cpuMode] || 'shared',
-      memPerCpu: app.metadata?.annotations?.[keyconstants.memPerCpu] || 1,
-
-      repoName: getContainer(0)?.image
-        ? getRepoName(app.spec.containers[activeContIndex]?.image)
-        : '',
-      repoImageTag: getContainer(0)?.image
-        ? getImageTag(app.spec.containers[activeContIndex]?.image)
-        : '',
-      repoAccountName:
-        app.metadata?.annotations?.[keyconstants.repoAccountName] || '',
-
-      cpu: parseValue(
-        app.spec.containers[activeContIndex]?.resourceCpu?.max,
-        250
-      ),
-
-      selectedPlan:
-        app.metadata?.annotations[keyconstants.selectedPlan] || 'shared-1',
-      selectionMode:
-        app.metadata?.annotations[keyconstants.selectionModeKey] || 'quick',
-      manualCpuMin: parseValue(
-        app.spec.containers[activeContIndex].resourceCpu?.min,
-        0
-      ),
-      manualCpuMax: parseValue(
-        app.spec.containers[activeContIndex].resourceCpu?.max,
-        0
-      ),
-      manualMemMin: parseValue(
-        app.spec.containers[activeContIndex].resourceMemory?.min,
-        0
-      ),
-      manualMemMax: parseValue(
-        app.spec.containers[activeContIndex].resourceMemory?.max,
-        0
-      ),
-
-      nodepoolName: app.spec.nodeSelector?.[keyconstants.nodepoolName] || '',
-    },
+    initialValues: appInitialFormValues({
+      app,
+      getContainer,
+    }),
     validationSchema: Yup.object({
       imageUrl: Yup.string().required(),
       pullSecret: Yup.string(),
@@ -133,79 +77,19 @@ const SettingCompute = () => {
       selectedPlan: Yup.string().required(),
     }),
     onSubmit: (val) => {
-      setApp((s) => ({
-        ...s,
-        metadata: {
-          ...s.metadata!,
-          annotations: {
-            ...(s.metadata?.annotations || {}),
-            [keyconstants.cpuMode]: val.cpuMode,
-            [keyconstants.selectedPlan]: val.selectedPlan,
-            [keyconstants.repoAccountName]: val.repoAccountName,
-          },
-        },
-        spec: {
-          ...s.spec,
-          nodeSelector: {
-            ...(s.spec.nodeSelector || {}),
-            [keyconstants.nodepoolName]: val.nodepoolName,
-          },
-          containers: [
-            {
-              ...(s.spec.containers?.[0] || {}),
-              image:
-                values.repoAccountName === undefined ||
-                values.repoAccountName === ''
-                  ? `${values.repoName}:${values.repoImageTag}`
-                  : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
-              name: 'container-0',
-              imagePullPolicy: val.imagePullPolicy,
-              resourceCpu:
-                val.selectionMode === 'quick'
-                  ? {
-                      max: `${val.cpu}m`,
-                      min: `${val.cpu}m`,
-                    }
-                  : {
-                      max: `${val.manualCpuMax}m`,
-                      min: `${val.manualCpuMin}m`,
-                    },
-              resourceMemory:
-                val.selectionMode === 'quick'
-                  ? {
-                      max: `${(
-                        (values.cpu || 1) * parseValue(values.memPerCpu, 4)
-                      ).toFixed(2)}Mi`,
-                      min: `${val.cpu}Mi`,
-                    }
-                  : {
-                      max: `${val.manualMemMax}Mi`,
-                      min: `${val.manualMemMin}Mi`,
-                    },
-            },
-          ],
-        },
-      }));
+      setApp((s) =>
+        mapFormValuesToApp({
+          appIn: val,
+          oldAppIn: s,
+        })
+      );
     },
   });
-
-  const repos = getRepoMapper(data);
 
   const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
     label: val.metadata?.name || '',
     value: val.metadata?.name || '',
   }));
-
-  const {
-    data: digestData,
-    isLoading: digestLoading,
-    error: digestError,
-  } = useCustomSwr(
-    () => `/digests_${values.repoName}`,
-    async () => {
-      return api.listDigest({ repoName: values.repoName });
-    }
-  );
 
   useEffect(() => {
     submit();
@@ -241,60 +125,6 @@ const SettingCompute = () => {
         }}
       >
         <div className="flex flex-col gap-3xl">
-          <Select
-            label="Repository Name"
-            size="lg"
-            placeholder="Select Repo"
-            value={values.repoName}
-            creatable
-            onChange={(val) => {
-              handleChange('repoName')(dummyEvent(val.value));
-              if (val.accName === undefined || val.accName === '') {
-                handleChange('repoAccountName')(dummyEvent(''));
-              } else {
-                handleChange('repoAccountName')(dummyEvent(val.accName));
-              }
-            }}
-            options={async () => [...repos]}
-            error={!!errors.repos || !!repoLoadingError}
-            message={
-              repoLoadingError ? 'Error fetching repositories.' : errors.app
-            }
-            loading={repoLoading}
-          />
-
-          <Select
-            label="Image Tag"
-            size="lg"
-            placeholder="Select Image Tag"
-            value={values.repoImageTag}
-            creatable
-            onChange={(_, val) => {
-              handleChange('repoImageTag')(dummyEvent(val));
-            }}
-            options={async () =>
-              [
-                ...new Set(
-                  parseNodes(digestData)
-                    .map((item) => item.tags)
-                    .flat()
-                ),
-              ].map((item) => ({
-                label: item,
-                value: item,
-              }))
-            }
-            error={!!errors.repoImageTag || !!digestError}
-            message={
-              errors.repoImageTag
-                ? errors.repoImageTag
-                : digestError
-                ? 'Failed to load Image tags.'
-                : ''
-            }
-            loading={digestLoading}
-          />
-
           <Select
             label="Nodepool Name"
             size="lg"

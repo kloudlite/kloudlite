@@ -37,13 +37,23 @@ export const useSocketLogs = ({
 
   useEffect(() => {
     const sorted = responses.sort((a, b) => {
-      const resp = a.data.podName.localeCompare(b.data.podName);
+      const podDiff = a.data.podName.localeCompare(b.data.podName);
 
-      if (resp === 0) {
-        return dayjs(a.data.timestamp).unix() - dayjs(b.data.timestamp).unix();
+      if (podDiff === 0) {
+        const contDiff = a.data.containerName.localeCompare(
+          b.data.containerName
+        );
+
+        if (contDiff === 0) {
+          return (
+            dayjs(a.data.timestamp).unix() - dayjs(b.data.timestamp).unix()
+          );
+        }
+
+        return contDiff;
       }
 
-      return resp;
+      return podDiff;
     });
 
     if (JSON.stringify(sorted) !== JSON.stringify(logs)) {

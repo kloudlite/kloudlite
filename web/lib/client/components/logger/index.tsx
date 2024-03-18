@@ -685,9 +685,17 @@ const LogComp = ({
   const [wInPx, setWInPx] = useState('100%');
   useEffect(() => {
     if (wRef.current && wInPx === '100%') {
-      setWInPx(`${wRef.current.clientWidth}`);
+      setWInPx(`${wRef.current.clientWidth}px`);
     }
   }, [wRef.current]);
+
+  const [logData, setLogData] = useState<ISocketMessage[]>([]);
+
+  useEffect(() => {
+    if (logs.length) {
+      setLogData(logs.map((d) => d.data));
+    }
+  }, [logs]);
 
   return isClientSide ? (
     <div
@@ -749,9 +757,7 @@ const LogComp = ({
         logs.length > 0 && (
           <LogBlock
             {...{
-              data: logs.map((d) => {
-                return d.data;
-              }),
+              data: logData,
               follow,
               dark,
               enableSearch,

@@ -12,6 +12,7 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 import logger from '~/root/lib/client/helpers/log';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { socketUrl } from '~/root/lib/configs/base-url.cjs';
+import { sleep } from '~/root/lib/utils/common';
 
 type IFor = 'logs' | 'resource-update';
 
@@ -264,9 +265,10 @@ export const SockProvider = ({ children }: ChildrenProps) => {
 
   const sendMsg = useCallback(
     async <T extends IData>(msg: ISocketMsg<T>) => {
-      if (!sockPromise.current) {
-        logger.log('no socket connection');
-        return;
+      while (!sockPromise.current) {
+        logger.log('no socket connection waiting');
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(1000);
       }
       try {
         const w = await sockPromise.current;

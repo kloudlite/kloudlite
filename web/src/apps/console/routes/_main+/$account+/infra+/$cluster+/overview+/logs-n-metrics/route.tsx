@@ -227,7 +227,7 @@ const LogsAndMetrics = () => {
         />
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 max-w-full">
         <LogComp
           {...{
             hideLineNumber: !state.linesVisible,
