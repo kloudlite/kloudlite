@@ -13,6 +13,10 @@ import MultiStepProgress, {
 } from '~/console/components/multi-step-progress';
 import { BottomNavigation } from '~/console/components/commons';
 import FillerCreateTeam from '~/console/assets/filler-create-team';
+import { SignOut } from '@jengaicons/react';
+import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
+import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
+import { Button } from '~/components/atoms/button';
 
 const NewAccount = () => {
   const api = useConsoleApi();
@@ -52,12 +56,24 @@ const NewAccount = () => {
     defaultStep: 1,
     totalSteps: 4,
   });
+  const eNavigate = useExternalRedirect();
 
   return (
     <form onSubmit={handleSubmit}>
       <MultiStepProgressWrapper
         fillerImage={<FillerCreateTeam />}
         title="Setup your account!"
+        action={
+          <Button
+            variant="plain"
+            suffix={<SignOut />}
+            size="sm"
+            content="Sign Out"
+            onClick={() => {
+              eNavigate(`${authBaseUrl}/logout`);
+            }}
+          />
+        }
         subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"
       >

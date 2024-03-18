@@ -1,8 +1,4 @@
-import { CaretDownFill, Copy, Eye, Spinner, Trash } from '@jengaicons/react';
 import { useState } from 'react';
-import { Button, IconButton } from '~/components/atoms/button';
-import OptionList from '~/components/atoms/option-list';
-import ScrollArea from '~/components/atoms/scroll-area';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
@@ -27,6 +23,8 @@ import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { registryHost } from '~/root/lib/configs/base-url.cjs';
 import { handleError } from '~/root/lib/utils/common';
+import { Copy, Spinner, Trash, Check } from '~/console/components/icons';
+import { CopyContentToClipboard } from '~/console/components/common-console-components';
 
 const RESOURCE_NAME = 'credential';
 type BaseType = ExtractNodeType<ICRCreds>;
@@ -77,113 +75,66 @@ const ExtraButton = ({ onDelete }: { onDelete: () => void }) => {
 };
 
 const RegistryUrlView = () => {
-  const { copy } = useClipboard({
-    onSuccess() {
-      toast.success('Registry url copied successfully.');
-    },
-  });
   return (
-    <ListBody
-      data={
-        <div
-          className="cursor-pointer flex flex-row items-center gap-lg truncate"
-          onClick={() => {
-            copy(registryHost);
-          }}
-        >
-          <span className="truncate">{registryHost}</span>
-          <span>
-            <Copy size={16} />
-          </span>
-        </div>
-      }
+    <CopyContentToClipboard
+      content={registryHost}
+      toastMessage="Registry url copied successfully."
     />
   );
 };
 
-const TokenView = ({
-  username,
-  list = true,
-}: {
-  username: string;
-  list: boolean;
-}) => {
-  const { copy } = useClipboard({
-    onSuccess() {
-      toast.success('Token copied successfully.');
+const TokenView = ({ username }: { username: string }) => {
+  const iconSize = 16;
+  const api = useConsoleApi();
+  const [copy, setCopy] = useState(false);
+  const [copyIcon, setCopyIcon] = useState(<Copy size={iconSize} />);
+
+  const handleCopy = () => {
+    toast.success('Token copied successfully.');
+    setCopyIcon(<Check size={iconSize} />);
+    setTimeout(() => {
+      setCopyIcon(<Copy size={iconSize} />);
+    }, 3000);
+  };
+
+  const { copy: copyToClipboard } = useClipboard({
+    onSuccess: () => {
+      handleCopy();
     },
   });
-  const api = useConsoleApi();
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
 
   useDebounce(
     async () => {
-      if (open) {
-        setLoading(true);
+      if (copy) {
+        setCopyIcon(<Spinner size={iconSize} />);
         const { errors, data } = await api.getCredToken({ username });
-        setLoading(false);
         if (errors) {
           throw errors[0];
         }
-
-        setToken(data);
+        copyToClipboard(data);
+        setCopy(false);
       }
     },
     100,
-    [username, open]
+    [username, copy]
   );
   return (
-    <OptionList.Root
-      onOpenChange={(e) => {
-        setOpen(e);
-      }}
-    >
-      {list ? (
-        <OptionList.Trigger>
-          <Button
-            variant="plain"
-            className="group/view"
-            content={
-              <div className="flex flex-row items-center gap-xl">
-                <span>View password</span>
-                <span className="invisible group-hover/view:visible group-[.selected]/view:visible">
-                  <CaretDownFill size={16} />
-                </span>
-              </div>
-            }
-            prefix={<Eye />}
-          />
-        </OptionList.Trigger>
-      ) : (
-        <OptionList.Trigger>
-          <IconButton variant="plain" icon={<Eye />} size="sm" />
-        </OptionList.Trigger>
-      )}
-
-      <OptionList.Content>
-        <OptionList.Item
+    <ListBody
+      data={
+        <div
+          className="cursor-pointer flex flex-row items-center gap-lg truncate w-fit"
           onClick={(e) => {
             e.preventDefault();
-            copy(token);
+            e.stopPropagation();
+            setCopy(true);
           }}
+          title="Copy token"
         >
-          <ScrollArea className="!w-auto max-w-[200px] min-w-[200px] text-text-default">
-            {token}
-            {loading && (
-              <div className="flex flex-row gap-xl">
-                <div className="animate-spin">
-                  <Spinner size={16} />
-                </div>{' '}
-                Loading...
-              </div>
-            )}
-          </ScrollArea>
-          <Copy size={16} />
-        </OptionList.Item>
-      </OptionList.Content>
-    </OptionList.Root>
+          <span>Copy token</span>
+          {copyIcon}
+        </div>
+      }
+    />
   );
 };
 
@@ -205,7 +156,6 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
                     subtitle={username}
                     action={
                       <div className="flex flex-row items-center">
-                        <TokenView username={item.username} list={false} />
                         <ExtraButton
                           onDelete={() => {
                             onDelete(item);
@@ -219,6 +169,10 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
               {
                 key: generateKey(keyPrefix, 'registry-url'),
                 render: () => <RegistryUrlView />,
+              },
+              {
+                key: generateKey(keyPrefix, 'token'),
+                render: () => <TokenView username={username} />,
               },
               {
                 key: generateKey(keyPrefix, 'access'),
@@ -269,7 +223,7 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
               {
                 key: generateKey(keyPrefix, 'token'),
                 className: 'w-[180px]',
-                render: () => <TokenView username={username} list />,
+                render: () => <TokenView username={username} />,
               },
               {
                 key: generateKey(keyPrefix, 'access'),

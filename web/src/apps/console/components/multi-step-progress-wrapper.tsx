@@ -7,11 +7,15 @@ import SplitWrapper from './split-wrapper';
 type ITitleSection = {
   title: ReactNode;
   subTitle: ReactNode;
+  action?: ReactNode;
 };
-const TitleSection = ({ title, subTitle }: ITitleSection) => {
+const TitleSection = ({ title, subTitle, action }: ITitleSection) => {
   return (
     <div className="flex flex-col gap-xl">
-      <div className="heading4xl text-text-default">{title}</div>
+      <div className="flex flex-row justify-between">
+        <div className="heading4xl text-text-default">{title}</div>
+        {action}
+      </div>
       <div className="bodyLg text-text-default">{subTitle}</div>
       <div />
     </div>
@@ -32,6 +36,7 @@ const MultiStepProgressWrapper = ({
   children,
   backButton,
   fillerImage,
+  action,
 }: IProgressWrapper) => {
   return (
     <SplitWrapper fillerImage={fillerImage}>
@@ -47,7 +52,7 @@ const MultiStepProgressWrapper = ({
               LinkComponent={Link}
             />
           )}
-          <TitleSection title={title} subTitle={subTitle} />
+          <TitleSection title={title} subTitle={subTitle} action={action} />
         </div>
         {children}
       </div>

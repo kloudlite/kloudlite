@@ -1,6 +1,10 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
+import useClipboard from '~/root/lib/client/hooks/use-clipboard';
+import { toast } from '~/components/molecule/toast';
+import { Copy, Check } from '~/console/components/icons';
+import { ListBody } from './console-list-components';
 
 interface IDeleteContainer {
   title: ReactNode;
@@ -49,5 +53,55 @@ export const Box = ({ children, title, className }: IBox) => {
       <div className="text-text-strong headingLg">{title}</div>
       <div className="flex flex-col gap-3xl flex-1">{children}</div>
     </div>
+  );
+};
+
+export const CopyContentToClipboard = ({
+  content,
+  toastMessage,
+}: {
+  content: string;
+  toastMessage: string;
+}) => {
+  const iconSize = 16;
+  const { copy } = useClipboard({});
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    copy(content);
+    setCopied(true);
+    toast.success(toastMessage);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 3000);
+  };
+
+  return (
+    <ListBody
+      data={
+        <div
+          className="cursor-pointer flex flex-row items-center gap-lg truncate"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!copied) {
+              handleCopy();
+            }
+          }}
+        >
+          <span className="truncate">{content}</span>
+          {copied ? (
+            <span>
+              <Check size={iconSize} />
+            </span>
+          ) : (
+            <span>
+              <Copy size={iconSize} />
+            </span>
+          )}
+        </div>
+      }
+    />
   );
 };

@@ -1,10 +1,9 @@
-import { Copy, Trash, Check } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
+import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import {
-  ListBody,
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
@@ -21,9 +20,9 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { registryHost } from '~/root/lib/configs/base-url.cjs';
 import { handleError } from '~/root/lib/utils/common';
+import { Trash } from '~/console/components/icons';
 
 type BaseType = ExtractNodeType<IRepos>;
 const RESOURCE_NAME = 'repository';
@@ -58,46 +57,12 @@ const ExtraButton = ({ onDelete }: { onDelete: () => void }) => {
 
 const RepoUrlView = ({ name }: { name: string }) => {
   const { account } = useParams();
-  const { copy } = useClipboard({});
   const url = `${registryHost}/${account}/${name}`;
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    copy(url);
-    setCopied(true);
-    toast.success('Registry url copied successfully.');
-
-    setTimeout(() => {
-      setCopied(false);
-    }, 3000);
-  };
 
   return (
-    <ListBody
-      data={
-        <div
-          className="cursor-pointer flex flex-row items-center gap-lg truncate w-fit"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!copied) {
-              handleCopy();
-            }
-          }}
-          title={url}
-        >
-          <span className="truncate">{url}</span>
-          {copied ? (
-            <span>
-              <Check size={16} />
-            </span>
-          ) : (
-            <span>
-              <Copy size={16} />
-            </span>
-          )}
-        </div>
-      }
+    <CopyContentToClipboard
+      content={url}
+      toastMessage="Repository url copied successfully."
     />
   );
 };
