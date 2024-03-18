@@ -689,6 +689,14 @@ const LogComp = ({
     }
   }, [wRef.current]);
 
+  const [logData, setLogData] = useState<ISocketMessage[]>([]);
+
+  useEffect(() => {
+    if (logs.length) {
+      setLogData(logs.map((d) => d.data));
+    }
+  }, [logs]);
+
   return isClientSide ? (
     <div
       ref={wRef}
@@ -749,9 +757,7 @@ const LogComp = ({
         logs.length > 0 && (
           <LogBlock
             {...{
-              data: logs.map((d) => {
-                return d.data;
-              }),
+              data: logData,
               follow,
               dark,
               enableSearch,
