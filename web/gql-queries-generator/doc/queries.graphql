@@ -945,6 +945,7 @@ mutation consoleDeleteApp($projectName: String!, $envName: String!, $appName: St
 query consoleGetApp($projectName: String!, $envName: String!, $name: String!) {
   core_getApp(projectName: $projectName, envName: $envName, name: $name) {
     id
+    recordVersion
     createdBy {
       userEmail
       userId

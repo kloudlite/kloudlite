@@ -26,6 +26,8 @@ import {
 } from '@jengaicons/react';
 import dayjs from 'dayjs';
 import LogComp from '~/root/lib/client/components/logger';
+import LogAction from '~/console/page-components/log-action';
+import { useDataState } from '~/console/page-components/common-state';
 import { IAccountContext } from '../../../_layout';
 
 const RESOURCE_NAME = 'build run';
@@ -88,7 +90,12 @@ const GridView = ({ items }: IResource) => {
 const ListItem = ({ item }: { item: BaseType }) => {
   const [open, setOpen] = useState<boolean>(false);
   const { account } = useOutletContext<IAccountContext>();
-  const commitHash = item.metadata?.annotations?.['github.com/commit'] || '';
+
+  if (item.metadata && !item.metadata.annotations) {
+    item.metadata.annotations = {};
+  }
+
+  const commitHash = item.metadata?.annotations['github.com/commit'];
 
   // eslint-disable-next-line no-nested-ternary
   const state: 'running' | 'done' | 'error' = item.status?.isReady
@@ -98,6 +105,11 @@ const ListItem = ({ item }: { item: BaseType }) => {
     : 'running';
 
   const isLatest = dayjs(item.updateTime).isAfter(dayjs().subtract(3, 'hour'));
+
+  const { state: st } = useDataState<{
+    linesVisible: boolean;
+    timestampVisible: boolean;
+  }>('logs');
 
   return (
     <div className="flex flex-col flex-1">
@@ -188,7 +200,9 @@ const ListItem = ({ item }: { item: BaseType }) => {
             width: '100%',
             height: '40rem',
             title: 'Logs',
-            hideLineNumber: true,
+            hideLineNumber: !st.linesVisible,
+            hideTimestamp: !st.timestampVisible,
+            actionComponent: <LogAction />,
             websocket: {
               account: parseName(account),
               cluster: item.clusterName,

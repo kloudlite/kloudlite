@@ -71,6 +71,7 @@ export interface IuseLog {
   account: string;
   cluster: string;
   trackingId: string;
+  recordVersion?: number;
 }
 
 const hoverClass = `hover:bg-[#ddd]`;
@@ -681,12 +682,12 @@ const LogComp = ({
 
   const wRef = useRef<HTMLDivElement>(null);
 
-  const getFullWidthInPx = () => {
-    if (wRef.current) {
-      return wRef.current.clientWidth;
+  const [wInPx, setWInPx] = useState('100%');
+  useEffect(() => {
+    if (wRef.current && wInPx === '100%') {
+      setWInPx(`${wRef.current.clientWidth}`);
     }
-    return '100%';
-  };
+  }, [wRef.current]);
 
   return isClientSide ? (
     <div
@@ -696,11 +697,7 @@ const LogComp = ({
         'relative hljs rounded-md': !fullScreen,
       })}
       style={{
-        width: fullScreen
-          ? '100%'
-          : width === '100%'
-          ? getFullWidthInPx()
-          : width,
+        width: fullScreen ? '100%' : width === '100%' ? wInPx : width,
         height: fullScreen ? '100vh' : height,
       }}
     >

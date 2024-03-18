@@ -221,6 +221,9 @@ dependencies:
   react-viewport-list:
     specifier: ^7.1.2
     version: 7.1.2(react@18.2.0)
+  reconnecting-websocket:
+    specifier: ^4.4.0
+    version: 4.4.0
   remix:
     specifier: ^1.19.3
     version: 1.19.3
@@ -239,9 +242,6 @@ dependencies:
   uuid:
     specifier: ^9.0.1
     version: 9.0.1
-  websocket:
-    specifier: ^1.0.34
-    version: 1.0.34
   yup:
     specifier: ^1.3.3
     version: 1.3.3
@@ -283,9 +283,6 @@ devDependencies:
   '@types/uuid':
     specifier: ^9.0.7
     version: 9.0.7
-  '@types/websocket':
-    specifier: ^1.0.10
-    version: 1.0.10
   '@typescript-eslint/eslint-plugin':
     specifier: ^6.17.0
     version: 6.17.0(@typescript-eslint/parser@6.17.0)(eslint@8.56.0)(typescript@5.3.3)
@@ -4339,12 +4336,6 @@ packages:
 
   /@types/uuid@9.0.7:
     resolution: {integrity: sha512-WUtIVRUZ9i5dYXefDEAI7sh9/O7jGvHg7Df/5O/gtH3Yabe5odI3UWopVR1qbPXQtvOxWu3mM4XxlYeZtMWF4g==}
-    dev: true
-
-  /@types/websocket@1.0.10:
-    resolution: {integrity: sha512-svjGZvPB7EzuYS94cI7a+qhwgGU1y89wUgjT6E2wVUfmAGIvRfT7obBvRtnhXCSsoMdlG4gBFGE7MfkIXZLoww==}
-    dependencies:
-      '@types/node': 20.10.6
     dev: true
 
   /@typescript-eslint/eslint-plugin@6.17.0(@typescript-eslint/parser@6.17.0)(eslint@8.56.0)(typescript@5.3.3):
@@ -9564,6 +9555,10 @@ packages:
       source-map: 0.6.1
       tslib: 2.6.2
     dev: true
+
+  /reconnecting-websocket@4.4.0:
+    resolution: {integrity: sha512-D2E33ceRPga0NvTDhJmphEgJ7FUYF0v4lr1ki0csq06OdlxKfugGzN0dSkxM/NfqCxYELK4KcaTOUOjTV6Dcng==}
+    dev: false
 
   /reflect.getprototypeof@1.0.4:
     resolution: {integrity: sha512-ECkTw8TmJwW60lOTR+ZkODISW6RQ8+2CL3COqtiJKLd6MmB45hN51HprHFziKLGkAuTGQhBb91V8cy+KHlaCjw==}

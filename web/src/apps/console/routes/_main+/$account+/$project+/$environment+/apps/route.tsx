@@ -9,7 +9,6 @@ import { parseNodes } from '~/console/server/r-utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import fake from '~/root/fake-data-generator/fake';
 import { clearAppState } from '~/console/page-components/app-states';
 import { useEffect } from 'react';
 import Tools from './tools';
@@ -27,7 +26,6 @@ export const loader = async (ctx: IRemixCtx) => {
       search: getSearch(ctx),
     });
     if (errors) {
-      console.error(errors);
       throw errors[0];
     }
 
@@ -47,9 +45,9 @@ const Apps = () => {
   return (
     <LoadingComp
       data={promise}
-    // skeletonData={{
-    //   appsData: fake.ConsoleListAppsQuery.core_listApps as any,
-    // }}
+      // skeletonData={{
+      //   appsData: fake.ConsoleListAppsQuery.core_listApps as any,
+      // }}
     >
       {({ appsData }) => {
         const apps = parseNodes(appsData);

@@ -2438,6 +2438,7 @@ export type ConsoleGetAppQueryVariables = Exact<{
 export type ConsoleGetAppQuery = {
   core_getApp?: {
     id: string;
+    recordVersion: number;
     creationTime: any;
     displayName: string;
     enabled?: boolean;

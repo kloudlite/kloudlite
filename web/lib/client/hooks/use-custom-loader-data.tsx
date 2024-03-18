@@ -6,5 +6,8 @@ type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
   ? I
   : never;
 
-export const useExtLoaderData = <T extends (...args: any) => Promise<any>>() =>
-  useLoaderData() as UnionToIntersection<Awaited<ReturnType<T>>>;
+export const useExtLoaderData = <
+  T extends (...args: any) => Promise<any>
+>() => {
+  return useLoaderData() as UnionToIntersection<Awaited<ReturnType<T>>>;
+};

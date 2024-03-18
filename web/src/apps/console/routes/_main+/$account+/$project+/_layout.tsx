@@ -6,7 +6,6 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import logger from '~/root/lib/client/helpers/log';
 import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import { IRemixCtx } from '~/root/lib/types/common';
 import {
@@ -15,39 +14,18 @@ import {
 } from '~/console/server/gql/queries/project-queries';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import {
-  ensureAccountClientSide,
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import {
-  Check,
-  ChevronUpDown,
-  Database,
-  GearSix,
-  Plus,
-  Search,
-  VirtualMachine,
-} from '~/console/components/icons';
-import {
-  ExtractNodeType,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-utils/common';
+import { Database, GearSix, VirtualMachine } from '~/console/components/icons';
+import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import LogoWrapper from '~/console/components/logo-wrapper';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
-import { cn } from '~/components/utils';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { ICluster } from '~/console/server/gql/queries/cluster-queries';
-import { useRef, useState } from 'react';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import { handleError } from '~/root/lib/utils/common';
 import { Button } from '~/components/atoms/button';
-import OptionList from '~/components/atoms/option-list';
-import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import { LoadingPlaceHolder } from '~/console/components/loading';
 import { IAccountContext } from '../_layout';
 
 export interface IProjectContext extends IAccountContext {
@@ -280,11 +258,19 @@ export const loader = async (ctx: IRemixCtx) => {
       name: project,
     });
 
+    if (errors) {
+      throw errors[0];
+    }
+
     const { data: msvTemplates, errors: msvError } = await GQLServerHandler(
       ctx.request
     ).listMSvTemplates({});
 
-    if (!data.clusterName) {
+    if (msvError) {
+      throw msvError[0];
+    }
+
+    if (!data?.clusterName) {
       throw new Error('No cluster in project.');
     }
 
@@ -293,14 +279,6 @@ export const loader = async (ctx: IRemixCtx) => {
     ).getCluster({
       name: data.clusterName,
     });
-
-    if (errors) {
-      throw errors[0];
-    }
-
-    if (msvError) {
-      throw msvError[0];
-    }
 
     if (clusterError) {
       throw clusterError[0];
@@ -312,7 +290,7 @@ export const loader = async (ctx: IRemixCtx) => {
       cluster: clusterData,
     };
   } catch (err) {
-    logger.log(err);
+    // logger.error(err);
     return redirect(`/${account}/projects`);
   }
 };

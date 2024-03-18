@@ -32,7 +32,6 @@ import tailwindBase from '~/design-system/tailwind-base.js';
 import { ReloadIndicator } from '~/lib/client/components/reload-indicator';
 import { isDev } from '~/lib/client/helpers/log';
 import { getClientEnv, getServerEnv } from '../configs/base-url.cjs';
-import { isBrowser } from '../client/helpers/is-browser';
 import { useDataFromMatches } from '../client/hooks/use-custom-matches';
 
 export const links: LinksFunction = () => [
@@ -234,20 +233,20 @@ const Root = ({
           }}
         />
         <LiveReload port={443} />
-        <Tooltip.Provider>
-          <ProgressContainer>
-            <ReloadIndicator />
-            <NonIdleProgressBar />
-            {isBrowser() && <ToastContainer position="bottom-left" />}
-            {error ? (
-              <div>{JSON.stringify(error)}</div>
-            ) : (
-              <Wrapper>
+        <ToastContainer position="bottom-left" />
+        <ProgressContainer>
+          <ReloadIndicator />
+          <NonIdleProgressBar />
+          {error ? (
+            <div>{JSON.stringify(error)}</div>
+          ) : (
+            <Wrapper>
+              <Tooltip.Provider>
                 <Outlet />
-              </Wrapper>
-            )}
-          </ProgressContainer>
-        </Tooltip.Provider>
+              </Tooltip.Provider>
+            </Wrapper>
+          )}
+        </ProgressContainer>
         <Scripts />
       </body>
     </html>

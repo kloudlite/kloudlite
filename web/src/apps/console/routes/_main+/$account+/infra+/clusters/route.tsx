@@ -130,7 +130,7 @@ const Clusters = () => {
         const { pageInfo, totalCount } = clustersData;
         return (
           <Wrapper
-            secondaryHeader={{
+            header={{
               title: 'Clusters',
               action: clusters.length > 0 && (
                 <Button

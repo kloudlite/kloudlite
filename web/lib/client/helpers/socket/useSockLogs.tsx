@@ -7,9 +7,15 @@ interface IuseLog {
   account: string;
   cluster: string;
   trackingId: string;
+  recordVersion?: number;
 }
 
-export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
+export const useSocketLogs = ({
+  account,
+  cluster,
+  trackingId,
+  recordVersion,
+}: IuseLog) => {
   const [logs, setLogs] = useState<ISocketResp<ILog>[]>([]);
   const { responses, infos, subscribed, errors } = useSubscribe(
     {
@@ -17,9 +23,12 @@ export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
       data: {
         id: `${account}.${cluster}.${trackingId}`,
         spec: {
-          account,
-          cluster,
-          trackingId,
+          ...{
+            account,
+            cluster,
+            trackingId,
+            recordVersion,
+          },
         },
       },
     },
@@ -28,7 +37,7 @@ export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
 
   useEffect(() => {
     const sorted = responses.sort((a, b) => {
-      const resp = b.data.podName.localeCompare(a.data.podName);
+      const resp = a.data.podName.localeCompare(b.data.podName);
 
       if (resp === 0) {
         return dayjs(a.data.timestamp).unix() - dayjs(b.data.timestamp).unix();

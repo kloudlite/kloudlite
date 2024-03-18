@@ -73,7 +73,7 @@ export const managedTemplateQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetMSvTemplateQuery) {
         return data.infra_getManagedServiceTemplate;
       },
-      vars(_: ConsoleGetMSvTemplateQueryVariables) { },
+      vars(_: ConsoleGetMSvTemplateQueryVariables) {},
     }
   ),
   listMSvTemplates: executor(
@@ -133,7 +133,7 @@ export const managedTemplateQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListMSvTemplatesQuery) =>
         data.infra_listManagedServiceTemplates,
-      vars(_: ConsoleListMSvTemplatesQueryVariables) { },
+      vars(_: ConsoleListMSvTemplatesQueryVariables) {},
     }
   ),
 });
