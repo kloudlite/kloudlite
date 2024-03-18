@@ -7,7 +7,7 @@ import {
 import { BottomNavigation } from '~/console/components/commons';
 import { FadeIn } from '../../../../../../page-components/util';
 import { EnvironmentVariables } from './app-environment-variables';
-import { ConfigMounts } from './app-environment-mounts';
+import { ConfigMounts } from './app-config-mount';
 
 export interface IAppDialogValue {
   refKey: string;
@@ -26,7 +26,7 @@ const AppEnvironment = () => {
       value: 'environment_variables',
     },
     {
-      label: 'Config mount',
+      label: 'Config files',
       value: 'config_mounts',
     },
   ];

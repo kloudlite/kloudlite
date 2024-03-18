@@ -1,7 +1,7 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
@@ -9,9 +9,6 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
-import CodeMirrorClient from '~/root/lib/client/components/editor-client';
-import { isBrowser } from 'framer-motion';
-import ReactCodeMirror from '@uiw/react-codemirror';
 import Tools from './tools';
 import HandleHelmChart from './handle-helm-chart';
 import HelmChartResourcesV2 from './helm-chart-resources-v2';
@@ -37,11 +34,6 @@ export const loader = (ctx: IRemixCtx) => {
 const HelmCharts = () => {
   const [visible, setVisible] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
-
-  const [l, setL] = useState(false);
-  useEffect(() => {
-    setL(true);
-  }, []);
 
   return (
     <>

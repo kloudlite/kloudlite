@@ -43,7 +43,7 @@ export interface IValue {
   type: 'config' | 'secret' | NonNullableString;
 }
 
-const EnvironmentVariablesList = ({
+const ConfigMountList = ({
   configMounts,
   onDelete = (_) => _,
 }: IConfigMountList) => {
@@ -65,7 +65,7 @@ const EnvironmentVariablesList = ({
           header={
             <div className="flex flex-row items-center w-full">
               <div className="text-text-strong bodyMd flex-1">
-                Environment variable list
+                Config mount list
               </div>
               <div className="flex flex-row items-center">
                 <IconButton
@@ -89,7 +89,7 @@ const EnvironmentVariablesList = ({
           {page.map((ev, index) => {
             return (
               <List.Row
-                key={ev.key}
+                key={ev.mountPath}
                 className={cn({
                   '!border-b': index < 4,
                   '!rounded-b-none': index < 4,
@@ -110,11 +110,22 @@ const EnvironmentVariablesList = ({
                   },
                   {
                     key: `${index}-column-1`,
-                    className: 'w-[80px]',
+                    className: 'w-[80px] truncate',
                     render: () => (
-                      <div className="bodyMd-semibold text-text-default">
-                        {ev.key}
-                      </div>
+                      <Tooltip.Root
+                        className="!max-w-[400px]"
+                        content={
+                          <div className="bodyMd-semibold text-text-default truncate">
+                            {ev.mountPath}
+                          </div>
+                        }
+                      >
+                        <div className="bodyMd-semibold text-text-default truncate w-fit max-w-full">
+                          <div className="truncate">
+                            <span>{ev.mountPath}</span>
+                          </div>
+                        </div>
+                      </Tooltip.Root>
                     ),
                   },
                   {
@@ -124,31 +135,15 @@ const EnvironmentVariablesList = ({
                         className="!max-w-[400px]"
                         content={
                           <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
-                            {!ev.type && ev.value}
                             {!!ev.type && (
-                              <>
-                                <span className="line-clamp-1">
-                                  {ev.refName}
-                                </span>
-                                <span>
-                                  <ArrowRight size={16} />
-                                </span>
-                                {ev.refKey}
-                              </>
+                              <span className="line-clamp-1">{ev.refName}</span>
                             )}
                           </div>
                         }
                       >
                         <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
-                          {!ev.type && ev.value}
                           {!!ev.type && (
-                            <>
-                              <span className="line-clamp-1">{ev.refName}</span>
-                              <span>
-                                <ArrowRight size={16} />
-                              </span>
-                              {ev.refKey}
-                            </>
+                            <span className="line-clamp-1">{ev.refName}</span>
                           )}
                         </div>
                       </Tooltip.Root>
@@ -180,7 +175,7 @@ const EnvironmentVariablesList = ({
         <div className="rounded border-border-default border min-h-[347px] flex flex-row items-center justify-center">
           <NoResultsFound
             title={null}
-            subtitle="No environment variables are added."
+            subtitle="No config mounts are added."
             compact
             image={<SmileySad size={32} weight={1} />}
             shadow={false}
@@ -202,16 +197,6 @@ export const ConfigMounts = () => {
 
   const entry = Yup.object({
     type: Yup.string().oneOf(['config', 'secret']).notRequired(),
-    key: Yup.string().required(),
-
-    refKey: Yup.string()
-      .when(['type'], ([type], schema) => {
-        if (type === 'config' || type === 'secret') {
-          return schema.required();
-        }
-        return schema;
-      })
-      .notRequired(),
     refName: Yup.string()
       .when(['type'], ([type], schema) => {
         if (type === 'config' || type === 'secret') {
@@ -220,6 +205,7 @@ export const ConfigMounts = () => {
         return schema;
       })
       .notRequired(),
+    mountPath: Yup.string().required(),
   });
 
   const {
@@ -228,12 +214,13 @@ export const ConfigMounts = () => {
     submit,
     resetValues: resetAppValue,
   } = useForm({
-    initialValues: getContainer().env,
+    initialValues: getContainer().volumes,
     validationSchema: Yup.array(entry),
     onSubmit: (val) => {
+      console.log('values', val);
       setContainer((c) => ({
         ...c,
-        env: val,
+        volumes: val,
       }));
     },
   });
@@ -250,14 +237,13 @@ export const ConfigMounts = () => {
   }, [hasChanges]);
 
   const addEntry = (val: IConfigMount) => {
+    console.log('here', val);
     const tempVal = val || [];
     setValues((v = []) => {
       const data = {
-        key: tempVal.key,
         type: tempVal.type,
-        refName: tempVal.refName || '',
-        refKey: tempVal.refKey || '',
-        value: tempVal.value || '',
+        refName: tempVal.refName,
+        mountPath: tempVal.mountPath,
       };
       return [...(v || []), data];
     });
@@ -265,7 +251,7 @@ export const ConfigMounts = () => {
 
   const removeEntry = (val: IConfigMount) => {
     setValues((v) => {
-      const nv = v?.filter((v) => v.key !== val.key);
+      const nv = v?.filter((v) => v.mountPath !== val.mountPath);
       return nv;
     });
   };
@@ -280,14 +266,12 @@ export const ConfigMounts = () => {
   });
 
   interface InitialValuesProps {
-    key: string;
+    mountPath: string;
     value?: IValue;
-    textInputValue?: string;
   }
 
   const initialValues: InitialValuesProps = {
-    key: '',
-    textInputValue: '',
+    mountPath: '',
   };
 
   const {
@@ -300,37 +284,23 @@ export const ConfigMounts = () => {
     submit: eSubmit,
   } = useForm({
     initialValues,
-
     validationSchema: Yup.object().shape({
       value: vSchema,
       textInputValue: Yup.string(),
-      key: Yup.string()
+      mountPath: Yup.string()
         .required()
-        .test('is-valid', 'Key already exists.', (value) => {
-          return !getContainer().env?.find((v) => v.key === value);
+        .test('is-valid', 'Path already exists.', (value) => {
+          return !getContainer().volumes?.find((v) => v.mountPath === value);
         }),
     }),
     onSubmit: () => {
-      if (eValues.textInputValue) {
+      console.log('helre', eValues);
+      if (eValues.value) {
         const ev: IConfigMount = {
-          key: eValues.key,
-          refKey: undefined,
-          refName: undefined,
-          type: undefined,
-          value: eValues.textInputValue,
-        };
-        // setEnvVariables((prev) => [...prev, ev]);
-        addEntry(ev);
-      } else if (eValues.value) {
-        const ev: IConfigMount = {
-          key: eValues.key,
-          refKey: eValues.value.refKey,
           refName: eValues.value.refName,
           type: eValues.value.type,
-          value: '',
+          mountPath: eValues.mountPath,
         };
-
-        // setEnvVariables((prev) => [...prev, ev]);
         addEntry(ev);
       }
       resetValues();
@@ -346,81 +316,85 @@ export const ConfigMounts = () => {
         <div className="flex flex-row gap-3xl items-start">
           <div className="flex-1">
             <TextInput
-              label="Key"
+              label="Path"
               size="lg"
-              error={!!eErrors.key}
-              message={eErrors.key}
-              value={eValues.key}
+              error={!!eErrors.mountPath}
+              message={eErrors.mountPath}
+              value={eValues.mountPath}
               autoComplete="off"
-              onChange={eHandleChange('key')}
+              onChange={eHandleChange('mountPath')}
             />
           </div>
-          <div className="flex-1">
-            {eValues.value ? (
-              <div className="flex flex-col gap-md">
-                <div className="bodyMd-medium text-text-default">Value</div>
-                <div className="flex flex-row items-center rounded border border-border-default bg-surface-basic-default line-clamp-1">
-                  <span className="py-lg pl-lg pr-md text-text-default">
-                    {eValues.value.type === 'config' ? (
-                      <LockSimpleOpen
-                        size={14}
-                        weight={2.5}
-                        color="currentColor"
-                      />
-                    ) : (
-                      <LockSimple size={14} weight={2.5} color="currentColor" />
-                    )}
-                  </span>
-                  <Tooltip.Root
-                    className="!max-w-[400px]"
-                    content={
+          <div className="flex-1 ">
+            <div className="flex flex-col">
+              <div className="bodyMd-medium text-text-default pb-md">
+                <span className="h-4xl block">Value</span>
+              </div>
+              <div className="h-[43px] px-lg flex flex-row items-center rounded border border-border-default bg-surface-basic-default line-clamp-1">
+                {eValues.value ? (
+                  <div className="flex flex-row items-center">
+                    <span className="py-lg pl-lg pr-md text-text-default">
+                      {eValues.value.type === 'config' ? (
+                        <LockSimpleOpen
+                          size={14}
+                          weight={2.5}
+                          color="currentColor"
+                        />
+                      ) : (
+                        <LockSimple
+                          size={14}
+                          weight={2.5}
+                          color="currentColor"
+                        />
+                      )}
+                    </span>
+                    <Tooltip.Root
+                      className="!max-w-[400px]"
+                      content={
+                        <div className="flex-1 flex flex-row gap-md items-center py-xl px-lg bodyMd text-text-soft ">
+                          <span>{eValues.value.refName}</span>
+                          <span>
+                            <ArrowRight size={16} />
+                          </span>
+                          <span className="truncate">
+                            {eValues.value.refKey}
+                          </span>
+                        </div>
+                      }
+                    >
                       <div className="flex-1 flex flex-row gap-md items-center py-xl px-lg bodyMd text-text-soft ">
-                        <span>{eValues.value.refKey}</span>
-                        <span>
-                          <ArrowRight size={16} />
-                        </span>
                         <span className="line-clamp-1">
                           {eValues.value.refName}
                         </span>
+                        <span>
+                          <ArrowRight size={16} />
+                        </span>
+
+                        <span className="line-clamp-1">
+                          {eValues.value.refKey}
+                        </span>
                       </div>
-                    }
-                  >
-                    <div className="flex-1 flex flex-row gap-md items-center py-xl px-lg bodyMd text-text-soft ">
-                      <span>{eValues.value.refKey}</span>
-                      <span>
-                        <ArrowRight size={16} />
-                      </span>
-                      <span className="line-clamp-1">
-                        {eValues.value.refName}
-                      </span>
-                    </div>
-                  </Tooltip.Root>
-                  <button
-                    aria-label="clear"
-                    tabIndex={-1}
-                    type="button"
-                    className="outline-none p-lg text-text-default rounded-full"
-                    onClick={() => {
-                      eSetValues((v) => {
-                        return {
-                          ...v,
-                          value: undefined,
-                        };
-                      });
-                    }}
-                  >
-                    <XCircleFill size={16} color="currentColor" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <TextInput
-                value={eValues.textInputValue}
-                onChange={eHandleChange('textInputValue')}
-                label="Value"
-                size="lg"
-                suffix={
-                  !eValues.textInputValue ? (
+                    </Tooltip.Root>
+                    <button
+                      aria-label="clear"
+                      tabIndex={-1}
+                      type="button"
+                      className="outline-none p-lg text-text-default rounded-full"
+                      onClick={() => {
+                        eSetValues((v) => {
+                          return {
+                            ...v,
+                            value: undefined,
+                          };
+                        });
+                      }}
+                    >
+                      <XCircleFill size={16} color="currentColor" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-full flex flex-row justify-between">
+                    <div />
                     <ChipGroup
                       onClick={(data) => {
                         setShowCSDialog({ type: data.name, data: null });
@@ -437,36 +411,31 @@ export const ConfigMounts = () => {
                         type="CLICKABLE"
                       />
                     </ChipGroup>
-                  ) : null
-                }
-                showclear={!!eValues.textInputValue}
-              />
-            )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex flex-row gap-md items-center">
           <div className="bodySm text-text-soft flex-1">
-            All environment entries be mounted on the path specified in the
-            container
+            All config entries be mounted on path specified in the container.
           </div>
           <Button
             type="submit"
-            content="Add environment"
+            content="Add config mount"
             variant="basic"
-            disabled={
-              !eValues.key || !(eValues.value || eValues.textInputValue)
-            }
+            disabled={!eValues.mountPath || !eValues.value}
             onClick={() => {
               eSubmit();
             }}
           />
         </div>
       </form>
-      <EnvironmentVariablesList
-        configMounts={getContainer().env || []}
+      <ConfigMountList
+        configMounts={getContainer().volumes || []}
         onDelete={(ev) => {
           removeEntry(ev);
-          // setEnvVariables((prev) => prev.filter((p) => p !== ev));
         }}
       />
       <AppDialog

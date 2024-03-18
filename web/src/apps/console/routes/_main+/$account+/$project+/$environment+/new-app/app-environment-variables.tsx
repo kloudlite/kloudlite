@@ -114,9 +114,20 @@ const EnvironmentVariablesList = ({
                     key: `${index}-column-1`,
                     className: 'w-[80px]',
                     render: () => (
-                      <div className="bodyMd-semibold text-text-default">
-                        {ev.key}
-                      </div>
+                      <Tooltip.Root
+                        className="!max-w-[400px]"
+                        content={
+                          <div className="bodyMd-semibold text-text-default">
+                            {ev.key}
+                          </div>
+                        }
+                      >
+                        <div className="bodyMd-semibold text-text-default truncate w-fit max-w-full">
+                          <div className="truncate">
+                            <span>{ev.key}</span>
+                          </div>
+                        </div>
+                      </Tooltip.Root>
                     ),
                   },
                   {
@@ -377,23 +388,29 @@ export const EnvironmentVariables = () => {
                     className="!max-w-[400px]"
                     content={
                       <div className="flex-1 flex flex-row gap-md items-center py-xl px-lg bodyMd text-text-soft ">
-                        <span>{eValues.value.refKey}</span>
+                        <span className="line-clamp-1">
+                          {eValues.value.refName}
+                        </span>
                         <span>
                           <ArrowRight size={16} />
                         </span>
+
                         <span className="line-clamp-1">
-                          {eValues.value.refName}
+                          {eValues.value.refKey}
                         </span>
                       </div>
                     }
                   >
                     <div className="flex-1 flex flex-row gap-md items-center py-xl px-lg bodyMd text-text-soft ">
-                      <span>{eValues.value.refKey}</span>
+                      <span className="line-clamp-1">
+                        {eValues.value.refName}
+                      </span>
                       <span>
                         <ArrowRight size={16} />
                       </span>
+
                       <span className="line-clamp-1">
-                        {eValues.value.refName}
+                        {eValues.value.refKey}
                       </span>
                     </div>
                   </Tooltip.Root>
