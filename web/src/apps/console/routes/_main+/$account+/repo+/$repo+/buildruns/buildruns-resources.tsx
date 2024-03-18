@@ -90,6 +90,11 @@ const GridView = ({ items }: IResource) => {
 const ListItem = ({ item }: { item: BaseType }) => {
   const [open, setOpen] = useState<boolean>(false);
   const { account } = useOutletContext<IAccountContext>();
+
+  if (item.metadata && !item.metadata.annotations) {
+    item.metadata.annotations = {};
+  }
+
   const commitHash = item.metadata?.annotations['github.com/commit'];
 
   // eslint-disable-next-line no-nested-ternary

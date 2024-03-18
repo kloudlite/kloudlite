@@ -37,7 +37,7 @@ export const useSocketLogs = ({
 
   useEffect(() => {
     const sorted = responses.sort((a, b) => {
-      const resp = b.data.podName.localeCompare(a.data.podName);
+      const resp = a.data.podName.localeCompare(b.data.podName);
 
       if (resp === 0) {
         return dayjs(a.data.timestamp).unix() - dayjs(b.data.timestamp).unix();
