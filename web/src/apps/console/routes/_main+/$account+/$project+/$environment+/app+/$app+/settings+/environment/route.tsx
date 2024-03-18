@@ -8,7 +8,7 @@ import Wrapper from '~/console/components/wrapper';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { Button } from '~/components/atoms/button';
 import { EnvironmentVariables } from '../../../../new-app/app-environment-variables';
-import { ConfigMounts } from '../../../../new-app/app-environment-mounts';
+import { ConfigMounts } from '../../../../new-app/app-config-mount';
 
 export interface IAppDialogValue {
   refKey: string;
@@ -28,7 +28,7 @@ const SettingEnvironment = () => {
       value: 'environment_variables',
     },
     {
-      label: 'Config mount',
+      label: 'Config files',
       value: 'config_mounts',
     },
   ];

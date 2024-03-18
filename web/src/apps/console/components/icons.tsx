@@ -1,4 +1,6 @@
 export {
+  Warning,
+  WarningCircleFill,
   Domain,
   ArrowLeftFill as ArrowLeft,
   ArrowRightFill as ArrowRight,

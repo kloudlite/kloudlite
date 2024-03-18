@@ -3,10 +3,9 @@ import {
   CheckCircleFill,
   Checks,
   CircleNotch,
-  XCircleFill,
   Circle,
   CircleFill,
-  X,
+  WarningCircleFill,
 } from '~/console/components/icons';
 import Tooltip from '~/components/atoms/tooltip';
 import {
@@ -136,11 +135,9 @@ const state = ({
       return {
         component:
           type === 'minimal' ? (
-            <span className="text-text-critical">
-              <X size={iconSize} />
-            </span>
+            <span className="text-text-critical">!!</span>
           ) : (
-            <Badge icon={<X />} type="critical">
+            <Badge icon={<span className="px-xs">!!</span>} type="critical">
               {textData()}
             </Badge>
           ),
@@ -250,7 +247,7 @@ export const SyncStatusV2 = ({
         return {
           icon: (
             <span className="text-text-critical">
-              <XCircleFill size={iconSize} />
+              <WarningCircleFill size={iconSize} />
             </span>
           ),
         };

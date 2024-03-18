@@ -54,7 +54,7 @@ const HelmCharts = () => {
                 action: helmCharts.length > 0 && (
                   <Button
                     variant="primary"
-                    content="Create helm chart"
+                    content="Install helm chart"
                     prefix={<PlusFill />}
                     onClick={() => {
                       setVisible(true);
@@ -72,7 +72,7 @@ const HelmCharts = () => {
                   </p>
                 ),
                 action: {
-                  content: 'Create helm chart',
+                  content: 'Install helm chart',
                   prefix: <Plus />,
                   onClick: () => {
                     setVisible(true);

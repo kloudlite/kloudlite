@@ -148,7 +148,7 @@ const ListItem = ({ item }: { item: BaseType }) => {
             <ListTitle
               title={
                 <div className="flex items-center gap-xl">
-                  {item.metadata?.annotations['github.com/repository']}{' '}
+                  {item.metadata?.annotations?.['github.com/repository'] || ''}
                 </div>
               }
               subtitle={
@@ -161,7 +161,7 @@ const ListItem = ({ item }: { item: BaseType }) => {
                   </div>
                   <div className="flex items-center gap-md">
                     <GitBranch size={12} />
-                    {item.metadata?.annotations['github.com/branch']}{' '}
+                    {item.metadata?.annotations?.['github.com/branch'] || ''}
                   </div>
 
                   <div className="flex items-center gap-md">
