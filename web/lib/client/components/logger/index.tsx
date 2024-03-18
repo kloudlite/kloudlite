@@ -685,7 +685,7 @@ const LogComp = ({
   const [wInPx, setWInPx] = useState('100%');
   useEffect(() => {
     if (wRef.current && wInPx === '100%') {
-      setWInPx(`${wRef.current.clientWidth}`);
+      setWInPx(`${wRef.current.clientWidth}px`);
     }
   }, [wRef.current]);
 
