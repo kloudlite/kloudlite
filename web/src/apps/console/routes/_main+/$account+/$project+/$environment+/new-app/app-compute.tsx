@@ -1,7 +1,6 @@
 import { NumberInput } from '~/components/atoms/input';
 import Slider from '~/components/atoms/slider';
 import { useAppState } from '~/console/page-components/app-states';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { FadeIn, parseValue } from '~/console/page-components/util';
@@ -11,7 +10,6 @@ import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useMapper } from '~/components/utils';
-import { registryHost } from '~/lib/configs/base-url.cjs';
 import { BottomNavigation } from '~/console/components/commons';
 import { useOutletContext } from '@remix-run/react';
 import { useLog } from '~/root/lib/client/hooks/use-log';
@@ -20,6 +18,7 @@ import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { plans } from './datas';
 import { IProjectContext } from '../../_layout';
+import appInitialFormValues, { mapFormValuesToApp } from './app-utils';
 
 const valueRender = ({
   label,
@@ -48,7 +47,7 @@ const AppCompute = () => {
     setApp,
     setPage,
     markPageAsCompleted,
-    activeContIndex,
+    getContainer,
     getRepoName,
     getImageTag,
   } = useAppState();
@@ -79,61 +78,13 @@ const AppCompute = () => {
     });
   });
 
-  useLog(nodepoolData);
-  useLog(nodepoolLoadingError);
-
   const { values, errors, handleChange, isLoading, submit } = useForm({
-    initialValues: {
-      imageUrl: app.spec.containers[activeContIndex]?.image || '',
-      imagePullPolicy:
-        app.spec.containers[activeContIndex]?.imagePullPolicy || 'IfNotPresent',
-      pullSecret: 'TODO',
-      cpuMode: app.metadata?.annotations?.[keyconstants.cpuMode] || 'shared',
-      memPerCpu: app.metadata?.annotations?.[keyconstants.memPerCpu] || '1',
-      autoscaling: app.spec.hpa?.enabled || false,
-      minReplicas: app.spec.hpa?.minReplicas || 1,
-      maxReplicas: app.spec.hpa?.maxReplicas || 3,
-      cpuThreshold: app.spec.hpa?.thresholdCpu || 75,
-      memoryThreshold: app.spec.hpa?.thresholdMemory || 75,
-      replicas: app.spec.replicas || 1,
-
-      cpu: parseValue(
-        app.spec.containers[activeContIndex]?.resourceCpu?.max,
-        250
-      ),
-
-      repoName: app.spec.containers[activeContIndex]?.image
-        ? getRepoName(app.spec.containers[activeContIndex]?.image)
-        : '',
-      repoImageTag: app.spec.containers[activeContIndex]?.image
-        ? getImageTag(app.spec.containers[activeContIndex]?.image)
-        : '',
-      repoAccountName:
-        app.metadata?.annotations?.[keyconstants.repoAccountName] || '',
-
-      selectedPlan:
-        app.metadata?.annotations[keyconstants.selectedPlan] || 'shared-1',
-      selectionMode:
-        app.metadata?.annotations[keyconstants.selectionModeKey] || 'quick',
-      manualCpuMin: parseValue(
-        app.spec.containers[activeContIndex].resourceCpu?.min,
-        0
-      ),
-      manualCpuMax: parseValue(
-        app.spec.containers[activeContIndex].resourceCpu?.max,
-        0
-      ),
-      manualMemMin: parseValue(
-        app.spec.containers[activeContIndex].resourceMemory?.min,
-        0
-      ),
-      manualMemMax: parseValue(
-        app.spec.containers[activeContIndex].resourceMemory?.max,
-        0
-      ),
-
-      nodepoolName: app.spec.nodeSelector?.[keyconstants.nodepoolName] || '',
-    },
+    initialValues: appInitialFormValues({
+      app,
+      getRepoName,
+      getImageTag,
+      getContainer,
+    }),
     validationSchema: Yup.object({
       pullSecret: Yup.string(),
       repoName: Yup.string().required(),
@@ -142,70 +93,12 @@ const AppCompute = () => {
       selectedPlan: Yup.string().required(),
     }),
     onSubmit: (val) => {
-      setApp((s) => ({
-        ...s,
-        metadata: {
-          ...s.metadata!,
-          annotations: {
-            ...(s.metadata?.annotations || {}),
-            [keyconstants.cpuMode]: val.cpuMode,
-            [keyconstants.memPerCpu]: `${val.memPerCpu}`,
-            [keyconstants.selectionModeKey]: val.selectionMode,
-            [keyconstants.selectedPlan]: val.selectedPlan,
-            [keyconstants.repoAccountName]: val.repoAccountName,
-          },
-        },
-        spec: {
-          ...s.spec,
-          nodeSelector: {
-            ...(s.spec.nodeSelector || {}),
-            [keyconstants.nodepoolName]: val.nodepoolName,
-          },
-          containers: [
-            {
-              ...(s.spec.containers?.[0] || {}),
-              // image: val.image === '' ? val.repoImageUrl : val.imageUrl,
-              image:
-                values.repoAccountName === undefined ||
-                values.repoAccountName === ''
-                  ? `${values.repoName}:${values.repoImageTag}`
-                  : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
-              name: 'container-0',
-              imagePullPolicy: val.imagePullPolicy,
-              resourceCpu:
-                val.selectionMode === 'quick'
-                  ? {
-                      max: `${val.cpu}m`,
-                      min: `${val.cpu}m`,
-                    }
-                  : {
-                      max: `${val.manualCpuMax}m`,
-                      min: `${val.manualCpuMin}m`,
-                    },
-              resourceMemory:
-                val.selectionMode === 'quick'
-                  ? {
-                      max: `${(
-                        (values.cpu || 1) * parseValue(values.memPerCpu, 4)
-                      ).toFixed(2)}Mi`,
-                      min: `${val.cpu}Mi`,
-                    }
-                  : {
-                      max: `${val.manualMemMax}Mi`,
-                      min: `${val.manualMemMin}Mi`,
-                    },
-            },
-          ],
-          hpa: {
-            enabled: val.autoscaling,
-            maxReplicas: val.maxReplicas,
-            minReplicas: val.minReplicas,
-            thresholdCpu: val.cpuThreshold,
-            thresholdMemory: val.memoryThreshold,
-          },
-          replicas: val.replicas,
-        },
-      }));
+      setApp((s) =>
+        mapFormValuesToApp({
+          appIn: val,
+          oldAppIn: s,
+        })
+      );
     },
   });
 
@@ -230,6 +123,8 @@ const AppCompute = () => {
       return api.listDigest({ repoName: values.repoName });
     }
   );
+
+  useLog(values.selectionMode);
 
   return (
     <FadeIn
@@ -353,6 +248,7 @@ const AppCompute = () => {
             <ExtendedFilledTab
               value={values.selectionMode}
               onChange={(e) => {
+                console.log(e, values.selectionMode);
                 handleChange('selectionMode')(dummyEvent(e));
               }}
               items={[

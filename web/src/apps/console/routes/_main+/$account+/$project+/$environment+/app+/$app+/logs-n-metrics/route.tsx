@@ -11,46 +11,72 @@ import { useDataState } from '~/console/page-components/common-state';
 import { observeUrl } from '~/root/lib/configs/base-url.cjs';
 import LogComp from '~/root/lib/client/components/logger';
 import LogAction from '~/console/page-components/log-action';
+import { generatePlainColor } from '~/root/lib/utils/color-generator';
 import { IAppContext } from '../_layout';
 
 const LogsAndMetrics = () => {
   const { app, project, account } = useOutletContext<IAppContext>();
-  const [cpuData, setCpuData] = useState<number[]>([]);
-  const [memoryData, setMemoryData] = useState<number[]>([]);
 
-  const xAxisFormatter = (_: string, __?: number) => {
-    // return dayjs((val || 0) * 1000).format('hh:mm A');
-    return '';
+  type tData = {
+    metric: {
+      exported_pod: string;
+    };
+    values: [number, string][];
+  };
+
+  const [data, setData] = useState<{
+    cpu: tData[];
+    memory: tData[];
+  }>({
+    cpu: [],
+    memory: [],
+  });
+
+  const xAxisFormatter = (val: string, __?: number) => {
+    return dayjs((parseValue(val, 0) || 0) * 1000).format('hh:mm A');
+    // return '';
   };
 
   const tooltipXAixsFormatter = (val: number) =>
     dayjs(val * 1000).format('DD/MM/YY hh:mm A');
 
-  const getAnnotations = ({
-    min = '',
-    max = '',
-  }: {
-    min?: string;
-    max?: string;
-  }) => {
+  const getAnnotations = (
+    {
+      min = '',
+      max = '',
+    }: {
+      min?: string;
+      max?: string;
+    },
+    resType: 'cpu' | 'memory'
+  ) => {
     const tmin = parseValue(min, 0);
     const tmax = parseValue(max, 0);
 
-    // if (tmin === tmax) {
-    //   return {};
-    // }
+    const unit = resType === 'cpu' ? 'vCPU' : 'MB';
 
     const k: ApexOptions['annotations'] = {
       yaxis: [
         {
           y: tmin,
-          y2: tmax,
+          y2: tmin === tmax ? tmax + 1 : tmax,
           fillColor: '#33f',
           borderColor: '#33f',
           opacity: 0.1,
           strokeDashArray: 0,
           borderWidth: 1,
-          label: {},
+          label: {
+            style: {
+              fontFamily: 'Inter',
+              fontSize: '14px',
+            },
+            // textAnchor: 'middle',
+            // position: 'center',
+            text:
+              tmin === tmax
+                ? `allocated: ${tmax}${unit}`
+                : `min: ${tmin}${unit} | max: ${tmax}${unit}`,
+          },
         },
       ],
     };
@@ -68,7 +94,12 @@ const LogsAndMetrics = () => {
             withCredentials: true,
           });
 
-          setCpuData(resp?.data?.data?.result[0]?.values || []);
+          setData((prev) => ({
+            ...prev,
+            cpu: resp?.data?.data?.result || [],
+          }));
+
+          // setCpuData(resp?.data?.data?.result[0]?.values || []);
         } catch (err) {
           console.error(err);
         }
@@ -81,7 +112,10 @@ const LogsAndMetrics = () => {
             withCredentials: true,
           });
 
-          setMemoryData(resp?.data?.data?.result[0]?.values || []);
+          setData((prev) => ({
+            ...prev,
+            memory: resp?.data?.data?.result || [],
+          }));
         } catch (err) {
           console.error(err);
         }
@@ -126,17 +160,29 @@ const LogsAndMetrics = () => {
 
   return (
     <div className="flex flex-col gap-6xl pt-6xl">
-      <div className="gap-6xl items-center flex-col grid sm:grid-cols-2 lg:grid-cols-4">
+      <div className="gap-6xl items-center flex-col grid sm:grid-cols-2 lg:grid-cols-2">
         <Chart
           title="CPU Usage"
           options={{
             ...chartOptions,
             series: [
-              {
-                color: '#1D4ED8',
-                name: 'CPU',
-                data: cpuData,
-              },
+              // {
+              //   color: '#1D4ED8',
+              //   name: 'CPU',
+              //   data: data.cpu.map((d) => {
+              //     return [d.value[0], parseFloat(d.value[1])];
+              //   }),
+              // },
+
+              ...data.cpu.map((d) => {
+                return {
+                  name: d.metric.exported_pod,
+                  color: generatePlainColor(d.metric.exported_pod),
+                  data: d.values.map((v) => {
+                    return [v[0], parseFloat(v[1])];
+                  }),
+                };
+              }),
             ],
             tooltip: {
               x: {
@@ -150,16 +196,19 @@ const LogsAndMetrics = () => {
             },
 
             annotations: getAnnotations(
-              app.spec.containers[0].resourceCpu || {}
+              app.spec.containers[0].resourceCpu || {},
+              'cpu'
             ),
 
             yaxis: {
               min: 0,
-              max: parseValue(app.spec.containers[0].resourceCpu?.max, 0),
+              max: parseValue(app.spec.containers[0].resourceCpu?.max, 0) * 1.1,
 
               floating: false,
               labels: {
-                formatter: (val) => `${val} m`,
+                formatter: (val) => {
+                  return `${(val / 1000).toFixed(3)} vCPU`;
+                },
               },
             },
           }}
@@ -170,24 +219,37 @@ const LogsAndMetrics = () => {
           options={{
             ...chartOptions,
             series: [
-              {
-                color: '#1D4ED8',
-                name: 'Memory',
-                data: memoryData,
-              },
+              ...data.memory.map((d) => {
+                return {
+                  name: d.metric.exported_pod,
+                  color: generatePlainColor(d.metric.exported_pod),
+                  data: d.values.map((v) => {
+                    return [v[0], parseFloat(v[1])];
+                  }),
+                };
+              }),
+              // {
+              //   color: '#1D4ED8',
+              //   name: 'Memory',
+              //   data: data.memory.map((d) => {
+              //     return [d.value[0], parseFloat(d.value[1])];
+              //   }),
+              // },
             ],
 
             annotations: getAnnotations(
-              app.spec.containers[0].resourceMemory || {}
+              app.spec.containers[0].resourceMemory || {},
+              'memory'
             ),
 
             yaxis: {
               min: 0,
-              max: parseValue(app.spec.containers[0].resourceMemory?.max, 0),
+              max:
+                parseValue(app.spec.containers[0].resourceMemory?.max, 0) * 1.1,
 
               floating: false,
               labels: {
-                formatter: (val) => `${val} MB`,
+                formatter: (val) => `${val.toFixed(0)} MB`,
               },
             },
             tooltip: {

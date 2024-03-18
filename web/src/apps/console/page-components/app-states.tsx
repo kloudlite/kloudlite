@@ -52,11 +52,18 @@ export const useAppState = () => {
 
   const { app, page, envPage, activeContIndex, completePages } = state;
 
-  const getContainer = (index: number = activeContIndex) =>
-    app.spec.containers[index] || {
-      name: `container-${index}`,
-      image: '',
-    };
+  const getContainer = (index: number = activeContIndex) => {
+    if (!index) {
+      // eslint-disable-next-line no-param-reassign
+      index = 0;
+    }
+    return (
+      app.spec.containers[index] || {
+        name: `container-${index}`,
+        image: '',
+      }
+    );
+  };
 
   const setApp: ISetState<typeof app> = (fn) => {
     if (typeof fn === 'function') {
