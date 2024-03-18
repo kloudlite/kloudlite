@@ -91,7 +91,10 @@ func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, ms
 				}
 			}
 
-			jc, err := d.newJetstreamConsumerForLog(ctx.Context, logs.LogSubsId(msg.Spec, d.env.LogsStreamName), hash, msg.Spec.Since)
+			tpk := logs.LogSubsId(msg.Spec, d.env.LogsStreamName)
+			d.logger.Debugf("tpk: %s", tpk)
+
+			jc, err := d.newJetstreamConsumerForLog(ctx.Context, tpk, hash, msg.Spec.Since)
 			if err != nil {
 				return err
 			}

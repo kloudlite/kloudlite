@@ -106,5 +106,5 @@ func LogSubsId(md MsgData, logStreamName string) string {
 		return fmt.Sprintf("%s.%s.%s.%s.>", logStreamName, md.Account, md.Cluster, md.TrackingId)
 	}
 
-	return fmt.Sprintf("%s.%s.%s.%s.%d.>", logStreamName, md.Account, md.Cluster, md.TrackingId, md.RecordVersion)
+	return fmt.Sprintf("%s.%s.%s.%s.%d.>", logStreamName, md.Account, md.Cluster, md.TrackingId, *md.RecordVersion)
 }
