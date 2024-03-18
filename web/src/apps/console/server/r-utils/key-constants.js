@@ -14,4 +14,5 @@ export const keyconstants = {
   nodepoolName: 'kloudlite.io/nodepool.name',
 
   nodepoolStateType: 'kloudlite.io/ui-pool.app-state-type',
+  helmChartRepoPackageId: 'kloudlite.io/helm-chart-repo-package-id',
 };

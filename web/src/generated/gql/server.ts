@@ -4781,7 +4781,12 @@ export type ConsoleListHelmChartQuery = {
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { generation: number; name: string; namespace?: string };
+        metadata?: {
+          generation: number;
+          name: string;
+          namespace?: string;
+          annotations?: any;
+        };
         spec?: {
           chartName: string;
           chartRepoURL: string;

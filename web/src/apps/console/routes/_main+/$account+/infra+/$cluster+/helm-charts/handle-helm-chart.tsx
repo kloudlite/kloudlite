@@ -26,10 +26,7 @@ import { NameIdView } from '~/console/components/name-id-view';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { toast } from '~/components/molecule/toast';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import CodeView from '~/console/components/code-view';
-import CodeMirrorClient from '~/root/lib/client/components/editor-client';
-import { javascript } from '@codemirror/lang-javascript';
-import { basicSetup } from '@uiw/react-codemirror';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 
 const LOGO_URL = 'https://artifacthub.io/image/';
 
@@ -101,15 +98,40 @@ const Root = (props: IDialog) => {
   const [helmValues, setHelmValues] = useState('');
   const [activeTab, setActiveTab] = useState('defaults');
 
+  const fetchValues = async ({
+    packageId,
+    version,
+  }: {
+    packageId: string;
+    version: string;
+  }) => {
+    try {
+      const r = await axios({
+        method: 'get',
+        url: `/artifacthub-values-api`,
+        params: {
+          packageId,
+          version,
+        },
+      });
+      setHelmValues(r.data);
+    } catch (err) {
+      toast.error('Error fetching chart values');
+    }
+  };
+
   useEffect(() => {
     if (isUpdate) {
-      setChartVersions(
-        hemlCharts.find((v) => v.value === chartName?.value)?.item || []
-      );
-      setChartName({
-        label: props.data.spec?.chartName || '',
-        value: props.data.spec?.chartName || '',
-      });
+      if (hemlCharts && hemlCharts.length > 0) {
+        setChartVersions(
+          hemlCharts.find((v) => v.value === props.data.spec?.chartName)
+            ?.item || []
+        );
+        setChartName({
+          label: props.data.spec?.chartName || '',
+          value: props.data.spec?.chartName || '',
+        });
+      }
     } else {
       setChartName(undefined);
       setChartVersions([]);
@@ -118,10 +140,21 @@ const Root = (props: IDialog) => {
 
   useEffect(() => {
     if (isUpdate) {
-      setChartVersion({
-        label: props.data.spec?.chartVersion || '',
-        value: props.data.spec?.chartVersion || '',
-      });
+      if (chartVersions && chartVersions.length > 0) {
+        setChartVersion({
+          label: props.data.spec?.chartVersion || '',
+          value: props.data.spec?.chartVersion || '',
+        });
+        if (props.data.spec?.chartVersion) {
+          fetchValues({
+            packageId:
+              props.data.metadata?.annotations?.[
+                keyconstants.helmChartRepoPackageId
+              ],
+            version: props.data.spec?.chartVersion,
+          });
+        }
+      }
     } else {
       setChartVersion(undefined);
     }
@@ -161,28 +194,6 @@ const Root = (props: IDialog) => {
       setRepoErrors(true);
     } finally {
       setHelmChartsLoading(false);
-    }
-  };
-
-  const fetchValues = async ({
-    packageId,
-    version,
-  }: {
-    packageId: string;
-    version: string;
-  }) => {
-    try {
-      const r = await axios({
-        method: 'get',
-        url: `/artifacthub-values-api`,
-        params: {
-          packageId,
-          version,
-        },
-      });
-      setHelmValues(r.data);
-    } catch (err) {
-      toast.error('Error fetching chart values');
     }
   };
 
@@ -352,6 +363,12 @@ const Root = (props: IDialog) => {
                 metadata: {
                   name: val.name,
                   namespace: val.namespace,
+                  annotations: {
+                    [keyconstants.helmChartRepoPackageId]:
+                      props.data.metadata?.annotations?.[
+                        keyconstants.helmChartRepoPackageId
+                      ],
+                  },
                 },
                 spec: {
                   chartName: props.data.spec?.chartName,
@@ -375,6 +392,9 @@ const Root = (props: IDialog) => {
                 metadata: {
                   name: val.name,
                   namespace: val.namespace,
+                  annotations: {
+                    [keyconstants.helmChartRepoPackageId]: selectedRepo,
+                  },
                 },
                 spec: {
                   chartName: chartName?.value,
@@ -404,6 +424,7 @@ const Root = (props: IDialog) => {
     () => {
       if (values.chartRepoURL) {
         fetchHelmCharts(values.chartRepoURL);
+        console.log('fetchHelmCharts');
       }
     },
     300,
@@ -530,7 +551,12 @@ const Root = (props: IDialog) => {
                 onSearch={() => true}
               />
             ) : (
-              <TextInput value={chartName?.value} disabled label="Chart name" />
+              <TextInput
+                value={chartName?.value}
+                disabled
+                label="Chart name"
+                placeholder="Chart name"
+              />
             )}
             <Select
               searchable
@@ -554,58 +580,59 @@ const Root = (props: IDialog) => {
               loading={isUpdate && helmChartsLoading}
               onChange={(val) => {
                 setChartVersion(val);
+                setHelmValues('');
                 fetchValues({ packageId: selectedRepo, version: val.value });
               }}
               onSearch={() => true}
             />
           </div>
           <div className="basis-full flex flex-col">
-            <ExtendedFilledTab
-              value={activeTab}
-              onChange={setActiveTab}
-              items={[
-                { label: 'Defaults', value: 'defaults' },
-                {
-                  label: 'Overrides',
-                  value: 'overrides',
-                },
-
-                {
-                  label: 'Effective',
-                  value: 'effective',
-                },
-              ]}
-            />
-            <CodeMirrorClient
-              extensions={[basicSetup]}
-              value={`
----
-title: Hello World
----
-
-`}
-            />
-            {/* <TextArea */}
-            {/*   containerClassName="h-full" */}
-            {/*   className="h-full" */}
-            {/*   placeholder="Helm values" */}
-            {/*   onChange={handleChange('values')} */}
-            {/*   error={!!errors.values} */}
-            {/*   message={errors.values} */}
-            {/*   value={(() => { */}
-            {/*     if (activeTab === 'defaults') { */}
-            {/*       return helmValues; */}
-            {/*     } */}
-            {/*     if (activeTab === 'overrides') { */}
-            {/*       return values.values; */}
-            {/*     } */}
-            {/*     if (activeTab === 'effective') { */}
-            {/*       return ''; */}
-            {/*     } */}
-            {/*     return ''; */}
-            {/*   })()} */}
-            {/*   name="helm-chart-values" */}
-            {/* /> */}
+            {chartVersion ? (
+              <div className="flex flex-col gap-3xl h-full">
+                <ExtendedFilledTab
+                  value={activeTab}
+                  onChange={setActiveTab}
+                  items={[
+                    { label: 'Defaults', value: 'defaults' },
+                    {
+                      label: 'Values',
+                      value: 'values',
+                    },
+                  ]}
+                />
+                <TextArea
+                  containerClassName="h-full"
+                  className="h-full"
+                  textFieldClassName={cn(
+                    '!font-mono whitespace-pre break-normal overflow-x-scroll'
+                  )}
+                  placeholder={
+                    activeTab === 'defaults' ? 'Default values' : 'Helm Values'
+                  }
+                  onChange={(e) => {
+                    if (activeTab === 'values') {
+                      handleChange('values')(e);
+                    }
+                  }}
+                  error={!!errors.values}
+                  message={errors.values}
+                  value={(() => {
+                    if (activeTab === 'defaults') {
+                      return helmValues;
+                    }
+                    if (activeTab === 'values') {
+                      return values.values;
+                    }
+                    return '';
+                  })()}
+                  name="helm-chart-values"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center bodyMd flex-col h-full">
+                Select chart name and version
+              </div>
+            )}
           </div>
         </div>
       </Popup.Content>
@@ -614,7 +641,7 @@ title: Hello World
         <Popup.Button
           loading={isLoading}
           type="submit"
-          content={isUpdate ? 'Update' : 'Add'}
+          content={isUpdate ? 'Update' : 'Install'}
           variant="primary"
         />
       </Popup.Footer>

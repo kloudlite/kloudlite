@@ -3429,6 +3429,7 @@ query consoleListHelmChart($clusterName: String!, $search: SearchHelmRelease, $p
           generation
           name
           namespace
+          annotations
         }
         recordVersion
         spec {
