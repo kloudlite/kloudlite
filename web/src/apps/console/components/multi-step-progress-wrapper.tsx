@@ -2,6 +2,9 @@ import { Link } from '@remix-run/react';
 import { ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
 import { ArrowLeft } from '~/console/components/icons';
+import { SignOut } from '@jengaicons/react';
+import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
+import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import SplitWrapper from './split-wrapper';
 
 type ITitleSection = {
@@ -9,9 +12,22 @@ type ITitleSection = {
   subTitle: ReactNode;
 };
 const TitleSection = ({ title, subTitle }: ITitleSection) => {
+  const eNavigate = useExternalRedirect();
+
   return (
     <div className="flex flex-col gap-xl">
-      <div className="heading4xl text-text-default">{title}</div>
+      <div className="flex flex-row justify-between">
+        <div className="heading4xl text-text-default">{title}</div>
+        <Button
+          variant="plain"
+          suffix={<SignOut />}
+          size="sm"
+          content="Sign Out"
+          onClick={() => {
+            eNavigate(`${authBaseUrl}/logout`);
+          }}
+        />
+      </div>
       <div className="bodyLg text-text-default">{subTitle}</div>
       <div />
     </div>
