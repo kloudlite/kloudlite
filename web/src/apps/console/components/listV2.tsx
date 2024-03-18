@@ -138,7 +138,7 @@ const RowBase = ({
       'bg-surface-basic-default': !pressed,
       'cursor-pointer hover:bg-surface-basic-hovered':
         (!!onClick || linkComponent !== 'div') && !pressed && !disabled,
-      'bg-surface-basic-active': pressed,
+      'bg-surface-basic-pressed': pressed,
       'cursor-default': !!disabled,
     },
     hideDetailSeperator
@@ -148,11 +148,10 @@ const RowBase = ({
 
   const css = cn(
     'w-full overflow-hidden resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative flex flex-row items-center gap-3xl',
-    ' first:rounded-t last:rounded-b p-2xl',
     className
   );
 
-  if (!disabled) {
+  if (!disabled && !pressed) {
     return (
       <RovingFocusGroup.Item
         role="row"
@@ -168,7 +167,7 @@ const RowBase = ({
       >
         <Component
           {...(Component === 'a' ? { href: to } : { to })}
-          className={cn('flex flex-col', commonCss)}
+          className={cn('flex flex-col last:rounded-b p-2xl', commonCss)}
         >
           <div className={css}>
             {headers?.map((item) => (
@@ -184,8 +183,8 @@ const RowBase = ({
   }
 
   return (
-    <div className="flex flex-col">
-      <div className={css} role="row">
+    <div className={cn(css, commonCss, 'p-2xl')}>
+      <div role="row">
         {headers?.map((item) => (
           <div key={item.name} className={cn(item.className)}>
             {columns?.[item.name]?.render()}
@@ -233,6 +232,7 @@ interface IRoot {
       detail?: ReactNode;
       hideDetailSeperator?: boolean;
       onClick?: ((item?: Record<string, IColumn>) => void) | null;
+      pressed?: boolean;
     }>;
     className?: Array<string>;
   };
@@ -307,6 +307,7 @@ const Root = ({
                   detail={r.detail}
                   hideDetailSeperator={r.hideDetailSeperator}
                   onClick={r.onClick}
+                  pressed={r.pressed}
                 />
               ))}
             </div>

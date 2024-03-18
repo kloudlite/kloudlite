@@ -11,7 +11,6 @@ import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useMapper } from '~/components/utils';
-import { registryHost } from '~/lib/configs/base-url.cjs';
 import { BottomNavigation } from '~/console/components/commons';
 import { useOutletContext } from '@remix-run/react';
 import { useLog } from '~/root/lib/client/hooks/use-log';
@@ -43,26 +42,11 @@ const valueRender = ({
 };
 
 const AppCompute = () => {
-  const {
-    app,
-    setApp,
-    setPage,
-    markPageAsCompleted,
-    activeContIndex,
-    getRepoName,
-    getImageTag,
-  } = useAppState();
+  const { app, setApp, setPage, markPageAsCompleted, activeContIndex } =
+    useAppState();
   const api = useConsoleApi();
   const { cluster } = useOutletContext<IProjectContext>();
   const [advancedOptions, setAdvancedOptions] = useState(false);
-
-  const {
-    data,
-    isLoading: repoLoading,
-    error: repoLoadingError,
-  } = useCustomSwr('/repos', async () => {
-    return api.listRepo({});
-  });
 
   const {
     data: nodepoolData,
@@ -84,7 +68,6 @@ const AppCompute = () => {
 
   const { values, errors, handleChange, isLoading, submit } = useForm({
     initialValues: {
-      imageUrl: app.spec.containers[activeContIndex]?.image || '',
       imagePullPolicy:
         app.spec.containers[activeContIndex]?.imagePullPolicy || 'IfNotPresent',
       pullSecret: 'TODO',
@@ -101,15 +84,6 @@ const AppCompute = () => {
         app.spec.containers[activeContIndex]?.resourceCpu?.max,
         250
       ),
-
-      repoName: app.spec.containers[activeContIndex]?.image
-        ? getRepoName(app.spec.containers[activeContIndex]?.image)
-        : '',
-      repoImageTag: app.spec.containers[activeContIndex]?.image
-        ? getImageTag(app.spec.containers[activeContIndex]?.image)
-        : '',
-      repoAccountName:
-        app.metadata?.annotations?.[keyconstants.repoAccountName] || '',
 
       selectedPlan:
         app.metadata?.annotations[keyconstants.selectedPlan] || 'shared-1',
@@ -136,8 +110,6 @@ const AppCompute = () => {
     },
     validationSchema: Yup.object({
       pullSecret: Yup.string(),
-      repoName: Yup.string().required(),
-      repoImageTag: Yup.string().required(),
       cpuMode: Yup.string().required(),
       selectedPlan: Yup.string().required(),
     }),
@@ -152,7 +124,6 @@ const AppCompute = () => {
             [keyconstants.memPerCpu]: `${val.memPerCpu}`,
             [keyconstants.selectionModeKey]: val.selectionMode,
             [keyconstants.selectedPlan]: val.selectedPlan,
-            [keyconstants.repoAccountName]: val.repoAccountName,
           },
         },
         spec: {
@@ -164,13 +135,6 @@ const AppCompute = () => {
           containers: [
             {
               ...(s.spec.containers?.[0] || {}),
-              // image: val.image === '' ? val.repoImageUrl : val.imageUrl,
-              image:
-                values.repoAccountName === undefined ||
-                values.repoAccountName === ''
-                  ? `${values.repoName}:${values.repoImageTag}`
-                  : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
-              name: 'container-0',
               imagePullPolicy: val.imagePullPolicy,
               resourceCpu:
                 val.selectionMode === 'quick'
@@ -209,27 +173,10 @@ const AppCompute = () => {
     },
   });
 
-  const repos = useMapper(parseNodes(data), (val) => ({
-    label: val.name,
-    value: val.name,
-    accName: val.accountName,
-  }));
-
   const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
     label: val.metadata?.name || '',
     value: val.metadata?.name || '',
   }));
-
-  const {
-    data: digestData,
-    isLoading: digestLoading,
-    error: digestError,
-  } = useCustomSwr(
-    () => `/digests_${values.repoName}`,
-    async () => {
-      return api.listDigest({ repoName: values.repoName });
-    }
-  );
 
   return (
     <FadeIn
@@ -248,103 +195,6 @@ const AppCompute = () => {
       <div className="bodyMd text-text-soft">
         Compute refers to the processing power and resources used for data
         manipulation and calculations in a system.
-      </div>
-      <div className="flex flex-col gap-3xl">
-        <Select
-          label="Repo Name"
-          size="lg"
-          placeholder="Select Repo"
-          value={values.repoName}
-          creatable
-          onChange={(val) => {
-            handleChange('repoName')(dummyEvent(val.value));
-            if (val.accName === undefined || val.accName === '') {
-              handleChange('repoAccountName')(dummyEvent(''));
-            } else {
-              handleChange('repoAccountName')(dummyEvent(val.accName));
-            }
-          }}
-          options={async () => [...repos]}
-          error={!!errors.repoName || !!repoLoadingError}
-          message={
-            repoLoadingError ? 'Error fetching repositories.' : errors.app
-          }
-          loading={repoLoading}
-        />
-
-        <Select
-          label="Image Tag"
-          size="lg"
-          placeholder="Select Image Tag"
-          value={values.repoImageTag}
-          creatable
-          onChange={(_, val) => {
-            handleChange('repoImageTag')(dummyEvent(val));
-          }}
-          options={async () =>
-            [
-              ...new Set(
-                parseNodes(digestData)
-                  .map((item) => item.tags)
-                  .flat()
-              ),
-            ].map((item) => ({
-              label: item,
-              value: item,
-            }))
-          }
-          error={!!errors.repoImageTag || !!digestError}
-          message={
-            // eslint-disable-next-line no-nested-ternary
-            errors.repoImageTag
-              ? errors.repoImageTag
-              : digestError
-              ? 'Failed to load Image tags.'
-              : ''
-          }
-          loading={digestLoading}
-        />
-
-        <Button
-          size="sm"
-          content={<span className="truncate text-left">Advanced options</span>}
-          variant="primary-plain"
-          className="truncate"
-          onClick={() => {
-            setAdvancedOptions(!advancedOptions);
-          }}
-        />
-
-        {advancedOptions && (
-          <Select
-            label="Nodepool Name"
-            size="lg"
-            placeholder="Select Nodepool"
-            value={values.nodepoolName}
-            creatable
-            onChange={(val) => {
-              handleChange('nodepoolName')(dummyEvent(val.value));
-            }}
-            options={async () => [...nodepools]}
-            error={!!errors.repos || !!nodepoolLoadingError}
-            message={
-              nodepoolLoadingError ? 'Error fetching nodepools.' : errors.app
-            }
-            loading={nodepoolLoading}
-          />
-        )}
-
-        {advancedOptions && (
-          <Checkbox
-            label="Always pull image on restart"
-            checked={values.imagePullPolicy === 'Always'}
-            onChange={(val) => {
-              const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
-              console.log(imagePullPolicy);
-              handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
-            }}
-          />
-        )}
       </div>
 
       <div className="flex flex-col">
@@ -477,6 +327,52 @@ const AppCompute = () => {
             </div>
           </div>
         )}
+
+        <div className="flex flex-col gap-3xl pt-3xl">
+          <Button
+            size="sm"
+            content={
+              <span className="truncate text-left">Advanced options</span>
+            }
+            variant="primary-plain"
+            className="truncate"
+            onClick={() => {
+              setAdvancedOptions(!advancedOptions);
+            }}
+          />
+
+          {advancedOptions && (
+            <Select
+              label="Nodepool Name"
+              size="lg"
+              placeholder="Select Nodepool"
+              value={values.nodepoolName}
+              creatable
+              onChange={(val) => {
+                handleChange('nodepoolName')(dummyEvent(val.value));
+              }}
+              options={async () => [...nodepools]}
+              error={!!errors.repos || !!nodepoolLoadingError}
+              message={
+                nodepoolLoadingError ? 'Error fetching nodepools.' : errors.app
+              }
+              loading={nodepoolLoading}
+              showclear
+            />
+          )}
+
+          {advancedOptions && (
+            <Checkbox
+              label="Always pull image on restart"
+              checked={values.imagePullPolicy === 'Always'}
+              onChange={(val) => {
+                const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
+                console.log(imagePullPolicy);
+                handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
+              }}
+            />
+          )}
+        </div>
       </div>
 
       <BottomNavigation

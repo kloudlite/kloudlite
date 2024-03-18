@@ -52,4 +52,5 @@ export {
   CircleNotch,
   Circle,
   CircleFill,
+  Spinner,
 } from '@jengaicons/react';
