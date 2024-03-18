@@ -3,7 +3,6 @@ package domain
 import (
 	"crypto/md5"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -52,32 +51,32 @@ func (d *Impl) GetBuildRun(ctx RegistryContext, repoName string, buildRunName st
 	return brun, nil
 }
 
-func (d *Impl) parseRecordVersionFromAnnotations(annotations map[string]string) (int, error) {
-	annotatedVersion, ok := annotations[constants.RecordVersionKey]
-	if !ok {
-		return 0, errors.Newf("no annotation with record version key (%s), found on the resource", constants.RecordVersionKey)
-	}
+// func (d *Impl) parseRecordVersionFromAnnotations(annotations map[string]string) (int, error) {
+// 	annotatedVersion, ok := annotations[constants.RecordVersionKey]
+// 	if !ok {
+// 		return 0, errors.Newf("no annotation with record version key (%s), found on the resource", constants.RecordVersionKey)
+// 	}
+//
+// 	annVersion, err := strconv.ParseInt(annotatedVersion, 10, 32)
+// 	if err != nil {
+// 		return 0, errors.NewE(err)
+// 	}
+//
+// 	return int(annVersion), nil
+// }
 
-	annVersion, err := strconv.ParseInt(annotatedVersion, 10, 32)
-	if err != nil {
-		return 0, errors.NewE(err)
-	}
-
-	return int(annVersion), nil
-}
-
-func (d *Impl) MatchRecordVersion(annotations map[string]string, rv int) (int, error) {
-	annVersion, err := d.parseRecordVersionFromAnnotations(annotations)
-	if err != nil {
-		return -1, errors.NewE(err)
-	}
-
-	if annVersion != rv {
-		return -1, errors.Newf("record version mismatch, expected %d, got %d", rv, annVersion)
-	}
-
-	return annVersion, nil
-}
+// func (d *Impl) MatchRecordVersion(annotations map[string]string, rv int) (int, error) {
+// 	annVersion, err := d.parseRecordVersionFromAnnotations(annotations)
+// 	if err != nil {
+// 		return -1, errors.NewE(err)
+// 	}
+//
+// 	if annVersion != rv {
+// 		return -1, errors.Newf("record version mismatch, expected %d, got %d", rv, annVersion)
+// 	}
+//
+// 	return annVersion, nil
+// }
 
 func (d *Impl) OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.BuildRun, status t2.ResourceStatus, opts UpdateAndDeleteOpts) error {
 
@@ -94,15 +93,15 @@ func (d *Impl) OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.Bu
 		return errors.Newf("build run with name %q not found", buildRun.Name)
 	}
 
-	recordVersion, err := d.MatchRecordVersion(xBr.Annotations, xBr.RecordVersion)
-	if err != nil {
-		return errors.NewE(err)
-	}
+	// recordVersion, err := d.MatchRecordVersion(xBr.Annotations, xBr.RecordVersion)
+	// if err != nil {
+	// 	return errors.NewE(err)
+	// }
 
 	if _, err = d.buildRunRepo.PatchById(
 		ctx,
 		xBr.Id,
-		common.PatchForSyncFromAgent(&buildRun, recordVersion, status, common.PatchOpts{
+		common.PatchForSyncFromAgent(&buildRun, 0, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		})); err != nil {
 		return errors.NewE(err)
