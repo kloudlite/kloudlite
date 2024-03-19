@@ -3,6 +3,7 @@ import {
   unstable_useBlocker,
   useBeforeUnload,
   useLocation,
+  useRevalidator,
 } from '@remix-run/react';
 import {
   createContext,
@@ -27,7 +28,6 @@ const UnsavedChanges = createContext<{
   performAction: string;
   setPerformAction: (action: string) => void;
   loading: boolean;
-  setLoading: (loading: boolean) => void;
 }>({
   hasChanges: false,
   setHasChanges() {},
@@ -39,7 +39,6 @@ const UnsavedChanges = createContext<{
   performAction: '',
   setPerformAction() {},
   loading: false,
-  setLoading() {},
 });
 
 export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
@@ -47,7 +46,6 @@ export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
   const [reload, setReload] = useState(false);
   const [ignorePaths, setIgnorePaths] = useState<string[]>([]);
   const [performAction, setPerformAction] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
   const location = useLocation();
   const { state, proceed, reset } = unstable_useBlocker(({ nextLocation }) => {
     if (hasChanges && !ignorePaths.includes(nextLocation.pathname)) {
@@ -94,6 +92,7 @@ export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
     setReload(true);
   };
 
+  const { state: s } = useRevalidator();
   return (
     <UnsavedChanges.Provider
       value={useMemo(
@@ -107,8 +106,7 @@ export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
           setIgnorePaths,
           setPerformAction,
           performAction,
-          loading,
-          setLoading,
+          loading: s === 'loading',
         }),
         [
           hasChanges,
@@ -117,8 +115,7 @@ export const UnsavedChangesProvider = ({ children }: ChildrenProps) => {
           ignorePaths,
           performAction,
           setPerformAction,
-          loading,
-          setLoading,
+          s,
         ]
       )}
     >

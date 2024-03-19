@@ -12,12 +12,12 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useMapper } from '~/components/utils';
 import { BottomNavigation } from '~/console/components/commons';
 import { useOutletContext } from '@remix-run/react';
-import { useLog } from '~/root/lib/client/hooks/use-log';
 import { Checkbox } from '~/components/atoms/checkbox';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
+import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
+import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { plans } from './datas';
-import { IProjectContext } from '../../_layout';
 import appInitialFormValues, { mapFormValuesToApp } from './app-utils';
 
 const valueRender = ({
@@ -41,7 +41,11 @@ const valueRender = ({
   );
 };
 
-const AppCompute = () => {
+const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
+  /** ---- Only for edit mode in settings ----* */
+  const { hasChanges } = useUnsavedChanges();
+  /** ---- end ----* */
+
   const { app, setApp, setPage, markPageAsCompleted, getContainer } =
     useAppState();
   const api = useConsoleApi();
@@ -63,38 +67,54 @@ const AppCompute = () => {
     });
   });
 
-  const { values, errors, handleChange, isLoading, submit } = useForm({
-    initialValues: appInitialFormValues({
-      app,
-      getContainer,
-    }),
-    validationSchema: Yup.object({
-      pullSecret: Yup.string(),
-      cpuMode: Yup.string().required(),
-      selectedPlan: Yup.string().required(),
-    }),
-    onSubmit: (val) => {
-      setApp((s) =>
-        mapFormValuesToApp({
-          appIn: val,
-          oldAppIn: s,
-        })
-      );
-    },
-  });
+  const { values, errors, handleChange, isLoading, submit, resetValues } =
+    useForm({
+      initialValues: appInitialFormValues({
+        app,
+        getContainer,
+      }),
+      validationSchema: Yup.object({
+        pullSecret: Yup.string(),
+        cpuMode: Yup.string().required(),
+        selectedPlan: Yup.string().required(),
+      }),
+      onSubmit: (val) => {
+        setApp((s) =>
+          mapFormValuesToApp({
+            appIn: val,
+            oldAppIn: s,
+          })
+        );
+      },
+    });
 
   const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
     label: val.metadata?.name || '',
     value: val.metadata?.name || '',
   }));
 
-  useLog(values.selectionMode);
+  /** ---- Only for edit mode in settings ----* */
+  useEffect(() => {
+    if (mode === 'edit') {
+      submit();
+    }
+  }, [values, mode]);
+
+  // useEffect(() => {
+  //   if (!hasChanges && mode === 'edit') {
+  //     resetValues();
+  //   }
+  // }, [hasChanges, mode]);
+
+  /** ---- end ----* */
 
   return (
     <FadeIn
       onSubmit={(e) => {
         e.preventDefault();
-
+        if (mode === 'edit') {
+          return;
+        }
         (async () => {
           const res = await submit();
           if (res) {
@@ -104,18 +124,18 @@ const AppCompute = () => {
         })();
       }}
     >
-      <div className="bodyMd text-text-soft">
-        Compute refers to the processing power and resources used for data
-        manipulation and calculations in a system.
-      </div>
-
+      {mode === 'new' && (
+        <div className="bodyMd text-text-soft">
+          Compute refers to the processing power and resources used for data
+          manipulation and calculations in a system.
+        </div>
+      )}
       <div className="flex flex-col">
         <div className="flex flex-row gap-lg items-center pb-3xl">
           <div className="flex-1">
             <ExtendedFilledTab
               value={values.selectionMode}
               onChange={(e) => {
-                console.log(e, values.selectionMode);
                 handleChange('selectionMode')(dummyEvent(e));
               }}
               items={[
@@ -157,7 +177,7 @@ const AppCompute = () => {
                 );
               }}
             />
-            <div className="flex flex-col gap-md p-2xl rounded border border-border-default">
+            <div className="flex flex-col gap-md p-2xl rounded border border-border-default bg-surface-basic-default">
               <div className="flex flex-row gap-lg items-center">
                 <div className="bodyMd-medium text-text-default">
                   Select CPU
@@ -280,34 +300,34 @@ const AppCompute = () => {
               checked={values.imagePullPolicy === 'Always'}
               onChange={(val) => {
                 const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
-                console.log(imagePullPolicy);
                 handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
               }}
             />
           )}
         </div>
       </div>
-
-      <BottomNavigation
-        primaryButton={{
-          loading: isLoading,
-          type: 'submit',
-          content: 'Save & Continue',
-          variant: 'primary',
-        }}
-        secondaryButton={{
-          content: 'App Info',
-          variant: 'outline',
-          onClick: () => {
-            (async () => {
-              const res = await submit();
-              if (res) {
-                setPage(1);
-              }
-            })();
-          },
-        }}
-      />
+      {mode === 'new' && (
+        <BottomNavigation
+          primaryButton={{
+            loading: isLoading,
+            type: 'submit',
+            content: 'Save & Continue',
+            variant: 'primary',
+          }}
+          secondaryButton={{
+            content: 'App Info',
+            variant: 'outline',
+            onClick: () => {
+              (async () => {
+                const res = await submit();
+                if (res) {
+                  setPage(1);
+                }
+              })();
+            },
+          }}
+        />
+      )}
     </FadeIn>
   );
 };

@@ -11,7 +11,6 @@ import { useAppState } from '~/console/page-components/app-states';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';
-import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import {
   ArrowRight,
   ChevronLeft,
@@ -210,9 +209,6 @@ export const EnvironmentVariables = () => {
 
   const [showCSDialog, setShowCSDialog] = useState<IShowDialog>(null);
 
-  // for updating
-  const { hasChanges } = useUnsavedChanges();
-
   const entry = Yup.object({
     type: Yup.string().oneOf(['config', 'secret']).notRequired(),
     key: Yup.string().required(),
@@ -235,12 +231,7 @@ export const EnvironmentVariables = () => {
       .notRequired(),
   });
 
-  const {
-    values,
-    setValues,
-    submit,
-    resetValues: resetAppValue,
-  } = useForm({
+  const { values, setValues, submit } = useForm({
     initialValues: getContainer().env,
     validationSchema: Yup.array(entry),
     onSubmit: (val) => {
@@ -254,13 +245,6 @@ export const EnvironmentVariables = () => {
   useEffect(() => {
     submit();
   }, [values]);
-
-  // for updating
-  useEffect(() => {
-    if (!hasChanges) {
-      resetAppValue();
-    }
-  }, [hasChanges]);
 
   const addEntry = (val: IEnvVariable) => {
     const tempVal = val || [];

@@ -45,6 +45,7 @@ export const mapFormValuesToApp = ({
   oldAppIn: AppIn;
   appIn: ReturnType<typeof appInitialFormValues>;
 }): AppIn => {
+  console.log('nodepool names', val.nodepoolName);
   return {
     ...s,
     metadata: {
@@ -59,14 +60,13 @@ export const mapFormValuesToApp = ({
     },
     spec: {
       ...s.spec,
-      nodeSelector: {
-        ...(s.spec.nodeSelector || {}),
-        ...(val.nodepoolName === ''
-          ? {}
-          : {
-              [keyconstants.nodepoolName]: val.nodepoolName,
-            }),
-      },
+      nodeSelector: val.nodepoolName
+        ? {
+            ...(s.spec.nodeSelector || {}),
+            [keyconstants.nodepoolName]: val.nodepoolName,
+          }
+        : null,
+
       containers: [
         {
           ...(s.spec.containers?.[0] || {}),
