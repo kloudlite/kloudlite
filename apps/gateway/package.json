@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "NODE_NO_WARNINGS=1 node --es-module-specifier-resolution=node ./src/index.js"
+    "start": "NODE_NO_WARNINGS=1 node --es-module-specifier-resolution=node ./src/index.js",
+    "gen": "NODE_NO_WARNINGS=1 node --es-module-specifier-resolution=node ./src/generate-schema.js"
   },
   "keywords": [],
   "author": "",
