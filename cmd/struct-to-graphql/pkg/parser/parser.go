@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/exp/maps"
+
 	"github.com/sanity-io/litter"
 	apiExtensionsV1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,16 +70,18 @@ var kindMap = map[reflect.Kind]string{
 }
 
 type Struct struct {
-	Types  map[string][]string
-	Inputs map[string][]string
-	Enums  map[string][]string
+	TypeDirectives map[string]struct{}
+	Types          map[string][]string
+	Inputs         map[string][]string
+	Enums          map[string][]string
 }
 
 func newStruct() *Struct {
 	return &Struct{
-		Types:  map[string][]string{},
-		Inputs: map[string][]string{},
-		Enums:  map[string][]string{},
+		Types:          map[string][]string{},
+		Inputs:         map[string][]string{},
+		Enums:          map[string][]string{},
+		TypeDirectives: map[string]struct{}{},
 	}
 }
 
@@ -164,94 +168,6 @@ func parseJsonTag(field reflect.StructField) JsonTag {
 
 type schemaFormat string
 
-type GraphqlTag struct {
-	Uri               *string
-	Enum              []string
-	Ignore            bool
-	NoInput           bool
-	OnlyInput         bool
-	InputOmitEmpty    bool
-	DefaultValue      any
-	ChildrenRequired  bool
-	ChildrenOmitEmpty bool
-}
-
-func parseGraphqlTag(field reflect.StructField) (GraphqlTag, error) {
-	tag := field.Tag.Get("graphql")
-	if tag == "" {
-		return GraphqlTag{}, nil
-	}
-
-	var gt GraphqlTag
-	sp := strings.Split(tag, ",")
-	for i := range sp {
-		kv := strings.Split(sp[i], "=")
-
-		switch kv[0] {
-		case "uri":
-			{
-				if len(kv) != 2 {
-					return GraphqlTag{}, fmt.Errorf("invalid graphql tag %s, must be of form key=value", tag)
-				}
-				gt.Uri = &kv[1]
-			}
-		case "enum":
-			{
-				if len(kv) != 2 {
-					return GraphqlTag{}, fmt.Errorf("invalid graphql tag %s, must be of form key=value", tag)
-				}
-				enumVals := strings.Split(kv[1], ";")
-
-				gt.Enum = make([]string, 0, len(enumVals))
-				for k := range enumVals {
-					if enumVals[k] != "" {
-						gt.Enum = append(gt.Enum, enumVals[k])
-					}
-				}
-			}
-		case "noinput":
-			{
-				gt.NoInput = true
-			}
-		case "onlyinput":
-			{
-				gt.OnlyInput = true
-			}
-
-		case "inputomitempty":
-			{
-				gt.InputOmitEmpty = true
-			}
-		case "children-required":
-			{
-				gt.ChildrenRequired = true
-			}
-		case "children-omitempty":
-			{
-				gt.ChildrenOmitEmpty = true
-			}
-
-		case "ignore":
-			{
-				gt.Ignore = true
-			}
-		case "default":
-			{
-				if strings.HasPrefix(kv[1], "'") {
-					return gt, fmt.Errorf("graphql string value can not start with single-quote, use double-quotes")
-				}
-				gt.DefaultValue = kv[1]
-			}
-		default:
-			{
-				return GraphqlTag{}, fmt.Errorf("unknown graphql tag %s", kv[0])
-			}
-		}
-	}
-
-	return gt, nil
-}
-
 func toFieldType(fieldType string, isRequired bool) string {
 	if isRequired {
 		return fieldType + "!"
@@ -290,6 +206,8 @@ func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect
 	if _, ok := p.structs[structName]; !ok {
 		p.structs[structName] = newStruct()
 	}
+
+	typeDirectives := map[string]struct{}{}
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
@@ -402,6 +320,11 @@ func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect
 				inputFields = append(inputFields, fmt.Sprintf("%s: %s = %v", jt.Value, inputFieldType, gt.DefaultValue))
 			}
 		}
+
+		if f.GraphqlTag.ScalarType != nil && *f.GraphqlTag.ScalarType == "ID" {
+			typeDirectives[`@key(fields: "id")`] = struct{}{}
+		}
+		typeDirectives[`@shareable`] = struct{}{}
 	}
 
 	if len(fields) > 0 {
@@ -411,6 +334,12 @@ func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect
 	if len(inputFields) > 0 {
 		p.structs[structName].Inputs[name+"In"] = inputFields
 	}
+
+	if p.structs[structName].TypeDirectives == nil {
+		p.structs[structName].TypeDirectives = map[string]struct{}{}
+	}
+
+	maps.Copy(p.structs[structName].TypeDirectives, typeDirectives)
 	return nil
 }
 
@@ -431,7 +360,17 @@ func (s *Struct) WriteSchema(w io.Writer) {
 
 	sort.Strings(keys)
 	for i := range keys {
+		// directives := maps.Keys(s.TypeDirectives)
+		// sort.Strings(directives)
+		//
+		// directivesStr := fmt.Sprintf(" %s", strings.Join(directives, " "))
+
+		// if strings.HasSuffix(keys[i], "PaginatedRecords") || strings.HasSuffix(keys[i], "Edge") {
+		// directivesStr = ""
+		// }
+
 		io.WriteString(w, fmt.Sprintf("type %s @shareable {\n", keys[i]))
+
 		sort.Slice(s.Types[keys[i]], func(p, q int) bool {
 			return strings.ToLower(s.Types[keys[i]][p]) < strings.ToLower(s.Types[keys[i]][q])
 		})
@@ -509,12 +448,12 @@ func (p *parser) WithPagination(types []string) {
 			},
 		}
 
-		for i := range paginatedTypes {
-			v.Types[i] = paginatedTypes[i]
-		}
-
 		if _, ok := p.structs[commonLabel]; !ok {
 			p.structs[commonLabel] = newStruct()
+		}
+
+		for i := range paginatedTypes {
+			v.Types[i] = paginatedTypes[i]
 		}
 	}
 
