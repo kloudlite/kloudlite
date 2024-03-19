@@ -1,4 +1,9 @@
-import { Outlet, useOutletContext, useParams } from '@remix-run/react';
+import {
+  Outlet,
+  useNavigation,
+  useOutletContext,
+  useParams,
+} from '@remix-run/react';
 import SidebarLayout from '~/console/components/sidebar-layout';
 import {
   UnsavedChangesProvider,
@@ -37,7 +42,7 @@ const Layout = () => {
     setIgnorePaths,
     performAction,
     setPerformAction,
-    setLoading,
+    loading,
   } = useUnsavedChanges();
   const { app, setApp } = useAppState();
 
@@ -74,8 +79,8 @@ const Layout = () => {
         toast.success('App updated successfully');
         // @ts-ignore
         setPerformAction('');
-        reload();
         setHasChanges(false);
+        reload();
       } catch (err) {
         handleError(err);
       }
@@ -83,19 +88,23 @@ const Layout = () => {
   });
 
   useEffect(() => {
+    if (loading) {
+      return;
+    }
     const isNotSame = JSON.stringify(app) !== JSON.stringify(rootContext.app);
-
     if (isNotSame) {
       setHasChanges(true);
     } else {
       setHasChanges(false);
     }
-  }, [app, rootContext.app]);
+  }, [app, rootContext.app, loading]);
 
   useEffect(() => {
-    setApp(rootContext.app);
-    setLoading(false);
-  }, [rootContext.app]);
+    if (!loading) {
+      setApp(rootContext.app);
+    }
+    setHasChanges(false);
+  }, [rootContext.app, loading]);
 
   useEffect(() => {
     if (performAction === 'discard-changes') {
@@ -126,7 +135,6 @@ const Layout = () => {
             loading={isLoading}
             onClick={() => {
               submit();
-              setLoading(true);
             }}
             content="Commit Changes"
           />

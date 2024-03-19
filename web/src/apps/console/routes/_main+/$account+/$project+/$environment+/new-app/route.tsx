@@ -12,7 +12,7 @@ import FillerAppCompute from '~/console/assets/app/filler-compute';
 import FillerAppEnv from '~/console/assets/app/filler-env';
 import FillerAppNetwork from '~/console/assets/app/filler-network';
 import FillerAppReview from '~/console/assets/app/filler-review';
-import AppCompute from './app-compute';
+import AppCompute from '~/console/page-components/app/compute';
 import AppDetail from './app-detail';
 import AppEnvironment from './app-environment';
 import AppNetwork from './app-network';
@@ -66,7 +66,7 @@ const AppComp = () => {
           <AppDetail />
         </MultiStepProgress.Step>
         <MultiStepProgress.Step step={2} label="Compute">
-          <AppCompute />
+          <AppCompute mode="new" />
         </MultiStepProgress.Step>
         <MultiStepProgress.Step step={3} label="Environment">
           <AppEnvironment />
