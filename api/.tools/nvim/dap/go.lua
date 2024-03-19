@@ -185,4 +185,17 @@ dap.configurations.go = {
       vim.g.nxt.project_root_dir .. "/apps/websocket-server" .. "/.secrets/env",
     },
   },
+
+  {
+    type = "go",
+    name = "Debug observability API",
+    request = "launch",
+    program = vim.g.nxt.project_root_dir .. "/apps/observability",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.nxt.project_root_dir .. "/apps/observability" .. "/.secrets/env",
+    },
+  },
 }
