@@ -55,7 +55,8 @@ type IExtraButton = {
 };
 
 const ExtraButton = ({ onAction, item }: IExtraButton) => {
-  return (
+  const phase = item.status?.phase;
+  return phase !== 'Bound' ? (
     <ResourceExtraAction
       options={[
         {
@@ -68,7 +69,7 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
         },
       ]}
     />
-  );
+  ) : null;
 };
 
 interface IResource {

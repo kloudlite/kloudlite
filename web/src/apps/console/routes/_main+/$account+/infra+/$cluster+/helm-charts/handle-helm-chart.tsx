@@ -167,9 +167,8 @@ const Root = (props: IDialog) => {
   } = useCustomSwr('/infra_namespaces', async () => {
     if (!cluster) {
       throw new Error('Cluster is required!.');
-    } else {
-      return api.listNamespaces({ clusterName: cluster });
     }
+    return api.listNamespaces({ clusterName: cluster });
   });
 
   const namespaces = useMapper(parseNodes(namespacesData), (val) => {
