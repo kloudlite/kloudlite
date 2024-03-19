@@ -20,7 +20,8 @@ query:
 label: Get Memory Metrics for App
 query:
   method: GET
-  url: 'http://console-api.kloudlite.svc.cluster.local:9100/observability/metrics/memory?cluster_name={{.clusterName}}&tracking_id=app-hg2hmvokiiuxih9jsq-ibqquumbl&step=5m'
+  # url: 'http://console-api.kloudlite.svc.cluster.local:9100/observability/metrics/memory?cluster_name={{.clusterName}}&tracking_id=app-hg2hmvokiiuxih9jsq-ibqquumbl&step=5m'
+  url: 'http://localhost:3000/observability/metrics/memory?cluster_name={{.clusterName}}&tracking_id=pmsvc-5nw2qi3fj1tvyjvyg2ujirsy5ota&step=5m'
 
 ---
 
