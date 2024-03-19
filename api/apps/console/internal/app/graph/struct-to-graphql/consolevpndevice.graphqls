@@ -6,7 +6,7 @@ type ConsoleVPNDevice @shareable {
   creationTime: Date!
   displayName: String!
   environmentName: String
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   linkedClusters: [String!]
