@@ -91,7 +91,6 @@ type K8sContext interface {
 }
 
 func (d *domain) applyK8sResourceOnCluster(ctx K8sContext, clusterName string, obj client.Object, recordVersion int) error {
-
 	if clusterName == "" {
 		d.logger.Infof("skipping apply of k8s resource %s/%s, cluster name not provided", obj.GetNamespace(), obj.GetName())
 		return nil

@@ -150,7 +150,7 @@ const (
 
 	EnvNameKey string = "kloudlite.io/env.name"
 
-	RecordVersionKey string = "kloudlite.io/record-version"
+	RecordVersionKey string = "kloudlite.io/observability.record-version"
 
 	ObservabilityTrackingKey    string = "kloudlite.io/observability.tracking.id"
 	ObservabilityAccountNameKey string = "kloudlite.io/observability.account.name"
