@@ -39,6 +39,10 @@ tasks:
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
+
+  gen:constants:
+    cmds:
+      - go generate ./internal/domain/entities/field-constants/gen.go
   run:
     dotenv:
       - .secrets/env

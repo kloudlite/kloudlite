@@ -4,7 +4,7 @@ type Digest @shareable {
   creationTime: Date!
   deleting: Boolean!
   digest: String!
-  id: String!
+  id: ID!
   length: Int!
   markedForDeletion: Boolean
   mediaType: String!
