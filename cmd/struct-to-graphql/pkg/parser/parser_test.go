@@ -861,13 +861,24 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"targetNamespace: String!",
 						},
 						"Github__com___kloudlite___operator___pkg___operator__Check": {
-							"status: Boolean!",
-							"message: String",
+							"debug: String",
+							"error: String",
 							"generation: Int",
+							"info: String",
+							"message: String",
+							"startedAt: Date",
+							"state: Github__com___kloudlite___operator___pkg___operator__State",
+							"status: Boolean!",
+						},
+						"Github__com___kloudlite___operator___pkg___operator__CheckMeta": {
+							"debug: Boolean!",
+							"description: String",
+							"name: String!",
+							"title: String!",
 						},
 						"Github__com___kloudlite___operator___pkg___operator__ResourceRef": {
-							"apiVersion: String",
-							"kind: String",
+							"apiVersion: String!",
+							"kind: String!",
 							"namespace: String!",
 							"name: String!",
 						},
@@ -875,6 +886,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"isReady: Boolean!",
 							"resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]",
 							"message: Github__com___kloudlite___operator___pkg___raw____json__RawJson",
+							"checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]",
 							"checks: Map",
 							"lastReadyGeneration: Int",
 							"lastReconcileTime: Date",
@@ -912,6 +924,12 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"item_1",
 							"item_2",
 							"item_3",
+						},
+						"Github__com___kloudlite___operator___pkg___operator__State": {
+							"errored____during____reconcilation",
+							"finished____reconcilation",
+							"under____reconcilation",
+							"yet____to____be____reconciled",
 						},
 					},
 				},
@@ -1347,8 +1365,8 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 			args: args{
 				name: "Sample",
 				data: struct {
-					//Type1 metav1.TypeMeta `json:"type1"`
-					//Type2 metav1.TypeMeta `json:"inline" graphql:"children-required"`
+					// Type1 metav1.TypeMeta `json:"type1"`
+					// Type2 metav1.TypeMeta `json:"inline" graphql:"children-required"`
 					metav1.TypeMeta `json:",inline" graphql:"children-required"`
 				}{},
 			},
@@ -1400,6 +1418,37 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:   "test 26. testing with graphql ID type",
+			fields: fields{structs: map[string]*parser.Struct{}, schemaCli: schemaCli},
+			args: args{
+				name: "Notsample",
+				data: struct {
+					BaseEntity types2.BaseEntity `json:",inline"`
+					// UserID types2.ID `json:"userId" graphql:"scalar-type=ID"`
+					// UserID types2.ID `json:"userId" graphql:"scalar-type=ID"`
+				}{},
+			},
+			want: map[string]*parser.Struct{
+				"Notsample": {
+					TypeDirectives: map[string]struct{}{"@shareable": {}},
+					Types: map[string][]string{
+						"Notsample": {
+							"id: ID!",
+							"ptrId: ID",
+						},
+					},
+					Inputs: map[string][]string{
+						"NotsampleIn": {
+							"id: ID!",
+							"ptrId: ID",
+						},
+					},
+				},
+				"common-types": {},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _idx, _tt := range tests {
@@ -1422,7 +1471,9 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 
 			testDir := filepath.Join(os.TempDir(), fmt.Sprintf("struct-to-graphql-testcase-%d", idx+1))
 			os.Mkdir(testDir, 0o755)
+
 			t.Logf("testcase output directory: %s", testDir)
+			fmt.Printf("testcase output directory: %s\n", testDir)
 
 			gbuft := new(bytes.Buffer)
 			gbufc := new(bytes.Buffer)
