@@ -23,6 +23,12 @@ type AppPaginatedRecords struct {
 	TotalCount int        `json:"totalCount"`
 }
 
+type Build struct {
+	ID repos.ID `json:"id"`
+}
+
+func (Build) IsEntity() {}
+
 type ConfigEdge struct {
 	Cursor string           `json:"cursor"`
 	Node   *entities.Config `json:"node"`
@@ -109,31 +115,33 @@ type GithubComKloudliteOperatorApisCrdsV1AppContainerIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSpec struct {
-	Containers     []*GithubComKloudliteOperatorApisCrdsV1AppContainer `json:"containers"`
-	DisplayName    *string                                             `json:"displayName,omitempty"`
-	Freeze         *bool                                               `json:"freeze,omitempty"`
-	Hpa            *GithubComKloudliteOperatorApisCrdsV1Hpa            `json:"hpa,omitempty"`
-	Intercept      *GithubComKloudliteOperatorApisCrdsV1Intercept      `json:"intercept,omitempty"`
-	NodeSelector   map[string]interface{}                              `json:"nodeSelector,omitempty"`
-	Region         *string                                             `json:"region,omitempty"`
-	Replicas       *int                                                `json:"replicas,omitempty"`
-	ServiceAccount *string                                             `json:"serviceAccount,omitempty"`
-	Services       []*GithubComKloudliteOperatorApisCrdsV1AppSvc       `json:"services,omitempty"`
-	Tolerations    []*K8sIoAPICoreV1Toleration                         `json:"tolerations,omitempty"`
+	Containers                []*GithubComKloudliteOperatorApisCrdsV1AppContainer `json:"containers"`
+	DisplayName               *string                                             `json:"displayName,omitempty"`
+	Freeze                    *bool                                               `json:"freeze,omitempty"`
+	Hpa                       *GithubComKloudliteOperatorApisCrdsV1Hpa            `json:"hpa,omitempty"`
+	Intercept                 *GithubComKloudliteOperatorApisCrdsV1Intercept      `json:"intercept,omitempty"`
+	NodeSelector              map[string]interface{}                              `json:"nodeSelector,omitempty"`
+	Region                    *string                                             `json:"region,omitempty"`
+	Replicas                  *int                                                `json:"replicas,omitempty"`
+	ServiceAccount            *string                                             `json:"serviceAccount,omitempty"`
+	Services                  []*GithubComKloudliteOperatorApisCrdsV1AppSvc       `json:"services,omitempty"`
+	Tolerations               []*K8sIoAPICoreV1Toleration                         `json:"tolerations,omitempty"`
+	TopologySpreadConstraints []*K8sIoAPICoreV1TopologySpreadConstraint           `json:"topologySpreadConstraints,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSpecIn struct {
-	Containers     []*GithubComKloudliteOperatorApisCrdsV1AppContainerIn `json:"containers"`
-	DisplayName    *string                                               `json:"displayName,omitempty"`
-	Freeze         *bool                                                 `json:"freeze,omitempty"`
-	Hpa            *GithubComKloudliteOperatorApisCrdsV1HPAIn            `json:"hpa,omitempty"`
-	Intercept      *GithubComKloudliteOperatorApisCrdsV1InterceptIn      `json:"intercept,omitempty"`
-	NodeSelector   map[string]interface{}                                `json:"nodeSelector,omitempty"`
-	Region         *string                                               `json:"region,omitempty"`
-	Replicas       *int                                                  `json:"replicas,omitempty"`
-	ServiceAccount *string                                               `json:"serviceAccount,omitempty"`
-	Services       []*GithubComKloudliteOperatorApisCrdsV1AppSvcIn       `json:"services,omitempty"`
-	Tolerations    []*K8sIoAPICoreV1TolerationIn                         `json:"tolerations,omitempty"`
+	Containers                []*GithubComKloudliteOperatorApisCrdsV1AppContainerIn `json:"containers"`
+	DisplayName               *string                                               `json:"displayName,omitempty"`
+	Freeze                    *bool                                                 `json:"freeze,omitempty"`
+	Hpa                       *GithubComKloudliteOperatorApisCrdsV1HPAIn            `json:"hpa,omitempty"`
+	Intercept                 *GithubComKloudliteOperatorApisCrdsV1InterceptIn      `json:"intercept,omitempty"`
+	NodeSelector              map[string]interface{}                                `json:"nodeSelector,omitempty"`
+	Region                    *string                                               `json:"region,omitempty"`
+	Replicas                  *int                                                  `json:"replicas,omitempty"`
+	ServiceAccount            *string                                               `json:"serviceAccount,omitempty"`
+	Services                  []*GithubComKloudliteOperatorApisCrdsV1AppSvcIn       `json:"services,omitempty"`
+	Tolerations               []*K8sIoAPICoreV1TolerationIn                         `json:"tolerations,omitempty"`
+	TopologySpreadConstraints []*K8sIoAPICoreV1TopologySpreadConstraintIn           `json:"topologySpreadConstraints,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSvc struct {
@@ -525,6 +533,7 @@ type GithubComKloudliteOperatorPkgOperatorCheck struct {
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
+	Debug       bool    `json:"debug"`
 	Description *string `json:"description,omitempty"`
 	Name        string  `json:"name"`
 	Title       string  `json:"title"`
@@ -566,6 +575,50 @@ type K8sIoAPICoreV1TolerationIn struct {
 	Operator          *K8sIoAPICoreV1TolerationOperator `json:"operator,omitempty"`
 	TolerationSeconds *int                              `json:"tolerationSeconds,omitempty"`
 	Value             *string                           `json:"value,omitempty"`
+}
+
+type K8sIoAPICoreV1TopologySpreadConstraint struct {
+	LabelSelector      *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"labelSelector,omitempty"`
+	MatchLabelKeys     []string                                     `json:"matchLabelKeys,omitempty"`
+	MaxSkew            int                                          `json:"maxSkew"`
+	MinDomains         *int                                         `json:"minDomains,omitempty"`
+	NodeAffinityPolicy *string                                      `json:"nodeAffinityPolicy,omitempty"`
+	NodeTaintsPolicy   *string                                      `json:"nodeTaintsPolicy,omitempty"`
+	TopologyKey        string                                       `json:"topologyKey"`
+	WhenUnsatisfiable  K8sIoAPICoreV1UnsatisfiableConstraintAction  `json:"whenUnsatisfiable"`
+}
+
+type K8sIoAPICoreV1TopologySpreadConstraintIn struct {
+	LabelSelector      *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"labelSelector,omitempty"`
+	MatchLabelKeys     []string                                       `json:"matchLabelKeys,omitempty"`
+	MaxSkew            int                                            `json:"maxSkew"`
+	MinDomains         *int                                           `json:"minDomains,omitempty"`
+	NodeAffinityPolicy *string                                        `json:"nodeAffinityPolicy,omitempty"`
+	NodeTaintsPolicy   *string                                        `json:"nodeTaintsPolicy,omitempty"`
+	TopologyKey        string                                         `json:"topologyKey"`
+	WhenUnsatisfiable  K8sIoAPICoreV1UnsatisfiableConstraintAction    `json:"whenUnsatisfiable"`
+}
+
+type K8sIoApimachineryPkgApisMetaV1LabelSelector struct {
+	MatchExpressions []*K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirement `json:"matchExpressions,omitempty"`
+	MatchLabels      map[string]interface{}                                    `json:"matchLabels,omitempty"`
+}
+
+type K8sIoApimachineryPkgApisMetaV1LabelSelectorIn struct {
+	MatchExpressions []*K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementIn `json:"matchExpressions,omitempty"`
+	MatchLabels      map[string]interface{}                                      `json:"matchLabels,omitempty"`
+}
+
+type K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirement struct {
+	Key      string                                              `json:"key"`
+	Operator K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator `json:"operator"`
+	Values   []string                                            `json:"values,omitempty"`
+}
+
+type K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementIn struct {
+	Key      string                                              `json:"key"`
+	Operator K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator `json:"operator"`
+	Values   []string                                            `json:"values,omitempty"`
 }
 
 type ManagedResourceEdge struct {
@@ -975,5 +1028,91 @@ func (e *K8sIoAPICoreV1TolerationOperator) UnmarshalGQL(v interface{}) error {
 }
 
 func (e K8sIoAPICoreV1TolerationOperator) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1UnsatisfiableConstraintAction string
+
+const (
+	K8sIoAPICoreV1UnsatisfiableConstraintActionDoNotSchedule  K8sIoAPICoreV1UnsatisfiableConstraintAction = "DoNotSchedule"
+	K8sIoAPICoreV1UnsatisfiableConstraintActionScheduleAnyway K8sIoAPICoreV1UnsatisfiableConstraintAction = "ScheduleAnyway"
+)
+
+var AllK8sIoAPICoreV1UnsatisfiableConstraintAction = []K8sIoAPICoreV1UnsatisfiableConstraintAction{
+	K8sIoAPICoreV1UnsatisfiableConstraintActionDoNotSchedule,
+	K8sIoAPICoreV1UnsatisfiableConstraintActionScheduleAnyway,
+}
+
+func (e K8sIoAPICoreV1UnsatisfiableConstraintAction) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1UnsatisfiableConstraintActionDoNotSchedule, K8sIoAPICoreV1UnsatisfiableConstraintActionScheduleAnyway:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1UnsatisfiableConstraintAction) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1UnsatisfiableConstraintAction) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1UnsatisfiableConstraintAction(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__UnsatisfiableConstraintAction", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1UnsatisfiableConstraintAction) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator string
+
+const (
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorDoesNotExist K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator = "DoesNotExist"
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorExists       K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator = "Exists"
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorIn           K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator = "In"
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorNotIn        K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator = "NotIn"
+)
+
+var AllK8sIoApimachineryPkgApisMetaV1LabelSelectorOperator = []K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator{
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorDoesNotExist,
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorExists,
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorIn,
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorNotIn,
+}
+
+func (e K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator) IsValid() bool {
+	switch e {
+	case K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorDoesNotExist, K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorExists, K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorIn, K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorNotIn:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator) String() string {
+	return string(e)
+}
+
+func (e *K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator", str)
+	}
+	return nil
+}
+
+func (e K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

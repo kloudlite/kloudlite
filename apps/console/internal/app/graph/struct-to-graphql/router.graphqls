@@ -6,7 +6,7 @@ type Router @shareable {
   displayName: String!
   enabled: Boolean
   environmentName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean

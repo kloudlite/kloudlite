@@ -45,6 +45,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppSpec @shareable {
   serviceAccount: String
   services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvc!]
   tolerations: [K8s__io___api___core___v1__Toleration!]
+  topologySpreadConstraints: [K8s__io___api___core___v1__TopologySpreadConstraint!]
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppSvc @shareable {
@@ -250,6 +251,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 }
 
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
+  debug: Boolean!
   description: String
   name: String!
   title: String!
@@ -292,6 +294,28 @@ type K8s__io___api___core___v1__Toleration @shareable {
   operator: K8s__io___api___core___v1__TolerationOperator
   tolerationSeconds: Int
   value: String
+}
+
+type K8s__io___api___core___v1__TopologySpreadConstraint @shareable {
+  labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  matchLabelKeys: [String!]
+  maxSkew: Int!
+  minDomains: Int
+  nodeAffinityPolicy: String
+  nodeTaintsPolicy: String
+  topologyKey: String!
+  whenUnsatisfiable: K8s__io___api___core___v1__UnsatisfiableConstraintAction!
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector @shareable {
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement!]
+  matchLabels: Map
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement @shareable {
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
 }
 
 type Metadata @shareable {
@@ -338,6 +362,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn {
   serviceAccount: String
   services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn!]
   tolerations: [K8s__io___api___core___v1__TolerationIn!]
+  topologySpreadConstraints: [K8s__io___api___core___v1__TopologySpreadConstraintIn!]
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn {
@@ -534,6 +559,28 @@ input K8s__io___api___core___v1__TolerationIn {
   value: String
 }
 
+input K8s__io___api___core___v1__TopologySpreadConstraintIn {
+  labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  matchLabelKeys: [String!]
+  maxSkew: Int!
+  minDomains: Int
+  nodeAffinityPolicy: String
+  nodeTaintsPolicy: String
+  topologyKey: String!
+  whenUnsatisfiable: K8s__io___api___core___v1__UnsatisfiableConstraintAction!
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn {
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn!]
+  matchLabels: Map
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn {
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
+}
+
 input MetadataIn {
   annotations: Map
   labels: Map
@@ -598,5 +645,17 @@ enum K8s__io___api___core___v1__TaintEffect {
 enum K8s__io___api___core___v1__TolerationOperator {
   Equal
   Exists
+}
+
+enum K8s__io___api___core___v1__UnsatisfiableConstraintAction {
+  DoNotSchedule
+  ScheduleAnyway
+}
+
+enum K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator {
+  DoesNotExist
+  Exists
+  In
+  NotIn
 }
 
