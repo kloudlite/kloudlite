@@ -92,6 +92,7 @@ export const projectQueries = (executor: IExecutor) => ({
             checks
             checkList {
               description
+              debug
               name
               title
             }
@@ -166,6 +167,7 @@ export const projectQueries = (executor: IExecutor) => ({
                 checks
                 checkList {
                   description
+                  debug
                   name
                   title
                 }

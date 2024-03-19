@@ -65,6 +65,7 @@ export const environmentQueries = (executor: IExecutor) => ({
             checks
             checkList {
               description
+              debug
               name
               title
             }
@@ -190,6 +191,7 @@ export const environmentQueries = (executor: IExecutor) => ({
                 checks
                 checkList {
                   description
+                  debug
                   name
                   title
                 }

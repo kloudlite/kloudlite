@@ -63,6 +63,12 @@ export const projectManagedServicesQueries = (executor: IExecutor) => ({
           }
           status {
             checks
+            checkList {
+              description
+              debug
+              title
+              name
+            }
             isReady
             lastReadyGeneration
             lastReconcileTime
@@ -178,6 +184,12 @@ export const projectManagedServicesQueries = (executor: IExecutor) => ({
               }
               status {
                 checks
+                checkList {
+                  description
+                  debug
+                  title
+                  name
+                }
                 isReady
                 lastReadyGeneration
                 lastReconcileTime

@@ -102,6 +102,7 @@ export const clusterQueries = (executor: IExecutor) => ({
                 checks
                 checkList {
                   description
+                  debug
                   name
                   title
                 }
@@ -248,6 +249,7 @@ export const clusterQueries = (executor: IExecutor) => ({
             checks
             checkList {
               description
+              debug
               name
               title
             }

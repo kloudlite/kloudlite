@@ -16,7 +16,6 @@ import {
 import { Badge } from '~/components/atoms/badge';
 
 interface IStatusMetaV2 {
-  metadata?: { generation: number };
   recordVersion: number;
   markedForDeletion?: boolean;
   status?: {

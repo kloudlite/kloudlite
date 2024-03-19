@@ -83,6 +83,39 @@ export const buildQueries = (executor: IExecutor) => ({
               }
               status
               updateTime
+              latestBuildRun {
+                recordVersion
+                status {
+                  checkList {
+                    debug
+                    description
+                    name
+                    title
+                  }
+                  checks
+                  isReady
+                  lastReadyGeneration
+                  lastReconcileTime
+                  message {
+                    RawMessage
+                  }
+                  resources {
+                    apiVersion
+                    kind
+                    name
+                    namespace
+                  }
+                }
+                syncStatus {
+                  action
+                  error
+                  lastSyncedAt
+                  recordVersion
+                  state
+                  syncScheduledAt
+                }
+                markedForDeletion
+              }
             }
           }
           pageInfo {

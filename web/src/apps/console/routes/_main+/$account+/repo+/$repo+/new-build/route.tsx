@@ -116,7 +116,7 @@ const NewBuild = () => {
           if (e) {
             throw e[0];
           }
-          navigate(`/${account}/repo/${atob(repoName)}/builds`);
+          navigate(`/${account}/repo/${btoa(repoName)}/builds`);
         } catch (err) {
           handleError(err);
         }

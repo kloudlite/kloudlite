@@ -4,17 +4,14 @@ import {
   ArrowClockwise,
 } from '~/console/components/icons';
 import { useState } from 'react';
-import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
-  ListBody,
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -29,7 +26,9 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import { useOutletContext } from '@remix-run/react';
+import { useOutletContext, Link } from '@remix-run/react';
+import { SyncStatusV2 } from '~/console/components/sync-status';
+import ListV2 from '~/console/components/listV2';
 import HandleBuild from './handle-builds';
 
 type BaseType = ExtractNodeType<IBuilds>;
@@ -146,33 +145,51 @@ const GridView = ({ items, onDelete, onEdit, onTrigger }: IResource) => {
 
 const ListView = ({ items, onDelete, onEdit, onTrigger }: IResource) => {
   return (
-    <List.Root>
-      {items.map((item, index) => {
-        const { name, id, status, updateInfo, cluster } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, 0),
-                className: 'flex-1',
-                render: () => <ListTitle title={name} />,
+    <ListV2.Root
+      linkComponent={Link}
+      data={{
+        headers: [
+          {
+            render: () => 'Name',
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Cluster',
+            name: 'cluster',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, updateInfo, cluster } = parseItem(i);
+          return {
+            columns: {
+              name: {
+                render: () => <ListTitle title={name} subtitle={id} />,
               },
-              {
-                key: generateKey(keyPrefix, 'cluster'),
-                className: 'flex-1',
-                render: () => <ListBody data={cluster} />,
+              status: {
+                render: () =>
+                  i.latestBuildRun ? (
+                    <SyncStatusV2 item={i.latestBuildRun} />
+                  ) : null,
               },
-              {
-                key: generateKey(keyPrefix, id, index, 'status'),
-                className: 'w-[300px]',
-                render: () => <Badge>{status}</Badge>,
-              },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
+              cluster: { render: () => <ListItem data={cluster} /> },
+              updated: {
                 render: () => (
                   <ListItem
                     data={`${updateInfo.author}`}
@@ -180,27 +197,27 @@ const ListView = ({ items, onDelete, onEdit, onTrigger }: IResource) => {
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
+              action: {
                 render: () => (
                   <ExtraButton
-                    onDelete={() => {
-                      onDelete(item);
-                    }}
                     onEdit={() => {
-                      onEdit(item);
+                      onEdit(i);
+                    }}
+                    onDelete={() => {
+                      onDelete(i);
                     }}
                     onTrigger={() => {
-                      onTrigger(item);
+                      onTrigger(i);
                     }}
                   />
                 ),
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+            to: `../build/${i.id}/buildruns`,
+          };
+        }),
+      }}
+    />
   );
 };
 

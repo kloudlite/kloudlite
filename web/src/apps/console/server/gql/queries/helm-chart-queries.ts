@@ -48,6 +48,12 @@ export const helmChartQueries = (executor: IExecutor) => ({
           }
           status {
             checks
+            checkList {
+              description
+              debug
+              title
+              name
+            }
             isReady
             lastReadyGeneration
             lastReconcileTime
@@ -118,6 +124,12 @@ export const helmChartQueries = (executor: IExecutor) => ({
               }
               status {
                 checks
+                checkList {
+                  description
+                  debug
+                  title
+                  name
+                }
                 isReady
                 lastReadyGeneration
                 lastReconcileTime

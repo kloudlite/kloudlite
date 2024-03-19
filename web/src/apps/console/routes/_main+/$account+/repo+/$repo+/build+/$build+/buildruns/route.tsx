@@ -12,14 +12,15 @@ import BuildRunResources from './buildruns-resources';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
-  const { repo } = ctx.params;
+  const { build } = ctx.params;
 
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listBuildRuns({
-      repoName: atob(repo),
+      buildID: build,
       pq: getPagination(ctx),
       search: getSearch(ctx),
     });
+    console.log(data);
     if (errors) {
       throw errors[0];
     }
@@ -47,7 +48,7 @@ const BuildRuns = () => {
         const { pageInfo, totalCount } = buildRunData;
         return (
           <Wrapper
-            header={{
+            secondaryHeader={{
               title: 'Build Runs',
             }}
             empty={{
