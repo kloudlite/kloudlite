@@ -108,6 +108,9 @@ models:
     model: github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyValueRef
 
   App: &app-model
+    fields:
+      build:
+        resolver: true
     model: github.com/kloudlite/api/apps/console/internal/entities.App
   AppIn: *app-model
 
