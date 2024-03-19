@@ -84,9 +84,9 @@ type Domain interface {
 	UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache entities.BuildCacheKey) (*entities.BuildCacheKey, error)
 	DeleteBuildCache(ctx RegistryContext, id repos.ID) error
 	ListBuildCaches(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildCacheKey], error)
-
-	ListBuildRuns(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error)
-	GetBuildRun(ctx RegistryContext, repoName string, runName string) (*entities.BuildRun, error)
+	ListBuildRuns(ctx RegistryContext, buildId repos.ID, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error)
+	GetLatestBuildRun(ctx RegistryContext, buildId repos.ID) (*entities.BuildRun, error)
+	GetBuildRun(ctx RegistryContext, buildId repos.ID, runName string) (*entities.BuildRun, error)
 	OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.BuildRun, status t.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	OnBuildRunDeleteMessage(ctx RegistryContext, buildRun entities.BuildRun) error
