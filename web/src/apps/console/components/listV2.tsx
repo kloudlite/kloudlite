@@ -141,9 +141,7 @@ const RowBase = ({
       'bg-surface-basic-pressed': pressed,
       'cursor-default': !!disabled,
     },
-    hideDetailSeperator
-      ? ''
-      : '[&:not(:last-child)]:border-b border-border-default'
+    '[&:not(:last-child)]:border-b border-border-default'
   );
 
   const css = cn(

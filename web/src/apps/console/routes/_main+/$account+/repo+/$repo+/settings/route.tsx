@@ -7,7 +7,7 @@ const Settings = () => {
     <SidebarLayout
       navItems={[
         { label: 'General', value: 'general' },
-        { label: 'Build caches', value: 'buildcaches' },
+        // { label: 'Build caches', value: 'buildcaches' },
       ]}
       parentPath="/settings"
     >

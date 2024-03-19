@@ -250,6 +250,7 @@ export const appQueries = (executor: IExecutor) => ({
           status {
             checkList {
               description
+              debug
               title
               name
             }
@@ -398,6 +399,7 @@ export const appQueries = (executor: IExecutor) => ({
                 }
                 checkList {
                   description
+                  debug
                   title
                   name
                 }

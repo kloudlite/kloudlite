@@ -159,6 +159,7 @@ export const routerQueries = (executor: IExecutor) => ({
                 checks
                 checkList {
                   description
+                  debug
                   name
                   title
                 }
@@ -271,6 +272,7 @@ export const routerQueries = (executor: IExecutor) => ({
             checks
             checkList {
               description
+              debug
               name
               title
             }

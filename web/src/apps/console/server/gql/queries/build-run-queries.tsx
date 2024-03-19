@@ -14,11 +14,11 @@ export const buildRunQueries = (executor: IExecutor) => ({
   listBuildRuns: executor(
     gql`
       query Cr_listBuildRuns(
-        $repoName: String!
+        $buildID: ID!
         $search: SearchBuildRuns
         $pq: CursorPaginationIn
       ) {
-        cr_listBuildRuns(repoName: $repoName, search: $search, pq: $pq) {
+        cr_listBuildRuns(buildID: $buildID, search: $search, pq: $pq) {
           edges {
             cursor
             node {
@@ -26,6 +26,7 @@ export const buildRunQueries = (executor: IExecutor) => ({
               clusterName
               creationTime
               markedForDeletion
+              recordVersion
               metadata {
                 annotations
                 creationTimestamp
@@ -59,6 +60,12 @@ export const buildRunQueries = (executor: IExecutor) => ({
               }
               status {
                 checks
+                checkList {
+                  description
+                  debug
+                  name
+                  title
+                }
                 isReady
                 lastReadyGeneration
                 lastReconcileTime
@@ -71,6 +78,14 @@ export const buildRunQueries = (executor: IExecutor) => ({
                   name
                   namespace
                 }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
               }
               updateTime
             }
@@ -92,11 +107,12 @@ export const buildRunQueries = (executor: IExecutor) => ({
   ),
   getBuildRun: executor(
     gql`
-      query Cr_getBuildRun($repoName: String!, $buildRunName: String!) {
-        cr_getBuildRun(repoName: $repoName, buildRunName: $buildRunName) {
+      query Cr_getBuildRun($buildID: ID!, $buildRunName: String!) {
+        cr_getBuildRun(buildID: $buildID, buildRunName: $buildRunName) {
           clusterName
           creationTime
           markedForDeletion
+          recordVersion
           metadata {
             annotations
             creationTimestamp
@@ -130,6 +146,12 @@ export const buildRunQueries = (executor: IExecutor) => ({
           }
           status {
             checks
+            checkList {
+              description
+              debug
+              name
+              title
+            }
             isReady
             lastReadyGeneration
             lastReconcileTime
@@ -142,6 +164,14 @@ export const buildRunQueries = (executor: IExecutor) => ({
               name
               namespace
             }
+          }
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
           }
           updateTime
         }
