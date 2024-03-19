@@ -60,7 +60,6 @@ type Mutation {
   cr_deleteCred(username:String!) :Boolean! @isLoggedInAndVerified @hasAccount
   cr_deleteDigest(repoName:String!, digest:String!) :Boolean! @isLoggedInAndVerified @hasAccount
 
-
   cr_addBuild(build:BuildIn!) : Build @isLoggedInAndVerified @hasAccount
   cr_updateBuild(id:ID!, build:BuildIn!) : Build @isLoggedInAndVerified @hasAccount
   cr_deleteBuild(id:ID!) : Boolean! @isLoggedInAndVerified @hasAccount
