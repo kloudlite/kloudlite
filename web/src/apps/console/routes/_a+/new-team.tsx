@@ -17,11 +17,17 @@ import { SignOut } from '@jengaicons/react';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import { Button } from '~/components/atoms/button';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 
 const NewAccount = () => {
   const api = useConsoleApi();
   const navigate = useNavigate();
   const user = useDataFromMatches<UserMe>('user', {});
+
+  const { data: accountsData } = useCustomSwr('/list_accounts', async () => {
+    return api.listAccounts({});
+  });
+
   const { values, handleChange, errors, isLoading, handleSubmit } = useForm({
     initialValues: {
       name: '',
@@ -64,15 +70,17 @@ const NewAccount = () => {
         fillerImage={<FillerCreateTeam />}
         title="Setup your account!"
         action={
-          <Button
-            variant="plain"
-            suffix={<SignOut />}
-            size="sm"
-            content="Sign Out"
-            onClick={() => {
-              eNavigate(`${authBaseUrl}/logout`);
-            }}
-          />
+          accountsData?.length === 0 && (
+            <Button
+              variant="plain"
+              suffix={<SignOut />}
+              size="sm"
+              content="Sign Out"
+              onClick={() => {
+                eNavigate(`${authBaseUrl}/logout`);
+              }}
+            />
+          )
         }
         subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"
