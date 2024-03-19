@@ -84,12 +84,13 @@ type App
 {
   accountName: String!
   apiVersion: String
+  ciBuildId: ID
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
   environmentName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -100,6 +101,7 @@ type App
   status: Github__com___kloudlite___operator___pkg___operator__Status
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
+  build: Build
 }
 
 type AppEdge
@@ -113,6 +115,7 @@ input AppIn
   @join__type(graph: CONSOLE_API)
 {
   apiVersion: String
+  ciBuildId: ID
   displayName: String!
   enabled: Boolean
   kind: String
@@ -129,22 +132,24 @@ type AppPaginatedRecords
 }
 
 type Build
-  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: CONSOLE_API, key: "id")
+  @join__type(graph: CONTAINER_REGISTRY_API, key: "id", extension: true)
 {
-  buildClusterName: String!
-  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  creationTime: Date!
-  credUser: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  errorMessages: Map!
-  id: String!
-  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  markedForDeletion: Boolean
-  name: String!
-  recordVersion: Int!
-  source: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSource!
-  spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec!
-  status: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus!
-  updateTime: Date!
+  id: ID!
+  buildClusterName: String! @join__field(graph: CONTAINER_REGISTRY_API)
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy! @join__field(graph: CONTAINER_REGISTRY_API)
+  creationTime: Date! @join__field(graph: CONTAINER_REGISTRY_API)
+  credUser: Github__com___kloudlite___api___common__CreatedOrUpdatedBy! @join__field(graph: CONTAINER_REGISTRY_API)
+  errorMessages: Map! @join__field(graph: CONTAINER_REGISTRY_API)
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy! @join__field(graph: CONTAINER_REGISTRY_API)
+  markedForDeletion: Boolean @join__field(graph: CONTAINER_REGISTRY_API)
+  name: String! @join__field(graph: CONTAINER_REGISTRY_API)
+  recordVersion: Int! @join__field(graph: CONTAINER_REGISTRY_API)
+  source: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSource! @join__field(graph: CONTAINER_REGISTRY_API)
+  spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec! @join__field(graph: CONTAINER_REGISTRY_API)
+  status: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus! @join__field(graph: CONTAINER_REGISTRY_API)
+  updateTime: Date! @join__field(graph: CONTAINER_REGISTRY_API)
+  latestBuildRun: BuildRun @join__field(graph: CONTAINER_REGISTRY_API)
 }
 
 type BuildCacheKey
@@ -154,7 +159,7 @@ type BuildCacheKey
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
@@ -215,11 +220,14 @@ type BuildRun
 {
   accountName: String!
   apiVersion: String
-  buildName: String!
+  buildId: ID!
   clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  id: String!
+  displayName: String!
+  id: ID!
   kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
   recordVersion: Int!
@@ -234,6 +242,12 @@ type BuildRunEdge
 {
   cursor: String!
   node: BuildRun!
+}
+
+input BuildRunIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  displayName: String!
 }
 
 type BuildRunPaginatedRecords
@@ -402,7 +416,7 @@ type Config
   data: Map
   displayName: String!
   environmentName: String!
-  id: String!
+  id: ID!
   immutable: Boolean
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -503,7 +517,7 @@ type ConsoleVPNDevice
   creationTime: Date!
   displayName: String!
   environmentName: String
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   linkedClusters: [String!]
@@ -569,7 +583,7 @@ type Credential
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   expiration: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__Expiration!
-  id: String!
+  id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
@@ -652,7 +666,7 @@ type Digest
   creationTime: Date!
   deleting: Boolean!
   digest: String!
-  id: String!
+  id: ID!
   length: Int!
   markedForDeletion: Boolean
   mediaType: String!
@@ -733,7 +747,7 @@ type Environment
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -1457,6 +1471,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppSpec
   serviceAccount: String
   services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvc!]
   tolerations: [K8s__io___api___core___v1__Toleration!]
+  topologySpreadConstraints: [K8s__io___api___core___v1__TopologySpreadConstraint!]
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn
@@ -1473,6 +1488,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn
   serviceAccount: String
   services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn!]
   tolerations: [K8s__io___api___core___v1__TolerationIn!]
+  topologySpreadConstraints: [K8s__io___api___core___v1__TopologySpreadConstraintIn!]
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppSvc
@@ -2179,6 +2195,7 @@ type Github__com___kloudlite___operator___pkg___operator__CheckMeta
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
 {
+  debug: Boolean!
   description: String
   name: String!
   title: String!
@@ -2187,6 +2204,7 @@ type Github__com___kloudlite___operator___pkg___operator__CheckMeta
 input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn
   @join__type(graph: CONTAINER_REGISTRY_API)
 {
+  debug: Boolean!
   description: String
   name: String!
   title: String!
@@ -2398,7 +2416,7 @@ type ImagePullSecret
   dockerConfigJson: String
   environmentName: String!
   format: Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat!
-  id: String!
+  id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
@@ -3456,6 +3474,32 @@ enum K8s__io___api___core___v1__TolerationOperator
   Exists @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
 }
 
+type K8s__io___api___core___v1__TopologySpreadConstraint
+  @join__type(graph: CONSOLE_API)
+{
+  labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  matchLabelKeys: [String!]
+  maxSkew: Int!
+  minDomains: Int
+  nodeAffinityPolicy: String
+  nodeTaintsPolicy: String
+  topologyKey: String!
+  whenUnsatisfiable: K8s__io___api___core___v1__UnsatisfiableConstraintAction!
+}
+
+input K8s__io___api___core___v1__TopologySpreadConstraintIn
+  @join__type(graph: CONSOLE_API)
+{
+  labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  matchLabelKeys: [String!]
+  maxSkew: Int!
+  minDomains: Int
+  nodeAffinityPolicy: String
+  nodeTaintsPolicy: String
+  topologyKey: String!
+  whenUnsatisfiable: K8s__io___api___core___v1__UnsatisfiableConstraintAction!
+}
+
 type K8s__io___api___core___v1__TypedLocalObjectReference
   @join__type(graph: INFRA_API)
 {
@@ -3488,6 +3532,13 @@ input K8s__io___api___core___v1__TypedObjectReferenceIn
   kind: String!
   name: String!
   namespace: String
+}
+
+enum K8s__io___api___core___v1__UnsatisfiableConstraintAction
+  @join__type(graph: CONSOLE_API)
+{
+  DoNotSchedule @join__enumValue(graph: CONSOLE_API)
+  ScheduleAnyway @join__enumValue(graph: CONSOLE_API)
 }
 
 type K8s__io___api___core___v1__VolumeNodeAffinity
@@ -3617,6 +3668,7 @@ input K8s__io___apimachinery___pkg___api___resource__QuantityIn
 }
 
 type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
 {
   matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement!]
@@ -3624,6 +3676,7 @@ type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
 }
 
 input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
 {
   matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn!]
@@ -3631,15 +3684,17 @@ input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
 }
 
 enum K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator
+  @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
 {
-  DoesNotExist @join__enumValue(graph: INFRA_API)
-  Exists @join__enumValue(graph: INFRA_API)
-  In @join__enumValue(graph: INFRA_API)
-  NotIn @join__enumValue(graph: INFRA_API)
+  DoesNotExist @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  Exists @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  In @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  NotIn @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
 }
 
 type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement
+  @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
 {
   key: String!
@@ -3648,6 +3703,7 @@ type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement
 }
 
 input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn
+  @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
 {
   key: String!
@@ -3679,7 +3735,7 @@ type ManagedResource
   displayName: String!
   enabled: Boolean
   environmentName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -3845,6 +3901,8 @@ type Mutation
   auth_createRemoteLogin(secret: String): String! @join__field(graph: AUTH_API)
   auth_login(email: String!, password: String!): Session @join__field(graph: AUTH_API)
   auth_signup(name: String!, email: String!, password: String!): Session @join__field(graph: AUTH_API)
+  oAuth_login(provider: String!, code: String!, state: String): Session! @join__field(graph: AUTH_API)
+  oAuth_addLogin(provider: String!, state: String!, code: String!): Boolean! @join__field(graph: AUTH_API)
   auth_logout: Boolean! @join__field(graph: AUTH_API)
   auth_setMetadata(values: Json!): User! @join__field(graph: AUTH_API)
   auth_clearMetadata: User! @join__field(graph: AUTH_API)
@@ -3854,8 +3912,6 @@ type Mutation
   auth_changeEmail(email: String!): Boolean! @join__field(graph: AUTH_API)
   auth_resendVerificationEmail: Boolean! @join__field(graph: AUTH_API)
   auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! @join__field(graph: AUTH_API)
-  oAuth_login(provider: String!, code: String!, state: String): Session! @join__field(graph: AUTH_API)
-  oAuth_addLogin(provider: String!, state: String!, code: String!): Boolean! @join__field(graph: AUTH_API)
   core_createProject(project: ProjectIn!): Project @join__field(graph: CONSOLE_API)
   core_updateProject(project: ProjectIn!): Project @join__field(graph: CONSOLE_API)
   core_deleteProject(name: String!): Boolean! @join__field(graph: CONSOLE_API)
@@ -4198,7 +4254,7 @@ type Project
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -4236,7 +4292,7 @@ type ProjectManagedService
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -4360,8 +4416,8 @@ type Query
   cr_listGitlabRepositories(groupId: String!, query: String, pagination: PaginationIn): [GitlabProject!] @join__field(graph: CONTAINER_REGISTRY_API)
   cr_listGitlabBranches(repoId: String!, query: String, pagination: PaginationIn): [GitBranch!] @join__field(graph: CONTAINER_REGISTRY_API)
   cr_listBuildCacheKeys(pq: CursorPaginationIn, search: SearchBuildCacheKeys): BuildCacheKeyPaginatedRecords @join__field(graph: CONTAINER_REGISTRY_API)
-  cr_listBuildRuns(repoName: String!, search: SearchBuildRuns, pq: CursorPaginationIn): BuildRunPaginatedRecords @join__field(graph: CONTAINER_REGISTRY_API)
-  cr_getBuildRun(repoName: String!, buildRunName: String!): BuildRun @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_listBuildRuns(buildID: ID!, search: SearchBuildRuns, pq: CursorPaginationIn): BuildRunPaginatedRecords @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_getBuildRun(buildID: ID!, buildRunName: String!): BuildRun @join__field(graph: CONTAINER_REGISTRY_API)
   infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @join__field(graph: INFRA_API)
   infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @join__field(graph: INFRA_API)
   infra_getCluster(name: String!): Cluster @join__field(graph: INFRA_API)
@@ -4401,7 +4457,7 @@ type Repository
   accountName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  id: String!
+  id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
@@ -4449,7 +4505,7 @@ type Router
   displayName: String!
   enabled: Boolean
   environmentName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -4670,7 +4726,7 @@ type Secret
   data: Map
   displayName: String!
   environmentName: String!
-  id: String!
+  id: ID!
   immutable: Boolean
   isReadyOnly: Boolean!
   kind: String
