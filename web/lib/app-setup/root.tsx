@@ -11,7 +11,6 @@ import {
   useNavigation,
   useRouteError,
 } from '@remix-run/react';
-import { motion } from 'framer-motion';
 import rcSlide from 'rc-slider/assets/index.css';
 import { ReactNode, useEffect } from 'react';
 import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
@@ -31,6 +30,8 @@ import rcss from 'react-highlightjs-logs/dist/index.css';
 import tailwindBase from '~/design-system/tailwind-base.js';
 import { ReloadIndicator } from '~/lib/client/components/reload-indicator';
 import { isDev } from '~/lib/client/helpers/log';
+import { Button } from '~/components/atoms/button';
+import { ChildrenProps } from '~/components/types';
 import { getClientEnv, getServerEnv } from '../configs/base-url.cjs';
 import { useDataFromMatches } from '../client/hooks/use-custom-matches';
 
@@ -49,6 +50,33 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: 'https://rsms.me/inter/inter.css' },
 ];
 
+export const Serror = ({ children, message }: ChildrenProps & any) => {
+  return (
+    <main className="antialiased">
+      <TopBar logo={<BrandLogo detailed />} />
+      <Container>
+        <pre>
+          <div className="flex flex-col max-h-[80vh] w-full bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl overflow-hidden">
+            <div
+              className="font-bold text-xl text-[#A71B1B] truncate"
+              title={message}
+            >
+              {message}
+            </div>
+            <div className="flex overflow-scroll">
+              <div className="bg-[#A71B1B] w-2xl" />
+              <div className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
+                {children}
+              </div>
+            </div>
+          </div>
+        </pre>
+      </Container>
+      <Scripts />
+    </main>
+  );
+};
+
 export const ErrorWrapper = ({ children, message }: any) => {
   return (
     <html lang="en" className="bg-surface-basic-subdued text-text-default">
@@ -59,29 +87,7 @@ export const ErrorWrapper = ({ children, message }: any) => {
         <Meta />
       </head>
       <body className="antialiased">
-        <TopBar logo={<BrandLogo detailed />} />
-        <Container>
-          <motion.pre
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ ease: 'anticipate' }}
-          >
-            <div className="flex flex-col max-h-[80vh] w-full bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl overflow-hidden">
-              <div
-                className="font-bold text-xl text-[#A71B1B] truncate"
-                title={message}
-              >
-                {message}
-              </div>
-              <div className="flex overflow-scroll">
-                <div className="bg-[#A71B1B] w-2xl" />
-                <div className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
-                  {children}
-                </div>
-              </div>
-            </div>
-          </motion.pre>
-        </Container>
+        <Serror message={message}>{children}</Serror>
         <Scripts />
       </body>
     </html>
@@ -195,6 +201,7 @@ const Root = ({
         <script
           async
           id="gtag-init"
+          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{
             __html: `
                 window.dataLayer = window.dataLayer || [];
@@ -238,7 +245,15 @@ const Root = ({
           <ReloadIndicator />
           <NonIdleProgressBar />
           {error ? (
-            <div>{JSON.stringify(error)}</div>
+            <div>
+              <Serror message="Server Side Error">
+                <code>{JSON.stringify(error, null, 2)}</code>
+              </Serror>
+
+              <div className="flex items-center justify-center">
+                <Button to="/teams" content="Go To Home Page" />
+              </div>
+            </div>
           ) : (
             <Wrapper>
               <Tooltip.Provider>
@@ -257,15 +272,9 @@ export const loader = () => {
   return getServerEnv();
 };
 
-export const headers: HeadersFunction = ({
-  actionHeaders,
-  loaderHeaders,
-  parentHeaders,
-  errorHeaders,
-}) => {
-  // console.log(loaderHeaders, actionHeaders, parentHeaders, errorHeaders);
+export const headers: HeadersFunction = () => {
+  // TODO: Remove this header if not needed
   return {
-    'X-Stretchy-Pants': 'its for fun',
     'Cache-Control': 'max-age=300, s-maxage=3600',
   };
 };

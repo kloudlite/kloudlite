@@ -61,7 +61,11 @@ export const mapFormValuesToApp = ({
       ...s.spec,
       nodeSelector: {
         ...(s.spec.nodeSelector || {}),
-        [keyconstants.nodepoolName]: val.nodepoolName,
+        ...(val.nodepoolName === ''
+          ? {}
+          : {
+              [keyconstants.nodepoolName]: val.nodepoolName,
+            }),
       },
       containers: [
         {
