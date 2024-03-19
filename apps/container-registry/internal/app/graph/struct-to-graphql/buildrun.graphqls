@@ -1,11 +1,14 @@
 type BuildRun @shareable {
   accountName: String!
   apiVersion: String
-  buildName: String!
+  buildId: ID!
   clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  id: String!
+  displayName: String!
+  id: ID!
   kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
@@ -24,5 +27,9 @@ type BuildRunPaginatedRecords @shareable {
   edges: [BuildRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+}
+
+input BuildRunIn {
+  displayName: String!
 }
 
