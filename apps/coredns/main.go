@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 
+	devinfo "github.com/kloudlite/operator/apps/coredns/dev-info"
 	"github.com/kloudlite/operator/common"
 )
 
@@ -45,9 +47,13 @@ func runCoreDNS(ctx context.Context, corefile string) {
 
 func main() {
 	var addr string
+	var tlsAddr string
 	var corefile string
+	var devi string
 	flag.StringVar(&addr, "addr", "", "--addr host:port")
+	flag.StringVar(&tlsAddr, "tls-addr", "", "--tls-addr host:port")
 	flag.StringVar(&corefile, "corefile", "", "--corefile <file-path>")
+	flag.StringVar(&devi, "dev-info", "", "--dev-info <device-info>")
 	flag.BoolVar(&debug, "debug", false, "--debug")
 	flag.Parse()
 
@@ -77,6 +83,20 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 
+	sm.HandleFunc("/whoami", func(w http.ResponseWriter, r *http.Request) {
+		if devi == "" {
+			w.WriteHeader(400)
+		}
+
+		d := devinfo.DeviceInfo{}
+
+		if err := d.FromBase64(devi); err != nil {
+			return
+		}
+
+		w.Write([]byte(d.String()))
+	})
+
 	sm.HandleFunc("/resync", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("resyncing corefile")
 		b, err := io.ReadAll(r.Body)
@@ -101,7 +121,27 @@ func main() {
 	common.PrintReadyBanner()
 
 	log.Printf("use /healthy to check, if server is reachable")
+
+	go func() {
+		tlsPath, ok := os.LookupEnv("TLS_CERT_FILE_PATH")
+		if !ok {
+			log.Println("TLS_CERT_FILE_PATH is not set, ignoring https server")
+			return
+		}
+		if tlsAddr == "" {
+			log.Println("TLS_ADDR is not set, ignoring https server")
+			return
+		}
+
+		log.Printf("https server is starting on %s", tlsAddr)
+		if err := http.ListenAndServeTLS(tlsAddr, path.Join(tlsPath, "tls.crt"), path.Join(tlsPath, "tls.key"), sm); err != nil {
+			log.Printf("err occurred while starting https server: %v\n", err)
+		}
+	}()
+
 	log.Printf("http server is starting on %s", addr)
 
-	http.ListenAndServe(addr, sm)
+	if err := http.ListenAndServe(addr, sm); err != nil {
+		log.Printf("err occurred while starting http server: %v\n", err)
+	}
 }

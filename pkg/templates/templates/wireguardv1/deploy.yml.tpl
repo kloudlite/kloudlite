@@ -4,6 +4,8 @@
 
 {{- $tolerations := get . "tolerations" |default list }}
 {{- $nodeSelector := get . "node-selector" |default dict }}
+{{- $tlsCertSecName := get . "tls-cert-sec-name" | default ""}}
+{{- $devInfo := get . "dev-info" | default ""}}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -70,10 +72,16 @@ spec:
         {{- /* image: rancher/mirrored-coredns-coredns:1.9.1 */}}
         {{- /* imagePullPolicy: IfNotPresent */}}
       - args:
+        {{- if $devInfo}}
+        - --dev-info
+        - {{ $devInfo }}
+        {{- end}}
         - --addr
-        {{- /* - 127.0.0.1:17171 */}}
-        {{- /* - 10.13.0.1:17171 */}}
         - 0.0.0.0:17171
+        {{- if $tlsCertSecName}}
+        - --tls-addr
+        - 0.0.0.0:17172
+        {{- end}}
         - --corefile
         - /etc/coredns/Corefile
         - --debug
@@ -97,6 +105,13 @@ spec:
           {{- /* readOnlyRootFilesystem: true */}}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
+
+        {{- if $tlsCertSecName}}
+        env:
+        - name: TLS_CERT_FILE_PATH
+          value: /etc/vpn-device/tls
+        {{- end}}
+
         volumeMounts:
         - mountPath: /etc/coredns
           name: config-volume
@@ -104,6 +119,11 @@ spec:
         - mountPath: /etc/coredns/custom
           name: custom-config-volume
           readOnly: true
+        {{- if $tlsCertSecName}}
+        - mountPath: /etc/vpn-device/tls
+          name: tls-certs
+          readOnly: true
+        {{- end}}
 
       # end of coredns
 
@@ -124,6 +144,12 @@ spec:
           hostPath:
             path: /lib/modules
             type: Directory
+        {{- if $tlsCertSecName}}
+        - name: tls-certs
+          secret:
+            secretName: {{ $tlsCertSecName }}
+        {{- end}}
+
 
         # for coredns
         - configMap:
