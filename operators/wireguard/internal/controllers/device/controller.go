@@ -107,7 +107,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(DnsConfigReady, KeysAndSecretReady, ConfigReady, ServerSvcReady, ServicesSynced, ServerReady, DeviceDeleted); !step.ShouldProceed() {
+	if step := req.EnsureChecks(DnsConfigReady, KeysAndSecretReady, ConfigReady, ServerSvcReady, ServicesSynced, ServerReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 

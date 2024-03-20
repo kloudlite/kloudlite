@@ -93,7 +93,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			mresSecret := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("mres-%s-creds", mr.Spec.ResourceName)), mresSecret); err != nil {
+			if err := r.Get(ctx, fn.NN(mr.Namespace, mr.Output.Credentials.Name), mresSecret); err != nil {
 				r.logger.Infof("mres secret for resource (%s), not found", obj.GetName())
 				mresSecret = nil
 			}
@@ -193,7 +193,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			})
 		}
 
-	case NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String():
+	case NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String(), NamespaceGVK.String():
 		{
 			// dispatch to infra
 			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
@@ -337,8 +337,10 @@ var (
 	PersistentVolumeGVK      = newGVK("v1", "PersistentVolume")
 	VolumeAttachmentGVK      = newGVK("storage.k8s.io/v1", "VolumeAttachment")
 	IngressGVK               = newGVK("networking.k8s.io/v1", "Ingress")
-	SecretGVK                = newGVK("v1", "Secret")
-	ConfigmapGVK             = newGVK("v1", "ConfigMap")
+
+	SecretGVK    = newGVK("v1", "Secret")
+	ConfigmapGVK = newGVK("v1", "ConfigMap")
+	NamespaceGVK = newGVK("v1", "Namespace")
 )
 
 // SetupWithManager sets up the controllers with the Manager.
@@ -375,6 +377,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		// filtered watch
 		SecretGVK,
 		ConfigmapGVK,
+		NamespaceGVK,
 	}
 
 	for i := range watchList {

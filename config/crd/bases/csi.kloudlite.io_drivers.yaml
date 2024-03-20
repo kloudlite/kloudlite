@@ -97,6 +97,8 @@ spec:
               checkList:
                 items:
                   properties:
+                    debug:
+                      type: boolean
                     description:
                       type: string
                     name:

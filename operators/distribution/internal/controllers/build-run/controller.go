@@ -82,6 +82,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := req.EnsureCheckList(B_CHECKLIST); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := req.EnsureChecks(PVCReady, JobCreated, JobCompleted, JobFailed); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
