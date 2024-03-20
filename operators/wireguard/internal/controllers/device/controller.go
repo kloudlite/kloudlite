@@ -15,6 +15,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
+	devinfo "github.com/kloudlite/operator/apps/coredns/dev-info"
 	"github.com/kloudlite/operator/operators/wireguard/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -170,6 +171,13 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 
 		for _, cn := range obj.Spec.CNameRecords {
 			corefile += fmt.Sprintf("\n\trewrite name %s %s", cn.Host, cn.Target)
+		}
+
+		if r.Env.TlsDomainPrefix != "" {
+			corefile += fmt.Sprintf("\n\trewrite name %s %s",
+				fmt.Sprintf("%s.%s", r.Env.TlsDomainPrefix, r.Env.DnsHostedZone),
+				fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.ClusterInternalDns),
+			)
 		}
 
 		corefile += fmt.Sprintf("\n\trewrite name regex (^[a-zA-Z0-9-_]+)[.]local {1}.%s.svc.%s answer auto",
@@ -499,8 +507,10 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 			},
 			Spec: corev1.ServiceSpec{
 				Ports: func() []corev1.ServicePort {
-					port := corev1.ServicePort{Name: "kl-coredns", Port: 17171}
-					return append(sPorts, port)
+					ports := []corev1.ServicePort{
+						{Name: "kl-coredns", Port: 17171},
+						{Name: "kl-coredns-https", Port: 17172}}
+					return append(sPorts, ports...)
 				}(),
 				Selector: map[string]string{
 					"kloudlite.io/pod-type": "wireguard-server",
@@ -638,6 +648,26 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 
 	// check deployment
 	if err := func() error {
+
+		deviceInfo := devinfo.DeviceInfo{
+			Name:        obj.Name,
+			AccountName: r.Env.AccountName,
+			ClusterName: r.Env.ClusterName,
+		}
+
+		devInfo, err := deviceInfo.ToBase64()
+		if err != nil {
+			devInfo = fn.Ptr("")
+		}
+
+		tlsAvailable := false
+		tlsCertSecName := fmt.Sprintf("%s.%s-tls", r.Env.TlsDomainPrefix, r.Env.DnsHostedZone)
+		if r.Env.TlsDomainPrefix != "" {
+			if _, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, tlsCertSecName), &corev1.Secret{}); err == nil {
+				tlsAvailable = true
+			}
+		}
+
 		dep, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &appsv1.Deployment{})
 		if err != nil {
 			if !apiErrors.IsNotFound(err) {
@@ -651,6 +681,13 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 				"ownerRefs":     []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"tolerations":   []corev1.Toleration{{Operator: "Exists"}},
 				"node-selector": obj.Spec.NodeSelector,
+				"tls-cert-sec-name": func() string {
+					if tlsAvailable {
+						return tlsCertSecName
+					}
+					return ""
+				}(),
+				"dev-info": devInfo,
 			})
 			if err != nil {
 				return err

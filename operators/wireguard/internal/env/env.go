@@ -13,7 +13,11 @@ type Env struct {
 	ClusterPodCidr     string `env:"CLUSTER_POD_CIDR" required:"true"` // default 10.42.0.0/16
 	ClusterServiceCidr string `env:"CLUSTER_SVC_CIDR" required:"true"` // default 10.43.0.0/16
 
-	DnsHostedZone string `env:"DNS_HOSTED_ZONE" required:"true"`
+	DnsHostedZone   string `env:"DNS_HOSTED_ZONE" required:"true"`
+	TlsDomainPrefix string `env:"TLS_DOMAIN_PREFIX"`
+
+	AccountName string `env:"ACCOUNT_NAME"`
+	ClusterName string `env:"CLUSTER_NAME"`
 
 	ClusterInternalDns string `env:"CLUSTER_INTERNAL_DNS" default:"cluster.local"`
 
