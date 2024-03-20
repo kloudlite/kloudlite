@@ -2,6 +2,7 @@ import { Link } from '@remix-run/react';
 import { ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
 import { ArrowLeft } from '~/console/components/icons';
+import { cn } from '~/components/utils';
 import SplitWrapper from './split-wrapper';
 
 type ITitleSection = {
@@ -29,6 +30,7 @@ interface IProgressWrapper extends ITitleSection {
     content: string;
   };
   fillerImage?: ReactNode;
+  className?: string;
 }
 const MultiStepProgressWrapper = ({
   subTitle,
@@ -37,10 +39,11 @@ const MultiStepProgressWrapper = ({
   backButton,
   fillerImage,
   action,
+  className,
 }: IProgressWrapper) => {
   return (
     <SplitWrapper fillerImage={fillerImage}>
-      <div className="max-w-[568px] flex flex-col gap-7xl">
+      <div className={cn('max-w-[568px] flex flex-col gap-7xl', className)}>
         <div className="flex flex-col gap-xl">
           {backButton && (
             <Button

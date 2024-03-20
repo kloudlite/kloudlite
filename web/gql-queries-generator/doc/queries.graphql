@@ -1534,6 +1534,7 @@ query consoleListSecrets($projectName: String!, $envName: String!, $search: Sear
         displayName
         stringData
         environmentName
+        isReadyOnly
         immutable
         lastUpdatedBy {
           userEmail
