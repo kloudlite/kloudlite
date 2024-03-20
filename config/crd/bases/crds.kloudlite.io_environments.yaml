@@ -25,6 +25,9 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+      name: Checks
+      type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/environment\.routing
       name: Routing
       type: string
@@ -84,7 +87,6 @@ spec:
                     title:
                       type: string
                   required:
-                  - debug
                   - name
                   - title
                   type: object
