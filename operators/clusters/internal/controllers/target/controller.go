@@ -52,13 +52,6 @@ func (r *ClusterReconciler) GetName() string {
 }
 
 const (
-	clusterApplyJob   = "clusterApplyJob"
-	clusterDestroyJob = "clusterDestroyJob"
-	messageQueueTopic = "messageQueueTopic"
-	jobRbac           = "job-rbac"
-)
-
-const (
 	LabelClusterApplyJob    = "kloudlite.io/cluster-apply-job"
 	LabelResourceGeneration = "kloudlite.io/resource-generation"
 	LabelClusterDestroyJob  = "kloudlite.io/cluster-apply-job"
@@ -67,6 +60,29 @@ const (
 const (
 	clusterJobServiceAccount = "cluster-job-sa"
 )
+
+const (
+	ClusterPrerequisitesReady string = "cluster-prerequisites-ready"
+
+	ClusterJobRBACReady             string = `cluster-job-rbac-ready`
+	ClusterCreateJobAppliedAndReady string = `cluster-create-job-applied-and-ready`
+	ClusterDeleteJobApplied         string = `cluster-delete-job-applied`
+
+	DefaultsPatched string = "defaults-patched"
+	KeyMsvcOutput   string = "msvc-output"
+
+	AnnotationCurrentStorageSize string = "kloudlite.io/msvc.storage-size"
+)
+
+var ApplyCheckList = []rApi.CheckMeta{
+	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
+	{Name: ClusterPrerequisitesReady, Title: "Cluster Pre-Requisites Ready"},
+	{Name: ClusterJobRBACReady, Title: "Cluster Job RBAC Ready", Debug: true},
+	{Name: ClusterCreateJobAppliedAndReady, Title: "Cluster Create Job Applied"},
+}
+
+// DefaultsPatched string = "defaults-patched"
+var DeleteCheckList = []rApi.CheckMeta{}
 
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters/status,verbs=get;update;patch
@@ -103,6 +119,14 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return notifyAndExit(step)
 	}
 
+	if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureChecks(DefaultsPatched, ClusterPrerequisitesReady, ClusterJobRBACReady, ClusterCreateJobAppliedAndReady); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return notifyAndExit(step)
 	}
@@ -132,9 +156,9 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 
 func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "defaults"
+	checkName := DefaultsPatched
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -220,28 +244,34 @@ func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) ste
 
 func (r *ClusterReconciler) ensureJobRBAC(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(jobRbac)
-	defer req.LogPostCheck(jobRbac)
+	checkName := ClusterJobRBACReady
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	b, err := templates.ParseBytes(r.templateRBACForClusterJob, map[string]any{
 		"service-account-name": clusterJobServiceAccount,
 		"namespace":            obj.Namespace,
 	})
 	if err != nil {
-		return req.CheckFailed(jobRbac, check, err.Error()).Err(nil)
+		return fail(err).Err(nil)
 	}
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return req.CheckFailed(jobRbac, check, err.Error()).Err(nil)
+		return fail(err)
 	}
 	req.AddToOwnedResources(rr...)
 
 	check.Status = true
-	if check != obj.Status.Checks[jobRbac] {
-		obj.Status.Checks[jobRbac] = check
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -252,9 +282,9 @@ func (r *ClusterReconciler) ensureJobRBAC(req *rApi.Request[*clustersv1.Cluster]
 
 func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "kloudlite-vpc"
+	checkName := ClusterPrerequisitesReady
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -360,7 +390,6 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clu
 	switch obj.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
 		{
-
 			if obj.Spec.AWS == nil {
 				return "", fmt.Errorf("when cloudprovider is set to aws, aws config must be provided")
 			}
@@ -511,9 +540,9 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clu
 
 func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "checkName"
+	checkName := ClusterCreateJobAppliedAndReady
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -530,7 +559,7 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	if job == nil {
 		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj)
 		if err != nil {
-			return req.CheckFailed(clusterApplyJob, check, err.Error()).Err(nil)
+			return fail(err).Err(nil)
 		}
 
 		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
@@ -570,12 +599,12 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 			"job-image":   r.Env.IACJobImage,
 		})
 		if err != nil {
-			return req.CheckFailed(clusterApplyJob, check, err.Error()).Err(nil)
+			return fail(err).Err(nil)
 		}
 
 		rr, err := r.yamlClient.ApplyYAML(ctx, b)
 		if err != nil {
-			return req.CheckFailed(clusterApplyJob, check, err.Error()).Err(nil)
+			return fail(err)
 		}
 		req.AddToOwnedResources(rr...)
 		req.Logger.Infof("waiting for job to be created")
@@ -586,18 +615,18 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(clusterApplyJob, check, "waiting for previous jobs to finish execution").Err(nil)
+			return fail(fmt.Errorf("waiting for previous jobs to finish execution")).Err(nil)
 		}
 
 		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return req.CheckFailed(clusterApplyJob, check, err.Error())
+			return fail(err)
 		}
 
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return req.CheckFailed(clusterApplyJob, check, "waiting for job to finish execution").Err(nil)
+		return fail(fmt.Errorf("waiting for job to finish execution"))
 	}
 
 	if job.Status.Succeeded == 0 {
@@ -605,8 +634,8 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[clusterApplyJob] {
-		obj.Status.Checks[clusterApplyJob] = check
+	if check != obj.Status.Checks[checkName] {
+		obj.Status.Checks[checkName] = check
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -617,9 +646,9 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 
 func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := clusterDestroyJob
+	checkName := ClusterDeleteJobApplied
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -705,8 +734,8 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 	// check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
 
 	check.Status = true
-	if check != obj.Status.Checks[clusterDestroyJob] {
-		obj.Status.Checks[clusterDestroyJob] = check
+	if check != obj.Status.Checks[checkName] {
+		obj.Status.Checks[checkName] = check
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}

@@ -39,6 +39,7 @@ type CheckMeta struct {
 	Name        string  `json:"name"`
 	Title       string  `json:"title"`
 	Description *string `json:"description,omitempty"`
+	Debug       bool    `json:"debug,omitempty"`
 }
 
 // +kubebuilder:object:generate=true
@@ -57,17 +58,6 @@ type Status struct {
 	IsReady   bool             `json:"isReady"`
 	Resources []ResourceRef    `json:"resources,omitempty"`
 	Message   *rawJson.RawJson `json:"message,omitempty"`
-
-	// Messages    []ContainerMessage `json:"messages,omitempty"`
-
-	// DisplayVars *rawJson.RawJson   `json:"displayVars,omitempty"`
-
-	// GeneratedVars     *rawJson.RawJson   `json:"generatedVars,omitempty"`
-
-	// Conditions []metav1.Condition `json:"conditions,omitempty"`
-
-	// ChildConditions   []metav1.Condition `json:"childConditions,omitempty"`
-	// OpsConditions     []metav1.Condition `json:"opsConditions,omitempty"`
 
 	CheckList           []CheckMeta      `json:"checkList,omitempty"`
 	Checks              map[string]Check `json:"checks,omitempty"`
