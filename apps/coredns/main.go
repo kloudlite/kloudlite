@@ -12,6 +12,8 @@ import (
 	"os/exec"
 	"path"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	devinfo "github.com/kloudlite/operator/apps/coredns/dev-info"
 	"github.com/kloudlite/operator/common"
 )
@@ -78,44 +80,52 @@ func main() {
 
 	go runCoreDNS(ctx, newCorefilePath)
 
-	sm := http.NewServeMux()
-	sm.HandleFunc("/healthy", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("ok"))
+	app := fiber.New()
+
+	app.Get("/healthy", func(c *fiber.Ctx) error {
+		return c.SendString("ok")
 	})
 
-	sm.HandleFunc("/whoami", func(w http.ResponseWriter, r *http.Request) {
-		if devi == "" {
-			w.WriteHeader(400)
-		}
-
-		d := devinfo.DeviceInfo{}
-
-		if err := d.FromBase64(devi); err != nil {
-			return
-		}
-
-		w.Write([]byte(d.String()))
-	})
-
-	sm.HandleFunc("/resync", func(w http.ResponseWriter, r *http.Request) {
+	app.Post("/resync", func(c *fiber.Ctx) error {
 		log.Println("resyncing corefile")
-		b, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer r.Body.Close()
+
+		b := c.Body()
 
 		if err := os.WriteFile(newCorefilePath, b, fs.FileMode(os.O_WRONLY)); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return err
 		}
 
 		cf()
 		ctx, cf = context.WithCancel(context.TODO())
 		go runCoreDNS(ctx, newCorefilePath)
 
-		w.WriteHeader(200)
+		return c.SendString("ok")
+	})
+
+	// Apply CORS middleware
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "https://*.kloudlite.io",
+		AllowMethods: "GET",
+		AllowHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+	}))
+
+	app.Get("/whoami", func(c *fiber.Ctx) error {
+
+		if devi == "" {
+			return fmt.Errorf("device info is not set")
+		}
+
+		d := devinfo.DeviceInfo{}
+
+		if err := d.FromBase64(devi); err != nil {
+			return err
+		}
+
+		return c.JSON(d)
+	})
+
+	app.Get("/*", func(c *fiber.Ctx) error {
+		return c.SendStatus(http.StatusNotFound)
 	})
 
 	common.PrintReadyBanner()
@@ -134,14 +144,14 @@ func main() {
 		}
 
 		log.Printf("https server is starting on %s", tlsAddr)
-		if err := http.ListenAndServeTLS(tlsAddr, path.Join(tlsPath, "tls.crt"), path.Join(tlsPath, "tls.key"), sm); err != nil {
+		if err := app.ListenTLS(tlsAddr, path.Join(tlsPath, "tls.crt"), path.Join(tlsPath, "tls.key")); err != nil {
 			log.Printf("err occurred while starting https server: %v\n", err)
 		}
 	}()
 
 	log.Printf("http server is starting on %s", addr)
 
-	if err := http.ListenAndServe(addr, sm); err != nil {
+	if err := app.Listen(addr); err != nil {
 		log.Printf("err occurred while starting http server: %v\n", err)
 	}
 }
