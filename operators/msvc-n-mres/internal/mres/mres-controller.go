@@ -52,9 +52,11 @@ const (
 	ResourceOwnedByManagedSvc        string = "resource-owned-by-msvc"
 	UnderlyingManagedResourceCreated string = "underlying-managed-resource-created"
 	UnderlyingManagedResourceReady   string = "underlying-managed-resource-ready"
+	DefaultsPatched                  string = "defaults-patched"
 )
 
 var ApplyCheckList = []rApi.CheckMeta{
+	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
 	{Name: ResourceOwnedByManagedSvc, Title: "Resource Owned By Managed Service"},
 	{Name: UnderlyingManagedResourceCreated, Title: "Underlying Managed Resource Created"},
 	{Name: UnderlyingManagedResourceReady, Title: "Underlying Managed Resource Ready"},
@@ -100,13 +102,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(ResourceOwnedByManagedSvc, UnderlyingManagedResourceCreated, UnderlyingManagedResourceReady); !step.ShouldProceed() {
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureOwnedByMsvc(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := r.ensureOwnedByMsvc(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	if step := r.ensureRealMresCreated(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -118,6 +120,52 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
+}
+
+func getRealResourceName(obj *crdsv1.ManagedResource) string {
+	if obj.Spec.ResourceNamePrefix != nil {
+		return fmt.Sprintf("%s-%s", *obj.Spec.ResourceNamePrefix, obj.Name)
+	}
+
+	return obj.Name
+}
+
+func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+
+	checkName := DefaultsPatched
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	hasUpdated := false
+
+	if obj.Output.CredentialsRef.Name == "" {
+		hasUpdated = true
+		obj.Output.CredentialsRef.Name = fmt.Sprintf("mres-%s-creds", getRealResourceName(obj))
+	}
+
+	if hasUpdated {
+		if err := r.Update(ctx, obj); err != nil {
+			return fail(err)
+		}
+		return req.Done().RequeueAfter(500 * time.Second)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
@@ -209,13 +257,15 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 		"api-version": obj.Spec.ResourceTemplate.APIVersion,
 		"kind":        obj.Spec.ResourceTemplate.Kind,
 
-		"name":       obj.Spec.ResourceNamePrefix,
+		"name":       getRealResourceName(obj),
 		"namespace":  obj.Namespace,
 		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		"labels":     obj.GetEnsuredLabels(),
 
 		"msvc-ref":               obj.Spec.ResourceTemplate.MsvcRef,
 		"resource-template-spec": obj.Spec.ResourceTemplate.Spec,
+
+		"output": obj.Output,
 	})
 	if err != nil {
 		return fail(err).Err(nil)
@@ -237,14 +287,6 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 	}
 
 	return req.Next()
-}
-
-func getRealResourceName(obj *crdsv1.ManagedResource) string {
-	if obj.Spec.ResourceNamePrefix != nil {
-		return fmt.Sprintf("%s-%s", *obj.Spec.ResourceNamePrefix, obj.Name)
-	}
-
-	return obj.Name
 }
 
 func (r *Reconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {

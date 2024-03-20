@@ -46,6 +46,8 @@ type ManagedService struct {
 	// +kubebuilder:default=true
 	Enabled *bool       `json:"enabled,omitempty"`
 	Status  rApi.Status `json:"status,omitempty" graphql:"noinput"`
+
+	Output ct.ManagedServiceOutput `json:"output,omitempty" graphql:"ignore"`
 }
 
 func (m *ManagedService) EnsureGVK() {
