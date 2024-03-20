@@ -9,12 +9,62 @@ query: |+
             name
             annotations
           }
+          status {
+            isReady
+          }
         }
       }
     }
   }
 variables:
   projectName: "{{.projectName}}"
+---
+
+label: restart project managed service
+query: |+ #graphql
+  query Query($projectName: String!, $name: String!) {
+    core_restartProjectManagedService(projectName: $projectName, name: $name)
+  }
+variables:
+  projectName: "{{.projectName}}"
+  name: "sampledbservice"
+
+---
+
+label: create project managed services
+query: |+
+  mutation Core_createProjectManagedService($projectName: String!, $pmsvc: ProjectManagedServiceIn!) {
+    core_createProjectManagedService(projectName: $projectName, pmsvc: $pmsvc) {
+      metadata {
+        name
+      }
+    }
+  }
+variables:
+  projectName: "{{.projectName}}"
+  pmsvc:
+    displayName: "sample project managed service"
+
+    apiVersion: "mongodb.msvc.kloudlite.io/v1"
+    kind: "StandaloneService"
+    metadata:
+      name: "sample"
+    spec:
+      targetNamespace: "{{.projectNamespace}}"
+      msvcSpec:
+        serviceTemplate:
+          apiVersion: mongodb.msvc.kloudlite.io/v1
+          kind: StandaloneService
+          spec:
+            resources:
+              cpu:
+                max: 400m
+                min: 400m
+              memory:
+                max: 400Mi
+                min: 400Mi
+              storage:
+                size: 0.4Gi
 ---
 
 label: restart project managed service

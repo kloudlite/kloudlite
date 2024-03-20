@@ -456,7 +456,7 @@ type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
-	Debug       bool    `json:"debug"`
+	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Name        string  `json:"name"`
 	Title       string  `json:"title"`

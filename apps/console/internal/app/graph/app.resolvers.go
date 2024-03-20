@@ -6,9 +6,8 @@ package graph
 
 import (
 	"context"
-	"time"
-
 	"github.com/kloudlite/api/pkg/errors"
+	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
@@ -68,7 +67,5 @@ func (r *Resolver) App() generated.AppResolver { return &appResolver{r} }
 // AppIn returns generated.AppInResolver implementation.
 func (r *Resolver) AppIn() generated.AppInResolver { return &appInResolver{r} }
 
-type (
-	appResolver   struct{ *Resolver }
-	appInResolver struct{ *Resolver }
-)
+type appResolver struct{ *Resolver }
+type appInResolver struct{ *Resolver }
