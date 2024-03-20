@@ -366,14 +366,6 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 		return req.CheckFailed(checkName, check, err.Error())
 	}
 
-	if len(obj.Spec.Routes) == 0 {
-		check.Status = true
-		fn.MapSet(&obj.Status.Checks, IngressReady, check)
-		if err := r.Status().Update(ctx, obj); err != nil {
-			return req.CheckFailed(IngressReady, check, err.Error())
-		}
-	}
-
 	wcDomains, nonWcDomains, err := r.parseAndExtractDomains(req)
 	if err != nil {
 		return req.CheckFailed(IngressReady, check, err.Error())
@@ -381,50 +373,51 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 
 	nginxIngressAnnotations := GenNginxIngressAnnotations(obj)
 
-	b, err := templates.ParseBytes(
-		r.templateIngress, map[string]any{
-			"name":      obj.Name,
-			"namespace": obj.Namespace,
+	if len(obj.Spec.Routes) > 0 {
+		b, err := templates.ParseBytes(
+			r.templateIngress, map[string]any{
+				"name":      obj.Name,
+				"namespace": obj.Namespace,
 
-			"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			"labels":      obj.GetLabels(),
-			"annotations": nginxIngressAnnotations,
+				"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"labels":      obj.GetLabels(),
+				"annotations": nginxIngressAnnotations,
 
-			"non-wildcard-domains": nonWcDomains,
-			"wildcard-domains":     wcDomains,
-			"router-domains":       obj.Spec.Domains,
+				"non-wildcard-domains": nonWcDomains,
+				"wildcard-domains":     wcDomains,
+				"router-domains":       obj.Spec.Domains,
 
-			"ingress-class": func() string {
-				if obj.Spec.IngressClass != "" {
-					return obj.Spec.IngressClass
-				}
-				return r.Env.DefaultIngressClass
-			}(),
-			"cluster-issuer": func() string {
-				if obj.Spec.Https != nil && obj.Spec.Https.ClusterIssuer != "" {
-					return obj.Spec.Https.ClusterIssuer
-				}
-				return r.Env.DefaultClusterIssuer
-			}(),
+				"ingress-class": func() string {
+					if obj.Spec.IngressClass != "" {
+						return obj.Spec.IngressClass
+					}
+					return r.Env.DefaultIngressClass
+				}(),
+				"cluster-issuer": func() string {
+					if obj.Spec.Https != nil && obj.Spec.Https.ClusterIssuer != "" {
+						return obj.Spec.Https.ClusterIssuer
+					}
+					return r.Env.DefaultClusterIssuer
+				}(),
 
-			"routes": obj.Spec.Routes,
+				"routes": obj.Spec.Routes,
 
-			"is-https-enabled": isHttpsEnabled(obj),
-		},
-	)
-	if err != nil {
-		return fail(err).Err(nil)
+				"is-https-enabled": isHttpsEnabled(obj),
+			},
+		)
+		if err != nil {
+			return fail(err).Err(nil)
+		}
+
+		rr, err := r.yamlClient.ApplyYAML(ctx, b)
+		if err != nil {
+			return fail(err)
+		}
+
+		req.AddToOwnedResources(rr...)
 	}
-
-	rr, err := r.yamlClient.ApplyYAML(ctx, b)
-	if err != nil {
-		return fail(err)
-	}
-
-	req.AddToOwnedResources(rr...)
 
 	check.Status = true
-
 	if check != obj.Status.Checks[checkName] {
 		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {

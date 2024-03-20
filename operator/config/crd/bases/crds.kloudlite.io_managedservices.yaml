@@ -51,6 +51,21 @@ spec:
             type: string
           metadata:
             type: object
+          output:
+            properties:
+              credentialsRef:
+                description: refers to a k8s secret that exists in the same namespace
+                  as managed service
+                properties:
+                  name:
+                    description: .metadata.name of the resource
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - credentialsRef
+            type: object
           spec:
             description: ManagedServiceSpec defines the desired state of ManagedService
             properties:
