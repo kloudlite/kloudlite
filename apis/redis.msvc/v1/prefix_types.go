@@ -8,20 +8,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type PrefixOutput struct {
-	Credentials ct.SecretRef `json:"credentials"`
-}
-
 // PrefixSpec defines the desired state of Prefix
 type PrefixSpec struct {
-	ResourceNamePrefix string `json:"resourceNamePrefix,omitempty"`
-
 	MsvcRef ct.MsvcRef `json:"msvcRef"`
 
 	// +kubebuilder:default=0
 	RedisDB int `json:"redisDB"`
-
-	Output PrefixOutput `json:"output,omitempty" graphql:"noinput"`
 }
 
 //+kubebuilder:object:root=true
@@ -39,6 +31,8 @@ type Prefix struct {
 
 	Spec   PrefixSpec  `json:"spec,omitempty"`
 	Status rApi.Status `json:"status,omitempty"`
+
+	Output ct.ManagedResourceOutput `json:"output"`
 }
 
 func (a *Prefix) EnsureGVK() {
@@ -55,9 +49,9 @@ func (a *Prefix) GetEnsuredLabels() map[string]string {
 	return map[string]string{}
 }
 
-func (a *Prefix) GetEnsuredAnnotations() map[string]string {
+func (p *Prefix) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		"kloudlite.io/credentials-ref": fmt.Sprintf("secret:%s/%s", a.Spec.Output.Credentials.Namespace, a.Spec.Output.Credentials.Name),
+		"kloudlite.io/credentials-ref": fmt.Sprintf("secret:%s/%s", p.Namespace, p.Output.CredentialsRef.Name),
 	}
 }
 

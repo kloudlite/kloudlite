@@ -7,10 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type StandaloneServiceOutput struct {
-	Credentials ct.SecretRef `json:"credentials,omitempty"`
-}
-
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
 	ct.NodeSelectorAndTolerations `json:",inline"`
@@ -19,8 +15,6 @@ type StandaloneServiceSpec struct {
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=1
 	ReplicaCount int `json:"replicaCount,omitempty"`
-
-	Output StandaloneServiceOutput `json:"output,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -37,6 +31,8 @@ type StandaloneService struct {
 
 	Spec   StandaloneServiceSpec `json:"spec"`
 	Status rApi.Status           `json:"status,omitempty"`
+
+	Output ct.ManagedServiceOutput `json:"output"`
 }
 
 func (ss *StandaloneService) EnsureGVK() {
@@ -50,9 +46,7 @@ func (ss *StandaloneService) GetStatus() *rApi.Status {
 }
 
 func (ss *StandaloneService) GetEnsuredLabels() map[string]string {
-	return map[string]string{
-		constants.MsvcNameKey: ss.Name,
-	}
+	return map[string]string{constants.MsvcNameKey: ss.Name}
 }
 
 func (ss *StandaloneService) GetEnsuredAnnotations() map[string]string {

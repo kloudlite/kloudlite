@@ -112,10 +112,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.patchDefaults(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := r.generateAccessCredentials(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -144,56 +140,8 @@ func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.ClusterService]) 
 	return req.Finalize()
 }
 
-func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.ClusterService]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := DefaultsPatched
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	hasPatched := false
-
-	if obj.Spec.Output.Credentials.Name == "" {
-		hasPatched = true
-		obj.Spec.Output.Credentials.Name = fmt.Sprintf("msvc-%s-creds", obj.Name)
-	}
-
-	if obj.Spec.Output.Credentials.Namespace == "" {
-		hasPatched = true
-		obj.Spec.Output.Credentials.Namespace = obj.Namespace
-	}
-
-	if obj.Spec.Output.HelmSecret.Name == "" {
-		hasPatched = true
-		obj.Spec.Output.HelmSecret.Name = fmt.Sprintf("helm-%s-creds", obj.Name)
-	}
-
-	if obj.Spec.Output.HelmSecret.Namespace == "" {
-		hasPatched = true
-		obj.Spec.Output.HelmSecret.Namespace = obj.Namespace
-	}
-
-	if hasPatched {
-		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
-		}
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+func getHelmSecretName(name string) string {
+	return fmt.Sprintf("helm-%s-creds", name)
 }
 
 func (r *Reconciler) generateAccessCredentials(req *rApi.Request[*mongodbMsvcv1.ClusterService]) stepResult.Result {
@@ -212,7 +160,7 @@ func (r *Reconciler) generateAccessCredentials(req *rApi.Request[*mongodbMsvcv1.
 	rootPassword := fn.CleanerNanoid(40)
 	replicasetKey := fn.CleanerNanoid(10) // should not be more than 10, as it crashes our mongodb process
 
-	msvcOutput := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.Output.Credentials.Name, Namespace: obj.Namespace}}
+	msvcOutput := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, msvcOutput, func() error {
 		msvcOutput.SetLabels(obj.GetLabels())
 		msvcOutput.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
@@ -249,7 +197,7 @@ func (r *Reconciler) generateAccessCredentials(req *rApi.Request[*mongodbMsvcv1.
 
 	req.AddToOwnedResources(rApi.ParseResourceRef(msvcOutput))
 
-	helmSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.Output.HelmSecret.Name, Namespace: obj.Namespace}}
+	helmSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: getHelmSecretName(obj.Name), Namespace: obj.Namespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, helmSecret, func() error {
 		helmSecret.SetLabels(obj.GetLabels())
@@ -320,7 +268,7 @@ func (r *Reconciler) applyHelm(req *rApi.Request[*mongodbMsvcv1.ClusterService])
 
 		"replica-count":        obj.Spec.Replicas,
 		"root-user":            string(creds["USERNAME"]),
-		"auth-existing-secret": obj.Spec.Output.HelmSecret.Name,
+		"auth-existing-secret": getHelmSecretName(obj.Name),
 
 		"cpu-min": obj.Spec.Resources.Cpu.Min,
 		"cpu-max": obj.Spec.Resources.Cpu.Max,

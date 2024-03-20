@@ -8,19 +8,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ClusterServiceOutput struct {
-	Credentials ct.SecretRef `json:"credentials,omitempty"`
-	HelmSecret  ct.SecretRef `json:"helmSecret,omitempty"`
-}
-
 // ClusterServiceSpec defines the desired state of ClusterService
 type ClusterServiceSpec struct {
 	ct.NodeSelectorAndTolerations `json:",inline"`
 	TopologySpreadConstraints     []corev1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
 
-	Replicas  int                  `json:"replicas"`
-	Resources ct.Resources         `json:"resources"`
-	Output    ClusterServiceOutput `json:"output,omitempty" graphql:"noinput"`
+	Replicas  int          `json:"replicas"`
+	Resources ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:root=true
@@ -37,6 +31,8 @@ type ClusterService struct {
 
 	Spec   ClusterServiceSpec `json:"spec"`
 	Status rApi.Status        `json:"status,omitempty"`
+
+	Output ct.ManagedServiceOutput `json:"output"`
 }
 
 func (cs *ClusterService) EnsureGVK() {
@@ -56,9 +52,7 @@ func (c *ClusterService) GetEnsuredLabels() map[string]string {
 }
 
 func (c *ClusterService) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{
-		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ClusterService").String(),
-	}
+	return map[string]string{}
 }
 
 // +kubebuilder:object:root=true
