@@ -59,8 +59,6 @@ func ReconcileFilter() predicate.Funcs {
 			oldAnn := oldObj.GetAnnotations()
 			newAnn := newObj.GetAnnotations()
 
-			// delete(oldAnn, constants.LastAppliedKey)
-			// delete(newAnn, constants.LastAppliedKey)
 			annHasChanged := false
 			for k, v := range oldAnn {
 				if k != constants.LastAppliedKey {

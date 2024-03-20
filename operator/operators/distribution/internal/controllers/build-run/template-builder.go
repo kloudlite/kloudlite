@@ -130,7 +130,7 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 		Name:             obj.Name,
 		Namespace:        r.Env.BuildNamespace,
 		Labels:           obj.Labels,
-		Annotations:      ann,
+		Annotations:      fn.FilterObservabilityAnnotations(ann),
 		AccountName:      obj.Spec.AccountName,
 		RegistryHost:     string(rh),
 		RegistryReponame: obj.Spec.Registry.Repo.Name,

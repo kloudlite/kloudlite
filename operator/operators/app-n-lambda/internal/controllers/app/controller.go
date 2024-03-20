@@ -52,18 +52,17 @@ const (
 	DeploymentSvcAndHpaCreated string = "deployment-svc-and-hpa-created"
 	ImagesLabelled             string = "images-labelled"
 	DeploymentReady            string = "deployment-ready"
-	// AnchorReady                string = "anchor-ready"
 
 	CleanedOwnedResources string = "cleaned-owned-resources"
 )
 
 var (
-	APP_CHECKLIST = []rApi.CheckMeta{
+	ApplyChecklist = []rApi.CheckMeta{
 		{Name: DeploymentSvcAndHpaCreated, Title: "Scaling configured"},
 		{Name: DeploymentReady, Title: "Deployment ready"},
 	}
 
-	APP_DESTROY_CHECKLIST = []rApi.CheckMeta{
+	DeleteChecklist = []rApi.CheckMeta{
 		{Name: CleanedOwnedResources, Title: "Cleaning up resources"},
 	}
 )
@@ -92,7 +91,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(APP_CHECKLIST); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(ApplyChecklist); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -129,7 +128,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-	if step := req.EnsureCheckList(APP_DESTROY_CHECKLIST); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(DeleteChecklist); !step.ShouldProceed() {
 		return step
 	}
 
@@ -142,16 +141,15 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result 
 
 func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{
-		Generation: obj.Generation,
-		State:      rApi.RunningState,
-	}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(ImagesLabelled)
-	defer req.LogPostCheck(ImagesLabelled)
+	checkName := ImagesLabelled
 
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(ImagesLabelled, check, err.Error())
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
 	}
 
 	newLabels := make(map[string]string, len(obj.GetLabels()))
@@ -172,16 +170,15 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 	if !reflect.DeepEqual(newLabels, obj.GetLabels()) {
 		obj.SetLabels(newLabels)
 		if err := r.Update(ctx, obj); err != nil {
-			return failed(err)
+			return fail(err)
 		}
 
 		return req.Done().RequeueAfter(500 * time.Millisecond)
 	}
 
-	check.State = rApi.CompletedState
 	check.Status = true
-	if check != obj.Status.Checks[ImagesLabelled] {
-		fn.MapSet(&obj.Status.Checks, DeploymentSvcAndHpaCreated, check)
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -192,16 +189,15 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 
 func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{
-		Generation: obj.Generation,
-		State:      rApi.RunningState,
-	}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(DeploymentSvcAndHpaCreated)
-	defer req.LogPostCheck(DeploymentSvcAndHpaCreated)
+	checkName := DeploymentSvcAndHpaCreated
 
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error())
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
 	}
 
 	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
@@ -219,20 +215,20 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 		},
 	)
 	if err != nil {
-		return failed(err)
+		return fail(err)
 	}
 
 	resRefs, err := r.YamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return failed(err)
+		return fail(err)
 	}
 
 	req.AddToOwnedResources(resRefs...)
 
 	check.State = rApi.CompletedState
 	check.Status = true
-	if check != obj.Status.Checks[DeploymentSvcAndHpaCreated] {
-		fn.MapSet(&obj.Status.Checks, DeploymentSvcAndHpaCreated, check)
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -243,26 +239,25 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 
 func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{
-		Generation: obj.Generation,
-		State:      rApi.RunningState,
-	}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(DeploymentReady)
-	defer req.LogPostCheck(DeploymentReady)
+	checkName := DeploymentReady
 
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(DeploymentReady, check, err.Error())
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
 	}
 
 	deployment, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.Deployment{})
 	if err != nil {
-		return failed(err)
+		return fail(err)
 	}
 
 	cds, err := conditions.FromObject(deployment)
 	if err != nil {
-		return failed(err)
+		return fail(err)
 	}
 
 	isReady := meta.IsStatusConditionTrue(cds, "Available")
@@ -275,25 +270,25 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 				Namespace:     obj.Namespace,
 			},
 		); err != nil {
-			return failed(err)
+			return fail(err)
 		}
 
 		pMessages := rApi.GetMessagesFromPods(podList.Items...)
 		bMsg, err := json.Marshal(pMessages)
 		if err != nil {
-			return failed(err)
+			return fail(err)
 		}
-		return failed(fmt.Errorf(string(bMsg)))
+		return fail(fmt.Errorf(string(bMsg)))
 	}
 
 	if deployment.Status.ReadyReplicas != deployment.Status.Replicas {
-		return failed(fmt.Errorf("ready-replicas (%d) != total replicas (%d)", deployment.Status.ReadyReplicas, deployment.Status.Replicas))
+		return fail(fmt.Errorf("ready-replicas (%d) != total replicas (%d)", deployment.Status.ReadyReplicas, deployment.Status.Replicas))
 	}
 
 	check.State = rApi.CompletedState
 	check.Status = true
-	if check != obj.Status.Checks[DeploymentReady] {
-		fn.MapSet(&obj.Status.Checks, DeploymentReady, check)
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
