@@ -3107,7 +3107,6 @@ type Mutation {
   cr_deleteCred(username:String!) :Boolean! @isLoggedInAndVerified @hasAccount
   cr_deleteDigest(repoName:String!, digest:String!) :Boolean! @isLoggedInAndVerified @hasAccount
 
-
   cr_addBuild(build:BuildIn!) : Build @isLoggedInAndVerified @hasAccount
   cr_updateBuild(id:ID!, build:BuildIn!) : Build @isLoggedInAndVerified @hasAccount
   cr_deleteBuild(id:ID!) : Boolean! @isLoggedInAndVerified @hasAccount
@@ -3121,7 +3120,7 @@ type Mutation {
 }
 
 extend type Build @key(fields: "id") {
-  latestBuildRun: BuildRun
+  latestBuildRun: BuildRun @isLoggedInAndVerified @hasAccount
 }
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/build.graphqls", Input: `type Build @shareable {
@@ -3333,7 +3332,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 }
 
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
-  debug: Boolean!
+  debug: Boolean
   description: String
   name: String!
   title: String!
@@ -3438,7 +3437,7 @@ input Github__com___kloudlite___operator___pkg___operator__CheckIn {
 }
 
 input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn {
-  debug: Boolean!
+  debug: Boolean
   description: String
   name: String!
   title: String!
@@ -5243,8 +5242,34 @@ func (ec *executionContext) _Build_latestBuildRun(ctx context.Context, field gra
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Build().LatestBuildRun(rctx, obj)
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Build().LatestBuildRun(rctx, obj)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, obj, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, obj, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.BuildRun); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/container-registry/internal/domain/entities.BuildRun`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13233,14 +13258,11 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*bool)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22124,7 +22146,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -25383,9 +25405,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___pkg___operator__CheckMeta")
 		case "debug":
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "description":
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx, field, obj)
 		case "name":

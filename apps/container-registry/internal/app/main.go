@@ -196,7 +196,7 @@ var Module = fx.Module("app",
 
 	fx.Invoke(
 		func(server httpServer.Server, d domain.Domain, sessionRepo kv.Repo[*common.AuthSession], ev *env.Env) {
-			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
+			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d, Env: ev}}
 
 			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
@@ -231,12 +231,7 @@ var Module = fx.Module("app",
 			}
 
 			schema := generated.NewExecutableSchema(gqlConfig)
-			server.SetupGraphqlServer(schema, httpServer.NewSessionMiddleware(
-				sessionRepo,
-				"hotspot-session",
-				ev.CookieDomain,
-				constants.CacheSessionPrefix,
-			))
+			server.SetupGraphqlServer(schema, httpServer.NewReadSessionMiddleware(sessionRepo, constants.CookieName, constants.CacheSessionPrefix))
 		},
 	),
 

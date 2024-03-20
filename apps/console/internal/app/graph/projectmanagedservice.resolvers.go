@@ -78,4 +78,3 @@ func (r *Resolver) ProjectManagedServiceIn() generated.ProjectManagedServiceInRe
 
 type projectManagedServiceResolver struct{ *Resolver }
 type projectManagedServiceInResolver struct{ *Resolver }
-
