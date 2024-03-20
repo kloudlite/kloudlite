@@ -299,7 +299,7 @@ export const ConfigMounts = () => {
         className="flex flex-col gap-3xl p-3xl rounded border border-border-default"
       >
         <div className="flex flex-row gap-3xl items-start">
-          <div className="flex-1">
+          <div className="basis-1/3">
             <TextInput
               label="Path"
               size="lg"
@@ -393,6 +393,11 @@ export const ConfigMounts = () => {
                       <Chip
                         item={{ name: 'secret' }}
                         label="Secrets"
+                        type="CLICKABLE"
+                      />
+                      <Chip
+                        item={{ name: 'mres' }}
+                        label="Managed resources"
                         type="CLICKABLE"
                       />
                     </ChipGroup>

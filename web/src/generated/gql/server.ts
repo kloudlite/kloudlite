@@ -3001,6 +3001,7 @@ export type ConsoleListSecretsQuery = {
         displayName: string;
         stringData?: any;
         environmentName: string;
+        isReadyOnly: boolean;
         immutable?: boolean;
         markedForDeletion?: boolean;
         projectName: string;

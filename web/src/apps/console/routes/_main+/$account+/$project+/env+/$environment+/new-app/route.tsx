@@ -13,6 +13,7 @@ import FillerAppEnv from '~/console/assets/app/filler-env';
 import FillerAppNetwork from '~/console/assets/app/filler-network';
 import FillerAppReview from '~/console/assets/app/filler-review';
 import AppCompute from '~/console/page-components/app/compute';
+import { cn } from '~/components/utils';
 import AppDetail from './app-detail';
 import AppEnvironment from './app-environment';
 import AppNetwork from './app-network';
@@ -56,6 +57,7 @@ const AppComp = () => {
         content: 'Back to apps',
         to: '../apps',
       }}
+      className={cn(currentStep === 3 ? 'max-w-[700px]' : '')}
     >
       <MultiStepProgress.Root
         currentStep={currentStep}
