@@ -6,6 +6,8 @@ import (
 	clusters "github.com/kloudlite/operator/operators/clusters/controller"
 	helmCharts "github.com/kloudlite/operator/operators/helm-charts/controller"
 	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
+	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
+	msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
 	nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	project "github.com/kloudlite/operator/operators/project/controller"
 	routers "github.com/kloudlite/operator/operators/routers/controller"
@@ -23,6 +25,8 @@ func main() {
 
 	// kloudlite managed services
 	msvcMongo.RegisterInto(mgr)
+	msvcRedis.RegisterInto(mgr)
+	msvcAndMres.RegisterInto(mgr)
 
 	// kloudlite cluster management
 	clusters.RegisterInto(mgr)

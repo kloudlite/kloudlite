@@ -123,11 +123,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepRes
 	defer req.LogPostCheck("finalizing")
 
 	if !slices.Equal(req.Object.Status.CheckList, DeleteCheckList) {
-		req.Object.Status.CheckList = nil
-	}
-
-	if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
-		return step
+		if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
+			return step
+		}
 	}
 
 	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
