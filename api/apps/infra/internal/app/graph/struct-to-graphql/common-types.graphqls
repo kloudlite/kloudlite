@@ -285,7 +285,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 }
 
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
-  debug: Boolean!
+  debug: Boolean
   description: String
   name: String!
   title: String!

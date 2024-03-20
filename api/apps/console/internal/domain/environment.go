@@ -428,7 +428,6 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 
 	for i := range managedResources {
 		spec := managedResources[i].Spec
-		spec.ResourceName = genMresResourceName(destEnv.Name, managedResources[i].Name)
 		if _, err := d.createAndApplyManagedResource(resCtx, &entities.ManagedResource{
 			ManagedResource: crdsv1.ManagedResource{
 				TypeMeta:   managedResources[i].TypeMeta,

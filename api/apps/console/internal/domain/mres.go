@@ -11,6 +11,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	fn "github.com/kloudlite/operator/pkg/functions"
 )
 
 // query
@@ -154,8 +155,6 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 	mres.ProjectName = ctx.ProjectName
 	mres.EnvironmentName = ctx.EnvironmentName
 
-	mres.Spec.ResourceName = genMresResourceName(ctx.EnvironmentName, mres.Name)
-
 	return d.createAndApplyManagedResource(ctx, &mres)
 }
 
@@ -163,7 +162,12 @@ func genMresResourceName(envName string, mresName string) string {
 	return fmt.Sprintf("env-%s-%s", envName, mresName)
 }
 
+func genMresCredentialsSecretName(name string) string {
+	return fmt.Sprintf("mres-%s-creds", name)
+}
+
 func (d *domain) createAndApplyManagedResource(ctx ResourceContext, mres *entities.ManagedResource) (*entities.ManagedResource, error) {
+	mres.Spec.ResourceNamePrefix = fn.New(genMresResourceName(ctx.EnvironmentName, mres.Name))
 	mres.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
 	if _, err := d.upsertEnvironmentResourceMapping(ctx, mres); err != nil {
@@ -178,6 +182,7 @@ func (d *domain) createAndApplyManagedResource(ctx ResourceContext, mres *entiti
 		}
 		return nil, errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeManagedResource, m.Name, PublishAdd)
 
 	if err := d.applyK8sResource(ctx, ctx.ProjectName, &m.ManagedResource, m.RecordVersion); err != nil {
@@ -202,7 +207,7 @@ func (d *domain) UpdateManagedResource(ctx ResourceContext, mres entities.Manage
 		&mres,
 		common.PatchOpts{
 			XPatch: repos.Document{
-				fc.ManagedResourceSpec: mres.Spec,
+				fc.ManagedResourceSpecResourceTemplateSpec: mres.Spec.ResourceTemplate.Spec,
 			},
 		})
 

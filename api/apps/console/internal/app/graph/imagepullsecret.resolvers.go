@@ -73,4 +73,3 @@ func (r *Resolver) ImagePullSecretIn() generated.ImagePullSecretInResolver {
 
 type imagePullSecretResolver struct{ *Resolver }
 type imagePullSecretInResolver struct{ *Resolver }
-

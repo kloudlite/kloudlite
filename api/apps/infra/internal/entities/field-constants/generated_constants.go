@@ -103,6 +103,9 @@ const (
 
 // constant vars generated for struct ClusterManagedService
 const (
+	ClusterManagedServiceOutput                                                  = "output"
+	ClusterManagedServiceOutputCredentialsRef                                    = "output.credentialsRef"
+	ClusterManagedServiceOutputCredentialsRefName                                = "output.credentialsRef.name"
 	ClusterManagedServiceSpec                                                    = "spec"
 	ClusterManagedServiceSpecMsvcSpec                                            = "spec.msvcSpec"
 	ClusterManagedServiceSpecMsvcSpecNodeSelector                                = "spec.msvcSpec.nodeSelector"

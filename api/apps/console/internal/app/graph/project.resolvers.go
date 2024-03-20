@@ -74,4 +74,3 @@ func (r *Resolver) ProjectIn() generated.ProjectInResolver { return &projectInRe
 
 type projectResolver struct{ *Resolver }
 type projectInResolver struct{ *Resolver }
-

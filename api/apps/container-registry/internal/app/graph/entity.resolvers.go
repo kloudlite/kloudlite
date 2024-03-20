@@ -6,15 +6,32 @@ package graph
 
 import (
 	"context"
+
+	"github.com/gofiber/fiber/v2"
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
 // FindBuildByID is the resolver for the findBuildByID field.
 func (r *entityResolver) FindBuildByID(ctx context.Context, id repos.ID) (*entities.Build, error) {
-	cc, err := toRegistryContext(ctx)
+	sess := httpServer.GetSession[*common.AuthSession](ctx)
+	if sess == nil {
+		return nil, fiber.ErrUnauthorized
+	}
+	m := httpServer.GetHttpCookies(ctx)
+	klAccount := m[r.Env.AccountCookieName]
+	if klAccount == "" {
+		return nil, errors.Newf("no cookie named %q present in request", r.Env.AccountCookieName)
+	}
+
+	nctx := context.WithValue(ctx, "user-session", sess)
+	nctx = context.WithValue(nctx, "account-name", klAccount)
+
+	cc, err := toRegistryContext(nctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}

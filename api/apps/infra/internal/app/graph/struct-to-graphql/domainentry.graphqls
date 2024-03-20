@@ -5,7 +5,7 @@ type DomainEntry @shareable {
   creationTime: Date!
   displayName: String!
   domainName: String!
-  id: String!
+  id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   recordVersion: Int!
