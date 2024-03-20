@@ -141,6 +141,11 @@ const ListView = ({ items, onAction }: IResource) => {
             className: 'flex-1 min-w-[30px] flex items-center justify-center',
           },
           {
+            render: () => 'Environmet',
+            name: 'environment',
+            className: 'w-[180px]',
+          },
+          {
             render: () => 'Updated',
             name: 'updated',
             className: 'w-[180px]',
@@ -166,6 +171,9 @@ const ListView = ({ items, onAction }: IResource) => {
               },
               status: {
                 render: () => <SyncStatusV2 item={i} />,
+              },
+              environment: {
+                render: () => <ListItem data={i.spec?.routing?.mode} />,
               },
               updated: {
                 render: () => (
