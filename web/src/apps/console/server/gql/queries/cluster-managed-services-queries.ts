@@ -57,7 +57,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetClusterMSvQuery) {
         return data.infra_getClusterManagedService;
       },
-      vars(_: ConsoleGetClusterMSvQueryVariables) { },
+      vars(_: ConsoleGetClusterMSvQueryVariables) {},
     }
   ),
   createClusterMSv: executor(
@@ -77,7 +77,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateClusterMSvMutation) =>
         data.infra_createClusterManagedService,
-      vars(_: ConsoleCreateClusterMSvMutationVariables) { },
+      vars(_: ConsoleCreateClusterMSvMutationVariables) {},
     }
   ),
   updateClusterMSv: executor(
@@ -97,7 +97,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateClusterMSvMutation) =>
         data.infra_updateClusterManagedService,
-      vars(_: ConsoleUpdateClusterMSvMutationVariables) { },
+      vars(_: ConsoleUpdateClusterMSvMutationVariables) {},
     }
   ),
   listClusterMSvs: executor(
@@ -163,7 +163,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListClusterMSvsQuery) =>
         data.infra_listClusterManagedServices,
-      vars(_: ConsoleListClusterMSvsQueryVariables) { },
+      vars(_: ConsoleListClusterMSvsQueryVariables) {},
     }
   ),
   deleteClusterMSv: executor(
@@ -181,7 +181,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteClusterMSvMutation) =>
         data.infra_deleteClusterManagedService,
-      vars(_: ConsoleDeleteClusterMSvMutationVariables) { },
+      vars(_: ConsoleDeleteClusterMSvMutationVariables) {},
     }
   ),
 });

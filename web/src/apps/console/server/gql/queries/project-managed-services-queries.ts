@@ -29,6 +29,8 @@ export const projectManagedServicesQueries = (executor: IExecutor) => ({
         $name: String!
       ) {
         core_getProjectManagedService(projectName: $projectName, name: $name) {
+          id
+          recordVersion
           createdBy {
             userEmail
             userId

@@ -4468,6 +4468,8 @@ export type ConsoleGetProjectMSvQueryVariables = Exact<{
 
 export type ConsoleGetProjectMSvQuery = {
   core_getProjectManagedService?: {
+    id: string;
+    recordVersion: number;
     creationTime: any;
     displayName: string;
     markedForDeletion?: boolean;

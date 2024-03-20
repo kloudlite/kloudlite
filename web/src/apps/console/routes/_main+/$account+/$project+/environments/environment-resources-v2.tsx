@@ -62,7 +62,7 @@ const ExtraButton = ({ item, onAction }: IExtraButton) => {
           label: 'Settings',
           icon: <GearSix size={16} />,
           type: 'item',
-          to: `/${account}/${project}/${parseName(item)}/settings/general`,
+          to: `/${account}/${project}/env/${parseName(item)}/settings/general`,
           key: 'settings',
         },
       ]}
@@ -85,7 +85,7 @@ const GridView = ({ items = [], onAction }: IResource) => {
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${project}/${id}`}
+            to={`/${account}/${project}/env/${id}`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -179,7 +179,7 @@ const ListView = ({ items, onAction }: IResource) => {
                 render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
-            to: `/${account}/${project}/${id}`,
+            to: `/${account}/${project}/env/${id}`,
           };
         }),
       }}

@@ -3032,6 +3032,8 @@ mutation consoleDeleteClusterMSv($clusterName: String!, $serviceName: String!) {
 
 query consoleGetProjectMSv($projectName: String!, $name: String!) {
   core_getProjectManagedService(projectName: $projectName, name: $name) {
+    id
+    recordVersion
     createdBy {
       userEmail
       userId

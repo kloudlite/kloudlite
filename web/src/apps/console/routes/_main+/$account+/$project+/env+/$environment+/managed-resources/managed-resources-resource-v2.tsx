@@ -1,4 +1,4 @@
-import { GearSix, PencilSimple, Trash } from '@jengaicons/react';
+import { PencilSimple, Trash } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -13,32 +13,25 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
-import { getManagedTemplate } from '~/console/utils/commons';
 import DeleteDialog from '~/console/components/delete-dialog';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useReload } from '~/root/lib/client/helpers/reloader';
+import { useReload } from '~/lib/client/helpers/reloader';
 import { useState } from 'react';
-import { handleError } from '~/root/lib/utils/common';
+import { handleError } from '~/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
-import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
-import { SyncStatusV2 } from '~/console/components/sync-status';
-import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
-import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
+import { Link, useParams } from '@remix-run/react';
+import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
+import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
-import HandleBackendService from './handle-backend-service';
+import { SyncStatusV2 } from '~/console/components/sync-status';
+import HandleManagedResources from './handle-managed-resource';
 
-const RESOURCE_NAME = 'managed service';
-type BaseType = ExtractNodeType<IProjectMSvs>;
+const RESOURCE_NAME = 'managed resource';
+type BaseType = ExtractNodeType<IManagedResources>;
 
-const parseItem = (item: BaseType, templates: IMSvTemplates) => {
-  const template = getManagedTemplate({
-    templates,
-    kind: item.spec?.msvcSpec?.serviceTemplate.kind || '',
-    apiVersion: item.spec?.msvcSpec?.serviceTemplate.apiVersion || '',
-  });
+const parseItem = (item: BaseType) => {
   return {
     name: item?.displayName,
     id: parseName(item),
@@ -46,7 +39,6 @@ const parseItem = (item: BaseType, templates: IMSvTemplates) => {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
-    logo: template?.logoUrl,
   };
 };
 
@@ -89,45 +81,26 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
 
 interface IResource {
   items: BaseType[];
-  templates: IMSvTemplates;
   onAction: OnAction;
 }
 
-const GridView = ({ items = [], templates = [], onAction: _ }: IResource) => {
-  const { account, project } = useParams();
+const GridView = ({ items = [], onAction }: IResource) => {
   return (
-    <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
+    <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
-        const { name, id, logo, updateInfo } = parseItem(item, templates);
+        const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${project}/msvc/${id}/logs-n-metrics`}
             rows={[
               {
-                key: generateKey(keyPrefix, name + id),
+                key: generateKey(keyPrefix, name),
                 render: () => (
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    action={
-                      <ResourceExtraAction
-                        options={[
-                          {
-                            key: 'managed-services-resource-extra-action-1',
-                            to: `/${account}/${project}/msvc/${id}/logs-n-metrics`,
-                            icon: <GearSix size={16} />,
-                            label: 'logs & metrics',
-                            type: 'item',
-                          },
-                        ]}
-                      />
-                    }
-                    // action={<ExtraButton onAction={onAction} item={item} />}
-                    avatar={
-                      <img src={logo} alt={name} className="w-4xl h-4xl" />
-                    }
+                    action={<ExtraButton onAction={onAction} item={item} />}
                   />
                 ),
               },
@@ -148,21 +121,21 @@ const GridView = ({ items = [], templates = [], onAction: _ }: IResource) => {
   );
 };
 
-const ListView = ({ items = [], templates = [], onAction }: IResource) => {
-  const { account, project } = useParams();
+const ListView = ({ items = [], onAction }: IResource) => {
+  const { environment, project, account } = useParams();
+  const preUrl = `/${account}/${project}/env/${environment}/secret/`;
   return (
     <ListV2.Root
-      linkComponent={Link}
       data={{
         headers: [
           {
-            render: () => (
-              <div className="flex flex-row">
-                <span className="w-[48px]" />
-                Name
-              </div>
-            ),
+            render: () => 'Name',
             name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'secret',
             className: 'w-[180px]',
           },
           {
@@ -182,21 +155,22 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const { name, id, logo, updateInfo } = parseItem(i, templates);
+          const { name, id, updateInfo } = parseItem(i);
           return {
             columns: {
               name: {
-                render: () => (
-                  <ListTitle
-                    title={name}
-                    subtitle={id}
-                    avatar={
-                      <div className="pulsable pulsable-circle aspect-square">
-                        <img src={logo} alt={name} className="w-4xl h-4xl" />
-                      </div>
-                    }
-                  />
-                ),
+                render: () => <ListTitle title={name} subtitle={id} />,
+              },
+              secret: {
+                render: () =>
+                  i.syncedOutputSecretRef ? (
+                    <Button
+                      content="View secrets"
+                      variant="plain"
+                      LinkComponent={Link}
+                      to={`${preUrl}${i.syncedOutputSecretRef?.metadata?.name}`}
+                    />
+                  ) : null,
               },
               status: {
                 render: () => <SyncStatusV2 item={i} />,
@@ -213,7 +187,6 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
                 render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
-            to: `/${account}/${project}/msvc/${id}/logs-n-metrics`,
           };
         }),
       }}
@@ -221,7 +194,7 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
   );
 };
 
-const BackendServicesResourcesV2 = ({
+const ManagedResourceResourcesV2 = ({
   items = [],
   templates = [],
 }: {
@@ -236,19 +209,18 @@ const BackendServicesResourcesV2 = ({
   const reloadPage = useReload();
   const params = useParams();
 
-  const { account } = useOutletContext<IAccountContext>();
-  const { project } = useOutletContext<IProjectContext>();
+  const { environment, project, account } = useParams();
+
   useWatchReload(
     items.map((i) => {
-      return `account:${parseName(account)}.project:${parseName(
-        project
-      )}.project_managed_service:${parseName(i)}`;
+      return `account:${account}.project:${project}.environment:${environment}.managed_resource:${parseName(
+        i
+      )}`;
     })
   );
 
   const props: IResource = {
     items,
-    templates,
     onAction: ({ action, item }) => {
       switch (action) {
         case 'delete':
@@ -274,12 +246,13 @@ const BackendServicesResourcesV2 = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!params.project) {
-            throw new Error('Project is required!.');
+          if (!params.project || !params.environment) {
+            throw new Error('Project and Environment is required!.');
           }
           try {
-            const { errors } = await api.deleteProjectMSv({
-              pmsvcName: parseName(showDeleteDialog),
+            const { errors } = await api.deleteManagedResource({
+              mresName: parseName(showDeleteDialog),
+              envName: params.environment,
               projectName: params.project,
             });
 
@@ -294,7 +267,7 @@ const BackendServicesResourcesV2 = ({
           }
         }}
       />
-      <HandleBackendService
+      <HandleManagedResources
         {...{
           isUpdate: true,
           visible: !!visible,
@@ -307,4 +280,4 @@ const BackendServicesResourcesV2 = ({
   );
 };
 
-export default BackendServicesResourcesV2;
+export default ManagedResourceResourcesV2;

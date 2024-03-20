@@ -1,67 +1,82 @@
-/* eslint-disable react/no-this-in-sfc */
 /* eslint-disable guard-for-in */
-import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
+
+import {
+  useLoaderData,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from '@remix-run/react';
 import Select from '~/components/atoms/select';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import { FormEventHandler, useEffect, useRef, useState } from 'react';
-import {
-  IMSvTemplate,
-  IMSvTemplates,
-} from '~/console/server/gql/queries/managed-templates-queries';
+import useForm, { dummyEvent } from '~/lib/client/hooks/use-form';
+import Yup from '~/lib/server/helpers/yup';
+import { FormEventHandler, useEffect, useState } from 'react';
+import { IMSvTemplate } from '~/console/server/gql/queries/managed-templates-queries';
 import { Switch } from '~/components/atoms/switch';
 import { NumberInput, TextInput } from '~/components/atoms/input';
-import { handleError } from '~/root/lib/utils/common';
+import { handleError } from '~/lib/utils/common';
 import { titleCase, useMapper } from '~/components/utils';
-import { flatMapValidations, flatM } from '~/console/utils/commons';
+import { IRemixCtx } from '~/lib/types/common';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { defer } from '@remix-run/node';
+import {
+  ExtractNodeType,
+  parseName,
+  parseNodes,
+} from '~/console/server/r-utils/common';
+import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
+import { getManagedTemplate } from '~/console/utils/commons';
+import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
-import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
 import {
   BottomNavigation,
   ReviewComponent,
 } from '~/console/components/commons';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
-import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { IProjectContext } from '../_layout';
+import { IProjectContext } from '../../../_layout';
 
-const valueRender = ({ label, icon }: { label: string; icon: string }) => {
-  return (
-    <div className="flex flex-row gap-lg items-center">
-      <span>
-        <img alt={label} src={icon} className="w-2xl h-w-2xl" />
-      </span>
-      <div>{label}</div>
-    </div>
-  );
+export const loader = (ctx: IRemixCtx) => {
+  const { project } = ctx.params;
+  const promise = pWrapper(async () => {
+    const { data: mData, errors: mErrors } = await GQLServerHandler(
+      ctx.request
+    ).listProjectMSvs({
+      projectName: project,
+    });
+
+    if (mErrors) {
+      throw mErrors[0];
+    }
+    return { managedServicesData: mData };
+  });
+  return defer({ promise });
 };
 
 const RenderField = ({
   field,
   value,
   onChange,
-  errors,
-  fieldKey,
+  error,
+  message,
 }: {
   field: IMSvTemplate['fields'][number];
   onChange: (e: string) => (e: { target: { value: any } }) => void;
   value: any;
-  errors: {
-    [key: string]: string;
-  };
-  fieldKey: string;
+  error: boolean;
+  message?: string;
 }) => {
   const [qos, setQos] = useState(false);
   if (field.inputType === 'Number') {
     return (
       <NumberInput
-        error={!!errors[fieldKey]}
-        message={errors[fieldKey]}
+        error={error}
+        message={message}
         label={`${field.label}${field.required ? ' *' : ''}`}
+        min={field.min}
+        max={field.max}
         placeholder={field.label}
         value={parseFloat(value) / (field.multiplier || 1) || ''}
         onChange={({ target }) => {
@@ -85,8 +100,6 @@ const RenderField = ({
         value={value || ''}
         onChange={onChange(`res.${field.name}`)}
         suffix={field.displayUnit}
-        error={!!errors[fieldKey]}
-        message={errors[fieldKey]}
       />
     );
   }
@@ -100,10 +113,12 @@ const RenderField = ({
           <div className="flex flex-row gap-xl items-end flex-1 ">
             <div className="flex-1">
               <NumberInput
-                error={!!errors[`${fieldKey}.min`]}
-                message={errors[`${fieldKey}.min`]}
+                error={error}
+                message={message}
+                min={field.min}
+                max={field.max}
                 placeholder={qos ? field.label : `${field.label} min`}
-                value={parseFloat(value.min) / (field.multiplier || 1)}
+                value={parseFloat(value.min) / (field.multiplier || 1) || ''}
                 onChange={({ target }) => {
                   onChange(`res.${field.name}.min`)(
                     dummyEvent(
@@ -128,8 +143,10 @@ const RenderField = ({
             {!qos && (
               <div className="flex-1">
                 <NumberInput
-                  error={!!errors[`${fieldKey}.max`]}
-                  message={errors[`${fieldKey}.max`]}
+                  error={error}
+                  message={message}
+                  min={field.min}
+                  max={field.max}
                   placeholder={`${field.label} max`}
                   value={parseFloat(value.max) / (field.multiplier || 1)}
                   onChange={({ target }) => {
@@ -165,75 +182,112 @@ const RenderField = ({
   return <div>unknown input type {field.inputType}</div>;
 };
 
-type ISelectedTemplate = {
-  category: string;
-  categoryDisplayName: string;
-  template: IMSvTemplate;
+const flatM = (obj: Record<string, any>) => {
+  const flatJson = {};
+  for (const key in obj) {
+    const parts = key.split('.');
+
+    let temp: Record<string, any> = flatJson;
+
+    if (parts.length === 1) {
+      temp[key] = null;
+    } else {
+      parts.forEach((part, index) => {
+        if (index === parts.length - 1) {
+          temp[part] = {
+            min: null,
+            max: null,
+          };
+        } else {
+          temp[part] = temp[part] || {};
+        }
+        temp = temp[part];
+      });
+    }
+  }
+
+  return flatJson;
 };
+
+type ISelectedResource = {
+  label: string;
+  value: string;
+  resource: IMSvTemplate['resources'][number];
+};
+
+type ISelectedService = {
+  label: string;
+  value: string;
+  service: ExtractNodeType<IProjectMSvs>;
+};
+
+interface ITemplateView {
+  handleSubmit: FormEventHandler<HTMLFormElement>;
+  values: Record<string, any>;
+  errors: Record<string, any>;
+  resources: {
+    label: string;
+    value: string;
+    resource: ExtractNodeType<IMSvTemplate>['resources'][number];
+  }[];
+  services: ExtractNodeType<IProjectMSvs>[];
+  isLoading: boolean;
+  handleChange: (key: string) => (e: { target: { value: any } }) => void;
+}
 
 const TemplateView = ({
   handleSubmit,
   values,
   handleChange,
   errors,
-  templates,
+  services,
+  resources,
   isLoading,
-}: {
-  handleSubmit: FormEventHandler<HTMLFormElement>;
-  values: Record<string, any>;
-  errors: Record<string, any>;
-  templates: IMSvTemplates;
-  isLoading: boolean;
-  handleChange: (key: string) => (e: { target: { value: any } }) => void;
-}) => {
+}: ITemplateView) => {
   return (
     <form className="flex flex-col gap-3xl" onSubmit={handleSubmit}>
       <div className="bodyMd text-text-soft">Create your managed services.</div>
+
       <Select
-        label="Template"
+        label="Service"
         size="lg"
-        placeholder="Select templates"
-        value={values.selectedTemplate?.template.name}
-        valueRender={valueRender}
+        placeholder="Select service"
+        value={values.selectedService?.value}
         searchable
-        error={!!errors.selectedTemplate}
-        message={errors.selectedTemplate}
-        onChange={({ item }) => {
-          handleChange('selectedTemplate')(dummyEvent(item));
+        onChange={(val) => {
+          handleChange('selectedService')(dummyEvent(val));
+          handleChange('selectedResource')(dummyEvent(undefined));
         }}
-        options={async () =>
-          templates.map((mt) => ({
+        options={async () => [
+          ...services.map((mt) => ({
             label: mt.displayName,
-            options: mt.items.map((mti) => ({
-              label: mti.displayName,
-              value: mti.name,
-              icon: mti.logoUrl,
-              item: {
-                categoryDisplayName: mt.displayName,
-                category: mt.category,
-                template: mti,
-              },
-              render: () => (
-                <div className="flex flex-row items-center gap-xl">
-                  <span>
-                    <img
-                      alt={mti.displayName}
-                      src={mti.logoUrl}
-                      className="w-2xl h-w-2xl"
-                    />
-                  </span>
-                  <div>{mti.displayName}</div>
-                </div>
-              ),
-            })),
-          }))
-        }
+            value: parseName(mt),
+            service: mt,
+          })),
+        ]}
+        error={!!errors.selectedService}
+        message={errors.selectedService}
+      />
+      <Select
+        disabled={!values.selectedService?.value}
+        label="Resource type"
+        size="lg"
+        placeholder="Select resource type"
+        value={values.selectedResource?.value}
+        searchable
+        onChange={(val) => {
+          handleChange('selectedResource')(dummyEvent(val));
+        }}
+        options={async () => [...resources]}
+        error={!!values.selectedService && !!errors.selectedResource}
+        message={values.selectedService ? errors.selectedResource : null}
       />
       <BottomNavigation
         primaryButton={{
-          type: 'submit',
           loading: isLoading,
+          variant: 'primary',
           content: 'Next',
+          type: 'submit',
         }}
       />
     </form>
@@ -241,8 +295,7 @@ const TemplateView = ({
 };
 
 const FieldView = ({
-  selectedTemplate,
-  nodepools,
+  selectedResource,
   values,
   handleSubmit,
   handleChange,
@@ -252,13 +305,8 @@ const FieldView = ({
   handleSubmit: FormEventHandler<HTMLFormElement>;
   values: Record<string, any>;
   errors: Record<string, any>;
-  selectedTemplate: ISelectedTemplate | null;
-  nodepools: { label: string; value: string }[];
+  selectedResource: ISelectedResource | null;
 }) => {
-  const nameRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    nameRef.current?.focus();
-  }, [nameRef.current]);
   return (
     <form
       className="flex flex-col gap-3xl"
@@ -271,7 +319,6 @@ const FieldView = ({
       }}
     >
       <NameIdView
-        ref={nameRef}
         placeholder="Enter managed service name"
         label="Name"
         resType="project_managed_service"
@@ -281,22 +328,7 @@ const FieldView = ({
         handleChange={handleChange}
         nameErrorLabel="isNameError"
       />
-
-      <Select
-        label="Nodepool Name"
-        size="lg"
-        placeholder="Select Nodepool"
-        value={values.nodepoolName}
-        creatable
-        onChange={(val) => {
-          handleChange('nodepoolName')(dummyEvent(val.value));
-        }}
-        options={async () => [...nodepools]}
-        error={!!errors.nodepoolName}
-        message={errors.nodepoolName}
-      />
-
-      {selectedTemplate?.template.fields?.map((field) => {
+      {selectedResource?.resource?.fields?.map((field) => {
         const k = field.name;
         const x = k.split('.').reduce((acc, curr) => {
           if (!acc) {
@@ -304,21 +336,23 @@ const FieldView = ({
           }
           return acc[curr];
         }, null);
+
         return (
           <RenderField
             field={field}
             key={field.name}
             onChange={handleChange}
             value={x}
-            errors={errors}
-            fieldKey={k}
+            error={!!errors[k]}
+            message={errors[k]}
           />
         );
       })}
       <BottomNavigation
         primaryButton={{
-          type: 'submit',
+          variant: 'primary',
           content: 'Next',
+          type: 'submit',
         }}
       />
     </form>
@@ -328,13 +362,17 @@ const FieldView = ({
 const ReviewView = ({
   handleSubmit,
   values,
+  selectedResource,
+  selectedService,
   isLoading,
   onEdit,
 }: {
   values: Record<string, any>;
-  onEdit: (step: number) => void;
   handleSubmit: FormEventHandler<HTMLFormElement>;
+  selectedResource: ISelectedResource | null;
+  selectedService: ISelectedService | null;
   isLoading?: boolean;
+  onEdit: (step: number) => void;
 }) => {
   const renderFieldView = () => {
     const fields = Object.entries(values.res).filter(
@@ -370,6 +408,7 @@ const ReviewView = ({
     }
     return null;
   };
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3xl">
       <div className="flex flex-col gap-xl">
@@ -388,89 +427,52 @@ const ReviewView = ({
             </div>
           </div>
         </ReviewComponent>
-
-        <ReviewComponent
-          title="Service details"
-          onEdit={() => {
-            onEdit(1);
-          }}
-        >
-          <div className="flex flex-col gap-xl p-xl rounded border border-border-default">
-            <div className="flex flex-col gap-lg pb-xl border-b border-border-default">
-              <div className="flex-1 bodyMd-medium text-text-default">
-                {values?.selectedTemplate?.categoryDisplayName}
-              </div>
-              <div className="text-text-soft bodyMd">
-                {values?.selectedTemplate?.template?.displayName}
-              </div>
-            </div>
-            <div className="flex flex-col gap-lg">
-              <div className="flex-1 bodyMd-medium text-text-default">
-                Node Selector
-              </div>
-              <div className="text-text-soft bodyMd">{values.nodepoolName}</div>
-            </div>
-          </div>
-        </ReviewComponent>
-
-        {renderFieldView()}
-        {values?.res?.resources && (
+        {selectedResource && (
           <ReviewComponent
-            title="Fields"
+            title="Service detail"
             onEdit={() => {
-              onEdit(2);
+              onEdit(1);
             }}
           >
-            <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
-              {Object.entries(values?.res?.resources).map(([key, value]) => {
-                return (
-                  <div
-                    key={key}
-                    className="flex flex-col gap-md  [&:not(:last-child)]:pb-lg   [&:not(:last-child)]:border-b border-border-default"
-                  >
-                    <div className="bodyMd-medium text-text-default">
-                      {titleCase(key)}
-                    </div>
-                    <div className="bodySm text-text-soft">
-                      {Object.entries(value || {}).map(([pKey, pValue]) => (
-                        <div key={pKey}>
-                          {pKey}
-                          {' : '}
-                          {pValue}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="flex flex-col p-xl gap-lg rounded border border-border-default">
+              <div className="flex flex-col gap-md pb-lg border-b border-border-default">
+                <div className="bodyMd-semibold text-text-default">Service</div>
+                <div className="bodySm text-text-soft">
+                  {selectedService?.service?.metadata?.name}
+                </div>
+              </div>
+              <div className="flex flex-col gap-md">
+                <div className="bodyMd-semibold text-text-default">
+                  Resource type
+                </div>
+                <div className="bodySm text-text-soft">
+                  {selectedResource?.resource?.name}
+                </div>
+              </div>
             </div>
           </ReviewComponent>
         )}
+        {renderFieldView()}
       </div>
       <BottomNavigation
         primaryButton={{
-          type: 'submit',
-          loading: isLoading,
+          variant: 'primary',
           content: 'Create',
+          loading: isLoading,
+          type: 'submit',
         }}
       />
     </form>
   );
 };
 
-const ManagedServiceLayout = () => {
+const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
   const { msvtemplates } = useOutletContext<IProjectContext>();
   const navigate = useNavigate();
   const api = useConsoleApi();
 
-  const { project, account } = useParams();
-  const rootUrl = `/${account}/${project}/managed-services`;
-
-  const { cluster } = useOutletContext<IProjectContext>();
-
-  const { data: nodepoolData } = useCustomSwr('/nodepools', async () => {
-    return api.listNodePools({ clusterName: parseName(cluster) });
-  });
+  const { project, account, environment } = useParams();
+  const rootUrl = `/${account}/${project}/env/${environment}/managed-resources`;
 
   const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
     defaultStep: 1,
@@ -482,86 +484,65 @@ const ManagedServiceLayout = () => {
       initialValues: {
         name: '',
         displayName: '',
+        selectedService: null,
+        selectedResource: null,
         res: {},
-        selectedTemplate: null,
         isNameError: false,
-        nodepoolName: '',
       },
-      validationSchema: Yup.object().shape({
+      validationSchema: Yup.object({
         name: Yup.string().test('required', 'Name is required', (v) => {
           return !(currentStep === 2 && !v);
         }),
         displayName: Yup.string().test('required', 'Name is required', (v) => {
           return !(currentStep === 2 && !v);
         }),
-        selectedTemplate: Yup.object({}).required('Template is required.'),
-        // @ts-ignore
-        res: Yup.object({}).test({
-          name: 'res',
-          skipAbsent: true,
-          test(value, ctx) {
-            const selfValue = this.parent;
-
-            let vs = Yup.object({});
-
-            if (selfValue.selectedTemplate && currentStep === 2) {
-              vs = Yup.object(
-                flatMapValidations(
-                  selfValue.selectedTemplate?.template?.fields.reduce(
-                    (acc: any, curr: any) => {
-                      return { ...acc, [curr.name]: curr };
-                    },
-                    {}
-                  )
-                )
-              );
-            }
-
-            const res = vs.validateSync(value, {
-              abortEarly: false,
-              context: ctx,
-            });
-
-            return res;
-          },
-        }),
+        selectedService: Yup.object().required('Service is required'),
+        selectedResource: Yup.object({}).required('Resource type is required'),
       }),
       onSubmit: async (val) => {
-        const selectedTemplate =
-          val.selectedTemplate as unknown as ISelectedTemplate;
+        const selectedService =
+          val.selectedService as unknown as ISelectedService;
+        const selectedResource =
+          val.selectedResource as unknown as ISelectedResource;
         const submit = async () => {
           try {
-            if (!project) {
-              throw new Error('Project is required!.');
+            if (!project || !environment) {
+              throw new Error('Project and Environment is required!.');
             }
             if (
-              !selectedTemplate?.template?.apiVersion ||
-              !selectedTemplate?.template?.kind
+              !selectedService ||
+              (selectedService && !selectedService.service)
             ) {
               throw new Error('Service apiversion or kind error.');
             }
-            const { errors: e } = await api.createProjectMSv({
+            const { errors: e } = await api.createManagedResource({
               projectName: project,
-              pmsvc: {
+              envName: environment,
+              mres: {
                 displayName: val.displayName,
                 metadata: {
                   name: val.name,
                 },
 
                 spec: {
-                  msvcSpec: {
-                    nodeSelector: {
-                      [keyconstants.nodepoolName]: val.nodepoolName,
+                  resourceTemplate: {
+                    apiVersion: selectedResource.resource.apiVersion || '',
+                    kind: selectedResource.resource.kind || '',
+                    spec: {
+                      ...val.res,
                     },
-                    serviceTemplate: {
-                      apiVersion: selectedTemplate.template.apiVersion,
-                      kind: selectedTemplate.template.kind,
-                      spec: {
-                        ...val.res,
-                      },
+                    msvcRef: {
+                      name: parseName(selectedService?.service),
+                      namespace:
+                        selectedService?.service?.spec?.targetNamespace || '',
+                      apiVersion:
+                        selectedService?.service?.spec?.msvcSpec.serviceTemplate
+                          .apiVersion || '',
+                      kind:
+                        selectedService?.service?.spec?.msvcSpec.serviceTemplate
+                          .kind || '',
                     },
                   },
-                  targetNamespace: '',
                 },
               },
             });
@@ -573,7 +554,6 @@ const ManagedServiceLayout = () => {
             handleError(err);
           }
         };
-
         switch (currentStep) {
           case 1:
             nextStep();
@@ -590,61 +570,70 @@ const ManagedServiceLayout = () => {
       },
     });
 
-  const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
-    label: val.metadata?.name || '',
-    value: val.metadata?.name || '',
-    nodepoolStateType: val.spec.nodeLabels[keyconstants.nodepoolStateType],
-  }));
-
-  const statefulNodepools = nodepools.filter(
-    (np) => np.nodepoolStateType === 'stateful'
-  );
-
   useEffect(() => {
-    const selectedTemplate =
-      values.selectedTemplate as unknown as ISelectedTemplate;
-    if (selectedTemplate?.template?.fields) {
-      setValues((v) => ({
-        ...v,
+    const selectedResource =
+      values?.selectedResource as unknown as ISelectedResource;
+    if (selectedResource?.resource?.fields) {
+      setValues({
+        ...values,
         res: {
           ...flatM(
-            selectedTemplate?.template?.fields.reduce((acc, curr) => {
-              return { ...acc, [curr.name]: curr };
+            selectedResource?.resource?.fields.reduce((acc, curr) => {
+              return { ...acc, [curr.name]: curr.defaultValue };
             }, {})
           ),
         },
-      }));
+      });
     }
-  }, [values.selectedTemplate]);
+  }, [values.selectedResource]);
+
+  const resources = useMapper(
+    [
+      ...(getManagedTemplate({
+        templates: msvtemplates || [],
+        kind:
+          (values.selectedService as unknown as ISelectedService)?.service?.spec
+            ?.msvcSpec.serviceTemplate.kind || '',
+        apiVersion:
+          (values.selectedService as unknown as ISelectedService)?.service?.spec
+            ?.msvcSpec.serviceTemplate.apiVersion || '',
+      })?.resources || []),
+    ],
+    (res) => ({
+      label: res.displayName,
+      value: res.name,
+      resource: res,
+    })
+  );
 
   return (
     <MultiStepProgressWrapper
-      title="Let’s create new managed service."
+      title="Let’s create new managed resource."
       subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
       backButton={{
-        content: 'Back to managed services',
+        content: 'Back to managed resources',
         to: rootUrl,
       }}
     >
       <MultiStepProgress.Root currentStep={currentStep} jumpStep={jumpStep}>
-        <MultiStepProgress.Step label="Select template" step={1}>
+        <MultiStepProgress.Step label="Select service" step={1}>
           <TemplateView
             isLoading={isLoading}
-            templates={msvtemplates}
+            services={services}
             handleChange={handleChange}
             handleSubmit={handleSubmit}
             errors={errors}
             values={values}
+            resources={resources}
           />
         </MultiStepProgress.Step>
-        <MultiStepProgress.Step label="Configure managed service" step={2}>
+        <MultiStepProgress.Step label="Configure managed resource" step={2}>
           <FieldView
-            selectedTemplate={values.selectedTemplate}
+            selectedResource={values.selectedResource}
             values={values}
             errors={errors}
             handleChange={handleChange}
             handleSubmit={handleSubmit}
-            nodepools={statefulNodepools}
           />
         </MultiStepProgress.Step>
         <MultiStepProgress.Step label="Review" step={3}>
@@ -652,11 +641,25 @@ const ManagedServiceLayout = () => {
             onEdit={jumpStep}
             values={values}
             handleSubmit={handleSubmit}
+            selectedService={values.selectedService}
+            selectedResource={values.selectedResource}
             isLoading={isLoading}
           />
         </MultiStepProgress.Step>
       </MultiStepProgress.Root>
     </MultiStepProgressWrapper>
+  );
+};
+
+const ManagedServiceLayout = () => {
+  const { promise } = useLoaderData<typeof loader>();
+  return (
+    <LoadingComp data={promise}>
+      {({ managedServicesData }) => {
+        const managedServicesList = parseNodes(managedServicesData);
+        return <App services={managedServicesList} />;
+      }}
+    </LoadingComp>
   );
 };
 
