@@ -48,6 +48,21 @@ spec:
             type: string
           metadata:
             type: object
+          output:
+            properties:
+              credentialsRef:
+                description: refers to a k8s secret that exists in the same namespace
+                  as managed resource
+                properties:
+                  name:
+                    description: .metadata.name of the resource
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - credentialsRef
+            type: object
           spec:
             description: PrefixSpec defines the desired state of Prefix
             properties:
@@ -73,30 +88,20 @@ spec:
                 - name
                 - namespace
                 type: object
-              output:
-                properties:
-                  credentials:
-                    properties:
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - name
-                    type: object
-                required:
-                - credentials
-                type: object
-              prefixKey:
-                type: string
+              redisDB:
+                default: 0
+                type: integer
             required:
             - msvcRef
+            - redisDB
             type: object
           status:
             properties:
               checkList:
                 items:
                   properties:
+                    debug:
+                      type: boolean
                     description:
                       type: string
                     name:
@@ -169,6 +174,8 @@ spec:
                   type: object
                 type: array
             type: object
+        required:
+        - output
         type: object
     served: true
     storage: true

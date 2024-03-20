@@ -98,7 +98,7 @@ const (
 	ProjectManagedServiceNameKey string = "kloudlite.io/project-msvc.name"
 	ProjectManagedServiceRefKey  string = "kloudlite.io/project-msvc-ref"
 
-	RecordVersionKey string = "kloudlite.io/record-version"
+	RecordVersionKey string = "kloudlite.io/observability.record-version"
 
 	// changes controller behaviour
 	ClearStatusKey string = "kloudlite.io/clear-status"
@@ -317,3 +317,5 @@ const (
 	DefaultIngressClass  = "nginx"
 	DefaultClusterIssuer = "kl-cert-issuer"
 )
+
+const KloudliteLabelPrefix = "kloudlite.io"

@@ -10,10 +10,10 @@ import (
 )
 
 type Route struct {
-	App    string `json:"app,omitempty"`
-	Lambda string `json:"lambda,omitempty"`
-	Path   string `json:"path"`
-	Port   uint16 `json:"port"`
+	App string `json:"app"`
+	// Lambda string `json:"lambda,omitempty"`
+	Path string `json:"path"`
+	Port uint16 `json:"port"`
 	// +kubebuilder:default=false
 	Rewrite bool `json:"rewrite,omitempty"`
 }
@@ -63,10 +63,10 @@ type RouterSpec struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/router\\.ingress-class",name=Class,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/router\\.domains",name=domains,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Router is the Schema for the routers API

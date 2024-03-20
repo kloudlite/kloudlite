@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	elasticsearchmsvcv1 "github.com/kloudlite/operator/apis/elasticsearch.msvc/v1"
@@ -47,9 +48,23 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	RealMsvcCreated string = "real-msvc-created"
-	RealMsvcReady   string = "real-msvc-ready"
+	// RealMsvcCreated string = "real-msvc-created"
+	// RealMsvcReady   string = "real-msvc-ready"
+
+	ManagedServiceApplied string = "managed-service-applied"
+	ManagedServiceReady   string = "managed-service-ready"
+
+	ManagedServiceDeleted string = "managed-service-deleted"
 )
+
+var ApplyCheckList = []rApi.CheckMeta{
+	{Name: ManagedServiceApplied, Title: "Managed Service Applied"},
+	{Name: ManagedServiceReady, Title: "Managed Service Ready"},
+}
+
+var DeleteCheckList = []rApi.CheckMeta{
+	{Name: ManagedServiceDeleted, Title: "managed-service-deleted"},
+}
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status,verbs=get;update;patch
@@ -83,7 +98,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureRealMsvcCreated(req); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureChecks(ManagedServiceApplied, ManagedServiceReady); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -103,6 +122,12 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepRes
 	req.LogPreCheck("finalizing")
 	defer req.LogPostCheck("finalizing")
 
+	if !slices.Equal(req.Object.Status.CheckList, DeleteCheckList) {
+		if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
+			return step
+		}
+	}
+
 	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
 		return result
 	}
@@ -112,9 +137,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepRes
 
 func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "real-managed-resource-created"
+	checkName := ManagedServiceApplied
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -129,8 +154,10 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 
 		"name":       obj.Name,
 		"namespace":  obj.Namespace,
-		"labels":     obj.GetLabels(),
 		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+
+		"labels":      obj.GetLabels(),
+		"annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
 
 		"node-selector":         obj.Spec.NodeSelector,
 		"tolerations":           obj.Spec.Tolerations,
@@ -159,9 +186,9 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 
 func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "real-managed-resource-ready"
+	checkName := ManagedServiceReady
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -191,7 +218,7 @@ func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedServic
 
 	if !realMsvcObj.Status.IsReady {
 		if realMsvcObj.Status.Message == nil {
-			return req.CheckFailed(RealMsvcReady, check, "waiting for real managed service to reconcile ...").Err(nil)
+			return req.CheckFailed(checkName, check, "waiting for real managed service to reconcile ...").Err(nil)
 		}
 		b, err := realMsvcObj.Status.Message.MarshalJSON()
 		if err != nil {

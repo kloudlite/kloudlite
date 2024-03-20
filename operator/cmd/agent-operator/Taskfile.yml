@@ -23,10 +23,15 @@ tasks:
     preconditions:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    vars:
+      push: "{{.push | default false}}"
     cmds:
       - task: build
       - nerdctl build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}}
-      # - nerdctl push {{.Image}}
+      - |+
+        if [ "{{.push}}" = "true" ]; then
+          nerdctl push {{.Image}}
+        fi
 
   container:build-and-push:
     preconditions:

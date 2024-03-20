@@ -46,6 +46,21 @@ spec:
             type: string
           metadata:
             type: object
+          output:
+            properties:
+              credentialsRef:
+                description: refers to a k8s secret that exists in the same namespace
+                  as managed service
+                properties:
+                  name:
+                    description: .metadata.name of the resource
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - credentialsRef
+            type: object
           spec:
             description: ClusterManagedServiceSpec defines the desired state of ClusterManagedService
             properties:
@@ -125,6 +140,8 @@ spec:
               checkList:
                 items:
                   properties:
+                    debug:
+                      type: boolean
                     description:
                       type: string
                     name:
@@ -197,6 +214,8 @@ spec:
                   type: object
                 type: array
             type: object
+        required:
+        - output
         type: object
     served: true
     storage: true
