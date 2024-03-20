@@ -73,10 +73,6 @@ func (c *Client) UserExists(ctx context.Context, dbName string, userName string)
 }
 
 func (c *Client) UpdateUserPassword(ctx context.Context, dbName string, userName string, password string) error {
-	if !c.isConnected {
-		return ErrNotConnected
-	}
-
 	exists, err := c.userExists(ctx, dbName, userName)
 	if err != nil {
 		return err
