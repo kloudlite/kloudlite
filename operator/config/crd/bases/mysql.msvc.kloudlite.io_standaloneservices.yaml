@@ -151,7 +151,6 @@ spec:
                     title:
                       type: string
                   required:
-                  - debug
                   - name
                   - title
                   type: object
