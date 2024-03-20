@@ -13,6 +13,7 @@ type Result interface {
 	Continue(bool) Result
 	RequeueAfter(time.Duration) Result
 	Err(error) Result
+
 	NoRequeue() Result
 }
 

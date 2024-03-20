@@ -3,11 +3,16 @@ package functions
 import "strings"
 
 // MapSet sets a key, value in a map. If a map is nil, it firsts initializes the map
-func MapSet[T any](m *map[string]T, key string, value T) {
+func mapSet[K comparable, V any](m *map[K]V, key K, value V) {
 	if *m == nil {
-		*m = make(map[string]T)
+		*m = make(map[K]V)
 	}
 	(*m)[key] = value
+}
+
+// MapSet sets a key, value in a map. If a map is nil, it firsts initializes the map
+func MapSet[T any](m *map[string]T, key string, value T) {
+	mapSet(m, key, value)
 }
 
 // MapContains checks if `destination` contains all keys from `source`
@@ -67,4 +72,10 @@ func MapFilter[K string, V any](m map[K]V, prefix string) map[K]V {
 	}
 
 	return result
+}
+
+func MapJoin[K comparable, V any](first *map[K]V, second map[K]V) {
+	for k, v := range second {
+		mapSet(first, k, v)
+	}
 }

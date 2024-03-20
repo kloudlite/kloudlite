@@ -63,6 +63,31 @@ const (
 	LabelHelmChartName       string = "kloudlite.io/helm-chart.name"
 )
 
+const (
+	ClusterPrerequisitesReady string = "cluster-prerequisites-ready"
+
+	HelmJobRBACReady                    string = "helm-job-rbac-ready"
+	HelmInstallJobAppliedAndCompleted   string = "helm-install-job-applied-and-completed"
+	HelmUninstallJobAppliedAndCompleted string = "helm-uninstall-job-applied-and-completed"
+
+	DefaultsPatched string = "defaults-patched"
+	KeyMsvcOutput   string = "msvc-output"
+
+	AnnotationCurrentStorageSize string = "kloudlite.io/msvc.storage-size"
+)
+
+var ApplyCheckList = []rApi.CheckMeta{
+	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
+	{Name: HelmJobRBACReady, Title: "Helm Job RBAC Ready"},
+	{Name: HelmInstallJobAppliedAndCompleted, Title: "Helm Install Job Applied and Completed"},
+}
+
+// DefaultsPatched string = "defaults-patched"
+var DeleteCheckList = []rApi.CheckMeta{
+	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
+	{Name: HelmUninstallJobAppliedAndCompleted, Title: "Helm Uninstall Job Applied And Completed"},
+}
+
 func getJobName(resName string) string {
 	return fmt.Sprintf("helm-job-%s", resName)
 }
@@ -76,8 +101,6 @@ func getJobSvcAccountName() string {
 // +kubebuilder:rbac:groups=helm.kloudlite.io,resources=helmcharts/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	// return ctrl.Result{}, nil
-
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.HelmChart{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -109,6 +132,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureChecks(DefaultsPatched, HelmJobRBACReady, HelmInstallJobAppliedAndCompleted); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.ensureJobRBAC(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -123,9 +154,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "patch-defaults"
+	checkName := DefaultsPatched
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -158,28 +189,48 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.HelmChart]) stepRes
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
-	checkName := "finalize"
+	obj := req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+
+	checkName := "finalizing"
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
+
+	if !slices.Equal(obj.Status.CheckList, DeleteCheckList) {
+		if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
+			return step
+		}
+		return req.Done().RequeueAfter(1 * time.Second)
+	}
 
 	if step := r.startUninstallJob(req); !step.ShouldProceed() {
 		return step
 	}
 
-	// if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
-	// 	return step
-	// }
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
 
 	return req.Finalize()
 }
 
 func (r *Reconciler) ensureJobRBAC(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(ensureJobRBAC)
-	defer req.LogPostCheck(ensureJobRBAC)
+	checkName := HelmJobRBACReady
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	jobSvcAcc := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: getJobSvcAccountName(), Namespace: obj.Namespace}}
 
@@ -192,7 +243,7 @@ func (r *Reconciler) ensureJobRBAC(req *rApi.Request[*crdsv1.HelmChart]) stepRes
 	})
 
 	crb := rbacv1.ClusterRoleBinding{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-rb", getJobSvcAccountName())}}
-	controllerutil.CreateOrUpdate(ctx, r.Client, &crb, func() error {
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, &crb, func() error {
 		if crb.Annotations == nil {
 			crb.Annotations = make(map[string]string, 1)
 		}
@@ -219,11 +270,13 @@ func (r *Reconciler) ensureJobRBAC(req *rApi.Request[*crdsv1.HelmChart]) stepRes
 			})
 		}
 		return nil
-	})
+	}); err != nil {
+		return fail(err)
+	}
 
 	check.Status = true
-	if check != obj.Status.Checks[ensureJobRBAC] {
-		obj.Status.Checks[ensureJobRBAC] = check
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -254,10 +307,16 @@ func valuesToYaml(values map[string]apiextensionsv1.JSON) (string, error) {
 
 func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(installOrUpgradeJob)
-	defer req.LogPostCheck(installOrUpgradeJob)
+	checkName := HelmInstallJobAppliedAndCompleted
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
@@ -266,7 +325,7 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 
 	values, err := valuesToYaml(obj.Spec.Values)
 	if err != nil {
-		return req.CheckFailed(installOrUpgradeJob, check, err.Error()).Err(nil)
+		return fail(err).Err(nil)
 	}
 
 	if job == nil {
@@ -301,7 +360,7 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 			"values-yaml":  values,
 		})
 		if err != nil {
-			return req.CheckFailed(installOrUpgradeJob, check, err.Error()).Err(nil)
+			return fail(err).Err(nil)
 		}
 
 		rr, err := r.yamlClient.ApplyYAML(ctx, b)
@@ -327,38 +386,37 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
-	pod, err := job_manager.GetLatestPod(ctx, r.Client, job.Namespace, job.Name)
-	if err != nil {
-		return req.CheckFailed(installOrUpgradeJob, check, "pod not found").Err(nil)
-	}
-
-	if pod != nil {
-		for _, v := range pod.Status.ContainerStatuses {
-			if (v.State.Waiting != nil && v.State.Waiting.Reason == "ImagePullBackOff") || (v.State.Waiting != nil && v.State.Waiting.Reason == "ErrImagePull") {
-				if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-					return req.CheckFailed(installOrUpgradeJob, check, err.Error())
-				}
-				return req.Done()
-			}
-		}
-	}
+	// pod, err := job_manager.GetLatestPod(ctx, r.Client, job.Namespace, job.Name)
+	// if err != nil {
+	// 	return req.CheckFailed(installOrUpgradeJob, check, "pod not found").Err(nil)
+	// }
+	//
+	// if pod != nil {
+	// 	for _, v := range pod.Status.ContainerStatuses {
+	// 		if (v.State.Waiting != nil && v.State.Waiting.Reason == "ImagePullBackOff") || (v.State.Waiting != nil && v.State.Waiting.Reason == "ErrImagePull") {
+	// 			if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
+	// 				return req.CheckFailed(installOrUpgradeJob, check, err.Error())
+	// 			}
+	// 			return req.Done()
+	// 		}
+	// 	}
+	// }
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return req.CheckFailed(installOrUpgradeJob, check, "waiting for job to finish execution").Err(nil)
+		return fail(fmt.Errorf("waiting for job to finish execution")).Err(nil)
 	}
 
 	check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
-	check.Status = job.Status.Succeeded > 0
+	if job.Status.Failed > 0 {
+		return fail(fmt.Errorf("install or upgrade job failed"))
+	}
 
-	if check != obj.Status.Checks[installOrUpgradeJob] {
-		obj.Status.Checks[installOrUpgradeJob] = check
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
-	}
-
-	if !check.Status {
-		return req.Done()
 	}
 
 	return req.Next()
@@ -366,10 +424,16 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 
 func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(uninstallJob)
-	defer req.LogPostCheck(uninstallJob)
+	checkName := HelmUninstallJobAppliedAndCompleted
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getJobName(obj.Name)), &batchv1.Job{})
 	if err != nil {
@@ -400,12 +464,12 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 			"post-uninstall": obj.Spec.PostUninstall,
 		})
 		if err != nil {
-			return req.CheckFailed(uninstallJob, check, err.Error()).Err(nil)
+			return fail(err).Err(nil)
 		}
 
 		rr, err := r.yamlClient.ApplyYAML(ctx, b)
 		if err != nil {
-			return req.CheckFailed(uninstallJob, check, err.Error()).Err(nil)
+			return fail(err).Err(nil)
 		}
 
 		req.AddToOwnedResources(rr...)
@@ -416,35 +480,36 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(uninstallJob, check, "waiting for previous jobs to finish execution").Err(nil)
+			return fail(fmt.Errorf("waiting for previous jobs to finish execution")).Err(nil)
 		}
+
 		// deleting that job
 		if err := r.Delete(ctx, job, &client.DeleteOptions{
 			GracePeriodSeconds: fn.New(int64(10)),
 			Preconditions:      &metav1.Preconditions{},
 			PropagationPolicy:  fn.New(metav1.DeletePropagationBackground),
 		}); err != nil {
-			return req.CheckFailed(uninstallJob, check, err.Error())
+			return fail(err)
 		}
 
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return req.CheckFailed(uninstallJob, check, "waiting for job to finish execution").Err(nil)
+		return fail(fmt.Errorf("waiting for job to finish execution")).Err(nil)
 	}
 
-	check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
-	check.Status = job.Status.Succeeded > 0
-	if check != obj.Status.Checks[uninstallJob] {
-		obj.Status.Checks[uninstallJob] = check
+	// check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
+	if job.Status.Failed > 0 {
+		return fail(fmt.Errorf("helm deletion job failed"))
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
-	}
-
-	if !check.Status {
-		return req.Done()
 	}
 
 	// deleting that job
@@ -453,7 +518,7 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 		Preconditions:      &metav1.Preconditions{},
 		PropagationPolicy:  fn.New(metav1.DeletePropagationBackground),
 	}); err != nil {
-		return req.CheckFailed(uninstallJob, check, err.Error())
+		return fail(err)
 	}
 
 	return req.Next()

@@ -24,6 +24,7 @@ import (
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	raw_json "github.com/kloudlite/operator/pkg/raw-json"
 )
 
 type Request[T Resource] struct {
@@ -171,26 +172,27 @@ func (r *Request[T]) EnsureCheckList(expected []CheckMeta) stepResult.Result {
 }
 
 func (r *Request[T]) EnsureChecks(names ...string) stepResult.Result {
-	obj, ctx, checks := r.Object, r.Context(), r.Object.GetStatus().Checks
-	nChecks := len(checks)
+	obj, ctx := r.Object, r.Context()
 
-	if checks == nil {
-		checks = map[string]Check{}
-	}
+	oldChecks := obj.GetStatus().Checks
+	checks := map[string]Check{}
 
-	for i := range names {
-		if _, ok := checks[names[i]]; !ok {
-			checks[names[i]] = Check{
+	for _, name := range names {
+		if v, ok := oldChecks[name]; ok {
+			checks[name] = v
+			continue
+		}
+		if _, ok := checks[name]; !ok {
+			checks[name] = Check{
 				State: WaitingState,
 			}
 		}
 	}
 
-	if nChecks != len(checks) {
+	if !fn.MapContains(oldChecks, checks) {
 		obj.GetStatus().Checks = checks
 		if err := r.client.Status().Update(ctx, obj); err != nil {
 			return r.Done().Err(err)
-			// return r.FailWithOpError(err)
 		}
 	}
 
@@ -289,10 +291,14 @@ func (r *Request[T]) CheckFailed(name string, check Check, msg string) stepResul
 		r.Object.GetStatus().Checks = make(map[string]Check, 1)
 	}
 
-	r.Object.GetStatus().Checks[name] = check
-	r.Object.GetStatus().Message.Set(name, check.Message)
-	r.Object.GetStatus().IsReady = false
-	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
+	status := r.Object.GetStatus()
+
+	status.Checks[name] = check
+	status.Message = &raw_json.RawJson{}
+	status.Message.Set(name, msg)
+	status.IsReady = false
+	status.LastReconcileTime = &metav1.Time{Time: time.Now()}
+
 	if err := r.client.Status().Update(r.ctx, r.Object); err != nil {
 		return stepResult.New().Err(err)
 	}
@@ -320,10 +326,15 @@ func (r *Request[T]) Next() stepResult.Result {
 
 func (r *Request[T]) UpdateStatus() stepResult.Result {
 	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
+
 	checks := r.Object.GetStatus().Checks
 
-	for name := range checks {
-		if checks[name].Status {
+	for name, check := range checks {
+		if check.State == RunningState {
+			check.State = ErroredState
+		}
+
+		if check.Status {
 			if err := r.Object.GetStatus().Message.Delete(name); err != nil {
 				return stepResult.New().Err(err)
 			}
@@ -331,6 +342,9 @@ func (r *Request[T]) UpdateStatus() stepResult.Result {
 			if r.Object.GetStatus().Message.Len() == 0 {
 				r.Object.GetStatus().Message = nil
 			}
+
+			check.State = CompletedState
+			checks[name] = check
 		}
 	}
 
@@ -352,6 +366,14 @@ func (r *Request[T]) PreReconcile() {
 	blue := color.New(color.FgBlue).SprintFunc()
 	r.reconStartTime = time.Now()
 	r.internalLogger.Infof(blue("[reconcile:start] start"))
+}
+
+var checkStates = map[State]string{
+	WaitingState: "🟡",
+	// RunningState: "🏃",
+	RunningState:   "🏇🏽",
+	ErroredState:   "🔴",
+	CompletedState: "🟢",
 }
 
 func (r *Request[T]) PostReconcile() {
@@ -399,14 +421,17 @@ func (r *Request[T]) PostReconcile() {
 
 	m["kloudlite.io/checks"] = func() string {
 		checks := make([]string, 0, len(r.Object.GetStatus().Checks))
-		for _, check := range r.Object.GetStatus().Checks {
-			if check.Status {
-				checks = append(checks, "🟢")
-				continue
+		currentCheck := ""
+		for k, check := range r.Object.GetStatus().Checks {
+			if check.State == RunningState || check.State == ErroredState {
+				currentCheck = k
 			}
-			checks = append(checks, "🔴")
+			checks = append(checks, checkStates[check.State])
 		}
 
+		if currentCheck != "" {
+			return fmt.Sprintf("%s (%s)", strings.Join(checks, ""), currentCheck)
+		}
 		return strings.Join(checks, "")
 	}()
 
@@ -479,16 +504,11 @@ func (r *Request[T]) AddToOwnedResources(refs ...ResourceRef) {
 
 func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 	ctx, obj := r.Context(), r.Object
-	check := Check{Generation: r.Object.GetGeneration()}
 
 	checkName := "cleanupLogic"
-
-	test := r.Object.GetName()
-	_ = test
+	check := Check{Generation: r.Object.GetGeneration()}
 
 	resources := r.Object.GetStatus().Resources
-
-	// deletionStatus := make(map[string]bool)
 
 	objects := make([]client.Object, 0, len(resources))
 
@@ -504,50 +524,6 @@ func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 
 		objects = append(objects, res)
 	}
-
-	// 	resLabel := fmt.Sprintf("apiVersion: %s, kind: %s, name: %s, namespace: %s", resources[i].APIVersion, resources[i].Kind, resources[i].Name, resources[i].Namespace)
-	//
-	// 	deletionStatus[resLabel] = false
-	//
-	// 	if err := r.client.Get(ctx, client.ObjectKeyFromObject(res), res); err != nil {
-	// 		if !apiErrors.IsNotFound(err) {
-	// 			return r.CheckFailed(checkName, check, err.Error())
-	// 		}
-	//
-	// 		deletionStatus[resLabel] = true
-	// 		continue
-	// 	}
-	//
-	// 	if err := r.client.Update(ctx, res); err != nil {
-	// 		if !apiErrors.IsNotFound(err) {
-	// 			return r.CheckFailed(checkName, check, err.Error())
-	// 		}
-	// 	}
-	//
-	// 	r.Logger.Infof("deleting resource (%s), as its parent is finalizing", resLabel)
-	//
-	// 	if err := r.client.Delete(ctx, res, &client.DeleteOptions{
-	// 		GracePeriodSeconds: fn.New(int64(30)),
-	// 		PropagationPolicy:  fn.New(metav1.DeletePropagationForeground),
-	// 	}); err != nil {
-	// 		if !apiErrors.IsNotFound(err) {
-	// 			return r.CheckFailed(checkName, check, err.Error())
-	// 		}
-	// 		return r.CheckFailed(checkName, check, fmt.Sprintf("waiting for deletion of resource %s", resLabel)).Err(nil)
-	// 	}
-	//
-	// 	if res.GetDeletionTimestamp() == nil {
-	// 		if err := r.client.Delete(ctx, res); err != nil {
-	// 			return r.CheckFailed(checkName, check, err.Error())
-	// 		}
-	// 	}
-	// }
-	//
-	// for k, v := range deletionStatus {
-	// 	if !v {
-	// 		return r.CheckFailed(checkName, check, fmt.Sprintf("waiting for all owned resource (%s) to be removed from k8s", k))
-	// 	}
-	// }
 
 	if err := fn.DeleteAndWait(ctx, r.Logger, r.client, objects...); err != nil {
 		return r.CheckFailed(checkName, check, err.Error())
