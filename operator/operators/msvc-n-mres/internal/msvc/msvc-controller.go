@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	elasticsearchmsvcv1 "github.com/kloudlite/operator/apis/elasticsearch.msvc/v1"
@@ -55,9 +56,11 @@ const (
 	ManagedServiceReady   string = "managed-service-ready"
 
 	ManagedServiceDeleted string = "managed-service-deleted"
+	DefaultsPatched       string = "defaults-patched"
 )
 
 var ApplyCheckList = []rApi.CheckMeta{
+	{Name: DefaultsPatched, Title: "Defaults Patched"},
 	{Name: ManagedServiceApplied, Title: "Managed Service Applied"},
 	{Name: ManagedServiceReady, Title: "Managed Service Ready"},
 }
@@ -106,6 +109,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.ensureRealMsvcCreated(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -116,6 +123,44 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
+}
+
+func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+
+	checkName := DefaultsPatched
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	hasPatched := false
+
+	if obj.Output.CredentialsRef.Name == "" {
+		hasPatched = true
+		obj.Output.CredentialsRef.Name = fmt.Sprintf("msvc-%s-creds", obj.Name)
+	}
+
+	if hasPatched {
+		if err := r.Update(ctx, obj); err != nil {
+			return fail(err)
+		}
+		return req.Done().RequeueAfter(500 * time.Millisecond)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
@@ -162,6 +207,8 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 		"node-selector":         obj.Spec.NodeSelector,
 		"tolerations":           obj.Spec.Tolerations,
 		"service-template-spec": obj.Spec.ServiceTemplate.Spec,
+
+		"output": obj.Output,
 	})
 	if err != nil {
 		return fail(err).Err(nil)

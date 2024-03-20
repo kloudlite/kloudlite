@@ -93,7 +93,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			mresSecret := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(mr.Namespace, mr.Output.Credentials.Name), mresSecret); err != nil {
+			if err := r.Get(ctx, fn.NN(mr.Namespace, mr.Output.CredentialsRef.Name), mresSecret); err != nil {
 				r.logger.Infof("mres secret for resource (%s), not found", obj.GetName())
 				mresSecret = nil
 			}
@@ -117,7 +117,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			pmsvcSecret := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(pmsvc.Spec.TargetNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), pmsvcSecret); err != nil {
+			if err := r.Get(ctx, fn.NN(pmsvc.Spec.TargetNamespace, pmsvc.Output.CredentialsRef.Name), pmsvcSecret); err != nil {
 				r.logger.Infof("pmsvc secret for service (%s), not found", obj.GetName())
 				pmsvcSecret = nil
 			}
