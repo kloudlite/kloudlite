@@ -185,7 +185,7 @@ type Mutation {
 }
 
 type Build @key(fields: "id") {
-  id: ID!
+  id: ID! @isLoggedInAndVerified @hasAccount
 }
 
 extend type App {

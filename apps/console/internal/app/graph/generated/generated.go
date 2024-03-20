@@ -388,8 +388,8 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec struct {
-		ResourceName     func(childComplexity int) int
-		ResourceTemplate func(childComplexity int) int
+		ResourceNamePrefix func(childComplexity int) int
+		ResourceTemplate   func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec struct {
@@ -440,7 +440,6 @@ type ComplexityRoot struct {
 
 	Github__com___kloudlite___operator___apis___crds___v1__Route struct {
 		App     func(childComplexity int) int
-		Lambda  func(childComplexity int) int
 		Path    func(childComplexity int) int
 		Port    func(childComplexity int) int
 		Rewrite func(childComplexity int) int
@@ -2481,12 +2480,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__Intercept.ToDevice(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.resourceName":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.ResourceName == nil {
+	case "Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.resourceNamePrefix":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.ResourceNamePrefix == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.ResourceName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.ResourceNamePrefix(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.resourceTemplate":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec.ResourceTemplate == nil {
@@ -2676,13 +2675,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__Route.App(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__Route.lambda":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__Route.Lambda == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__Route.Lambda(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___crds___v1__Route.path":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__Route.Path == nil {
@@ -5607,7 +5599,7 @@ type Mutation {
 }
 
 type Build @key(fields: "id") {
-  id: ID!
+  id: ID! @isLoggedInAndVerified @hasAccount
 }
 
 extend type App {
@@ -5796,7 +5788,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec @shareable {
-  resourceName: String
+  resourceNamePrefix: String
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate!
 }
 
@@ -5847,8 +5839,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__RateLimit @shareable
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Route @shareable {
-  app: String
-  lambda: String
+  app: String!
   path: String!
   port: Int!
   rewrite: Boolean
@@ -5911,7 +5902,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 }
 
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
-  debug: Boolean!
+  debug: Boolean
   description: String
   name: String!
   title: String!
@@ -6111,7 +6102,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
-  resourceName: String
+  resourceNamePrefix: String
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn!
 }
 
@@ -6162,8 +6153,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__RouteIn {
-  app: String
-  lambda: String
+  app: String!
   path: String!
   port: Int!
   rewrite: Boolean
@@ -10369,8 +10359,34 @@ func (ec *executionContext) _Build_id(ctx context.Context, field graphql.Collect
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return obj.ID, nil
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, obj, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, obj, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(repos.ID); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/kloudlite/api/pkg/repos.ID`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17867,8 +17883,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceName(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceNamePrefix(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceNamePrefix(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -17881,7 +17897,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ResourceName, nil
+		return obj.ResourceNamePrefix, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17895,7 +17911,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceNamePrefix(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec",
 		Field:      field,
@@ -19101,55 +19117,17 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_app(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Route",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__Route_lambda(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1Route) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_lambda(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Lambda, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_lambda(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Route",
 		Field:      field,
@@ -19694,8 +19672,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 			switch field.Name {
 			case "app":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_app(ctx, field)
-			case "lambda":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_lambda(ctx, field)
 			case "path":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_path(ctx, field)
 			case "port":
@@ -20700,14 +20676,11 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*bool)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24222,8 +24195,8 @@ func (ec *executionContext) fieldContext_ManagedResource_spec(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "resourceName":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceName(ctx, field)
+			case "resourceNamePrefix":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceNamePrefix(ctx, field)
 			case "resourceTemplate":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceTemplate(ctx, field)
 			}
@@ -40746,22 +40719,22 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"resourceName", "resourceTemplate"}
+	fieldsInOrder := [...]string{"resourceNamePrefix", "resourceTemplate"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "resourceName":
+		case "resourceNamePrefix":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceName"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceNamePrefix"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ResourceName = data
+			it.ResourceNamePrefix = data
 		case "resourceTemplate":
 			var err error
 
@@ -41149,7 +41122,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"app", "lambda", "path", "port", "rewrite"}
+	fieldsInOrder := [...]string{"app", "path", "port", "rewrite"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -41160,20 +41133,11 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.App = data
-		case "lambda":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lambda"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Lambda = data
 		case "path":
 			var err error
 
@@ -45587,8 +45551,8 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec")
-		case "resourceName":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceName(ctx, field, obj)
+		case "resourceNamePrefix":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceNamePrefix(ctx, field, obj)
 		case "resourceTemplate":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceTemplate(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -45957,8 +45921,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__Route")
 		case "app":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Route_app(ctx, field, obj)
-		case "lambda":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Route_lambda(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "path":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__Route_path(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -46361,9 +46326,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___pkg___operator__CheckMeta")
 		case "debug":
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "description":
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx, field, obj)
 		case "name":

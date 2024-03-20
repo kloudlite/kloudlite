@@ -22,9 +22,9 @@ func getUserId(ctx context.Context) (repos.ID, error) {
 }
 
 func toRegistryContext(ctx context.Context) (domain.RegistryContext, error) {
-	session, ok := ctx.Value("user-session").(*common.AuthSession)
-
 	errMsgs := []string{}
+
+	session, ok := ctx.Value("user-session").(*common.AuthSession)
 	if !ok {
 		errMsgs = append(errMsgs, fmt.Sprintf("context values %q is missing", "user-session"))
 	}
@@ -47,5 +47,4 @@ func toRegistryContext(ctx context.Context) (domain.RegistryContext, error) {
 		UserName:  session.UserName,
 		UserEmail: session.UserEmail,
 	}, errors.NewE(err)
-
 }

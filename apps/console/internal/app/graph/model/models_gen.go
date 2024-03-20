@@ -317,13 +317,13 @@ type GithubComKloudliteOperatorApisCrdsV1InterceptIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
-	ResourceName     *string                                                   `json:"resourceName,omitempty"`
-	ResourceTemplate *GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate `json:"resourceTemplate"`
+	ResourceNamePrefix *string                                                   `json:"resourceNamePrefix,omitempty"`
+	ResourceTemplate   *GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate `json:"resourceTemplate"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn struct {
-	ResourceName     *string                                                     `json:"resourceName,omitempty"`
-	ResourceTemplate *GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn `json:"resourceTemplate"`
+	ResourceNamePrefix *string                                                     `json:"resourceNamePrefix,omitempty"`
+	ResourceTemplate   *GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn `json:"resourceTemplate"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
@@ -419,19 +419,17 @@ type GithubComKloudliteOperatorApisCrdsV1RateLimitIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1Route struct {
-	App     *string `json:"app,omitempty"`
-	Lambda  *string `json:"lambda,omitempty"`
-	Path    string  `json:"path"`
-	Port    int     `json:"port"`
-	Rewrite *bool   `json:"rewrite,omitempty"`
+	App     string `json:"app"`
+	Path    string `json:"path"`
+	Port    int    `json:"port"`
+	Rewrite *bool  `json:"rewrite,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1RouteIn struct {
-	App     *string `json:"app,omitempty"`
-	Lambda  *string `json:"lambda,omitempty"`
-	Path    string  `json:"path"`
-	Port    int     `json:"port"`
-	Rewrite *bool   `json:"rewrite,omitempty"`
+	App     string `json:"app"`
+	Path    string `json:"path"`
+	Port    int    `json:"port"`
+	Rewrite *bool  `json:"rewrite,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1RouterSpec struct {
@@ -533,7 +531,7 @@ type GithubComKloudliteOperatorPkgOperatorCheck struct {
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
-	Debug       bool    `json:"debug"`
+	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Name        string  `json:"name"`
 	Title       string  `json:"title"`

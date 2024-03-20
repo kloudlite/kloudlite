@@ -74,4 +74,3 @@ func (r *Resolver) RouterIn() generated.RouterInResolver { return &routerInResol
 
 type routerResolver struct{ *Resolver }
 type routerInResolver struct{ *Resolver }
-

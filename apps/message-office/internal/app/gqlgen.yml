@@ -24,8 +24,11 @@ resolver:
   package: graph
 
 autobind:
-  - "kloudlite.io/pkg/errors"
+  - "github.com/kloudlite/api/pkg/errors"
   # - "kloudlite.io/apps/wireguard/internal/domain/entities"
+
+skip_mod_tidy: true
+skip_validation: true
 
 models:
   Json:
@@ -33,7 +36,7 @@ models:
       - github.com/99designs/gqlgen/graphql.Map
   ID:
     model:
-      - kloudlite.io/pkg/repos.ID
+      - github.com/kloudlite/api/pkg/repos.ID
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int

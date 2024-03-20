@@ -31,6 +31,7 @@ import (
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 	return &executableSchema{
+		schema:     cfg.Schema,
 		resolvers:  cfg.Resolvers,
 		directives: cfg.Directives,
 		complexity: cfg.Complexity,
@@ -38,6 +39,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 }
 
 type Config struct {
+	Schema     *ast.Schema
 	Resolvers  ResolverRoot
 	Directives DirectiveRoot
 	Complexity ComplexityRoot
@@ -1239,14 +1241,14 @@ type CloudProviderSecretResolver interface {
 
 	CreationTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error)
 
-	ID(ctx context.Context, obj *entities.CloudProviderSecret) (string, error)
+	ID(ctx context.Context, obj *entities.CloudProviderSecret) (repos.ID, error)
 
 	UpdateTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error)
 }
 type ClusterResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Cluster) (string, error)
 
-	ID(ctx context.Context, obj *entities.Cluster) (string, error)
+	ID(ctx context.Context, obj *entities.Cluster) (repos.ID, error)
 
 	Spec(ctx context.Context, obj *entities.Cluster) (*model.GithubComKloudliteOperatorApisClustersV1ClusterSpec, error)
 
@@ -1256,7 +1258,7 @@ type ClusterResolver interface {
 type ClusterManagedServiceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.ClusterManagedService) (string, error)
 
-	ID(ctx context.Context, obj *entities.ClusterManagedService) (string, error)
+	ID(ctx context.Context, obj *entities.ClusterManagedService) (repos.ID, error)
 
 	Spec(ctx context.Context, obj *entities.ClusterManagedService) (*model.GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec, error)
 
@@ -1265,7 +1267,7 @@ type ClusterManagedServiceResolver interface {
 type DomainEntryResolver interface {
 	CreationTime(ctx context.Context, obj *entities.DomainEntry) (string, error)
 
-	ID(ctx context.Context, obj *entities.DomainEntry) (string, error)
+	ID(ctx context.Context, obj *entities.DomainEntry) (repos.ID, error)
 
 	UpdateTime(ctx context.Context, obj *entities.DomainEntry) (string, error)
 }
@@ -1297,7 +1299,7 @@ type Github__com___kloudlite___operator___pkg___operator__StatusResolver interfa
 type HelmReleaseResolver interface {
 	CreationTime(ctx context.Context, obj *entities.HelmRelease) (string, error)
 
-	ID(ctx context.Context, obj *entities.HelmRelease) (string, error)
+	ID(ctx context.Context, obj *entities.HelmRelease) (repos.ID, error)
 
 	Spec(ctx context.Context, obj *entities.HelmRelease) (*model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec, error)
 	Status(ctx context.Context, obj *entities.HelmRelease) (*model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus, error)
@@ -1336,7 +1338,7 @@ type MutationResolver interface {
 type NamespaceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Namespace) (string, error)
 
-	ID(ctx context.Context, obj *entities.Namespace) (string, error)
+	ID(ctx context.Context, obj *entities.Namespace) (repos.ID, error)
 
 	Spec(ctx context.Context, obj *entities.Namespace) (*model.K8sIoAPICoreV1NamespaceSpec, error)
 	Status(ctx context.Context, obj *entities.Namespace) (*model.K8sIoAPICoreV1NamespaceStatus, error)
@@ -1345,7 +1347,7 @@ type NamespaceResolver interface {
 }
 type NodeResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Node) (string, error)
-	ID(ctx context.Context, obj *entities.Node) (string, error)
+	ID(ctx context.Context, obj *entities.Node) (repos.ID, error)
 
 	Spec(ctx context.Context, obj *entities.Node) (*model.GithubComKloudliteOperatorApisClustersV1NodeSpec, error)
 
@@ -1354,7 +1356,7 @@ type NodeResolver interface {
 type NodePoolResolver interface {
 	CreationTime(ctx context.Context, obj *entities.NodePool) (string, error)
 
-	ID(ctx context.Context, obj *entities.NodePool) (string, error)
+	ID(ctx context.Context, obj *entities.NodePool) (repos.ID, error)
 
 	Spec(ctx context.Context, obj *entities.NodePool) (*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec, error)
 
@@ -1363,7 +1365,7 @@ type NodePoolResolver interface {
 type PersistentVolumeResolver interface {
 	CreationTime(ctx context.Context, obj *entities.PersistentVolume) (string, error)
 
-	ID(ctx context.Context, obj *entities.PersistentVolume) (string, error)
+	ID(ctx context.Context, obj *entities.PersistentVolume) (repos.ID, error)
 
 	Spec(ctx context.Context, obj *entities.PersistentVolume) (*model.K8sIoAPICoreV1PersistentVolumeSpec, error)
 	Status(ctx context.Context, obj *entities.PersistentVolume) (*model.K8sIoAPICoreV1PersistentVolumeStatus, error)
@@ -1373,7 +1375,7 @@ type PersistentVolumeResolver interface {
 type PersistentVolumeClaimResolver interface {
 	CreationTime(ctx context.Context, obj *entities.PersistentVolumeClaim) (string, error)
 
-	ID(ctx context.Context, obj *entities.PersistentVolumeClaim) (string, error)
+	ID(ctx context.Context, obj *entities.PersistentVolumeClaim) (repos.ID, error)
 
 	Spec(ctx context.Context, obj *entities.PersistentVolumeClaim) (*model.K8sIoAPICoreV1PersistentVolumeClaimSpec, error)
 	Status(ctx context.Context, obj *entities.PersistentVolumeClaim) (*model.K8sIoAPICoreV1PersistentVolumeClaimStatus, error)
@@ -1409,7 +1411,7 @@ type QueryResolver interface {
 type VolumeAttachmentResolver interface {
 	CreationTime(ctx context.Context, obj *entities.VolumeAttachment) (string, error)
 
-	ID(ctx context.Context, obj *entities.VolumeAttachment) (string, error)
+	ID(ctx context.Context, obj *entities.VolumeAttachment) (repos.ID, error)
 
 	Spec(ctx context.Context, obj *entities.VolumeAttachment) (*model.K8sIoAPIStorageV1VolumeAttachmentSpec, error)
 	Status(ctx context.Context, obj *entities.VolumeAttachment) (*model.K8sIoAPIStorageV1VolumeAttachmentStatus, error)
@@ -1460,17 +1462,21 @@ type VolumeAttachmentInResolver interface {
 }
 
 type executableSchema struct {
+	schema     *ast.Schema
 	resolvers  ResolverRoot
 	directives DirectiveRoot
 	complexity ComplexityRoot
 }
 
 func (e *executableSchema) Schema() *ast.Schema {
+	if e.schema != nil {
+		return e.schema
+	}
 	return parsedSchema
 }
 
 func (e *executableSchema) Complexity(typeName, field string, childComplexity int, rawArgs map[string]interface{}) (int, bool) {
-	ec := executionContext{nil, e}
+	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
 
@@ -6812,7 +6818,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
-	ec := executionContext{rc, e}
+	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCloudProviderSecretIn,
 		ec.unmarshalInputClusterIn,
@@ -6922,18 +6928,33 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	switch rc.Operation.Operation {
 	case ast.Query:
 		return func(ctx context.Context) *graphql.Response {
-			if !first {
-				return nil
+			var response graphql.Response
+			var data graphql.Marshaler
+			if first {
+				first = false
+				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+				data = ec._Query(ctx, rc.Operation.SelectionSet)
+			} else {
+				if atomic.LoadInt32(&ec.pendingDeferred) > 0 {
+					result := <-ec.deferredResults
+					atomic.AddInt32(&ec.pendingDeferred, -1)
+					data = result.Result
+					response.Path = result.Path
+					response.Label = result.Label
+					response.Errors = result.Errors
+				} else {
+					return nil
+				}
 			}
-			first = false
-			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
-			data := ec._Query(ctx, rc.Operation.SelectionSet)
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
-
-			return &graphql.Response{
-				Data: buf.Bytes(),
+			response.Data = buf.Bytes()
+			if atomic.LoadInt32(&ec.deferred) > 0 {
+				hasNext := atomic.LoadInt32(&ec.pendingDeferred) > 0
+				response.HasNext = &hasNext
 			}
+
+			return &response
 		}
 	case ast.Mutation:
 		return func(ctx context.Context) *graphql.Response {
@@ -6959,20 +6980,42 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 type executionContext struct {
 	*graphql.OperationContext
 	*executableSchema
+	deferred        int32
+	pendingDeferred int32
+	deferredResults chan graphql.DeferredResult
+}
+
+func (ec *executionContext) processDeferredGroup(dg graphql.DeferredGroup) {
+	atomic.AddInt32(&ec.pendingDeferred, 1)
+	go func() {
+		ctx := graphql.WithFreshResponseContext(dg.Context)
+		dg.FieldSet.Dispatch(ctx)
+		ds := graphql.DeferredResult{
+			Path:   dg.Path,
+			Label:  dg.Label,
+			Result: dg.FieldSet,
+			Errors: graphql.GetErrors(ctx),
+		}
+		// null fields should bubble up
+		if dg.FieldSet.Invalids > 0 {
+			ds.Result = graphql.Null
+		}
+		ec.deferredResults <- ds
+	}()
 }
 
 func (ec *executionContext) introspectSchema() (*introspection.Schema, error) {
 	if ec.DisableIntrospection {
 		return nil, errors.New("introspection disabled")
 	}
-	return introspection.WrapSchema(parsedSchema), nil
+	return introspection.WrapSchema(ec.Schema()), nil
 }
 
 func (ec *executionContext) introspectType(name string) (*introspection.Type, error) {
 	if ec.DisableIntrospection {
 		return nil, errors.New("introspection disabled")
 	}
-	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
+	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
 var sources = []*ast.Source{
@@ -7139,7 +7182,7 @@ extend type Cluster {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
@@ -7172,7 +7215,7 @@ input CloudProviderSecretIn {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -7211,7 +7254,7 @@ input ClusterIn {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -7530,7 +7573,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 }
 
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
-  debug: Boolean!
+  debug: Boolean
   description: String
   name: String!
   title: String!
@@ -8707,7 +8750,7 @@ directive @goField(
   creationTime: Date!
   displayName: String!
   domainName: String!
-  id: String!
+  id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   recordVersion: Int!
@@ -8739,7 +8782,7 @@ input DomainEntryIn {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -8806,7 +8849,7 @@ enum MatchFilterMatchType {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -8843,7 +8886,7 @@ input NamespaceIn {
   apiVersion: String
   clusterName: String!
   creationTime: Date!
-  id: String!
+  id: ID!
   kind: String
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
@@ -8880,7 +8923,7 @@ input NodeIn {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -8919,7 +8962,7 @@ input NodePoolIn {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -8958,7 +9001,7 @@ input PersistentVolumeIn {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -8994,7 +9037,7 @@ scalar Date
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -9027,19 +9070,48 @@ input VolumeAttachmentIn {
 
 `, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
-	scalar _Any
-	scalar _FieldSet
-	directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
-	directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
+	directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
+	directive @composeDirective(name: String!) repeatable on SCHEMA
 	directive @extends on OBJECT | INTERFACE
-
-	directive @key(fields: _FieldSet!, resolvable: Boolean = true) repeatable on OBJECT | INTERFACE
-	directive @external on FIELD_DEFINITION | OBJECT
+	directive @external on OBJECT | FIELD_DEFINITION
+	directive @key(fields: FieldSet!, resolvable: Boolean = true) repeatable on OBJECT | INTERFACE
+	directive @inaccessible on
+	  | ARGUMENT_DEFINITION
+	  | ENUM
+	  | ENUM_VALUE
+	  | FIELD_DEFINITION
+	  | INPUT_FIELD_DEFINITION
+	  | INPUT_OBJECT
+	  | INTERFACE
+	  | OBJECT
+	  | SCALAR
+	  | UNION
+	directive @interfaceObject on OBJECT
 	directive @link(import: [String!], url: String!) repeatable on SCHEMA
-	directive @shareable on OBJECT | FIELD_DEFINITION
-	directive @tag(name: String!) repeatable on FIELD_DEFINITION | INTERFACE | OBJECT | UNION | ARGUMENT_DEFINITION | SCALAR | ENUM | ENUM_VALUE | INPUT_OBJECT | INPUT_FIELD_DEFINITION
 	directive @override(from: String!) on FIELD_DEFINITION
-	directive @inaccessible on SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | INTERFACE | UNION | ENUM | ENUM_VALUE | INPUT_OBJECT | INPUT_FIELD_DEFINITION
+	directive @provides(fields: FieldSet!) on FIELD_DEFINITION
+	directive @requires(fields: FieldSet!) on FIELD_DEFINITION
+	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on 
+	  | FIELD_DEFINITION
+	  | OBJECT
+	  | INTERFACE
+	  | SCALAR
+	  | ENUM
+	directive @shareable repeatable on FIELD_DEFINITION | OBJECT
+	directive @tag(name: String!) repeatable on
+	  | ARGUMENT_DEFINITION
+	  | ENUM
+	  | ENUM_VALUE
+	  | FIELD_DEFINITION
+	  | INPUT_FIELD_DEFINITION
+	  | INPUT_OBJECT
+	  | INTERFACE
+	  | OBJECT
+	  | SCALAR
+	  | UNION
+	scalar _Any
+	scalar FieldSet
+	scalar federation__Scope
 `, BuiltIn: true},
 	{Name: "../../federation/entity.graphql", Input: `
 type _Service {
@@ -10570,9 +10642,9 @@ func (ec *executionContext) _CloudProviderSecret_id(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CloudProviderSecret_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10582,7 +10654,7 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_id(ctx context.Cont
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11342,9 +11414,9 @@ func (ec *executionContext) _Cluster_id(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Cluster_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11354,7 +11426,7 @@ func (ec *executionContext) fieldContext_Cluster_id(ctx context.Context, field g
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12295,9 +12367,9 @@ func (ec *executionContext) _ClusterManagedService_id(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ClusterManagedService_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12307,7 +12379,7 @@ func (ec *executionContext) fieldContext_ClusterManagedService_id(ctx context.Co
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13716,9 +13788,9 @@ func (ec *executionContext) _DomainEntry_id(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DomainEntry_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13728,7 +13800,7 @@ func (ec *executionContext) fieldContext_DomainEntry_id(ctx context.Context, fie
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -22242,14 +22314,11 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*bool)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23220,9 +23289,9 @@ func (ec *executionContext) _HelmRelease_id(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HelmRelease_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -23232,7 +23301,7 @@ func (ec *executionContext) fieldContext_HelmRelease_id(ctx context.Context, fie
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -35410,7 +35479,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_createCluster(ctx contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_createCluster_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -35522,7 +35591,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateCluster(ctx contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_updateCluster_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -35603,7 +35672,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteCluster(ctx contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_deleteCluster_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -35684,7 +35753,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_upgradeHelmKloudliteAgen
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_upgradeHelmKloudliteAgent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -35788,7 +35857,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_createProviderSecret(ctx
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_createProviderSecret_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -35892,7 +35961,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateProviderSecret(ctx
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_updateProviderSecret_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -35973,7 +36042,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteProviderSecret(ctx
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_deleteProviderSecret_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -36075,7 +36144,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_createDomainEntry(ctx co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_createDomainEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -36177,7 +36246,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateDomainEntry(ctx co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_updateDomainEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -36258,7 +36327,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteDomainEntry(ctx co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_deleteDomainEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -36370,7 +36439,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_createNodePool(ctx conte
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_createNodePool_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -36482,7 +36551,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateNodePool(ctx conte
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_updateNodePool_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -36563,7 +36632,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteNodePool(ctx conte
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_deleteNodePool_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -36675,7 +36744,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_createClusterManagedServ
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_createClusterManagedService_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -36787,7 +36856,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateClusterManagedServ
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_updateClusterManagedService_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -36868,7 +36937,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteClusterManagedServ
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_deleteClusterManagedService_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -36980,7 +37049,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_createHelmRelease(ctx co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_createHelmRelease_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -37092,7 +37161,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateHelmRelease(ctx co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_updateHelmRelease_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -37173,7 +37242,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteHelmRelease(ctx co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_deleteHelmRelease_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -37254,7 +37323,7 @@ func (ec *executionContext) fieldContext_Mutation_infra_deletePV(ctx context.Con
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_deletePV_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -37554,9 +37623,9 @@ func (ec *executionContext) _Namespace_id(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Namespace_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -37566,7 +37635,7 @@ func (ec *executionContext) fieldContext_Namespace_id(ctx context.Context, field
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -38470,9 +38539,9 @@ func (ec *executionContext) _Node_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Node_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -38482,7 +38551,7 @@ func (ec *executionContext) fieldContext_Node_id(ctx context.Context, field grap
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -39437,9 +39506,9 @@ func (ec *executionContext) _NodePool_id(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NodePool_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -39449,7 +39518,7 @@ func (ec *executionContext) fieldContext_NodePool_id(ctx context.Context, field 
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -40638,9 +40707,9 @@ func (ec *executionContext) _PersistentVolume_id(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PersistentVolume_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -40650,7 +40719,7 @@ func (ec *executionContext) fieldContext_PersistentVolume_id(ctx context.Context
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -41442,9 +41511,9 @@ func (ec *executionContext) _PersistentVolumeClaim_id(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PersistentVolumeClaim_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -41454,7 +41523,7 @@ func (ec *executionContext) fieldContext_PersistentVolumeClaim_id(ctx context.Co
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -42533,7 +42602,7 @@ func (ec *executionContext) fieldContext_Query_infra_checkNameAvailability(ctx c
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_checkNameAvailability_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -42619,7 +42688,7 @@ func (ec *executionContext) fieldContext_Query_infra_listClusters(ctx context.Co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_listClusters_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -42731,7 +42800,7 @@ func (ec *executionContext) fieldContext_Query_infra_getCluster(ctx context.Cont
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getCluster_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -42817,7 +42886,7 @@ func (ec *executionContext) fieldContext_Query_infra_listNodePools(ctx context.C
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_listNodePools_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -42929,7 +42998,7 @@ func (ec *executionContext) fieldContext_Query_infra_getNodePool(ctx context.Con
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getNodePool_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43015,7 +43084,7 @@ func (ec *executionContext) fieldContext_Query_infra_listProviderSecrets(ctx con
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_listProviderSecrets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43119,7 +43188,7 @@ func (ec *executionContext) fieldContext_Query_infra_getProviderSecret(ctx conte
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getProviderSecret_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43205,7 +43274,7 @@ func (ec *executionContext) fieldContext_Query_infra_listDomainEntries(ctx conte
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_listDomainEntries_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43307,7 +43376,7 @@ func (ec *executionContext) fieldContext_Query_infra_getDomainEntry(ctx context.
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getDomainEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43394,7 +43463,7 @@ func (ec *executionContext) fieldContext_Query_infra_checkAwsAccess(ctx context.
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_checkAwsAccess_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43480,7 +43549,7 @@ func (ec *executionContext) fieldContext_Query_infra_listClusterManagedServices(
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_listClusterManagedServices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43592,7 +43661,7 @@ func (ec *executionContext) fieldContext_Query_infra_getClusterManagedService(ct
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getClusterManagedService_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43678,7 +43747,7 @@ func (ec *executionContext) fieldContext_Query_infra_listHelmReleases(ctx contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_listHelmReleases_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43790,7 +43859,7 @@ func (ec *executionContext) fieldContext_Query_infra_getHelmRelease(ctx context.
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getHelmRelease_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43913,7 +43982,7 @@ func (ec *executionContext) fieldContext_Query_infra_getManagedServiceTemplate(c
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getManagedServiceTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43999,7 +44068,7 @@ func (ec *executionContext) fieldContext_Query_infra_listPVCs(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_listPVCs_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -44111,7 +44180,7 @@ func (ec *executionContext) fieldContext_Query_infra_getPVC(ctx context.Context,
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getPVC_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -44197,7 +44266,7 @@ func (ec *executionContext) fieldContext_Query_infra_listNamespaces(ctx context.
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_listNamespaces_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -44309,7 +44378,7 @@ func (ec *executionContext) fieldContext_Query_infra_getNamespace(ctx context.Co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getNamespace_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -44395,7 +44464,7 @@ func (ec *executionContext) fieldContext_Query_infra_listPVs(ctx context.Context
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_listPVs_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -44507,7 +44576,7 @@ func (ec *executionContext) fieldContext_Query_infra_getPV(ctx context.Context, 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getPV_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -44593,7 +44662,7 @@ func (ec *executionContext) fieldContext_Query_infra_listVolumeAttachments(ctx c
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_listVolumeAttachments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -44705,7 +44774,7 @@ func (ec *executionContext) fieldContext_Query_infra_getVolumeAttachment(ctx con
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getVolumeAttachment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -44827,7 +44896,7 @@ func (ec *executionContext) fieldContext_Query___type(ctx context.Context, field
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query___type_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -45182,9 +45251,9 @@ func (ec *executionContext) _VolumeAttachment_id(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VolumeAttachment_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -45194,7 +45263,7 @@ func (ec *executionContext) fieldContext_VolumeAttachment_id(ctx context.Context
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -47372,7 +47441,7 @@ func (ec *executionContext) fieldContext___Type_fields(ctx context.Context, fiel
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field___Type_fields_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -47560,7 +47629,7 @@ func (ec *executionContext) fieldContext___Type_enumValues(ctx context.Context, 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field___Type_enumValues_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
-		return
+		return fc, err
 	}
 	return fc, nil
 }
@@ -47764,10 +47833,11 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-			it.DisplayName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DisplayName = data
 		case "metadata":
 			var err error
 
@@ -47803,26 +47873,29 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIVersion = data
 		case "displayName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-			it.DisplayName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DisplayName = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "metadata":
 			var err error
 
@@ -47869,26 +47942,29 @@ func (ec *executionContext) unmarshalInputClusterManagedServiceIn(ctx context.Co
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIVersion = data
 		case "displayName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-			it.DisplayName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DisplayName = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "metadata":
 			var err error
 
@@ -47942,50 +48018,56 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-			it.After, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.After = data
 		case "before":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-			it.Before, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Before = data
 		case "first":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-			it.First, err = ec.unmarshalOInt2ᚖint64(ctx, v)
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.First = data
 		case "last":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-			it.Last, err = ec.unmarshalOInt2ᚖint64(ctx, v)
+			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Last = data
 		case "orderBy":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
-			it.OrderBy, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.OrderBy = data
 		case "sortDirection":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortDirection"))
-			it.SortDirection, err = ec.unmarshalOCursorPaginationSortDirection2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐSortDirection(ctx, v)
+			data, err := ec.unmarshalOCursorPaginationSortDirection2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐSortDirection(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SortDirection = data
 		}
 	}
 
@@ -48010,26 +48092,29 @@ func (ec *executionContext) unmarshalInputDomainEntryIn(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-			it.ClusterName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClusterName = data
 		case "displayName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-			it.DisplayName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DisplayName = data
 		case "domainName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domainName"))
-			it.DomainName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DomainName = data
 		}
 	}
 
@@ -48054,10 +48139,11 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("awsAccountId"))
-			it.AwsAccountID, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AwsAccountID = data
 		}
 	}
 
@@ -48082,18 +48168,20 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessKey"))
-			it.AccessKey, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AccessKey = data
 		case "secretKey":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretKey"))
-			it.SecretKey, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretKey = data
 		}
 	}
 
@@ -48118,26 +48206,29 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assumeRoleParams"))
-			it.AssumeRoleParams, err = ec.unmarshalOGithub__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesAWSAssumeRoleParamsIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesAWSAssumeRoleParamsIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AssumeRoleParams = data
 		case "authMechanism":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-			it.AuthMechanism, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AuthMechanism = data
 		case "authSecretKeys":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authSecretKeys"))
-			it.AuthSecretKeys, err = ec.unmarshalOGithub__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesAWSAuthSecretKeysIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesAWSAuthSecretKeysIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AuthSecretKeys = data
 		}
 	}
 
@@ -48162,26 +48253,29 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credentials"))
-			it.Credentials, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsCredentialsIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsCredentialsIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Credentials = data
 		case "k3sMasters":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("k3sMasters"))
-			it.K3sMasters, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.K3sMasters = data
 		case "region":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
-			it.Region, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Region = data
 		}
 	}
 
@@ -48206,18 +48300,20 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceType"))
-			it.InstanceType, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.InstanceType = data
 		case "nvidiaGpuEnabled":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nvidiaGpuEnabled"))
-			it.NvidiaGpuEnabled, err = ec.unmarshalNBoolean2bool(ctx, v)
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NvidiaGpuEnabled = data
 		}
 	}
 
@@ -48242,42 +48338,47 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("availabilityZone"))
-			it.AvailabilityZone, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AvailabilityZone = data
 		case "ec2Pool":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ec2Pool"))
-			it.Ec2Pool, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Ec2Pool = data
 		case "nvidiaGpuEnabled":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nvidiaGpuEnabled"))
-			it.NvidiaGpuEnabled, err = ec.unmarshalNBoolean2bool(ctx, v)
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NvidiaGpuEnabled = data
 		case "poolType":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poolType"))
-			it.PoolType, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AWSPoolType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSPoolType(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AWSPoolType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSPoolType(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PoolType = data
 		case "spotPool":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spotPool"))
-			it.SpotPool, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SpotPool = data
 		}
 	}
 
@@ -48302,18 +48403,20 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
-			it.AuthMechanism, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AuthMechanism = data
 		case "secretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
-			it.SecretRef, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__SecretRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRefIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__SecretRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRefIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretRef = data
 		}
 	}
 
@@ -48338,18 +48441,20 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceType"))
-			it.InstanceType, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.InstanceType = data
 		case "nodes":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodes"))
-			it.Nodes, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Nodes = data
 		}
 	}
 
@@ -48374,18 +48479,20 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPerVcpu"))
-			it.MemoryPerVcpu, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MemoryPerVcpu = data
 		case "vcpu":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vcpu"))
-			it.Vcpu, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Vcpu = data
 		}
 	}
 
@@ -48410,10 +48517,11 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceTypes"))
-			it.InstanceTypes, err = ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.InstanceTypes = data
 		}
 	}
 
@@ -48438,26 +48546,29 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuNode"))
-			it.CPUNode, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.CPUNode = data
 		case "gpuNode":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gpuNode"))
-			it.GpuNode, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.GpuNode = data
 		case "nodes":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodes"))
-			it.Nodes, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Nodes = data
 		}
 	}
 
@@ -48482,34 +48593,38 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("availabilityMode"))
-			it.AvailabilityMode, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AvailabilityMode = data
 		case "aws":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aws"))
-			it.Aws, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Aws = data
 		case "cloudflareEnabled":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudflareEnabled"))
-			it.CloudflareEnabled, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.CloudflareEnabled = data
 		case "cloudProvider":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProvider"))
-			it.CloudProvider, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.CloudProvider = data
 		}
 	}
 
@@ -48534,66 +48649,74 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("availabilityZone"))
-			it.AvailabilityZone, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AvailabilityZone = data
 		case "bootVolumeSize":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bootVolumeSize"))
-			it.BootVolumeSize, err = ec.unmarshalNInt2int(ctx, v)
+			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.BootVolumeSize = data
 		case "bootVolumeType":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bootVolumeType"))
-			it.BootVolumeType, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.BootVolumeType = data
 		case "credentials":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credentials"))
-			it.Credentials, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__SecretRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRefIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__SecretRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRefIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Credentials = data
 		case "machineType":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("machineType"))
-			it.MachineType, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MachineType = data
 		case "nodes":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodes"))
-			it.Nodes, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Nodes = data
 		case "poolType":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poolType"))
-			it.PoolType, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__GCPPoolType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPPoolType(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__GCPPoolType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPPoolType(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PoolType = data
 		case "region":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
-			it.Region, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Region = data
 		}
 	}
 
@@ -48618,58 +48741,65 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aws"))
-			it.Aws, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Aws = data
 		case "cloudProvider":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProvider"))
-			it.CloudProvider, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.CloudProvider = data
 		case "gcp":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gcp"))
-			it.Gcp, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPNodePoolConfigIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPNodePoolConfigIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Gcp = data
 		case "maxCount":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxCount"))
-			it.MaxCount, err = ec.unmarshalNInt2int(ctx, v)
+			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MaxCount = data
 		case "minCount":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minCount"))
-			it.MinCount, err = ec.unmarshalNInt2int(ctx, v)
+			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MinCount = data
 		case "nodeLabels":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeLabels"))
-			it.NodeLabels, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodeLabels = data
 		case "nodeTaints":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeTaints"))
-			it.NodeTaints, err = ec.unmarshalOK8s__io___api___core___v1__TaintIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TaintInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__TaintIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TaintInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodeTaints = data
 		}
 	}
 
@@ -48694,10 +48824,11 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastRecreatedAt"))
-			it.LastRecreatedAt, err = ec.unmarshalODate2ᚖstring(ctx, v)
+			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.LastRecreatedAt = data
 		}
 	}
 
@@ -48722,10 +48853,11 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodepoolName"))
-			it.NodepoolName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodepoolName = data
 		}
 	}
 
@@ -48750,18 +48882,20 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("max"))
-			it.Max, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Max = data
 		case "min":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("min"))
-			it.Min, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Min = data
 		}
 	}
 
@@ -48786,18 +48920,20 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Name = data
 		case "namespace":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			it.Namespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Namespace = data
 		}
 	}
 
@@ -48822,18 +48958,20 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcSpec"))
-			it.MsvcSpec, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MsvcSpec = data
 		case "targetNamespace":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetNamespace"))
-			it.TargetNamespace, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.TargetNamespace = data
 		}
 	}
 
@@ -48858,74 +48996,83 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartName"))
-			it.ChartName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ChartName = data
 		case "chartRepoURL":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartRepoURL"))
-			it.ChartRepoURL, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ChartRepoURL = data
 		case "chartVersion":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartVersion"))
-			it.ChartVersion, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ChartVersion = data
 		case "jobVars":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("jobVars"))
-			it.JobVars, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1JobVarsIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1JobVarsIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.JobVars = data
 		case "postInstall":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postInstall"))
-			it.PostInstall, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PostInstall = data
 		case "postUninstall":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postUninstall"))
-			it.PostUninstall, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PostUninstall = data
 		case "preInstall":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preInstall"))
-			it.PreInstall, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PreInstall = data
 		case "preUninstall":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preUninstall"))
-			it.PreUninstall, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PreUninstall = data
 		case "values":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
-			it.Values, err = ec.unmarshalNMap2map(ctx, v)
+			data, err := ec.unmarshalNMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Values = data
 		}
 	}
 
@@ -48950,34 +49097,38 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("affinity"))
-			it.Affinity, err = ec.unmarshalOK8s__io___api___core___v1__AffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AffinityIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__AffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AffinityIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Affinity = data
 		case "backOffLimit":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backOffLimit"))
-			it.BackOffLimit, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.BackOffLimit = data
 		case "nodeSelector":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelector"))
-			it.NodeSelector, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodeSelector = data
 		case "tolerations":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tolerations"))
-			it.Tolerations, err = ec.unmarshalOK8s__io___api___core___v1__TolerationIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__TolerationIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Tolerations = data
 		}
 	}
 
@@ -49002,26 +49153,29 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelector"))
-			it.NodeSelector, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodeSelector = data
 		case "serviceTemplate":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceTemplate"))
-			it.ServiceTemplate, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ServiceTemplate = data
 		case "tolerations":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tolerations"))
-			it.Tolerations, err = ec.unmarshalOK8s__io___api___core___v1__TolerationIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__TolerationIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Tolerations = data
 		}
 	}
 
@@ -49046,26 +49200,29 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIVersion = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "spec":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			it.Spec, err = ec.unmarshalNMap2map(ctx, v)
+			data, err := ec.unmarshalNMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Spec = data
 		}
 	}
 
@@ -49090,26 +49247,29 @@ func (ec *executionContext) unmarshalInputHelmReleaseIn(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIVersion = data
 		case "displayName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-			it.DisplayName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DisplayName = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "metadata":
 			var err error
 
@@ -49156,34 +49316,38 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AWSElasticB
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "partition":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("partition"))
-			it.Partition, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Partition = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "volumeID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeID"))
-			it.VolumeID, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumeID = data
 		}
 	}
 
@@ -49208,26 +49372,29 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AffinityIn(
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeAffinity"))
-			it.NodeAffinity, err = ec.unmarshalOK8s__io___api___core___v1__NodeAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeAffinityIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeAffinityIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodeAffinity = data
 		case "podAffinity":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("podAffinity"))
-			it.PodAffinity, err = ec.unmarshalOK8s__io___api___core___v1__PodAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PodAffinity = data
 		case "podAntiAffinity":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("podAntiAffinity"))
-			it.PodAntiAffinity, err = ec.unmarshalOK8s__io___api___core___v1__PodAntiAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAntiAffinityIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAntiAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAntiAffinityIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PodAntiAffinity = data
 		}
 	}
 
@@ -49252,50 +49419,56 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureDiskVo
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cachingMode"))
-			it.CachingMode, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.CachingMode = data
 		case "diskName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("diskName"))
-			it.DiskName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DiskName = data
 		case "diskURI":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("diskURI"))
-			it.DiskURI, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DiskURI = data
 		case "fsType":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		}
 	}
 
@@ -49320,34 +49493,38 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureFilePe
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "secretName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
-			it.SecretName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretName = data
 		case "secretNamespace":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretNamespace"))
-			it.SecretNamespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretNamespace = data
 		case "shareName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shareName"))
-			it.ShareName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ShareName = data
 		}
 	}
 
@@ -49372,82 +49549,92 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersiste
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controllerExpandSecretRef"))
-			it.ControllerExpandSecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ControllerExpandSecretRef = data
 		case "controllerPublishSecretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controllerPublishSecretRef"))
-			it.ControllerPublishSecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ControllerPublishSecretRef = data
 		case "driver":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driver"))
-			it.Driver, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Driver = data
 		case "fsType":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "nodeExpandSecretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeExpandSecretRef"))
-			it.NodeExpandSecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodeExpandSecretRef = data
 		case "nodePublishSecretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodePublishSecretRef"))
-			it.NodePublishSecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodePublishSecretRef = data
 		case "nodeStageSecretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeStageSecretRef"))
-			it.NodeStageSecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodeStageSecretRef = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "volumeAttributes":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeAttributes"))
-			it.VolumeAttributes, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumeAttributes = data
 		case "volumeHandle":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeHandle"))
-			it.VolumeHandle, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumeHandle = data
 		}
 	}
 
@@ -49472,50 +49659,56 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CephFSPersi
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("monitors"))
-			it.Monitors, err = ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Monitors = data
 		case "path":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
-			it.Path, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Path = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "secretFile":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretFile"))
-			it.SecretFile, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretFile = data
 		case "secretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
-			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretRef = data
 		case "user":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
-			it.User, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.User = data
 		}
 	}
 
@@ -49540,34 +49733,38 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CinderPersi
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "secretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
-			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretRef = data
 		case "volumeID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeID"))
-			it.VolumeID, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumeID = data
 		}
 	}
 
@@ -49592,42 +49789,47 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FCVolumeSou
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "lun":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lun"))
-			it.Lun, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Lun = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "targetWWNs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetWWNs"))
-			it.TargetWWNs, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.TargetWWNs = data
 		case "wwids":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("wwids"))
-			it.Wwids, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Wwids = data
 		}
 	}
 
@@ -49652,42 +49854,47 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FlexPersist
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driver"))
-			it.Driver, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Driver = data
 		case "fsType":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "options":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("options"))
-			it.Options, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Options = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "secretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
-			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretRef = data
 		}
 	}
 
@@ -49712,18 +49919,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FlockerVolu
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("datasetName"))
-			it.DatasetName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DatasetName = data
 		case "datasetUUID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("datasetUUID"))
-			it.DatasetUUID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DatasetUUID = data
 		}
 	}
 
@@ -49748,34 +49957,38 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GCEPersiste
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "partition":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("partition"))
-			it.Partition, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Partition = data
 		case "pdName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pdName"))
-			it.PdName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PdName = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		}
 	}
 
@@ -49800,34 +50013,38 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GlusterfsPe
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endpoints"))
-			it.Endpoints, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Endpoints = data
 		case "endpointsNamespace":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endpointsNamespace"))
-			it.EndpointsNamespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.EndpointsNamespace = data
 		case "path":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
-			it.Path, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Path = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		}
 	}
 
@@ -49852,18 +50069,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__HostPathVol
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
-			it.Path, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Path = data
 		case "type":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			it.Type, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Type = data
 		}
 	}
 
@@ -49888,90 +50107,101 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chapAuthDiscovery"))
-			it.ChapAuthDiscovery, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ChapAuthDiscovery = data
 		case "chapAuthSession":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chapAuthSession"))
-			it.ChapAuthSession, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ChapAuthSession = data
 		case "fsType":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "initiatorName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("initiatorName"))
-			it.InitiatorName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.InitiatorName = data
 		case "iqn":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iqn"))
-			it.Iqn, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Iqn = data
 		case "iscsiInterface":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iscsiInterface"))
-			it.IscsiInterface, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.IscsiInterface = data
 		case "lun":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lun"))
-			it.Lun, err = ec.unmarshalNInt2int(ctx, v)
+			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Lun = data
 		case "portals":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portals"))
-			it.Portals, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Portals = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "secretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
-			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretRef = data
 		case "targetPortal":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPortal"))
-			it.TargetPortal, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.TargetPortal = data
 		}
 	}
 
@@ -49996,18 +50226,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__LocalVolume
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "path":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
-			it.Path, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Path = data
 		}
 	}
 
@@ -50032,26 +50264,29 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NFSVolumeSo
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
-			it.Path, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Path = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "server":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("server"))
-			it.Server, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Server = data
 		}
 	}
 
@@ -50076,42 +50311,47 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceCo
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTransitionTime"))
-			it.LastTransitionTime, err = ec.unmarshalODate2ᚖstring(ctx, v)
+			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.LastTransitionTime = data
 		case "message":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			it.Message, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Message = data
 		case "reason":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
-			it.Reason, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Reason = data
 		case "status":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			it.Status, err = ec.unmarshalNK8s__io___api___core___v1__ConditionStatus2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ConditionStatus(ctx, v)
+			data, err := ec.unmarshalNK8s__io___api___core___v1__ConditionStatus2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ConditionStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Status = data
 		case "type":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			it.Type, err = ec.unmarshalNK8s__io___api___core___v1__NamespaceConditionType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionType(ctx, v)
+			data, err := ec.unmarshalNK8s__io___api___core___v1__NamespaceConditionType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionType(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Type = data
 		}
 	}
 
@@ -50136,10 +50376,11 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceSp
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("finalizers"))
-			it.Finalizers, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Finalizers = data
 		}
 	}
 
@@ -50164,18 +50405,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceSt
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("conditions"))
-			it.Conditions, err = ec.unmarshalOK8s__io___api___core___v1__NamespaceConditionIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NamespaceConditionIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Conditions = data
 		case "phase":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phase"))
-			it.Phase, err = ec.unmarshalOK8s__io___api___core___v1__NamespacePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespacePhase(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NamespacePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespacePhase(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Phase = data
 		}
 	}
 
@@ -50200,18 +50443,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeAffinit
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preferredDuringSchedulingIgnoredDuringExecution"))
-			it.PreferredDuringSchedulingIgnoredDuringExecution, err = ec.unmarshalOK8s__io___api___core___v1__PreferredSchedulingTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTermInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PreferredSchedulingTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTermInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PreferredDuringSchedulingIgnoredDuringExecution = data
 		case "requiredDuringSchedulingIgnoredDuringExecution":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiredDuringSchedulingIgnoredDuringExecution"))
-			it.RequiredDuringSchedulingIgnoredDuringExecution, err = ec.unmarshalOK8s__io___api___core___v1__NodeSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RequiredDuringSchedulingIgnoredDuringExecution = data
 		}
 	}
 
@@ -50236,10 +50481,11 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelecto
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelectorTerms"))
-			it.NodeSelectorTerms, err = ec.unmarshalNK8s__io___api___core___v1__NodeSelectorTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermInᚄ(ctx, v)
+			data, err := ec.unmarshalNK8s__io___api___core___v1__NodeSelectorTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodeSelectorTerms = data
 		}
 	}
 
@@ -50264,26 +50510,29 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelecto
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
-			it.Key, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Key = data
 		case "operator":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
-			it.Operator, err = ec.unmarshalNK8s__io___api___core___v1__NodeSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorOperator(ctx, v)
+			data, err := ec.unmarshalNK8s__io___api___core___v1__NodeSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorOperator(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Operator = data
 		case "values":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
-			it.Values, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Values = data
 		}
 	}
 
@@ -50308,18 +50557,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelecto
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchExpressions"))
-			it.MatchExpressions, err = ec.unmarshalOK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MatchExpressions = data
 		case "matchFields":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchFields"))
-			it.MatchFields, err = ec.unmarshalOK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MatchFields = data
 		}
 	}
 
@@ -50344,58 +50595,65 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ObjectRefer
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIVersion = data
 		case "fieldPath":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fieldPath"))
-			it.FieldPath, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FieldPath = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "name":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Name = data
 		case "namespace":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			it.Namespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Namespace = data
 		case "resourceVersion":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceVersion"))
-			it.ResourceVersion, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ResourceVersion = data
 		case "uid":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("uid"))
-			it.UID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.UID = data
 		}
 	}
 
@@ -50420,50 +50678,56 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastProbeTime"))
-			it.LastProbeTime, err = ec.unmarshalODate2ᚖstring(ctx, v)
+			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.LastProbeTime = data
 		case "lastTransitionTime":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTransitionTime"))
-			it.LastTransitionTime, err = ec.unmarshalODate2ᚖstring(ctx, v)
+			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.LastTransitionTime = data
 		case "message":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			it.Message, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Message = data
 		case "reason":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
-			it.Reason, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Reason = data
 		case "status":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			it.Status, err = ec.unmarshalNK8s__io___api___core___v1__ConditionStatus2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ConditionStatus(ctx, v)
+			data, err := ec.unmarshalNK8s__io___api___core___v1__ConditionStatus2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ConditionStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Status = data
 		case "type":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			it.Type, err = ec.unmarshalNK8s__io___api___core___v1__PersistentVolumeClaimConditionType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeClaimConditionType(ctx, v)
+			data, err := ec.unmarshalNK8s__io___api___core___v1__PersistentVolumeClaimConditionType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeClaimConditionType(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Type = data
 		}
 	}
 
@@ -50488,66 +50752,74 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessModes"))
-			it.AccessModes, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AccessModes = data
 		case "dataSource":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSource"))
-			it.DataSource, err = ec.unmarshalOK8s__io___api___core___v1__TypedLocalObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TypedLocalObjectReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__TypedLocalObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TypedLocalObjectReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DataSource = data
 		case "dataSourceRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSourceRef"))
-			it.DataSourceRef, err = ec.unmarshalOK8s__io___api___core___v1__TypedObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TypedObjectReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__TypedObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TypedObjectReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DataSourceRef = data
 		case "resources":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resources"))
-			it.Resources, err = ec.unmarshalOK8s__io___api___core___v1__ResourceRequirementsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ResourceRequirementsIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__ResourceRequirementsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ResourceRequirementsIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Resources = data
 		case "selector":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("selector"))
-			it.Selector, err = ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Selector = data
 		case "storageClassName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageClassName"))
-			it.StorageClassName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.StorageClassName = data
 		case "volumeMode":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeMode"))
-			it.VolumeMode, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumeMode = data
 		case "volumeName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeName"))
-			it.VolumeName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumeName = data
 		}
 	}
 
@@ -50572,50 +50844,56 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessModes"))
-			it.AccessModes, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AccessModes = data
 		case "allocatedResources":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocatedResources"))
-			it.AllocatedResources, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AllocatedResources = data
 		case "allocatedResourceStatuses":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocatedResourceStatuses"))
-			it.AllocatedResourceStatuses, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AllocatedResourceStatuses = data
 		case "capacity":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("capacity"))
-			it.Capacity, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Capacity = data
 		case "conditions":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("conditions"))
-			it.Conditions, err = ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeClaimConditionIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeClaimConditionInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeClaimConditionIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeClaimConditionInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Conditions = data
 		case "phase":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phase"))
-			it.Phase, err = ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeClaimPhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeClaimPhase(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeClaimPhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeClaimPhase(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Phase = data
 		}
 	}
 
@@ -50640,242 +50918,272 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessModes"))
-			it.AccessModes, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AccessModes = data
 		case "awsElasticBlockStore":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("awsElasticBlockStore"))
-			it.AwsElasticBlockStore, err = ec.unmarshalOK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AwsElasticBlockStore = data
 		case "azureDisk":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("azureDisk"))
-			it.AzureDisk, err = ec.unmarshalOK8s__io___api___core___v1__AzureDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureDiskVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__AzureDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureDiskVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AzureDisk = data
 		case "azureFile":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("azureFile"))
-			it.AzureFile, err = ec.unmarshalOK8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureFilePersistentVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureFilePersistentVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AzureFile = data
 		case "capacity":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("capacity"))
-			it.Capacity, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Capacity = data
 		case "cephfs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cephfs"))
-			it.Cephfs, err = ec.unmarshalOK8s__io___api___core___v1__CephFSPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CephFSPersistentVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__CephFSPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CephFSPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Cephfs = data
 		case "cinder":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cinder"))
-			it.Cinder, err = ec.unmarshalOK8s__io___api___core___v1__CinderPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CinderPersistentVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__CinderPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CinderPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Cinder = data
 		case "claimRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claimRef"))
-			it.ClaimRef, err = ec.unmarshalOK8s__io___api___core___v1__ObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__ObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClaimRef = data
 		case "csi":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("csi"))
-			it.Csi, err = ec.unmarshalOK8s__io___api___core___v1__CSIPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CSIPersistentVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__CSIPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CSIPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Csi = data
 		case "fc":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fc"))
-			it.Fc, err = ec.unmarshalOK8s__io___api___core___v1__FCVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FCVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__FCVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FCVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Fc = data
 		case "flexVolume":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("flexVolume"))
-			it.FlexVolume, err = ec.unmarshalOK8s__io___api___core___v1__FlexPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlexPersistentVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__FlexPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlexPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FlexVolume = data
 		case "flocker":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("flocker"))
-			it.Flocker, err = ec.unmarshalOK8s__io___api___core___v1__FlockerVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlockerVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__FlockerVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlockerVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Flocker = data
 		case "gcePersistentDisk":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gcePersistentDisk"))
-			it.GcePersistentDisk, err = ec.unmarshalOK8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GCEPersistentDiskVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GCEPersistentDiskVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.GcePersistentDisk = data
 		case "glusterfs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("glusterfs"))
-			it.Glusterfs, err = ec.unmarshalOK8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GlusterfsPersistentVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GlusterfsPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Glusterfs = data
 		case "hostPath":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hostPath"))
-			it.HostPath, err = ec.unmarshalOK8s__io___api___core___v1__HostPathVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1HostPathVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__HostPathVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1HostPathVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.HostPath = data
 		case "iscsi":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iscsi"))
-			it.Iscsi, err = ec.unmarshalOK8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ISCSIPersistentVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ISCSIPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Iscsi = data
 		case "local":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("local"))
-			it.Local, err = ec.unmarshalOK8s__io___api___core___v1__LocalVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1LocalVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__LocalVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1LocalVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Local = data
 		case "mountOptions":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mountOptions"))
-			it.MountOptions, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MountOptions = data
 		case "nfs":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nfs"))
-			it.Nfs, err = ec.unmarshalOK8s__io___api___core___v1__NFSVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NFSVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NFSVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NFSVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Nfs = data
 		case "nodeAffinity":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeAffinity"))
-			it.NodeAffinity, err = ec.unmarshalOK8s__io___api___core___v1__VolumeNodeAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VolumeNodeAffinityIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__VolumeNodeAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VolumeNodeAffinityIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodeAffinity = data
 		case "persistentVolumeReclaimPolicy":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("persistentVolumeReclaimPolicy"))
-			it.PersistentVolumeReclaimPolicy, err = ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeReclaimPolicy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeReclaimPolicy(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeReclaimPolicy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeReclaimPolicy(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PersistentVolumeReclaimPolicy = data
 		case "photonPersistentDisk":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("photonPersistentDisk"))
-			it.PhotonPersistentDisk, err = ec.unmarshalOK8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PhotonPersistentDiskVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PhotonPersistentDiskVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PhotonPersistentDisk = data
 		case "portworxVolume":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portworxVolume"))
-			it.PortworxVolume, err = ec.unmarshalOK8s__io___api___core___v1__PortworxVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PortworxVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PortworxVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PortworxVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PortworxVolume = data
 		case "quobyte":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quobyte"))
-			it.Quobyte, err = ec.unmarshalOK8s__io___api___core___v1__QuobyteVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1QuobyteVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__QuobyteVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1QuobyteVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Quobyte = data
 		case "rbd":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rbd"))
-			it.Rbd, err = ec.unmarshalOK8s__io___api___core___v1__RBDPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1RBDPersistentVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__RBDPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1RBDPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Rbd = data
 		case "scaleIO":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scaleIO"))
-			it.ScaleIo, err = ec.unmarshalOK8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ScaleIo = data
 		case "storageClassName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageClassName"))
-			it.StorageClassName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.StorageClassName = data
 		case "storageos":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageos"))
-			it.Storageos, err = ec.unmarshalOK8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1StorageOSPersistentVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1StorageOSPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Storageos = data
 		case "volumeMode":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeMode"))
-			it.VolumeMode, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumeMode = data
 		case "vsphereVolume":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vsphereVolume"))
-			it.VsphereVolume, err = ec.unmarshalOK8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VsphereVolume = data
 		}
 	}
 
@@ -50900,34 +51208,38 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastPhaseTransitionTime"))
-			it.LastPhaseTransitionTime, err = ec.unmarshalODate2ᚖstring(ctx, v)
+			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.LastPhaseTransitionTime = data
 		case "message":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			it.Message, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Message = data
 		case "phase":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phase"))
-			it.Phase, err = ec.unmarshalOK8s__io___api___core___v1__PersistentVolumePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumePhase(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumePhase(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Phase = data
 		case "reason":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
-			it.Reason, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Reason = data
 		}
 	}
 
@@ -50952,18 +51264,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PhotonPersi
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "pdID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pdID"))
-			it.PdID, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PdID = data
 		}
 	}
 
@@ -50988,18 +51302,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAffinity
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preferredDuringSchedulingIgnoredDuringExecution"))
-			it.PreferredDuringSchedulingIgnoredDuringExecution, err = ec.unmarshalOK8s__io___api___core___v1__WeightedPodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__WeightedPodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PreferredDuringSchedulingIgnoredDuringExecution = data
 		case "requiredDuringSchedulingIgnoredDuringExecution":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiredDuringSchedulingIgnoredDuringExecution"))
-			it.RequiredDuringSchedulingIgnoredDuringExecution, err = ec.unmarshalOK8s__io___api___core___v1__PodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RequiredDuringSchedulingIgnoredDuringExecution = data
 		}
 	}
 
@@ -51024,34 +51340,38 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAffinity
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labelSelector"))
-			it.LabelSelector, err = ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.LabelSelector = data
 		case "namespaces":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespaces"))
-			it.Namespaces, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Namespaces = data
 		case "namespaceSelector":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespaceSelector"))
-			it.NamespaceSelector, err = ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NamespaceSelector = data
 		case "topologyKey":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topologyKey"))
-			it.TopologyKey, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.TopologyKey = data
 		}
 	}
 
@@ -51076,18 +51396,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAntiAffi
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preferredDuringSchedulingIgnoredDuringExecution"))
-			it.PreferredDuringSchedulingIgnoredDuringExecution, err = ec.unmarshalOK8s__io___api___core___v1__WeightedPodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__WeightedPodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PreferredDuringSchedulingIgnoredDuringExecution = data
 		case "requiredDuringSchedulingIgnoredDuringExecution":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiredDuringSchedulingIgnoredDuringExecution"))
-			it.RequiredDuringSchedulingIgnoredDuringExecution, err = ec.unmarshalOK8s__io___api___core___v1__PodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RequiredDuringSchedulingIgnoredDuringExecution = data
 		}
 	}
 
@@ -51112,26 +51434,29 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PortworxVol
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "volumeID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeID"))
-			it.VolumeID, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumeID = data
 		}
 	}
 
@@ -51156,18 +51481,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PreferredSc
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preference"))
-			it.Preference, err = ec.unmarshalNK8s__io___api___core___v1__NodeSelectorTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermIn(ctx, v)
+			data, err := ec.unmarshalNK8s__io___api___core___v1__NodeSelectorTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Preference = data
 		case "weight":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weight"))
-			it.Weight, err = ec.unmarshalNInt2int(ctx, v)
+			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Weight = data
 		}
 	}
 
@@ -51192,50 +51519,56 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__QuobyteVolu
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("group"))
-			it.Group, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Group = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "registry":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("registry"))
-			it.Registry, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Registry = data
 		case "tenant":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tenant"))
-			it.Tenant, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Tenant = data
 		case "user":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
-			it.User, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.User = data
 		case "volume":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volume"))
-			it.Volume, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Volume = data
 		}
 	}
 
@@ -51260,66 +51593,74 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__RBDPersiste
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "image":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
-			it.Image, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Image = data
 		case "keyring":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keyring"))
-			it.Keyring, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Keyring = data
 		case "monitors":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("monitors"))
-			it.Monitors, err = ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Monitors = data
 		case "pool":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pool"))
-			it.Pool, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Pool = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "secretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
-			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretRef = data
 		case "user":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
-			it.User, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.User = data
 		}
 	}
 
@@ -51344,10 +51685,11 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ResourceCla
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Name = data
 		}
 	}
 
@@ -51372,26 +51714,29 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ResourceReq
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claims"))
-			it.Claims, err = ec.unmarshalOK8s__io___api___core___v1__ResourceClaimIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ResourceClaimInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__ResourceClaimIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ResourceClaimInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Claims = data
 		case "limits":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limits"))
-			it.Limits, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Limits = data
 		case "requests":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requests"))
-			it.Requests, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Requests = data
 		}
 	}
 
@@ -51416,82 +51761,92 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPers
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "gateway":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gateway"))
-			it.Gateway, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Gateway = data
 		case "protectionDomain":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("protectionDomain"))
-			it.ProtectionDomain, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ProtectionDomain = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "secretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
-			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretRef = data
 		case "sslEnabled":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sslEnabled"))
-			it.SslEnabled, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SslEnabled = data
 		case "storageMode":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageMode"))
-			it.StorageMode, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.StorageMode = data
 		case "storagePool":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePool"))
-			it.StoragePool, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.StoragePool = data
 		case "system":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("system"))
-			it.System, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.System = data
 		case "volumeName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeName"))
-			it.VolumeName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumeName = data
 		}
 	}
 
@@ -51516,18 +51871,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__SecretRefer
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Name = data
 		case "namespace":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			it.Namespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Namespace = data
 		}
 	}
 
@@ -51552,42 +51909,47 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__StorageOSPe
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "readOnly":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
-			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ReadOnly = data
 		case "secretRef":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
-			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__ObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReferenceIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__ObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReferenceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.SecretRef = data
 		case "volumeName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeName"))
-			it.VolumeName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumeName = data
 		case "volumeNamespace":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeNamespace"))
-			it.VolumeNamespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumeNamespace = data
 		}
 	}
 
@@ -51612,34 +51974,38 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TaintIn(ctx
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effect"))
-			it.Effect, err = ec.unmarshalNK8s__io___api___core___v1__TaintEffect2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TaintEffect(ctx, v)
+			data, err := ec.unmarshalNK8s__io___api___core___v1__TaintEffect2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TaintEffect(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Effect = data
 		case "key":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
-			it.Key, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Key = data
 		case "timeAdded":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeAdded"))
-			it.TimeAdded, err = ec.unmarshalODate2ᚖstring(ctx, v)
+			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.TimeAdded = data
 		case "value":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			it.Value, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Value = data
 		}
 	}
 
@@ -51664,42 +52030,47 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationI
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effect"))
-			it.Effect, err = ec.unmarshalOK8s__io___api___core___v1__TaintEffect2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TaintEffect(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__TaintEffect2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TaintEffect(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Effect = data
 		case "key":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
-			it.Key, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Key = data
 		case "operator":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
-			it.Operator, err = ec.unmarshalOK8s__io___api___core___v1__TolerationOperator2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationOperator(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__TolerationOperator2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationOperator(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Operator = data
 		case "tolerationSeconds":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tolerationSeconds"))
-			it.TolerationSeconds, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.TolerationSeconds = data
 		case "value":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			it.Value, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Value = data
 		}
 	}
 
@@ -51724,26 +52095,29 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TypedLocalO
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiGroup"))
-			it.APIGroup, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIGroup = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "name":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Name = data
 		}
 	}
 
@@ -51768,34 +52142,38 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TypedObject
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiGroup"))
-			it.APIGroup, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIGroup = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "name":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Name = data
 		case "namespace":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			it.Namespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Namespace = data
 		}
 	}
 
@@ -51820,10 +52198,11 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__VolumeNodeA
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("required"))
-			it.Required, err = ec.unmarshalOK8s__io___api___core___v1__NodeSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Required = data
 		}
 	}
 
@@ -51848,34 +52227,38 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__VsphereVirt
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
-			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FsType = data
 		case "storagePolicyID":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePolicyID"))
-			it.StoragePolicyID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.StoragePolicyID = data
 		case "storagePolicyName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePolicyName"))
-			it.StoragePolicyName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.StoragePolicyName = data
 		case "volumePath":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumePath"))
-			it.VolumePath, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.VolumePath = data
 		}
 	}
 
@@ -51900,18 +52283,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__WeightedPod
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("podAffinityTerm"))
-			it.PodAffinityTerm, err = ec.unmarshalNK8s__io___api___core___v1__PodAffinityTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermIn(ctx, v)
+			data, err := ec.unmarshalNK8s__io___api___core___v1__PodAffinityTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PodAffinityTerm = data
 		case "weight":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weight"))
-			it.Weight, err = ec.unmarshalNInt2int(ctx, v)
+			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Weight = data
 		}
 	}
 
@@ -51936,18 +52321,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inlineVolumeSpec"))
-			it.InlineVolumeSpec, err = ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeSpecIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeSpecIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.InlineVolumeSpec = data
 		case "persistentVolumeName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("persistentVolumeName"))
-			it.PersistentVolumeName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PersistentVolumeName = data
 		}
 	}
 
@@ -51972,26 +52359,29 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attacher"))
-			it.Attacher, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Attacher = data
 		case "nodeName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeName"))
-			it.NodeName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NodeName = data
 		case "source":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
-			it.Source, err = ec.unmarshalNK8s__io___api___storage___v1__VolumeAttachmentSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSourceIn(ctx, v)
+			data, err := ec.unmarshalNK8s__io___api___storage___v1__VolumeAttachmentSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSourceIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Source = data
 		}
 	}
 
@@ -52016,34 +52406,38 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attached"))
-			it.Attached, err = ec.unmarshalNBoolean2bool(ctx, v)
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Attached = data
 		case "attachError":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachError"))
-			it.AttachError, err = ec.unmarshalOK8s__io___api___storage___v1__VolumeErrorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeErrorIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___storage___v1__VolumeErrorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeErrorIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AttachError = data
 		case "attachmentMetadata":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachmentMetadata"))
-			it.AttachmentMetadata, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.AttachmentMetadata = data
 		case "detachError":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("detachError"))
-			it.DetachError, err = ec.unmarshalOK8s__io___api___storage___v1__VolumeErrorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeErrorIn(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___storage___v1__VolumeErrorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeErrorIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DetachError = data
 		}
 	}
 
@@ -52068,18 +52462,20 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeEr
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			it.Message, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Message = data
 		case "time":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("time"))
-			it.Time, err = ec.unmarshalODate2ᚖstring(ctx, v)
+			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Time = data
 		}
 	}
 
@@ -52104,10 +52500,11 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___api___r
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Format"))
-			it.Format, err = ec.unmarshalNK8s__io___apimachinery___pkg___api___resource__Format2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgAPIResourceFormat(ctx, v)
+			data, err := ec.unmarshalNK8s__io___apimachinery___pkg___api___resource__Format2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgAPIResourceFormat(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Format = data
 		}
 	}
 
@@ -52132,18 +52529,20 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchExpressions"))
-			it.MatchExpressions, err = ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementInᚄ(ctx, v)
+			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MatchExpressions = data
 		case "matchLabels":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchLabels"))
-			it.MatchLabels, err = ec.unmarshalOMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MatchLabels = data
 		}
 	}
 
@@ -52168,26 +52567,29 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
-			it.Key, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Key = data
 		case "operator":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
-			it.Operator, err = ec.unmarshalNK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorOperator(ctx, v)
+			data, err := ec.unmarshalNK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorOperator(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Operator = data
 		case "values":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
-			it.Values, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Values = data
 		}
 	}
 
@@ -52212,34 +52614,38 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("array"))
-			it.Array, err = ec.unmarshalOAny2ᚕinterfaceᚄ(ctx, v)
+			data, err := ec.unmarshalOAny2ᚕinterfaceᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Array = data
 		case "exact":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exact"))
-			it.Exact, err = ec.unmarshalOAny2interface(ctx, v)
+			data, err := ec.unmarshalOAny2interface(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Exact = data
 		case "matchType":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchType"))
-			it.MatchType, err = ec.unmarshalNMatchFilterMatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx, v)
+			data, err := ec.unmarshalNMatchFilterMatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MatchType = data
 		case "regex":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("regex"))
-			it.Regex, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Regex = data
 		}
 	}
 
@@ -52286,18 +52692,20 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Name = data
 		case "namespace":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			it.Namespace, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Namespace = data
 		}
 	}
 
@@ -52322,18 +52730,20 @@ func (ec *executionContext) unmarshalInputNamespaceIn(ctx context.Context, obj i
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIVersion = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "metadata":
 			var err error
 
@@ -52391,34 +52801,38 @@ func (ec *executionContext) unmarshalInputNodeIn(ctx context.Context, obj interf
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIVersion = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "metadata":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			it.Metadata, err = ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Metadata = data
 		case "spec":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			it.Spec, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpecIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpecIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Spec = data
 		}
 	}
 
@@ -52443,26 +52857,29 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIVersion = data
 		case "displayName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-			it.DisplayName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.DisplayName = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "metadata":
 			var err error
 
@@ -52509,18 +52926,20 @@ func (ec *executionContext) unmarshalInputPersistentVolumeIn(ctx context.Context
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIVersion = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "metadata":
 			var err error
 
@@ -52578,34 +52997,38 @@ func (ec *executionContext) unmarshalInputSearchCluster(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProviderName"))
-			it.CloudProviderName, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.CloudProviderName = data
 		case "isReady":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
-			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.IsReady = data
 		case "region":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
-			it.Region, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Region = data
 		case "text":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Text = data
 		}
 	}
 
@@ -52630,18 +53053,20 @@ func (ec *executionContext) unmarshalInputSearchClusterManagedService(ctx contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
-			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.IsReady = data
 		case "text":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Text = data
 		}
 	}
 
@@ -52666,18 +53091,20 @@ func (ec *executionContext) unmarshalInputSearchDomainEntry(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-			it.ClusterName, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ClusterName = data
 		case "text":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Text = data
 		}
 	}
 
@@ -52702,18 +53129,20 @@ func (ec *executionContext) unmarshalInputSearchHelmRelease(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Text = data
 		case "isReady":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
-			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.IsReady = data
 		}
 	}
 
@@ -52738,10 +53167,11 @@ func (ec *executionContext) unmarshalInputSearchNamespaces(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Text = data
 		}
 	}
 
@@ -52766,10 +53196,11 @@ func (ec *executionContext) unmarshalInputSearchNodepool(ctx context.Context, ob
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Text = data
 		}
 	}
 
@@ -52794,10 +53225,11 @@ func (ec *executionContext) unmarshalInputSearchPersistentVolumeClaims(ctx conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Text = data
 		}
 	}
 
@@ -52822,10 +53254,11 @@ func (ec *executionContext) unmarshalInputSearchPersistentVolumes(ctx context.Co
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Text = data
 		}
 	}
 
@@ -52850,18 +53283,20 @@ func (ec *executionContext) unmarshalInputSearchProviderSecret(ctx context.Conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProviderName"))
-			it.CloudProviderName, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.CloudProviderName = data
 		case "text":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Text = data
 		}
 	}
 
@@ -52886,10 +53321,11 @@ func (ec *executionContext) unmarshalInputSearchVolumeAttachments(ctx context.Co
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Text = data
 		}
 	}
 
@@ -52914,18 +53350,20 @@ func (ec *executionContext) unmarshalInputVolumeAttachmentIn(ctx context.Context
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.APIVersion = data
 		case "kind":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
+			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Kind = data
 		case "metadata":
 			var err error
 
@@ -52977,31 +53415,40 @@ var checkAwsAccessOutputImplementors = []string{"CheckAwsAccessOutput"}
 
 func (ec *executionContext) _CheckAwsAccessOutput(ctx context.Context, sel ast.SelectionSet, obj *model.CheckAwsAccessOutput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, checkAwsAccessOutputImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CheckAwsAccessOutput")
 		case "result":
-
 			out.Values[i] = ec._CheckAwsAccessOutput_result(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "installationUrl":
-
 			out.Values[i] = ec._CheckAwsAccessOutput_installationUrl(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53009,34 +53456,43 @@ var checkNameAvailabilityOutputImplementors = []string{"CheckNameAvailabilityOut
 
 func (ec *executionContext) _CheckNameAvailabilityOutput(ctx context.Context, sel ast.SelectionSet, obj *domain.CheckNameAvailabilityOutput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, checkNameAvailabilityOutputImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CheckNameAvailabilityOutput")
 		case "result":
-
 			out.Values[i] = ec._CheckNameAvailabilityOutput_result(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "suggestedNames":
-
 			out.Values[i] = ec._CheckNameAvailabilityOutput_suggestedNames(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53044,23 +53500,22 @@ var cloudProviderSecretImplementors = []string{"CloudProviderSecret"}
 
 func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.SelectionSet, obj *entities.CloudProviderSecret) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, cloudProviderSecretImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CloudProviderSecret")
 		case "accountName":
-
 			out.Values[i] = ec._CloudProviderSecret_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "aws":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53070,14 +53525,30 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "cloudProviderName":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53085,26 +53556,40 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 				}()
 				res = ec._CloudProviderSecret_cloudProviderName(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "createdBy":
-
 			out.Values[i] = ec._CloudProviderSecret_createdBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "creationTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53112,26 +53597,40 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 				}()
 				res = ec._CloudProviderSecret_creationTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "displayName":
-
 			out.Values[i] = ec._CloudProviderSecret_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "id":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53139,44 +53638,52 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 				}()
 				res = ec._CloudProviderSecret_id(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "lastUpdatedBy":
-
 			out.Values[i] = ec._CloudProviderSecret_lastUpdatedBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "markedForDeletion":
-
 			out.Values[i] = ec._CloudProviderSecret_markedForDeletion(ctx, field, obj)
-
 		case "metadata":
-
 			out.Values[i] = ec._CloudProviderSecret_metadata(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "recordVersion":
-
 			out.Values[i] = ec._CloudProviderSecret_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updateTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53184,23 +53691,51 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 				}()
 				res = ec._CloudProviderSecret_updateTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53208,34 +53743,43 @@ var cloudProviderSecretEdgeImplementors = []string{"CloudProviderSecretEdge"}
 
 func (ec *executionContext) _CloudProviderSecretEdge(ctx context.Context, sel ast.SelectionSet, obj *model.CloudProviderSecretEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, cloudProviderSecretEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CloudProviderSecretEdge")
 		case "cursor":
-
 			out.Values[i] = ec._CloudProviderSecretEdge_cursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "node":
-
 			out.Values[i] = ec._CloudProviderSecretEdge_node(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53243,41 +53787,48 @@ var cloudProviderSecretPaginatedRecordsImplementors = []string{"CloudProviderSec
 
 func (ec *executionContext) _CloudProviderSecretPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.CloudProviderSecretPaginatedRecords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, cloudProviderSecretPaginatedRecordsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CloudProviderSecretPaginatedRecords")
 		case "edges":
-
 			out.Values[i] = ec._CloudProviderSecretPaginatedRecords_edges(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pageInfo":
-
 			out.Values[i] = ec._CloudProviderSecretPaginatedRecords_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "totalCount":
-
 			out.Values[i] = ec._CloudProviderSecretPaginatedRecords_totalCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53285,34 +53836,29 @@ var clusterImplementors = []string{"Cluster"}
 
 func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, obj *entities.Cluster) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, clusterImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Cluster")
 		case "accountName":
-
 			out.Values[i] = ec._Cluster_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "apiVersion":
-
 			out.Values[i] = ec._Cluster_apiVersion(ctx, field, obj)
-
 		case "createdBy":
-
 			out.Values[i] = ec._Cluster_createdBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "creationTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53320,26 +53866,40 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 				}()
 				res = ec._Cluster_creationTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "displayName":
-
 			out.Values[i] = ec._Cluster_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "id":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53347,48 +53907,54 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 				}()
 				res = ec._Cluster_id(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "kind":
-
 			out.Values[i] = ec._Cluster_kind(ctx, field, obj)
-
 		case "lastUpdatedBy":
-
 			out.Values[i] = ec._Cluster_lastUpdatedBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "markedForDeletion":
-
 			out.Values[i] = ec._Cluster_markedForDeletion(ctx, field, obj)
-
 		case "metadata":
-
 			out.Values[i] = ec._Cluster_metadata(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "recordVersion":
-
 			out.Values[i] = ec._Cluster_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53396,30 +53962,42 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 				}()
 				res = ec._Cluster_spec(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
-
 			out.Values[i] = ec._Cluster_status(ctx, field, obj)
-
 		case "syncStatus":
-
 			out.Values[i] = ec._Cluster_syncStatus(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updateTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53427,19 +54005,35 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 				}()
 				res = ec._Cluster_updateTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "adminKubeconfig":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53449,18 +54043,46 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53468,34 +54090,43 @@ var clusterEdgeImplementors = []string{"ClusterEdge"}
 
 func (ec *executionContext) _ClusterEdge(ctx context.Context, sel ast.SelectionSet, obj *model.ClusterEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, clusterEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ClusterEdge")
 		case "cursor":
-
 			out.Values[i] = ec._ClusterEdge_cursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "node":
-
 			out.Values[i] = ec._ClusterEdge_node(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53503,41 +54134,34 @@ var clusterManagedServiceImplementors = []string{"ClusterManagedService"}
 
 func (ec *executionContext) _ClusterManagedService(ctx context.Context, sel ast.SelectionSet, obj *entities.ClusterManagedService) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, clusterManagedServiceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ClusterManagedService")
 		case "accountName":
-
 			out.Values[i] = ec._ClusterManagedService_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "apiVersion":
-
 			out.Values[i] = ec._ClusterManagedService_apiVersion(ctx, field, obj)
-
 		case "clusterName":
-
 			out.Values[i] = ec._ClusterManagedService_clusterName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdBy":
-
 			out.Values[i] = ec._ClusterManagedService_createdBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "creationTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53545,26 +54169,40 @@ func (ec *executionContext) _ClusterManagedService(ctx context.Context, sel ast.
 				}()
 				res = ec._ClusterManagedService_creationTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "displayName":
-
 			out.Values[i] = ec._ClusterManagedService_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "id":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53572,45 +54210,51 @@ func (ec *executionContext) _ClusterManagedService(ctx context.Context, sel ast.
 				}()
 				res = ec._ClusterManagedService_id(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "kind":
-
 			out.Values[i] = ec._ClusterManagedService_kind(ctx, field, obj)
-
 		case "lastUpdatedBy":
-
 			out.Values[i] = ec._ClusterManagedService_lastUpdatedBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "markedForDeletion":
-
 			out.Values[i] = ec._ClusterManagedService_markedForDeletion(ctx, field, obj)
-
 		case "metadata":
-
 			out.Values[i] = ec._ClusterManagedService_metadata(ctx, field, obj)
-
 		case "recordVersion":
-
 			out.Values[i] = ec._ClusterManagedService_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53620,25 +54264,37 @@ func (ec *executionContext) _ClusterManagedService(ctx context.Context, sel ast.
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
-
 			out.Values[i] = ec._ClusterManagedService_status(ctx, field, obj)
-
 		case "syncStatus":
-
 			out.Values[i] = ec._ClusterManagedService_syncStatus(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updateTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53646,23 +54302,51 @@ func (ec *executionContext) _ClusterManagedService(ctx context.Context, sel ast.
 				}()
 				res = ec._ClusterManagedService_updateTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53670,34 +54354,43 @@ var clusterManagedServiceEdgeImplementors = []string{"ClusterManagedServiceEdge"
 
 func (ec *executionContext) _ClusterManagedServiceEdge(ctx context.Context, sel ast.SelectionSet, obj *model.ClusterManagedServiceEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, clusterManagedServiceEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ClusterManagedServiceEdge")
 		case "cursor":
-
 			out.Values[i] = ec._ClusterManagedServiceEdge_cursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "node":
-
 			out.Values[i] = ec._ClusterManagedServiceEdge_node(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53705,41 +54398,48 @@ var clusterManagedServicePaginatedRecordsImplementors = []string{"ClusterManaged
 
 func (ec *executionContext) _ClusterManagedServicePaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.ClusterManagedServicePaginatedRecords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, clusterManagedServicePaginatedRecordsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ClusterManagedServicePaginatedRecords")
 		case "edges":
-
 			out.Values[i] = ec._ClusterManagedServicePaginatedRecords_edges(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pageInfo":
-
 			out.Values[i] = ec._ClusterManagedServicePaginatedRecords_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "totalCount":
-
 			out.Values[i] = ec._ClusterManagedServicePaginatedRecords_totalCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53747,41 +54447,48 @@ var clusterPaginatedRecordsImplementors = []string{"ClusterPaginatedRecords"}
 
 func (ec *executionContext) _ClusterPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.ClusterPaginatedRecords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, clusterPaginatedRecordsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ClusterPaginatedRecords")
 		case "edges":
-
 			out.Values[i] = ec._ClusterPaginatedRecords_edges(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pageInfo":
-
 			out.Values[i] = ec._ClusterPaginatedRecords_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "totalCount":
-
 			out.Values[i] = ec._ClusterPaginatedRecords_totalCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53789,44 +54496,45 @@ var cursorPaginationImplementors = []string{"CursorPagination"}
 
 func (ec *executionContext) _CursorPagination(ctx context.Context, sel ast.SelectionSet, obj *repos.CursorPagination) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, cursorPaginationImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CursorPagination")
 		case "after":
-
 			out.Values[i] = ec._CursorPagination_after(ctx, field, obj)
-
 		case "before":
-
 			out.Values[i] = ec._CursorPagination_before(ctx, field, obj)
-
 		case "first":
-
 			out.Values[i] = ec._CursorPagination_first(ctx, field, obj)
-
 		case "last":
-
 			out.Values[i] = ec._CursorPagination_last(ctx, field, obj)
-
 		case "orderBy":
-
 			out.Values[i] = ec._CursorPagination_orderBy(ctx, field, obj)
-
 		case "sortDirection":
-
 			out.Values[i] = ec._CursorPagination_sortDirection(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53834,37 +54542,32 @@ var domainEntryImplementors = []string{"DomainEntry"}
 
 func (ec *executionContext) _DomainEntry(ctx context.Context, sel ast.SelectionSet, obj *entities.DomainEntry) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, domainEntryImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("DomainEntry")
 		case "accountName":
-
 			out.Values[i] = ec._DomainEntry_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "clusterName":
-
 			out.Values[i] = ec._DomainEntry_clusterName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdBy":
-
 			out.Values[i] = ec._DomainEntry_createdBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "creationTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53872,33 +54575,45 @@ func (ec *executionContext) _DomainEntry(ctx context.Context, sel ast.SelectionS
 				}()
 				res = ec._DomainEntry_creationTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "displayName":
-
 			out.Values[i] = ec._DomainEntry_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "domainName":
-
 			out.Values[i] = ec._DomainEntry_domainName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "id":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53906,37 +54621,47 @@ func (ec *executionContext) _DomainEntry(ctx context.Context, sel ast.SelectionS
 				}()
 				res = ec._DomainEntry_id(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "lastUpdatedBy":
-
 			out.Values[i] = ec._DomainEntry_lastUpdatedBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "markedForDeletion":
-
 			out.Values[i] = ec._DomainEntry_markedForDeletion(ctx, field, obj)
-
 		case "recordVersion":
-
 			out.Values[i] = ec._DomainEntry_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updateTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -53944,23 +54669,51 @@ func (ec *executionContext) _DomainEntry(ctx context.Context, sel ast.SelectionS
 				}()
 				res = ec._DomainEntry_updateTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -53968,34 +54721,43 @@ var domainEntryEdgeImplementors = []string{"DomainEntryEdge"}
 
 func (ec *executionContext) _DomainEntryEdge(ctx context.Context, sel ast.SelectionSet, obj *model.DomainEntryEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, domainEntryEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("DomainEntryEdge")
 		case "cursor":
-
 			out.Values[i] = ec._DomainEntryEdge_cursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "node":
-
 			out.Values[i] = ec._DomainEntryEdge_node(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54003,41 +54765,48 @@ var domainEntryPaginatedRecordsImplementors = []string{"DomainEntryPaginatedReco
 
 func (ec *executionContext) _DomainEntryPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.DomainEntryPaginatedRecords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, domainEntryPaginatedRecordsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("DomainEntryPaginatedRecords")
 		case "edges":
-
 			out.Values[i] = ec._DomainEntryPaginatedRecords_edges(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pageInfo":
-
 			out.Values[i] = ec._DomainEntryPaginatedRecords_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "totalCount":
-
 			out.Values[i] = ec._DomainEntryPaginatedRecords_totalCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54045,34 +54814,43 @@ var encodedValueImplementors = []string{"EncodedValue"}
 
 func (ec *executionContext) _EncodedValue(ctx context.Context, sel ast.SelectionSet, obj *model.EncodedValue) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, encodedValueImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("EncodedValue")
 		case "value":
-
 			out.Values[i] = ec._EncodedValue_value(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "encoding":
-
 			out.Values[i] = ec._EncodedValue_encoding(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54080,48 +54858,53 @@ var github__com___kloudlite___api___apps___infra___internal___entities__AWSAssum
 
 func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAssumeRoleParams) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams")
 		case "awsAccountId":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams_awsAccountId(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "cfParamTrustedARN":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams_cfParamTrustedARN(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "externalID":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams_externalID(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "roleARN":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams_roleARN(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54129,41 +54912,48 @@ var github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthS
 
 func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAuthSecretKeys) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys")
 		case "accessKey":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys_accessKey(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "cfParamUserName":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys_cfParamUserName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "secretKey":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys_secretKey(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54171,47 +54961,48 @@ var github__com___kloudlite___api___apps___infra___internal___entities__AWSSecre
 
 func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentialsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials")
 		case "assumeRoleParams":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials_assumeRoleParams(ctx, field, obj)
-
 		case "authMechanism":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials_authMechanism(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "authSecretKeys":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials_authSecretKeys(ctx, field, obj)
-
 		case "cfParamInstanceProfileName":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials_cfParamInstanceProfileName(ctx, field, obj)
-
 		case "cfParamRoleName":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials_cfParamRoleName(ctx, field, obj)
-
 		case "cfParamStackName":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials_cfParamStackName(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54219,69 +55010,62 @@ var github__com___kloudlite___api___apps___infra___internal___entities__InputFie
 
 func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__InputField(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesInputField) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___apps___infra___internal___entities__InputFieldImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___apps___infra___internal___entities__InputField")
 		case "defaultValue":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_defaultValue(ctx, field, obj)
-
 		case "displayUnit":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_displayUnit(ctx, field, obj)
-
 		case "inputType":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_inputType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "label":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_label(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "max":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_max(ctx, field, obj)
-
 		case "min":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_min(ctx, field, obj)
-
 		case "multiplier":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_multiplier(ctx, field, obj)
-
 		case "name":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "required":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_required(ctx, field, obj)
-
 		case "unit":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_unit(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54289,63 +55073,62 @@ var github__com___kloudlite___api___apps___infra___internal___entities__MresTemp
 
 func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesMresTemplate) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___apps___infra___internal___entities__MresTemplateImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate")
 		case "apiVersion":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate_apiVersion(ctx, field, obj)
-
 		case "description":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate_description(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "displayName":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "fields":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate_fields(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "kind":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate_kind(ctx, field, obj)
-
 		case "name":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "outputs":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate_outputs(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54353,41 +55136,34 @@ var github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemp
 
 func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry(ctx context.Context, sel ast.SelectionSet, obj *entities.MsvcTemplateEntry) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry")
 		case "active":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry_active(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "apiVersion":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry_apiVersion(ctx, field, obj)
-
 		case "description":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry_description(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "displayName":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "fields":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -54395,37 +55171,47 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___inte
 				}()
 				res = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry_fields(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "kind":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry_kind(ctx, field, obj)
-
 		case "logoUrl":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry_logoUrl(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "outputs":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -54433,19 +55219,35 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___inte
 				}()
 				res = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry_outputs(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "resources":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -54453,23 +55255,51 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___inte
 				}()
 				res = ec._Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry_resources(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54477,41 +55307,48 @@ var github__com___kloudlite___api___apps___infra___internal___entities__OutputFi
 
 func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__OutputField(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesOutputField) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___apps___infra___internal___entities__OutputFieldImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___apps___infra___internal___entities__OutputField")
 		case "description":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__OutputField_description(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "label":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__OutputField_label(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "name":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__OutputField_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54519,23 +55356,22 @@ var github__com___kloudlite___api___common__CreatedOrUpdatedByImplementors = []s
 
 func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, obj *common.CreatedOrUpdatedBy) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___common__CreatedOrUpdatedByImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___common__CreatedOrUpdatedBy")
 		case "userEmail":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "userId":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -54543,30 +55379,56 @@ func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUp
 				}()
 				res = ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "userName":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54574,27 +55436,24 @@ var github__com___kloudlite___api___pkg___types__SyncStatusImplementors = []stri
 
 func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncStatus(ctx context.Context, sel ast.SelectionSet, obj *types.SyncStatus) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___pkg___types__SyncStatusImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___pkg___types__SyncStatus")
 		case "action":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "error":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___pkg___types__SyncStatus_error(ctx, field, obj)
-
 		case "lastSyncedAt":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -54604,28 +55463,40 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "recordVersion":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___pkg___types__SyncStatus_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "state":
-
 			out.Values[i] = ec._Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "syncScheduledAt":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -54635,18 +55506,46 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54654,50 +55553,51 @@ var github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigI
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig")
 		case "credentials":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_credentials(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "k3sMasters":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_k3sMasters(ctx, field, obj)
-
 		case "nodePools":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_nodePools(ctx, field, obj)
-
 		case "region":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_region(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "spotNodePools":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_spotNodePools(ctx, field, obj)
-
 		case "vpc":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_vpc(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54705,56 +55605,57 @@ var github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConf
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig")
 		case "iamInstanceProfileRole":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_iamInstanceProfileRole(ctx, field, obj)
-
 		case "instanceType":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_instanceType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "nodes":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nodes(ctx, field, obj)
-
 		case "nvidiaGpuEnabled":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nvidiaGpuEnabled(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "rootVolumeSize":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeSize(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "rootVolumeType":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54762,81 +55663,74 @@ var github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig")
 		case "availabilityZone":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_availabilityZone(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "ec2Pool":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_ec2Pool(ctx, field, obj)
-
 		case "iamInstanceProfileRole":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_iamInstanceProfileRole(ctx, field, obj)
-
 		case "nvidiaGpuEnabled":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_nvidiaGpuEnabled(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "poolType":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_poolType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "rootVolumeSize":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_rootVolumeSize(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "rootVolumeType":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_rootVolumeType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "spotPool":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_spotPool(ctx, field, obj)
-
 		case "vpcId":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_vpcId(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "vpcSubnetId":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_vpcSubnetId(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54844,34 +55738,43 @@ var github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsImp
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsCredentials) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials")
 		case "authMechanism":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials_authMechanism(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "secretRef":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials_secretRef(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54879,31 +55782,40 @@ var github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigI
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig")
 		case "instanceType":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig_instanceType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "nodes":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig_nodes(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54911,31 +55823,40 @@ var github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeImp
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode")
 		case "memoryPerVcpu":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_memoryPerVcpu(ctx, field, obj)
-
 		case "vcpu":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_vcpu(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54943,27 +55864,38 @@ var github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeImp
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode")
 		case "instanceTypes":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode_instanceTypes(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -54971,39 +55903,44 @@ var github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig")
 		case "cpuNode":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_cpuNode(ctx, field, obj)
-
 		case "gpuNode":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_gpuNode(ctx, field, obj)
-
 		case "nodes":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_nodes(ctx, field, obj)
-
 		case "spotFleetTaggingRoleName":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig_spotFleetTaggingRoleName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55011,34 +55948,43 @@ var github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithIDIm
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSubnetWithID) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithIDImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID")
 		case "availabilityZone":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID_availabilityZone(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "id":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID_id(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55046,34 +55992,43 @@ var github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParamsImple
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsVPCParams) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParamsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams")
 		case "id":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams_id(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "publicSubnets":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams_publicSubnets(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55081,70 +56036,67 @@ var github__com___kloudlite___operator___apis___clusters___v1__ClusterOutputImpl
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterOutput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__ClusterOutputImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput")
 		case "jobName":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_jobName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "jobNamespace":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_jobNamespace(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "keyAWSVPCId":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyAWSVPCId(ctx, field, obj)
-
 		case "keyAWSVPCPublicSubnets":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyAWSVPCPublicSubnets(ctx, field, obj)
-
 		case "keyK3sAgentJoinToken":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sAgentJoinToken(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "keyK3sServerJoinToken":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sServerJoinToken(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "keyKubeconfig":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyKubeconfig(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "secretName":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_secretName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55152,103 +56104,88 @@ var github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecImplem
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec")
 		case "accountId":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountId(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "accountName":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "availabilityMode":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_availabilityMode(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "aws":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_aws(ctx, field, obj)
-
 		case "backupToS3Enabled":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_backupToS3Enabled(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "cloudflareEnabled":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudflareEnabled(ctx, field, obj)
-
 		case "cloudProvider":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudProvider(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "clusterInternalDnsHost":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterInternalDnsHost(ctx, field, obj)
-
 		case "clusterTokenRef":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx, field, obj)
-
 		case "kloudliteRelease":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_kloudliteRelease(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "messageQueueTopicName":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_messageQueueTopicName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "output":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_output(ctx, field, obj)
-
 		case "publicDNSHost":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_publicDNSHost(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "taintMasterNodes":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_taintMasterNodes(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55256,73 +56193,70 @@ var github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfig) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig")
 		case "availabilityZone":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_availabilityZone(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "bootVolumeSize":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_bootVolumeSize(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "bootVolumeType":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_bootVolumeType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "credentials":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_credentials(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "machineType":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_machineType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "nodes":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_nodes(ctx, field, obj)
-
 		case "poolType":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_poolType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "region":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_region(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55330,45 +56264,50 @@ var github__com___kloudlite___operator___apis___clusters___v1__MasterNodePropsIm
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1MasterNodeProps) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__MasterNodePropsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps")
 		case "availabilityZone":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_availabilityZone(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "kloudliteRelease":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_kloudliteRelease(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "lastRecreatedAt":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_lastRecreatedAt(ctx, field, obj)
-
 		case "role":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_role(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55376,57 +56315,56 @@ var github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecImple
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec")
 		case "aws":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_aws(ctx, field, obj)
-
 		case "cloudProvider":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_cloudProvider(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "gcp":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_gcp(ctx, field, obj)
-
 		case "maxCount":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_maxCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "minCount":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_minCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "nodeLabels":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_nodeLabels(ctx, field, obj)
-
 		case "nodeTaints":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_nodeTaints(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55434,24 +56372,35 @@ var github__com___kloudlite___operator___apis___clusters___v1__NodePropsImplemen
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodeProps(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1NodeProps) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__NodePropsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__NodeProps")
 		case "lastRecreatedAt":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodeProps_lastRecreatedAt(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55459,27 +56408,38 @@ var github__com___kloudlite___operator___apis___clusters___v1__NodeSpecImplement
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1NodeSpec) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__NodeSpecImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec")
 		case "nodepoolName":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec_nodepoolName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55487,34 +56447,43 @@ var github__com___kloudlite___operator___apis___common____types__MinMaxFloatImpl
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MinMaxFloat(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloat) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___common____types__MinMaxFloatImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___common____types__MinMaxFloat")
 		case "max":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_max(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "min":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_min(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55522,38 +56491,45 @@ var github__com___kloudlite___operator___apis___common____types__SecretKeyRefImp
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretKeyRef(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretKeyRef) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___common____types__SecretKeyRefImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___common____types__SecretKeyRef")
 		case "key":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_key(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "name":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "namespace":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_namespace(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55561,31 +56537,40 @@ var github__com___kloudlite___operator___apis___common____types__SecretRefImplem
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretRef(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretRef) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___common____types__SecretRefImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___common____types__SecretRef")
 		case "name":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "namespace":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55593,34 +56578,43 @@ var github__com___kloudlite___operator___apis___crds___v1__ClusterManagedService
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec")
 		case "msvcSpec":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_msvcSpec(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "targetNamespace":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_targetNamespace(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55628,72 +56622,65 @@ var github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecImplemen
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec")
 		case "chartName":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "chartRepoURL":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "chartVersion":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "jobVars":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_jobVars(ctx, field, obj)
-
 		case "postInstall":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postInstall(ctx, field, obj)
-
 		case "postUninstall":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_postUninstall(ctx, field, obj)
-
 		case "preInstall":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preInstall(ctx, field, obj)
-
 		case "preUninstall":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_preUninstall(ctx, field, obj)
-
 		case "releaseName":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_releaseName(ctx, field, obj)
-
 		case "values":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_values(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55701,65 +56688,60 @@ var github__com___kloudlite___operator___apis___crds___v1__HelmChartStatusImplem
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__HelmChartStatusImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus")
 		case "checkList":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checkList(ctx, field, obj)
-
 		case "checks":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_checks(ctx, field, obj)
-
 		case "isReady":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_isReady(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "lastReadyGeneration":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReadyGeneration(ctx, field, obj)
-
 		case "lastReconcileTime":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_lastReconcileTime(ctx, field, obj)
-
 		case "message":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_message(ctx, field, obj)
-
 		case "releaseNotes":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseNotes(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "releaseStatus":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_releaseStatus(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "resources":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus_resources(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55767,36 +56749,41 @@ var github__com___kloudlite___operator___apis___crds___v1__JobVarsImplementors =
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__JobVars(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1JobVars) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__JobVarsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__JobVars")
 		case "affinity":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_affinity(ctx, field, obj)
-
 		case "backOffLimit":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_backOffLimit(ctx, field, obj)
-
 		case "nodeSelector":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_nodeSelector(ctx, field, obj)
-
 		case "tolerations":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__JobVars_tolerations(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55804,35 +56791,42 @@ var github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecImp
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec")
 		case "nodeSelector":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec_nodeSelector(ctx, field, obj)
-
 		case "serviceTemplate":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec_serviceTemplate(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "tolerations":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec_tolerations(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55840,41 +56834,48 @@ var github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateImplem
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1ServiceTemplate) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate")
 		case "apiVersion":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate_apiVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "kind":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate_kind(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "spec":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate_spec(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55882,36 +56883,27 @@ var github__com___kloudlite___operator___pkg___operator__CheckImplementors = []s
 
 func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Check(ctx context.Context, sel ast.SelectionSet, obj *operator.Check) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___pkg___operator__CheckImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___pkg___operator__Check")
 		case "debug":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Check_debug(ctx, field, obj)
-
 		case "error":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Check_error(ctx, field, obj)
-
 		case "generation":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Check_generation(ctx, field, obj)
-
 		case "info":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Check_info(ctx, field, obj)
-
 		case "message":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Check_message(ctx, field, obj)
-
 		case "startedAt":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -55921,14 +56913,30 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "state":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -55938,25 +56946,51 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Check_status(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -55964,45 +56998,47 @@ var github__com___kloudlite___operator___pkg___operator__CheckMetaImplementors =
 
 func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__CheckMeta(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorPkgOperatorCheckMeta) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___pkg___operator__CheckMetaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___pkg___operator__CheckMeta")
 		case "debug":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "description":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx, field, obj)
-
 		case "name":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "title":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_title(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56010,48 +57046,53 @@ var github__com___kloudlite___operator___pkg___operator__ResourceRefImplementors
 
 func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__ResourceRef(ctx context.Context, sel ast.SelectionSet, obj *operator.ResourceRef) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___pkg___operator__ResourceRefImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___pkg___operator__ResourceRef")
 		case "apiVersion":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__ResourceRef_apiVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "kind":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__ResourceRef_kind(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "name":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__ResourceRef_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "namespace":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__ResourceRef_namespace(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56059,8 +57100,9 @@ var github__com___kloudlite___operator___pkg___operator__StatusImplementors = []
 
 func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Status(ctx context.Context, sel ast.SelectionSet, obj *operator.Status) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___pkg___operator__StatusImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -56068,7 +57110,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 		case "checkList":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -56078,14 +57120,30 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "checks":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -56095,25 +57153,37 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "isReady":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Status_isReady(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "lastReadyGeneration":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(ctx, field, obj)
-
 		case "lastReconcileTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -56123,14 +57193,30 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "message":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -56140,22 +57226,48 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "resources":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56163,24 +57275,35 @@ var github__com___kloudlite___operator___pkg___raw____json__RawJsonImplementors 
 
 func (ec *executionContext) _Github__com___kloudlite___operator___pkg___raw____json__RawJson(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorPkgRawJSONRawJSON) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___pkg___raw____json__RawJsonImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___pkg___raw____json__RawJson")
 		case "RawMessage":
-
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___raw____json__RawJson_RawMessage(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56188,41 +57311,34 @@ var helmReleaseImplementors = []string{"HelmRelease"}
 
 func (ec *executionContext) _HelmRelease(ctx context.Context, sel ast.SelectionSet, obj *entities.HelmRelease) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, helmReleaseImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("HelmRelease")
 		case "accountName":
-
 			out.Values[i] = ec._HelmRelease_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "apiVersion":
-
 			out.Values[i] = ec._HelmRelease_apiVersion(ctx, field, obj)
-
 		case "clusterName":
-
 			out.Values[i] = ec._HelmRelease_clusterName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdBy":
-
 			out.Values[i] = ec._HelmRelease_createdBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "creationTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -56230,26 +57346,40 @@ func (ec *executionContext) _HelmRelease(ctx context.Context, sel ast.SelectionS
 				}()
 				res = ec._HelmRelease_creationTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "displayName":
-
 			out.Values[i] = ec._HelmRelease_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "id":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -56257,45 +57387,51 @@ func (ec *executionContext) _HelmRelease(ctx context.Context, sel ast.SelectionS
 				}()
 				res = ec._HelmRelease_id(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "kind":
-
 			out.Values[i] = ec._HelmRelease_kind(ctx, field, obj)
-
 		case "lastUpdatedBy":
-
 			out.Values[i] = ec._HelmRelease_lastUpdatedBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "markedForDeletion":
-
 			out.Values[i] = ec._HelmRelease_markedForDeletion(ctx, field, obj)
-
 		case "metadata":
-
 			out.Values[i] = ec._HelmRelease_metadata(ctx, field, obj)
-
 		case "recordVersion":
-
 			out.Values[i] = ec._HelmRelease_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -56305,14 +57441,30 @@ func (ec *executionContext) _HelmRelease(ctx context.Context, sel ast.SelectionS
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -56322,21 +57474,35 @@ func (ec *executionContext) _HelmRelease(ctx context.Context, sel ast.SelectionS
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "syncStatus":
-
 			out.Values[i] = ec._HelmRelease_syncStatus(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updateTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -56344,23 +57510,51 @@ func (ec *executionContext) _HelmRelease(ctx context.Context, sel ast.SelectionS
 				}()
 				res = ec._HelmRelease_updateTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56368,34 +57562,43 @@ var helmReleaseEdgeImplementors = []string{"HelmReleaseEdge"}
 
 func (ec *executionContext) _HelmReleaseEdge(ctx context.Context, sel ast.SelectionSet, obj *model.HelmReleaseEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, helmReleaseEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("HelmReleaseEdge")
 		case "cursor":
-
 			out.Values[i] = ec._HelmReleaseEdge_cursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "node":
-
 			out.Values[i] = ec._HelmReleaseEdge_node(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56403,41 +57606,48 @@ var helmReleasePaginatedRecordsImplementors = []string{"HelmReleasePaginatedReco
 
 func (ec *executionContext) _HelmReleasePaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.HelmReleasePaginatedRecords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, helmReleasePaginatedRecordsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("HelmReleasePaginatedRecords")
 		case "edges":
-
 			out.Values[i] = ec._HelmReleasePaginatedRecords_edges(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pageInfo":
-
 			out.Values[i] = ec._HelmReleasePaginatedRecords_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "totalCount":
-
 			out.Values[i] = ec._HelmReleasePaginatedRecords_totalCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56445,39 +57655,44 @@ var k8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceImplementors = []
 
 func (ec *executionContext) _K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource")
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_fsType(ctx, field, obj)
-
 		case "partition":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_partition(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_readOnly(ctx, field, obj)
-
 		case "volumeID":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_volumeID(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56485,32 +57700,39 @@ var k8s__io___api___core___v1__AffinityImplementors = []string{"K8s__io___api___
 
 func (ec *executionContext) _K8s__io___api___core___v1__Affinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1Affinity) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__AffinityImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__Affinity")
 		case "nodeAffinity":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Affinity_nodeAffinity(ctx, field, obj)
-
 		case "podAffinity":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Affinity_podAffinity(ctx, field, obj)
-
 		case "podAntiAffinity":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Affinity_podAntiAffinity(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56518,50 +57740,51 @@ var k8s__io___api___core___v1__AzureDiskVolumeSourceImplementors = []string{"K8s
 
 func (ec *executionContext) _K8s__io___api___core___v1__AzureDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1AzureDiskVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__AzureDiskVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__AzureDiskVolumeSource")
 		case "cachingMode":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_cachingMode(ctx, field, obj)
-
 		case "diskName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_diskName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "diskURI":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_diskURI(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_fsType(ctx, field, obj)
-
 		case "kind":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_kind(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_readOnly(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56569,42 +57792,47 @@ var k8s__io___api___core___v1__AzureFilePersistentVolumeSourceImplementors = []s
 
 func (ec *executionContext) _K8s__io___api___core___v1__AzureFilePersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1AzureFilePersistentVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__AzureFilePersistentVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__AzureFilePersistentVolumeSource")
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AzureFilePersistentVolumeSource_readOnly(ctx, field, obj)
-
 		case "secretName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "secretNamespace":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretNamespace(ctx, field, obj)
-
 		case "shareName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__AzureFilePersistentVolumeSource_shareName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56612,66 +57840,59 @@ var k8s__io___api___core___v1__CSIPersistentVolumeSourceImplementors = []string{
 
 func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__CSIPersistentVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__CSIPersistentVolumeSource")
 		case "controllerExpandSecretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerExpandSecretRef(ctx, field, obj)
-
 		case "controllerPublishSecretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerPublishSecretRef(ctx, field, obj)
-
 		case "driver":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_driver(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_fsType(ctx, field, obj)
-
 		case "nodeExpandSecretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeExpandSecretRef(ctx, field, obj)
-
 		case "nodePublishSecretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_nodePublishSecretRef(ctx, field, obj)
-
 		case "nodeStageSecretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeStageSecretRef(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_readOnly(ctx, field, obj)
-
 		case "volumeAttributes":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeAttributes(ctx, field, obj)
-
 		case "volumeHandle":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeHandle(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56679,47 +57900,48 @@ var k8s__io___api___core___v1__CephFSPersistentVolumeSourceImplementors = []stri
 
 func (ec *executionContext) _K8s__io___api___core___v1__CephFSPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1CephFSPersistentVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__CephFSPersistentVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__CephFSPersistentVolumeSource")
 		case "monitors":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_monitors(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "path":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_path(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_readOnly(ctx, field, obj)
-
 		case "secretFile":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretFile(ctx, field, obj)
-
 		case "secretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretRef(ctx, field, obj)
-
 		case "user":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_user(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56727,39 +57949,44 @@ var k8s__io___api___core___v1__CinderPersistentVolumeSourceImplementors = []stri
 
 func (ec *executionContext) _K8s__io___api___core___v1__CinderPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1CinderPersistentVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__CinderPersistentVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__CinderPersistentVolumeSource")
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CinderPersistentVolumeSource_fsType(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CinderPersistentVolumeSource_readOnly(ctx, field, obj)
-
 		case "secretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CinderPersistentVolumeSource_secretRef(ctx, field, obj)
-
 		case "volumeID":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__CinderPersistentVolumeSource_volumeID(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56767,40 +57994,43 @@ var k8s__io___api___core___v1__FCVolumeSourceImplementors = []string{"K8s__io___
 
 func (ec *executionContext) _K8s__io___api___core___v1__FCVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1FCVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__FCVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__FCVolumeSource")
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FCVolumeSource_fsType(ctx, field, obj)
-
 		case "lun":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FCVolumeSource_lun(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FCVolumeSource_readOnly(ctx, field, obj)
-
 		case "targetWWNs":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FCVolumeSource_targetWWNs(ctx, field, obj)
-
 		case "wwids":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FCVolumeSource_wwids(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56808,43 +58038,46 @@ var k8s__io___api___core___v1__FlexPersistentVolumeSourceImplementors = []string
 
 func (ec *executionContext) _K8s__io___api___core___v1__FlexPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1FlexPersistentVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__FlexPersistentVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__FlexPersistentVolumeSource")
 		case "driver":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FlexPersistentVolumeSource_driver(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FlexPersistentVolumeSource_fsType(ctx, field, obj)
-
 		case "options":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FlexPersistentVolumeSource_options(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FlexPersistentVolumeSource_readOnly(ctx, field, obj)
-
 		case "secretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FlexPersistentVolumeSource_secretRef(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56852,28 +58085,37 @@ var k8s__io___api___core___v1__FlockerVolumeSourceImplementors = []string{"K8s__
 
 func (ec *executionContext) _K8s__io___api___core___v1__FlockerVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1FlockerVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__FlockerVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__FlockerVolumeSource")
 		case "datasetName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FlockerVolumeSource_datasetName(ctx, field, obj)
-
 		case "datasetUUID":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__FlockerVolumeSource_datasetUUID(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56881,39 +58123,44 @@ var k8s__io___api___core___v1__GCEPersistentDiskVolumeSourceImplementors = []str
 
 func (ec *executionContext) _K8s__io___api___core___v1__GCEPersistentDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1GCEPersistentDiskVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__GCEPersistentDiskVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__GCEPersistentDiskVolumeSource")
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_fsType(ctx, field, obj)
-
 		case "partition":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_partition(ctx, field, obj)
-
 		case "pdName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_pdName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_readOnly(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56921,42 +58168,47 @@ var k8s__io___api___core___v1__GlusterfsPersistentVolumeSourceImplementors = []s
 
 func (ec *executionContext) _K8s__io___api___core___v1__GlusterfsPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1GlusterfsPersistentVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__GlusterfsPersistentVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__GlusterfsPersistentVolumeSource")
 		case "endpoints":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpoints(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "endpointsNamespace":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpointsNamespace(ctx, field, obj)
-
 		case "path":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_path(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_readOnly(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56964,31 +58216,40 @@ var k8s__io___api___core___v1__HostPathVolumeSourceImplementors = []string{"K8s_
 
 func (ec *executionContext) _K8s__io___api___core___v1__HostPathVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1HostPathVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__HostPathVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__HostPathVolumeSource")
 		case "path":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__HostPathVolumeSource_path(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "type":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__HostPathVolumeSource_type(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -56996,73 +58257,64 @@ var k8s__io___api___core___v1__ISCSIPersistentVolumeSourceImplementors = []strin
 
 func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__ISCSIPersistentVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__ISCSIPersistentVolumeSource")
 		case "chapAuthDiscovery":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthDiscovery(ctx, field, obj)
-
 		case "chapAuthSession":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthSession(ctx, field, obj)
-
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_fsType(ctx, field, obj)
-
 		case "initiatorName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_initiatorName(ctx, field, obj)
-
 		case "iqn":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iqn(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "iscsiInterface":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iscsiInterface(ctx, field, obj)
-
 		case "lun":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_lun(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "portals":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_portals(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_readOnly(ctx, field, obj)
-
 		case "secretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_secretRef(ctx, field, obj)
-
 		case "targetPortal":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_targetPortal(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57070,31 +58322,40 @@ var k8s__io___api___core___v1__LocalVolumeSourceImplementors = []string{"K8s__io
 
 func (ec *executionContext) _K8s__io___api___core___v1__LocalVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1LocalVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__LocalVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__LocalVolumeSource")
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__LocalVolumeSource_fsType(ctx, field, obj)
-
 		case "path":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__LocalVolumeSource_path(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57102,38 +58363,45 @@ var k8s__io___api___core___v1__NFSVolumeSourceImplementors = []string{"K8s__io__
 
 func (ec *executionContext) _K8s__io___api___core___v1__NFSVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NFSVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NFSVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NFSVolumeSource")
 		case "path":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NFSVolumeSource_path(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NFSVolumeSource_readOnly(ctx, field, obj)
-
 		case "server":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NFSVolumeSource_server(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57141,46 +58409,49 @@ var k8s__io___api___core___v1__NamespaceConditionImplementors = []string{"K8s__i
 
 func (ec *executionContext) _K8s__io___api___core___v1__NamespaceCondition(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NamespaceCondition) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NamespaceConditionImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NamespaceCondition")
 		case "lastTransitionTime":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceCondition_lastTransitionTime(ctx, field, obj)
-
 		case "message":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceCondition_message(ctx, field, obj)
-
 		case "reason":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceCondition_reason(ctx, field, obj)
-
 		case "status":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceCondition_status(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "type":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceCondition_type(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57188,24 +58459,35 @@ var k8s__io___api___core___v1__NamespaceSpecImplementors = []string{"K8s__io___a
 
 func (ec *executionContext) _K8s__io___api___core___v1__NamespaceSpec(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NamespaceSpec) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NamespaceSpecImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NamespaceSpec")
 		case "finalizers":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceSpec_finalizers(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57213,28 +58495,37 @@ var k8s__io___api___core___v1__NamespaceStatusImplementors = []string{"K8s__io__
 
 func (ec *executionContext) _K8s__io___api___core___v1__NamespaceStatus(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NamespaceStatus) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NamespaceStatusImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NamespaceStatus")
 		case "conditions":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceStatus_conditions(ctx, field, obj)
-
 		case "phase":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceStatus_phase(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57242,28 +58533,37 @@ var k8s__io___api___core___v1__NodeAffinityImplementors = []string{"K8s__io___ap
 
 func (ec *executionContext) _K8s__io___api___core___v1__NodeAffinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NodeAffinity) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NodeAffinityImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NodeAffinity")
 		case "preferredDuringSchedulingIgnoredDuringExecution":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NodeAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
-
 		case "requiredDuringSchedulingIgnoredDuringExecution":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NodeAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57271,27 +58571,38 @@ var k8s__io___api___core___v1__NodeSelectorImplementors = []string{"K8s__io___ap
 
 func (ec *executionContext) _K8s__io___api___core___v1__NodeSelector(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NodeSelector) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NodeSelectorImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NodeSelector")
 		case "nodeSelectorTerms":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelector_nodeSelectorTerms(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57299,38 +58610,45 @@ var k8s__io___api___core___v1__NodeSelectorRequirementImplementors = []string{"K
 
 func (ec *executionContext) _K8s__io___api___core___v1__NodeSelectorRequirement(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NodeSelectorRequirement) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NodeSelectorRequirementImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NodeSelectorRequirement")
 		case "key":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelectorRequirement_key(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "operator":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelectorRequirement_operator(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "values":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelectorRequirement_values(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57338,28 +58656,37 @@ var k8s__io___api___core___v1__NodeSelectorTermImplementors = []string{"K8s__io_
 
 func (ec *executionContext) _K8s__io___api___core___v1__NodeSelectorTerm(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NodeSelectorTerm) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NodeSelectorTermImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NodeSelectorTerm")
 		case "matchExpressions":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelectorTerm_matchExpressions(ctx, field, obj)
-
 		case "matchFields":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelectorTerm_matchFields(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57367,48 +58694,47 @@ var k8s__io___api___core___v1__ObjectReferenceImplementors = []string{"K8s__io__
 
 func (ec *executionContext) _K8s__io___api___core___v1__ObjectReference(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1ObjectReference) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__ObjectReferenceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__ObjectReference")
 		case "apiVersion":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_apiVersion(ctx, field, obj)
-
 		case "fieldPath":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_fieldPath(ctx, field, obj)
-
 		case "kind":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_kind(ctx, field, obj)
-
 		case "name":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_name(ctx, field, obj)
-
 		case "namespace":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_namespace(ctx, field, obj)
-
 		case "resourceVersion":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_resourceVersion(ctx, field, obj)
-
 		case "uid":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_uid(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57416,50 +58742,51 @@ var k8s__io___api___core___v1__PersistentVolumeClaimConditionImplementors = []st
 
 func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeClaimCondition(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PersistentVolumeClaimCondition) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PersistentVolumeClaimConditionImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PersistentVolumeClaimCondition")
 		case "lastProbeTime":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimCondition_lastProbeTime(ctx, field, obj)
-
 		case "lastTransitionTime":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimCondition_lastTransitionTime(ctx, field, obj)
-
 		case "message":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimCondition_message(ctx, field, obj)
-
 		case "reason":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimCondition_reason(ctx, field, obj)
-
 		case "status":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimCondition_status(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "type":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimCondition_type(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57467,52 +58794,49 @@ var k8s__io___api___core___v1__PersistentVolumeClaimSpecImplementors = []string{
 
 func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeClaimSpec(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PersistentVolumeClaimSpec) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PersistentVolumeClaimSpecImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PersistentVolumeClaimSpec")
 		case "accessModes":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimSpec_accessModes(ctx, field, obj)
-
 		case "dataSource":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimSpec_dataSource(ctx, field, obj)
-
 		case "dataSourceRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimSpec_dataSourceRef(ctx, field, obj)
-
 		case "resources":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimSpec_resources(ctx, field, obj)
-
 		case "selector":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimSpec_selector(ctx, field, obj)
-
 		case "storageClassName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimSpec_storageClassName(ctx, field, obj)
-
 		case "volumeMode":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimSpec_volumeMode(ctx, field, obj)
-
 		case "volumeName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimSpec_volumeName(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57520,44 +58844,45 @@ var k8s__io___api___core___v1__PersistentVolumeClaimStatusImplementors = []strin
 
 func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeClaimStatus(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PersistentVolumeClaimStatus) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PersistentVolumeClaimStatusImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PersistentVolumeClaimStatus")
 		case "accessModes":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus_accessModes(ctx, field, obj)
-
 		case "allocatedResources":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus_allocatedResources(ctx, field, obj)
-
 		case "allocatedResourceStatuses":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus_allocatedResourceStatuses(ctx, field, obj)
-
 		case "capacity":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus_capacity(ctx, field, obj)
-
 		case "conditions":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus_conditions(ctx, field, obj)
-
 		case "phase":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus_phase(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57565,140 +58890,93 @@ var k8s__io___api___core___v1__PersistentVolumeSpecImplementors = []string{"K8s_
 
 func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PersistentVolumeSpecImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PersistentVolumeSpec")
 		case "accessModes":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_accessModes(ctx, field, obj)
-
 		case "awsElasticBlockStore":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_awsElasticBlockStore(ctx, field, obj)
-
 		case "azureDisk":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_azureDisk(ctx, field, obj)
-
 		case "azureFile":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_azureFile(ctx, field, obj)
-
 		case "capacity":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_capacity(ctx, field, obj)
-
 		case "cephfs":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_cephfs(ctx, field, obj)
-
 		case "cinder":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_cinder(ctx, field, obj)
-
 		case "claimRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_claimRef(ctx, field, obj)
-
 		case "csi":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_csi(ctx, field, obj)
-
 		case "fc":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_fc(ctx, field, obj)
-
 		case "flexVolume":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_flexVolume(ctx, field, obj)
-
 		case "flocker":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_flocker(ctx, field, obj)
-
 		case "gcePersistentDisk":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_gcePersistentDisk(ctx, field, obj)
-
 		case "glusterfs":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_glusterfs(ctx, field, obj)
-
 		case "hostPath":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_hostPath(ctx, field, obj)
-
 		case "iscsi":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_iscsi(ctx, field, obj)
-
 		case "local":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_local(ctx, field, obj)
-
 		case "mountOptions":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_mountOptions(ctx, field, obj)
-
 		case "nfs":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_nfs(ctx, field, obj)
-
 		case "nodeAffinity":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_nodeAffinity(ctx, field, obj)
-
 		case "persistentVolumeReclaimPolicy":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_persistentVolumeReclaimPolicy(ctx, field, obj)
-
 		case "photonPersistentDisk":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_photonPersistentDisk(ctx, field, obj)
-
 		case "portworxVolume":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_portworxVolume(ctx, field, obj)
-
 		case "quobyte":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_quobyte(ctx, field, obj)
-
 		case "rbd":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_rbd(ctx, field, obj)
-
 		case "scaleIO":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_scaleIO(ctx, field, obj)
-
 		case "storageClassName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_storageClassName(ctx, field, obj)
-
 		case "storageos":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_storageos(ctx, field, obj)
-
 		case "volumeMode":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_volumeMode(ctx, field, obj)
-
 		case "vsphereVolume":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_vsphereVolume(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57706,36 +58984,41 @@ var k8s__io___api___core___v1__PersistentVolumeStatusImplementors = []string{"K8
 
 func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeStatus(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PersistentVolumeStatus) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PersistentVolumeStatusImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PersistentVolumeStatus")
 		case "lastPhaseTransitionTime":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeStatus_lastPhaseTransitionTime(ctx, field, obj)
-
 		case "message":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeStatus_message(ctx, field, obj)
-
 		case "phase":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeStatus_phase(ctx, field, obj)
-
 		case "reason":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeStatus_reason(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57743,31 +59026,40 @@ var k8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceImplementors = []
 
 func (ec *executionContext) _K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PhotonPersistentDiskVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource")
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_fsType(ctx, field, obj)
-
 		case "pdID":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_pdID(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57775,28 +59067,37 @@ var k8s__io___api___core___v1__PodAffinityImplementors = []string{"K8s__io___api
 
 func (ec *executionContext) _K8s__io___api___core___v1__PodAffinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PodAffinity) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PodAffinityImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PodAffinity")
 		case "preferredDuringSchedulingIgnoredDuringExecution":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
-
 		case "requiredDuringSchedulingIgnoredDuringExecution":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57804,39 +59105,44 @@ var k8s__io___api___core___v1__PodAffinityTermImplementors = []string{"K8s__io__
 
 func (ec *executionContext) _K8s__io___api___core___v1__PodAffinityTerm(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PodAffinityTerm) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PodAffinityTermImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PodAffinityTerm")
 		case "labelSelector":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinityTerm_labelSelector(ctx, field, obj)
-
 		case "namespaces":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinityTerm_namespaces(ctx, field, obj)
-
 		case "namespaceSelector":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinityTerm_namespaceSelector(ctx, field, obj)
-
 		case "topologyKey":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PodAffinityTerm_topologyKey(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57844,28 +59150,37 @@ var k8s__io___api___core___v1__PodAntiAffinityImplementors = []string{"K8s__io__
 
 func (ec *executionContext) _K8s__io___api___core___v1__PodAntiAffinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PodAntiAffinity) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PodAntiAffinityImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PodAntiAffinity")
 		case "preferredDuringSchedulingIgnoredDuringExecution":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PodAntiAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
-
 		case "requiredDuringSchedulingIgnoredDuringExecution":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PodAntiAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57873,35 +59188,42 @@ var k8s__io___api___core___v1__PortworxVolumeSourceImplementors = []string{"K8s_
 
 func (ec *executionContext) _K8s__io___api___core___v1__PortworxVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PortworxVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PortworxVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PortworxVolumeSource")
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PortworxVolumeSource_fsType(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PortworxVolumeSource_readOnly(ctx, field, obj)
-
 		case "volumeID":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PortworxVolumeSource_volumeID(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57909,34 +59231,43 @@ var k8s__io___api___core___v1__PreferredSchedulingTermImplementors = []string{"K
 
 func (ec *executionContext) _K8s__io___api___core___v1__PreferredSchedulingTerm(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PreferredSchedulingTerm) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PreferredSchedulingTermImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PreferredSchedulingTerm")
 		case "preference":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PreferredSchedulingTerm_preference(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "weight":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__PreferredSchedulingTerm_weight(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57944,50 +59275,51 @@ var k8s__io___api___core___v1__QuobyteVolumeSourceImplementors = []string{"K8s__
 
 func (ec *executionContext) _K8s__io___api___core___v1__QuobyteVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1QuobyteVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__QuobyteVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__QuobyteVolumeSource")
 		case "group":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_group(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_readOnly(ctx, field, obj)
-
 		case "registry":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_registry(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "tenant":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_tenant(ctx, field, obj)
-
 		case "user":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_user(ctx, field, obj)
-
 		case "volume":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_volume(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -57995,58 +59327,55 @@ var k8s__io___api___core___v1__RBDPersistentVolumeSourceImplementors = []string{
 
 func (ec *executionContext) _K8s__io___api___core___v1__RBDPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1RBDPersistentVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__RBDPersistentVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__RBDPersistentVolumeSource")
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_fsType(ctx, field, obj)
-
 		case "image":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_image(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "keyring":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_keyring(ctx, field, obj)
-
 		case "monitors":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_monitors(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pool":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_pool(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_readOnly(ctx, field, obj)
-
 		case "secretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_secretRef(ctx, field, obj)
-
 		case "user":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_user(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58054,27 +59383,38 @@ var k8s__io___api___core___v1__ResourceClaimImplementors = []string{"K8s__io___a
 
 func (ec *executionContext) _K8s__io___api___core___v1__ResourceClaim(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1ResourceClaim) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__ResourceClaimImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__ResourceClaim")
 		case "name":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ResourceClaim_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58082,32 +59422,39 @@ var k8s__io___api___core___v1__ResourceRequirementsImplementors = []string{"K8s_
 
 func (ec *executionContext) _K8s__io___api___core___v1__ResourceRequirements(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1ResourceRequirements) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__ResourceRequirementsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__ResourceRequirements")
 		case "claims":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ResourceRequirements_claims(ctx, field, obj)
-
 		case "limits":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ResourceRequirements_limits(ctx, field, obj)
-
 		case "requests":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ResourceRequirements_requests(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58115,66 +59462,59 @@ var k8s__io___api___core___v1__ScaleIOPersistentVolumeSourceImplementors = []str
 
 func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__ScaleIOPersistentVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__ScaleIOPersistentVolumeSource")
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_fsType(ctx, field, obj)
-
 		case "gateway":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_gateway(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "protectionDomain":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_protectionDomain(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_readOnly(ctx, field, obj)
-
 		case "secretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_secretRef(ctx, field, obj)
-
 		case "sslEnabled":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_sslEnabled(ctx, field, obj)
-
 		case "storageMode":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storageMode(ctx, field, obj)
-
 		case "storagePool":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storagePool(ctx, field, obj)
-
 		case "system":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_system(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "volumeName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_volumeName(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58182,28 +59522,37 @@ var k8s__io___api___core___v1__SecretReferenceImplementors = []string{"K8s__io__
 
 func (ec *executionContext) _K8s__io___api___core___v1__SecretReference(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1SecretReference) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__SecretReferenceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__SecretReference")
 		case "name":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__SecretReference_name(ctx, field, obj)
-
 		case "namespace":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__SecretReference_namespace(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58211,40 +59560,43 @@ var k8s__io___api___core___v1__StorageOSPersistentVolumeSourceImplementors = []s
 
 func (ec *executionContext) _K8s__io___api___core___v1__StorageOSPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1StorageOSPersistentVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__StorageOSPersistentVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__StorageOSPersistentVolumeSource")
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__StorageOSPersistentVolumeSource_fsType(ctx, field, obj)
-
 		case "readOnly":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__StorageOSPersistentVolumeSource_readOnly(ctx, field, obj)
-
 		case "secretRef":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__StorageOSPersistentVolumeSource_secretRef(ctx, field, obj)
-
 		case "volumeName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeName(ctx, field, obj)
-
 		case "volumeNamespace":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeNamespace(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58252,42 +59604,47 @@ var k8s__io___api___core___v1__TaintImplementors = []string{"K8s__io___api___cor
 
 func (ec *executionContext) _K8s__io___api___core___v1__Taint(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1Taint) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__TaintImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__Taint")
 		case "effect":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Taint_effect(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "key":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Taint_key(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "timeAdded":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Taint_timeAdded(ctx, field, obj)
-
 		case "value":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Taint_value(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58295,40 +59652,43 @@ var k8s__io___api___core___v1__TolerationImplementors = []string{"K8s__io___api_
 
 func (ec *executionContext) _K8s__io___api___core___v1__Toleration(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1Toleration) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__TolerationImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__Toleration")
 		case "effect":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Toleration_effect(ctx, field, obj)
-
 		case "key":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Toleration_key(ctx, field, obj)
-
 		case "operator":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Toleration_operator(ctx, field, obj)
-
 		case "tolerationSeconds":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Toleration_tolerationSeconds(ctx, field, obj)
-
 		case "value":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__Toleration_value(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58336,38 +59696,45 @@ var k8s__io___api___core___v1__TypedLocalObjectReferenceImplementors = []string{
 
 func (ec *executionContext) _K8s__io___api___core___v1__TypedLocalObjectReference(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1TypedLocalObjectReference) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__TypedLocalObjectReferenceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__TypedLocalObjectReference")
 		case "apiGroup":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__TypedLocalObjectReference_apiGroup(ctx, field, obj)
-
 		case "kind":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__TypedLocalObjectReference_kind(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "name":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__TypedLocalObjectReference_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58375,42 +59742,47 @@ var k8s__io___api___core___v1__TypedObjectReferenceImplementors = []string{"K8s_
 
 func (ec *executionContext) _K8s__io___api___core___v1__TypedObjectReference(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1TypedObjectReference) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__TypedObjectReferenceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__TypedObjectReference")
 		case "apiGroup":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__TypedObjectReference_apiGroup(ctx, field, obj)
-
 		case "kind":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__TypedObjectReference_kind(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "name":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__TypedObjectReference_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "namespace":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__TypedObjectReference_namespace(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58418,24 +59790,35 @@ var k8s__io___api___core___v1__VolumeNodeAffinityImplementors = []string{"K8s__i
 
 func (ec *executionContext) _K8s__io___api___core___v1__VolumeNodeAffinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1VolumeNodeAffinity) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__VolumeNodeAffinityImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__VolumeNodeAffinity")
 		case "required":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__VolumeNodeAffinity_required(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58443,39 +59826,44 @@ var k8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceImplementors = []st
 
 func (ec *executionContext) _K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1VsphereVirtualDiskVolumeSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource")
 		case "fsType":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_fsType(ctx, field, obj)
-
 		case "storagePolicyID":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyID(ctx, field, obj)
-
 		case "storagePolicyName":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyName(ctx, field, obj)
-
 		case "volumePath":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_volumePath(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58483,34 +59871,43 @@ var k8s__io___api___core___v1__WeightedPodAffinityTermImplementors = []string{"K
 
 func (ec *executionContext) _K8s__io___api___core___v1__WeightedPodAffinityTerm(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1WeightedPodAffinityTerm) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__WeightedPodAffinityTermImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__WeightedPodAffinityTerm")
 		case "podAffinityTerm":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__WeightedPodAffinityTerm_podAffinityTerm(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "weight":
-
 			out.Values[i] = ec._K8s__io___api___core___v1__WeightedPodAffinityTerm_weight(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58518,28 +59915,37 @@ var k8s__io___api___storage___v1__VolumeAttachmentSourceImplementors = []string{
 
 func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPIStorageV1VolumeAttachmentSource) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___storage___v1__VolumeAttachmentSourceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___storage___v1__VolumeAttachmentSource")
 		case "inlineVolumeSpec":
-
 			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentSource_inlineVolumeSpec(ctx, field, obj)
-
 		case "persistentVolumeName":
-
 			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentSource_persistentVolumeName(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58547,41 +59953,48 @@ var k8s__io___api___storage___v1__VolumeAttachmentSpecImplementors = []string{"K
 
 func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentSpec(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPIStorageV1VolumeAttachmentSpec) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___storage___v1__VolumeAttachmentSpecImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___storage___v1__VolumeAttachmentSpec")
 		case "attacher":
-
 			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentSpec_attacher(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "nodeName":
-
 			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentSpec_nodeName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "source":
-
 			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentSpec_source(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58589,39 +60002,44 @@ var k8s__io___api___storage___v1__VolumeAttachmentStatusImplementors = []string{
 
 func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentStatus(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPIStorageV1VolumeAttachmentStatus) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___storage___v1__VolumeAttachmentStatusImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___storage___v1__VolumeAttachmentStatus")
 		case "attached":
-
 			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentStatus_attached(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "attachError":
-
 			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentStatus_attachError(ctx, field, obj)
-
 		case "attachmentMetadata":
-
 			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentStatus_attachmentMetadata(ctx, field, obj)
-
 		case "detachError":
-
 			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentStatus_detachError(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58629,28 +60047,37 @@ var k8s__io___api___storage___v1__VolumeErrorImplementors = []string{"K8s__io___
 
 func (ec *executionContext) _K8s__io___api___storage___v1__VolumeError(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPIStorageV1VolumeError) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___storage___v1__VolumeErrorImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___api___storage___v1__VolumeError")
 		case "message":
-
 			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeError_message(ctx, field, obj)
-
 		case "time":
-
 			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeError_time(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58658,27 +60085,38 @@ var k8s__io___apimachinery___pkg___api___resource__QuantityImplementors = []stri
 
 func (ec *executionContext) _K8s__io___apimachinery___pkg___api___resource__Quantity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoApimachineryPkgAPIResourceQuantity) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___apimachinery___pkg___api___resource__QuantityImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___apimachinery___pkg___api___resource__Quantity")
 		case "Format":
-
 			out.Values[i] = ec._K8s__io___apimachinery___pkg___api___resource__Quantity_Format(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58686,28 +60124,37 @@ var k8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorImplementors =
 
 func (ec *executionContext) _K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoApimachineryPkgApisMetaV1LabelSelector) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector")
 		case "matchExpressions":
-
 			out.Values[i] = ec._K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector_matchExpressions(ctx, field, obj)
-
 		case "matchLabels":
-
 			out.Values[i] = ec._K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector_matchLabels(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58715,38 +60162,45 @@ var k8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementImp
 
 func (ec *executionContext) _K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirement) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement")
 		case "key":
-
 			out.Values[i] = ec._K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement_key(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "operator":
-
 			out.Values[i] = ec._K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement_operator(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "values":
-
 			out.Values[i] = ec._K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement_values(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58754,39 +60208,44 @@ var matchFilterImplementors = []string{"MatchFilter"}
 
 func (ec *executionContext) _MatchFilter(ctx context.Context, sel ast.SelectionSet, obj *repos.MatchFilter) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, matchFilterImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("MatchFilter")
 		case "array":
-
 			out.Values[i] = ec._MatchFilter_array(ctx, field, obj)
-
 		case "exact":
-
 			out.Values[i] = ec._MatchFilter_exact(ctx, field, obj)
-
 		case "matchType":
-
 			out.Values[i] = ec._MatchFilter_matchType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "regex":
-
 			out.Values[i] = ec._MatchFilter_regex(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58794,8 +60253,9 @@ var metadataImplementors = []string{"Metadata"}
 
 func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet, obj *v1.ObjectMeta) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, metadataImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -58803,7 +60263,7 @@ func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet,
 		case "annotations":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -58813,14 +60273,30 @@ func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet,
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "creationTimestamp":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -58828,19 +60304,35 @@ func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet,
 				}()
 				res = ec._Metadata_creationTimestamp(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "deletionTimestamp":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -58850,21 +60342,35 @@ func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet,
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "generation":
-
 			out.Values[i] = ec._Metadata_generation(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "labels":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -58874,29 +60380,53 @@ func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet,
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "name":
-
 			out.Values[i] = ec._Metadata_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "namespace":
-
 			out.Values[i] = ec._Metadata_namespace(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58904,41 +60434,48 @@ var msvcTemplateImplementors = []string{"MsvcTemplate"}
 
 func (ec *executionContext) _MsvcTemplate(ctx context.Context, sel ast.SelectionSet, obj *entities.MsvcTemplate) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, msvcTemplateImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("MsvcTemplate")
 		case "category":
-
 			out.Values[i] = ec._MsvcTemplate_category(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "displayName":
-
 			out.Values[i] = ec._MsvcTemplate_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "items":
-
 			out.Values[i] = ec._MsvcTemplate_items(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -58951,7 +60488,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	})
 
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
 			Object: field.Name,
@@ -58962,157 +60499,129 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "infra_createCluster":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_createCluster(ctx, field)
 			})
-
 		case "infra_updateCluster":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_updateCluster(ctx, field)
 			})
-
 		case "infra_deleteCluster":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_deleteCluster(ctx, field)
 			})
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "infra_upgradeHelmKloudliteAgent":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_upgradeHelmKloudliteAgent(ctx, field)
 			})
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "infra_createProviderSecret":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_createProviderSecret(ctx, field)
 			})
-
 		case "infra_updateProviderSecret":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_updateProviderSecret(ctx, field)
 			})
-
 		case "infra_deleteProviderSecret":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_deleteProviderSecret(ctx, field)
 			})
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "infra_createDomainEntry":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_createDomainEntry(ctx, field)
 			})
-
 		case "infra_updateDomainEntry":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_updateDomainEntry(ctx, field)
 			})
-
 		case "infra_deleteDomainEntry":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_deleteDomainEntry(ctx, field)
 			})
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "infra_createNodePool":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_createNodePool(ctx, field)
 			})
-
 		case "infra_updateNodePool":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_updateNodePool(ctx, field)
 			})
-
 		case "infra_deleteNodePool":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_deleteNodePool(ctx, field)
 			})
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "infra_createClusterManagedService":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_createClusterManagedService(ctx, field)
 			})
-
 		case "infra_updateClusterManagedService":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_updateClusterManagedService(ctx, field)
 			})
-
 		case "infra_deleteClusterManagedService":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_deleteClusterManagedService(ctx, field)
 			})
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "infra_createHelmRelease":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_createHelmRelease(ctx, field)
 			})
-
 		case "infra_updateHelmRelease":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_updateHelmRelease(ctx, field)
 			})
-
 		case "infra_deleteHelmRelease":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_deleteHelmRelease(ctx, field)
 			})
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "infra_deletePV":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_deletePV(ctx, field)
 			})
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -59120,41 +60629,34 @@ var namespaceImplementors = []string{"Namespace"}
 
 func (ec *executionContext) _Namespace(ctx context.Context, sel ast.SelectionSet, obj *entities.Namespace) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, namespaceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Namespace")
 		case "accountName":
-
 			out.Values[i] = ec._Namespace_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "apiVersion":
-
 			out.Values[i] = ec._Namespace_apiVersion(ctx, field, obj)
-
 		case "clusterName":
-
 			out.Values[i] = ec._Namespace_clusterName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdBy":
-
 			out.Values[i] = ec._Namespace_createdBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "creationTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59162,26 +60664,40 @@ func (ec *executionContext) _Namespace(ctx context.Context, sel ast.SelectionSet
 				}()
 				res = ec._Namespace_creationTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "displayName":
-
 			out.Values[i] = ec._Namespace_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "id":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59189,45 +60705,51 @@ func (ec *executionContext) _Namespace(ctx context.Context, sel ast.SelectionSet
 				}()
 				res = ec._Namespace_id(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "kind":
-
 			out.Values[i] = ec._Namespace_kind(ctx, field, obj)
-
 		case "lastUpdatedBy":
-
 			out.Values[i] = ec._Namespace_lastUpdatedBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "markedForDeletion":
-
 			out.Values[i] = ec._Namespace_markedForDeletion(ctx, field, obj)
-
 		case "metadata":
-
 			out.Values[i] = ec._Namespace_metadata(ctx, field, obj)
-
 		case "recordVersion":
-
 			out.Values[i] = ec._Namespace_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59237,14 +60759,30 @@ func (ec *executionContext) _Namespace(ctx context.Context, sel ast.SelectionSet
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59254,21 +60792,35 @@ func (ec *executionContext) _Namespace(ctx context.Context, sel ast.SelectionSet
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "syncStatus":
-
 			out.Values[i] = ec._Namespace_syncStatus(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updateTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59276,23 +60828,51 @@ func (ec *executionContext) _Namespace(ctx context.Context, sel ast.SelectionSet
 				}()
 				res = ec._Namespace_updateTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -59300,34 +60880,43 @@ var namespaceEdgeImplementors = []string{"NamespaceEdge"}
 
 func (ec *executionContext) _NamespaceEdge(ctx context.Context, sel ast.SelectionSet, obj *model.NamespaceEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, namespaceEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NamespaceEdge")
 		case "cursor":
-
 			out.Values[i] = ec._NamespaceEdge_cursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "node":
-
 			out.Values[i] = ec._NamespaceEdge_node(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -59335,41 +60924,48 @@ var namespacePaginatedRecordsImplementors = []string{"NamespacePaginatedRecords"
 
 func (ec *executionContext) _NamespacePaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.NamespacePaginatedRecords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, namespacePaginatedRecordsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NamespacePaginatedRecords")
 		case "edges":
-
 			out.Values[i] = ec._NamespacePaginatedRecords_edges(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pageInfo":
-
 			out.Values[i] = ec._NamespacePaginatedRecords_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "totalCount":
-
 			out.Values[i] = ec._NamespacePaginatedRecords_totalCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -59377,34 +60973,29 @@ var nodeImplementors = []string{"Node"}
 
 func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj *entities.Node) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, nodeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Node")
 		case "accountName":
-
 			out.Values[i] = ec._Node_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "apiVersion":
-
 			out.Values[i] = ec._Node_apiVersion(ctx, field, obj)
-
 		case "clusterName":
-
 			out.Values[i] = ec._Node_clusterName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "creationTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59412,19 +61003,35 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 				}()
 				res = ec._Node_creationTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "id":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59432,38 +61039,46 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 				}()
 				res = ec._Node_id(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "kind":
-
 			out.Values[i] = ec._Node_kind(ctx, field, obj)
-
 		case "markedForDeletion":
-
 			out.Values[i] = ec._Node_markedForDeletion(ctx, field, obj)
-
 		case "metadata":
-
 			out.Values[i] = ec._Node_metadata(ctx, field, obj)
-
 		case "recordVersion":
-
 			out.Values[i] = ec._Node_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59471,30 +61086,42 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 				}()
 				res = ec._Node_spec(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
-
 			out.Values[i] = ec._Node_status(ctx, field, obj)
-
 		case "syncStatus":
-
 			out.Values[i] = ec._Node_syncStatus(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updateTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59502,23 +61129,51 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 				}()
 				res = ec._Node_updateTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -59526,34 +61181,43 @@ var nodeEdgeImplementors = []string{"NodeEdge"}
 
 func (ec *executionContext) _NodeEdge(ctx context.Context, sel ast.SelectionSet, obj *model.NodeEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, nodeEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NodeEdge")
 		case "cursor":
-
 			out.Values[i] = ec._NodeEdge_cursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "node":
-
 			out.Values[i] = ec._NodeEdge_node(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -59561,41 +61225,48 @@ var nodePaginatedRecordsImplementors = []string{"NodePaginatedRecords"}
 
 func (ec *executionContext) _NodePaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.NodePaginatedRecords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, nodePaginatedRecordsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NodePaginatedRecords")
 		case "edges":
-
 			out.Values[i] = ec._NodePaginatedRecords_edges(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pageInfo":
-
 			out.Values[i] = ec._NodePaginatedRecords_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "totalCount":
-
 			out.Values[i] = ec._NodePaginatedRecords_totalCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -59603,41 +61274,34 @@ var nodePoolImplementors = []string{"NodePool"}
 
 func (ec *executionContext) _NodePool(ctx context.Context, sel ast.SelectionSet, obj *entities.NodePool) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, nodePoolImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NodePool")
 		case "accountName":
-
 			out.Values[i] = ec._NodePool_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "apiVersion":
-
 			out.Values[i] = ec._NodePool_apiVersion(ctx, field, obj)
-
 		case "clusterName":
-
 			out.Values[i] = ec._NodePool_clusterName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdBy":
-
 			out.Values[i] = ec._NodePool_createdBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "creationTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59645,26 +61309,40 @@ func (ec *executionContext) _NodePool(ctx context.Context, sel ast.SelectionSet,
 				}()
 				res = ec._NodePool_creationTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "displayName":
-
 			out.Values[i] = ec._NodePool_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "id":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59672,45 +61350,51 @@ func (ec *executionContext) _NodePool(ctx context.Context, sel ast.SelectionSet,
 				}()
 				res = ec._NodePool_id(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "kind":
-
 			out.Values[i] = ec._NodePool_kind(ctx, field, obj)
-
 		case "lastUpdatedBy":
-
 			out.Values[i] = ec._NodePool_lastUpdatedBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "markedForDeletion":
-
 			out.Values[i] = ec._NodePool_markedForDeletion(ctx, field, obj)
-
 		case "metadata":
-
 			out.Values[i] = ec._NodePool_metadata(ctx, field, obj)
-
 		case "recordVersion":
-
 			out.Values[i] = ec._NodePool_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59718,30 +61402,42 @@ func (ec *executionContext) _NodePool(ctx context.Context, sel ast.SelectionSet,
 				}()
 				res = ec._NodePool_spec(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
-
 			out.Values[i] = ec._NodePool_status(ctx, field, obj)
-
 		case "syncStatus":
-
 			out.Values[i] = ec._NodePool_syncStatus(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updateTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59749,23 +61445,51 @@ func (ec *executionContext) _NodePool(ctx context.Context, sel ast.SelectionSet,
 				}()
 				res = ec._NodePool_updateTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -59773,34 +61497,43 @@ var nodePoolEdgeImplementors = []string{"NodePoolEdge"}
 
 func (ec *executionContext) _NodePoolEdge(ctx context.Context, sel ast.SelectionSet, obj *model.NodePoolEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, nodePoolEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NodePoolEdge")
 		case "cursor":
-
 			out.Values[i] = ec._NodePoolEdge_cursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "node":
-
 			out.Values[i] = ec._NodePoolEdge_node(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -59808,41 +61541,48 @@ var nodePoolPaginatedRecordsImplementors = []string{"NodePoolPaginatedRecords"}
 
 func (ec *executionContext) _NodePoolPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.NodePoolPaginatedRecords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, nodePoolPaginatedRecordsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NodePoolPaginatedRecords")
 		case "edges":
-
 			out.Values[i] = ec._NodePoolPaginatedRecords_edges(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pageInfo":
-
 			out.Values[i] = ec._NodePoolPaginatedRecords_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "totalCount":
-
 			out.Values[i] = ec._NodePoolPaginatedRecords_totalCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -59850,36 +61590,41 @@ var pageInfoImplementors = []string{"PageInfo"}
 
 func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PageInfo")
 		case "endCursor":
-
 			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
-
 		case "hasNextPage":
-
 			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
-
 		case "hasPreviousPage":
-
 			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
-
 		case "startCursor":
-
 			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -59887,41 +61632,34 @@ var persistentVolumeImplementors = []string{"PersistentVolume"}
 
 func (ec *executionContext) _PersistentVolume(ctx context.Context, sel ast.SelectionSet, obj *entities.PersistentVolume) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, persistentVolumeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PersistentVolume")
 		case "accountName":
-
 			out.Values[i] = ec._PersistentVolume_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "apiVersion":
-
 			out.Values[i] = ec._PersistentVolume_apiVersion(ctx, field, obj)
-
 		case "clusterName":
-
 			out.Values[i] = ec._PersistentVolume_clusterName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdBy":
-
 			out.Values[i] = ec._PersistentVolume_createdBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "creationTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59929,26 +61667,40 @@ func (ec *executionContext) _PersistentVolume(ctx context.Context, sel ast.Selec
 				}()
 				res = ec._PersistentVolume_creationTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "displayName":
-
 			out.Values[i] = ec._PersistentVolume_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "id":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -59956,45 +61708,51 @@ func (ec *executionContext) _PersistentVolume(ctx context.Context, sel ast.Selec
 				}()
 				res = ec._PersistentVolume_id(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "kind":
-
 			out.Values[i] = ec._PersistentVolume_kind(ctx, field, obj)
-
 		case "lastUpdatedBy":
-
 			out.Values[i] = ec._PersistentVolume_lastUpdatedBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "markedForDeletion":
-
 			out.Values[i] = ec._PersistentVolume_markedForDeletion(ctx, field, obj)
-
 		case "metadata":
-
 			out.Values[i] = ec._PersistentVolume_metadata(ctx, field, obj)
-
 		case "recordVersion":
-
 			out.Values[i] = ec._PersistentVolume_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60004,14 +61762,30 @@ func (ec *executionContext) _PersistentVolume(ctx context.Context, sel ast.Selec
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60021,21 +61795,35 @@ func (ec *executionContext) _PersistentVolume(ctx context.Context, sel ast.Selec
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "syncStatus":
-
 			out.Values[i] = ec._PersistentVolume_syncStatus(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updateTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60043,23 +61831,51 @@ func (ec *executionContext) _PersistentVolume(ctx context.Context, sel ast.Selec
 				}()
 				res = ec._PersistentVolume_updateTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -60067,41 +61883,34 @@ var persistentVolumeClaimImplementors = []string{"PersistentVolumeClaim"}
 
 func (ec *executionContext) _PersistentVolumeClaim(ctx context.Context, sel ast.SelectionSet, obj *entities.PersistentVolumeClaim) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, persistentVolumeClaimImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PersistentVolumeClaim")
 		case "accountName":
-
 			out.Values[i] = ec._PersistentVolumeClaim_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "apiVersion":
-
 			out.Values[i] = ec._PersistentVolumeClaim_apiVersion(ctx, field, obj)
-
 		case "clusterName":
-
 			out.Values[i] = ec._PersistentVolumeClaim_clusterName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdBy":
-
 			out.Values[i] = ec._PersistentVolumeClaim_createdBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "creationTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60109,26 +61918,40 @@ func (ec *executionContext) _PersistentVolumeClaim(ctx context.Context, sel ast.
 				}()
 				res = ec._PersistentVolumeClaim_creationTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "displayName":
-
 			out.Values[i] = ec._PersistentVolumeClaim_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "id":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60136,45 +61959,51 @@ func (ec *executionContext) _PersistentVolumeClaim(ctx context.Context, sel ast.
 				}()
 				res = ec._PersistentVolumeClaim_id(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "kind":
-
 			out.Values[i] = ec._PersistentVolumeClaim_kind(ctx, field, obj)
-
 		case "lastUpdatedBy":
-
 			out.Values[i] = ec._PersistentVolumeClaim_lastUpdatedBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "markedForDeletion":
-
 			out.Values[i] = ec._PersistentVolumeClaim_markedForDeletion(ctx, field, obj)
-
 		case "metadata":
-
 			out.Values[i] = ec._PersistentVolumeClaim_metadata(ctx, field, obj)
-
 		case "recordVersion":
-
 			out.Values[i] = ec._PersistentVolumeClaim_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60184,14 +62013,30 @@ func (ec *executionContext) _PersistentVolumeClaim(ctx context.Context, sel ast.
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60201,21 +62046,35 @@ func (ec *executionContext) _PersistentVolumeClaim(ctx context.Context, sel ast.
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "syncStatus":
-
 			out.Values[i] = ec._PersistentVolumeClaim_syncStatus(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updateTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60223,23 +62082,51 @@ func (ec *executionContext) _PersistentVolumeClaim(ctx context.Context, sel ast.
 				}()
 				res = ec._PersistentVolumeClaim_updateTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -60247,34 +62134,43 @@ var persistentVolumeClaimEdgeImplementors = []string{"PersistentVolumeClaimEdge"
 
 func (ec *executionContext) _PersistentVolumeClaimEdge(ctx context.Context, sel ast.SelectionSet, obj *model.PersistentVolumeClaimEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, persistentVolumeClaimEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PersistentVolumeClaimEdge")
 		case "cursor":
-
 			out.Values[i] = ec._PersistentVolumeClaimEdge_cursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "node":
-
 			out.Values[i] = ec._PersistentVolumeClaimEdge_node(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -60282,41 +62178,48 @@ var persistentVolumeClaimPaginatedRecordsImplementors = []string{"PersistentVolu
 
 func (ec *executionContext) _PersistentVolumeClaimPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.PersistentVolumeClaimPaginatedRecords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, persistentVolumeClaimPaginatedRecordsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PersistentVolumeClaimPaginatedRecords")
 		case "edges":
-
 			out.Values[i] = ec._PersistentVolumeClaimPaginatedRecords_edges(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pageInfo":
-
 			out.Values[i] = ec._PersistentVolumeClaimPaginatedRecords_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "totalCount":
-
 			out.Values[i] = ec._PersistentVolumeClaimPaginatedRecords_totalCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -60324,34 +62227,43 @@ var persistentVolumeEdgeImplementors = []string{"PersistentVolumeEdge"}
 
 func (ec *executionContext) _PersistentVolumeEdge(ctx context.Context, sel ast.SelectionSet, obj *model.PersistentVolumeEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, persistentVolumeEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PersistentVolumeEdge")
 		case "cursor":
-
 			out.Values[i] = ec._PersistentVolumeEdge_cursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "node":
-
 			out.Values[i] = ec._PersistentVolumeEdge_node(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -60359,41 +62271,48 @@ var persistentVolumePaginatedRecordsImplementors = []string{"PersistentVolumePag
 
 func (ec *executionContext) _PersistentVolumePaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.PersistentVolumePaginatedRecords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, persistentVolumePaginatedRecordsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PersistentVolumePaginatedRecords")
 		case "edges":
-
 			out.Values[i] = ec._PersistentVolumePaginatedRecords_edges(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pageInfo":
-
 			out.Values[i] = ec._PersistentVolumePaginatedRecords_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "totalCount":
-
 			out.Values[i] = ec._PersistentVolumePaginatedRecords_totalCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -60406,7 +62325,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	})
 
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
 			Object: field.Name,
@@ -60419,7 +62338,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "infra_checkNameAvailability":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60427,22 +62346,21 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_infra_checkNameAvailability(ctx, field)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listClusters":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60453,16 +62371,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_getCluster":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60473,16 +62390,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listNodePools":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60493,16 +62409,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_getNodePool":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60513,16 +62428,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listProviderSecrets":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60533,16 +62447,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_getProviderSecret":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60553,16 +62466,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listDomainEntries":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60573,16 +62485,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_getDomainEntry":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60593,16 +62504,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_checkAwsAccess":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60610,22 +62520,21 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_infra_checkAwsAccess(ctx, field)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listClusterManagedServices":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60636,16 +62545,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_getClusterManagedService":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60656,16 +62564,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listHelmReleases":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60676,16 +62583,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_getHelmRelease":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60696,16 +62602,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listManagedServiceTemplates":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60716,16 +62621,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_getManagedServiceTemplate":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60736,16 +62640,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listPVCs":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60756,16 +62659,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_getPVC":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60776,16 +62678,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listNamespaces":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60796,16 +62697,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_getNamespace":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60816,16 +62716,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listPVs":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60836,16 +62735,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_getPV":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60856,16 +62754,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listVolumeAttachments":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60876,16 +62773,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_getVolumeAttachment":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60896,16 +62792,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "_service":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60913,38 +62808,45 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query__service(ctx, field)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
 			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
 			})
-
 		case "__schema":
-
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -60952,41 +62854,34 @@ var volumeAttachmentImplementors = []string{"VolumeAttachment"}
 
 func (ec *executionContext) _VolumeAttachment(ctx context.Context, sel ast.SelectionSet, obj *entities.VolumeAttachment) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, volumeAttachmentImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("VolumeAttachment")
 		case "accountName":
-
 			out.Values[i] = ec._VolumeAttachment_accountName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "apiVersion":
-
 			out.Values[i] = ec._VolumeAttachment_apiVersion(ctx, field, obj)
-
 		case "clusterName":
-
 			out.Values[i] = ec._VolumeAttachment_clusterName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdBy":
-
 			out.Values[i] = ec._VolumeAttachment_createdBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "creationTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -60994,26 +62889,40 @@ func (ec *executionContext) _VolumeAttachment(ctx context.Context, sel ast.Selec
 				}()
 				res = ec._VolumeAttachment_creationTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "displayName":
-
 			out.Values[i] = ec._VolumeAttachment_displayName(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "id":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -61021,45 +62930,51 @@ func (ec *executionContext) _VolumeAttachment(ctx context.Context, sel ast.Selec
 				}()
 				res = ec._VolumeAttachment_id(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "kind":
-
 			out.Values[i] = ec._VolumeAttachment_kind(ctx, field, obj)
-
 		case "lastUpdatedBy":
-
 			out.Values[i] = ec._VolumeAttachment_lastUpdatedBy(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "markedForDeletion":
-
 			out.Values[i] = ec._VolumeAttachment_markedForDeletion(ctx, field, obj)
-
 		case "metadata":
-
 			out.Values[i] = ec._VolumeAttachment_metadata(ctx, field, obj)
-
 		case "recordVersion":
-
 			out.Values[i] = ec._VolumeAttachment_recordVersion(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -61067,19 +62982,35 @@ func (ec *executionContext) _VolumeAttachment(ctx context.Context, sel ast.Selec
 				}()
 				res = ec._VolumeAttachment_spec(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -61089,21 +63020,35 @@ func (ec *executionContext) _VolumeAttachment(ctx context.Context, sel ast.Selec
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "syncStatus":
-
 			out.Values[i] = ec._VolumeAttachment_syncStatus(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updateTime":
 			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -61111,23 +63056,51 @@ func (ec *executionContext) _VolumeAttachment(ctx context.Context, sel ast.Selec
 				}()
 				res = ec._VolumeAttachment_updateTime(ctx, field, obj)
 				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
+					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
 
-			})
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -61135,34 +63108,43 @@ var volumeAttachmentEdgeImplementors = []string{"VolumeAttachmentEdge"}
 
 func (ec *executionContext) _VolumeAttachmentEdge(ctx context.Context, sel ast.SelectionSet, obj *model.VolumeAttachmentEdge) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, volumeAttachmentEdgeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("VolumeAttachmentEdge")
 		case "cursor":
-
 			out.Values[i] = ec._VolumeAttachmentEdge_cursor(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "node":
-
 			out.Values[i] = ec._VolumeAttachmentEdge_node(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -61170,41 +63152,48 @@ var volumeAttachmentPaginatedRecordsImplementors = []string{"VolumeAttachmentPag
 
 func (ec *executionContext) _VolumeAttachmentPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.VolumeAttachmentPaginatedRecords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, volumeAttachmentPaginatedRecordsImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("VolumeAttachmentPaginatedRecords")
 		case "edges":
-
 			out.Values[i] = ec._VolumeAttachmentPaginatedRecords_edges(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "pageInfo":
-
 			out.Values[i] = ec._VolumeAttachmentPaginatedRecords_pageInfo(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "totalCount":
-
 			out.Values[i] = ec._VolumeAttachmentPaginatedRecords_totalCount(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -61212,24 +63201,35 @@ var _ServiceImplementors = []string{"_Service"}
 
 func (ec *executionContext) __Service(ctx context.Context, sel ast.SelectionSet, obj *fedruntime.Service) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, _ServiceImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("_Service")
 		case "sdl":
-
 			out.Values[i] = ec.__Service_sdl(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -61237,52 +63237,55 @@ var __DirectiveImplementors = []string{"__Directive"}
 
 func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionSet, obj *introspection.Directive) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __DirectiveImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Directive")
 		case "name":
-
 			out.Values[i] = ec.___Directive_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "description":
-
 			out.Values[i] = ec.___Directive_description(ctx, field, obj)
-
 		case "locations":
-
 			out.Values[i] = ec.___Directive_locations(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "args":
-
 			out.Values[i] = ec.___Directive_args(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "isRepeatable":
-
 			out.Values[i] = ec.___Directive_isRepeatable(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -61290,42 +63293,47 @@ var __EnumValueImplementors = []string{"__EnumValue"}
 
 func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionSet, obj *introspection.EnumValue) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __EnumValueImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__EnumValue")
 		case "name":
-
 			out.Values[i] = ec.___EnumValue_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "description":
-
 			out.Values[i] = ec.___EnumValue_description(ctx, field, obj)
-
 		case "isDeprecated":
-
 			out.Values[i] = ec.___EnumValue_isDeprecated(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "deprecationReason":
-
 			out.Values[i] = ec.___EnumValue_deprecationReason(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -61333,56 +63341,57 @@ var __FieldImplementors = []string{"__Field"}
 
 func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, obj *introspection.Field) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __FieldImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Field")
 		case "name":
-
 			out.Values[i] = ec.___Field_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "description":
-
 			out.Values[i] = ec.___Field_description(ctx, field, obj)
-
 		case "args":
-
 			out.Values[i] = ec.___Field_args(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "type":
-
 			out.Values[i] = ec.___Field_type(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "isDeprecated":
-
 			out.Values[i] = ec.___Field_isDeprecated(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "deprecationReason":
-
 			out.Values[i] = ec.___Field_deprecationReason(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -61390,42 +63399,47 @@ var __InputValueImplementors = []string{"__InputValue"}
 
 func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.SelectionSet, obj *introspection.InputValue) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __InputValueImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__InputValue")
 		case "name":
-
 			out.Values[i] = ec.___InputValue_name(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "description":
-
 			out.Values[i] = ec.___InputValue_description(ctx, field, obj)
-
 		case "type":
-
 			out.Values[i] = ec.___InputValue_type(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "defaultValue":
-
 			out.Values[i] = ec.___InputValue_defaultValue(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -61433,53 +63447,54 @@ var __SchemaImplementors = []string{"__Schema"}
 
 func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet, obj *introspection.Schema) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __SchemaImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Schema")
 		case "description":
-
 			out.Values[i] = ec.___Schema_description(ctx, field, obj)
-
 		case "types":
-
 			out.Values[i] = ec.___Schema_types(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "queryType":
-
 			out.Values[i] = ec.___Schema_queryType(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "mutationType":
-
 			out.Values[i] = ec.___Schema_mutationType(ctx, field, obj)
-
 		case "subscriptionType":
-
 			out.Values[i] = ec.___Schema_subscriptionType(ctx, field, obj)
-
 		case "directives":
-
 			out.Values[i] = ec.___Schema_directives(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -61487,63 +63502,56 @@ var __TypeImplementors = []string{"__Type"}
 
 func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, obj *introspection.Type) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, __TypeImplementors)
+
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
+	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Type")
 		case "kind":
-
 			out.Values[i] = ec.___Type_kind(ctx, field, obj)
-
 			if out.Values[i] == graphql.Null {
-				invalids++
+				out.Invalids++
 			}
 		case "name":
-
 			out.Values[i] = ec.___Type_name(ctx, field, obj)
-
 		case "description":
-
 			out.Values[i] = ec.___Type_description(ctx, field, obj)
-
 		case "fields":
-
 			out.Values[i] = ec.___Type_fields(ctx, field, obj)
-
 		case "interfaces":
-
 			out.Values[i] = ec.___Type_interfaces(ctx, field, obj)
-
 		case "possibleTypes":
-
 			out.Values[i] = ec.___Type_possibleTypes(ctx, field, obj)
-
 		case "enumValues":
-
 			out.Values[i] = ec.___Type_enumValues(ctx, field, obj)
-
 		case "inputFields":
-
 			out.Values[i] = ec.___Type_inputFields(ctx, field, obj)
-
 		case "ofType":
-
 			out.Values[i] = ec.___Type_ofType(ctx, field, obj)
-
 		case "specifiedByURL":
-
 			out.Values[i] = ec.___Type_specifiedByURL(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	out.Dispatch()
-	if invalids > 0 {
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
 		return graphql.Null
 	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
 	return out
 }
 
@@ -61904,6 +63912,21 @@ func (ec *executionContext) marshalNDomainEntryEdge2ᚖgithubᚗcomᚋkloudlite�
 func (ec *executionContext) unmarshalNDomainEntryIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐDomainEntry(ctx context.Context, v interface{}) (entities.DomainEntry, error) {
 	res, err := ec.unmarshalInputDomainEntryIn(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNFieldSet2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFieldSet2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNGithub__com___kloudlite___api___apps___infra___internal___entities__InputField2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesInputFieldᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GithubComKloudliteAPIAppsInfraInternalEntitiesInputField) graphql.Marshaler {
@@ -62493,6 +64516,22 @@ func (ec *executionContext) marshalNHelmReleaseEdge2ᚖgithubᚗcomᚋkloudlite�
 func (ec *executionContext) unmarshalNHelmReleaseIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐHelmRelease(ctx context.Context, v interface{}) (entities.HelmRelease, error) {
 	res, err := ec.unmarshalInputHelmReleaseIn(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (repos.ID, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := repos.ID(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx context.Context, sel ast.SelectionSet, v repos.ID) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
@@ -63383,21 +65422,6 @@ func (ec *executionContext) marshalNVolumeAttachmentEdge2ᚖgithubᚗcomᚋkloud
 	return ec._VolumeAttachmentEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalN_FieldSet2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalString(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalN_FieldSet2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) marshalN_Service2githubᚗcomᚋ99designsᚋgqlgenᚋpluginᚋfederationᚋfedruntimeᚐService(ctx context.Context, sel ast.SelectionSet, v fedruntime.Service) graphql.Marshaler {
 	return ec.__Service(ctx, sel, &v)
 }
@@ -63655,7 +65679,86 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalNfederation__Scope2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNfederation__Scope2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNfederation__Scope2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Scope2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Scope2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Scope2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNfederation__Scope2ᚕᚕstringᚄ(ctx context.Context, v interface{}) ([][]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([][]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Scope2ᚕstringᚄ(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v [][]string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Scope2ᚕstringᚄ(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -63663,7 +65766,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

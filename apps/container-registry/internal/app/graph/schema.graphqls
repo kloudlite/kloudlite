@@ -73,5 +73,5 @@ type Mutation {
 }
 
 extend type Build @key(fields: "id") {
-  latestBuildRun: BuildRun
+  latestBuildRun: BuildRun @isLoggedInAndVerified @hasAccount
 }

@@ -136,7 +136,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec @shareable {
-  resourceName: String
+  resourceNamePrefix: String
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate!
 }
 
@@ -187,8 +187,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__RateLimit @shareable
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Route @shareable {
-  app: String
-  lambda: String
+  app: String!
   path: String!
   port: Int!
   rewrite: Boolean
@@ -251,7 +250,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 }
 
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
-  debug: Boolean!
+  debug: Boolean
   description: String
   name: String!
   title: String!
@@ -451,7 +450,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
-  resourceName: String
+  resourceNamePrefix: String
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn!
 }
 
@@ -502,8 +501,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__RouteIn {
-  app: String
-  lambda: String
+  app: String!
   path: String!
   port: Int!
   rewrite: Boolean
