@@ -9,7 +9,7 @@
 {{- $msvcRef := get . "msvc-ref" }}
 {{- $resourceTemplateSpec := get . "resource-template-spec" }}
 
-{{- $outputCredentialsSecretName := get . "output-credentials-secret-name" }}
+{{- $output := get . "output" }}
 
 apiVersion: {{$apiVersion}}
 kind: {{$kind}}
@@ -23,6 +23,4 @@ spec:
   {{- if $resourceTemplateSpec }}
   {{ $resourceTemplateSpec | toYAML | nindent 2 }}
   {{- end}}
-output:
-  credentials:
-    name: {{$outputCredentialsSecretName}}
+output: {{$output | toYAML | nindent 2 }}
