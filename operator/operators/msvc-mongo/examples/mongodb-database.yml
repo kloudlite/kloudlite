@@ -9,3 +9,6 @@ spec:
     kind: StandaloneService
     name: mongodb-standalone
   resourceName: test-db
+output:
+  credentials:
+    name: ""

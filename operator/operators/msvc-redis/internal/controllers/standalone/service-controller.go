@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
-	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
@@ -113,10 +112,6 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.patchDefaults(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := r.generateAccessCreds(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -159,51 +154,6 @@ func (r *ServiceReconciler) finalize(req *rApi.Request[*redisMsvcv1.StandaloneSe
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) patchDefaults(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := DefaultsPatched
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	hasPatched := false
-
-	// function-body
-	if obj.Spec.Output.Credentials.Name == "" {
-		hasPatched = true
-		obj.Spec.Output.Credentials.Name = fmt.Sprintf("msvc-%s-creds", obj.Name)
-	}
-
-	if obj.Spec.Output.Credentials.Namespace == "" {
-		hasPatched = true
-		obj.Spec.Output.Credentials.Namespace = obj.Namespace
-	}
-
-	if hasPatched {
-		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
-		}
-
-		return req.Done().RequeueAfter(500 * time.Millisecond)
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
-}
-
 func (r *ServiceReconciler) generateAccessCreds(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
@@ -217,7 +167,7 @@ func (r *ServiceReconciler) generateAccessCreds(req *rApi.Request[*redisMsvcv1.S
 		return req.CheckFailed(checkName, check, err.Error())
 	}
 
-	accessCreds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.Output.Credentials.Name, Namespace: obj.Spec.Output.Credentials.Namespace}}
+	accessCreds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, accessCreds, func() error {
 		obj.SetLabels(obj.GetLabels())

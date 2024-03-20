@@ -3,7 +3,6 @@ package prefix
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/kloudlite/operator/pkg/kubectl"
 
@@ -94,10 +93,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.patchDefaults(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := r.ensureAccessCredentials(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -123,54 +118,6 @@ func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcV1.Prefix]) stepResult
 	return req.Finalize()
 }
 
-func (r *Reconciler) patchDefaults(req *rApi.Request[*redisMsvcV1.Prefix]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := DefaultsPatched
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	hasPatched := false
-
-	if obj.Spec.ResourceNamePrefix == "" {
-		hasPatched = true
-		obj.Spec.ResourceNamePrefix = fmt.Sprintf("%s:", obj.Name)
-	}
-
-	if obj.Spec.Output.Credentials.Name == "" {
-		hasPatched = true
-		obj.Spec.Output.Credentials.Name = fmt.Sprintf("mres-%s-creds", obj.Name)
-	}
-
-	if obj.Spec.Output.Credentials.Namespace == "" {
-		hasPatched = true
-		obj.Spec.Output.Credentials.Namespace = obj.Namespace
-	}
-
-	if hasPatched {
-		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
-		}
-		return req.Done().RequeueAfter(500 * time.Millisecond)
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
-}
-
 func (r *Reconciler) getMsvcCredentials(req *rApi.Request[*redisMsvcV1.Prefix]) (*types.MsvcOutput, error) {
 	ctx, obj := req.Context(), req.Object
 
@@ -182,7 +129,7 @@ func (r *Reconciler) getMsvcCredentials(req *rApi.Request[*redisMsvcV1.Prefix]) 
 				return nil, err
 			}
 
-			s, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Spec.Output.Credentials.Namespace, msvc.Spec.Output.Credentials.Name), &corev1.Secret{})
+			s, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, msvc.Output.CredentialsRef.Name), &corev1.Secret{})
 			if err != nil {
 				return nil, err
 			}
@@ -203,10 +150,6 @@ func (r *Reconciler) getMsvcCredentials(req *rApi.Request[*redisMsvcV1.Prefix]) 
 			return nil, fmt.Errorf("unknown msvc kind (%s), must of one of [StandaloneService, ClusterService]", obj.Spec.MsvcRef.Kind)
 		}
 	}
-}
-
-func genRedisPrefixKey(obj *redisMsvcV1.Prefix) string {
-	return fmt.Sprintf("%s-%s", obj.Spec.ResourceNamePrefix, obj.Name)
 }
 
 func (r *Reconciler) ensureAccessCredentials(req *rApi.Request[*redisMsvcV1.Prefix]) stepResult.Result {
@@ -238,13 +181,13 @@ func (r *Reconciler) ensureAccessCredentials(req *rApi.Request[*redisMsvcV1.Pref
 
 		Password: msvcCreds.RootPassword,
 
-		Prefix: genRedisPrefixKey(obj),
+		Prefix: obj.Name,
 	})
 	if err != nil {
 		return fail(err)
 	}
 
-	mresCredsSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.Output.Credentials.Name, Namespace: obj.Spec.Output.Credentials.Namespace}}
+	mresCredsSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, mresCredsSecret, func() error {
 		mresCredsSecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})

@@ -145,3 +145,18 @@ type NodeSelectorAndTolerations struct {
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 }
+
+type LocalObjectReference struct {
+	// .metadata.name of the resource
+	Name string `json:"name"`
+}
+
+type ManagedResourceOutput struct {
+	// refers to a k8s secret that exists in the same namespace as managed resource
+	CredentialsRef LocalObjectReference `json:"credentialsRef"`
+}
+
+type ManagedServiceOutput struct {
+	// refers to a k8s secret that exists in the same namespace as managed service
+	CredentialsRef LocalObjectReference `json:"credentialsRef"`
+}
