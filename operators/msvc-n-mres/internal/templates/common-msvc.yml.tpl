@@ -14,6 +14,8 @@
 
 {{- $serviceTemplateSpec := get . "service-template-spec" }}
 
+{{- $output := get . "output" }}
+
 apiVersion: {{$apiVersion}}
 kind: {{$kind}}
 metadata:
@@ -26,3 +28,4 @@ spec:
   nodeSelector: {{$nodeSelector |toYAML | nindent 2}}
   tolerations: {{$tolerations |toYAML | nindent 2}}
   {{$serviceTemplateSpec | toYAML | nindent 2 }}
+output: {{$output | toYAML | nindent 2}}

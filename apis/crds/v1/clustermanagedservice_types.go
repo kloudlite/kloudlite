@@ -29,7 +29,7 @@ type ClusterManagedService struct {
 	Spec   ClusterManagedServiceSpec `json:"spec,omitempty"`
 	Status rApi.Status               `json:"status,omitempty" graphql:"noinput"`
 
-	Output ct.ManagedServiceOutput `json:"output"`
+	Output ct.ManagedServiceOutput `json:"output" graphql:"ignore"`
 }
 
 func (m *ClusterManagedService) EnsureGVK() {
