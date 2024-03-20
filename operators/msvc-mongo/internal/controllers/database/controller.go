@@ -64,10 +64,11 @@ const (
 )
 
 func (r *Reconciler) newMongoContext(parent context.Context) (context.Context, context.CancelFunc) {
-	if r.Env.IsDev {
-		return context.WithCancel(parent)
-	}
-	return context.WithTimeout(parent, 5*time.Second)
+	_ = time.Now()
+	// if r.Env.IsDev {
+	return context.WithCancel(parent)
+	// }
+	// return context.WithTimeout(parent, 5*time.Second)
 }
 
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete

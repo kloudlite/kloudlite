@@ -33,10 +33,6 @@ type ManagedResourceSpec struct {
 	ResourceTemplate   MresResourceTemplate `json:"resourceTemplate"`
 }
 
-type ManagedResourceOutput struct {
-	Credentials ct.SecretRef `json:"credentials,omitempty"`
-}
-
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource-gvk",name=Resource_GVK,type=string
@@ -54,7 +50,7 @@ type ManagedResource struct {
 	Enabled *bool       `json:"enabled,omitempty"`
 	Status  rApi.Status `json:"status,omitempty" graphql:"noinput"`
 
-	Output ManagedResourceOutput `json:"output,omitempty" graphql:"noinput"`
+	Output ct.ManagedResourceOutput `json:"output,omitempty" graphql:"ignore"`
 }
 
 func (m *ManagedResource) EnsureGVK() {
