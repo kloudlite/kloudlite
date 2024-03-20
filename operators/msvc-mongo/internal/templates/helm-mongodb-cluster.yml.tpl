@@ -9,6 +9,9 @@
 {{- $tolerations := get . "tolerations" | default list }}
 {{- $priorityClassname := get . "priority-classname" | default "stateful" }}
 
+{{- $podLabels := get . "pod-labels" }}
+{{- $podAnnotations := get . "pod-annotations" }}
+
 {{- $topologySpreadConstraints := get . "topology-spread-constraints" }}
 
 {{- $ownerRefs := get . "owner-refs" | default list }}
@@ -66,7 +69,9 @@ spec:
     replicaSetHostnames: true
 
     commonLabels: {{$labels | toYAML | nindent 6}}
-    podLabels: {{$labels | toYAML | nindent 6}}
+
+    podLabels: {{$podLabels | toYAML | nindent 6}}
+    podAnnotations: {{$podAnnotations | toYAML | nindent 6}}
 
     directoryPerDB: true
 

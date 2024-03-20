@@ -7,23 +7,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type StandaloneServiceOutput struct {
-	Credentials ct.SecretRef `json:"credentials,omitempty"`
-	HelmSecret  ct.SecretRef `json:"helmSecret,omitempty"`
-}
-
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
 	ct.NodeSelectorAndTolerations `json:",inline"`
-
-	Resources ct.Resources `json:"resources"`
-
-	Output StandaloneServiceOutput `json:"output,omitempty" graphql:"noinput"`
+	Resources                     ct.Resources `json:"resources"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
@@ -34,6 +27,8 @@ type StandaloneService struct {
 
 	Spec   StandaloneServiceSpec `json:"spec"`
 	Status rApi.Status           `json:"status,omitempty"`
+
+	Output ct.ManagedServiceOutput `json:"output"`
 }
 
 func (s *StandaloneService) EnsureGVK() {

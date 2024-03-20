@@ -3,9 +3,9 @@ package v1
 import (
 	"fmt"
 
-	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 
+	ct "github.com/kloudlite/operator/apis/common-types"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -29,14 +29,19 @@ type MresResourceTemplate struct {
 
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
-	ResourceName     string               `json:"resourceName,omitempty"`
-	ResourceTemplate MresResourceTemplate `json:"resourceTemplate"`
+	ResourceNamePrefix *string              `json:"resourceNamePrefix,omitempty"`
+	ResourceTemplate   MresResourceTemplate `json:"resourceTemplate"`
+}
+
+type ManagedResourceOutput struct {
+	Credentials ct.SecretRef `json:"credentials,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource-gvk",name=Resource_GVK,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
@@ -48,6 +53,8 @@ type ManagedResource struct {
 	// +kubebuilder:default=true
 	Enabled *bool       `json:"enabled,omitempty"`
 	Status  rApi.Status `json:"status,omitempty" graphql:"noinput"`
+
+	Output ManagedResourceOutput `json:"output,omitempty" graphql:"noinput"`
 }
 
 func (m *ManagedResource) EnsureGVK() {
@@ -73,8 +80,7 @@ func (m *ManagedResource) GetEnsuredLabels() map[string]string {
 
 func (m *ManagedResource) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ManagedResource").String(),
-		"kloudlite.io/resource-gvk":               m.Spec.ResourceTemplate.GroupVersionKind().String(),
+		"kloudlite.io/resource-gvk": m.Spec.ResourceTemplate.GroupVersionKind().String(),
 	}
 }
 

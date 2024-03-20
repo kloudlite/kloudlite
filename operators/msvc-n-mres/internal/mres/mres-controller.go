@@ -2,9 +2,11 @@ package mres
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
+	"slices"
 	"time"
 
+	ct "github.com/kloudlite/operator/apis/common-types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	influxdbMsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
@@ -46,14 +48,21 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	RealMresCreated string = "real-mres-created"
-	RealMresReady   string = "real-mres-ready"
-	MsvcIsOwner     string = "msvc-is-owner"
-	DefaultsPatched string = "defaults-patched"
-
-	// TODO: needs to delete this step
-	OwnedByMsvc string = "owned-by-msvc"
+	Cleanup                          string = "cleanup"
+	ResourceOwnedByManagedSvc        string = "resource-owned-by-msvc"
+	UnderlyingManagedResourceCreated string = "underlying-managed-resource-created"
+	UnderlyingManagedResourceReady   string = "underlying-managed-resource-ready"
 )
+
+var ApplyCheckList = []rApi.CheckMeta{
+	{Name: ResourceOwnedByManagedSvc, Title: "Resource Owned By Managed Service"},
+	{Name: UnderlyingManagedResourceCreated, Title: "Underlying Managed Resource Created"},
+	{Name: UnderlyingManagedResourceReady, Title: "Underlying Managed Resource Ready"},
+}
+
+var DeleteCheckList = []rApi.CheckMeta{
+	{Name: Cleanup, Title: "Cleanup"},
+}
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status,verbs=get;update;patch
@@ -87,9 +96,17 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	// if step := r.ensureOwnedByMsvc(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
+	if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureChecks(ResourceOwnedByManagedSvc, UnderlyingManagedResourceCreated, UnderlyingManagedResourceReady); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureOwnedByMsvc(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
 	if step := r.ensureRealMresCreated(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -103,11 +120,32 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+	obj := req.Object
 
-	checkName := "patch-defaults"
+	if !slices.Equal(obj.Status.CheckList, DeleteCheckList) {
+		if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
+			return step
+		}
+	}
+
+	checkName := "finalizing"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
+		return result
+	}
+
+	return req.Finalize()
+}
+
+func (r *Reconciler) ensureOwnedByMsvc(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+
+	checkName := ResourceOwnedByManagedSvc
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -116,19 +154,31 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedResource]) s
 		return req.CheckFailed(checkName, check, err.Error())
 	}
 
-	hasPatched := false
-
-	// function-body
-	if obj.Spec.ResourceName == "" {
-		hasPatched = true
-		obj.Spec.ResourceName = obj.Name
+	msvc, err := rApi.Get(
+		ctx, r.Client, fn.NN(obj.Spec.ResourceTemplate.MsvcRef.Namespace, obj.Spec.ResourceTemplate.MsvcRef.Name), &crdsv1.ManagedService{},
+	)
+	if err != nil {
+		return fail(err)
 	}
 
-	if hasPatched {
+	hasUpdated := false
+
+	msvcLabels := fn.MapFilter(msvc.Labels, constants.KloudliteLabelPrefix)
+	if !fn.MapContains(obj.Labels, msvcLabels) {
+		hasUpdated = true
+		fn.MapJoin(&obj.Labels, msvcLabels)
+	}
+
+	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
+		hasUpdated = true
+		obj.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(msvc, true)})
+	}
+
+	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
 			return fail(err)
 		}
-		return req.Done().RequeueAfter(1 * time.Second)
+		return req.Done().RequeueAfter(100 * time.Millisecond)
 	}
 
 	check.Status = true
@@ -142,75 +192,24 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedResource]) s
 	return req.Next()
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
-	checkName := "finalizing"
+func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+
+	checkName := UnderlyingManagedResourceCreated
+
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
 
-	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
-		return result
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
 	}
-
-	return req.Finalize()
-}
-
-func (r *Reconciler) ensureOwnedByMsvc(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(OwnedByMsvc)
-	defer req.LogPostCheck(OwnedByMsvc)
-
-	msvc, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Spec.ResourceTemplate.MsvcRef.Namespace, obj.Spec.ResourceTemplate.MsvcRef.Name), &crdsv1.ManagedService{},
-	)
-	if err != nil {
-		return req.CheckFailed(OwnedByMsvc, check, err.Error())
-	}
-
-	hasUpdated := false
-	if !fn.MapContains(obj.Labels, msvc.Labels) {
-		hasUpdated = true
-		for k, v := range msvc.Labels {
-			obj.Labels[k] = v
-		}
-	}
-
-	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
-		hasUpdated = true
-		obj.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(msvc, true)})
-	}
-
-	if hasUpdated {
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(OwnedByMsvc, check, err.Error())
-		}
-		return req.Done().RequeueAfter(100 * time.Millisecond)
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[OwnedByMsvc] {
-		obj.Status.Checks[OwnedByMsvc] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
-}
-
-func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(RealMresCreated)
-	defer req.LogPostCheck(RealMresCreated)
 
 	b, err := templates.ParseBytes(r.templateCommonMres, map[string]any{
 		"api-version": obj.Spec.ResourceTemplate.APIVersion,
 		"kind":        obj.Spec.ResourceTemplate.Kind,
 
-		"name":       obj.Spec.ResourceName,
+		"name":       obj.Spec.ResourceNamePrefix,
 		"namespace":  obj.Namespace,
 		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		"labels":     obj.GetEnsuredLabels(),
@@ -219,19 +218,19 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 		"resource-template-spec": obj.Spec.ResourceTemplate.Spec,
 	})
 	if err != nil {
-		return req.CheckFailed(RealMresCreated, check, err.Error()).Err(nil)
+		return fail(err).Err(nil)
 	}
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return req.CheckFailed(RealMresCreated, check, err.Error()).Err(nil)
+		return fail(err)
 	}
 
 	req.AddToOwnedResources(rr...)
 
 	check.Status = true
-	if check != obj.Status.Checks[RealMresCreated] {
-		obj.Status.Checks[RealMresCreated] = check
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -240,61 +239,67 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 	return req.Next()
 }
 
+func getRealResourceName(obj *crdsv1.ManagedResource) string {
+	if obj.Spec.ResourceNamePrefix != nil {
+		return fmt.Sprintf("%s-%s", *obj.Spec.ResourceNamePrefix, obj.Name)
+	}
+
+	return obj.Name
+}
+
 func (r *Reconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(RealMresReady)
-	defer req.LogPreCheck(RealMresReady)
+	checkName := UnderlyingManagedResourceReady
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	uobj := unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": obj.Spec.ResourceTemplate.APIVersion,
 			"kind":       obj.Spec.ResourceTemplate.Kind,
-			"metadata": map[string]any{
-				"name":      obj.Spec.ResourceName,
-				"namespace": obj.Namespace,
-			},
 		},
 	}
 
-	if err := r.Get(ctx, client.ObjectKeyFromObject(&uobj), &uobj); err != nil {
-		if client.IgnoreNotFound(err) != nil {
-			return req.CheckFailed(RealMresReady, check, err.Error())
-		}
+	if err := r.Get(ctx, fn.NN(obj.GetNamespace(), getRealResourceName(obj)), &uobj); err != nil {
+		return fail(err)
 	}
 
-	b, err := json.Marshal(uobj.Object)
-	if err != nil {
-		return req.CheckFailed(RealMresReady, check, err.Error()).Err(nil)
-	}
-
-	var realMresObj struct {
+	realMresObj, err := fn.JsonConvert[struct {
 		Status rApi.Status `json:"status"`
-	}
-
-	if err := json.Unmarshal(b, &realMresObj); err != nil {
-		return req.CheckFailed(RealMresReady, check, err.Error()).Err(nil)
+		Output struct {
+			Credentials ct.SecretRef `json:"credentials"`
+		} `json:"output"`
+	}](uobj.Object)
+	if err != nil {
+		return fail(err).Err(nil)
 	}
 
 	if !realMresObj.Status.IsReady {
 		if realMresObj.Status.Message == nil {
-			return req.CheckFailed(RealMresReady, check, "waiting for real managed resource to reconcile ...")
+			return req.CheckFailed(checkName, check, "waiting for real managed service to reconcile ...").Err(nil)
 		}
-		b, err := json.Marshal(realMresObj.Status.Message)
+		b, err := realMresObj.Status.Message.MarshalJSON()
 		if err != nil {
-			return req.CheckFailed(RealMresReady, check, err.Error()).Err(nil)
+			return fail(err).Err(nil)
 		}
-		return req.CheckFailed(RealMresReady, check, string(b)).Err(nil)
+		return fail(fmt.Errorf("%s", b)).Err(nil)
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[RealMresReady] {
-		obj.Status.Checks[RealMresReady] = check
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
 	}
+
 	return req.Next()
 }
 

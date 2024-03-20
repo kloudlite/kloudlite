@@ -75,12 +75,13 @@ snippet embed-templates
 
 snippet kubebuilder-printcolumns-default
 	// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+	// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\\\.io\\\\/checks",name=Checks,type=string
 	// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\\\.io\\\\/resource\\\\.ready",name=Ready,type=string
 	// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
-snippet robj "creates template for recocilation step functino"
+snippet robj "creates template for recocilation step function"
   ctx, obj := req.Context(), req.Object
-  check := rApi.Check{Generation: obj.Generation}
+  check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
   checkName := "${1:checkName}"
 
@@ -103,3 +104,17 @@ snippet robj "creates template for recocilation step functino"
 
   return req.Next()
 
+snippet init-checklist "initializes controller check list"
+	const (
+		DefaultsPatched string = "defaults-patched"
+		Cleanup         string = "cleanup"
+	)
+
+	var ApplyCheckList = []rApi.CheckMeta{
+		{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
+	}
+
+	var DeleteCheckList = []rApi.CheckMeta{
+		{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
+		{Name: Cleanup, Title: "Cleanup" }
+	}

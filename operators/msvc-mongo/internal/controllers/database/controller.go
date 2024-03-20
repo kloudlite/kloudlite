@@ -83,10 +83,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	req.PreReconcile()
 	defer req.PostReconcile()
 
-	if step := r.patchDefaults(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
@@ -112,49 +108,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
-}
-
-
-func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(DefaultsPatched)
-	defer req.LogPostCheck(DefaultsPatched)
-
-	hasPatched := false
-
-	if obj.Spec.Output.Credentials.Name == "" {
-		hasPatched = true
-		obj.Spec.Output.Credentials.Name = fmt.Sprintf("mres-%s-creds", obj.Name)
-	}
-
-	if obj.Spec.Output.Credentials.Namespace == "" {
-		hasPatched = true
-		obj.Spec.Output.Credentials.Namespace = obj.Namespace
-	}
-
-	if obj.Spec.ResourceName == "" {
-		hasPatched = true
-		obj.Spec.ResourceName = obj.Name
-	}
-
-	if hasPatched {
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(DefaultsPatched, check, err.Error())
-		}
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[DefaultsPatched] {
-		fn.MapSet(&obj.Status.Checks, DefaultsPatched, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-		return req.Done()
-	}
-
-	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
@@ -195,7 +148,7 @@ func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMs
 				return "", "", err
 			}
 
-			s, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Spec.Output.Credentials.Namespace, msvc.Spec.Output.Credentials.Name), &corev1.Secret{})
+			s, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Output.CredentialsRef.Name), &corev1.Secret{})
 			if err != nil {
 				return "", "", err
 			}
@@ -214,7 +167,7 @@ func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMs
 				return "", "", err
 			}
 
-			s, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Spec.Output.Credentials.Namespace, msvc.Spec.Output.Credentials.Name), &corev1.Secret{})
+			s, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Output.CredentialsRef.Name), &corev1.Secret{})
 			if err != nil {
 				return "", "", err
 			}
@@ -238,8 +191,8 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 	req.LogPreCheck(AccessCredsReady)
 	defer req.LogPostCheck(AccessCredsReady)
 
-	secretName := obj.Spec.Output.Credentials.Name
-	secretNamespace := obj.Spec.Output.Credentials.Namespace
+	secretName := obj.Output.CredentialsRef.Name
+	secretNamespace := obj.Namespace
 
 	scrt, err := rApi.Get(ctx, r.Client, fn.NN(secretNamespace, secretName), &corev1.Secret{})
 	if err != nil {
@@ -277,9 +230,9 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 			Username: obj.Name,
 			Password: dbPasswd,
 			Hosts:    msvcHosts,
-			DbName:   obj.Spec.ResourceName,
+			DbName:   obj.Name,
 			URI: func() string {
-				baseURI := fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=%s", obj.Name, dbPasswd, msvcHosts, obj.Spec.ResourceName, obj.Spec.ResourceName)
+				baseURI := fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=%s", obj.Name, dbPasswd, msvcHosts, obj.Name, obj.Name)
 				if obj.Spec.MsvcRef.Kind == "ClusterService" {
 					return baseURI + "&replicaSet=rs"
 				}
