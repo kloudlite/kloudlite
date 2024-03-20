@@ -97,7 +97,6 @@
 		"reconnecting-websocket": "^4.4.0",
 		"remix": "^1.19.3",
 		"search-in-json": "^1.0.67",
-		"sonner": "^1.4.3",
 		"swr": "^2.2.4",
 		"use-immer": "^0.9.0",
 		"uuid": "^9.0.1",
