@@ -147,13 +147,13 @@ const ListRenderer = ({ data, onChange, value, isLoading }: IListRenderer) => {
               <Radio.Item
                 key={repo.name}
                 value={repo.url}
-                className="pulsable flex-row justify-between w-full py-2xl bodyMd-medium"
+                className="flex-row justify-between w-full py-2xl bodyMd-medium"
                 labelPlacement="left"
               >
                 <div className="flex flex-row items-center gap-lg bodyMd-medium">
-                  <span>{repo.name}</span>
+                  <span className="pulsable">{repo.name}</span>
 
-                  <span>
+                  <span className="pulsable">
                     {repo.private ? (
                       <LockSimple size={12} />
                     ) : (
@@ -163,7 +163,7 @@ const ListRenderer = ({ data, onChange, value, isLoading }: IListRenderer) => {
                   <span>
                     <CircleFill size={2} />
                   </span>
-                  <span className="text-text-soft">
+                  <span className="text-text-soft pulsable">
                     {dayjs(repo.updatedAt).fromNow()}
                   </span>
                 </div>
@@ -441,26 +441,24 @@ const Git = ({
             loading
           }
         >
-          <div className="pulsable">
-            <Select
-              label="Select branch"
-              size="lg"
-              value={branch && !showProviderOverlay ? branch : undefined}
-              disabled={!repo || showProviderOverlay}
-              placeholder="Select a branch"
-              options={async () => [
-                ...(branches.data?.map((d) => ({
-                  label: d.name || '',
-                  value: d.name || '',
-                })) || []),
-              ]}
-              onChange={({ value }) => {
-                setBranch(value);
-              }}
-              error={!!error}
-              message={error}
-            />
-          </div>
+          <Select
+            label="Select branch"
+            size="lg"
+            value={branch && !showProviderOverlay ? branch : undefined}
+            disabled={!repo || showProviderOverlay}
+            placeholder="Select a branch"
+            options={async () => [
+              ...(branches.data?.map((d) => ({
+                label: d.name || '',
+                value: d.name || '',
+              })) || []),
+            ]}
+            onChange={({ value }) => {
+              setBranch(value);
+            }}
+            error={!!error}
+            message={error}
+          />
         </Pulsable>
       </div>
     </div>

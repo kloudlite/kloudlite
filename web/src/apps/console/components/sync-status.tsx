@@ -382,6 +382,12 @@ export const SyncStatusV2 = ({
               {state({ state: k, type: type || 'full' }).text}
             </div>
             <div className="flex flex-col gap-lg">
+              {k === 'idle' && (
+                <div className="bodySm">
+                  Please wait while we are operating on this resource
+                </div>
+              )}
+
               {ic?.map((cl) => (
                 <div
                   key={cl.name}

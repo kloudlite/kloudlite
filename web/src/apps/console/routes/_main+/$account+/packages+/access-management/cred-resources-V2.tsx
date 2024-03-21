@@ -107,7 +107,11 @@ const TokenView = ({ username }: { username: string }) => {
   useDebounce(
     async () => {
       if (copy) {
-        setCopyIcon(<Spinner size={iconSize} />);
+        setCopyIcon(
+          <span className="flex animate-spin">
+            <Spinner size={iconSize} />
+          </span>
+        );
         const { errors, data } = await api.getCredToken({ username });
         if (errors) {
           throw errors[0];
