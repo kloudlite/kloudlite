@@ -230,12 +230,14 @@ type GithubComKloudliteOperatorPkgOperatorCheckIn struct {
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
+	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Name        string  `json:"name"`
 	Title       string  `json:"title"`
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheckMetaIn struct {
+	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Name        string  `json:"name"`
 	Title       string  `json:"title"`
@@ -560,7 +562,7 @@ const (
 	GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent  GithubComKloudliteAPIPkgTypesSyncState = "DELETED_AT_AGENT"
 	GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent GithubComKloudliteAPIPkgTypesSyncState = "DELETING_AT_AGENT"
 	GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent  GithubComKloudliteAPIPkgTypesSyncState = "ERRORED_AT_AGENT"
-	GithubComKloudliteAPIPkgTypesSyncStateIDLe            GithubComKloudliteAPIPkgTypesSyncState = "IDLE"
+	GithubComKloudliteAPIPkgTypesSyncStateIdle            GithubComKloudliteAPIPkgTypesSyncState = "IDLE"
 	GithubComKloudliteAPIPkgTypesSyncStateInQueue         GithubComKloudliteAPIPkgTypesSyncState = "IN_QUEUE"
 	GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent  GithubComKloudliteAPIPkgTypesSyncState = "UPDATED_AT_AGENT"
 )
@@ -570,14 +572,14 @@ var AllGithubComKloudliteAPIPkgTypesSyncState = []GithubComKloudliteAPIPkgTypesS
 	GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent,
 	GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent,
 	GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent,
-	GithubComKloudliteAPIPkgTypesSyncStateIDLe,
+	GithubComKloudliteAPIPkgTypesSyncStateIdle,
 	GithubComKloudliteAPIPkgTypesSyncStateInQueue,
 	GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent,
 }
 
 func (e GithubComKloudliteAPIPkgTypesSyncState) IsValid() bool {
 	switch e {
-	case GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent, GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent, GithubComKloudliteAPIPkgTypesSyncStateIDLe, GithubComKloudliteAPIPkgTypesSyncStateInQueue, GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent:
+	case GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent, GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent, GithubComKloudliteAPIPkgTypesSyncStateIdle, GithubComKloudliteAPIPkgTypesSyncStateInQueue, GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent:
 		return true
 	}
 	return false

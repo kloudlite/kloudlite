@@ -15,6 +15,34 @@ import (
 
 const userContextKey = "__local_user_context__"
 
+func NewReadSessionMiddleware(repo kv.Repo[*common.AuthSession], cookieName string, sessionKeyPrefix string) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		cookies := map[string]string{}
+		ctx.Request().Header.VisitAllCookie(func(key, value []byte) {
+			cookies[string(key)] = string(value)
+		})
+
+		ctx.SetUserContext(context.WithValue(ctx.UserContext(), "http-cookies", cookies))
+
+		cookieValue := ctx.Cookies(cookieName)
+
+		if cookieValue != "" {
+			key := fmt.Sprintf("%s:%s", sessionKeyPrefix, cookieValue)
+			sess, err := repo.Get(ctx.Context(), key)
+			if err != nil {
+				if !repo.ErrKeyNotFound(err) {
+					return errors.NewE(err)
+				}
+			}
+
+			if sess != nil {
+				ctx.SetUserContext(context.WithValue(ctx.UserContext(), "session", sess))
+			}
+		}
+		return ctx.Next()
+	}
+}
+
 func NewSessionMiddleware(
 	repo kv.Repo[*common.AuthSession],
 	cookieName string,

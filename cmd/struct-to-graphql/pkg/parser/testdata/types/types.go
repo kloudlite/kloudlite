@@ -11,3 +11,10 @@ type Sample struct {
 	UpdatedBy   ActionMeta `json:"updatedBy"`
 	Age         int        `json:"age"`
 }
+
+type ID string
+
+type BaseEntity struct {
+	ResourceId    ID  `json:"id" graphql:"scalar-type=ID"`
+	ResourceIdPtr *ID `json:"ptrId" graphql:"scalar-type=ID"`
+}

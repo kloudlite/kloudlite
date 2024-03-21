@@ -103,19 +103,4 @@ var Module = fx.Module("framework",
 			},
 		})
 	}),
-
-	fx.Provide(func(logger logging.Logger) app.LogsAndMetricsHttpServer {
-		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger})
-	}),
-
-	fx.Invoke(func(lf fx.Lifecycle, ev *env.Env, server app.LogsAndMetricsHttpServer) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return server.Listen(fmt.Sprintf(":%d", ev.LogsAndMetricsHttpPort))
-			},
-			OnStop: func(context.Context) error {
-				return server.Close()
-			},
-		})
-	}),
 )

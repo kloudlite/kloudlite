@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/google/go-github/v45/github"

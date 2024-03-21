@@ -5,11 +5,11 @@ input SearchRepos {
   text: MatchFilterIn
 }
 
-input  SearchCreds {
+input SearchCreds {
   text: MatchFilterIn
 }
 
-input  SearchBuilds {
+input SearchBuilds {
   text: MatchFilterIn
 }
 
@@ -45,12 +45,11 @@ type Query {
 
   cr_listGitlabGroups(query:String, pagination:PaginationIn) : [GitlabGroup!] @isLoggedInAndVerified
   cr_listGitlabRepositories(groupId:String!, query:String, pagination:PaginationIn) : [GitlabProject!] @isLoggedInAndVerified
-  cr_listGitlabBranches(repoId:String!, query:String, pagination:PaginationIn) : [GitBranch!] @isLoggedInAndVerified
-  cr_listBuildCacheKeys(pq:CursorPaginationIn, search: SearchBuildCacheKeys) : BuildCacheKeyPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_listGitlabBranches(repoId: String!, query:String, pagination:PaginationIn) : [GitBranch!] @isLoggedInAndVerified
+  cr_listBuildCacheKeys(pq: CursorPaginationIn, search: SearchBuildCacheKeys) : BuildCacheKeyPaginatedRecords @isLoggedInAndVerified @hasAccount
 
-  
-  cr_listBuildRuns(repoName: String!, search: SearchBuildRuns, pq: CursorPaginationIn): BuildRunPaginatedRecords @isLoggedInAndVerified @hasAccount
-  cr_getBuildRun(repoName: String!, buildRunName: String!): BuildRun @isLoggedInAndVerified @hasAccount
+  cr_listBuildRuns(buildID: ID!, search: SearchBuildRuns, pq: CursorPaginationIn): BuildRunPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_getBuildRun(buildID: ID!, buildRunName: String!): BuildRun @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -60,7 +59,6 @@ type Mutation {
   cr_deleteRepo(name:String!) :Boolean! @isLoggedInAndVerified @hasAccount
   cr_deleteCred(username:String!) :Boolean! @isLoggedInAndVerified @hasAccount
   cr_deleteDigest(repoName:String!, digest:String!) :Boolean! @isLoggedInAndVerified @hasAccount
-
 
   cr_addBuild(build:BuildIn!) : Build @isLoggedInAndVerified @hasAccount
   cr_updateBuild(id:ID!, build:BuildIn!) : Build @isLoggedInAndVerified @hasAccount
@@ -72,4 +70,8 @@ type Mutation {
   cr_updateBuildCacheKey(id:ID!, buildCacheKey:BuildCacheKeyIn!) : BuildCacheKey @isLoggedInAndVerified @hasAccount
 
   cr_listBuildsByBuildCacheId(buildCacheKeyId:ID!, pagination:CursorPaginationIn) : BuildPaginatedRecords @isLoggedInAndVerified @hasAccount
+}
+
+extend type Build @key(fields: "id") {
+  latestBuildRun: BuildRun @isLoggedInAndVerified @hasAccount
 }

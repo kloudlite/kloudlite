@@ -14,6 +14,8 @@ type App struct {
 
 	crdsv1.App `json:",inline"`
 
+	CIBuildId *repos.ID `json:"ciBuildId,omitempty" graphql:"scalar-type=ID"`
+
 	AccountName     string `json:"accountName" graphql:"noinput"`
 	ProjectName     string `json:"projectName" graphql:"noinput"`
 	EnvironmentName string `json:"environmentName" graphql:"noinput"`

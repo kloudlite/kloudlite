@@ -60,6 +60,9 @@
             upx
 
             rover
+
+            # node
+            nodePackages.pnpm
           ];
 
           shellHook = ''

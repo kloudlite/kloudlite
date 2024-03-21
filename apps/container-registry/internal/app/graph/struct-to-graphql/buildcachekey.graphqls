@@ -3,7 +3,7 @@ type BuildCacheKey @shareable {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
