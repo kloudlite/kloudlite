@@ -83,13 +83,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	// if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
+	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
