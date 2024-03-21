@@ -3670,6 +3670,7 @@ query consoleListConsoleVpnDevices($search: CoreSearchVPNDevices, $pq: CursorPag
         creationTime
         displayName
         environmentName
+        projectName
         lastUpdatedBy {
           userEmail
           userId
@@ -3683,6 +3684,35 @@ query consoleListConsoleVpnDevices($search: CoreSearchVPNDevices, $pq: CursorPag
         }
         projectName
         recordVersion
+        status {
+          checkList {
+            debug
+            description
+            name
+            title
+          }
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
         spec {
           cnameRecords {
             host
@@ -3741,8 +3771,6 @@ query consoleGetConsoleVpnDevice($name: String!) {
 
 query consoleListConsoleVpnDevicesForUser {
   core_listVPNDevicesForUser {
-    accountName
-    apiVersion
     createdBy {
       userEmail
       userId
@@ -3751,8 +3779,7 @@ query consoleListConsoleVpnDevicesForUser {
     creationTime
     displayName
     environmentName
-    id
-    kind
+    projectName
     lastUpdatedBy {
       userEmail
       userId
@@ -3760,16 +3787,41 @@ query consoleListConsoleVpnDevicesForUser {
     }
     markedForDeletion
     metadata {
-      annotations
-      creationTimestamp
-      deletionTimestamp
       generation
-      labels
       name
       namespace
     }
     projectName
     recordVersion
+    status {
+      checkList {
+        debug
+        description
+        name
+        title
+      }
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
     spec {
       cnameRecords {
         host
@@ -3784,10 +3836,6 @@ query consoleListConsoleVpnDevicesForUser {
       }
     }
     updateTime
-    wireguardConfig {
-      encoding
-      value
-    }
   }
 }
 

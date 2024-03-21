@@ -7,8 +7,6 @@ import Popup from '~/components/molecule/popup';
 import MultiStep, { useMultiStep } from '~/console/components/multi-step';
 import NoResultsFound from '~/console/components/no-results-found';
 import { IDialog } from '~/console/components/types.d';
-import ConfigResource from '~/console/page-components/config-resource';
-import SecretResources from '~/console/page-components/secret-resource';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IConfigs } from '~/console/server/gql/queries/config-queries';
 import { ISecrets } from '~/console/server/gql/queries/secret-queries';
@@ -20,6 +18,8 @@ import {
 import useDebounce from '~/lib/client/hooks/use-debounce';
 import { handleError } from '~/lib/utils/common';
 import { ArrowLeft } from '~/console/components/icons';
+import ConfigResourcesV2 from '~/console/page-components/config-resource-v2';
+import SecretResourcesV2 from '~/console/page-components/secret-resource-v2';
 import { IAppDialogValue } from './app-environment';
 import CSComponent, { ICSComponent } from './cs-item';
 
@@ -158,7 +158,7 @@ const AppDialog = ({
               <MultiStep.Step step={1}>
                 {configs.length > 0 || secrets.length > 0 || mres.length > 0 ? (
                   show?.type === 'config' ? (
-                    <ConfigResource
+                    <ConfigResourcesV2
                       items={configs}
                       hasActions={false}
                       onClick={(val) => {
@@ -168,7 +168,7 @@ const AppDialog = ({
                       }}
                     />
                   ) : (
-                    <SecretResources
+                    <SecretResourcesV2
                       items={show?.type === 'secret' ? secrets : mres}
                       hasActions={false}
                       onClick={(val) => {

@@ -8,7 +8,6 @@ import {
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -25,6 +24,8 @@ import { registryHost } from '~/root/lib/configs/base-url.cjs';
 import { handleError } from '~/root/lib/utils/common';
 import { Copy, Spinner, Trash, Check } from '~/console/components/icons';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
+import ListV2 from '~/console/components/listV2';
+import ConsoleAvatar from '~/console/components/console-avatar';
 
 const RESOURCE_NAME = 'credential';
 type BaseType = ExtractNodeType<ICRCreds>;
@@ -201,64 +202,91 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
 
 const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
   return (
-    <List.Root>
-      {items.map((item, index) => {
-        const { name, id, access, updateInfo, username } = parseItem(item);
-        const keyPrefix = `app-${id}-${index}`;
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
-                render: () => <ListTitle title={name} subtitle={username} />,
+    <ListV2.Root
+      data={{
+        headers: [
+          {
+            render: () => (
+              <div className="flex flex-row">
+                <span className="w-[48px]" />
+                Name
+              </div>
+            ),
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Registry Url',
+            name: 'registryUrl',
+            className: 'flex-1 w-[180px]',
+          },
+          {
+            render: () => 'Token',
+            name: 'token',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Access',
+            name: 'access',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, access, updateInfo, username } = parseItem(i);
+          return {
+            columns: {
+              name: {
+                render: () => (
+                  <ListTitle
+                    title={name}
+                    subtitle={username}
+                    avatar={<ConsoleAvatar name={id} />}
+                  />
+                ),
               },
-              {
-                key: generateKey(keyPrefix, 'registry-url'),
-                className: 'w-[200px]',
+              registryUrl: {
                 render: () => <RegistryUrlView />,
               },
-              {
-                key: generateKey(keyPrefix, 'token'),
-                className: 'w-[180px]',
-                render: () => <TokenView username={username} />,
-              },
-              {
-                key: generateKey(keyPrefix, 'access'),
-                className: 'w-[120px] text-start',
-                render: () => <ListBody data={access} />,
-              },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
+              token: { render: () => <TokenView username={username} /> },
+              updated: {
                 render: () => (
                   <ListItem
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
+              access: {
+                render: () => <ListBody data={access} />,
+              },
+              action: {
                 render: () => (
                   <ExtraButton
                     onDelete={() => {
-                      onDelete(item);
+                      onDelete(i);
                     }}
                   />
                 ),
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+          };
+        }),
+      }}
+    />
   );
 };
 
-const CredResources = ({ items = [] }: { items: BaseType[] }) => {
+const CredResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
@@ -304,4 +332,4 @@ const CredResources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default CredResources;
+export default CredResourcesV2;

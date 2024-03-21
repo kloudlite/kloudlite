@@ -4,10 +4,8 @@ import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import SubNavAction from '~/console/components/sub-nav-action';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import SecretResources from '~/console/page-components/secret-resource';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import {
@@ -18,6 +16,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
+import SecretResourcesV2 from '~/console/page-components/secret-resource-v2';
 import HandleSecret from './handle-secret';
 import Tools from './tools';
 
@@ -94,7 +93,7 @@ const Secrets = () => {
               }}
               tools={<Tools />}
             >
-              <SecretResources items={secrets} linkComponent={Link} />
+              <SecretResourcesV2 items={secrets} linkComponent={Link} />
             </Wrapper>
           );
         }}

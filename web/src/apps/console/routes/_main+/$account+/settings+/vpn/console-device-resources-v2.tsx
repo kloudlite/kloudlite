@@ -8,7 +8,6 @@ import {
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -24,6 +23,9 @@ import { IConsoleDevices } from '~/console/server/gql/queries/console-vpn-querie
 import HandleConsoleDevices, {
   ShowWireguardConfig,
 } from '~/console/page-components/handle-console-devices';
+import ListV2 from '~/console/components/listV2';
+import ConsoleAvatar from '~/console/components/console-avatar';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 
 const RESOURCE_NAME = 'device';
 type BaseType = ExtractNodeType<IConsoleDevices>;
@@ -139,43 +141,77 @@ const GridView = ({ items, onAction }: IResource) => {
 
 const ListView = ({ items, onAction }: IResource) => {
   return (
-    <List.Root>
-      {items?.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, name + id),
-                className: 'w-full',
-                render: () => <ListTitle title={name} subtitle={id} />,
+    <ListV2.Root
+      data={{
+        headers: [
+          {
+            render: () => (
+              <div className="flex flex-row">
+                <span className="w-[48px]" />
+                Name
+              </div>
+            ),
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Project',
+            name: 'project',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, updateInfo } = parseItem(i);
+          return {
+            columns: {
+              name: {
+                render: () => (
+                  <ListTitle
+                    title={name}
+                    subtitle={id}
+                    avatar={<ConsoleAvatar name={id} />}
+                  />
+                ),
               },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[200px] min-w-[200px] max-w-[200px]',
+              status: {
+                render: () => <SyncStatusV2 item={i} />,
+              },
+              project: { render: () => <ListItem data={i.projectName} /> },
+              updated: {
                 render: () => (
                   <ListItem
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onAction={onAction} item={item} />,
+              action: {
+                render: () => <ExtraButton onAction={onAction} item={i} />,
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+          };
+        }),
+      }}
+    />
   );
 };
 
-const ConsoleDeviceResources = ({ items = [] }: { items: BaseType[] }) => {
+const ConsoleDeviceResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showHandleDevice, setShowHandleDevice] = useState<BaseType | null>(
     null
   );
@@ -259,4 +295,4 @@ const ConsoleDeviceResources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default ConsoleDeviceResources;
+export default ConsoleDeviceResourcesV2;

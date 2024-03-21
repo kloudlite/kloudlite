@@ -9,7 +9,6 @@ import {
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -23,6 +22,8 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { registryHost } from '~/root/lib/configs/base-url.cjs';
 import { handleError } from '~/root/lib/utils/common';
 import { Trash } from '~/console/components/icons';
+import ListV2 from '~/console/components/listV2';
+import ConsoleAvatar from '~/console/components/console-avatar';
 
 type BaseType = ExtractNodeType<IRepos>;
 const RESOURCE_NAME = 'repository';
@@ -115,49 +116,82 @@ const GridView = ({ items, onDelete }: IResource) => {
 const ListView = ({ items, onDelete }: IResource) => {
   const { account } = useParams();
   return (
-    <List.Root linkComponent={Link}>
-      {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return (
-          <List.Row
-            key={id}
-            to={`/${account}/repo/${btoa(name)}`}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, name + id),
-                className: 'flex-1 min-w-[100px] max-w-[100px]',
-                render: () => <ListTitle title={name} />,
+    <ListV2.Root
+      linkComponent={Link}
+      data={{
+        headers: [
+          {
+            render: () => (
+              <div className="flex flex-row">
+                <span className="w-[48px]" />
+                Name
+              </div>
+            ),
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Repository Url',
+            name: 'repositoryUrl',
+            className: 'flex-1 w-[180px]',
+          },
+          {
+            render: () => 'Account',
+            name: 'account',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, updateInfo } = parseItem(i);
+          return {
+            columns: {
+              name: {
+                render: () => (
+                  <ListTitle
+                    title={name}
+                    avatar={<ConsoleAvatar name={id} />}
+                  />
+                ),
               },
-              {
-                key: generateKey(keyPrefix, 'repo-url'),
-                className: 'min-w-[100px] w-[100px] basis-full  mr-[20px]',
-                render: () => <RepoUrlView name={name} />,
+              repositoryUrl: {
+                render: () => (
+                  <div className="flex w-fit">
+                    <RepoUrlView name={name} />
+                  </div>
+                ),
               },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: 'min-w-[180px] max-w-[180px] text-left',
+              account: { render: () => <ListItem data={i.accountName} /> },
+              updated: {
                 render: () => (
                   <ListItem
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onDelete={() => onDelete?.(item)} />,
+              action: {
+                render: () => <ExtraButton onDelete={() => onDelete?.(i)} />,
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+            to: `/${account}/repo/${btoa(name)}`,
+          };
+        }),
+      }}
+    />
   );
 };
 
-const RepoResources = ({ items = [] }: { items: BaseType[] }) => {
+const RepoResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
@@ -201,4 +235,4 @@ const RepoResources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default RepoResources;
+export default RepoResourcesV2;
