@@ -78,16 +78,6 @@ const Tabs = () => {
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
-              <NoOps size={iconSize} />
-              Build Runs
-            </span>
-          ),
-          value: '/buildruns',
-          to: '/buildruns',
-        },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
               <GearSix size={iconSize} />
               Settings
             </span>
