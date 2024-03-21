@@ -9,9 +9,9 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
-import DomainResources from './domain-resources';
 import HandleDomain from './handle-domain';
 import Tools from './tools';
+import DomainResourcesV2 from './domain-resources-v2';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -78,7 +78,7 @@ const Domain = () => {
               }}
               tools={<Tools />}
             >
-              <DomainResources items={domains} />
+              <DomainResourcesV2 items={domains} />
             </Wrapper>
           );
         }}

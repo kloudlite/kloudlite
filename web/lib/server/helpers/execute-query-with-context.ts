@@ -11,6 +11,8 @@ import {
   NN,
 } from '../../types/common';
 
+const ignoreLogsFor = ['accounts_listAccounts', 'auth_me'];
+
 const parseCookie = (cookieString: string) => {
   const [cookie] = cookieString.split(';');
   const [name, value] = cookie.split('=');
@@ -43,9 +45,12 @@ export const ExecuteQueryWithContext = (
     def?: any
   ): IExecutorResp<B, C> {
     const logId = uuid();
-    const apiName = `[#${logId.substring(0, 5)}] ${
-      (q as any)?.definitions[0]?.selectionSet?.selections[0]?.name?.value || ''
-    }`;
+
+    const gqlName =
+      (q as any)?.definitions[0]?.selectionSet?.selections[0]?.name?.value ||
+      '';
+
+    const apiName = `[#${logId.substring(0, 5)}] ${gqlName}`;
 
     const res: IExecutorResp<B, C> = async (variables) => {
       const { transformer } = formatter;
@@ -111,13 +116,15 @@ export const ExecuteQueryWithContext = (
         }
         return { ...resp.data, data };
       } catch (err) {
-        if ((err as AxiosError).response) {
-          console.trace('ErrorIn:', apiName, (err as Error).name);
+        if (!ignoreLogsFor.includes(gqlName)) {
+          if ((err as AxiosError).response) {
+            console.log('\nErrorIn:', apiName, (err as Error).name, '\n');
 
-          return (err as AxiosError).response?.data;
+            return (err as AxiosError).response?.data;
+          }
+
+          console.log('\nErrorIn:', apiName, (err as Error).message, '\n');
         }
-
-        console.trace('ErrorIn:', apiName, (err as Error).message);
 
         return {
           data: null,

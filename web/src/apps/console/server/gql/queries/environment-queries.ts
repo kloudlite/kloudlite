@@ -63,6 +63,12 @@ export const environmentQueries = (executor: IExecutor) => ({
           }
           status {
             checks
+            checkList {
+              description
+              debug
+              name
+              title
+            }
             isReady
             lastReadyGeneration
             lastReconcileTime
@@ -183,6 +189,12 @@ export const environmentQueries = (executor: IExecutor) => ({
               }
               status {
                 checks
+                checkList {
+                  description
+                  debug
+                  name
+                  title
+                }
                 isReady
                 lastReadyGeneration
                 lastReconcileTime

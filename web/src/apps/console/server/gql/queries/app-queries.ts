@@ -134,6 +134,7 @@ export const appQueries = (executor: IExecutor) => ({
       ) {
         core_getApp(projectName: $projectName, envName: $envName, name: $name) {
           id
+          recordVersion
           createdBy {
             userEmail
             userId
@@ -247,6 +248,12 @@ export const appQueries = (executor: IExecutor) => ({
             }
           }
           status {
+            checkList {
+              description
+              debug
+              title
+              name
+            }
             checks
             isReady
             lastReadyGeneration
@@ -389,6 +396,12 @@ export const appQueries = (executor: IExecutor) => ({
                   kind
                   name
                   namespace
+                }
+                checkList {
+                  description
+                  debug
+                  title
+                  name
                 }
               }
               syncStatus {

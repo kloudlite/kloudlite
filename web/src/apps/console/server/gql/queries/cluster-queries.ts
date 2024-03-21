@@ -78,6 +78,7 @@ export const clusterQueries = (executor: IExecutor) => ({
           edges {
             cursor
             node {
+              id
               displayName
               markedForDeletion
               metadata {
@@ -99,6 +100,12 @@ export const clusterQueries = (executor: IExecutor) => ({
               updateTime
               status {
                 checks
+                checkList {
+                  description
+                  debug
+                  name
+                  title
+                }
                 isReady
                 lastReadyGeneration
                 lastReconcileTime
@@ -240,6 +247,12 @@ export const clusterQueries = (executor: IExecutor) => ({
           }
           status {
             checks
+            checkList {
+              description
+              debug
+              name
+              title
+            }
             isReady
             lastReadyGeneration
             lastReconcileTime

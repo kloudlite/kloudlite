@@ -27,7 +27,6 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { Link, useOutletContext } from '@remix-run/react';
 import { IStatus, listRender } from '~/console/components/commons';
-import { listStatus } from '~/console/components/sync-status';
 import AnimateHide from '~/components/atoms/animate-hide';
 import { ISetState } from '~/console/page-components/app-states';
 import { Button } from '~/components/atoms/button';
@@ -35,6 +34,8 @@ import { dayjs } from '~/components/molecule/dayjs';
 import LogComp from '~/root/lib/client/components/logger';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$cluster+/_layout';
+import LogAction from '~/console/page-components/log-action';
+import { useDataState } from '~/console/page-components/common-state';
 import HandleNodePool from './handle-nodepool';
 import {
   findNodePlanWithCategory,
@@ -87,6 +88,7 @@ const ExtraButton = ({
     />
   );
 };
+
 interface IResource {
   items: BaseType[];
   onDelete: (item: BaseType) => void;
@@ -199,13 +201,12 @@ const ListDetail = (
     type: 'nodepool',
   });
 
-  const tempStatus = listStatus({
-    key: keyPrefix,
-    item,
-    className: 'basis-full text-center',
-  });
-
   const isLatest = dayjs(item.updateTime).isAfter(dayjs().subtract(3, 'hour'));
+
+  const { state } = useDataState<{
+    linesVisible: boolean;
+    timestampVisible: boolean;
+  }>('logs');
 
   return (
     <div className="w-full flex flex-col">
@@ -241,7 +242,7 @@ const ListDetail = (
         )}
 
         <div className="flex items-center w-[20px] mx-xl flex-grow">
-          {tempStatus.render()}
+          {/* {tempStatus.render()} */}
         </div>
         <div className="flex flex-col gap-sm w-[150px] min-w-[150px] border-border-disabled border-x pl-xl mr-xl pr-xl truncate">
           <span className="bodySm text-text-soft pulsable">Size</span>
@@ -277,12 +278,14 @@ const ListDetail = (
             width: '100%',
             height: '40rem',
             title: 'Logs',
-            hideLineNumber: true,
+            hideLineNumber: !state.linesVisible,
+            hideTimestamp: !state.timestampVisible,
             websocket: {
               account: parseName(account),
               cluster: item.clusterName,
               trackingId: item.id,
             },
+            actionComponent: <LogAction />,
           }}
         />
       </AnimateHide>
@@ -369,7 +372,6 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
       {items.map((item, index) => {
         const { name, id } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        // const lR = listRender({ keyPrefix, resource: item });
         return (
           <List.Row
             key={id}

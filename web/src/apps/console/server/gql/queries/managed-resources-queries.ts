@@ -152,7 +152,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
               }
               recordVersion
               spec {
-                resourceName
                 resourceTemplate {
                   apiVersion
                   kind
@@ -167,6 +166,12 @@ export const managedResourceQueries = (executor: IExecutor) => ({
               }
               status {
                 checks
+                checkList {
+                  description
+                  debug
+                  name
+                  title
+                }
                 isReady
                 lastReadyGeneration
                 lastReconcileTime

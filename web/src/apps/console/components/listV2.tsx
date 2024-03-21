@@ -1,6 +1,7 @@
 import * as RovingFocusGroup from '@radix-ui/react-roving-focus';
 import { KeyboardEvent, ReactNode, useRef } from 'react';
 import { cn } from '~/components/utils';
+import logger from '~/root/lib/client/helpers/log';
 import { LoadingPlaceHolder } from './loading';
 
 const focusableElement = 'a[href], button, input, select, textarea';
@@ -77,7 +78,7 @@ const handleKeyNavigation = (
       }
     }
   } catch {
-    console.log('Error focusing');
+    logger.error('Error focusing');
   }
 };
 
@@ -103,6 +104,9 @@ interface IMain {
 interface IRowBase extends IMain {
   linkComponent?: any;
   headers?: IHeader[];
+  disabled?: boolean;
+  detail?: ReactNode;
+  hideDetailSeperator?: boolean;
 }
 
 const RowBase = ({
@@ -112,8 +116,10 @@ const RowBase = ({
   className = '',
   onClick = null,
   pressed = false,
-  plain,
   headers,
+  disabled,
+  detail,
+  hideDetailSeperator,
 }: IRowBase) => {
   let Component: any = linkComponent;
 
@@ -127,27 +133,27 @@ const RowBase = ({
     Component = 'div';
   }
 
-  const css = cn(
-    'w-full overflow-hidden resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative flex flex-row items-center gap-3xl',
-    {
-      '[&:not(:last-child)]:border-b border-border-default first:rounded-t last:rounded-b p-2xl':
-        !plain,
-    },
-    className,
+  const commonCss = cn(
     {
       'bg-surface-basic-default': !pressed,
       'cursor-pointer hover:bg-surface-basic-hovered':
-        (!!onClick || linkComponent !== 'div') && !pressed,
-      'bg-surface-basic-active': pressed,
-    }
+        (!!onClick || linkComponent !== 'div') && !pressed && !disabled,
+      'bg-surface-basic-pressed': pressed,
+      'cursor-default': !!disabled,
+    },
+    '[&:not(:last-child)]:border-b border-border-default'
   );
 
-  if (!!onClick || linkComponent !== 'div') {
+  const css = cn(
+    'w-full overflow-hidden resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative flex flex-row items-center gap-3xl',
+    className
+  );
+
+  if (!disabled && !pressed) {
     return (
       <RovingFocusGroup.Item
         role="row"
         asChild
-        className={css}
         onClick={() => {
           if (onClick) onClick(columns);
         }}
@@ -157,24 +163,33 @@ const RowBase = ({
           }
         }}
       >
-        <Component {...(Component === 'a' ? { href: to } : { to })}>
-          {headers?.map((item) => (
-            <div key={item.name} className={cn(item.className)}>
-              {columns?.[item.name]?.render()}
-            </div>
-          ))}
+        <Component
+          {...(Component === 'a' ? { href: to } : { to })}
+          className={cn('flex flex-col last:rounded-b p-2xl', commonCss)}
+        >
+          <div className={css}>
+            {headers?.map((item) => (
+              <div key={item.name} className={cn(item.className)}>
+                {columns?.[item.name]?.render()}
+              </div>
+            ))}
+          </div>
+          <div className={cn('px-2xl')}>{detail}</div>
         </Component>
       </RovingFocusGroup.Item>
     );
   }
 
   return (
-    <div className={css} role="row">
-      {headers?.map((item) => (
-        <div key={item.name} className={cn(item.className)}>
-          {columns?.[item.name]?.render()}
-        </div>
-      ))}
+    <div className={cn(css, commonCss, 'p-2xl')}>
+      <div role="row">
+        {headers?.map((item) => (
+          <div key={item.name} className={cn(item.className)}>
+            {columns?.[item.name]?.render()}
+          </div>
+        ))}
+      </div>
+      {detail}
     </div>
   );
 };
@@ -208,7 +223,15 @@ interface IRoot {
   loading?: boolean;
   data?: {
     headers: IHeader[];
-    rows: Array<{ columns: Record<string, IColumn>; to?: string }>;
+    rows: Array<{
+      columns: Record<string, IColumn>;
+      to?: string;
+      disabled?: boolean;
+      detail?: ReactNode;
+      hideDetailSeperator?: boolean;
+      onClick?: ((item?: Record<string, IColumn>) => void) | null;
+      pressed?: boolean;
+    }>;
     className?: Array<string>;
   };
   headerClassName?: string;
@@ -224,7 +247,7 @@ const Root = ({
 }: IRoot) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  console.log(data);
+  // logger.log(data);
   return (
     <>
       {!loading && (
@@ -250,7 +273,7 @@ const Root = ({
                 }
               }
             } catch {
-              console.log('Error Focusing');
+              logger.error('Error Focusing');
             }
           }}
           onKeyDown={(e) => {
@@ -265,7 +288,7 @@ const Root = ({
               )}
             >
               {data?.headers.map((h, index) => (
-                <div key={index} className={cn(h.className)}>
+                <div key={`${index + h.name}`} className={cn(h.className)}>
                   {h.render()}
                 </div>
               ))}
@@ -274,10 +297,15 @@ const Root = ({
               {data?.rows.map((r, index) => (
                 <RowBase
                   linkComponent={linkComponent}
-                  key={index}
+                  key={`${index + (r.to || '')}`}
                   columns={r.columns}
                   to={r.to}
                   headers={data.headers}
+                  disabled={r.disabled}
+                  detail={r.detail}
+                  hideDetailSeperator={r.hideDetailSeperator}
+                  onClick={r.onClick}
+                  pressed={r.pressed}
                 />
               ))}
             </div>

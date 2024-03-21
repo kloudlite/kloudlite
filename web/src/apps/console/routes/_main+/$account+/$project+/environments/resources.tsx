@@ -20,7 +20,6 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { listStatus } from '~/console/components/sync-status';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
@@ -126,7 +125,6 @@ const ListView = ({ items, onAction }: IResource) => {
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        const status = listStatus({ key: `${keyPrefix}status`, item });
         return (
           <List.Row
             key={id}
@@ -144,7 +142,6 @@ const ListView = ({ items, onAction }: IResource) => {
                   />
                 ),
               },
-              status,
               listFlex({ key: `${keyPrefix}flex-1` }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),

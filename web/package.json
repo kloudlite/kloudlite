@@ -22,6 +22,7 @@
 		"tsgen": "pnpm gql:parse && cd src/generated && pnpm tsgen"
 	},
 	"dependencies": {
+		"@codemirror/lang-javascript": "^6.2.2",
 		"@codemirror/language": "^6.10.0",
 		"@codemirror/legacy-modes": "^6.3.3",
 		"@jengaicons/react": "^1.3.0",
@@ -62,7 +63,7 @@
 		"@react-types/shared": "^3.22.0",
 		"@remix-run/node": "^1.19.3",
 		"@remix-run/react": "^1.19.3",
-		"@uiw/react-codemirror": "^4.21.21",
+		"@uiw/react-codemirror": "^4.21.24",
 		"anser": "^2.1.1",
 		"apexcharts": "^3.45.2",
 		"aria-hidden": "^1.2.3",
@@ -93,12 +94,12 @@
 		"react-router-dom": "^6.21.1",
 		"react-toastify": "^9.1.3",
 		"react-viewport-list": "^7.1.2",
+		"reconnecting-websocket": "^4.4.0",
 		"remix": "^1.19.3",
 		"search-in-json": "^1.0.67",
 		"swr": "^2.2.4",
 		"use-immer": "^0.9.0",
 		"uuid": "^9.0.1",
-		"websocket": "^1.0.34",
 		"yup": "^1.3.3"
 	},
 	"devDependencies": {
@@ -114,7 +115,6 @@
 		"@types/react-dom": "^18.2.18",
 		"@types/react-ranger": "^2.0.4",
 		"@types/uuid": "^9.0.7",
-		"@types/websocket": "^1.0.10",
 		"@typescript-eslint/eslint-plugin": "^6.17.0",
 		"@typescript-eslint/parser": "^6.17.0",
 		"autoprefixer": "^10.4.16",

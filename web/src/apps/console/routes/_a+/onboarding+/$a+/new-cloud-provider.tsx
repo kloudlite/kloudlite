@@ -143,7 +143,7 @@ const NewCloudProvider = () => {
               />
             </div>
           </MultiStepProgress.Step>
-          {/* <MultiStepProgress.Step step={3} label="Validate cloud provider" /> */}
+          <MultiStepProgress.Step step={3} label="Validate cloud provider" />
           <MultiStepProgress.Step step={4} label="Setup first cluster" />
         </MultiStepProgress.Root>
       </MultiStepProgressWrapper>

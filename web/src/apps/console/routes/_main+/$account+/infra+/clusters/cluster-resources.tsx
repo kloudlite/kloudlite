@@ -1,19 +1,17 @@
 import { GearSix } from '@jengaicons/react';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { cn, generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '~/components/utils';
 import { IStatus, listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
   ListItem,
   ListTitle,
-  listFlex,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { listStatus } from '~/console/components/sync-status';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import {
   ExtractNodeType,
@@ -25,6 +23,14 @@ import { renderCloudProvider } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import { ISetState } from '~/console/page-components/app-states';
+import { useState } from 'react';
+import { dayjs } from '~/components/molecule/dayjs';
+import { Button } from '~/components/atoms/button';
+import AnimateHide from '~/components/atoms/animate-hide';
+import LogComp from '~/root/lib/client/components/logger';
+import LogAction from '~/console/page-components/log-action';
+import { useDataState } from '~/console/page-components/common-state';
 
 const RESOURCE_NAME = 'cluster';
 
@@ -143,36 +149,121 @@ const GridView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
   );
 };
 
-const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
+type BaseType = ExtractNodeType<IClusters>;
+
+interface IResource {
+  items: BaseType[];
+  // onDelete: (item: BaseType) => void;
+  // onEdit: (item: BaseType) => void;
+}
+
+const ListDetail = (
+  props: Omit<IResource, 'items'> & {
+    open: string;
+    item: BaseType;
+    setOpen: ISetState<string>;
+  }
+) => {
+  const { item, open, setOpen } = props;
+
+  const { name, id } = parseItem(item);
+  const keyPrefix = `${RESOURCE_NAME}-${id}`;
+  const lR = listRender({ keyPrefix, resource: item });
+
+  const { account } = useOutletContext<IAccountContext>();
+
+  const isLatest = dayjs(item.updateTime).isAfter(dayjs().subtract(3, 'hour'));
+
+  const { state } = useDataState<{
+    linesVisible: boolean;
+    timestampVisible: boolean;
+  }>('logs');
+
+  return (
+    <div className="w-full flex flex-col">
+      <div className="flex flex-row items-center">
+        <div className="w-[220px] min-w-[220px]  mr-xl flex flex-row items-center">
+          <ListTitle
+            title={name}
+            subtitle={
+              <div className="flex flex-row items-center gap-md">{id}</div>
+            }
+            avatar={<ConsoleAvatar name={id} />}
+          />
+        </div>
+
+        {isLatest && (
+          <Button
+            size="sm"
+            variant="basic"
+            content={open === item.id ? 'Hide Logs' : 'Show Logs'}
+            onClick={(e) => {
+              e.preventDefault();
+
+              setOpen((s) => {
+                if (s === item.id) {
+                  return '';
+                }
+                return item.id;
+              });
+            }}
+          />
+        )}
+
+        <div className="flex items-center w-[20px] mx-xl flex-grow">
+          {/* {tempStatus.render()} */}
+        </div>
+
+        <div className="pr-3xl w-[180px] min-w-[180px]">
+          {lR.authorRender({ className: '' }).render()}
+        </div>
+      </div>
+
+      <AnimateHide
+        onClick={(e) => e.preventDefault()}
+        show={open === item.id}
+        className="w-full flex pt-4xl justify-center items-center"
+      >
+        <LogComp
+          {...{
+            hideLineNumber: !state.linesVisible,
+            hideTimestamp: !state.timestampVisible,
+            className: 'flex-1',
+            dark: true,
+            width: '100%',
+            height: '40rem',
+            title: 'Logs',
+            websocket: {
+              account: parseName(account),
+              cluster: parseName(item),
+              trackingId: item.id,
+            },
+            actionComponent: <LogAction />,
+          }}
+        />
+      </AnimateHide>
+    </div>
+  );
+};
+
+const ListView = ({ items }: IResource) => {
+  const [open, setOpen] = useState<string>('');
   const { account } = useParams();
+
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, provider } = parseItem(item);
+        const { name, id } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        const lR = listRender({ keyPrefix, resource: item });
 
+        const lR = listRender({ keyPrefix, resource: item });
         const statusRender = lR.statusRender({
           className: 'min-w-[80px] mx-[25px] basis-full text-center',
         });
-
-        const tempStatus = listStatus({
-          key: keyPrefix,
-          item,
-          className: 'text-center',
-        });
-
         return (
           <List.Row
             key={id}
-            className={cn(
-              '!p-3xl',
-              statusRender.status === 'notready' ||
-                statusRender.status === 'deleting'
-                ? '!cursor-default hover:!bg-surface-basic-default'
-                : ''
-            )}
-            // to={`/${account}/${id}/overview`}
+            className="!p-3xl"
             {...(!(
               statusRender.status === 'notready' ||
               statusRender.status === 'deleting'
@@ -181,28 +272,10 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
               : {})}
             columns={[
               {
+                className: 'w-full',
                 key: generateKey(keyPrefix, name + id),
-                className: 'max-w-[180px] min-w-[180px] w-[180px]',
                 render: () => (
-                  <ListTitle
-                    title={name}
-                    subtitle={id}
-                    avatar={<ConsoleAvatar name={id} />}
-                  />
-                ),
-              },
-              tempStatus,
-              listFlex({ key: 'flex-1' }),
-              {
-                key: generateKey(keyPrefix, `${provider}`),
-                className: 'min-w-[150px] text-start',
-                render: () => <ListBody data={provider} />,
-              },
-              lR.authorRender({ className: 'min-w-[180px] w-[180px]' }),
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <ExtraButton status={statusRender.status} cluster={item} />
+                  <ListDetail item={item} open={open} setOpen={setOpen} />
                 ),
               },
             ]}

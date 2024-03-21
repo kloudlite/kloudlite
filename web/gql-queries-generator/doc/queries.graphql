@@ -134,6 +134,12 @@ query consoleGetProject($name: String!) {
     recordVersion
     status {
       checks
+      checkList {
+        description
+        debug
+        name
+        title
+      }
       isReady
       lastReadyGeneration
       lastReconcileTime
@@ -193,6 +199,12 @@ query consoleListProjects($search: SearchProjects, $pq: CursorPaginationIn) {
         }
         status {
           checks
+          checkList {
+            description
+            debug
+            name
+            title
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -255,6 +267,7 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
     edges {
       cursor
       node {
+        id
         displayName
         markedForDeletion
         metadata {
@@ -276,6 +289,12 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
         updateTime
         status {
           checks
+          checkList {
+            description
+            debug
+            name
+            title
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -408,6 +427,12 @@ query consoleGetCluster($name: String!) {
     }
     status {
       checks
+      checkList {
+        description
+        debug
+        name
+        title
+      }
       isReady
       lastReadyGeneration
       lastReconcileTime
@@ -766,6 +791,12 @@ query consoleGetEnvironment($projectName: String!, $name: String!) {
     }
     status {
       checks
+      checkList {
+        description
+        debug
+        name
+        title
+      }
       isReady
       lastReadyGeneration
       lastReconcileTime
@@ -835,6 +866,12 @@ query consoleListEnvironments($projectName: String!, $search: SearchEnvironments
         }
         status {
           checks
+          checkList {
+            description
+            debug
+            name
+            title
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -914,6 +951,7 @@ mutation consoleDeleteApp($projectName: String!, $envName: String!, $appName: St
 query consoleGetApp($projectName: String!, $envName: String!, $name: String!) {
   core_getApp(projectName: $projectName, envName: $envName, name: $name) {
     id
+    recordVersion
     createdBy {
       userEmail
       userId
@@ -1027,6 +1065,12 @@ query consoleGetApp($projectName: String!, $envName: String!, $name: String!) {
       }
     }
     status {
+      checkList {
+        description
+        debug
+        title
+        name
+      }
       checks
       isReady
       lastReadyGeneration
@@ -1156,6 +1200,12 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
             name
             namespace
           }
+          checkList {
+            description
+            debug
+            title
+            name
+          }
         }
         syncStatus {
           action
@@ -1258,7 +1308,6 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
           }
           routes {
             app
-            lambda
             path
             port
             rewrite
@@ -1266,6 +1315,12 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
         }
         status {
           checks
+          checkList {
+            description
+            debug
+            name
+            title
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -1350,7 +1405,6 @@ query consoleGetRouter($projectName: String!, $envName: String!, $name: String!)
       }
       routes {
         app
-        lambda
         path
         port
         rewrite
@@ -1358,18 +1412,13 @@ query consoleGetRouter($projectName: String!, $envName: String!, $name: String!)
     }
     status {
       checks
-      isReady
-      lastReadyGeneration
-      lastReconcileTime
-      message {
-        RawMessage
-      }
-      resources {
-        apiVersion
-        kind
+      checkList {
+        description
+        debug
         name
-        namespace
+        title
       }
+      isReady
     }
     updateTime
   }
@@ -1483,6 +1532,7 @@ query consoleListSecrets($projectName: String!, $envName: String!, $search: Sear
         displayName
         stringData
         environmentName
+        isReadyOnly
         immutable
         lastUpdatedBy {
           userEmail
@@ -1978,6 +2028,39 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
         }
         status
         updateTime
+        latestBuildRun {
+          recordVersion
+          status {
+            checkList {
+              debug
+              description
+              name
+              title
+            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
+          }
+          markedForDeletion
+        }
       }
     }
     pageInfo {
@@ -2004,6 +2087,10 @@ mutation consoleUpdateBuild($crUpdateBuildId: ID!, $build: BuildIn!) {
 
 mutation consoleDeleteBuild($crDeleteBuildId: ID!) {
   cr_deleteBuild(id: $crDeleteBuildId)
+}
+
+mutation consoleTriggerBuild($crTriggerBuildId: ID!) {
+  cr_triggerBuild(id: $crTriggerBuildId)
 }
 
 query consoleListBuildCaches($pq: CursorPaginationIn, $search: SearchBuildCacheKeys) {
@@ -2686,8 +2773,8 @@ mutation consoleDeletePV($clusterName: String!, $pvName: String!) {
   infra_deletePV(clusterName: $clusterName, pvName: $pvName)
 }
 
-query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: CursorPaginationIn) {
-  cr_listBuildRuns(repoName: $repoName, search: $search, pq: $pq) {
+query consoleListBuildRuns($buildID: ID!, $search: SearchBuildRuns, $pq: CursorPaginationIn) {
+  cr_listBuildRuns(buildID: $buildID, search: $search, pq: $pq) {
     edges {
       cursor
       node {
@@ -2695,6 +2782,7 @@ query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: Cu
         clusterName
         creationTime
         markedForDeletion
+        recordVersion
         metadata {
           annotations
           creationTimestamp
@@ -2728,6 +2816,12 @@ query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: Cu
         }
         status {
           checks
+          checkList {
+            description
+            debug
+            name
+            title
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -2740,6 +2834,14 @@ query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: Cu
             name
             namespace
           }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
         }
         updateTime
       }
@@ -2754,11 +2856,12 @@ query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: Cu
   }
 }
 
-query consoleGetBuildRun($repoName: String!, $buildRunName: String!) {
-  cr_getBuildRun(repoName: $repoName, buildRunName: $buildRunName) {
+query consoleGetBuildRun($buildID: ID!, $buildRunName: String!) {
+  cr_getBuildRun(buildID: $buildID, buildRunName: $buildRunName) {
     clusterName
     creationTime
     markedForDeletion
+    recordVersion
     metadata {
       annotations
       creationTimestamp
@@ -2792,6 +2895,12 @@ query consoleGetBuildRun($repoName: String!, $buildRunName: String!) {
     }
     status {
       checks
+      checkList {
+        description
+        debug
+        name
+        title
+      }
       isReady
       lastReadyGeneration
       lastReconcileTime
@@ -2804,6 +2913,14 @@ query consoleGetBuildRun($repoName: String!, $buildRunName: String!) {
         name
         namespace
       }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
     }
     updateTime
   }
@@ -2914,6 +3031,8 @@ mutation consoleDeleteClusterMSv($clusterName: String!, $serviceName: String!) {
 
 query consoleGetProjectMSv($projectName: String!, $name: String!) {
   core_getProjectManagedService(projectName: $projectName, name: $name) {
+    id
+    recordVersion
     createdBy {
       userEmail
       userId
@@ -2948,6 +3067,12 @@ query consoleGetProjectMSv($projectName: String!, $name: String!) {
     }
     status {
       checks
+      checkList {
+        description
+        debug
+        title
+        name
+      }
       isReady
       lastReadyGeneration
       lastReconcileTime
@@ -3022,6 +3147,12 @@ query consoleListProjectMSvs($projectName: String!, $search: SearchProjectManage
         }
         status {
           checks
+          checkList {
+            description
+            debug
+            title
+            name
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -3249,7 +3380,6 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
         }
         recordVersion
         spec {
-          resourceName
           resourceTemplate {
             apiVersion
             kind
@@ -3264,6 +3394,12 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
         }
         status {
           checks
+          checkList {
+            description
+            debug
+            name
+            title
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -3339,6 +3475,12 @@ query consoleGetHelmChart($clusterName: String!, $name: String!) {
     }
     status {
       checks
+      checkList {
+        description
+        debug
+        title
+        name
+      }
       isReady
       lastReadyGeneration
       lastReconcileTime
@@ -3385,6 +3527,7 @@ query consoleListHelmChart($clusterName: String!, $search: SearchHelmRelease, $p
           generation
           name
           namespace
+          annotations
         }
         recordVersion
         spec {
@@ -3395,6 +3538,12 @@ query consoleListHelmChart($clusterName: String!, $search: SearchHelmRelease, $p
         }
         status {
           checks
+          checkList {
+            description
+            debug
+            title
+            name
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -3482,24 +3631,6 @@ query consoleListNamespaces($clusterName: String!) {
         recordVersion
         spec {
           finalizers
-        }
-        status {
-          conditions {
-            lastTransitionTime
-            message
-            reason
-            status
-            type
-          }
-          phase
-        }
-        syncStatus {
-          action
-          error
-          lastSyncedAt
-          recordVersion
-          state
-          syncScheduledAt
         }
         updateTime
       }

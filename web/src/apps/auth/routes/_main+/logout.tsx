@@ -1,42 +1,40 @@
-import { getCookie } from '~/root/lib/app-setup/cookies';
-import withContext from '~/root/lib/app-setup/with-contxt';
-import { useNavigate, useLoaderData } from '@remix-run/react';
-import { useEffect } from 'react';
+import { useNavigate } from '@remix-run/react';
 import { BrandLogo } from '~/components/branding/brand-logo';
-import { IExtRemixCtx } from '~/root/lib/types/common';
+import { handleError, sleep } from '~/root/lib/utils/common';
+import { useAuthApi } from '~/auth/server/gql/api-provider';
+import { toast } from 'react-toastify';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 
 const LogoutPage = () => {
   const navigate = useNavigate();
-  const { done } = useLoaderData();
+  const api = useAuthApi();
 
-  useEffect(() => {
-    if (done) {
-      navigate('/');
-    }
-  }, [done]);
+  useDebounce(
+    () => {
+      (async () => {
+        try {
+          const { errors } = await api.logout({});
+          if (errors) {
+            throw errors[0];
+          }
+
+          toast.warn('Logged out successfully');
+          await sleep(1000);
+          navigate('/login');
+        } catch (error) {
+          handleError(error);
+        }
+      })();
+    },
+    1000,
+    []
+  );
   return (
     <div className="flex flex-col items-center justify-center gap-7xl h-full">
       <BrandLogo detailed={false} size={100} />
       <span className="heading2xl text-text-strong">Logging out...</span>
     </div>
   );
-};
-
-export const loader = async (ctx: IExtRemixCtx) => {
-  const cookie = getCookie(ctx);
-
-  const keys = Object.keys(cookie.getAll());
-
-  for (let i = 0; i < keys.length; i += 1) {
-    const key = keys[i];
-    if (key === 'hotspot-session') {
-      cookie.remove(key);
-    }
-  }
-
-  return withContext(ctx, {
-    done: 'true',
-  });
 };
 
 export default LogoutPage;

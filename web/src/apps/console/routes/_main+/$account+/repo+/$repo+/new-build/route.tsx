@@ -10,12 +10,13 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import Git from '~/console/components/git';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
 import { BottomNavigation } from '~/console/components/commons';
+import { toast } from '~/components/molecule/toast';
 import ReviewBuild from './review-build';
 import BuildDetails from './build-details';
 import { IRepoContext } from '../_layout';
 
 const NewBuild = () => {
-  const { loginUrls, logins } = useOutletContext<IRepoContext>();
+  const { loginUrls, logins, repoName } = useOutletContext<IRepoContext>();
 
   const navigate = useNavigate();
 
@@ -27,7 +28,6 @@ const NewBuild = () => {
   });
 
   const api = useConsoleApi();
-  const { repo } = useParams();
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
@@ -40,7 +40,7 @@ const NewBuild = () => {
       tags: [],
       buildClusterName: '',
       advanceOptions: false,
-      repository: repo || '',
+      repository: repoName || '',
       buildArgs: {},
       buildContexts: {},
       contextDir: '',
@@ -69,8 +69,9 @@ const NewBuild = () => {
       }),
     }),
     onSubmit: async (val) => {
-      if (!repo) {
-        throw new Error('Repository is required!.');
+      if (!repoName) {
+        toast.error('Repository is required!.');
+        return;
       }
       const submit = async () => {
         try {
@@ -115,21 +116,26 @@ const NewBuild = () => {
           if (e) {
             throw e[0];
           }
-          navigate(`/${account}/repo/${repo}/builds`);
+          navigate(`/${account}/repo/${btoa(repoName)}/builds`);
         } catch (err) {
           handleError(err);
         }
       };
-      switch (currentStep) {
-        case 1:
-          nextStep();
-          break;
-        case 2:
-          nextStep();
-          break;
-        default:
-          await submit();
-          break;
+
+      try {
+        switch (currentStep) {
+          case 1:
+            nextStep();
+            break;
+          case 2:
+            nextStep();
+            break;
+          default:
+            await submit();
+            break;
+        }
+      } catch (err) {
+        handleError(err);
       }
     },
   });

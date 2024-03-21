@@ -63,7 +63,7 @@ const githubInstallUrl = `https://github.com/apps/${githubAppName}/installations
 
 const popupWindow = ({
   url = '',
-  onClose = () => { },
+  onClose = () => {},
   width = 800,
   height = 500,
   title = 'kloudlite',
@@ -71,7 +71,8 @@ const popupWindow = ({
   const frame = window.open(
     url,
     title,
-    `toolbar=no,scrollbars=yes,resizable=no,top=${window.screen.height / 2 - height / 2
+    `toolbar=no,scrollbars=yes,resizable=no,top=${
+      window.screen.height / 2 - height / 2
     },left=${window.screen.width / 2 - width / 2},width=800,height=600`
   );
   const interval = setInterval(() => {
@@ -90,8 +91,8 @@ interface IBranch {
 
 interface IListRenderer {
   data:
-  | { name: string; updatedAt: any; private: true; url: string }[]
-  | undefined;
+    | { name: string; updatedAt: any; private: true; url: string }[]
+    | undefined;
   onChange: (value: string) => void;
   value: string;
   isLoading?: boolean;
@@ -207,7 +208,7 @@ const Git = ({
   loginUrls,
 }: IGitRepoSelector) => {
   const [showProviderOverlay, setShowProviderOverlay] = useState(
-    !logins?.providerGithub || !logins?.providerGitlab || false
+    !logins?.providerGithub && !logins?.providerGitlab
   );
 
   const {
@@ -298,7 +299,9 @@ const Git = ({
         }
       }
     });
-    setLoading(false);
+    setTimeout(() => {
+      setLoading(false);
+    }, 200);
   }, []);
 
   useEffect(() => {

@@ -11,7 +11,7 @@ import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import Tools from './tools';
-import ClusterResources from './cluster-resources';
+import ClusterResourcesV2 from './cluster-resources-v2';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -130,7 +130,7 @@ const Clusters = () => {
         const { pageInfo, totalCount } = clustersData;
         return (
           <Wrapper
-            secondaryHeader={{
+            header={{
               title: 'Clusters',
               action: clusters.length > 0 && (
                 <Button
@@ -152,7 +152,7 @@ const Clusters = () => {
             }}
             tools={<Tools />}
           >
-            <ClusterResources items={clusters} />
+            <ClusterResourcesV2 items={clusters} />
           </Wrapper>
         );
       }}

@@ -1,4 +1,4 @@
-import { HeadersFunction } from '@remix-run/node';
+import { HeadersFunction, LinksFunction } from '@remix-run/node';
 import {
   Link,
   Links,
@@ -11,7 +11,6 @@ import {
   useNavigation,
   useRouteError,
 } from '@remix-run/react';
-import { motion } from 'framer-motion';
 import rcSlide from 'rc-slider/assets/index.css';
 import { ReactNode, useEffect } from 'react';
 import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
@@ -21,7 +20,6 @@ import Container from '~/components/atoms/container';
 import ProgressContainer, {
   useProgress,
 } from '~/components/atoms/progress-bar';
-// import { SelectPortalContainer } from '~/components/atoms/select';
 import Tooltip from '~/components/atoms/tooltip';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { ToastContainer } from '~/components/molecule/toast';
@@ -30,10 +28,14 @@ import styleZenerSelect from '@oshq/react-select/index.css';
 import stylesUrl from '~/design-system/index.css';
 import rcss from 'react-highlightjs-logs/dist/index.css';
 import tailwindBase from '~/design-system/tailwind-base.js';
-import { isDev } from '../client/helpers/log';
+import { ReloadIndicator } from '~/lib/client/components/reload-indicator';
+import { isDev } from '~/lib/client/helpers/log';
+import { Button } from '~/components/atoms/button';
+import { ChildrenProps } from '~/components/types';
 import { getClientEnv, getServerEnv } from '../configs/base-url.cjs';
+import { useDataFromMatches } from '../client/hooks/use-custom-matches';
 
-export const links = () => [
+export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesUrl },
   { rel: 'stylesheet', href: reactToast },
   { rel: 'stylesheet', href: skeletonCSS },
@@ -41,7 +43,39 @@ export const links = () => [
   { rel: 'stylesheet', href: styleReactPulsable },
   { rel: 'stylesheet', href: styleZenerSelect },
   { rel: 'stylesheet', href: rcss },
+  {
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap',
+  },
+  { rel: 'stylesheet', href: 'https://rsms.me/inter/inter.css' },
 ];
+
+export const Serror = ({ children, message }: ChildrenProps & any) => {
+  return (
+    <main className="antialiased">
+      <TopBar logo={<BrandLogo detailed />} />
+      <Container>
+        <pre>
+          <div className="flex flex-col max-h-[80vh] w-full bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl overflow-hidden">
+            <div
+              className="font-bold text-xl text-[#A71B1B] truncate"
+              title={message}
+            >
+              {message}
+            </div>
+            <div className="flex overflow-scroll">
+              <div className="bg-[#A71B1B] w-2xl" />
+              <div className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
+                {children}
+              </div>
+            </div>
+          </div>
+        </pre>
+      </Container>
+      <Scripts />
+    </main>
+  );
+};
 
 export const ErrorWrapper = ({ children, message }: any) => {
   return (
@@ -53,29 +87,7 @@ export const ErrorWrapper = ({ children, message }: any) => {
         <Meta />
       </head>
       <body className="antialiased">
-        <TopBar logo={<BrandLogo detailed />} />
-        <Container>
-          <motion.pre
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ ease: 'anticipate' }}
-          >
-            <div className="flex flex-col max-h-[80vh] w-full bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl overflow-hidden">
-              <div
-                className="font-bold text-xl text-[#A71B1B] truncate"
-                title={message}
-              >
-                {message}
-              </div>
-              <div className="flex overflow-scroll">
-                <div className="bg-[#A71B1B] w-2xl" />
-                <div className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
-                  {children}
-                </div>
-              </div>
-            </div>
-          </motion.pre>
-        </Container>
+        <Serror message={message}>{children}</Serror>
         <Scripts />
       </body>
     </html>
@@ -155,10 +167,14 @@ const NonIdleProgressBar = () => {
 
 const Root = ({
   Wrapper = ({ children }: { children: any }) => children,
+  tagId,
 }: {
   Wrapper: (prop: { children: ReactNode }) => JSX.Element;
+  tagId?: string;
 }) => {
   const env = useLoaderData();
+
+  const error = useDataFromMatches('error', '');
 
   return (
     <html lang="en" className="bg-surface-basic-subdued text-text-default">
@@ -167,6 +183,35 @@ const Root = ({
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Links />
         <Meta />
+        {/* <script */}
+        {/*   async */}
+        {/*   src="https://www.googletagmanager.com/gtag/js?id=G-9GFNBFM718" */}
+        {/* /> */}
+        {/* <script> */}
+        {/*   window.dataLayer = window.dataLayer || []; */}
+        {/*   function gtag(){dataLayer.push(arguments);} */}
+        {/*   gtag('js', new Date()); */}
+
+        {/*   gtag('config', 'G-9GFNBFM718'); */}
+        {/* </script> */}
+        <script
+          async
+          src={`https://www.googletagmanager.com/gtag/js?id=${tagId}`}
+        />
+        <script
+          async
+          id="gtag-init"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{
+            __html: `
+                window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', '${tagId}');
+              `,
+          }}
+        />
       </head>
       <body className="antialiased">
         <div
@@ -195,15 +240,28 @@ const Root = ({
           }}
         />
         <LiveReload port={443} />
-        <Tooltip.Provider>
-          <ProgressContainer>
-            <NonIdleProgressBar />
-            <ToastContainer position="bottom-left" />
+        <ToastContainer position="bottom-left" />
+        <ProgressContainer>
+          <ReloadIndicator />
+          <NonIdleProgressBar />
+          {error ? (
+            <div>
+              <Serror message="Server Side Error">
+                <code>{JSON.stringify(error, null, 2)}</code>
+              </Serror>
+
+              <div className="flex items-center justify-center">
+                <Button to="/teams" content="Go To Home Page" />
+              </div>
+            </div>
+          ) : (
             <Wrapper>
-              <Outlet />
+              <Tooltip.Provider>
+                <Outlet />
+              </Tooltip.Provider>
             </Wrapper>
-          </ProgressContainer>
-        </Tooltip.Provider>
+          )}
+        </ProgressContainer>
         <Scripts />
       </body>
     </html>
@@ -214,15 +272,9 @@ export const loader = () => {
   return getServerEnv();
 };
 
-export const headers: HeadersFunction = ({
-  actionHeaders,
-  loaderHeaders,
-  parentHeaders,
-  errorHeaders,
-}) => {
-  // console.log(loaderHeaders, actionHeaders, parentHeaders, errorHeaders);
+export const headers: HeadersFunction = () => {
+  // TODO: Remove this header if not needed
   return {
-    'X-Stretchy-Pants': 'its for fun',
     'Cache-Control': 'max-age=300, s-maxage=3600',
   };
 };

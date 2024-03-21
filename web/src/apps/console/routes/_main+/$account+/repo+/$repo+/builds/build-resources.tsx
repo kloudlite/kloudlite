@@ -1,16 +1,17 @@
-import { Trash, PencilSimple } from '@jengaicons/react';
+import {
+  Trash,
+  PencilSimple,
+  ArrowClockwise,
+} from '~/console/components/icons';
 import { useState } from 'react';
-import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
-  ListBody,
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -25,7 +26,9 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import { useOutletContext } from '@remix-run/react';
+import { useOutletContext, Link } from '@remix-run/react';
+import { SyncStatusV2 } from '~/console/components/sync-status';
+import ListV2 from '~/console/components/listV2';
 import HandleBuild from './handle-builds';
 
 type BaseType = ExtractNodeType<IBuilds>;
@@ -47,9 +50,10 @@ const parseItem = (item: BaseType) => {
 interface IExtraButton {
   onDelete: () => void;
   onEdit: () => void;
+  onTrigger: () => void;
 }
 
-const ExtraButton = ({ onDelete, onEdit }: IExtraButton) => {
+const ExtraButton = ({ onDelete, onEdit, onTrigger }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
@@ -59,6 +63,17 @@ const ExtraButton = ({ onDelete, onEdit }: IExtraButton) => {
           type: 'item',
           onClick: onEdit,
           key: 'edit',
+        },
+        {
+          label: 'Trigger',
+          icon: <ArrowClockwise size={16} />,
+          type: 'item',
+          onClick: onTrigger,
+          key: 'trigger',
+        },
+        {
+          type: 'separator',
+          key: 'separator1',
         },
         {
           label: 'Delete',
@@ -77,9 +92,10 @@ interface IResource {
   items: BaseType[];
   onDelete: (item: BaseType) => void;
   onEdit: (item: BaseType) => void;
+  onTrigger: (item: BaseType) => void;
 }
 
-const GridView = ({ items, onDelete, onEdit }: IResource) => {
+const GridView = ({ items, onDelete, onEdit, onTrigger }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -101,6 +117,9 @@ const GridView = ({ items, onDelete, onEdit }: IResource) => {
                         }}
                         onEdit={() => {
                           onEdit(item);
+                        }}
+                        onTrigger={() => {
+                          onTrigger(item);
                         }}
                       />
                     }
@@ -124,35 +143,53 @@ const GridView = ({ items, onDelete, onEdit }: IResource) => {
   );
 };
 
-const ListView = ({ items, onDelete, onEdit }: IResource) => {
+const ListView = ({ items, onDelete, onEdit, onTrigger }: IResource) => {
   return (
-    <List.Root>
-      {items.map((item, index) => {
-        const { name, id, status, updateInfo, cluster } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, 0),
-                className: 'flex-1',
-                render: () => <ListTitle title={name} />,
+    <ListV2.Root
+      linkComponent={Link}
+      data={{
+        headers: [
+          {
+            render: () => 'Name',
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Cluster',
+            name: 'cluster',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, updateInfo, cluster } = parseItem(i);
+          return {
+            columns: {
+              name: {
+                render: () => <ListTitle title={name} subtitle={id} />,
               },
-              {
-                key: generateKey(keyPrefix, 'cluster'),
-                className: 'flex-1',
-                render: () => <ListBody data={cluster} />,
+              status: {
+                render: () =>
+                  i.latestBuildRun ? (
+                    <SyncStatusV2 item={i.latestBuildRun} />
+                  ) : null,
               },
-              {
-                key: generateKey(keyPrefix, id, index, 'status'),
-                className: 'w-[300px]',
-                render: () => <Badge>{status}</Badge>,
-              },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
+              cluster: { render: () => <ListItem data={cluster} /> },
+              updated: {
                 render: () => (
                   <ListItem
                     data={`${updateInfo.author}`}
@@ -160,24 +197,27 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
+              action: {
                 render: () => (
                   <ExtraButton
-                    onDelete={() => {
-                      onDelete(item);
-                    }}
                     onEdit={() => {
-                      onEdit(item);
+                      onEdit(i);
+                    }}
+                    onDelete={() => {
+                      onDelete(i);
+                    }}
+                    onTrigger={() => {
+                      onTrigger(i);
                     }}
                   />
                 ),
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+            to: `../build/${i.id}/buildruns`,
+          };
+        }),
+      }}
+    />
   );
 };
 
@@ -197,6 +237,22 @@ const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
     })
   );
 
+  const triggerBuild = async (id: string) => {
+    try {
+      const { errors } = await api.triggerBuild({
+        crTriggerBuildId: id,
+      });
+
+      if (errors) {
+        throw errors[0];
+      }
+      reloadPage();
+      toast.success(`${titleCase(RESOURCE_NAME)} triggered successfully`);
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
   const props: IResource = {
     items,
     onDelete: (item) => {
@@ -204,6 +260,9 @@ const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
     },
     onEdit: (item) => {
       setHandleBuild(item);
+    },
+    onTrigger: async (item) => {
+      await triggerBuild(item.id);
     },
   };
 

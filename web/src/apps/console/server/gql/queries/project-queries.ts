@@ -27,7 +27,7 @@ export const projectQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteProjectMutation) =>
         data.core_deleteProject,
-      vars(_: ConsoleDeleteProjectMutationVariables) { },
+      vars(_: ConsoleDeleteProjectMutationVariables) {},
     }
   ),
   createProject: executor(
@@ -41,7 +41,7 @@ export const projectQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateProjectMutation) =>
         data.core_createProject,
-      vars(_: ConsoleCreateProjectMutationVariables) { },
+      vars(_: ConsoleCreateProjectMutationVariables) {},
     }
   ),
   updateProject: executor(
@@ -55,7 +55,7 @@ export const projectQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateProjectMutation) =>
         data.core_updateProject,
-      vars(_: ConsoleUpdateProjectMutationVariables) { },
+      vars(_: ConsoleUpdateProjectMutationVariables) {},
     }
   ),
   getProject: executor(
@@ -90,6 +90,12 @@ export const projectQueries = (executor: IExecutor) => ({
           recordVersion
           status {
             checks
+            checkList {
+              description
+              debug
+              name
+              title
+            }
             isReady
             lastReadyGeneration
             lastReconcileTime
@@ -117,7 +123,7 @@ export const projectQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetProjectQuery) => data.core_getProject,
-      vars(_: ConsoleGetProjectQueryVariables) { },
+      vars(_: ConsoleGetProjectQueryVariables) {},
     }
   ),
   listProjects: executor(
@@ -159,6 +165,12 @@ export const projectQueries = (executor: IExecutor) => ({
               }
               status {
                 checks
+                checkList {
+                  description
+                  debug
+                  name
+                  title
+                }
                 isReady
                 lastReadyGeneration
                 lastReconcileTime
@@ -195,7 +207,7 @@ export const projectQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListProjectsQuery) => data.core_listProjects,
-      vars(_: ConsoleListProjectsQueryVariables) { },
+      vars(_: ConsoleListProjectsQueryVariables) {},
     }
   ),
 });

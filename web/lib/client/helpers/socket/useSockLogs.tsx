@@ -7,44 +7,53 @@ interface IuseLog {
   account: string;
   cluster: string;
   trackingId: string;
+  recordVersion?: number;
 }
 
-export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
+export const useSocketLogs = ({
+  account,
+  cluster,
+  trackingId,
+  recordVersion,
+}: IuseLog) => {
   const [logs, setLogs] = useState<ISocketResp<ILog>[]>([]);
-  const { responses, subscribed, errors } = useSubscribe(
+  const { responses, infos, subscribed, errors } = useSubscribe(
     {
       for: 'logs',
       data: {
         id: `${account}.${cluster}.${trackingId}`,
         spec: {
-          account,
-          cluster,
-          trackingId,
+          ...{
+            account,
+            cluster,
+            trackingId,
+            recordVersion,
+          },
         },
       },
     },
     []
   );
 
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (subscribed && isLoading) {
-      setIsLoading(false);
-    } else if (!subscribed && !isLoading) {
-      setIsLoading(true);
-    }
-  }, []);
-
   useEffect(() => {
     const sorted = responses.sort((a, b) => {
-      const resp = b.data.podName.localeCompare(a.data.podName);
+      const podDiff = a.data.podName.localeCompare(b.data.podName);
 
-      if (resp === 0) {
-        return dayjs(a.data.timestamp).unix() - dayjs(b.data.timestamp).unix();
+      if (podDiff === 0) {
+        const contDiff = a.data.containerName.localeCompare(
+          b.data.containerName
+        );
+
+        if (contDiff === 0) {
+          return (
+            dayjs(a.data.timestamp).unix() - dayjs(b.data.timestamp).unix()
+          );
+        }
+
+        return contDiff;
       }
 
-      return resp;
+      return podDiff;
     });
 
     if (JSON.stringify(sorted) !== JSON.stringify(logs)) {
@@ -55,7 +64,7 @@ export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
   return {
     logs,
     errors,
-    isLoading,
+    isLoading: !subscribed && (logs.length === 0 || infos.length === 0),
     subscribed,
   };
 };

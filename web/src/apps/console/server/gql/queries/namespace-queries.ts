@@ -49,24 +49,6 @@ export const namespaceQueries = (executor: IExecutor) => ({
               spec {
                 finalizers
               }
-              status {
-                conditions {
-                  lastTransitionTime
-                  message
-                  reason
-                  status
-                  type
-                }
-                phase
-              }
-              syncStatus {
-                action
-                error
-                lastSyncedAt
-                recordVersion
-                state
-                syncScheduledAt
-              }
               updateTime
             }
           }
@@ -83,7 +65,7 @@ export const namespaceQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListNamespacesQuery) =>
         data.infra_listNamespaces,
-      vars(_: ConsoleListNamespacesQueryVariables) { },
+      vars(_: ConsoleListNamespacesQueryVariables) {},
     }
   ),
 });

@@ -244,7 +244,7 @@ const TagsResources = ({ items = [] }: { items: BaseType[] }) => {
           }
         }}
       />
-      <SHADialog show={showSHADialog} setShow={setShowSHADialog} />
+      {/* <SHADialog show={showSHADialog} setShow={setShowSHADialog} /> */}
     </>
   );
 };

@@ -7,11 +7,12 @@ import {
   useRef,
   useState,
 } from 'react';
-import * as wsock from 'websocket';
 import { ChildrenProps } from '~/components/types';
+import ReconnectingWebSocket from 'reconnecting-websocket';
 import logger from '~/root/lib/client/helpers/log';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { socketUrl } from '~/root/lib/configs/base-url.cjs';
+import { sleep } from '~/root/lib/utils/common';
 
 type IFor = 'logs' | 'resource-update';
 
@@ -62,8 +63,8 @@ export const useSubscribe = <T extends IData>(
   const {
     sendMsg,
     responses,
-    infos: i,
-    errors: e,
+    infos: mInfos,
+    errors: mErrors,
     clear,
   } = useContext(Context);
 
@@ -85,9 +86,10 @@ export const useSubscribe = <T extends IData>(
           const m = msg[k];
 
           tr.push(...(responses[m.for]?.[m.data.id || 'default'] || []));
-          terr.push(...(e[m.for]?.[m.data.id || 'default'] || []));
-          ti.push(...(i[m.for]?.[m.data.id || 'default'] || []));
+          terr.push(...(mErrors[m.for]?.[m.data.id || 'default'] || []));
+          ti.push(...(mInfos[m.for]?.[m.data.id || 'default'] || []));
         }
+
         setResp(tr);
         setErrors(terr);
         setInfos(ti);
@@ -97,20 +99,23 @@ export const useSubscribe = <T extends IData>(
         }
         return;
       }
+      const tempResp = responses[msg.for]?.[msg.data.id || 'default'] || [];
+      setResp(tempResp);
 
-      setResp(responses[msg.for]?.[msg.data.id || 'default'] || []);
-      setErrors(e[msg.for]?.[msg.data.id || 'default'] || []);
-      setInfos(i[msg.for]?.[msg.data.id || 'default'] || []);
+      setErrors(mErrors[msg.for]?.[msg.data.id || 'default'] || []);
 
-      if (resp.length || i[msg.for]?.[msg.data.id || 'default']?.length) {
+      const tempInfo = mInfos[msg.for]?.[msg.data.id || 'default'] || [];
+      setInfos(tempInfo);
+
+      if (tempResp.length || tempInfo.length) {
         setSubscribed(true);
       }
     })();
-  }, [responses]);
+  }, [responses, mInfos, mErrors]);
 
   useDebounce(
     () => {
-      console.log('subscribing');
+      logger.log('subscribing');
       if (Array.isArray(msg)) {
         msg.forEach((m) => {
           sendMsg({ ...m, data: { ...m.data, event: 'subscribe' } });
@@ -120,7 +125,7 @@ export const useSubscribe = <T extends IData>(
       }
 
       return () => {
-        console.log('unsubscribing');
+        logger.log('unsubscribing');
         if (Array.isArray(msg)) {
           msg.forEach((m) => {
             clear(m);
@@ -148,7 +153,7 @@ export const useSubscribe = <T extends IData>(
 };
 
 export const SockProvider = ({ children }: ChildrenProps) => {
-  const sockPromise = useRef<Promise<wsock.w3cwebsocket> | null>(null);
+  const sockPromise = useRef<Promise<ReconnectingWebSocket> | null>(null);
 
   const [responses, setResponses] = useState<IResponses>({});
   const [errors, setErrors] = useState<IResponses>({});
@@ -196,7 +201,7 @@ export const SockProvider = ({ children }: ChildrenProps) => {
     });
   }, []);
 
-  const onMessage = useCallback((msg: wsock.IMessageEvent) => {
+  const onMessage = useCallback((msg: any) => {
     try {
       const m: ISocketResp = JSON.parse(msg.data as string);
 
@@ -219,37 +224,38 @@ export const SockProvider = ({ children }: ChildrenProps) => {
     }
   }, []);
 
+  const getSocket = () => {
+    return new Promise<ReconnectingWebSocket>((res, rej) => {
+      try {
+        // eslint-disable-next-line new-cap
+        const w = new ReconnectingWebSocket(`${socketUrl}/ws`, '', {});
+
+        w.onmessage = onMessage;
+
+        w.onopen = () => {
+          res(w);
+        };
+
+        w.onerror = (e) => {
+          rej(e);
+        };
+
+        w.onclose = () => {
+          rej();
+        };
+      } catch (e) {
+        rej(e);
+      }
+    });
+  };
+
   useDebounce(
     () => {
       if (typeof window !== 'undefined') {
         try {
-          sockPromise.current = new Promise<wsock.w3cwebsocket>((res, rej) => {
-            let rejected = false;
-            try {
-              // eslint-disable-next-line new-cap
-              const w = new wsock.w3cwebsocket(`${socketUrl}/ws`, '', '', {});
-
-              w.onmessage = onMessage;
-
-              w.onopen = () => {
-                res(w);
-              };
-
-              w.onerror = (e) => {
-                console.error(e);
-                if (!rejected) {
-                  rejected = true;
-                  rej(e);
-                }
-              };
-
-              w.onclose = () => {};
-            } catch (e) {
-              rej(e);
-            }
-          });
+          sockPromise.current = getSocket();
         } catch (e) {
-          console.log(e);
+          logger.error(e);
         }
       }
     },
@@ -259,9 +265,10 @@ export const SockProvider = ({ children }: ChildrenProps) => {
 
   const sendMsg = useCallback(
     async <T extends IData>(msg: ISocketMsg<T>) => {
-      if (!sockPromise.current) {
-        logger.log('no socket connection');
-        return;
+      while (!sockPromise.current) {
+        logger.log('no socket connection waiting');
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(1000);
       }
       try {
         const w = await sockPromise.current;

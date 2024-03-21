@@ -13,11 +13,21 @@ import MultiStepProgress, {
 } from '~/console/components/multi-step-progress';
 import { BottomNavigation } from '~/console/components/commons';
 import FillerCreateTeam from '~/console/assets/filler-create-team';
+import { SignOut } from '@jengaicons/react';
+import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
+import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
+import { Button } from '~/components/atoms/button';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 
 const NewAccount = () => {
   const api = useConsoleApi();
   const navigate = useNavigate();
   const user = useDataFromMatches<UserMe>('user', {});
+
+  const { data: accountsData } = useCustomSwr('/list_accounts', async () => {
+    return api.listAccounts({});
+  });
+
   const { values, handleChange, errors, isLoading, handleSubmit } = useForm({
     initialValues: {
       name: '',
@@ -52,12 +62,26 @@ const NewAccount = () => {
     defaultStep: 1,
     totalSteps: 4,
   });
+  const eNavigate = useExternalRedirect();
 
   return (
     <form onSubmit={handleSubmit}>
       <MultiStepProgressWrapper
         fillerImage={<FillerCreateTeam />}
         title="Setup your account!"
+        action={
+          accountsData?.length === 0 && (
+            <Button
+              variant="plain"
+              suffix={<SignOut />}
+              size="sm"
+              content="Sign Out"
+              onClick={() => {
+                eNavigate(`${authBaseUrl}/logout`);
+              }}
+            />
+          )
+        }
         subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"
       >
@@ -89,7 +113,7 @@ const NewAccount = () => {
             </div>
           </MultiStepProgress.Step>
           <MultiStepProgress.Step step={2} label="Add your cloud provider" />
-          {/* <MultiStepProgress.Step step={3} label="Validate cloud provider" /> */}
+          <MultiStepProgress.Step step={3} label="Validate cloud provider" />
           <MultiStepProgress.Step step={4} label="Setup first cluster" />
         </MultiStepProgress.Root>
       </MultiStepProgressWrapper>

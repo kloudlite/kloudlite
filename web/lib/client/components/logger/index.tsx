@@ -15,7 +15,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { ViewportList } from 'react-viewport-list';
+import { ViewportList, ViewportListRef } from 'react-viewport-list';
 import { dayjs } from '~/components/molecule/dayjs';
 import {
   ISearchInfProps,
@@ -28,6 +28,7 @@ import { generatePlainColor } from '~/root/lib/utils/color-generator';
 import ReactPulsable from 'react-pulsable';
 import { ChildrenProps } from '~/components/types';
 import { logsMockData } from './dummy';
+import { LoadingIndicator } from '../reload-indicator';
 
 const pulsableContext = createContext(false);
 
@@ -70,6 +71,7 @@ export interface IuseLog {
   account: string;
   cluster: string;
   trackingId: string;
+  recordVersion?: number;
 }
 
 const hoverClass = `hover:bg-[#ddd]`;
@@ -94,7 +96,7 @@ interface IHighlightIt {
 
 const LoadingComp = memo(() => (
   <Pulsable isLoading>
-    <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex inset-0 rounded-md">
+    <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex inset-0 rounded-md overflow-hidden">
       <div className="flex flex-col w-full">
         <div className="flex justify-between items-center border-b border-border-tertiary p-lg">
           <div>Logs</div>
@@ -123,7 +125,7 @@ const LoadingComp = memo(() => (
             const log = logsMockData[Math.floor(Math.random() * 10)];
             return (
               <div className="flex gap-3xl" key={`${i + log}`}>
-                <div className="w-xl pulsable" />
+                <div className="min-w-xl pulsable" />
                 <div className="pulsable">{log}</div>
               </div>
             );
@@ -499,22 +501,14 @@ const LogBlock = ({
 
   const [showAll, setShowAll] = useState(true);
 
-  const ref = useRef(null);
+  const ref = useRef<ViewportListRef>(null);
 
   useEffect(() => {
-    (async () => {
-      if (
-        follow &&
-        ref.current &&
-        // @ts-ignore
-        typeof ref.current.scrollToIndex === 'function'
-      ) {
-        // @ts-ignore
-        ref.current.scrollToIndex({
-          index: data.length - 1,
-        });
-      }
-    })();
+    if (follow && ref.current) {
+      ref.current.scrollToIndex({
+        index: data.length - 1,
+      });
+    }
   }, [data, maxLines]);
 
   return (
@@ -575,13 +569,8 @@ const LogBlock = ({
           <div
             className="flex-1 flex flex-col pb-8 scroll-container"
             style={{ lineHeight: `${fontSize * 1.5}px` }}
-            ref={ref}
           >
-            <ViewportList
-              items={showAll ? data : searchResult}
-              ref={ref}
-              // viewportRef={listRef}
-            >
+            <ViewportList items={showAll ? data : searchResult} ref={ref}>
               {(log, index) => {
                 return (
                   <LogLine
@@ -681,7 +670,7 @@ const LogComp = ({
     }
   }, [fullScreen]);
 
-  const { logs, subscribed, errors } = useSocketLogs(websocket);
+  const { logs, subscribed, errors, isLoading } = useSocketLogs(websocket);
 
   const [isClientSide, setIsClientSide] = useState(false);
 
@@ -691,14 +680,32 @@ const LogComp = ({
     }
   }, []);
 
+  const wRef = useRef<HTMLDivElement>(null);
+
+  const [wInPx, setWInPx] = useState('100%');
+  useEffect(() => {
+    if (wRef.current && wInPx === '100%') {
+      setWInPx(`${wRef.current.clientWidth}px`);
+    }
+  }, [wRef.current]);
+
+  const [logData, setLogData] = useState<ISocketMessage[]>([]);
+
+  useEffect(() => {
+    if (logs.length) {
+      setLogData(logs.map((d) => d.data));
+    }
+  }, [logs]);
+
   return isClientSide ? (
     <div
+      ref={wRef}
       className={classNames(className, {
         'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
         'relative hljs rounded-md': !fullScreen,
       })}
       style={{
-        width: fullScreen ? '100%' : width,
+        width: fullScreen ? '100%' : width === '100%' ? wInPx : width,
         height: fullScreen ? '100vh' : height,
       }}
     >
@@ -736,21 +743,21 @@ const LogComp = ({
                 </div>
               </div>
             </div>
+
+            <LoadingIndicator className="absolute z-20 bottom-lg right-lg" />
           </div>
         </Pulsable>
       )}
 
-      {!subscribed && logs.length === 0 && <LoadingComp />}
+      {isLoading && <LoadingComp />}
 
       {errors.length ? (
-        <pre>{JSON.stringify(errors)}</pre>
+        <pre>{JSON.stringify(errors, null, 2)}</pre>
       ) : (
         logs.length > 0 && (
           <LogBlock
             {...{
-              data: logs.map((d) => {
-                return d.data;
-              }),
+              data: logData,
               follow,
               dark,
               enableSearch,

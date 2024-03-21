@@ -6,15 +6,13 @@ import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
 import { ConsoleResType, ResType } from '~/root/src/generated/gql/server';
-import { useOutletContext, useParams } from '@remix-run/react';
+import { useParams } from '@remix-run/react';
 import { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
 import { useConsoleApi } from '../server/gql/api-provider';
-import { IEnvironmentContext } from '../routes/_main+/$account+/$project+/$environment+/_layout';
-import { parseName } from '../server/r-utils/common';
 
 interface INameIdView {
   name: string;

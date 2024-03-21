@@ -48,6 +48,12 @@ export const helmChartQueries = (executor: IExecutor) => ({
           }
           status {
             checks
+            checkList {
+              description
+              debug
+              title
+              name
+            }
             isReady
             lastReadyGeneration
             lastReconcileTime
@@ -71,7 +77,7 @@ export const helmChartQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetHelmChartQuery) {
         return data.infra_getHelmRelease;
       },
-      vars(_: ConsoleGetHelmChartQueryVariables) { },
+      vars(_: ConsoleGetHelmChartQueryVariables) {},
     }
   ),
   listHelmChart: executor(
@@ -107,6 +113,7 @@ export const helmChartQueries = (executor: IExecutor) => ({
                 generation
                 name
                 namespace
+                annotations
               }
               recordVersion
               spec {
@@ -117,6 +124,12 @@ export const helmChartQueries = (executor: IExecutor) => ({
               }
               status {
                 checks
+                checkList {
+                  description
+                  debug
+                  title
+                  name
+                }
                 isReady
                 lastReadyGeneration
                 lastReconcileTime
@@ -156,7 +169,7 @@ export const helmChartQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListHelmChartQuery) =>
         data.infra_listHelmReleases,
-      vars(_: ConsoleListHelmChartQueryVariables) { },
+      vars(_: ConsoleListHelmChartQueryVariables) {},
     }
   ),
   createHelmChart: executor(
@@ -173,7 +186,7 @@ export const helmChartQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateHelmChartMutation) =>
         data.infra_createHelmRelease,
-      vars(_: ConsoleCreateHelmChartMutationVariables) { },
+      vars(_: ConsoleCreateHelmChartMutationVariables) {},
     }
   ),
   updateHelmChart: executor(
@@ -191,7 +204,7 @@ export const helmChartQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleUpdateHelmChartMutation) {
         return data.infra_updateHelmRelease;
       },
-      vars(_: ConsoleUpdateHelmChartMutationVariables) { },
+      vars(_: ConsoleUpdateHelmChartMutationVariables) {},
     }
   ),
   deleteHelmChart: executor(
@@ -210,7 +223,7 @@ export const helmChartQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleDeleteHelmChartMutation) {
         return data.infra_deleteHelmRelease;
       },
-      vars(_: ConsoleDeleteHelmChartMutationVariables) { },
+      vars(_: ConsoleDeleteHelmChartMutationVariables) {},
     }
   ),
 });

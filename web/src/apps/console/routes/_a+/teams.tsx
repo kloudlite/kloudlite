@@ -1,15 +1,9 @@
 import { redirect } from '@remix-run/node';
-import {
-  Link,
-  useLoaderData,
-  useNavigate,
-  useOutletContext,
-} from '@remix-run/react';
+import { Link, useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { usePagination } from '~/components/molecule/pagination';
 import { cn, generateKey } from '~/components/utils';
-import logger from '~/root/lib/client/helpers/log';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
@@ -26,6 +20,7 @@ import ConsoleAvatar from '~/console/components/console-avatar';
 import { ArrowRight, Users } from '~/console/components/icons';
 import SplitWrapper from '~/console/components/split-wrapper';
 import FillerTeam from '~/console/assets/filler-team';
+import { useExtLoaderData } from '~/root/lib/client/hooks/use-custom-loader-data';
 
 export const loader = async (ctx: IRemixCtx) => {
   let accounts;
@@ -58,8 +53,9 @@ export const loader = async (ctx: IRemixCtx) => {
       };
     }
   } catch (err) {
-    logger.error(err);
+    return handleError(err);
   }
+
   return {
     accounts: accounts || [],
     invites: invites || [],
@@ -67,7 +63,7 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Accounts = () => {
-  const { accounts, invites } = useLoaderData<typeof loader>();
+  const { accounts, invites } = useExtLoaderData<typeof loader>();
   const { user } = useOutletContext<{
     user: UserMe;
   }>();
