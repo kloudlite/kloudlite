@@ -149,7 +149,6 @@ export const routerQueries = (executor: IExecutor) => ({
                 }
                 routes {
                   app
-                  lambda
                   path
                   port
                   rewrite
@@ -262,7 +261,6 @@ export const routerQueries = (executor: IExecutor) => ({
             }
             routes {
               app
-              lambda
               path
               port
               rewrite

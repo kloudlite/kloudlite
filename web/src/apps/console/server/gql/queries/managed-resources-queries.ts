@@ -152,7 +152,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
               }
               recordVersion
               spec {
-                resourceName
                 resourceTemplate {
                   apiVersion
                   kind
