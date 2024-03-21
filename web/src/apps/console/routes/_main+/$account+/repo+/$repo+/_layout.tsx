@@ -5,7 +5,13 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { ChevronRight, GearSix, GitMerge, Nodeless } from '@jengaicons/react';
+import {
+  ChevronRight,
+  GearSix,
+  GitMerge,
+  NoOps,
+  Nodeless,
+} from '@jengaicons/react';
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 
@@ -68,6 +74,16 @@ const Tabs = () => {
           ),
           value: '/builds',
           to: '/builds',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <NoOps size={iconSize} />
+              Build Runs
+            </span>
+          ),
+          value: '/buildruns',
+          to: '/buildruns',
         },
         {
           label: (

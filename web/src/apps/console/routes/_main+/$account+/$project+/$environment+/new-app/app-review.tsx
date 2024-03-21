@@ -16,7 +16,7 @@ import {
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 
 const AppReview = () => {
-  const { app, setPage, resetState } = useAppState();
+  const { app, buildData, setPage, resetState } = useAppState();
 
   const api = useConsoleApi();
   const navigate = useNavigate();
@@ -29,11 +29,52 @@ const AppReview = () => {
       if (!project || !environment) {
         throw new Error('Project and Environment is required!.');
       }
+
+      let buildId = '';
+      const gitMode =
+        app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
+
+      if (buildData && gitMode) {
+        try {
+          const { errors, data } = await api.createBuild({
+            build: buildData,
+          });
+
+          if (errors) {
+            throw errors[0];
+          }
+
+          buildId = data.id;
+
+          toast.success('build created successfully');
+        } catch (err) {
+          handleError(err);
+        }
+      }
+
       try {
         const { errors } = await api.createApp({
           envName: environment,
           projectName: project,
-          app,
+          app: {
+            ...app,
+            ...(buildId && gitMode
+              ? {
+                  ciBuildId: buildId,
+                  spec: {
+                    ...app.spec,
+                    containers: [
+                      {
+                        image: `${buildData?.spec.registry.repo.name}:${
+                          buildData?.spec.registry.repo.tags?.[0] || 'latest'
+                        }`,
+                        name: 'container-0',
+                      },
+                    ],
+                  },
+                }
+              : {}),
+          },
         });
         if (errors) {
           throw errors[0];

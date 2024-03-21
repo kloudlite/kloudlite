@@ -28,27 +28,32 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import { IRemixCtx } from '~/root/lib/types/common';
+import { IRemixCtx, LoaderResult } from '~/root/lib/types/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
 import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
 import { cn } from '~/components/utils';
 import { Button } from '~/components/atoms/button';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import { handleError } from '~/root/lib/utils/common';
+import logger from '~/root/lib/client/helpers/log';
+import { ILoginUrls, ILogins } from '~/console/server/gql/queries/git-queries';
 import { IProjectContext } from '../_layout';
-
-export interface IEnvironmentContext extends IProjectContext {
-  environment: IEnvironment;
-}
 
 const Environment = () => {
   const rootContext = useOutletContext<IProjectContext>();
-  const { environment, managedTemplates } = useLoaderData();
+  const { environment, managedTemplates, loginUrls, logins } = useLoaderData();
 
   return (
     <SubNavDataProvider>
-      <Outlet context={{ ...rootContext, environment, managedTemplates }} />
+      <Outlet
+        context={{
+          ...rootContext,
+          environment,
+          managedTemplates,
+          loginUrls,
+          logins,
+        }}
+      />
     </SubNavDataProvider>
   );
 };
@@ -244,6 +249,8 @@ export const loader = async (ctx: IRemixCtx) => {
   const { environment, project } = ctx.params;
   ensureAccountSet(ctx);
 
+  let envData: IEnvironment;
+
   try {
     const { data, errors } = await GQLServerHandler(ctx.request).getEnvironment(
       {
@@ -253,15 +260,47 @@ export const loader = async (ctx: IRemixCtx) => {
     );
 
     if (errors) {
-      return handleError(errors[0]);
+      throw errors[0];
     }
 
+    const { data: logins, errors: loginErrors } = await GQLServerHandler(
+      ctx.request
+    ).getLogins({});
+
+    if (loginErrors) {
+      throw loginErrors[0];
+    }
+
+    const { data: loginUrls, errors: dErrors } = await GQLServerHandler(
+      ctx.request
+    ).loginUrls({});
+
+    if (dErrors) {
+      throw dErrors[0];
+    }
+    envData = data;
     return {
-      environment: data || {},
+      loginUrls,
+      logins,
+      environment: envData,
     };
   } catch (err) {
-    return handleError(err);
+    logger.error(err);
+
+    const k: any = {};
+
+    return {
+      logins: k as ILogins,
+      loginUrls: k as ILoginUrls,
+      environment: k as IEnvironment,
+    };
   }
 };
+
+export interface IEnvironmentContext extends IProjectContext {
+  logins: LoaderResult<typeof loader>['logins'];
+  loginUrls: LoaderResult<typeof loader>['loginUrls'];
+  environment: LoaderResult<typeof loader>['environment'];
+}
 
 export default Environment;

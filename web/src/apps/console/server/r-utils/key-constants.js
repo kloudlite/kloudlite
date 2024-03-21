@@ -15,4 +15,6 @@ export const keyconstants = {
 
   nodepoolStateType: 'kloudlite.io/ui-pool.app-state-type',
   helmChartRepoPackageId: 'kloudlite.io/helm-chart-repo-package-id',
+
+  appImageMode: 'kloudlite.io/ui-appImageMode',
 };

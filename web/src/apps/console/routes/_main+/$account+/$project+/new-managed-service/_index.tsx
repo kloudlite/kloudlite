@@ -26,7 +26,6 @@ import {
 } from '~/console/components/commons';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
-import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { IProjectContext } from '../_layout';
 
@@ -603,7 +602,7 @@ const ManagedServiceLayout = () => {
   }));
 
   const statefulNodepools = nodepools.filter(
-    (np) => np.nodepoolStateType == 'stateful'
+    (np) => np.nodepoolStateType === 'stateful'
   );
 
   useEffect(() => {
