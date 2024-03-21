@@ -46,41 +46,6 @@ spec:
       kubectl patch storageclass sc-ext4 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
     fi
 
-    {{- /* kubectl apply -f - <<EOF */}}
-    {{- /* apiVersion: batch/v1 */}}
-    {{- /* kind: Job */}}
-    {{- /* metadata: */}}
-    {{- /*   name: ensure-default-storage-class */}}
-    {{- /*   namespace: {{ .Release.Namespace }} */}}
-    {{- /* spec: */}}
-    {{- /*   template: */}}
-    {{- /*     spec: */}}
-    {{- /*       tolerations: */}}
-    {{- /*         - operator: Exists */}}
-    {{- /*       serviceAccountName: {{.Values.serviceAccount.name}} */}}
-    {{- /*       containers: */}}
-    {{- /*       - name: kubectl */}}
-    {{- /*         image: bitnami/kubectl:latest */}}
-    {{- /*         command: ["sh"] */}}
-    {{- /*         args: */}}
-    {{- /*         - -c */}}
-    {{- /*         - |+ #bash */}}
-    {{- /*           kubectl get sc/local-path -o=jsonpath={.metadata.name} */}}
-    {{- /*           exit_code=$? */}}
-    {{- /**/}}
-    {{- /*           if [ $exit_code -eq 0 ]; then */}}
-    {{- /*             kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}' */}}
-    {{- /*           fi */}}
-    {{- /**/}}
-    {{- /*           kubectl get sc/sc-ext4 -o=jsonpath={.metadata.name} */}}
-    {{- /*           exit_code=$? */}}
-    {{- /*           if [ $exit_code -eq 0 ]; then */}}
-    {{- /*             kubectl patch storageclass sc-ext4 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}' */}}
-    {{- /*           fi */}}
-    {{- /*       restartPolicy: Never */}}
-    {{- /*   backoffLimit: 0 */}}
-    {{- /* EOF */}}
-
   values:
     customLabels:
       kloudlite.io/part-of: "{{.Chart.Name}}"
