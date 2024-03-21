@@ -54,6 +54,7 @@ jobs:
           - websocket-server
           - message-office
           - tenant-agent
+          - observability
 
           - gateway # nodejs process
 
