@@ -4,6 +4,7 @@
 {{- $vpnDeviceTLSPrefix := "whoami.vpn-device" }}
 
 ---
+{{- if .Values.operators.agentOperator.configuration.nodepools.enabled }}
 {{- $k3sParams := (lookup "v1" "Secret" "kube-system" "k3s-params") -}}
 
 {{- if not $k3sParams }}
@@ -17,8 +18,10 @@ metadata:
   namespace: {{.Release.Namespace}}
 data: {{ $k3sParams.data | toYaml | nindent 2 }}
 
+{{- end }}
 ---
-{{- $certDomain := printf "%s.%s" $vpnDeviceTLSPrefix (index $k3sParams.data "k3s_masters_public_dns_host" | b64dec) }}
+{{- /* {{- $certDomain := printf "%s.%s" $vpnDeviceTLSPrefix (index $k3sParams.data "k3s_masters_public_dns_host" | b64dec) }} */}}
+{{- $certDomain := printf "%s.%s" $vpnDeviceTLSPrefix .Values.operators.agentOperator.configuration.wireguard.publicDNSHost}}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -142,6 +145,10 @@ spec:
                   optional: true
 
             {{- /* for: nodepool operator */}}
+            - name: ENABLE_NODEPOOLS
+              value: {{.Values.operators.agentOperator.configuration.nodepools.enabled | squote }}
+
+            {{- if .Values.operators.agentOperator.configuration.nodepools.enabled }}
             - name: "IAC_JOB_IMAGE"
               {{- $iacjobimageTag := .Values.operators.agentOperator.configuration.nodepools.iacJobImage.tag | default (include "image-tag" .) }}
               value: {{.Values.operators.agentOperator.configuration.nodepools.iacJobImage.repository}}:{{$iacjobimageTag}}
@@ -170,11 +177,9 @@ spec:
                   name: k3s-params
                   key: cloudprovider_region
 
-            - name: ENABLE_NODEPOOLS
-              value: {{.Values.operators.agentOperator.configuration.nodepools.enabled | squote }}
-
             - name: KLOUDLITE_RELEASE
               value: {{include "image-tag" .}}
+            {{- end }}
 
             {{- /* for: routers */}}
             - name: WORKSPACE_ROUTE_SWITCHER_SERVICE
@@ -196,6 +201,9 @@ spec:
             - name: BUILD_NAMESPACE
               value: {{.Values.jobsNamespace}}
 
+            - name: JOBS_NAMESPACE
+              value: {{.Values.jobsNamespace}}
+
             {{- /* for wireguard controller */}}
             - name: CLUSTER_POD_CIDR
               value: {{.Values.operators.agentOperator.configuration.wireguard.podCIDR}}
@@ -204,11 +212,7 @@ spec:
               value: {{.Values.operators.agentOperator.configuration.wireguard.svcCIDR}}
 
             - name: DNS_HOSTED_ZONE
-              valueFrom:
-                secretKeyRef:
-                  name: k3s-params
-                  namespace: kloudlite
-                  key: k3s_masters_public_dns_host
+              value: {{.Values.operators.agentOperator.configuration.wireguard.publicDNSHost}}
 
             - name: TLS_DOMAIN_PREFIX
               value: {{$vpnDeviceTLSPrefix |squote}}

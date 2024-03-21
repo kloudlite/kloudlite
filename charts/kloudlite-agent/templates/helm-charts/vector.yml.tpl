@@ -167,5 +167,11 @@ spec:
             - kubelet_metrics_exporter
             - kloudlite_metrics_exporter
           address: {{.Values.agent.name}}.{{.Release.Namespace}}.svc.cluster.local:6000
+          compression: false
+          batch:
+            max_bytes: 2048
+            max_events: 100
+          buffer:
+            max_events: 100
 
 {{- end }}

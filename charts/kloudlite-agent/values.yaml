@@ -97,6 +97,7 @@ operators:
         svcCIDR: 10.43.0.0/16
 
         deviceNamespace: kl-vpn-devices
+        publicDNSHost: ""
 
 helmCharts:
   kloudliteAddons:
@@ -104,8 +105,12 @@ helmCharts:
     name: "kloudlite-addons"
     configuration:
       chartVersion: ""
+
       nodeSelector: {}
       tolerations: {}
+
+      clusterAutoscaler:
+        enabled: false
 
   ingressNginx:
     enabled: true
