@@ -208,7 +208,7 @@ const Git = ({
   loginUrls,
 }: IGitRepoSelector) => {
   const [showProviderOverlay, setShowProviderOverlay] = useState(
-    !logins?.providerGithub || !logins?.providerGitlab || false
+    !logins?.providerGithub && !logins?.providerGitlab
   );
 
   const {
@@ -299,7 +299,9 @@ const Git = ({
         }
       }
     });
-    setLoading(false);
+    setTimeout(() => {
+      setLoading(false);
+    }, 200);
   }, []);
 
   useEffect(() => {

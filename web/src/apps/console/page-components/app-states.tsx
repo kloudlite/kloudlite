@@ -5,10 +5,10 @@ import { NonNullableString } from '~/root/lib/types/common';
 import {
   AppIn,
   Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppContainerIn as AppSpecContainersIn,
+  BuildIn,
 } from '~/root/src/generated/gql/server';
 import { mapper } from '~/components/utils';
 import { parseNodes } from '~/console/server/r-utils/common';
-// import logger from '~/root/lib/client/helpers/log';
 
 const defaultApp: AppIn = {
   metadata: {
@@ -25,6 +25,28 @@ const defaultApp: AppIn = {
     ],
   },
   displayName: '',
+};
+
+const defaultBuild: BuildIn = {
+  name: '',
+  source: {
+    branch: '',
+    provider: 'github',
+    repository: '',
+  },
+  buildClusterName: '',
+  spec: {
+    registry: {
+      repo: {
+        name: '',
+        tags: [],
+      },
+    },
+    resource: {
+      cpu: 500,
+      memoryInMb: 1000,
+    },
+  },
 };
 
 export type ISetState<T = any> = (fn: ((val: T) => T) | T) => void;
@@ -45,12 +67,14 @@ interface IappState {
   envPage: createAppEnvPage;
   page: number;
   app: AppIn;
+  buildData?: BuildIn;
 }
 
 export const useAppState = () => {
   const [state, setState] = useContext<ImmerHook<IappState>>(CreateAppContext);
 
-  const { app, page, envPage, activeContIndex, completePages } = state;
+  const { app, page, envPage, activeContIndex, completePages, buildData } =
+    state;
 
   const getContainer = (index: number = activeContIndex) => {
     if (!index) {
@@ -100,6 +124,14 @@ export const useAppState = () => {
         },
       };
     });
+  };
+
+  const setBuildData: ISetState<BuildIn> = (fn) => {
+    if (typeof fn === 'function') {
+      setState((s) => ({ ...s, buildData: fn(s.buildData || defaultBuild) }));
+    } else {
+      setState((s) => ({ ...s, buildData: fn }));
+    }
   };
 
   const setPage: ISetState<number> = (fn) => {
@@ -193,6 +225,7 @@ export const useAppState = () => {
       completePages: {},
       envPage: 'environment_variables',
       activeContIndex: 0,
+      buildData: defaultBuild,
     });
   };
 
@@ -245,6 +278,8 @@ export const useAppState = () => {
     getRepoMapper,
     getRepoName,
     getImageTag,
+    setBuildData,
+    buildData,
   };
 };
 

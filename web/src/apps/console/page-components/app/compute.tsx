@@ -16,7 +16,6 @@ import { Checkbox } from '~/components/atoms/checkbox';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
-import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { plans } from './datas';
 import appInitialFormValues, { mapFormValuesToApp } from './app-utils';
 
@@ -42,10 +41,6 @@ const valueRender = ({
 };
 
 const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
-  /** ---- Only for edit mode in settings ----* */
-  const { hasChanges } = useUnsavedChanges();
-  /** ---- end ----* */
-
   const { app, setApp, setPage, markPageAsCompleted, getContainer } =
     useAppState();
   const api = useConsoleApi();
@@ -67,26 +62,25 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     });
   });
 
-  const { values, errors, handleChange, isLoading, submit, resetValues } =
-    useForm({
-      initialValues: appInitialFormValues({
-        app,
-        getContainer,
-      }),
-      validationSchema: Yup.object({
-        pullSecret: Yup.string(),
-        cpuMode: Yup.string().required(),
-        selectedPlan: Yup.string().required(),
-      }),
-      onSubmit: (val) => {
-        setApp((s) =>
-          mapFormValuesToApp({
-            appIn: val,
-            oldAppIn: s,
-          })
-        );
-      },
-    });
+  const { values, errors, handleChange, isLoading, submit } = useForm({
+    initialValues: appInitialFormValues({
+      app,
+      getContainer,
+    }),
+    validationSchema: Yup.object({
+      pullSecret: Yup.string(),
+      cpuMode: Yup.string().required(),
+      selectedPlan: Yup.string().required(),
+    }),
+    onSubmit: (val) => {
+      setApp((s) =>
+        mapFormValuesToApp({
+          appIn: val,
+          oldAppIn: s,
+        })
+      );
+    },
+  });
 
   const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
     label: val.metadata?.name || '',
@@ -99,14 +93,6 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       submit();
     }
   }, [values, mode]);
-
-  // useEffect(() => {
-  //   if (!hasChanges && mode === 'edit') {
-  //     resetValues();
-  //   }
-  // }, [hasChanges, mode]);
-
-  /** ---- end ----* */
 
   return (
     <FadeIn
