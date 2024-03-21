@@ -3,10 +3,11 @@ package repos
 import (
 	"context"
 	"encoding/base64"
+	"time"
+
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/functions"
 	"go.mongodb.org/mongo-driver/bson"
-	"time"
 )
 
 type Entity interface {
@@ -24,11 +25,13 @@ type Entity interface {
 	IsMarkedForDeletion() bool
 }
 
-type Opts map[string]interface{}
-type SortOpts map[string]int32
-type Filter map[string]interface{}
+type (
+	Opts     map[string]interface{}
+	SortOpts map[string]int32
+	Filter   map[string]interface{}
+)
 
-func (f Filter) Add(key string, value interface{}) Filter{
+func (f Filter) Add(key string, value interface{}) Filter {
 	f[key] = value
 	return f
 }
@@ -36,6 +39,7 @@ func (f Filter) Add(key string, value interface{}) Filter{
 type Query struct {
 	Filter Filter
 	Sort   map[string]interface{}
+	Limit  *int64
 }
 
 type MatchType string

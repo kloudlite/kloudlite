@@ -1,6 +1,9 @@
 package graph
 
-import "github.com/kloudlite/api/apps/container-registry/internal/domain"
+import (
+	"github.com/kloudlite/api/apps/container-registry/internal/domain"
+	"github.com/kloudlite/api/apps/container-registry/internal/env"
+)
 
 // This file will not be regenerated automatically.
 //
@@ -8,10 +11,5 @@ import "github.com/kloudlite/api/apps/container-registry/internal/domain"
 
 type Resolver struct {
 	Domain domain.Domain
-}
-
-func NewResolver(domain domain.Domain) *Resolver {
-	return &Resolver{
-		domain,
-	}
+	Env    *env.Env
 }

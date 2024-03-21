@@ -7,7 +7,7 @@ type Config @shareable {
   data: Map
   displayName: String!
   environmentName: String!
-  id: String!
+  id: ID!
   immutable: Boolean
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
