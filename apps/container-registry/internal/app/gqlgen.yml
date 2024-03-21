@@ -13,6 +13,7 @@ exec:
 federation:
   filename: graph/generated/federation.go
   package: generated
+  version: 2
 
 # Where should any generated models go?
 model:
@@ -45,7 +46,9 @@ autobind:
 # The first line in each type will be used as defaults for resolver arguments and
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
+skip_mod_tidy: true
 skip_validation: true
+
 models:
   Metadata: &metadata-model
     model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
@@ -54,6 +57,7 @@ models:
   ID:
     model:
       - github.com/kloudlite/api/pkg/repos.ID
+
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int
@@ -67,6 +71,10 @@ models:
     model: github.com/kloudlite/api/apps/container-registry/internal/domain.CheckNameAvailabilityOutput
 
   Build: &build
+    fields:
+      latestBuildRun:
+        resolver: true
+
     model:
       - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Build
   BuildIn: *build

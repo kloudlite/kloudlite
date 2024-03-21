@@ -3,6 +3,7 @@ package domain
 import (
 	"crypto/md5"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,69 +18,94 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/container-registry-authorizer/admin"
 	common_types "github.com/kloudlite/operator/apis/common-types"
-	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 	distributionv1 "github.com/kloudlite/operator/apis/distribution/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	t2 "github.com/kloudlite/operator/operators/resource-watcher/types"
+	fn "github.com/kloudlite/operator/pkg/functions"
 )
 
-func (d *Impl) ListBuildRuns(ctx RegistryContext, repoName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error) {
+func (d *Impl) ListBuildRuns(ctx RegistryContext, buildId repos.ID, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error) {
 	filter := repos.Filter{
-		fields.AccountName:              ctx.AccountName,
-		fc.BuildRunSpecRegistryRepoName: repoName,
+		fields.AccountName: ctx.AccountName,
+		fc.BuildRunBuildId: buildId,
 	}
-	paginated, err := d.buildRunRepo.FindPaginated(ctx, d.buildRunRepo.MergeMatchFilters(filter, matchFilters), pagination)
+	paginated, err := d.buildRunRepo.FindPaginated(ctx, d.buildRunRepo.MergeMatchFilters(filter, search), pagination)
 	return paginated, err
 }
 
-func (d *Impl) GetBuildRun(ctx RegistryContext, repoName string, buildRunName string) (*entities.BuildRun, error) {
+func (d *Impl) GetBuildRun(ctx RegistryContext, buildId repos.ID, runName string) (*entities.BuildRun, error) {
 	brun, err := d.buildRunRepo.FindOne(ctx, repos.Filter{
-		fields.AccountName:              ctx.AccountName,
-		fields.MetadataName:             buildRunName,
-		fc.BuildRunSpecRegistryRepoName: repoName,
+		fields.AccountName:  ctx.AccountName,
+		fields.MetadataName: runName,
+		fc.BuildRunBuildId:  buildId,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	if brun == nil {
-		return nil, errors.Newf("build run with name %q not found", buildRunName)
+		return nil, errors.Newf("build run with id=%q not found", buildId)
 	}
 	return brun, nil
 }
 
-// func (d *Impl) parseRecordVersionFromAnnotations(annotations map[string]string) (int, error) {
-// 	annotatedVersion, ok := annotations[constants.RecordVersionKey]
-// 	if !ok {
-// 		return 0, errors.Newf("no annotation with record version key (%s), found on the resource", constants.RecordVersionKey)
-// 	}
-//
-// 	annVersion, err := strconv.ParseInt(annotatedVersion, 10, 32)
-// 	if err != nil {
-// 		return 0, errors.NewE(err)
-// 	}
-//
-// 	return int(annVersion), nil
-// }
+func (d *Impl) GetLatestBuildRun(ctx RegistryContext, buildId repos.ID) (*entities.BuildRun, error) {
+	bruns, err := d.buildRunRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			fields.AccountName: ctx.AccountName,
+			fc.BuildRunBuildId: buildId,
+		},
+		Sort: map[string]any{
+			"creationTime": -1,
+		},
+		Limit: fn.New(int64(1)),
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
 
-// func (d *Impl) MatchRecordVersion(annotations map[string]string, rv int) (int, error) {
-// 	annVersion, err := d.parseRecordVersionFromAnnotations(annotations)
-// 	if err != nil {
-// 		return -1, errors.NewE(err)
-// 	}
-//
-// 	if annVersion != rv {
-// 		return -1, errors.Newf("record version mismatch, expected %d, got %d", rv, annVersion)
-// 	}
-//
-// 	return annVersion, nil
-// }
+	if len(bruns) == 0 {
+		return nil, nil
+	}
+
+	if len(bruns) != 1 {
+		return nil, errors.Newf("failed to find latest build run")
+	}
+
+	return bruns[0], nil
+}
+
+func (d *Impl) parseRecordVersionFromAnnotations(annotations map[string]string) (int, error) {
+	annotatedVersion, ok := annotations[constants.RecordVersionKey]
+	if !ok {
+		return 0, errors.Newf("no annotation with record version key (%s), found on the resource", constants.RecordVersionKey)
+	}
+
+	annVersion, err := strconv.ParseInt(annotatedVersion, 10, 32)
+	if err != nil {
+		return 0, errors.NewE(err)
+	}
+
+	return int(annVersion), nil
+}
+
+func (d *Impl) MatchRecordVersion(annotations map[string]string, rv int) (int, error) {
+	annVersion, err := d.parseRecordVersionFromAnnotations(annotations)
+	if err != nil {
+		return -1, errors.NewE(err)
+	}
+
+	if annVersion != rv {
+		return -1, errors.Newf("record version mismatch, expected %d, got %d", rv, annVersion)
+	}
+
+	return annVersion, nil
+}
 
 func (d *Impl) OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.BuildRun, status t2.ResourceStatus, opts UpdateAndDeleteOpts) error {
-
 	xBr, err := d.buildRunRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName:       ctx.AccountName,
 		fields.MetadataName:      buildRun.Name,
@@ -93,10 +119,10 @@ func (d *Impl) OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.Bu
 		return errors.Newf("build run with name %q not found", buildRun.Name)
 	}
 
-	// recordVersion, err := d.MatchRecordVersion(xBr.Annotations, xBr.RecordVersion)
-	// if err != nil {
-	// 	return errors.NewE(err)
-	// }
+	if _, err := d.MatchRecordVersion(buildRun.Annotations, xBr.RecordVersion); err != nil {
+		d.logger.Warnf("error while matching record version: %s, ignoring silently", err.Error())
+		return nil
+	}
 
 	if _, err = d.buildRunRepo.PatchById(
 		ctx,
@@ -157,6 +183,9 @@ func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *
 		return errors.NewE(err)
 	}
 	token, err := admin.GenerateToken(KL_ADMIN, build.Spec.AccountName, string("read_write"), i, d.envs.RegistrySecretKey+build.Spec.AccountName)
+	if err != nil {
+		return errors.NewE(err)
+	}
 
 	sec := corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
@@ -202,14 +231,14 @@ func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *
 			"kloudlite.io/tag":      strings.Join(build.Spec.Registry.Repo.Tags, ","),
 		},
 		BuildOptions: build.Spec.BuildOptions,
-		Registry: dbv1.Registry{
-			Repo: dbv1.Repo{
+		Registry: distributionv1.Registry{
+			Repo: distributionv1.Repo{
 				Name: build.Spec.Registry.Repo.Name,
 				Tags: build.Spec.Registry.Repo.Tags,
 			},
 		},
 		CacheKeyName: build.Spec.CacheKeyName,
-		GitRepo: dbv1.GitRepo{
+		GitRepo: distributionv1.GitRepo{
 			Url:    hook.RepoUrl,
 			Branch: hook.CommitHash,
 		},
@@ -219,6 +248,10 @@ func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *
 			Namespace: d.envs.JobBuildNamespace,
 		},
 	})
+	if err != nil {
+		return err
+	}
+
 	brRaw := distributionv1.BuildRun{}
 	err = yaml.Unmarshal(b, &brRaw)
 	if err != nil {
@@ -226,12 +259,12 @@ func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *
 		return errors.NewE(err)
 	}
 	br := entities.BuildRun{
-		BuildRun:   brRaw,
-		BuildName:  build.Name,
-		SyncStatus: t.GenSyncStatus(t.SyncActionApply, build.RecordVersion),
+		BuildRun:    brRaw,
+		BuildId:     build.Id,
+		SyncStatus:  t.GenSyncStatus(t.SyncActionApply, build.RecordVersion),
+		AccountName: build.Spec.AccountName,
+		ClusterName: build.BuildClusterName,
 	}
-	br.AccountName = build.Spec.AccountName
-	br.ClusterName = build.BuildClusterName
 	if secretCreationError != nil {
 		msg := secretCreationError.Error()
 		br.SyncStatus.Error = &msg

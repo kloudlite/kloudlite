@@ -3,7 +3,7 @@ type Node @shareable {
   apiVersion: String
   clusterName: String!
   creationTime: Date!
-  id: String!
+  id: ID!
   kind: String
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")

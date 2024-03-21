@@ -2,11 +2,11 @@ package parser
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
-	"strings"
 
 	"github.com/kloudlite/api/cmd/struct-to-graphql/pkg/parser/types"
-	apiExtensionsV1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	fn "github.com/kloudlite/operator/pkg/functions"
 )
 
 func sanitizeEnums(enums []string) []string {
@@ -17,6 +17,10 @@ func sanitizeEnums(enums []string) []string {
 }
 
 func (f *Field) handleString() (fieldType string, inputType string, err error) {
+	if f.ScalarType != nil {
+		return toFieldType(*f.ScalarType, !f.OmitEmpty), toFieldType(*f.ScalarType, !f.OmitEmpty), nil
+	}
+
 	childType := f.ParentName + f.Name
 	if f.Enum != nil {
 		f.Parser.structs[f.StructName].Enums[childType] = sanitizeEnums(f.Enum)
@@ -57,54 +61,55 @@ func (f *Field) handleStruct() (fieldType string, inputFieldType string, err err
 		return commonLabel
 	}()
 
-	if f.Uri != nil && false {
-		jsonSchema, err := func() (*apiExtensionsV1.JSONSchemaProps, error) {
-			if strings.HasPrefix(*f.Uri, "http://") || strings.HasPrefix(*f.Uri, "https://") {
-				return f.Parser.schemaCli.GetHttpJsonSchema(*f.Uri)
-			}
-
-			if strings.HasPrefix(*f.Uri, "k8s://") {
-				k8sCrdName := strings.Split(*f.Uri, "k8s://")[1]
-				return f.Parser.schemaCli.GetK8sJsonSchema(k8sCrdName)
-			}
-
-			return nil, fmt.Errorf("unknown schema for schema uri %q", *f.Uri)
-		}()
-		if err != nil {
-			panic(err)
-		}
-
-		if f.Parser.structs[structName] == nil {
-			f.Parser.structs[structName] = newStruct()
-		}
-
-		if f.Inline {
-			p2 := newParser(f.Parser.schemaCli)
-			p2.structs[structName] = newStruct()
-
-			if err := p2.GenerateFromJsonSchema(p2.structs[structName], childType, jsonSchema); err != nil {
-				return "", "", err
-			}
-
-			fields2, inputFields2 := f.Parser.structs[structName].mergeParser(p2.structs[structName], childType)
-
-			if !f.GraphqlTag.OnlyInput {
-				*f.Fields = append(*f.Fields, fields2...)
-			}
-			if !f.GraphqlTag.NoInput {
-				*f.InputFields = append(*f.InputFields, inputFields2...)
-			}
-
-			return "", "", err
-		}
-
-		fieldType = toFieldType(childType, !f.OmitEmpty)
-		inputFieldType = toFieldType(childType+"In", !f.OmitEmpty && !f.InputOmitEmpty)
-		if err := f.Parser.GenerateFromJsonSchema(f.Parser.structs[structName], childType, jsonSchema); err != nil {
-			return "", "", err
-		}
-		return fieldType, inputFieldType, err
-	}
+	//if f.Uri != nil && false {
+	//	jsonSchema, err := func() (*apiExtensionsV1.JSONSchemaProps, error) {
+	//		if strings.HasPrefix(*f.Uri, "http://") || strings.HasPrefix(*f.Uri, "https://") {
+	//			return f.Parser.schemaCli.GetHttpJsonSchema(*f.Uri)
+	//		}
+	//
+	//		if strings.HasPrefix(*f.Uri, "k8s://") {
+	//			k8sCrdName := strings.Split(*f.Uri, "k8s://")[1]
+	//			return f.Parser.schemaCli.GetK8sJsonSchema(k8sCrdName)
+	//		}
+	//
+	//		return nil, fmt.Errorf("unknown schema for schema uri %q", *f.Uri)
+	//	}()
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//
+	//	if f.Parser.structs[structName] == nil {
+	//		f.Parser.structs[structName] = newStruct()
+	//	}
+	//
+	//	if f.Inline {
+	//		p2 := newParser(f.Parser.schemaCli)
+	//		p2.structs[structName] = newStruct()
+	//
+	//		if err := p2.GenerateFromJsonSchema(p2.structs[structName], childType, jsonSchema); err != nil {
+	//			return "", "", err
+	//		}
+	//
+	//		fields2, inputFields2 := f.Parser.structs[structName].mergeParser(p2.structs[structName], childType)
+	//		maps.Copy(f.Parser.structs[structName].TypeDirectives, p2.structs[structName].TypeDirectives)
+	//
+	//		if !f.GraphqlTag.OnlyInput {
+	//			*f.Fields = append(*f.Fields, fields2...)
+	//		}
+	//		if !f.GraphqlTag.NoInput {
+	//			*f.InputFields = append(*f.InputFields, inputFields2...)
+	//		}
+	//
+	//		return "", "", err
+	//	}
+	//
+	//	fieldType = toFieldType(childType, !f.OmitEmpty)
+	//	inputFieldType = toFieldType(childType+"In", !f.OmitEmpty && !f.InputOmitEmpty)
+	//	if err := f.Parser.GenerateFromJsonSchema(f.Parser.structs[structName], childType, jsonSchema); err != nil {
+	//		return "", "", err
+	//	}
+	//	return fieldType, inputFieldType, err
+	//}
 
 	p2 := newParser(f.Parser.schemaCli)
 
@@ -130,6 +135,10 @@ func (f *Field) handleStruct() (fieldType string, inputFieldType string, err err
 
 			if !f.NoInput {
 				*f.InputFields = append(*f.InputFields, inputFields2...)
+			}
+
+			for k, v := range p2.structs[structName].TypeDirectives {
+				fn.MapSet(&f.Parser.structs[f.StructName].TypeDirectives, k, v)
 			}
 
 			return "", "", err
@@ -163,6 +172,11 @@ func (f *Field) handleStruct() (fieldType string, inputFieldType string, err err
 				f.Parser.structs[k].Inputs[k2] = v2
 			}
 		}
+
+		if f.Parser.structs[k].TypeDirectives == nil {
+			f.Parser.structs[k].TypeDirectives = map[string]struct{}{}
+		}
+		maps.Copy(f.Parser.structs[k].TypeDirectives, v.TypeDirectives)
 	}
 
 	return fieldType, inputFieldType, err
@@ -272,6 +286,10 @@ func (f *Field) handlePtr() (fieldType string, inputFieldType string, err error)
 		}
 		f2.StructName = commonLabel
 		return f2.handleStruct()
+	}
+
+	if f.Type.Elem().Kind() == reflect.String && f.ScalarType != nil {
+		return toFieldType(*f.ScalarType, false), toFieldType(*f.ScalarType, false), nil
 	}
 
 	return kindMap[f.Type.Elem().Kind()], kindMap[f.Type.Elem().Kind()], err

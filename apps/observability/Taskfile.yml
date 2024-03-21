@@ -1,0 +1,49 @@
+version: "3"
+
+vars:
+  app: observability
+
+includes:
+  go: ../../.tools/taskfiles/go-build.yml
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
+
+  run:
+    dotenv:
+      - .secrets/env
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go run ./main.go --dev
+
+  build:
+    cmds:
+      - task: go:build 
+        vars: 
+          Out: ./bin/{{.app}}
+
+  local:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    vars:
+      push: "{{.push |default false}}"
+    cmds:
+      - task: build
+      - nerdctl build -t {{.Image}} . --build-arg BINARY={{.app}}
+      - |+
+        [ {{.push}} = "true" ] && nerdctl push {{.Image}}
+
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+      - docker buildx build -f ./Dockerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
+

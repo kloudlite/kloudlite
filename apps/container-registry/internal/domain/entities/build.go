@@ -48,6 +48,8 @@ type Build struct {
 
 	ErrorMessages map[string]string `json:"errorMessages" graphql:"noinput"`
 	Status        BuildStatus       `json:"status" graphql:"noinput"`
+
+	// LatestBuildRun BuildRun `json:"-" graphql:"noinput"`
 }
 
 var BuildIndexes = []repos.IndexField{

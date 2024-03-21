@@ -13,7 +13,7 @@ query: |+ #graphql
         node {
           accountName
           spec {
-            resourceName
+            # resourceName
             resourceTemplate {
               msvcRef {
                 apiVersion
@@ -22,6 +22,12 @@ query: |+ #graphql
                 namespace
               }
             }
+          }
+          status {
+            isReady
+          }
+          metadata {
+            annotations
           }
           syncStatus {
             state
@@ -33,7 +39,7 @@ query: |+ #graphql
   }
 variables:
   projectName: "{{.projectName}}"
-  envName: "{{.envName}}"
+  envName: "{{.environmentName}}"
 ---
 
 label: Create Managed Resource
@@ -41,7 +47,7 @@ query: |+ #graphql
   mutation Core_createManagedResource($projectName: String!, $envName: String!, $mres: ManagedResourceIn!) {
     core_createManagedResource(projectName: $projectName, envName: $envName, mres: $mres) {
       spec {
-        resourceName
+        # resourceName
         resourceTemplate {
           apiVersion
           kind
@@ -58,7 +64,7 @@ query: |+ #graphql
   }
 variables:
   projectName: "{{.projectName}}"
-  envName: "{{.envName}}"
+  envName: "{{.environmentName}}"
   mres:
     displayName: "Test Managed Resource"
     metadata:
@@ -70,10 +76,10 @@ variables:
         msvcRef:
           apiVersion: mongodb.msvc.kloudlite.io/v1
           kind: StandaloneService
-          name: mongodb
-          namespace: pmsvc-mongodb
-        spec:
-          resourceName: "sample"
+          name: sample
+          namespace: "{{.projectNamespace}}"
+        spec: {}
+        #   resourceName: "sample"
 
 ---
 
@@ -134,17 +140,16 @@ variables:
 
 label: Get Managed Resource Output Keys
 query: |+ #graphql
-  query Query($projectName: String!, $envName: String!, $name: String!) {
-    core_getManagedResouceOutputKeys(projectName: $projectName, envName: $envName, name: $name)
+  mutation Core_deleteManagedResource($projectName: String!, $envName: String!, $mresName: String!) {
+    core_deleteManagedResource(projectName: $projectName, envName: $envName, mresName: $mresName)
   }
 variables:
   # projectName: "{{.projectName}}"
   # envName: "{{.envName}}"
   # envName: "public-environment"
-  projectName: "demo-project"
-  envName: "private-environment"
-  # name: "{{.name}}"
-  name: "test-sample-db"
+  projectName: "{{.projectName}}"
+  envName: "{{.environmentName}}"
+  mresName: "{{.name}}"
 
 ---
 

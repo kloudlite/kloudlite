@@ -20,6 +20,13 @@ query: |+ #graphql
             name
             annotations
           }
+          build {
+            id
+            source {
+              repository
+              branch
+            }
+          }
           syncStatus {
             state
             action

@@ -85,11 +85,7 @@ var Module = fx.Module("app",
 
 	fx.Invoke(
 		func(server httpServer.Server, d domain.Domain) {
-			schema := generated.NewExecutableSchema(
-				generated.Config{
-					Resolvers: &graph.Resolver{Domain: d},
-				},
-			)
+			schema := generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{Domain: d}})
 			server.SetupGraphqlServer(schema)
 		},
 	),
