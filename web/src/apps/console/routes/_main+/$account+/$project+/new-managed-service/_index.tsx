@@ -467,13 +467,8 @@ const ManagedServiceLayout = () => {
   const rootUrl = `/${account}/${project}/managed-services`;
 
   const { cluster } = useOutletContext<IProjectContext>();
-  console.log('cluster', parseName(cluster));
 
-  const {
-    data: nodepoolData,
-    isLoading: nodepoolLoading,
-    error: nodepoolLoadingError,
-  } = useCustomSwr('/nodepools', async () => {
+  const { data: nodepoolData } = useCustomSwr('/nodepools', async () => {
     return api.listNodePools({ clusterName: parseName(cluster) });
   });
 

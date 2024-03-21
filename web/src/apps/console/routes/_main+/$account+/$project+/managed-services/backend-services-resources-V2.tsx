@@ -1,4 +1,4 @@
-import { PencilSimple, Trash } from '@jengaicons/react';
+import { GearSix, PencilSimple, Trash } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -21,7 +21,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
-import { useOutletContext, useParams } from '@remix-run/react';
+import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
 import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
@@ -93,23 +93,38 @@ interface IResource {
   onAction: OnAction;
 }
 
-const GridView = ({ items = [], templates = [], onAction }: IResource) => {
+const GridView = ({ items = [], templates = [], onAction: _ }: IResource) => {
+  const { account, project } = useParams();
   return (
-    <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
+    <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, logo, updateInfo } = parseItem(item, templates);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
+            to={`/${account}/${project}/msvc/${id}/logs-n-metrics`}
             rows={[
               {
-                key: generateKey(keyPrefix, name),
+                key: generateKey(keyPrefix, name + id),
                 render: () => (
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    action={<ExtraButton onAction={onAction} item={item} />}
+                    action={
+                      <ResourceExtraAction
+                        options={[
+                          {
+                            key: 'managed-services-resource-extra-action-1',
+                            to: `/${account}/${project}/msvc/${id}/logs-n-metrics`,
+                            icon: <GearSix size={16} />,
+                            label: 'logs & metrics',
+                            type: 'item',
+                          },
+                        ]}
+                      />
+                    }
+                    // action={<ExtraButton onAction={onAction} item={item} />}
                     avatar={
                       <img src={logo} alt={name} className="w-4xl h-4xl" />
                     }
@@ -134,8 +149,10 @@ const GridView = ({ items = [], templates = [], onAction }: IResource) => {
 };
 
 const ListView = ({ items = [], templates = [], onAction }: IResource) => {
+  const { account, project } = useParams();
   return (
     <ListV2.Root
+      linkComponent={Link}
       data={{
         headers: [
           {
@@ -196,6 +213,7 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
                 render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
+            to: `/${account}/${project}/msvc/${id}/logs-n-metrics`,
           };
         }),
       }}

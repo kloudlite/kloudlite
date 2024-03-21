@@ -588,7 +588,7 @@ export type ManagedResourceIn = {
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedResourceSpecIn =
   {
-    resourceName?: InputMaybe<Scalars['String']['input']>;
+    resourceNamePrefix?: InputMaybe<Scalars['String']['input']>;
     resourceTemplate: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresResourceTemplateIn;
   };
 
@@ -702,8 +702,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RateLimitIn =
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouteIn = {
-  app?: InputMaybe<Scalars['String']['input']>;
-  lambda?: InputMaybe<Scalars['String']['input']>;
+  app: Scalars['String']['input'];
   path: Scalars['String']['input'];
   port: Scalars['Int']['input'];
   rewrite?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1142,7 +1141,7 @@ export type Github__Com___Kloudlite___Operator___Pkg___Operator__CheckIn = {
 };
 
 export type Github__Com___Kloudlite___Operator___Pkg___Operator__CheckMetaIn = {
-  debug: Scalars['Boolean']['input'];
+  debug?: InputMaybe<Scalars['Boolean']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   title: Scalars['String']['input'];
@@ -1712,7 +1711,7 @@ export type ConsoleGetProjectQuery = {
       lastReconcileTime?: any;
       checkList?: Array<{
         description?: string;
-        debug: boolean;
+        debug?: boolean;
         name: string;
         title: string;
       }>;
@@ -1771,7 +1770,7 @@ export type ConsoleListProjectsQuery = {
           lastReconcileTime?: any;
           checkList?: Array<{
             description?: string;
-            debug: boolean;
+            debug?: boolean;
             name: string;
             title: string;
           }>;
@@ -1857,7 +1856,7 @@ export type ConsoleListClustersQuery = {
           lastReconcileTime?: any;
           checkList?: Array<{
             description?: string;
-            debug: boolean;
+            debug?: boolean;
             name: string;
             title: string;
           }>;
@@ -1981,7 +1980,7 @@ export type ConsoleGetClusterQuery = {
       lastReconcileTime?: any;
       checkList?: Array<{
         description?: string;
-        debug: boolean;
+        debug?: boolean;
         name: string;
         title: string;
       }>;
@@ -2307,7 +2306,7 @@ export type ConsoleGetEnvironmentQuery = {
       lastReconcileTime?: any;
       checkList?: Array<{
         description?: string;
-        debug: boolean;
+        debug?: boolean;
         name: string;
         title: string;
       }>;
@@ -2386,7 +2385,7 @@ export type ConsoleListEnvironmentsQuery = {
           lastReconcileTime?: any;
           checkList?: Array<{
             description?: string;
-            debug: boolean;
+            debug?: boolean;
             name: string;
             title: string;
           }>;
@@ -2569,7 +2568,7 @@ export type ConsoleGetAppQuery = {
       lastReconcileTime?: any;
       checkList?: Array<{
         description?: string;
-        debug: boolean;
+        debug?: boolean;
         title: string;
         name: string;
       }>;
@@ -2678,7 +2677,7 @@ export type ConsoleListAppsQuery = {
           }>;
           checkList?: Array<{
             description?: string;
-            debug: boolean;
+            debug?: boolean;
             title: string;
             name: string;
           }>;
@@ -2781,8 +2780,7 @@ export type ConsoleListRoutersQuery = {
             rps?: number;
           };
           routes?: Array<{
-            app?: string;
-            lambda?: string;
+            app: string;
             path: string;
             port: number;
             rewrite?: boolean;
@@ -2795,7 +2793,7 @@ export type ConsoleListRoutersQuery = {
           lastReconcileTime?: any;
           checkList?: Array<{
             description?: string;
-            debug: boolean;
+            debug?: boolean;
             name: string;
             title: string;
           }>;
@@ -2867,8 +2865,7 @@ export type ConsoleGetRouterQuery = {
         rps?: number;
       };
       routes?: Array<{
-        app?: string;
-        lambda?: string;
+        app: string;
         path: string;
         port: number;
         rewrite?: boolean;
@@ -2879,7 +2876,7 @@ export type ConsoleGetRouterQuery = {
       isReady: boolean;
       checkList?: Array<{
         description?: string;
-        debug: boolean;
+        debug?: boolean;
         name: string;
         title: string;
       }>;
@@ -3001,6 +2998,7 @@ export type ConsoleListSecretsQuery = {
         displayName: string;
         stringData?: any;
         environmentName: string;
+        isReadyOnly: boolean;
         immutable?: boolean;
         markedForDeletion?: boolean;
         projectName: string;
@@ -3555,7 +3553,7 @@ export type ConsoleListBuildsQuery = {
             lastReadyGeneration?: number;
             lastReconcileTime?: any;
             checkList?: Array<{
-              debug: boolean;
+              debug?: boolean;
               description?: string;
               name: string;
               title: string;
@@ -4265,7 +4263,7 @@ export type ConsoleListBuildRunsQuery = {
           lastReconcileTime?: any;
           checkList?: Array<{
             description?: string;
-            debug: boolean;
+            debug?: boolean;
             name: string;
             title: string;
           }>;
@@ -4338,7 +4336,7 @@ export type ConsoleGetBuildRunQuery = {
       lastReconcileTime?: any;
       checkList?: Array<{
         description?: string;
-        debug: boolean;
+        debug?: boolean;
         name: string;
         title: string;
       }>;
@@ -4468,6 +4466,8 @@ export type ConsoleGetProjectMSvQueryVariables = Exact<{
 
 export type ConsoleGetProjectMSvQuery = {
   core_getProjectManagedService?: {
+    id: string;
+    recordVersion: number;
     creationTime: any;
     displayName: string;
     markedForDeletion?: boolean;
@@ -4496,7 +4496,7 @@ export type ConsoleGetProjectMSvQuery = {
       lastReconcileTime?: any;
       checkList?: Array<{
         description?: string;
-        debug: boolean;
+        debug?: boolean;
         title: string;
         name: string;
       }>;
@@ -4571,7 +4571,7 @@ export type ConsoleListProjectMSvsQuery = {
           lastReconcileTime?: any;
           checkList?: Array<{
             description?: string;
-            debug: boolean;
+            debug?: boolean;
             title: string;
             name: string;
           }>;
@@ -4793,7 +4793,6 @@ export type ConsoleListManagedResourcesQuery = {
           namespace?: string;
         };
         spec: {
-          resourceName?: string;
           resourceTemplate: {
             apiVersion: string;
             kind: string;
@@ -4813,7 +4812,7 @@ export type ConsoleListManagedResourcesQuery = {
           lastReconcileTime?: any;
           checkList?: Array<{
             description?: string;
-            debug: boolean;
+            debug?: boolean;
             name: string;
             title: string;
           }>;
@@ -4886,7 +4885,7 @@ export type ConsoleGetHelmChartQuery = {
       releaseStatus: string;
       checkList?: Array<{
         description?: string;
-        debug: boolean;
+        debug?: boolean;
         title: string;
         name: string;
       }>;
@@ -4942,7 +4941,7 @@ export type ConsoleListHelmChartQuery = {
           releaseStatus: string;
           checkList?: Array<{
             description?: string;
-            debug: boolean;
+            debug?: boolean;
             title: string;
             name: string;
           }>;

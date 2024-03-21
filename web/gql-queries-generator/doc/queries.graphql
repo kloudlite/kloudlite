@@ -1308,7 +1308,6 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
           }
           routes {
             app
-            lambda
             path
             port
             rewrite
@@ -1406,7 +1405,6 @@ query consoleGetRouter($projectName: String!, $envName: String!, $name: String!)
       }
       routes {
         app
-        lambda
         path
         port
         rewrite
@@ -1534,6 +1532,7 @@ query consoleListSecrets($projectName: String!, $envName: String!, $search: Sear
         displayName
         stringData
         environmentName
+        isReadyOnly
         immutable
         lastUpdatedBy {
           userEmail
@@ -3032,6 +3031,8 @@ mutation consoleDeleteClusterMSv($clusterName: String!, $serviceName: String!) {
 
 query consoleGetProjectMSv($projectName: String!, $name: String!) {
   core_getProjectManagedService(projectName: $projectName, name: $name) {
+    id
+    recordVersion
     createdBy {
       userEmail
       userId
@@ -3379,7 +3380,6 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
         }
         recordVersion
         spec {
-          resourceName
           resourceTemplate {
             apiVersion
             kind

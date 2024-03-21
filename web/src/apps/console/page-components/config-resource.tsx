@@ -93,7 +93,7 @@ const GridView = ({
             key={id}
             to={
               linkComponent !== null
-                ? `/${account}/${project}/${environment}/config/${id}`
+                ? `/${account}/${project}/env/${environment}/config/${id}`
                 : undefined
             }
             rows={[
@@ -169,7 +169,7 @@ const ListView = ({
             className="!p-3xl"
             to={
               linkComponent !== null
-                ? `/${account}/${project}/${environment}/config/${id}`
+                ? `/${account}/${project}/env/${environment}/config/${id}`
                 : undefined
             }
             columns={[

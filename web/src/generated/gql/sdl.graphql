@@ -211,7 +211,7 @@ type CloudProviderSecret {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
@@ -244,7 +244,7 @@ type Cluster {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -276,7 +276,7 @@ type ClusterManagedService {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -545,7 +545,7 @@ type DomainEntry {
   creationTime: Date!
   displayName: String!
   domainName: String!
-  id: String!
+  id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   recordVersion: Int!
@@ -1407,12 +1407,12 @@ input Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec {
-  resourceName: String
+  resourceNamePrefix: String
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
-  resourceName: String
+  resourceNamePrefix: String
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn!
 }
 
@@ -1509,16 +1509,14 @@ input Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Route {
-  app: String
-  lambda: String
+  app: String!
   path: String!
   port: Int!
   rewrite: Boolean
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__RouteIn {
-  app: String
-  lambda: String
+  app: String!
   path: String!
   port: Int!
   rewrite: Boolean
@@ -1695,14 +1693,14 @@ input Github__com___kloudlite___operator___pkg___operator__CheckIn {
 }
 
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta {
-  debug: Boolean!
+  debug: Boolean
   description: String
   name: String!
   title: String!
 }
 
 input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn {
-  debug: Boolean!
+  debug: Boolean
   description: String
   name: String!
   title: String!
@@ -1829,7 +1827,7 @@ type HelmRelease {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -3085,7 +3083,7 @@ type Namespace {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -3121,7 +3119,7 @@ type Node {
   apiVersion: String
   clusterName: String!
   creationTime: Date!
-  id: String!
+  id: ID!
   kind: String
   markedForDeletion: Boolean
   metadata: Metadata
@@ -3157,7 +3155,7 @@ type NodePool {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -3217,7 +3215,7 @@ type PersistentVolume {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -3236,7 +3234,7 @@ type PersistentVolumeClaim {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -3768,7 +3766,7 @@ type VolumeAttachment {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean

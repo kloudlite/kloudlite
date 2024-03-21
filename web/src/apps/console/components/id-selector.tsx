@@ -14,8 +14,6 @@ import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
-import { IEnvironmentContext } from '../routes/_main+/$account+/$project+/$environment+/_layout';
-import { parseName } from '../server/r-utils/common';
 
 interface IidSelector {
   name: string;
@@ -57,8 +55,7 @@ export const IdSelector = ({
 
   const api = useAPIClient();
   const params = useParams();
-  const { cluster } = params;
-  const { environment, project } = useOutletContext<IEnvironmentContext>();
+  const { cluster, project } = params;
 
   const checkApi = (() => {
     switch (resType) {
@@ -110,7 +107,7 @@ export const IdSelector = ({
             // eslint-disable-next-line no-nested-ternary
             ...(resType === 'environment' || resType === 'app'
               ? {
-                  projectName: parseName(project),
+                  projectName: project,
                 }
               : {}),
             ...(resType === 'nodepool' || resType === 'vpn_device'

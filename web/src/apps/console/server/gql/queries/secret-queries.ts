@@ -44,6 +44,7 @@ export const secretQueries = (executor: IExecutor) => ({
               displayName
               stringData
               environmentName
+              isReadyOnly
               immutable
               lastUpdatedBy {
                 userEmail
@@ -77,7 +78,7 @@ export const secretQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListSecretsQuery) => data.core_listSecrets,
-      vars(_: ConsoleListSecretsQueryVariables) { },
+      vars(_: ConsoleListSecretsQueryVariables) {},
     }
   ),
   createSecret: executor(
@@ -99,7 +100,7 @@ export const secretQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateSecretMutation) =>
         data.core_createSecret,
-      vars(_: ConsoleCreateSecretMutationVariables) { },
+      vars(_: ConsoleCreateSecretMutationVariables) {},
     }
   ),
 
@@ -137,7 +138,7 @@ export const secretQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetSecretQuery) => data.core_getSecret,
-      vars(_: ConsoleGetSecretQueryVariables) { },
+      vars(_: ConsoleGetSecretQueryVariables) {},
     }
   ),
   updateSecret: executor(
@@ -158,7 +159,7 @@ export const secretQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleUpdateSecretMutation) => data,
-      vars(_: ConsoleUpdateSecretMutationVariables) { },
+      vars(_: ConsoleUpdateSecretMutationVariables) {},
     }
   ),
   deleteSecret: executor(
@@ -177,7 +178,7 @@ export const secretQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleDeleteSecretMutation) => data,
-      vars(_: ConsoleDeleteSecretMutationVariables) { },
+      vars(_: ConsoleDeleteSecretMutationVariables) {},
     }
   ),
 });

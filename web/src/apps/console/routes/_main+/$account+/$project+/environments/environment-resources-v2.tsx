@@ -62,7 +62,7 @@ const ExtraButton = ({ item, onAction }: IExtraButton) => {
           label: 'Settings',
           icon: <GearSix size={16} />,
           type: 'item',
-          to: `/${account}/${project}/${parseName(item)}/settings/general`,
+          to: `/${account}/${project}/env/${parseName(item)}/settings/general`,
           key: 'settings',
         },
       ]}
@@ -85,7 +85,7 @@ const GridView = ({ items = [], onAction }: IResource) => {
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${project}/${id}`}
+            to={`/${account}/${project}/env/${id}`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -141,6 +141,11 @@ const ListView = ({ items, onAction }: IResource) => {
             className: 'flex-1 min-w-[30px] flex items-center justify-center',
           },
           {
+            render: () => 'Environmet',
+            name: 'environment',
+            className: 'w-[180px]',
+          },
+          {
             render: () => 'Updated',
             name: 'updated',
             className: 'w-[180px]',
@@ -167,6 +172,9 @@ const ListView = ({ items, onAction }: IResource) => {
               status: {
                 render: () => <SyncStatusV2 item={i} />,
               },
+              environment: {
+                render: () => <ListItem data={i.spec?.routing?.mode} />,
+              },
               updated: {
                 render: () => (
                   <ListItem
@@ -179,7 +187,7 @@ const ListView = ({ items, onAction }: IResource) => {
                 render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
-            to: `/${account}/${project}/${id}`,
+            to: `/${account}/${project}/env/${id}`,
           };
         }),
       }}
