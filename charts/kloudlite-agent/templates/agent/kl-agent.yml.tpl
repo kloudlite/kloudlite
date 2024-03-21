@@ -77,11 +77,11 @@ spec:
 
         resources:
           limits:
-            cpu: 50m
-            memory: 80Mi
+            cpu: 100m
+            memory: 200Mi
           requests:
-            cpu: 30m
-            memory: 50Mi
+            cpu: 50m
+            memory: 100Mi
 
 ---
 

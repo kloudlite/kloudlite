@@ -26,7 +26,7 @@ spec:
 
     common:
       clusterAutoscaler:
-        enabled: true
+        enabled: false
         configuration:
           scaleDownUnneededTime: 3m
 
