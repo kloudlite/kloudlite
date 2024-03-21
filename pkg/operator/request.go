@@ -305,6 +305,29 @@ func (r *Request[T]) CheckFailed(name string, check Check, msg string) stepResul
 	return stepResult.New()
 }
 
+func (r *Request[T]) CheckStillRunning(name string, check Check, msg string) stepResult.Result {
+	check.Status = false
+	check.Message = msg
+	check.Error = msg
+	check.State = RunningState
+	if r.Object.GetStatus().Checks == nil {
+		r.Object.GetStatus().Checks = make(map[string]Check, 1)
+	}
+
+	status := r.Object.GetStatus()
+
+	status.Checks[name] = check
+	status.Message = &raw_json.RawJson{}
+	status.Message.Set(name, msg)
+	status.IsReady = false
+	status.LastReconcileTime = &metav1.Time{Time: time.Now()}
+
+	if err := r.client.Status().Update(r.ctx, r.Object); err != nil {
+		return stepResult.New().Err(err)
+	}
+	return stepResult.New()
+}
+
 func (r *Request[T]) Context() context.Context {
 	return r.ctx
 }
@@ -321,6 +344,33 @@ func (r *Request[T]) Done(result ...ctrl.Result) stepResult.Result {
 }
 
 func (r *Request[T]) Next() stepResult.Result {
+	return stepResult.New().Continue(true)
+}
+
+func (r *Request[T]) updateStatus() stepResult.Result {
+	status := r.Object.GetStatus()
+	status.LastReconcileTime = &metav1.Time{Time: time.Now()}
+
+	for name, check := range status.Checks {
+		if !check.Status {
+			status.IsReady = false
+			status.Message = &raw_json.RawJson{}
+			status.Message.Set(name, check.Message)
+
+			break
+		}
+		if err := status.Message.Delete(name); err != nil {
+			return stepResult.New().Err(err)
+		}
+	}
+
+	if status.Message.Len() == 0 {
+		status.Message = nil
+	}
+
+	if err := r.client.Status().Update(r.Context(), r.Object); err != nil {
+		return stepResult.New().Err(err)
+	}
 	return stepResult.New().Continue(true)
 }
 
@@ -369,11 +419,10 @@ func (r *Request[T]) PreReconcile() {
 }
 
 var checkStates = map[State]string{
-	WaitingState: "🟡",
-	// RunningState: "🏃",
-	RunningState:   "🏇🏽",
+	WaitingState:   "🔶",
+	RunningState:   "⌛",
 	ErroredState:   "🔴",
-	CompletedState: "🟢",
+	CompletedState: "🌿",
 }
 
 func (r *Request[T]) PostReconcile() {
