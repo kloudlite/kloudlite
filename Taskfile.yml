@@ -46,7 +46,7 @@ tasks:
 
   yaml:crds:
     cmds:
-      - make manifests
+      # - make manifests
       - |+
         [ -f config/crd/bases/_.yaml ] && rm config/crd/bases/_.yaml
         F={{.Filter}}

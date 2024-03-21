@@ -306,8 +306,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 						return nil
 					}
 
-					if brn, ok := obj.GetAnnotations()[constants.BuildRunNameKey]; ok {
-						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetAnnotations()[buildrunNamespaceAnn], brn)}}
+					if brn, ok := obj.GetLabels()[constants.BuildRunNameKey]; ok {
+						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetLabels()[buildrunNamespaceAnn], brn)}}
 					}
 					return nil
 				}),
