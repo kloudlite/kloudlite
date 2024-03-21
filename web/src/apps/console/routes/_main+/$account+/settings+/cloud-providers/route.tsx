@@ -13,8 +13,8 @@ import { useState } from 'react';
 
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import HandleProvider from './handle-provider';
-import ProviderResources from './provider-resources';
 import Tools from './tools';
+import ProviderResourcesV2 from './provider-resources-v2';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -93,7 +93,7 @@ const CloudProvidersIndex = () => {
               }}
               tools={<Tools />}
             >
-              <ProviderResources items={providers} />
+              <ProviderResourcesV2 items={providers} />
             </Wrapper>
           );
         }}

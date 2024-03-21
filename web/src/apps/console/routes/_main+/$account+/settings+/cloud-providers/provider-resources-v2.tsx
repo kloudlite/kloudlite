@@ -14,7 +14,6 @@ import {
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -37,6 +36,8 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { PasswordInput } from '~/components/atoms/input';
 import useForm from '~/root/lib/client/hooks/use-form';
 import { Badge } from '~/components/atoms/badge';
+import ListV2 from '~/console/components/listV2';
+import ConsoleAvatar from '~/console/components/console-avatar';
 import HandleProvider from './handle-provider';
 
 const RESOURCE_NAME = 'cloud provider';
@@ -409,64 +410,88 @@ const GridView = ({ items = [], onDelete, onEdit }: IResource) => {
 
 const ListView = ({ items = [], onDelete, onEdit }: IResource) => {
   return (
-    <List.Root>
-      {items.map((item, index) => {
-        const { name, id, cloudprovider, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, name + id),
-                className: 'w-full min-w-[150px]',
-                render: () => <ListTitle title={name} subtitle={id} />,
-              },
-              {
-                key: generateKey(keyPrefix, name + id + cloudprovider),
-                className: 'text-start mr-[50px]',
+    <ListV2.Root
+      data={{
+        headers: [
+          {
+            render: () => (
+              <div className="flex flex-row">
+                <span className="w-[48px]" />
+                Name
+              </div>
+            ),
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Provider',
+            name: 'provider',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, cloudprovider, updateInfo } = parseItem(i);
+          return {
+            columns: {
+              name: {
                 render: () => (
-                  <ListBody
-                    data={item.aws ? <AwsCheckBody item={item} /> : null}
+                  <ListTitle
+                    title={name}
+                    subtitle={id}
+                    avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, cloudprovider),
-                className: 'min-w-[100px] text-start',
+              status: {
+                render: () => (
+                  <ListBody data={i.aws ? <AwsCheckBody item={i} /> : null} />
+                ),
+              },
+              provider: {
                 render: () => (
                   <ListBody data={renderCloudProvider({ cloudprovider })} />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: 'min-w-[180px]',
+              updated: {
                 render: () => (
                   <ListItem
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
+              action: {
                 render: () => (
                   <ExtraButton
-                    onDelete={() => onDelete(item)}
-                    onEdit={() => onEdit(item)}
+                    onDelete={() => onDelete(i)}
+                    onEdit={() => onEdit(i)}
                   />
                 ),
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+          };
+        }),
+      }}
+    />
   );
 };
 
-const ProviderResources = ({ items = [] }: { items: BaseType[] }) => {
+const ProviderResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
@@ -525,4 +550,4 @@ const ProviderResources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default ProviderResources;
+export default ProviderResourcesV2;

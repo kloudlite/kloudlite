@@ -4,10 +4,8 @@ import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import SubNavAction from '~/console/components/sub-nav-action';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import ConfigResources from '~/console/page-components/config-resource';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import {
@@ -18,6 +16,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
+import ConfigResourcesV2 from '~/console/page-components/config-resource-v2';
 import HandleConfig from './handle-config';
 import Tools from './tools';
 
@@ -95,7 +94,7 @@ const Configs = () => {
               }}
               tools={<Tools />}
             >
-              <ConfigResources items={configs} linkComponent={Link} />
+              <ConfigResourcesV2 items={configs} linkComponent={Link} />
             </Wrapper>
           );
         }}

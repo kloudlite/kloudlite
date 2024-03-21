@@ -3,13 +3,6 @@ import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
-import List from '~/console/components/list';
-import {
-  ExtractNodeType,
-  parseName,
-  parseUpdateOrCreatedBy,
-  parseUpdateOrCreatedOn,
-} from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
@@ -23,10 +16,17 @@ import Grid from '../components/grid';
 import ListGridView from '../components/list-grid-view';
 import ResourceExtraAction from '../components/resource-extra-action';
 import { useConsoleApi } from '../server/gql/api-provider';
-import { ISecrets } from '../server/gql/queries/secret-queries';
+import { IConfigs } from '../server/gql/queries/config-queries';
+import {
+  ExtractNodeType,
+  parseName,
+  parseUpdateOrCreatedBy,
+  parseUpdateOrCreatedOn,
+} from '../server/r-utils/common';
+import ListV2 from '../components/listV2';
 
-const RESOURCE_NAME = 'secret';
-type BaseType = ExtractNodeType<ISecrets>;
+const RESOURCE_NAME = 'config';
+type BaseType = ExtractNodeType<IConfigs>;
 
 interface IResource {
   onDelete: (item: BaseType) => void;
@@ -40,7 +40,7 @@ const parseItem = (item: BaseType) => {
   return {
     name: titleCase(item.displayName),
     id: parseName(item),
-    entries: [`${Object.keys(item?.stringData || {}).length || 0} Entries`],
+    entries: [`${Object.keys(item?.data).length || 0} Entries`],
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
@@ -93,7 +93,7 @@ const GridView = ({
             key={id}
             to={
               linkComponent !== null
-                ? `/${account}/${project}/env/${environment}/secret/${id}`
+                ? `/${account}/${project}/env/${environment}/config/${id}`
                 : undefined
             }
             rows={[
@@ -153,67 +153,77 @@ const ListView = ({
     props = { linkComponent };
   }
   return (
-    <List.Root {...props}>
-      {items.map((item, index) => {
-        const { name, id, entries, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-
-        return (
-          <List.Row
-            onClick={() => {
-              onClick(item);
+    <ListV2.Root
+      {...props}
+      data={{
+        headers: [
+          {
+            render: () => 'Name',
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Entries',
+            name: 'entries',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, entries, updateInfo } = parseItem(i);
+          return {
+            onClick: () => {
+              onClick(i);
               setSelected(id);
-            }}
-            pressed={selected === id}
-            key={id}
-            className="!p-3xl"
-            to={
-              linkComponent !== null
-                ? `/${account}/${project}/env/${environment}/secret/${id}`
-                : undefined
-            }
-            columns={[
-              {
-                key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
+            },
+            pressed: !linkComponent ? selected === id : false,
+            columns: {
+              name: {
                 render: () => <ListTitle title={name} />,
               },
-              {
-                key: generateKey(keyPrefix, 'entries'),
-                className: 'w-[120px]',
+              entries: {
                 render: () => <ListBody data={entries} />,
               },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
+              updated: {
                 render: () => (
                   <ListItem
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              ...[
-                ...(hasActions
-                  ? [
-                      {
-                        key: generateKey(keyPrefix, 'action'),
-                        render: () => (
-                          <ExtraButton onDelete={() => onDelete(item)} />
-                        ),
-                      },
-                    ]
-                  : []),
-              ],
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+
+              ...(hasActions
+                ? {
+                    action: {
+                      render: () => (
+                        <ExtraButton onDelete={() => onDelete(i)} />
+                      ),
+                    },
+                  }
+                : {}),
+            },
+            to:
+              linkComponent !== null
+                ? `/${account}/${project}/env/${environment}/config/${id}`
+                : undefined,
+          };
+        }),
+      }}
+    />
   );
 };
 
-const SecretResources = ({
+const ConfigResourcesV2 = ({
   items = [],
   hasActions = true,
   onClick = (_) => _,
@@ -229,7 +239,7 @@ const SecretResources = ({
 
   useWatchReload(
     items.map((i) => {
-      return `account:${account}.project:${project}.environment:${environment}.secret:${parseName(
+      return `account:${account}.project:${project}.environment:${environment}.config:${parseName(
         i
       )}`;
     })
@@ -256,14 +266,14 @@ const SecretResources = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!environment || !project) {
-            throw new Error('Project and Environment is required!.');
+          if (!project || !environment) {
+            throw new Error('Project and Environment name is required!.');
           }
           try {
-            const { errors } = await api.deleteSecret({
-              envName: environment,
+            const { errors } = await api.deleteConfig({
+              configName: parseName(showDeleteDialog),
               projectName: project,
-              secretName: parseName(showDeleteDialog),
+              envName: environment,
             });
 
             if (errors) {
@@ -281,4 +291,4 @@ const SecretResources = ({
   );
 };
 
-export default SecretResources;
+export default ConfigResourcesV2;
