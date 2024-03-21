@@ -188,6 +188,9 @@ const Projects = () => {
               secretsLength: cloudProviderSecretsCount,
             })}
             tools={<Tools />}
+            pagination={{
+              pageInfo: projectsData.pageInfo,
+            }}
           >
             <ProjectResourcesV2 items={projects} />
           </Wrapper>
