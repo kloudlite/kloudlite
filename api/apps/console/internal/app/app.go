@@ -2,9 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
 
@@ -17,7 +14,6 @@ import (
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/apps/console/internal/env"
-	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -32,9 +28,8 @@ import (
 )
 
 type (
-	IAMGrpcClient            grpc.Client
-	InfraClient              grpc.Client
-	LogsAndMetricsHttpServer httpServer.Server
+	IAMGrpcClient grpc.Client
+	InfraClient   grpc.Client
 )
 
 func toConsoleContext(requestCtx context.Context, accountCookieName string) (domain.ConsoleContext, error) {
@@ -67,67 +62,6 @@ var Module = fx.Module("app",
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
 			return iam.NewIAMClient(conn)
-		},
-	),
-
-	// streaming logs
-	fx.Invoke(
-		func(logAndMetricsServer LogsAndMetricsHttpServer, ev *env.Env, sessionRepo kv.Repo[*common.AuthSession], iamCli iam.IAMClient,
-		) {
-			a := logAndMetricsServer.Raw()
-
-			a.Use(
-				httpServer.NewSessionMiddleware(
-					sessionRepo,
-					constants.CookieName,
-					ev.CookieDomain,
-					constants.CacheSessionPrefix,
-				),
-			)
-
-			a.Get("/observability/metrics/:metric_type", func(c *fiber.Ctx) error {
-				cc, err := toConsoleContext(c.Context(), ev.AccountCookieName)
-				if err != nil {
-					return errors.NewE(err)
-				}
-
-				clusterName := c.Query("cluster_name")
-				if clusterName == "" {
-					return c.Status(http.StatusBadRequest).JSON(map[string]any{"error": "query param (cluster_name) must be provided"})
-				}
-
-				trackingId := c.Query("tracking_id")
-				if trackingId == "" {
-					return c.Status(http.StatusBadRequest).JSON(map[string]any{"error": "query param (tracking_id) must be provided"})
-				}
-
-				can, err := iamCli.Can(c.Context(), &iam.CanIn{
-					UserId: string(cc.UserId),
-					ResourceRefs: []string{
-						iamT.NewResourceRef(cc.AccountName, iamT.ResourceAccount, cc.AccountName),
-					},
-					Action: string(iamT.ReadMetrics),
-				})
-				if err != nil {
-					return &fiber.Error{Code: http.StatusUnauthorized, Message: errors.NewEf(err, "unauthorized to view metrics for resources belonging to account (%s)", cc.AccountName).Error()}
-				}
-
-				if !can.Status {
-					return &fiber.Error{Code: http.StatusUnauthorized, Message: fmt.Sprintf("unauthorized to view metrics for resources belonging to account (%s)", cc.AccountName)}
-				}
-
-				metricType := c.Params("metric_type")
-
-				st := c.Query("start_time", fmt.Sprintf("%d", time.Now().Add(-3*time.Hour).Unix()))
-				et := c.Query("end_time", fmt.Sprintf("%d", time.Now().Unix()))
-				step := c.Query("step", "5m")
-
-				return queryProm(ev.PromHttpAddr, PromMetricsType(metricType), map[string]string{
-					"kl_account_name": cc.AccountName,
-					"kl_cluster_name": clusterName,
-					"kl_tracking_id":  trackingId,
-				}, st, et, step, c.Response().BodyWriter())
-			})
 		},
 	),
 
@@ -178,12 +112,7 @@ var Module = fx.Module("app",
 
 			schema := generated.NewExecutableSchema(gqlConfig)
 			server.SetupGraphqlServer(schema,
-				httpServer.NewSessionMiddleware(
-					sessionRepo,
-					constants.CookieName,
-					ev.CookieDomain,
-					constants.CacheSessionPrefix,
-				),
+				httpServer.NewReadSessionMiddleware(sessionRepo, constants.CookieName, constants.CacheSessionPrefix),
 			)
 		},
 	),

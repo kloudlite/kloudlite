@@ -99,7 +99,8 @@ func (repo *dbRepo[T]) NewId() ID {
 func (repo *dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	curr, err := repo.db.Collection(repo.collectionName).Find(
 		ctx, query.Filter, &options.FindOptions{
-			Sort: query.Sort,
+			Sort:  query.Sort,
+			Limit: query.Limit,
 		},
 	)
 	if err != nil {

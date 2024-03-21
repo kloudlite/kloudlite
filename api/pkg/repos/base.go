@@ -6,7 +6,7 @@ import (
 
 type BaseEntity struct {
 	PrimitiveId       ID        `json:"_id,omitempty" graphql:"ignore" struct-json-path:",ignore"`
-	Id                ID        `json:"id"`
+	Id                ID        `json:"id" graphql:"scalar-type=ID"`
 	CreationTime      time.Time `json:"creationTime"`
 	UpdateTime        time.Time `json:"updateTime"`
 	RecordVersion     int       `json:"recordVersion"`
@@ -58,4 +58,9 @@ func (c *BaseEntity) IsMarkedForDeletion() bool {
 		return false
 	}
 	return *c.MarkedForDeletion
+}
+
+// added because gqlgen needs it when using @key directives
+// read more [here](https://github.com/99designs/gqlgen/blob/ee526b05f28b0e7d5a8e7b1da28da3e03c826df9/plugin/federation/fedruntime/runtime.go#L12)
+func (c *BaseEntity) IsEntity() {
 }
