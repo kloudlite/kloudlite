@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { useAppState } from '~/console/page-components/app-states';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -11,6 +11,8 @@ import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
 import {
   BottomNavigation,
+  GitDetail,
+  GitDetailRaw,
   ReviewComponent,
 } from '~/console/components/commons';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
@@ -18,6 +20,8 @@ import { keyconstants } from '~/console/server/r-utils/key-constants';
 const AppReview = () => {
   const { app, buildData, setPage, resetState } = useAppState();
 
+  const gitMode =
+    app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
   const api = useConsoleApi();
   const navigate = useNavigate();
   const { project, environment } = useParams();
@@ -30,11 +34,14 @@ const AppReview = () => {
         throw new Error('Project and Environment is required!.');
       }
 
+      // create build first if git image is selected
       let buildId = '';
-      const gitMode =
-        app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
 
       if (buildData && gitMode) {
+        toast.info('Creating build', {
+          toastId: 'app',
+        });
+
         try {
           const { errors, data } = await api.createBuild({
             build: buildData,
@@ -46,13 +53,21 @@ const AppReview = () => {
 
           buildId = data.id;
 
-          toast.success('build created successfully');
+          toast.update('app', {
+            type: 'success',
+            render: 'Build created successfully',
+          });
         } catch (err) {
           handleError(err);
+          return;
         }
       }
 
       try {
+        toast.update('app', {
+          type: 'info',
+          render: 'Creating app',
+        });
         const { errors } = await api.createApp({
           envName: environment,
           projectName: project,
@@ -79,7 +94,10 @@ const AppReview = () => {
         if (errors) {
           throw errors[0];
         }
-        toast.success('created successfully');
+        toast.update('app', {
+          type: 'success',
+          render: 'App created successfully',
+        });
         resetState();
         navigate('../apps');
       } catch (err) {
@@ -107,12 +125,21 @@ const AppReview = () => {
             setPage(1);
           }}
         >
-          <div className="flex flex-col p-xl gap-md rounded border border-border-default">
-            <div className="bodyMd-semibold text-text-default">
-              {app.displayName}
+          <div className="flex flex-col rounded border border-border-default">
+            <div className="flex flex-col p-xl gap-md">
+              <div className="bodyMd-semibold text-text-default">
+                {app.displayName}
+              </div>
+              <div className="bodySm text-text-soft">{parseName(app)}</div>
             </div>
-            <div className="bodySm text-text-soft">{parseName(app)}</div>
           </div>
+          {gitMode && buildData && (
+            <GitDetailRaw
+              branch={buildData?.source.branch}
+              provider={buildData?.source.provider}
+              repository={buildData?.source.repository}
+            />
+          )}
         </ReviewComponent>
 
         <ReviewComponent

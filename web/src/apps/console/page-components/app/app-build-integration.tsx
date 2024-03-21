@@ -1,11 +1,10 @@
 import { useOutletContext } from '@remix-run/react';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { TextArea, TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
 import Git from '~/console/components/git';
 import KeyValuePair from '~/console/components/key-value-pair';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
-import { IAppContext } from '~/console/routes/_main+/$account+/$project+/$environment+/app+/$app+/_layout';
+import { IAppContext } from '~/console/routes/_main+/$account+/$project+/env+/$environment+/app+/$app+/_layout';
 import { dummyEvent } from '~/root/lib/client/hooks/use-form';
 
 const AppBuildIntegration = ({
