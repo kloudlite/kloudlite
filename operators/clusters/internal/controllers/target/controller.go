@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
@@ -156,12 +157,8 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 
 func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := DefaultsPatched
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	check := rApi.NewRunningCheck(DefaultsPatched, req)
 
 	hasUpdated := false
 
@@ -201,42 +198,28 @@ func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(checkName, check, err.Error())
+			return check.Failed(err)
 		}
 		return req.Done().RequeueAfter(500 * time.Millisecond)
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	_, obj := req.Context(), req.Object
 
-	checkName := "finalizing"
-	check := rApi.Check{Generation: obj.Generation}
+	if !slices.Equal(obj.Status.CheckList, DeleteCheckList) {
+		req.Object.Status.CheckList = DeleteCheckList
+		if step := req.UpdateStatus(); !step.ShouldProceed() {
+			return step
+		}
+	}
 
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	check := rApi.NewRunningCheck("finalizing", req)
 
 	if step := r.startClusterDestroyJob(req); !step.ShouldProceed() {
-		check.Status = false
-		check.Message = "waiting for cluster destroy job check to be completed"
-		if check != obj.Status.Checks[checkName] {
-			fn.MapSet(&obj.Status.Checks, checkName, check)
-			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-				return sr
-			}
-		}
-
-		return req.Done().Err(nil)
+		return check.StillRunning(fmt.Errorf("waiting for cluster destroy job check to be completed"))
 	}
 
 	return req.Finalize()
@@ -244,60 +227,34 @@ func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) ste
 
 func (r *ClusterReconciler) ensureJobRBAC(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := ClusterJobRBACReady
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(ClusterJobRBACReady, req)
 
 	b, err := templates.ParseBytes(r.templateRBACForClusterJob, map[string]any{
 		"service-account-name": clusterJobServiceAccount,
 		"namespace":            obj.Namespace,
 	})
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).Err(nil)
 	}
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 	req.AddToOwnedResources(rr...)
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := ClusterPrerequisitesReady
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(ClusterPrerequisitesReady, req)
 
 	switch obj.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
 		{
 			if obj.Spec.AWS == nil {
-				return fail(fmt.Errorf(".spec.aws must be set when cloudprovider is aws"))
+				return check.Failed(fmt.Errorf(".spec.aws must be set when cloudprovider is aws")).Err(nil)
 			}
 
 			if obj.Spec.AWS.VPC == nil {
@@ -306,7 +263,7 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 				awsvpc, err := rApi.Get(ctx, r.Client, fn.NN(namespace, name), &clustersv1.AwsVPC{})
 				if err != nil {
 					if !apiErrors.IsNotFound(err) {
-						return fail(err)
+						return check.Failed(err)
 					}
 					// create vpc
 					awsvpc = &clustersv1.AwsVPC{
@@ -324,23 +281,23 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 						},
 					}
 					if err := r.Create(ctx, awsvpc); err != nil {
-						return fail(err)
+						return check.Failed(err)
 					}
 				}
 
 				if !awsvpc.Status.IsReady {
-					return fail(fmt.Errorf("aws vpc (%s) is not ready", name))
+					return check.StillRunning(fmt.Errorf("aws vpc (%s) is not ready", name))
 				}
 
 				secret, err := rApi.Get(ctx, r.Client, fn.NN(awsvpc.Spec.Output.Namespace, awsvpc.Spec.Output.Name), &corev1.Secret{})
 				if err != nil {
-					return fail(err)
+					return check.Failed(err)
 				}
 
 				var m []map[string]string
 
 				if err := json.Unmarshal(secret.Data["vpc_public_subnets"], &m); err != nil {
-					return fail(err)
+					return check.Failed(err)
 				}
 
 				vpcPublicSubnets := make([]clustersv1.AwsSubnetWithID, 0, len(m))
@@ -357,7 +314,7 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 				}
 
 				if err := r.Update(ctx, obj); err != nil {
-					return fail(err).RequeueAfter(500 * time.Millisecond)
+					return check.Failed(err)
 				}
 
 				return req.Done().RequeueAfter(500 * time.Millisecond)
@@ -365,19 +322,11 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 		}
 	default:
 		{
-			return fail(fmt.Errorf("unsupported cloudprovider %s", obj.Spec.CloudProvider))
+			return check.Failed(fmt.Errorf("unsupported cloudprovider %s", obj.Spec.CloudProvider)).Err(nil)
 		}
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1.Cluster) (string, error) {
@@ -540,16 +489,7 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clu
 
 func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := ClusterCreateJobAppliedAndReady
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(ClusterCreateJobAppliedAndReady, req)
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), job); err != nil {
@@ -559,7 +499,7 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	if job == nil {
 		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj)
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err).Err(nil)
 		}
 
 		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
@@ -599,12 +539,12 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 			"job-image":   r.Env.IACJobImage,
 		})
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err).Err(nil)
 		}
 
 		rr, err := r.yamlClient.ApplyYAML(ctx, b)
 		if err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 		req.AddToOwnedResources(rr...)
 		req.Logger.Infof("waiting for job to be created")
@@ -615,47 +555,30 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return fail(fmt.Errorf("waiting for previous jobs to finish execution")).Err(nil)
+			return check.Failed(fmt.Errorf("waiting for previous jobs to finish execution")).Err(nil)
 		}
 
 		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return fail(fmt.Errorf("waiting for job to finish execution"))
+		return check.Failed(fmt.Errorf("waiting for job to finish execution"))
 	}
 
 	if job.Status.Succeeded == 0 {
-		return fail(fmt.Errorf("cluster creation job did not succeed"))
+		return check.Failed(fmt.Errorf("cluster creation job did not succeed"))
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		obj.Status.Checks[checkName] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := ClusterDeleteJobApplied
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(ClusterDeleteJobApplied, req)
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), job); err != nil {
@@ -665,7 +588,7 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 	if job == nil {
 		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj)
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err).Err(nil)
 		}
 
 		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
@@ -696,12 +619,12 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 			"job-image": r.Env.IACJobImage,
 		})
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err).Err(nil)
 		}
 
 		rr, err := r.yamlClient.ApplyYAML(ctx, b)
 		if err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 		req.AddToOwnedResources(rr...)
 		req.Logger.Infof("waiting for job to be created")
@@ -712,36 +635,28 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return fail(fmt.Errorf("waiting for previous jobs to finish execution"))
+			return check.StillRunning(fmt.Errorf("waiting for previous jobs to finish execution"))
 		}
 
 		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return fail(fmt.Errorf("waiting for job to finish execution"))
+		return check.StillRunning(fmt.Errorf("waiting for job to finish execution"))
 	}
 
 	if job.Status.Succeeded < 1 {
 		// means job failed
-		return fail(fmt.Errorf("job failed, checkout logs for more details")).Err(nil)
+		return check.Failed(fmt.Errorf("job failed, checkout logs for more details")).Err(nil)
 	}
 
 	// check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		obj.Status.Checks[checkName] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
