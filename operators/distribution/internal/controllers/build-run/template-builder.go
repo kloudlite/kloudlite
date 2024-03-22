@@ -126,7 +126,7 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 	fn.MapSet(&obj.Labels, buildrunNamespaceAnn, obj.Namespace)
 
 	o := &BuildObj{
-		Name:             obj.Name,
+		Name:             fmt.Sprintf("build-%s", obj.Name),
 		Namespace:        r.Env.BuildNamespace,
 		Labels:           obj.Labels,
 		Annotations:      fn.FilterObservabilityAnnotations(obj.Annotations),

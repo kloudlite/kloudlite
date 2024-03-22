@@ -116,55 +116,31 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(PVCReady, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(PVCReady, req)
 
 	if obj.Spec.CacheKeyName == nil {
-		check.Status = true
 		check.Message = "no cache key name specified, so not required"
-		check.State = rApi.CompletedState
-		check.Info = check.Message
-		if check != obj.Status.Checks[PVCReady] {
-			fn.MapSet(&obj.Status.Checks, PVCReady, check)
-			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-				return sr
-			}
-		}
-		return req.Next()
+		return check.Completed()
 	}
 
 	_, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.BuildNamespace, *obj.Spec.CacheKeyName), &corev1.PersistentVolumeClaim{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return failed(err)
+			return check.Failed(err)
 		}
-		return failed(fmt.Errorf("pvc, required for cache not found, please create a pvc with name %s", *obj.Spec.CacheKeyName))
+		return check.Failed(fmt.Errorf("pvc, required for cache not found, please create a pvc with name %s", *obj.Spec.CacheKeyName))
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != obj.Status.Checks[PVCReady] {
-		fn.MapSet(&obj.Status.Checks, PVCReady, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(JobCreated, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(JobCreated, req)
 
 	if obj.Status.Checks[JobCreated].Status {
-		return req.Next()
+		return check.Completed()
 	}
 
 	var jobs batchv1.JobList
@@ -176,47 +152,34 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 				Namespace:     r.Env.BuildNamespace,
 			},
 		); err != nil {
-			return failed(err)
+			return check.Failed(err)
 		}
 
 		for _, j := range jobs.Items {
 			if j.Status.Active > 0 {
-				return failed(fmt.Errorf("cache is in use, currently building %s", j.Name)).Err(nil)
+				return check.StillRunning(fmt.Errorf("cache is in use, currently building %s", j.Name)).Err(nil)
 			}
 		}
 	}
 
 	b, err := r.getBuildTemplate(req)
 	if err != nil {
-		return failed(err)
+		return check.Failed(err).Err(nil)
 	}
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return failed(err).Err(nil)
+		return check.Failed(err)
 	}
 
 	req.AddToOwnedResources(rr...)
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != obj.Status.Checks[JobCreated] {
-		fn.MapSet(&obj.Status.Checks, JobCreated, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(JobCompleted, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(JobCompleted, req)
 
 	if obj.Status.Checks[JobCompleted].Status || obj.Status.Checks[JobFailed].Status {
 		return req.Next()
@@ -224,35 +187,19 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 
 	j, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.BuildNamespace, fmt.Sprint("build-", obj.Name)), &batchv1.Job{})
 	if err != nil {
-		return failed(err)
+		return check.Failed(err)
 	}
 
 	if j.Status.Active > 0 {
-		return failed(fmt.Errorf("job is running, and waiting for completion")).Err(nil)
+		return check.StillRunning(fmt.Errorf("job is running, and waiting for completion")).Err(nil)
 	}
 
 	if j.Status.Succeeded > 0 {
-		check.Status = true
-		check.State = rApi.CompletedState
-		if check != obj.Status.Checks[JobCompleted] {
-			fn.MapSet(&obj.Status.Checks, JobCompleted, check)
-			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-				return sr
-			}
-		}
+		return check.Completed()
 	}
 
 	if j.Status.Failed > 0 {
-		check.Status = true
-		check.State = rApi.ErroredState
-		check.Error = "job failed, please check logs"
-		check.Message = "job failed, please check logs"
-		if check != obj.Status.Checks[JobFailed] {
-			fn.MapSet(&obj.Status.Checks, JobFailed, check)
-			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-				return sr
-			}
-		}
+		return check.Failed(fmt.Errorf("job failed, please check logs")).Err(nil)
 	}
 
 	return req.Next()
@@ -260,11 +207,7 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 
 func (r *Reconciler) finalize(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(JobDeleted, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(JobDeleted, req)
 
 	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
 		return step
@@ -273,13 +216,19 @@ func (r *Reconciler) finalize(req *rApi.Request[*dbv1.BuildRun]) stepResult.Resu
 	s, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), &corev1.Secret{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return failed(err)
+			return check.Failed(err)
 		}
 		return req.Finalize()
 	}
-
 	if err := r.Delete(ctx, s); err != nil {
-		return failed(err)
+		return check.Failed(err)
+	}
+
+	if _, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.BuildNamespace, fmt.Sprintf("build-%s", obj.Name)), &batchv1.Job{}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
+		}
+		return req.Finalize()
 	}
 
 	return req.Finalize()
