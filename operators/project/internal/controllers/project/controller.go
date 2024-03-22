@@ -3,7 +3,6 @@ package project
 import (
 	"context"
 	"slices"
-	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 
@@ -196,7 +195,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Project]) stepRes
 }
 
 func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(NamespacedRBACsReady, req)
 
 	var pullSecrets corev1.SecretList
