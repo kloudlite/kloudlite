@@ -1,15 +1,22 @@
 package env
 
 import (
-	"strings"
-
 	"github.com/codingconcepts/env"
 )
 
 type Env struct {
+	baseEnv
+	kloudliteNodepoolEnv
+}
+
+type baseEnv struct {
 	// common
 	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES"`
 
+	EnableNodepools bool `env:"ENABLE_NODEPOOLS" required:"true"`
+}
+
+type kloudliteNodepoolEnv struct {
 	CloudProviderName   string `env:"CLOUD_PROVIDER_NAME" required:"true"`
 	CloudProviderRegion string `env:"CLOUD_PROVIDER_REGION" required:"true"`
 
@@ -24,30 +31,26 @@ type Env struct {
 	TFStateSecretNamespace string `env:"TF_STATE_SECRET_NAMESPACE" required:"true" default:"kloudlite"`
 	IACJobImage            string `env:"IAC_JOB_IMAGE" required:"true"`
 
-	EnableNodepools bool `env:"ENABLE_NODEPOOLS" required:"true"`
-
 	// for, `k3s-runner`, and `k3s` binary on the to be created VM.
-	KloudliteRelease string `env:"KLOUDLITE_RELEASE"`
+	KloudliteRelease string `env:"KLOUDLITE_RELEASE" required:"true"`
 }
 
 func GetEnvOrDie() *Env {
 	var ev Env
-	if err := env.Set(&ev); err != nil {
+
+	var bev baseEnv
+	if err := env.Set(&bev); err != nil {
 		panic(err)
 	}
 
-	if ev.EnableNodepools {
-		// if strings.TrimSpace(ev.AWSVpcId) == "" {
-		// 	panic("env-var AWS_VPC_ID must be set, when ENABLE_NODEPOOLS is true")
-		// }
-		//
-		// if strings.TrimSpace(ev.AWSVpcPublicSubnets) == "" {
-		// 	panic("env-var AWS_VPC_PUBLIC_SUBNETS must be set, when ENABLE_NODEPOOLS is true")
-		// }
+	ev.baseEnv = bev
 
-		if strings.TrimSpace(ev.KloudliteRelease) == "" {
-			panic("env-var KLOUDLITE_RELEASE must be set, when ENABLE_NODEPOOLS is true")
+	if bev.EnableNodepools {
+		var npenv kloudliteNodepoolEnv
+		if err := env.Set(&npenv); err != nil {
+			panic(err)
 		}
+		ev.kloudliteNodepoolEnv = npenv
 	}
 
 	return &ev
