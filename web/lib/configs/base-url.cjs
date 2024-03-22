@@ -1,6 +1,14 @@
 // @ts-ignore
 const getClientEnv = (env) => {
-  const { BASE_URL, NODE_ENV, URL_SUFFIX, DEVELOPER, REGISTRY_URL } = env;
+  const {
+    BASE_URL,
+    NODE_ENV,
+    URL_SUFFIX,
+    DEVELOPER,
+    REGISTRY_URL,
+    MANAGE_GITLAB_URL,
+    MANAGE_GITHUB_URL,
+  } = env;
   return `
 ${BASE_URL ? `window.BASE_URL = ${`'${BASE_URL}'`}` : ''}
 ${
@@ -10,6 +18,16 @@ ${
 }
 ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
 ${REGISTRY_URL ? `window.REGISTRY_URL = ${`'${REGISTRY_URL}'`}` : ''}
+${
+  MANAGE_GITHUB_URL
+    ? `window.MANAGE_GITHUB_URL = ${`'${MANAGE_GITHUB_URL}'`}`
+    : ''
+}
+${
+  MANAGE_GITLAB_URL
+    ? `window.MANAGE_GITLAB_URL = ${`'${MANAGE_GITLAB_URL}'`}`
+    : ''
+}
 `;
 };
 
@@ -28,6 +46,12 @@ const getServerEnv = () => {
       : {}),
     ...(process.env.REGISTRY_URL
       ? { REGISTRY_URL: process.env.REGISTRY_URL }
+      : {}),
+    ...(process.env.MANAGE_GITHUB_URL
+      ? { MANAGE_GITHUB_URL: process.env.MANAGE_GITHUB_URL }
+      : {}),
+    ...(process.env.MANAGE_GITLAB_URL
+      ? { MANAGE_GITLAB_URL: process.env.MANAGE_GITLAB_URL }
       : {}),
   };
 };

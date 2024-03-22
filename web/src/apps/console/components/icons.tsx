@@ -56,4 +56,6 @@ export {
   Circle,
   CircleFill,
   Spinner,
+  Globe,
+  ShieldCheck,
 } from '@jengaicons/react';
