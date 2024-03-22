@@ -156,16 +156,7 @@ func (r *ServiceReconciler) finalize(req *rApi.Request[*redisMsvcv1.StandaloneSe
 
 func (r *ServiceReconciler) generateAccessCreds(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := AccessCredsGenerated
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(AccessCredsGenerated, req)
 
 	accessCreds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
 
@@ -201,42 +192,25 @@ func (r *ServiceReconciler) generateAccessCreds(req *rApi.Request[*redisMsvcv1.S
 
 		return nil
 	}); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](accessCreds)
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).Err(nil)
 	}
 	rApi.SetLocal(req, KeyMsvcOutput, *msvcOutput)
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *ServiceReconciler) applyHelm(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := RedisHelmApplied
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	check := rApi.NewRunningCheck(RedisHelmApplied, req)
 
 	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
 	if !ok {
-		return fail(rApi.ErrNotInReqLocals(KeyMsvcOutput))
+		return check.Failed(rApi.ErrNotInReqLocals(KeyMsvcOutput)).Err(nil)
 	}
 
 	b, err := templates.ParseBytes(r.templateHelmRedisStandalone, map[string]any{
@@ -264,76 +238,42 @@ func (r *ServiceReconciler) applyHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 		"root-password": msvcOutput.RootPassword,
 	})
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).Err(nil)
 	}
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	req.AddToOwnedResources(rr...)
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *ServiceReconciler) checkHelmReady(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := RedisHelmReady
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(RedisHelmReady, req)
 
 	hc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.HelmChart{})
 	if err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	if !hc.Status.IsReady {
-		return fail(fmt.Errorf("waiting for helm installation to complete"))
+		return check.Failed(fmt.Errorf("waiting for helm installation to complete"))
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *ServiceReconciler) checkStsReady(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := RedisStatefulSetsReady
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	check := rApi.NewRunningCheck(RedisStatefulSetsReady, req)
 
 	sts, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name+"-master"), &appsv1.StatefulSet{})
 	if err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	if sts.Status.AvailableReplicas != sts.Status.Replicas {
@@ -347,29 +287,21 @@ func (r *ServiceReconciler) checkStsReady(req *rApi.Request[*redisMsvcv1.Standal
 				),
 			},
 		); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 
 		messages := rApi.GetMessagesFromPods(podsList.Items...)
 		if len(messages) > 0 {
 			b, err := json.Marshal(messages)
 			if err != nil {
-				return fail(err)
+				return check.Failed(err)
 			}
-			return fail(fmt.Errorf(string(b)))
+			return check.Failed(fmt.Errorf(string(b)))
 		}
-		return fail(fmt.Errorf("waiting for statefulset pods to kick in"))
+		return check.StillRunning(fmt.Errorf("waiting for statefulset pods to kick in"))
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

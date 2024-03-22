@@ -50,7 +50,9 @@ func (cw *checkWrapper[T]) StillRunning(err error) step_result.Result {
 
 	cw.Check.State = RunningState
 	cw.Check.Status = false
-	cw.Check.Message = err.Error()
+	if err != nil {
+		cw.Check.Message = err.Error()
+	}
 
 	cw.request.Object.GetStatus().Checks[cw.checkName] = cw.Check
 
