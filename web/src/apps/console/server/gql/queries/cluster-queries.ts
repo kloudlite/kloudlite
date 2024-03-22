@@ -13,14 +13,44 @@ import {
   ConsoleGetKubeConfigQuery,
   ConsoleListClustersQuery,
   ConsoleListClustersQueryVariables,
+  ConsoleListDnsHostsQuery,
   ConsoleUpdateClusterMutation,
   ConsoleUpdateClusterMutationVariables,
+  ConsoleListDnsHostsQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type ICluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
 export type IClusters = NN<ConsoleListClustersQuery['infra_listClusters']>;
 
+export type IDnsHosts = NN<ConsoleListDnsHostsQuery>['infra_listClusters'];
+
 export const clusterQueries = (executor: IExecutor) => ({
+  listDnsHosts: executor(
+    gql`
+      query Spec {
+        infra_listClusters {
+          edges {
+            node {
+              metadata {
+                name
+                namespace
+              }
+              spec {
+                publicDNSHost
+              }
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleListDnsHostsQuery) => {
+        return data.infra_listClusters;
+      },
+      vars(_: ConsoleListDnsHostsQueryVariables) {},
+    }
+  ),
+
   createCluster: executor(
     gql`
       mutation CreateCluster($cluster: ClusterIn!) {

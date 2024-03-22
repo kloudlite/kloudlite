@@ -239,6 +239,22 @@ query consoleListProjects($search: SearchProjects, $pq: CursorPaginationIn) {
   }
 }
 
+query consoleListDnsHosts {
+  infra_listClusters {
+    edges {
+      node {
+        metadata {
+          name
+          namespace
+        }
+        spec {
+          publicDNSHost
+        }
+      }
+    }
+  }
+}
+
 mutation consoleCreateCluster($cluster: ClusterIn!) {
   infra_createCluster(cluster: $cluster) {
     id

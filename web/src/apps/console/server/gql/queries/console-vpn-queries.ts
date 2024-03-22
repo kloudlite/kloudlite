@@ -24,6 +24,10 @@ export type IConsoleDevicesForUser = NN<
   ConsoleListConsoleVpnDevicesForUserQuery['core_listVPNDevicesForUser']
 >;
 
+export type IConsoleDevice = NN<
+  ConsoleGetConsoleVpnDeviceQuery['core_getVPNDevice']
+>;
+
 export const consoleVpnQueries = (executor: IExecutor) => ({
   createConsoleVpnDevice: executor(
     gql`

@@ -1801,6 +1801,19 @@ export type ConsoleListProjectsQuery = {
   };
 };
 
+export type ConsoleListDnsHostsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ConsoleListDnsHostsQuery = {
+  infra_listClusters?: {
+    edges: Array<{
+      node: {
+        metadata: { name: string; namespace?: string };
+        spec: { publicDNSHost: string };
+      };
+    }>;
+  };
+};
+
 export type ConsoleCreateClusterMutationVariables = Exact<{
   cluster: ClusterIn;
 }>;
