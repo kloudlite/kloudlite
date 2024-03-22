@@ -81,7 +81,7 @@ func (r *Reconciler) ensureAccountNamespace(req *rApi.Request[*crdsv1.Account]) 
 	check := rApi.NewRunningCheck(ensureAccountNamespace, req)
 
 	if obj.Spec.TargetNamespace == nil {
-		return check.Failed(errors.New(".spec.targetNamespace is nil, it must be non-nil"))
+		return check.Failed(errors.New(".spec.targetNamespace is nil, it must be non-nil")).Err(nil)
 	}
 
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: *obj.Spec.TargetNamespace}}
