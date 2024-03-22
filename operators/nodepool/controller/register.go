@@ -10,6 +10,12 @@ import (
 
 func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
+
+	if !ev.EnableNodepools {
+		mgr.Operator().Logger.Infof("nodepools controller is disabled")
+		return
+	}
+
 	mgr.AddToSchemes(clustersv1.AddToScheme)
 	mgr.RegisterControllers(
 		&nodepool_controller.Reconciler{Env: ev, Name: "nodepool"},
