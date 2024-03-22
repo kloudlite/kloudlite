@@ -113,27 +113,26 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 
-	checkName := "finalizing"
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.NewRunningCheck("finalizing", req)
 
 	_, URI, err := r.getMsvcConnectionParams(ctx, obj)
 	if err != nil {
 		if apiErrors.IsNotFound(err) {
 			return req.Finalize()
 		}
-		return req.CheckFailed(checkName, check, err.Error()).Err(nil)
+		return check.Failed(err)
 	}
 
 	mctx, cancel := r.newMongoContext(ctx)
 	defer cancel()
 	mongoCli, err := libMongo.NewClient(mctx, URI)
 	if err != nil {
-		return req.CheckFailed(checkName, check, err.Error())
+		return check.Failed(err)
 	}
 	defer mongoCli.Close()
 
 	if err := mongoCli.DeleteUser(ctx, obj.Name, obj.Name); err != nil {
-		return req.CheckFailed(checkName, check, err.Error())
+		return check.Failed(err)
 	}
 
 	return req.Finalize()
