@@ -64,11 +64,10 @@ const (
 )
 
 func (r *Reconciler) newMongoContext(parent context.Context) (context.Context, context.CancelFunc) {
-	_ = time.Now()
-	// if r.Env.IsDev {
-	return context.WithCancel(parent)
-	// }
-	// return context.WithTimeout(parent, 5*time.Second)
+	if r.Env.IsDev {
+		return context.WithCancel(parent)
+	}
+	return context.WithTimeout(parent, 5*time.Second)
 }
 
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=databases,verbs=get;list;watch;create;update;patch;delete
@@ -187,10 +186,7 @@ func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMs
 
 func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(AccessCredsReady)
-	defer req.LogPostCheck(AccessCredsReady)
+	check := rApi.NewRunningCheck(AccessCredsReady, req)
 
 	secretName := obj.Output.CredentialsRef.Name
 	secretNamespace := obj.Namespace
@@ -202,7 +198,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 
 	msvcHosts, msvcURI, err := r.getMsvcConnectionParams(ctx, obj)
 	if err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+		return check.Failed(err).Err(nil)
 	}
 
 	shouldGeneratePassword := scrt == nil
@@ -210,16 +206,15 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 	if scrt != nil {
 		mresOutput, err := fn.ParseFromSecret[types.MresOutput](scrt)
 		if err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+			return check.Failed(err).Err(nil)
 		}
 
 		err = libMongo.ConnectAndPing(ctx, mresOutput.URI)
 		if err != nil {
 			if !libMongo.FailsWithAuthError(err) {
-				return req.CheckFailed(AccessCredsReady, check, err.Error())
+				return check.Failed(err)
 			}
 			req.Logger.Infof("Invalid Credentials in secret's .data.URI, would need to be regenerated as connection failed with auth error")
-
 			shouldGeneratePassword = true
 		}
 	}
@@ -250,55 +245,44 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 			},
 		)
 		if err != nil {
-			return req.CheckFailed(DBUserReady, check, err.Error())
+			return check.Failed(err).Err(nil)
 		}
 
 		if _, err := r.yamlClient.ApplyYAML(ctx, b2); err != nil {
-			return req.CheckFailed(DBUserReady, check, err.Error())
+			return check.Failed(err)
 		}
 
 		mctx, cancel := r.newMongoContext(ctx)
 		defer cancel()
 		mongoCli, err := libMongo.NewClient(mctx, msvcURI)
 		if err != nil {
-			return req.CheckFailed(DBUserReady, check, err.Error())
+			return check.Failed(err)
 		}
 
 		if err := mongoCli.Ping(mctx); err != nil {
-			return req.CheckFailed(DBUserReady, check, err.Error())
+			return check.Failed(err)
 		}
 
 		defer mongoCli.Close()
 
 		exists, err := mongoCli.UserExists(ctx, mresOutput.DbName, obj.Name)
 		if err != nil {
-			return req.CheckFailed(DBUserReady, check, err.Error())
+			return check.Failed(err)
 		}
 
 		if !exists {
 			if err := mongoCli.UpsertUser(ctx, mresOutput.DbName, mresOutput.Username, mresOutput.Password); err != nil {
-				return req.CheckFailed(DBUserReady, check, err.Error())
+				return check.Failed(err)
 			}
-			fn.MapSet(&obj.Status.Checks, DBUserReady, check)
-			return req.UpdateStatus()
+
+			return check.StillRunning(nil)
 		}
 
-		if exists {
-			if err := mongoCli.UpdateUserPassword(ctx, mresOutput.DbName, mresOutput.Username, mresOutput.Password); err != nil {
-				return req.CheckFailed(DBUserReady, check, err.Error())
-			}
+		if err := mongoCli.UpdateUserPassword(ctx, mresOutput.DbName, mresOutput.Username, mresOutput.Password); err != nil {
+			return check.Failed(err)
 		}
 	}
-
-	check.Status = true
-	if check != obj.Status.Checks[AccessCredsReady] {
-		fn.MapSet(&obj.Status.Checks, AccessCredsReady, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
