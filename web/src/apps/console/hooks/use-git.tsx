@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '../server/gql/api-provider';
+import { parseValue } from '../page-components/util';
 
 export type IGIT_PROVIDERS = 'gitlab' | 'github';
 
@@ -45,7 +46,10 @@ const useGit = ({
   );
   const [searchText, setSearchText] = useState('');
   const [repo, setRepo] = useState(initialRepo || '');
-  const [org, setOrg] = useState('');
+  const [org, setOrg] = useState<{
+    value: string;
+    label: string;
+  } | null>();
   const [branch, setBranch] = useState(initialBranch || '');
   const api = useConsoleApi();
   const [loading, setLoading] = useState(true);
@@ -62,6 +66,7 @@ const useGit = ({
       branchKey: 'api/github-branches',
       api: api.listGithubInstalltions,
       repoApi: api.searchGithubRepos,
+      listRepoApi: api.listGithubRepos,
       branchApi: api.listGithubBranches,
     },
     gitlab: {
@@ -103,36 +108,37 @@ const useGit = ({
   );
 
   const repos = useCustomSwr(
-    () => (org ? `repos_${org}_${debouncedSearch}` : null),
+    () => (org ? `repos_${org.value}_${debouncedSearch}` : null),
     async () => {
       switch (provider) {
-        case 'github':
-          return data.github.repoApi({
-            organization: org,
-            search: debouncedSearch,
-            pagination: {
-              page: 1,
-              per_page: 5,
-            },
-          });
         case 'gitlab':
           return data.gitlab.repoApi({
-            groupId: org,
+            groupId: org?.value || '',
             query: debouncedSearch,
             pagination: {
               page: 1,
               per_page: 5,
             },
           });
+
+        case 'github':
         default:
-          return data.github.repoApi({
-            organization: org,
-            search: debouncedSearch,
-            pagination: {
-              page: 1,
-              per_page: 5,
-            },
-          });
+          return searchText
+            ? data.github.repoApi({
+                organization: org?.label || '',
+                search: debouncedSearch,
+                pagination: {
+                  page: 1,
+                  per_page: 5,
+                },
+              })
+            : data.github.listRepoApi({
+                installationId: parseValue(org?.value, 0),
+                pagination: {
+                  page: 1,
+                  per_page: 5,
+                },
+              });
       }
     }
   );
@@ -168,10 +174,10 @@ const useGit = ({
     if (installations.data && installations.data.length > 0) {
       switch (provider) {
         case 'gitlab':
-          setOrg(installations.data[0].value);
+          setOrg(installations.data[0]);
           break;
         case 'github':
-          setOrg(installations.data[0].label);
+          setOrg(installations.data[0]);
           break;
         default:
           break;

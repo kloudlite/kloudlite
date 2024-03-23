@@ -1,21 +1,33 @@
 import useSWR from 'swr';
 import { IGqlReturn } from '../../types/common';
+import { handleError } from '../../utils/common';
 
-const caller = <T>(func: () => IGqlReturn<T>): (() => Promise<T>) => {
+const caller = <T>(
+  func: () => IGqlReturn<T>,
+  toastError?: boolean
+): (() => Promise<T>) => {
   return async () => {
-    const { errors, data } = await func();
-    if (errors) {
-      throw errors;
-    }
+    try {
+      const { errors, data } = await func();
+      if (errors) {
+        throw errors;
+      }
 
-    return data;
+      return data;
+    } catch (e) {
+      if (toastError) {
+        handleError(e);
+      }
+      throw e;
+    }
   };
 };
 const useCustomSwr = <T>(
   key: string | null | (() => string | null),
-  func: () => IGqlReturn<T>
+  func: () => IGqlReturn<T>,
+  toastError?: boolean
 ) => {
-  return useSWR(key, caller(func), {
+  return useSWR(key, caller(func, toastError), {
     shouldRetryOnError: false,
     revalidateOnFocus: false,
   });

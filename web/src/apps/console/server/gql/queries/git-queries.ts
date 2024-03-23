@@ -2,6 +2,7 @@ import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { NN } from '~/root/lib/types/common';
 import {
+  ConsoleGetGitConnectionsQuery,
   ConsoleGetLoginsQuery,
   ConsoleGetLoginsQueryVariables,
   ConsoleListGithubBranchesQuery,
@@ -20,6 +21,7 @@ import {
   ConsoleLoginUrlsQueryVariables,
   ConsoleSearchGithubReposQuery,
   ConsoleSearchGithubReposQueryVariables,
+  ConsoleGetGitConnectionsQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IGithubRepos = NN<
@@ -36,6 +38,43 @@ export type ILoginUrls = NN<ConsoleLoginUrlsQuery>;
 // export type IProject = NN<Console['core_getProject']>;
 
 export const gitQueries = (executor: IExecutor) => ({
+  getGitConnections: executor(
+    gql`
+      query Me($state: String) {
+        auth_me {
+          providerGitlab
+          providerGithub
+          providerGoogle
+        }
+        githubLoginUrl: oAuth_requestLogin(provider: "github", state: $state)
+        gitlabLoginUrl: oAuth_requestLogin(provider: "gitlab", state: $state)
+      }
+    `,
+    {
+      transformer: (data: ConsoleGetGitConnectionsQuery) => {
+        const { providerGitlab, providerGithub, providerGoogle } =
+          data?.auth_me || {};
+        const { githubLoginUrl, gitlabLoginUrl } = data;
+        return {
+          github: {
+            connected: !!providerGithub,
+            avatar: providerGithub?.avatar,
+            githubLoginUrl,
+          },
+          gitlab: {
+            connected: !!providerGitlab,
+            avatar: providerGitlab?.avatar,
+            gitlabLoginUrl,
+          },
+          google: {
+            connected: !!providerGoogle,
+            avatar: providerGoogle?.avatar,
+          },
+        };
+      },
+      vars(_: ConsoleGetGitConnectionsQueryVariables) {},
+    }
+  ),
   getLogins: executor(
     gql`
       query Auth_me {

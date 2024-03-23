@@ -1820,6 +1820,16 @@ mutation consoleDeleteDigest($repoName: String!, $digest: String!) {
   cr_deleteDigest(repoName: $repoName, digest: $digest)
 }
 
+query consoleGetGitConnections($state: String) {
+  auth_me {
+    providerGitlab
+    providerGithub
+    providerGoogle
+  }
+  githubLoginUrl: oAuth_requestLogin(provider: "github", state: $state)
+  gitlabLoginUrl: oAuth_requestLogin(provider: "gitlab", state: $state)
+}
+
 query consoleGetLogins {
   auth_me {
     providerGithub
