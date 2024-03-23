@@ -11,13 +11,13 @@ import {
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { dayjs } from '~/components/molecule/dayjs';
-import { githubAppName } from '~/root/lib/configs/base-url.cjs';
 import Radio from '~/components/atoms/radio';
 import { useAppend, useMapper } from '~/components/utils';
 import { ReactNode, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '~/components/atoms/button';
 import { toast } from '~/components/molecule/toast';
+import { gitEnvs } from '~/root/lib/configs/base-url.cjs';
 import { ILoginUrls, ILogins } from '../server/gql/queries/git-queries';
 import Pulsable from './pulsable';
 import useGit, { IGIT_PROVIDERS } from '../hooks/use-git';
@@ -58,8 +58,6 @@ const commonOptions = [
     ),
   },
 ];
-
-const githubInstallUrl = `https://github.com/apps/${githubAppName}/installations/new`;
 
 const popupWindow = ({
   url = '',
@@ -248,7 +246,7 @@ const Git = ({
   const accounts = useMapper(installations.data || [], (d) => {
     return {
       label: d.label,
-      value: provider === 'gitlab' ? d.value : d.label,
+      value: d.value,
       labelValueIcon:
         provider === 'gitlab' ? (
           <GitlabLogoFill size={iconSize} />
@@ -327,20 +325,19 @@ const Git = ({
                   size="lg"
                   valueRender={valueRender}
                   options={async () => accountsModified}
-                  value={org}
+                  value={org?.value}
                   onChange={(res) => {
-                    console.log(res);
                     switch (res.value) {
                       case extraAddOption:
                         popupWindow({
-                          url: githubInstallUrl,
+                          url: `https://github.com/apps/${gitEnvs.githubAppName}/installations/new`,
                         });
                         break;
                       case extraSwitchOption:
                         setShowProviderOverlay(true);
                         break;
                       default:
-                        setOrg(res.value);
+                        setOrg(res);
                         break;
                     }
                   }}

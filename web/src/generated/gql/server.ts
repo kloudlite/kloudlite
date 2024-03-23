@@ -3331,6 +3331,20 @@ export type ConsoleDeleteDigestMutationVariables = Exact<{
 
 export type ConsoleDeleteDigestMutation = { cr_deleteDigest: boolean };
 
+export type ConsoleGetGitConnectionsQueryVariables = Exact<{
+  state?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type ConsoleGetGitConnectionsQuery = {
+  githubLoginUrl: any;
+  gitlabLoginUrl: any;
+  auth_me?: {
+    providerGitlab?: any;
+    providerGithub?: any;
+    providerGoogle?: any;
+  };
+};
+
 export type ConsoleGetLoginsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type ConsoleGetLoginsQuery = {
