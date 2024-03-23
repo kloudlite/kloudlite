@@ -208,7 +208,8 @@ export type SearchBuildCacheKeys = {
 };
 
 export type SearchBuildRuns = {
-  text?: InputMaybe<MatchFilterIn>;
+  buildId?: InputMaybe<Scalars['ID']['input']>;
+  repoName?: InputMaybe<MatchFilterIn>;
 };
 
 export type SearchBuilds = {
@@ -828,6 +829,11 @@ export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Inter
 
 export type RepositoryIn = {
   name: Scalars['String']['input'];
+};
+
+export type ByokClusterIn = {
+  displayName: Scalars['String']['input'];
+  metadata: MetadataIn;
 };
 
 export type ClusterIn = {
@@ -4243,7 +4249,6 @@ export type ConsoleDeletePvMutationVariables = Exact<{
 export type ConsoleDeletePvMutation = { infra_deletePV: boolean };
 
 export type ConsoleListBuildRunsQueryVariables = Exact<{
-  buildID: Scalars['ID']['input'];
   search?: InputMaybe<SearchBuildRuns>;
   pq?: InputMaybe<CursorPaginationIn>;
 }>;

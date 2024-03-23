@@ -14,11 +14,10 @@ export const buildRunQueries = (executor: IExecutor) => ({
   listBuildRuns: executor(
     gql`
       query Cr_listBuildRuns(
-        $buildID: ID!
         $search: SearchBuildRuns
         $pq: CursorPaginationIn
       ) {
-        cr_listBuildRuns(buildID: $buildID, search: $search, pq: $pq) {
+        cr_listBuildRuns(search: $search, pq: $pq) {
           edges {
             cursor
             node {
