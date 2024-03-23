@@ -4,7 +4,7 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { getPagination, getSearch } from '~/console/server/utils/common';
+import { getPagination } from '~/console/server/utils/common';
 import { defer } from '@remix-run/node';
 import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
@@ -16,9 +16,10 @@ export const loader = async (ctx: IRemixCtx) => {
 
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listBuildRuns({
-      buildID: build,
       pq: getPagination(ctx),
-      search: getSearch(ctx),
+      search: {
+        buildId: build,
+      },
     });
     console.log(data);
     if (errors) {
