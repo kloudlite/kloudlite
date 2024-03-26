@@ -136,20 +136,36 @@ func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.A
 		return nil, errors.NewE(err)
 	}
 
+	xapp, err := d.appRepo.FindOne(ctx, ctx.DBFilters().Add(fields.MetadataName, appIn.Name))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if xapp == nil {
+		return nil, errors.Newf("app does not exist")
+	}
+
+	for i := range xapp.Spec.Containers {
+		for _, volume := range xapp.Spec.Containers[i].Volumes {
+			if volume.Type == crdsv1.PVCType {
+				appIn.Spec.Containers[i].Volumes = append(appIn.Spec.Containers[i].Volumes, volume)
+			}
+		}
+	}
+
+	patchDoc := repos.Document{
+		fc.AppCiBuildId: appIn.CIBuildId,
+		fc.AppSpec:      appIn.Spec,
+	}
+
 	patchForUpdate := common.PatchForUpdate(
 		ctx,
 		&appIn,
 		common.PatchOpts{
-			XPatch: repos.Document{
-				fc.AppSpec: appIn.Spec,
-			},
+			XPatch: patchDoc,
 		})
 
-	upApp, err := d.appRepo.Patch(
-		ctx,
-		ctx.DBFilters().Add(fields.MetadataName, appIn.Name),
-		patchForUpdate,
-	)
+	upApp, err := d.appRepo.Patch(ctx, ctx.DBFilters().Add(fields.MetadataName, appIn.Name), patchForUpdate)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
