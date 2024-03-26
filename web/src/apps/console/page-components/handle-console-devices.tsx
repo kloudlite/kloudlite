@@ -20,11 +20,7 @@ import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import QRCode from '~/console/components/qr-code';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import {
-  ExtractNodeType,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-utils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -37,10 +33,7 @@ import CodeView from '~/console/components/code-view';
 import { InfoLabel } from '~/console/components/commons';
 import { parseValue } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
-import {
-  IConsoleDevices,
-  IConsoleDevicesForUser,
-} from '~/console/server/gql/queries/console-vpn-queries';
+import { IConsoleDevice } from '~/console/server/gql/queries/console-vpn-queries';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Select from '~/components/atoms/select';
 import { ConsoleApiType } from '../server/gql/saved-queries';
@@ -404,7 +397,7 @@ export const switchEnvironment = async ({
   project,
 }: {
   api: ConsoleApiType;
-  device: IConsoleDevicesForUser[number];
+  device: IConsoleDevice;
   environment: string;
   project: string;
 }) => {
@@ -431,7 +424,7 @@ export const switchEnvironment = async ({
   }
 };
 
-type IDialog = IDialogBase<ExtractNodeType<IConsoleDevices>>;
+type IDialog = IDialogBase<IConsoleDevice>;
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;

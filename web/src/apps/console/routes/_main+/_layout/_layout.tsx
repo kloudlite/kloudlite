@@ -193,7 +193,7 @@ const Console = () => {
 
   const noMainLayout = useHandleFromMatches('noMainLayout', null);
 
-  const _devicesMenu = useHandleFromMatches('devicesMenu', null);
+  const devicesMenu = useHandleFromMatches('devicesMenu', null);
   const noBreadCrum = useHandleFromMatches('noBreadCrum', false);
   const hideProfileName = useHandleFromMatches('hideProfileName', false);
 
@@ -233,7 +233,7 @@ const Console = () => {
         tabs={navbar === constants.nan ? null : navbar}
         actions={
           <div className="flex flex-row gap-2xl items-center">
-            {/* {!!devicesMenu && devicesMenu()} */}
+            {!!devicesMenu && devicesMenu()}
             {!!headerExtra && headerExtra()}
             <ProfileMenu hideProfileName={hideProfileName} />
           </div>

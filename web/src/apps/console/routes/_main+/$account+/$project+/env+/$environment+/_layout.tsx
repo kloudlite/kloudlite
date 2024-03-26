@@ -8,6 +8,8 @@ import {
   TreeStructure,
   Check,
   ChevronDown,
+  Globe,
+  ShieldCheck,
 } from '~/console/components/icons';
 import {
   Link,
@@ -170,10 +172,17 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
       <OptionList.Root open={open} onOpenChange={setOpen} modal={false}>
         <OptionList.Trigger>
           <Button
-            content={environment.displayName}
+            content={`${environment.displayName}`}
             size="sm"
             variant="plain"
             suffix={<ChevronDown />}
+            prefix={
+              environment.spec?.routing?.mode === 'private' ? (
+                <ShieldCheck />
+              ) : (
+                <Globe />
+              )
+            }
           />
         </OptionList.Trigger>
         <OptionList.Content className="!pt-0 !pb-md" align="center">

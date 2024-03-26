@@ -43,7 +43,6 @@ import {
   BreadcrumSlash,
 } from '~/console/utils/commons';
 import OptionList from '~/components/atoms/option-list';
-import { IConsoleDevicesForUser } from '~/console/server/gql/queries/console-vpn-queries';
 import { Button, IconButton } from '~/components/atoms/button';
 import HandleConsoleDevices, {
   ShowWireguardConfig,
@@ -58,6 +57,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { cn } from '~/components/utils';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
+import useActiveDevice from '~/console/hooks/use-device';
 import { IConsoleRootContext } from '../_layout/_layout';
 
 const _ProfileIcon = ({ size = 16 }: { size?: number }) => {
@@ -169,8 +169,7 @@ const Account = () => {
   );
 };
 
-const DevicesMenu = ({ devices }: { devices: IConsoleDevicesForUser }) => {
-  const [visible, setVisible] = useState(false);
+const DevicesMenu = () => {
   const [isUpdate, setIsUpdate] = useState(false);
   const [showQR, setShowQR] = useState(false);
 
@@ -184,29 +183,7 @@ const DevicesMenu = ({ devices }: { devices: IConsoleDevicesForUser }) => {
 
   const { environment, project } = useParams();
 
-  if (!devices || devices?.length === 0) {
-    return (
-      <div>
-        <Button
-          content="Create new device"
-          variant="basic"
-          suffix={<Plus />}
-          onClick={() => {
-            setVisible(true);
-          }}
-        />
-        <HandleConsoleDevices
-          {...{
-            isUpdate: false,
-            visible,
-            setVisible: () => setVisible(false),
-          }}
-        />
-      </div>
-    );
-  }
-
-  const device = devices[0];
+  const { device, reloadDevice } = useActiveDevice();
 
   const getConfig = async () => {
     try {
@@ -221,121 +198,125 @@ const DevicesMenu = ({ devices }: { devices: IConsoleDevicesForUser }) => {
       handleError(error);
     }
   };
+
+  if (!device) {
+    return null;
+  }
+
   return (
-    devices?.length > 0 && (
-      <>
-        <OptionList.Root>
-          <OptionList.Trigger>
-            <IconButton variant="outline" icon={<WireGuardlogo />} />
-          </OptionList.Trigger>
-          <OptionList.Content>
-            {device.environmentName && device.projectName && (
-              <>
-                <OptionList.Item>
-                  <div className="flex flex-row items-center gap-lg">
-                    <div className="flex flex-col">
-                      <span className="bodyMd-medium text-text-default">
-                        {device.displayName}
-                      </span>
-                      <span className="bodySm text-text-soft">
-                        ({parseName(device)})
-                      </span>
-                    </div>
-                  </div>
-                </OptionList.Item>
-                <OptionList.Separator />
-                <OptionList.Item>
+    <>
+      <OptionList.Root>
+        <OptionList.Trigger>
+          <IconButton variant="outline" icon={<WireGuardlogo />} />
+        </OptionList.Trigger>
+        <OptionList.Content>
+          {device.environmentName && device.projectName && (
+            <>
+              <OptionList.Item>
+                <div className="flex flex-row items-center gap-lg">
                   <div className="flex flex-col">
                     <span className="bodyMd-medium text-text-default">
-                      Connected
+                      {device.displayName}
                     </span>
                     <span className="bodySm text-text-soft">
-                      {device.projectName}/{device.environmentName}
+                      ({parseName(device)})
                     </span>
                   </div>
-                </OptionList.Item>
-                <OptionList.Item
-                  onClick={() => {
-                    setShowQR(true);
-                  }}
-                >
-                  <div className="flex flex-row items-center gap-lg">
-                    <div>
-                      <QrCode size={16} />
-                    </div>
-                    <div>Show QR Code</div>
-                  </div>
-                </OptionList.Item>
-                <OptionList.Item
-                  onClick={() => {
-                    getConfig();
-                  }}
-                >
-                  <div className="flex flex-row items-center gap-lg">
-                    <div>
-                      <Copy size={16} />
-                    </div>
-                    <div>Copy WG Config</div>
-                  </div>
-                  <OptionList.Separator />
-                </OptionList.Item>
-                {environment &&
-                  project &&
-                  environment !== device.environmentName && (
-                    <OptionList.Item
-                      onClick={async () => {
-                        await switchEnvironment({
-                          api,
-                          device,
-                          environment,
-                          project,
-                        });
-                        reload();
-                      }}
-                    >
-                      <div className="flex flex-row items-center gap-lg">
-                        <div>
-                          <ArrowsCounterClockwise size={16} />
-                        </div>
-                        <div>Switch to {environment}</div>
-                      </div>
-                    </OptionList.Item>
-                  )}
-              </>
-            )}
-            <OptionList.Separator />
-            <OptionList.Item
-              onClick={() => {
-                setIsUpdate(true);
-              }}
-            >
-              <div className="flex flex-row items-center gap-lg">
-                <div>
-                  <GearSix size={16} />
                 </div>
-                <div>Settings</div>
+              </OptionList.Item>
+              <OptionList.Separator />
+              <OptionList.Item>
+                <div className="flex flex-col">
+                  <span className="bodyMd-medium text-text-default">
+                    Connected
+                  </span>
+                  <span className="bodySm text-text-soft">
+                    {device.projectName}/{device.environmentName}
+                  </span>
+                </div>
+              </OptionList.Item>
+              <OptionList.Item
+                onClick={() => {
+                  setShowQR(true);
+                }}
+              >
+                <div className="flex flex-row items-center gap-lg">
+                  <div>
+                    <QrCode size={16} />
+                  </div>
+                  <div>Show QR Code</div>
+                </div>
+              </OptionList.Item>
+              <OptionList.Item
+                onClick={() => {
+                  getConfig();
+                }}
+              >
+                <div className="flex flex-row items-center gap-lg">
+                  <div>
+                    <Copy size={16} />
+                  </div>
+                  <div>Copy WG Config</div>
+                </div>
+                <OptionList.Separator />
+              </OptionList.Item>
+              {environment &&
+                project &&
+                environment !== device.environmentName && (
+                  <OptionList.Item
+                    onClick={async () => {
+                      await switchEnvironment({
+                        api,
+                        device,
+                        environment,
+                        project,
+                      });
+                      reload();
+                      reloadDevice();
+                    }}
+                  >
+                    <div className="flex flex-row items-center gap-lg">
+                      <div>
+                        <ArrowsCounterClockwise size={16} />
+                      </div>
+                      <div>Switch to {environment}</div>
+                    </div>
+                  </OptionList.Item>
+                )}
+            </>
+          )}
+          <OptionList.Separator />
+          <OptionList.Item
+            onClick={() => {
+              setIsUpdate(true);
+            }}
+          >
+            <div className="flex flex-row items-center gap-lg">
+              <div>
+                <GearSix size={16} />
               </div>
-            </OptionList.Item>
-          </OptionList.Content>
-        </OptionList.Root>
-        <HandleConsoleDevices
-          {...{
-            isUpdate: true,
-            data: device,
-            visible: isUpdate,
-            setVisible: () => setIsUpdate(false),
-          }}
-        />
-        <ShowWireguardConfig
-          {...{
-            visible: showQR,
-            setVisible: () => setShowQR(false),
-            data: { device: parseName(device) },
-            mode: 'qr',
-          }}
-        />
-      </>
-    )
+              <div>Settings</div>
+            </div>
+          </OptionList.Item>
+        </OptionList.Content>
+      </OptionList.Root>
+      <HandleConsoleDevices
+        {...{
+          isUpdate: true,
+          data: device,
+          visible: isUpdate,
+          setVisible: () => setIsUpdate(false),
+        }}
+      />
+      <ShowWireguardConfig
+        {...{
+          visible: showQR,
+          setVisible: () => setShowQR(false),
+          data: { device: parseName(device) },
+          mode: 'qr',
+        }}
+      />
+    </>
   );
 };
 
@@ -470,10 +451,10 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
   );
 };
 
-export const handle = ({ account, devicesForUser }: any) => {
+export const handle = ({ account }: any) => {
   return {
     breadcrum: () => <CurrentBreadcrum account={account} />,
-    devicesMenu: () => <DevicesMenu devices={devicesForUser} />,
+    devicesMenu: () => <DevicesMenu />,
   };
 };
 
@@ -490,17 +471,9 @@ export const loader = async (ctx: IRemixCtx) => {
       throw errors[0];
     }
 
-    const { data: devicesForUser, errors: vpnError } = await GQLServerHandler(
-      ctx.request
-    ).listConsoleVpnDevicesForUser({});
-    if (vpnError) {
-      throw vpnError[0];
-    }
-
     acccountData = data;
     return {
       account: data,
-      devicesForUser,
     };
   } catch (err) {
     const k = redirect('/teams') as any;
@@ -512,7 +485,6 @@ export const loader = async (ctx: IRemixCtx) => {
 
 export interface IAccountContext extends IConsoleRootContext {
   account: LoaderResult<typeof loader>['account'];
-  devicesForUser: IConsoleDevicesForUser;
 }
 
 export const shouldRevalidate: ShouldRevalidateFunction = ({

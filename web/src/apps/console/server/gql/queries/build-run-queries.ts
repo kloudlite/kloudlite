@@ -14,11 +14,10 @@ export const buildRunQueries = (executor: IExecutor) => ({
   listBuildRuns: executor(
     gql`
       query Cr_listBuildRuns(
-        $buildID: ID!
         $search: SearchBuildRuns
         $pq: CursorPaginationIn
       ) {
-        cr_listBuildRuns(buildID: $buildID, search: $search, pq: $pq) {
+        cr_listBuildRuns(search: $search, pq: $pq) {
           edges {
             cursor
             node {
@@ -107,8 +106,8 @@ export const buildRunQueries = (executor: IExecutor) => ({
   ),
   getBuildRun: executor(
     gql`
-      query Cr_getBuildRun($buildID: ID!, $buildRunName: String!) {
-        cr_getBuildRun(buildID: $buildID, buildRunName: $buildRunName) {
+      query Cr_getBuildRun($buildId: ID!, $buildRunName: String!) {
+        cr_getBuildRun(buildID: $buildId, buildRunName: $buildRunName) {
           clusterName
           creationTime
           markedForDeletion

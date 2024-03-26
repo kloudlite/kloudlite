@@ -4,7 +4,7 @@ import {
   Link as LinkIcon,
   Repeat,
 } from '@jengaicons/react';
-import { Link, useOutletContext, useParams } from '@remix-run/react';
+import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -30,7 +30,7 @@ import { useReload } from '~/lib/client/helpers/reloader';
 import { SyncStatusV2 } from '~/console/components/sync-status';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
-import { IEnvironmentContext } from '../_layout';
+import useActiveDevice from '~/console/hooks/use-device';
 
 const RESOURCE_NAME = 'app';
 type BaseType = ExtractNodeType<IApps>;
@@ -120,7 +120,6 @@ interface IResource {
 
 const GridView = ({ items = [], onAction: _ }: IResource) => {
   const { account, project, environment } = useParams();
-
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
@@ -256,7 +255,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
 const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
   const api = useConsoleApi();
   const { environment, project, account } = useParams();
-  const { devicesForUser } = useOutletContext<IEnvironmentContext>();
+  const { device } = useActiveDevice();
   const reload = useReload();
 
   useWatchReload(
@@ -278,8 +277,7 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
     if (!environment || !project) {
       throw new Error('Environment is required!.');
     }
-    if (devicesForUser && devicesForUser.length > 0) {
-      const device = devicesForUser[0];
+    if (device) {
       try {
         const { errors } = await api.interceptApp({
           appname: pn(item),

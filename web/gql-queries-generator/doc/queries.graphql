@@ -239,6 +239,22 @@ query consoleListProjects($search: SearchProjects, $pq: CursorPaginationIn) {
   }
 }
 
+query consoleListDnsHosts {
+  infra_listClusters {
+    edges {
+      node {
+        metadata {
+          name
+          namespace
+        }
+        spec {
+          publicDNSHost
+        }
+      }
+    }
+  }
+}
+
 mutation consoleCreateCluster($cluster: ClusterIn!) {
   infra_createCluster(cluster: $cluster) {
     id
@@ -1834,6 +1850,16 @@ mutation consoleDeleteDigest($repoName: String!, $digest: String!) {
   cr_deleteDigest(repoName: $repoName, digest: $digest)
 }
 
+query consoleGetGitConnections($state: String) {
+  auth_me {
+    providerGitlab
+    providerGithub
+    providerGoogle
+  }
+  githubLoginUrl: oAuth_requestLogin(provider: "github", state: $state)
+  gitlabLoginUrl: oAuth_requestLogin(provider: "gitlab", state: $state)
+}
+
 query consoleGetLogins {
   auth_me {
     providerGithub
@@ -2803,8 +2829,8 @@ mutation consoleDeletePV($clusterName: String!, $pvName: String!) {
   infra_deletePV(clusterName: $clusterName, pvName: $pvName)
 }
 
-query consoleListBuildRuns($buildID: ID!, $search: SearchBuildRuns, $pq: CursorPaginationIn) {
-  cr_listBuildRuns(buildID: $buildID, search: $search, pq: $pq) {
+query consoleListBuildRuns($search: SearchBuildRuns, $pq: CursorPaginationIn) {
+  cr_listBuildRuns(search: $search, pq: $pq) {
     edges {
       cursor
       node {
@@ -2886,8 +2912,8 @@ query consoleListBuildRuns($buildID: ID!, $search: SearchBuildRuns, $pq: CursorP
   }
 }
 
-query consoleGetBuildRun($buildID: ID!, $buildRunName: String!) {
-  cr_getBuildRun(buildID: $buildID, buildRunName: $buildRunName) {
+query consoleGetBuildRun($buildId: ID!, $buildRunName: String!) {
+  cr_getBuildRun(buildID: $buildId, buildRunName: $buildRunName) {
     clusterName
     creationTime
     markedForDeletion
@@ -3700,6 +3726,7 @@ query consoleListConsoleVpnDevices($search: CoreSearchVPNDevices, $pq: CursorPag
         creationTime
         displayName
         environmentName
+        projectName
         lastUpdatedBy {
           userEmail
           userId
@@ -3713,6 +3740,35 @@ query consoleListConsoleVpnDevices($search: CoreSearchVPNDevices, $pq: CursorPag
         }
         projectName
         recordVersion
+        status {
+          checkList {
+            debug
+            description
+            name
+            title
+          }
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
         spec {
           cnameRecords {
             host
@@ -3771,8 +3827,6 @@ query consoleGetConsoleVpnDevice($name: String!) {
 
 query consoleListConsoleVpnDevicesForUser {
   core_listVPNDevicesForUser {
-    accountName
-    apiVersion
     createdBy {
       userEmail
       userId
@@ -3781,8 +3835,7 @@ query consoleListConsoleVpnDevicesForUser {
     creationTime
     displayName
     environmentName
-    id
-    kind
+    projectName
     lastUpdatedBy {
       userEmail
       userId
@@ -3790,16 +3843,41 @@ query consoleListConsoleVpnDevicesForUser {
     }
     markedForDeletion
     metadata {
-      annotations
-      creationTimestamp
-      deletionTimestamp
       generation
-      labels
       name
       namespace
     }
     projectName
     recordVersion
+    status {
+      checkList {
+        debug
+        description
+        name
+        title
+      }
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
     spec {
       cnameRecords {
         host
@@ -3814,10 +3892,6 @@ query consoleListConsoleVpnDevicesForUser {
       }
     }
     updateTime
-    wireguardConfig {
-      encoding
-      value
-    }
   }
 }
 

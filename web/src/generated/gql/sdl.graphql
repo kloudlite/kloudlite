@@ -1595,14 +1595,14 @@ input Github__com___kloudlite___operator___apis___distribution___v1__BuildOption
 type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec {
   accountName: String!
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
-  cacheKeyName: String
+  cachePaths: [String!]
   registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
 }
 
 input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn {
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
-  cacheKeyName: String
+  cachePaths: [String!]
   registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
 }

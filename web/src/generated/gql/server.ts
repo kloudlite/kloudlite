@@ -208,7 +208,8 @@ export type SearchBuildCacheKeys = {
 };
 
 export type SearchBuildRuns = {
-  text?: InputMaybe<MatchFilterIn>;
+  buildId?: InputMaybe<Scalars['ID']['input']>;
+  repoName?: InputMaybe<MatchFilterIn>;
 };
 
 export type SearchBuilds = {
@@ -828,6 +829,11 @@ export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Inter
 
 export type RepositoryIn = {
   name: Scalars['String']['input'];
+};
+
+export type ByokClusterIn = {
+  displayName: Scalars['String']['input'];
+  metadata: MetadataIn;
 };
 
 export type ClusterIn = {
@@ -1798,6 +1804,19 @@ export type ConsoleListProjectsQuery = {
       hasPreviousPage?: boolean;
       startCursor?: string;
     };
+  };
+};
+
+export type ConsoleListDnsHostsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ConsoleListDnsHostsQuery = {
+  infra_listClusters?: {
+    edges: Array<{
+      node: {
+        metadata: { name: string; namespace?: string };
+        spec: { publicDNSHost: string };
+      };
+    }>;
   };
 };
 
@@ -3340,6 +3359,20 @@ export type ConsoleDeleteDigestMutationVariables = Exact<{
 
 export type ConsoleDeleteDigestMutation = { cr_deleteDigest: boolean };
 
+export type ConsoleGetGitConnectionsQueryVariables = Exact<{
+  state?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type ConsoleGetGitConnectionsQuery = {
+  githubLoginUrl: any;
+  gitlabLoginUrl: any;
+  auth_me?: {
+    providerGitlab?: any;
+    providerGithub?: any;
+    providerGoogle?: any;
+  };
+};
+
 export type ConsoleGetLoginsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type ConsoleGetLoginsQuery = {
@@ -4238,7 +4271,6 @@ export type ConsoleDeletePvMutationVariables = Exact<{
 export type ConsoleDeletePvMutation = { infra_deletePV: boolean };
 
 export type ConsoleListBuildRunsQueryVariables = Exact<{
-  buildID: Scalars['ID']['input'];
   search?: InputMaybe<SearchBuildRuns>;
   pq?: InputMaybe<CursorPaginationIn>;
 }>;
@@ -4317,7 +4349,7 @@ export type ConsoleListBuildRunsQuery = {
 };
 
 export type ConsoleGetBuildRunQueryVariables = Exact<{
-  buildID: Scalars['ID']['input'];
+  buildId: Scalars['ID']['input'];
   buildRunName: Scalars['String']['input'];
 }>;
 
@@ -5094,13 +5126,40 @@ export type ConsoleListConsoleVpnDevicesQuery = {
         creationTime: any;
         displayName: string;
         environmentName?: string;
-        markedForDeletion?: boolean;
         projectName?: string;
+        markedForDeletion?: boolean;
         recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata?: { generation: number; name: string; namespace?: string };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReadyGeneration?: number;
+          lastReconcileTime?: any;
+          checkList?: Array<{
+            debug?: boolean;
+            description?: string;
+            name: string;
+            title: string;
+          }>;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion: string;
+            kind: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
         spec?: {
           activeNamespace?: string;
           disabled?: boolean;
@@ -5147,27 +5206,42 @@ export type ConsoleListConsoleVpnDevicesForUserQueryVariables = Exact<{
 
 export type ConsoleListConsoleVpnDevicesForUserQuery = {
   core_listVPNDevicesForUser?: Array<{
-    accountName: string;
-    apiVersion?: string;
     creationTime: any;
     displayName: string;
     environmentName?: string;
-    id: string;
-    kind?: string;
-    markedForDeletion?: boolean;
     projectName?: string;
+    markedForDeletion?: boolean;
     recordVersion: number;
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-    metadata?: {
-      annotations?: any;
-      creationTimestamp: any;
-      deletionTimestamp?: any;
-      generation: number;
-      labels?: any;
-      name: string;
-      namespace?: string;
+    metadata?: { generation: number; name: string; namespace?: string };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReadyGeneration?: number;
+      lastReconcileTime?: any;
+      checkList?: Array<{
+        debug?: boolean;
+        description?: string;
+        name: string;
+        title: string;
+      }>;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion: string;
+        kind: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+    syncStatus: {
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+      syncScheduledAt?: any;
     };
     spec?: {
       activeNamespace?: string;
@@ -5176,7 +5250,6 @@ export type ConsoleListConsoleVpnDevicesForUserQuery = {
       cnameRecords?: Array<{ host?: string; target?: string }>;
       ports?: Array<{ port?: number; targetPort?: number }>;
     };
-    wireguardConfig?: { encoding: string; value: string };
   }>;
 };
 

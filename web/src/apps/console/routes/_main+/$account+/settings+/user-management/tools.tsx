@@ -1,11 +1,23 @@
-import { ArrowDown, ArrowUp, ArrowsDownUp } from '@jengaicons/react';
-import { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import OptionList from '~/components/atoms/option-list';
 import Toolbar from '~/components/atoms/toolbar';
+import { ArrowDown, ArrowsDownUp, ArrowUp } from '~/console/components/icons';
 
-const SortbyOptionList = () => {
+interface Props {
+  sortFunction: (options: {
+    sortByProperty: string;
+    sortByTime: string;
+  }) => void;
+}
+
+const SortbyOptionList: React.FC<Props> = ({ sortFunction }) => {
   const [sortbyProperty, setSortbyProperty] = useState('updated');
-  const [sortbyTime, setSortbyTime] = useState('oldest');
+  const [sortbyTime, setSortbyTime] = useState('des');
+
+  useEffect(() => {
+    sortFunction({ sortByProperty: sortbyProperty, sortByTime: sortbyTime });
+  }, [sortbyProperty, sortbyTime]);
+
   return (
     <OptionList.Root>
       <OptionList.Trigger>
@@ -13,9 +25,8 @@ const SortbyOptionList = () => {
           <div className="hidden md:flex">
             <Toolbar.IconButton icon={<ArrowsDownUp />} variant="basic" />
           </div>
-
           <div className="flex md:hidden">
-            <Toolbar.IconButton variant="basic" icon={<ArrowsDownUp />} />
+            <Toolbar.IconButton variant="basic" icon={<ArrowUp />} />
           </div>
         </div>
       </OptionList.Trigger>
@@ -24,36 +35,22 @@ const SortbyOptionList = () => {
           value={sortbyProperty}
           onValueChange={setSortbyProperty}
         >
-          <OptionList.RadioGroupItem
-            value="title"
-            onClick={(e) => e.preventDefault()}
-          >
+          <OptionList.RadioGroupItem value="name">
             Name
           </OptionList.RadioGroupItem>
-          <OptionList.RadioGroupItem
-            value="updated"
-            onClick={(e) => e.preventDefault()}
-          >
+          <OptionList.RadioGroupItem value="updated">
             Updated
           </OptionList.RadioGroupItem>
         </OptionList.RadioGroup>
         <OptionList.Separator />
         <OptionList.RadioGroup value={sortbyTime} onValueChange={setSortbyTime}>
-          <OptionList.RadioGroupItem
-            showIndicator={false}
-            value="oldest"
-            onClick={(e) => e.preventDefault()}
-          >
+          <OptionList.RadioGroupItem showIndicator={false} value="asc">
             <ArrowUp size={16} />
-            Oldest first
+            Ascending
           </OptionList.RadioGroupItem>
-          <OptionList.RadioGroupItem
-            value="newest"
-            showIndicator={false}
-            onClick={(e) => e.preventDefault()}
-          >
+          <OptionList.RadioGroupItem showIndicator={false} value="des">
             <ArrowDown size={16} />
-            Newest first
+            Descending
           </OptionList.RadioGroupItem>
         </OptionList.RadioGroup>
       </OptionList.Content>
@@ -64,9 +61,14 @@ const SortbyOptionList = () => {
 const Tools = ({
   searchText,
   setSearchText,
+  sortTeamMembers,
 }: {
   searchText: string;
   setSearchText: (s: string) => void;
+  sortTeamMembers: (options: {
+    sortByProperty: string;
+    sortByTime: string;
+  }) => void;
 }) => {
   return (
     <div className="flex-1 ">
@@ -81,7 +83,7 @@ const Tools = ({
               placeholder="Search"
             />
           </div>
-          <SortbyOptionList />
+          <SortbyOptionList sortFunction={sortTeamMembers} />
         </div>
       </Toolbar.Root>
     </div>

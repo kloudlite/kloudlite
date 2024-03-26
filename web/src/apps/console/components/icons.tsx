@@ -4,6 +4,9 @@ export {
   Domain,
   ArrowLeftFill as ArrowLeft,
   ArrowRightFill as ArrowRight,
+  ArrowUpFill as ArrowUp,
+  ArrowDownFill as ArrowDown,
+  ArrowsDownUp,
   Plus,
   Trash,
   PencilLine as Pencil,
@@ -53,4 +56,6 @@ export {
   Circle,
   CircleFill,
   Spinner,
+  Globe,
+  ShieldCheck,
 } from '@jengaicons/react';

@@ -1,4 +1,4 @@
-import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
+import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { DeleteContainer } from '~/console/components/common-console-components';
@@ -21,7 +21,6 @@ const SettingAdvance = () => {
   const api = useConsoleApi();
   const navigate = useNavigate();
   const { setPerformAction, hasChanges, loading } = useUnsavedChanges();
-  const { account } = useParams();
 
   return (
     <div>
@@ -87,11 +86,7 @@ const SettingAdvance = () => {
               reload();
               toast.success(`App deleted successfully`);
               setDeleteApp(false);
-              navigate(
-                `/${account}/${parseName(project)}/${parseName(
-                  environment
-                )}/apps/`
-              );
+              navigate(`../../../apps/`);
             } catch (err) {
               handleError(err);
             }

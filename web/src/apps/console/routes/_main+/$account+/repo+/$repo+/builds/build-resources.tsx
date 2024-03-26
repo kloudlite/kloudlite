@@ -146,7 +146,6 @@ const GridView = ({ items, onDelete, onEdit, onTrigger }: IResource) => {
 const ListView = ({ items, onDelete, onEdit, onTrigger }: IResource) => {
   return (
     <ListV2.Root
-      linkComponent={Link}
       data={{
         headers: [
           {
@@ -213,7 +212,6 @@ const ListView = ({ items, onDelete, onEdit, onTrigger }: IResource) => {
                 ),
               },
             },
-            to: `../build/${i.id}/buildruns`,
           };
         }),
       }}

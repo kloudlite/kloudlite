@@ -1,10 +1,10 @@
 import Wrapper from '~/console/components/wrapper';
 import { useLoaderData } from '@remix-run/react';
-import { IRemixCtx } from '~/root/lib/types/common';
+import { IRemixCtx } from '~/lib/types/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { getPagination, getSearch } from '~/console/server/utils/common';
+import { getPagination } from '~/console/server/utils/common';
 import { defer } from '@remix-run/node';
 import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
@@ -12,13 +12,11 @@ import BuildRunResources from './buildruns-resources';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
-  const { build } = ctx.params;
 
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listBuildRuns({
-      buildID: build,
       pq: getPagination(ctx),
-      search: getSearch(ctx),
+      search: {},
     });
     console.log(data);
     if (errors) {
@@ -48,7 +46,7 @@ const BuildRuns = () => {
         const { pageInfo, totalCount } = buildRunData;
         return (
           <Wrapper
-            secondaryHeader={{
+            header={{
               title: 'Build Runs',
             }}
             empty={{

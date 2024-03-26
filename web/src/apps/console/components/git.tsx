@@ -11,13 +11,13 @@ import {
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { dayjs } from '~/components/molecule/dayjs';
-import { githubAppName } from '~/root/lib/configs/base-url.cjs';
 import Radio from '~/components/atoms/radio';
 import { useAppend, useMapper } from '~/components/utils';
 import { ReactNode, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '~/components/atoms/button';
 import { toast } from '~/components/molecule/toast';
+import { gitEnvs } from '~/root/lib/configs/base-url.cjs';
 import { ILoginUrls, ILogins } from '../server/gql/queries/git-queries';
 import Pulsable from './pulsable';
 import useGit, { IGIT_PROVIDERS } from '../hooks/use-git';
@@ -58,8 +58,6 @@ const commonOptions = [
     ),
   },
 ];
-
-const githubInstallUrl = `https://github.com/apps/${githubAppName}/installations/new`;
 
 const popupWindow = ({
   url = '',
@@ -147,13 +145,13 @@ const ListRenderer = ({ data, onChange, value, isLoading }: IListRenderer) => {
               <Radio.Item
                 key={repo.name}
                 value={repo.url}
-                className="pulsable flex-row justify-between w-full py-2xl bodyMd-medium"
+                className="flex-row justify-between w-full py-2xl bodyMd-medium"
                 labelPlacement="left"
               >
                 <div className="flex flex-row items-center gap-lg bodyMd-medium">
-                  <span>{repo.name}</span>
+                  <span className="pulsable">{repo.name}</span>
 
-                  <span>
+                  <span className="pulsable">
                     {repo.private ? (
                       <LockSimple size={12} />
                     ) : (
@@ -163,7 +161,7 @@ const ListRenderer = ({ data, onChange, value, isLoading }: IListRenderer) => {
                   <span>
                     <CircleFill size={2} />
                   </span>
-                  <span className="text-text-soft">
+                  <span className="text-text-soft pulsable">
                     {dayjs(repo.updatedAt).fromNow()}
                   </span>
                 </div>
@@ -248,7 +246,7 @@ const Git = ({
   const accounts = useMapper(installations.data || [], (d) => {
     return {
       label: d.label,
-      value: provider === 'gitlab' ? d.value : d.label,
+      value: d.value,
       labelValueIcon:
         provider === 'gitlab' ? (
           <GitlabLogoFill size={iconSize} />
@@ -327,20 +325,19 @@ const Git = ({
                   size="lg"
                   valueRender={valueRender}
                   options={async () => accountsModified}
-                  value={org}
+                  value={org?.value}
                   onChange={(res) => {
-                    console.log(res);
                     switch (res.value) {
                       case extraAddOption:
                         popupWindow({
-                          url: githubInstallUrl,
+                          url: `https://github.com/apps/${gitEnvs.githubAppName}/installations/new`,
                         });
                         break;
                       case extraSwitchOption:
                         setShowProviderOverlay(true);
                         break;
                       default:
-                        setOrg(res.value);
+                        setOrg(res);
                         break;
                     }
                   }}
@@ -441,26 +438,24 @@ const Git = ({
             loading
           }
         >
-          <div className="pulsable">
-            <Select
-              label="Select branch"
-              size="lg"
-              value={branch && !showProviderOverlay ? branch : undefined}
-              disabled={!repo || showProviderOverlay}
-              placeholder="Select a branch"
-              options={async () => [
-                ...(branches.data?.map((d) => ({
-                  label: d.name || '',
-                  value: d.name || '',
-                })) || []),
-              ]}
-              onChange={({ value }) => {
-                setBranch(value);
-              }}
-              error={!!error}
-              message={error}
-            />
-          </div>
+          <Select
+            label="Select branch"
+            size="lg"
+            value={branch && !showProviderOverlay ? branch : undefined}
+            disabled={!repo || showProviderOverlay}
+            placeholder="Select a branch"
+            options={async () => [
+              ...(branches.data?.map((d) => ({
+                label: d.name || '',
+                value: d.name || '',
+              })) || []),
+            ]}
+            onChange={({ value }) => {
+              setBranch(value);
+            }}
+            error={!!error}
+            message={error}
+          />
         </Pulsable>
       </div>
     </div>

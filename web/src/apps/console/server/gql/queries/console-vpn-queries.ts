@@ -24,6 +24,10 @@ export type IConsoleDevicesForUser = NN<
   ConsoleListConsoleVpnDevicesForUserQuery['core_listVPNDevicesForUser']
 >;
 
+export type IConsoleDevice = NN<
+  ConsoleGetConsoleVpnDeviceQuery['core_getVPNDevice']
+>;
+
 export const consoleVpnQueries = (executor: IExecutor) => ({
   createConsoleVpnDevice: executor(
     gql`
@@ -36,7 +40,7 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateConsoleVpnDeviceMutation) =>
         data.core_createVPNDevice,
-      vars(_: ConsoleCreateConsoleVpnDeviceMutationVariables) { },
+      vars(_: ConsoleCreateConsoleVpnDeviceMutationVariables) {},
     }
   ),
 
@@ -52,7 +56,7 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
       transformer: (v: ConsoleUpdateConsoleVpnDeviceMutation) => {
         return v.core_updateVPNDevice;
       },
-      vars(_: ConsoleUpdateConsoleVpnDeviceMutationVariables) { },
+      vars(_: ConsoleUpdateConsoleVpnDeviceMutationVariables) {},
     }
   ),
   listConsoleVpnDevices: executor(
@@ -73,6 +77,7 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
               creationTime
               displayName
               environmentName
+              projectName
               lastUpdatedBy {
                 userEmail
                 userId
@@ -86,6 +91,35 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
               }
               projectName
               recordVersion
+              status {
+                checkList {
+                  debug
+                  description
+                  name
+                  title
+                }
+                checks
+                isReady
+                lastReadyGeneration
+                lastReconcileTime
+                message {
+                  RawMessage
+                }
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
               spec {
                 cnameRecords {
                   host
@@ -116,7 +150,7 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleListConsoleVpnDevicesQuery) {
         return data.core_listVPNDevices;
       },
-      vars(_: ConsoleListConsoleVpnDevicesQueryVariables) { },
+      vars(_: ConsoleListConsoleVpnDevicesQueryVariables) {},
     }
   ),
   getConsoleVpnDevice: executor(
@@ -155,15 +189,13 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetConsoleVpnDeviceQuery) {
         return data.core_getVPNDevice;
       },
-      vars(_: ConsoleGetConsoleVpnDeviceQueryVariables) { },
+      vars(_: ConsoleGetConsoleVpnDeviceQueryVariables) {},
     }
   ),
   listConsoleVpnDevicesForUser: executor(
     gql`
       query Core_listVPNDevicesForUser {
         core_listVPNDevicesForUser {
-          accountName
-          apiVersion
           createdBy {
             userEmail
             userId
@@ -172,8 +204,7 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
           creationTime
           displayName
           environmentName
-          id
-          kind
+          projectName
           lastUpdatedBy {
             userEmail
             userId
@@ -181,16 +212,41 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
           }
           markedForDeletion
           metadata {
-            annotations
-            creationTimestamp
-            deletionTimestamp
             generation
-            labels
             name
             namespace
           }
           projectName
           recordVersion
+          status {
+            checkList {
+              debug
+              description
+              name
+              title
+            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
+          }
           spec {
             cnameRecords {
               host
@@ -205,10 +261,6 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
             }
           }
           updateTime
-          wireguardConfig {
-            encoding
-            value
-          }
         }
       }
     `,
@@ -216,7 +268,7 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleListConsoleVpnDevicesForUserQuery) {
         return data.core_listVPNDevicesForUser;
       },
-      vars(_: ConsoleListConsoleVpnDevicesForUserQueryVariables) { },
+      vars(_: ConsoleListConsoleVpnDevicesForUserQueryVariables) {},
     }
   ),
   deleteConsoleVpnDevice: executor(
@@ -229,7 +281,7 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleDeleteConsoleVpnDeviceMutation) {
         return data.core_deleteVPNDevice;
       },
-      vars(_: ConsoleDeleteConsoleVpnDeviceMutationVariables) { },
+      vars(_: ConsoleDeleteConsoleVpnDeviceMutationVariables) {},
     }
   ),
 });

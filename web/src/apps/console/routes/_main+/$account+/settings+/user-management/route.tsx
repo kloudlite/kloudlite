@@ -8,12 +8,14 @@ import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import Wrapper from '~/console/components/wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
-import { NonNullableString } from '~/root/lib/types/common';
+import { ExtractArrayType, NonNullableString } from '~/root/lib/types/common';
 import Pulsable from '~/console/components/pulsable';
 import { EmptyState } from '~/console/components/empty-state';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { motion } from 'framer-motion';
 import { parseName } from '~/console/server/r-utils/common';
+import { useSort } from '~/components/utils';
+import { dayjs } from '~/components/molecule/dayjs';
 import { IAccountContext } from '../../_layout';
 import HandleUser from './handle-user';
 import Tools from './tools';
@@ -22,6 +24,10 @@ import UserAccessResources from './user-access-resource';
 interface ITeams {
   setShowUserInvite: React.Dispatch<React.SetStateAction<boolean>>;
   searchText: string;
+  sortTeamMembers: {
+    sortByProperty: string;
+    sortByTime: string;
+  };
 }
 
 const placeHolderUsers = Array(3)
@@ -33,7 +39,7 @@ const placeHolderUsers = Array(3)
     email: 'sampleuser@gmail.com',
   }));
 
-const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
+const Teams = ({ setShowUserInvite, searchText, sortTeamMembers }: ITeams) => {
   const { account } = useOutletContext<IAccountContext>();
   const api = useConsoleApi();
   const { data: teamMembers, isLoading } = useCustomSwr(
@@ -59,6 +65,30 @@ const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
     },
     [searchText, teamMembers]
   );
+
+  const sortFunction = useCallback(
+    ({
+      a,
+      b,
+    }: {
+      a: ExtractArrayType<typeof teamMembers>;
+      b: ExtractArrayType<typeof teamMembers>;
+    }) => {
+      const isAscending = sortTeamMembers.sortByTime === 'asc';
+
+      const x = isAscending ? a : b;
+      const y = isAscending ? b : a;
+
+      if (sortTeamMembers.sortByProperty === 'name') {
+        return x.user.name.localeCompare(y.user.name);
+      }
+
+      return dayjs(x.user.joined).unix() - dayjs(y.user.joined).unix();
+    },
+    [sortTeamMembers]
+  );
+
+  const sorted = useSort(searchResp || [], (a, b) => sortFunction({ a, b }));
 
   return (
     <motion.div
@@ -96,7 +126,7 @@ const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
               items={
                 isLoading && searchResp.length === 0
                   ? placeHolderUsers
-                  : searchResp.map((i) => ({
+                  : sorted.map((i) => ({
                       id: i.user.email,
                       name: i.user.name,
                       role: i.role,
@@ -112,7 +142,11 @@ const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
   );
 };
 
-const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
+const Invitations = ({
+  setShowUserInvite,
+  searchText,
+  sortTeamMembers,
+}: ITeams) => {
   const { account } = useOutletContext<IAccountContext>();
   const api = useConsoleApi();
 
@@ -140,6 +174,35 @@ const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
     [searchText, invitations]
   );
 
+  const sortFunction = useCallback(
+    ({
+      a,
+      b,
+    }: {
+      a: ExtractArrayType<typeof invitations>;
+      b: ExtractArrayType<typeof invitations>;
+    }) => {
+      const isAscending = sortTeamMembers.sortByTime === 'asc';
+
+      const x = isAscending ? a : b;
+      const y = isAscending ? b : a;
+
+      // TODO: remove below if
+      if (!x.userEmail || !y.userEmail) {
+        return 0;
+      }
+
+      if (sortTeamMembers.sortByProperty === 'name') {
+        return x.userEmail.localeCompare(y.userEmail);
+      }
+
+      return dayjs(x.creationTime).unix() - dayjs(y.creationTime).unix();
+    },
+    [sortTeamMembers]
+  );
+
+  const sorted = useSort(searchResp || [], (a, b) => sortFunction({ a, b }));
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -166,7 +229,7 @@ const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
         <Pulsable isLoading={isLoading}>
           <UserAccessResources
             items={
-              isLoading && searchResp.length === 0
+              isLoading && sorted.length === 0
                 ? placeHolderUsers
                 : searchResp
                     ?.filter((i) => !i.accepted)
@@ -193,6 +256,11 @@ const SettingUserManagement = () => {
   const { account } = useOutletContext<IAccountContext>();
 
   const [searchText, setSearchText] = useState('');
+
+  const [sortByProperty, setSortbyProperty] = useState({
+    sortByProperty: 'updated',
+    sortByTime: 'des',
+  });
 
   const api = useConsoleApi();
 
@@ -269,12 +337,24 @@ const SettingUserManagement = () => {
               ]}
             />
           </div>
-          <Tools setSearchText={setSearchText} searchText={searchText} />
+          <Tools
+            setSearchText={setSearchText}
+            searchText={searchText}
+            sortTeamMembers={setSortbyProperty}
+          />
         </div>
         {active === 'team' ? (
-          <Teams setShowUserInvite={setVisible} searchText={searchText} />
+          <Teams
+            setShowUserInvite={setVisible}
+            searchText={searchText}
+            sortTeamMembers={sortByProperty}
+          />
         ) : (
-          <Invitations setShowUserInvite={setVisible} searchText={searchText} />
+          <Invitations
+            setShowUserInvite={setVisible}
+            searchText={searchText}
+            sortTeamMembers={sortByProperty}
+          />
         )}
       </div>
       <HandleUser {...{ isUpdate: false, visible, setVisible }} />

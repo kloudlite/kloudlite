@@ -10,6 +10,8 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+// import useActiveDevice from '~/console/hooks/use-device';
+// import { useEffect } from 'react';
 import Tools from './tools';
 import ProjectResourcesV2 from './project-resources-v2';
 
@@ -153,6 +155,12 @@ const Projects = () => {
     };
   };
 
+  // const p = useActiveDevice();
+  //
+  // useEffect(() => {
+  //   console.log(p);
+  // }, [p]);
+
   return (
     <LoadingComp
       data={promise}
@@ -188,6 +196,9 @@ const Projects = () => {
               secretsLength: cloudProviderSecretsCount,
             })}
             tools={<Tools />}
+            pagination={{
+              pageInfo: projectsData.pageInfo,
+            }}
           >
             <ProjectResourcesV2 items={projects} />
           </Wrapper>

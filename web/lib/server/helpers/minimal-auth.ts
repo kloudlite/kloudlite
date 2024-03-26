@@ -31,6 +31,10 @@ export const minimalAuth = async (ctx: IExtRemixCtx) => {
     return redirect(`${authBaseUrl}/login`);
   }
 
+  if (whoAmI.errors) {
+    console.log('whoAmI.errors', whoAmI.errors);
+  }
+
   if (!(whoAmI.data && whoAmI.data)) {
     if (new URL(ctx.request.url).host === new URL(consoleBaseUrl).host) {
       const { pathname } = new URL(ctx.request.url);
