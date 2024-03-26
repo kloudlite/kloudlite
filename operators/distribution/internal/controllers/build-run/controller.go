@@ -118,8 +118,6 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 		return check.Failed(err).Err(nil)
 	}
 
-	fmt.Println("*******************************\n", string(b), "\n***********************************")
-
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
 		return check.Failed(err)
