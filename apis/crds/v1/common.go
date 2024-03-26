@@ -40,12 +40,13 @@ type Output struct {
 	Description string `json:"description,omitempty"`
 }
 
-// +kubebuilder:validation:Enum=config;secret
+// +kubebuilder:validation:Enum=config;secret;pvc
 type ConfigOrSecret string
 
 const (
 	SecretType ConfigOrSecret = "secret"
 	ConfigType ConfigOrSecret = "config"
+	PVCType    ConfigOrSecret = "pvc"
 )
 
 func ParseVolumes(containers []AppContainer) (volumes []corev1.Volume, volumeMounts [][]corev1.VolumeMount) {
@@ -93,48 +94,9 @@ func ParseVolumes(containers []AppContainer) (volumes []corev1.Volume, volumeMou
 	for k, cVolumes := range m {
 		volume := corev1.Volume{Name: k}
 
-		// len == 1, without projection
-		// if len(cVolumes) == 1 {
-		// 	volm := cVolumes[0]
-		//
-		// 	var kp []corev1.KeyToPath
-		// 	if len(volm.Items) > 0 {
-		// 		for _, item := range volm.Items {
-		// 			kp = append(
-		// 				kp, corev1.KeyToPath{
-		// 					Key:  item.Key,
-		// 					Path: item.FileName,
-		// 					Mode: nil,
-		// 				},
-		// 			)
-		// 		}
-		// 	}
-		//
-		// 	switch volm.Type {
-		// 	case SecretType:
-		// 		{
-		// 			volume.VolumeSource.Secret = &corev1.SecretVolumeSource{
-		// 				SecretName: volm.RefName,
-		// 				Items:      kp,
-		// 			}
-		// 		}
-		// 	case ConfigType:
-		// 		{
-		// 			volume.VolumeSource.ConfigMap = &corev1.ConfigMapVolumeSource{
-		// 				LocalObjectReference: corev1.LocalObjectReference{
-		// 					Name: volm.RefName,
-		// 				},
-		// 				Items: kp,
-		// 			}
-		// 		}
-		// 	}
-		// }
-
-		// len > 1, with projection
-		// if len(cVolumes) > 1 {
-		volume.VolumeSource.Projected = &corev1.ProjectedVolumeSource{}
+		// volume.VolumeSource.Projected = nil
 		for _, volm := range cVolumes {
-			projection := corev1.VolumeProjection{}
+			// projection := corev1.VolumeProjection{}
 			var kp []corev1.KeyToPath
 			if len(volm.Items) > 0 {
 				for _, item := range volm.Items {
@@ -153,20 +115,37 @@ func ParseVolumes(containers []AppContainer) (volumes []corev1.Volume, volumeMou
 			switch volm.Type {
 			case SecretType:
 				{
-					projection.Secret = &corev1.SecretProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: volm.RefName,
-						},
-						Items: kp,
+					if volume.Projected == nil {
+						volume.Projected = &corev1.ProjectedVolumeSource{}
 					}
+					volume.Projected.Sources = append(volume.Projected.Sources, corev1.VolumeProjection{
+						Secret: &corev1.SecretProjection{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: volm.RefName,
+							},
+							Items: kp,
+						},
+					})
 				}
 			case ConfigType:
 				{
-					projection.ConfigMap = &corev1.ConfigMapProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: volm.RefName,
+					if volume.Projected == nil {
+						volume.Projected = &corev1.ProjectedVolumeSource{}
+					}
+					volume.Projected.Sources = append(volume.Projected.Sources, corev1.VolumeProjection{
+						ConfigMap: &corev1.ConfigMapProjection{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: volm.RefName,
+							},
+							Items: kp,
 						},
-						Items: kp,
+					})
+				}
+			case PVCType:
+				{
+					volume.PersistentVolumeClaim = &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: volm.RefName,
+						ReadOnly:  false,
 					}
 				}
 			default:
@@ -174,9 +153,7 @@ func ParseVolumes(containers []AppContainer) (volumes []corev1.Volume, volumeMou
 					fmt.Println("invalid type, not config, secret")
 				}
 			}
-			volume.Projected.Sources = append(volume.Projected.Sources, projection)
 		}
-		// }
 		volumes = append(volumes, volume)
 	}
 

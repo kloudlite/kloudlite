@@ -51,8 +51,8 @@ var (
 		{Name: PVCReady, Title: "PVC ready for cache"},
 		{Name: JobCreated, Title: "Job created for build"},
 		{Name: JobCompleted, Title: "Job completed"},
-		// {Name: CredsAvailable, Title: "credentials available"},
 	}
+
 	B_DESTROY_CHECKLIST = []rApi.CheckMeta{
 		{Name: JobDeleted, Title: "Cleaning up resources"},
 	}
@@ -83,10 +83,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.EnsureCheckList(B_CHECKLIST); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.EnsureChecks(PVCReady, JobCreated, JobCompleted, JobFailed); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 

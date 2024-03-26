@@ -83,6 +83,7 @@ spec:
                             enum:
                             - config
                             - secret
+                            - pvc
                             type: string
                           value:
                             type: string
@@ -99,6 +100,7 @@ spec:
                             enum:
                             - config
                             - secret
+                            - pvc
                             type: string
                         required:
                         - refName
@@ -238,6 +240,7 @@ spec:
                             enum:
                             - config
                             - secret
+                            - pvc
                             type: string
                         required:
                         - mountPath
