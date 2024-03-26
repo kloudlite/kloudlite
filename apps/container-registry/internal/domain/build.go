@@ -16,40 +16,14 @@ import (
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 )
 
-func (d *Impl) ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error) {
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-		},
-		Action: string(iamT.GetAccount),
-	})
-
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if !co.Status {
-		return nil, errors.Newf("unauthorized to list builds")
-	}
-
-	filter := repos.Filter{
-		fc.BuildSpecAccountName:  ctx.AccountName,
-		fc.BuildSpecCacheKeyName: cacheId,
-	}
-
-	return d.buildRepo.FindPaginated(ctx, filter, pagination)
-}
-
 func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Build, error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
 		},
-		Action: string(iamT.UpdateAccount),
+		Action: string(iamT.CreateBuildIntegration),
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -93,9 +67,8 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
 		},
-		Action: string(iamT.UpdateAccount),
+		Action: string(iamT.UpdateBuildIntegration),
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -113,6 +86,7 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 		fc.BuildBuildClusterName: build.BuildClusterName,
 		fields.LastUpdatedBy:     common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
 		fc.BuildSource:           build.Source,
+		fc.BuildSpec:             build.Spec,
 	}
 
 	return d.buildRepo.Patch(ctx, repos.Filter{fields.Id: id}, patchDoc)
@@ -145,9 +119,8 @@ func (d *Impl) ListBuilds(ctx RegistryContext, repoName string, search map[strin
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
 		},
-		Action: string(iamT.GetAccount),
+		Action: string(iamT.ListBuildIntegrations),
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -170,9 +143,8 @@ func (d *Impl) GetBuild(ctx RegistryContext, buildId repos.ID) (*entities.Build,
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
 		},
-		Action: string(iamT.GetAccount),
+		Action: string(iamT.GetBuildIntegration),
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -199,9 +171,8 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
 		},
-		Action: string(iamT.GetAccount),
+		Action: string(iamT.DeleteBuildIntegration),
 	})
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -242,9 +213,8 @@ func (d *Impl) TriggerBuild(ctx RegistryContext, buildId repos.ID) error {
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
 		},
-		Action: string(iamT.GetAccount),
+		Action: string(iamT.CreateBuildRun),
 	})
-
 	if err != nil {
 		return errors.NewE(err)
 	}

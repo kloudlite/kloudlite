@@ -60,7 +60,6 @@ func (d *Impl) ParseGithubHook(eventType string, hookBody []byte) (*GitWebhookPa
 	default:
 		return nil, &ErrEventNotSupported{err: errors.Newf("event type (%s), currently not supported", eventType)}
 	}
-
 }
 
 func (d *Impl) getAccessTokenByUserId(ctx context.Context, provider string, userId repos.ID) (*entities.AccessToken, error) {
@@ -128,11 +127,13 @@ func (d *Impl) GithubListRepos(ctx context.Context, userId repos.ID, installatio
 	}
 
 	i, err := d.github.ListRepos(ctx, token, installationId, pagination)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
 
 	repositories := make([]*entities.GithubRepository, len(i.Repositories))
 
 	for i2, r := range i.Repositories {
-
 		repositories[i2] = &entities.GithubRepository{
 			ID:                r.ID,
 			NodeID:            r.NodeID,
@@ -159,7 +160,6 @@ func (d *Impl) GithubListRepos(ctx context.Context, userId repos.ID, installatio
 			Visibility:        r.Visibility,
 			URL:               r.URL,
 		}
-
 	}
 
 	return &entities.GithubListRepository{
@@ -169,18 +169,19 @@ func (d *Impl) GithubListRepos(ctx context.Context, userId repos.ID, installatio
 }
 
 func (d *Impl) GithubSearchRepos(ctx context.Context, userId repos.ID, q, org string, pagination *types.Pagination) (*entities.GithubSearchRepository, error) {
-
 	token, err := d.getAccessTokenByUserId(ctx, "github", userId)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	i, err := d.github.SearchRepos(ctx, token, q, org, pagination)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
 
 	repositories := make([]*entities.GithubRepository, len(i.Repositories))
 
 	for i2, r := range i.Repositories {
-
 		repositories[i2] = &entities.GithubRepository{
 			ID:                r.ID,
 			NodeID:            r.NodeID,
