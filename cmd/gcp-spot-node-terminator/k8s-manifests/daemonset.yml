@@ -55,6 +55,8 @@ spec:
         env:
           - name: DEBUG
             value: "false"
+          - name: WEBHOOK_URL
+            value: "https://tg-webhook-bot.dev.kloudlite.io"
           - name: NODE_NAME
             valueFrom:
               fieldRef: 
