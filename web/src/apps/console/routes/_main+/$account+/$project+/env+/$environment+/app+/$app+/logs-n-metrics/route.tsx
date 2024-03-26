@@ -256,6 +256,7 @@ const LogsAndMetrics = () => {
           {...{
             hideLineNumber: !state.linesVisible,
             hideTimestamp: !state.timestampVisible,
+            podSelect: true,
             dark: true,
             width: '100%',
             height: '70vh',
