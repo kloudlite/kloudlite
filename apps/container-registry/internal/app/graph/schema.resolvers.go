@@ -129,73 +129,6 @@ func (r *mutationResolver) CrTriggerBuild(ctx context.Context, id repos.ID) (boo
 	return true, nil
 }
 
-// CrAddBuildCacheKey is the resolver for the cr_addBuildCacheKey field.
-func (r *mutationResolver) CrAddBuildCacheKey(ctx context.Context, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.AddBuildCache(cc, buildCacheKey)
-}
-
-// CrDeleteBuildCacheKey is the resolver for the cr_deleteBuildCacheKey field.
-func (r *mutationResolver) CrDeleteBuildCacheKey(ctx context.Context, id repos.ID) (bool, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-
-	if err := r.Domain.DeleteBuildCache(cc, id); err != nil {
-		return false, errors.NewE(err)
-	}
-	return true, nil
-}
-
-// CrUpdateBuildCacheKey is the resolver for the cr_updateBuildCacheKey field.
-func (r *mutationResolver) CrUpdateBuildCacheKey(ctx context.Context, id repos.ID, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.UpdateBuildCache(cc, id, buildCacheKey)
-}
-
-// CrListBuildsByBuildCacheID is the resolver for the cr_listBuildsByBuildCacheId field.
-func (r *mutationResolver) CrListBuildsByBuildCacheID(ctx context.Context, buildCacheKeyID repos.ID, pagination *repos.CursorPagination) (*model.BuildPaginatedRecords, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	rr, err := r.Domain.ListBuildsByCache(cc, buildCacheKeyID, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	records := make([]*model.BuildEdge, len(rr.Edges))
-
-	for i := range rr.Edges {
-		records[i] = &model.BuildEdge{
-			Node:   rr.Edges[i].Node,
-			Cursor: rr.Edges[i].Cursor,
-		}
-	}
-
-	m := &model.BuildPaginatedRecords{
-		Edges: records,
-		PageInfo: &model.PageInfo{
-			HasNextPage:     rr.PageInfo.HasNextPage,
-			HasPreviousPage: rr.PageInfo.HasPrevPage,
-			StartCursor:     &rr.PageInfo.StartCursor,
-			EndCursor:       &rr.PageInfo.EndCursor,
-		},
-	}
-
-	return m, nil
-}
-
 // CrListRepos is the resolver for the cr_listRepos field.
 func (r *queryResolver) CrListRepos(ctx context.Context, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.RepositoryPaginatedRecords, error) {
 	cc, err := toRegistryContext(ctx)
@@ -467,7 +400,119 @@ func (r *queryResolver) CrListGitlabBranches(ctx context.Context, repoID string,
 	return r.Domain.GitlabListBranches(ctx, userId, repoID, query, pagination)
 }
 
-// CrListBuildCacheKeys is the resolver for the cr_listBuildCacheKeys field.
+// CrListBuildRuns is the resolver for the cr_listBuildRuns field.
+func (r *queryResolver) CrListBuildRuns(ctx context.Context, search *model.SearchBuildRuns, pq *repos.CursorPagination) (*model.BuildRunPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.BuildID != nil {
+			filter["buildId"] = repos.MatchFilter{
+				MatchType: repos.MatchTypeExact,
+				Exact:     *search.BuildID,
+			}
+		}
+
+		if search.RepoName != nil {
+			filter["spec.registry.repo"] = *search.RepoName
+		}
+	}
+
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	buildRuns, err := r.Domain.ListBuildRuns(cc, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return fn.JsonConvertP[model.BuildRunPaginatedRecords](buildRuns)
+}
+
+// CrGetBuildRun is the resolver for the cr_getBuildRun field.
+func (r *queryResolver) CrGetBuildRun(ctx context.Context, buildID repos.ID, buildRunName string) (*entities.BuildRun, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GetBuildRun(cc, buildID, buildRunName)
+}
+
+// Mutation returns generated1.MutationResolver implementation.
+func (r *Resolver) Mutation() generated1.MutationResolver { return &mutationResolver{r} }
+
+// Query returns generated1.QueryResolver implementation.
+func (r *Resolver) Query() generated1.QueryResolver { return &queryResolver{r} }
+
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) CrAddBuildCacheKey(ctx context.Context, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.AddBuildCache(cc, buildCacheKey)
+}
+func (r *mutationResolver) CrDeleteBuildCacheKey(ctx context.Context, id repos.ID) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.DeleteBuildCache(cc, id); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+func (r *mutationResolver) CrUpdateBuildCacheKey(ctx context.Context, id repos.ID, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.UpdateBuildCache(cc, id, buildCacheKey)
+}
+func (r *mutationResolver) CrListBuildsByBuildCacheID(ctx context.Context, buildCacheKeyID repos.ID, pagination *repos.CursorPagination) (*model.BuildPaginatedRecords, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	rr, err := r.Domain.ListBuildsByCache(cc, buildCacheKeyID, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	records := make([]*model.BuildEdge, len(rr.Edges))
+
+	for i := range rr.Edges {
+		records[i] = &model.BuildEdge{
+			Node:   rr.Edges[i].Node,
+			Cursor: rr.Edges[i].Cursor,
+		}
+	}
+
+	m := &model.BuildPaginatedRecords{
+		Edges: records,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     rr.PageInfo.HasNextPage,
+			HasPreviousPage: rr.PageInfo.HasPrevPage,
+			StartCursor:     &rr.PageInfo.StartCursor,
+			EndCursor:       &rr.PageInfo.EndCursor,
+		},
+	}
+
+	return m, nil
+}
 func (r *queryResolver) CrListBuildCacheKeys(ctx context.Context, pq *repos.CursorPagination, search *model.SearchBuildCacheKeys) (*model.BuildCacheKeyPaginatedRecords, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
@@ -507,44 +552,3 @@ func (r *queryResolver) CrListBuildCacheKeys(ctx context.Context, pq *repos.Curs
 
 	return m, nil
 }
-
-// CrListBuildRuns is the resolver for the cr_listBuildRuns field.
-func (r *queryResolver) CrListBuildRuns(ctx context.Context, buildID repos.ID, search *model.SearchBuildRuns, pq *repos.CursorPagination) (*model.BuildRunPaginatedRecords, error) {
-	filter := map[string]repos.MatchFilter{}
-	if search != nil {
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
-		}
-	}
-
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	buildRuns, err := r.Domain.ListBuildRuns(cc, buildID, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return fn.JsonConvertP[model.BuildRunPaginatedRecords](buildRuns)
-}
-
-// CrGetBuildRun is the resolver for the cr_getBuildRun field.
-func (r *queryResolver) CrGetBuildRun(ctx context.Context, buildID repos.ID, buildRunName string) (*entities.BuildRun, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.GetBuildRun(cc, buildID, buildRunName)
-}
-
-// Mutation returns generated1.MutationResolver implementation.
-func (r *Resolver) Mutation() generated1.MutationResolver { return &mutationResolver{r} }
-
-// Query returns generated1.QueryResolver implementation.
-func (r *Resolver) Query() generated1.QueryResolver { return &queryResolver{r} }
-
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }

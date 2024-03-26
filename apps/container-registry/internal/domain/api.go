@@ -80,17 +80,17 @@ type Domain interface {
 
 	ListBuildsByGit(ctx context.Context, repoUrl, branch, provider string) ([]*entities.Build, error)
 
-	AddBuildCache(ctx RegistryContext, buildCache entities.BuildCacheKey) (*entities.BuildCacheKey, error)
-	UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache entities.BuildCacheKey) (*entities.BuildCacheKey, error)
-	DeleteBuildCache(ctx RegistryContext, id repos.ID) error
-	ListBuildCaches(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildCacheKey], error)
-	ListBuildRuns(ctx RegistryContext, buildId repos.ID, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error)
+	// AddBuildCache(ctx RegistryContext, buildCache entities.BuildCacheKey) (*entities.BuildCacheKey, error)
+	// UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache entities.BuildCacheKey) (*entities.BuildCacheKey, error)
+	// DeleteBuildCache(ctx RegistryContext, id repos.ID) error
+	// ListBuildCaches(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildCacheKey], error)
+	ListBuildRuns(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error)
 	GetLatestBuildRun(ctx RegistryContext, buildId repos.ID) (*entities.BuildRun, error)
 	GetBuildRun(ctx RegistryContext, buildId repos.ID, runName string) (*entities.BuildRun, error)
 	OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.BuildRun, status t.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	OnBuildRunDeleteMessage(ctx RegistryContext, buildRun entities.BuildRun) error
 	OnBuildRunApplyErrorMessage(ctx RegistryContext, clusterName string, name string, errorMsg string) error
-	ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error)
+	// ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error)
 	CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *GitWebhookPayload, pullToken string, seed string) error
 }

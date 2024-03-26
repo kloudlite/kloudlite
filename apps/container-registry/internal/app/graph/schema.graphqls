@@ -14,11 +14,8 @@ input SearchBuilds {
 }
 
 input SearchBuildRuns {
-  text: MatchFilterIn
-}
-
-input SearchBuildCacheKeys {
-  text: MatchFilterIn
+  buildId: ID
+  repoName: MatchFilterIn
 }
 
 type CRCheckNameAvailabilityOutput @shareable {
@@ -28,48 +25,42 @@ type CRCheckNameAvailabilityOutput @shareable {
 
 type Query {
   cr_listRepos(search: SearchRepos, pagination: CursorPaginationIn): RepositoryPaginatedRecords @isLoggedInAndVerified @hasAccount
-  cr_listCreds(search:SearchCreds, pagination:CursorPaginationIn) : CredentialPaginatedRecords @isLoggedInAndVerified @hasAccount
-  cr_listDigests(repoName:String!, search: SearchRepos, pagination:CursorPaginationIn) : DigestPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_listCreds(search: SearchCreds, pagination: CursorPaginationIn): CredentialPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_listDigests(repoName: String!, search: SearchRepos, pagination: CursorPaginationIn): DigestPaginatedRecords @isLoggedInAndVerified @hasAccount
 
-  cr_getCredToken(username:String!) : String! @isLoggedInAndVerified @hasAccount
+  cr_getCredToken(username: String!): String! @isLoggedInAndVerified @hasAccount
 
-  cr_checkUserNameAvailability(name:String!) :CRCheckNameAvailabilityOutput! @isLoggedInAndVerified @hasAccount
+  cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput! @isLoggedInAndVerified @hasAccount
 
-  cr_getBuild(id:ID!) : Build @isLoggedInAndVerified @hasAccount
-  cr_listBuilds(repoName:String!, search:SearchBuilds, pagination:CursorPaginationIn) : BuildPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_getBuild(id: ID!): Build @isLoggedInAndVerified @hasAccount
+  cr_listBuilds(repoName: String!, search: SearchBuilds, pagination: CursorPaginationIn): BuildPaginatedRecords @isLoggedInAndVerified @hasAccount
 
-  cr_listGithubInstallations(pagination:PaginationIn) : [GithubInstallation!] @isLoggedInAndVerified
-  cr_listGithubRepos(installationId:Int!, pagination:PaginationIn): GithubListRepository @isLoggedInAndVerified
-  cr_searchGithubRepos(organization:String!, search:String!, pagination:PaginationIn): GithubSearchRepository @isLoggedInAndVerified
-  cr_listGithubBranches(repoUrl:String!, pagination:PaginationIn) : [GitBranch!] @isLoggedInAndVerified
+  cr_listGithubInstallations(pagination: PaginationIn): [GithubInstallation!] @isLoggedInAndVerified
+  cr_listGithubRepos(installationId: Int!, pagination: PaginationIn): GithubListRepository @isLoggedInAndVerified
+  cr_searchGithubRepos(organization: String!, search: String!, pagination: PaginationIn): GithubSearchRepository @isLoggedInAndVerified
+  cr_listGithubBranches(repoUrl: String!, pagination: PaginationIn): [GitBranch!] @isLoggedInAndVerified
 
-  cr_listGitlabGroups(query:String, pagination:PaginationIn) : [GitlabGroup!] @isLoggedInAndVerified
-  cr_listGitlabRepositories(groupId:String!, query:String, pagination:PaginationIn) : [GitlabProject!] @isLoggedInAndVerified
-  cr_listGitlabBranches(repoId: String!, query:String, pagination:PaginationIn) : [GitBranch!] @isLoggedInAndVerified
-  cr_listBuildCacheKeys(pq: CursorPaginationIn, search: SearchBuildCacheKeys) : BuildCacheKeyPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_listGitlabGroups(query: String, pagination: PaginationIn): [GitlabGroup!] @isLoggedInAndVerified
+  cr_listGitlabRepositories(groupId: String!, query: String, pagination: PaginationIn): [GitlabProject!] @isLoggedInAndVerified
+  cr_listGitlabBranches(repoId: String!, query: String, pagination: PaginationIn): [GitBranch!] @isLoggedInAndVerified
 
-  cr_listBuildRuns(buildID: ID!, search: SearchBuildRuns, pq: CursorPaginationIn): BuildRunPaginatedRecords @isLoggedInAndVerified @hasAccount
+  # cr_listBuildRuns(buildID: ID!, search: SearchBuildRuns, pq: CursorPaginationIn): BuildRunPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_listBuildRuns(search: SearchBuildRuns, pq: CursorPaginationIn): BuildRunPaginatedRecords @isLoggedInAndVerified @hasAccount
   cr_getBuildRun(buildID: ID!, buildRunName: String!): BuildRun @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
-  cr_createRepo(repository:RepositoryIn!) : Repository @isLoggedInAndVerified @hasAccount
-  cr_createCred(credential: CredentialIn!) : Credential @isLoggedInAndVerified @hasAccount
+  cr_createRepo(repository: RepositoryIn!): Repository @isLoggedInAndVerified @hasAccount
+  cr_createCred(credential: CredentialIn!): Credential @isLoggedInAndVerified @hasAccount
 
-  cr_deleteRepo(name:String!) :Boolean! @isLoggedInAndVerified @hasAccount
-  cr_deleteCred(username:String!) :Boolean! @isLoggedInAndVerified @hasAccount
-  cr_deleteDigest(repoName:String!, digest:String!) :Boolean! @isLoggedInAndVerified @hasAccount
+  cr_deleteRepo(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+  cr_deleteCred(username: String!): Boolean! @isLoggedInAndVerified @hasAccount
+  cr_deleteDigest(repoName: String!, digest: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-  cr_addBuild(build:BuildIn!) : Build @isLoggedInAndVerified @hasAccount
-  cr_updateBuild(id:ID!, build:BuildIn!) : Build @isLoggedInAndVerified @hasAccount
-  cr_deleteBuild(id:ID!) : Boolean! @isLoggedInAndVerified @hasAccount
-  cr_triggerBuild(id:ID!) : Boolean! @isLoggedInAndVerified @hasAccount
-
-  cr_addBuildCacheKey(buildCacheKey:BuildCacheKeyIn!) : BuildCacheKey @isLoggedInAndVerified @hasAccount
-  cr_deleteBuildCacheKey(id:ID!) : Boolean! @isLoggedInAndVerified @hasAccount
-  cr_updateBuildCacheKey(id:ID!, buildCacheKey:BuildCacheKeyIn!) : BuildCacheKey @isLoggedInAndVerified @hasAccount
-
-  cr_listBuildsByBuildCacheId(buildCacheKeyId:ID!, pagination:CursorPaginationIn) : BuildPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_addBuild(build: BuildIn!): Build @isLoggedInAndVerified @hasAccount
+  cr_updateBuild(id: ID!, build: BuildIn!): Build @isLoggedInAndVerified @hasAccount
+  cr_deleteBuild(id: ID!): Boolean! @isLoggedInAndVerified @hasAccount
+  cr_triggerBuild(id: ID!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 extend type Build @key(fields: "id") {

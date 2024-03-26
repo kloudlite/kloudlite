@@ -72,9 +72,14 @@ type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
 type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec @shareable {
   accountName: String!
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
-  cacheKeyName: String
+  caches: [Github__com___kloudlite___operator___apis___distribution___v1__Cache!]
   registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Cache @shareable {
+  name: String!
+  path: String!
 }
 
 type Github__com___kloudlite___operator___apis___distribution___v1__Registry @shareable {
@@ -177,9 +182,14 @@ input Github__com___kloudlite___operator___apis___distribution___v1__BuildOption
 
 input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn {
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
-  cacheKeyName: String
+  caches: [Github__com___kloudlite___operator___apis___distribution___v1__CacheIn!]
   registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__CacheIn {
+  name: String!
+  path: String!
 }
 
 input Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn {
