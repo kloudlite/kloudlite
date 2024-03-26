@@ -6,7 +6,6 @@ import (
 	"github.com/kloudlite/operator/pkg/constants"
 	jsonPatch "github.com/kloudlite/operator/pkg/json-patch"
 	rApi "github.com/kloudlite/operator/pkg/operator"
-	"github.com/kloudlite/operator/pkg/templates"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -40,7 +39,6 @@ type ContainerVolume struct {
 	Type      ConfigOrSecret        `json:"type"`
 	RefName   string                `json:"refName"`
 	Items     []ContainerVolumeItem `json:"items,omitempty"`
-	// SubPath   string                `json:"subPath,omitempty"`
 }
 
 type ShellProbe struct {
@@ -88,104 +86,104 @@ type AppContainer struct {
 	ReadinessProbe  *Probe            `json:"readinessProbe,omitempty"`
 }
 
-func (ac AppContainer) ToYAML() []byte {
-	b, err := templates.ParseBytes([]byte(`
-- name: {{.Name}}
-  image: {{.Image}}
-  imagePullPolicy: {{.ImagePullPolicy}}
-
-  {{- if .Command }}
-  command: {{.Command | toYAML | nindent 4 }}
-  {{- end}}
-
-  {{- if .Args }}
-  args: {{.Args | toYAML | nindent 4}}
-  {{- end }}
-
-  {{- if .EnvFrom }}
-  envFrom:
-  {{- range .EnvFrom }}
-    {{call .ToYAML }}
-  {{- end }}
-  {{- end }}
-
-  {{- if .Env }}
-  env:
-    {{- range .Env }}
-    {{call .ToYAML}}
-    {{- end }}
-  {{- end }}
-
-  {{- if or .ResourceCpu .ResourceMemory }}
-  resources:
-  {{- if and .ResourceCpu.Min .ResourceMemory.Min }}
-    requests:
-      cpu: {{ .ResourceCpu.Min }}
-      memory: {{ .ResourceMemory.Min }}
-  {{- end }}
-  {{- if and .ResourceCpu.Max .ResourceMemory.Max }}
-    limits:
-      cpu: {{ .ResourceCpu.Max }}
-      memory: {{ .ResourceMemory.Max }}
-  {{- end }}
-  {{- end }}
-
-  {{- if $volumeMounts }}
-  {{- $vMounts := index $volumeMounts $idx }}
-  {{- if $vMounts }}
-  volumeMounts: {{- $vMounts | toYAML | nindent 4 }}
-  {{- end}}
-  {{- end }}
-
-  {{- if .LivenessProbe }}
-  {{- with .LivenessProbe}}
-  livenessProbe:
-    failureThreshold: {{.FailureThreshold | default 3}}
-    initialDelaySeconds: {{.InitialDelay | default 2}}
-    periodSeconds: {{.Interval | default 10 }}
-
-    {{- if eq .Type "shell"}}
-    exec:
-      command: {{ .Shell | toYAML | nindent 8 }}
-    {{- end }}
-
-    {{- if eq .Type "httpGet"}}
-    httpGet: {{.HttpGet | toYAML | nindent 6}}
-    {{- end }}
-
-    {{- if eq .Type "httpHeaders"}}
-    tcpProbe: {{.Tcp | toYAML | nindent 6}}
-    {{- end}}
-  {{- end }}
-  {{- end}}
-
-  {{- if .ReadinessProbe }}
-  {{- with .ReadinessProbe}}
-  readinessProbe:
-    failureThreshold: {{.FailureThreshold | default 3}}
-    initialDelaySeconds: {{.InitialDelay | default 2}}
-    periodSeconds: {{.Interval | default 10 }}
-
-    {{- if eq .Type "shell"}}
-    exec:
-      command: {{ .Shell | toYAML | nindent 8 }}
-    {{- end }}
-
-    {{- if eq .Type "httpGet"}}
-    httpGet: {{.HttpGet | toYAML | nindent 6}}
-    {{- end }}
-
-    {{- if eq .Type "httpHeaders"}}
-    tcpProbe: {{.Tcp | toYAML | nindent 6}}
-    {{- end}}
-  {{- end }}
-  {{- end}}
-`), ac)
-	if err != nil {
-		return nil
-	}
-	return b
-}
+// func (ac AppContainer) ToYAML() []byte {
+// 	b, err := templates.ParseBytes([]byte(`
+// - name: {{.Name}}
+//   image: {{.Image}}
+//   imagePullPolicy: {{.ImagePullPolicy}}
+//
+//   {{- if .Command }}
+//   command: {{.Command | toYAML | nindent 4 }}
+//   {{- end}}
+//
+//   {{- if .Args }}
+//   args: {{.Args | toYAML | nindent 4}}
+//   {{- end }}
+//
+//   {{- if .EnvFrom }}
+//   envFrom:
+//   {{- range .EnvFrom }}
+//     {{call .ToYAML }}
+//   {{- end }}
+//   {{- end }}
+//
+//   {{- if .Env }}
+//   env:
+//     {{- range .Env }}
+//     {{call .ToYAML}}
+//     {{- end }}
+//   {{- end }}
+//
+//   {{- if or .ResourceCpu .ResourceMemory }}
+//   resources:
+//   {{- if and .ResourceCpu.Min .ResourceMemory.Min }}
+//     requests:
+//       cpu: {{ .ResourceCpu.Min }}
+//       memory: {{ .ResourceMemory.Min }}
+//   {{- end }}
+//   {{- if and .ResourceCpu.Max .ResourceMemory.Max }}
+//     limits:
+//       cpu: {{ .ResourceCpu.Max }}
+//       memory: {{ .ResourceMemory.Max }}
+//   {{- end }}
+//   {{- end }}
+//
+//   {{- if $volumeMounts }}
+//   {{- $vMounts := index $volumeMounts $idx }}
+//   {{- if $vMounts }}
+//   volumeMounts: {{- $vMounts | toYAML | nindent 4 }}
+//   {{- end}}
+//   {{- end }}
+//
+//   {{- if .LivenessProbe }}
+//   {{- with .LivenessProbe}}
+//   livenessProbe:
+//     failureThreshold: {{.FailureThreshold | default 3}}
+//     initialDelaySeconds: {{.InitialDelay | default 2}}
+//     periodSeconds: {{.Interval | default 10 }}
+//
+//     {{- if eq .Type "shell"}}
+//     exec:
+//       command: {{ .Shell | toYAML | nindent 8 }}
+//     {{- end }}
+//
+//     {{- if eq .Type "httpGet"}}
+//     httpGet: {{.HttpGet | toYAML | nindent 6}}
+//     {{- end }}
+//
+//     {{- if eq .Type "httpHeaders"}}
+//     tcpProbe: {{.Tcp | toYAML | nindent 6}}
+//     {{- end}}
+//   {{- end }}
+//   {{- end}}
+//
+//   {{- if .ReadinessProbe }}
+//   {{- with .ReadinessProbe}}
+//   readinessProbe:
+//     failureThreshold: {{.FailureThreshold | default 3}}
+//     initialDelaySeconds: {{.InitialDelay | default 2}}
+//     periodSeconds: {{.Interval | default 10 }}
+//
+//     {{- if eq .Type "shell"}}
+//     exec:
+//       command: {{ .Shell | toYAML | nindent 8 }}
+//     {{- end }}
+//
+//     {{- if eq .Type "httpGet"}}
+//     httpGet: {{.HttpGet | toYAML | nindent 6}}
+//     {{- end }}
+//
+//     {{- if eq .Type "httpHeaders"}}
+//     tcpProbe: {{.Tcp | toYAML | nindent 6}}
+//     {{- end}}
+//   {{- end }}
+//   {{- end}}
+// `), ac)
+// 	if err != nil {
+// 		return nil
+// 	}
+// 	return b
+// }
 
 type AppSvc struct {
 	Port       uint16 `json:"port"`

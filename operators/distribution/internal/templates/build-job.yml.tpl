@@ -18,7 +18,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: build-{{ $name }}
+  name: {{ $name }}
   namespace: {{ $namespace }}
   labels: {{ $labels | toJson }}
   annotations: {{ $annotations | toJson }}
@@ -28,7 +28,7 @@ spec:
   suspend: false
   template:
     metadata:
-      name: build-{{ $name }}
+      name: {{ $name }}
       annotations: {{ $annotations | toJson }}
     spec:
       containers:

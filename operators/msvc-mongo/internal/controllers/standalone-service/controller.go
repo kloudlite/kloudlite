@@ -108,10 +108,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	// if step := r.patchDefaults(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
-
 	if step := r.generateAccessCredentials(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -151,16 +147,7 @@ func getHelmSecretName(name string) string {
 
 func (r *Reconciler) generateAccessCredentials(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := AccessCredsGenerated
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(AccessCredsGenerated, req)
 
 	rootPassword := fn.CleanerNanoid(40)
 
@@ -202,7 +189,7 @@ func (r *Reconciler) generateAccessCredentials(req *rApi.Request[*mongodbMsvcv1.
 		}
 		return nil
 	}); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	req.AddToOwnedResources(rApi.ParseResourceRef(msvcOutput))
@@ -222,40 +209,23 @@ func (r *Reconciler) generateAccessCredentials(req *rApi.Request[*mongodbMsvcv1.
 
 		return nil
 	}); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	req.AddToOwnedResources(rApi.ParseResourceRef(helmSecret))
 	rApi.SetLocal(req, "creds", msvcOutput.Data)
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := MongoDBHelmApplied
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(MongoDBHelmApplied, req)
 
 	hc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.HelmChart{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return fail(err)
+			return check.Failed(err)
 		}
 		hc = nil
 	}
@@ -263,7 +233,7 @@ func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1
 	if hc == nil {
 		fn.MapSet(&obj.Annotations, AnnotationCurrentStorageSize, string(obj.Spec.Resources.Storage.Size))
 		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 
 		b, err := templates.ParseBytes(r.templateHelmMongoDB, map[string]any{
@@ -289,11 +259,11 @@ func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1
 			"existing-secret": getHelmSecretName(obj.Name),
 		})
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err).Err(nil)
 		}
 
 		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 
 		return req.Done().RequeueAfter(500 * time.Millisecond)
@@ -307,19 +277,21 @@ func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1
 	if ok {
 		oldSizeNum, err := ct.StorageSize(oldSize).ToInt()
 		if err != nil {
-			return fail(err)
+			return check.Failed(err).Err(nil)
 		}
 
 		newSizeNum, err := ct.StorageSize(obj.Spec.Resources.Storage.Size).ToInt()
 		if err != nil {
-			return fail(err)
+			return check.Failed(err).Err(nil)
 		}
 
 		if oldSizeNum > newSizeNum {
-			return fail(fmt.Errorf("new storage size (%s), must be higher than or equal to old size (%s)", obj.Spec.Resources.Storage.Size, oldSize))
+			return check.Failed(fmt.Errorf("new storage size (%s), must be higher than or equal to old size (%s)", obj.Spec.Resources.Storage.Size, oldSize)).Err(nil)
 		}
+
 		shouldUpdatePVCs = newSizeNum > oldSizeNum
 	}
+
 	if !ok {
 		shouldUpdatePVCs = true
 	}
@@ -332,7 +304,7 @@ func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1
 		ss, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.StatefulSet{})
 		if err != nil {
 			if !apiErrors.IsNotFound(err) {
-				return fail(err)
+				return check.Failed(err).Err(nil)
 			}
 			ss = nil
 		}
@@ -345,84 +317,50 @@ func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1
 				LabelSelector: apiLabels.SelectorFromValidatedSet(m),
 				Namespace:     obj.Namespace,
 			}); err != nil {
-				return fail(err)
+				return check.Failed(err)
 			}
 
 			for i := range pvclist.Items {
 				pvclist.Items[i].Spec.Resources.Requests[corev1.ResourceStorage] = resource.MustParse(string(obj.Spec.Resources.Storage.Size))
 				if err := r.Update(ctx, &pvclist.Items[i]); err != nil {
-					return fail(err)
+					return check.Failed(err)
 				}
 			}
 
 			// STEP 2: rollout statefulset
 			if err := fn.RolloutRestart(r.Client, fn.StatefulSet, obj.Namespace, ss.GetLabels()); err != nil {
-				return fail(err)
+				return check.Failed(err)
 			}
 
 			fn.MapSet(&obj.Annotations, AnnotationCurrentStorageSize, string(obj.Spec.Resources.Storage.Size))
 			if err := r.Update(ctx, obj); err != nil {
-				return fail(err)
+				return check.Failed(err)
 			}
 		}
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) checkHelmReady(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := MongoDBHelmReady
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(MongoDBHelmReady, req)
 
 	hc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.HelmChart{})
 	if err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	if !hc.Status.IsReady {
-		return fail(fmt.Errorf("waiting for helm installation to complete"))
+		return check.Failed(fmt.Errorf("waiting for helm installation to complete"))
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := MongoDBStatefulSetsReady
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(MongoDBStatefulSetsReady, req)
 
 	var stsList appsv1.StatefulSetList
 	if err := r.List(
@@ -433,11 +371,11 @@ func (r *Reconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.StandaloneService
 			Namespace: obj.Namespace,
 		},
 	); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	if len(stsList.Items) == 0 {
-		return fail(fmt.Errorf("no statefulset pods found, waiting for helm controller to reconcile the resource"))
+		return check.Failed(fmt.Errorf("no statefulset pods found, waiting for helm controller to reconcile the resource"))
 	}
 
 	for i := range stsList.Items {
@@ -455,31 +393,23 @@ func (r *Reconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.StandaloneService
 					),
 				},
 			); err != nil {
-				return fail(err)
+				return check.Failed(err)
 			}
 
 			messages := rApi.GetMessagesFromPods(podsList.Items...)
 			if len(messages) > 0 {
 				b, err := json.Marshal(messages)
 				if err != nil {
-					return fail(err).Err(nil)
+					return check.Failed(err).Err(nil)
 				}
-				return fail(fmt.Errorf("%s", b)).Err(nil)
+				return check.Failed(fmt.Errorf("%s", b)).Err(nil)
 			}
 
-			return fail(fmt.Errorf("waiting for statefulset pods to start"))
+			return check.StillRunning(fmt.Errorf("waiting for statefulset pods to start"))
 		}
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

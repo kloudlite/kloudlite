@@ -133,20 +133,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+	check := rApi.NewRunningCheck(envFinalizing, req)
 
 	if !slices.Equal(obj.Status.CheckList, ENV_DESTROY_CHECKLIST) {
 		req.Object.Status.CheckList = ENV_DESTROY_CHECKLIST
 		if step := req.UpdateStatus(); !step.ShouldProceed() {
 			return step
 		}
-	}
-
-	req.LogPreCheck(envFinalizing)
-	defer req.LogPostCheck(envFinalizing)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(envFinalizing, check, err.Error()).RequeueAfter(2 * time.Second) // during finalizing, there is no need to wait for changes to happen, we are doing aggressive polling
 	}
 
 	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
@@ -156,7 +149,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	// ensure deletion of other kloudlite resources, that belong to this environment
 	var mresList crdsv1.ManagedResourceList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &mresList, obj.Spec.TargetNamespace); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	mres := make([]client.Object, len(mresList.Items))
@@ -165,13 +158,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, mres...); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	// routers
 	var routersList crdsv1.RouterList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &routersList, obj.Spec.TargetNamespace); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	routers := make([]client.Object, len(routersList.Items))
@@ -180,13 +173,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, routers...); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	// apps
 	var appsList crdsv1.AppList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &appsList, obj.Spec.TargetNamespace); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	apps := make([]client.Object, len(appsList.Items))
@@ -195,13 +188,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, apps...); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	// configs
 	var configsList corev1.ConfigMapList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &configsList, obj.Spec.TargetNamespace); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	configs := make([]client.Object, 0, len(configsList.Items))
@@ -213,13 +206,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, configs...); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	// secrets
 	var secretsList corev1.SecretList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &secretsList, obj.Spec.TargetNamespace); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	secrets := make([]client.Object, len(secretsList.Items))
@@ -228,31 +221,15 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, secrets...); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != obj.Status.Checks[envFinalizing] {
-		fn.MapSet(&obj.Status.Checks, envFinalizing, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Finalize()
+	return check.Completed()
 }
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	req.LogPreCheck(patchDefaults)
-	defer req.LogPostCheck(patchDefaults)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(patchDefaults, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(patchDefaults, req)
 
 	hasUpdated := false
 
@@ -279,37 +256,21 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepR
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 		return req.Done()
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != obj.Status.Checks[patchDefaults] {
-		fn.MapSet(&obj.Status.Checks, patchDefaults, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	req.LogPreCheck(ensureNamespace)
-	defer req.LogPostCheck(ensureNamespace)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(ensureNamespace, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(ensureNamespace, req)
 
 	var project crdsv1.Project
 	if err := r.Get(ctx, fn.NN("", obj.Spec.ProjectName), &project); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
@@ -329,34 +290,19 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 
 		return nil
 	}); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != obj.Status.Checks[ensureNamespace] {
-		fn.MapSet(&obj.Status.Checks, ensureNamespace, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	req.LogPreCheck(ensureNamespaceRBACs)
-	defer req.LogPreCheck(ensureNamespaceRBACs)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(ensureNamespaceRBACs, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(ensureNamespaceRBACs, req)
 
 	var pullSecrets corev1.SecretList
 	if err := r.List(ctx, &pullSecrets, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	secretNames := make([]string, 0, len(pullSecrets.Items))
@@ -373,38 +319,22 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]
 	},
 	)
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).Err(nil)
 	}
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).Err(nil)
 	}
 
 	req.AddToOwnedResources(rr...)
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != obj.Status.Checks[ensureNamespaceRBACs] {
-		fn.MapSet(&obj.Status.Checks, ensureNamespaceRBACs, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) setupEnvIngressController(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	req.LogPreCheck(setupEnvIngress)
-	defer req.LogPostCheck(setupEnvIngress)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(setupEnvIngress, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(setupEnvIngress, req)
 
 	// releaseName := fmt.Sprintf("%s-env-ingress-%s", obj.Spec.TargetNamespace, obj.Name)
 	releaseName := obj.Spec.Routing.PrivateIngressClass
@@ -422,12 +352,12 @@ func (r *Reconciler) setupEnvIngressController(req *rApi.Request[*crdsv1.Environ
 		"ingress-class-name": obj.Spec.Routing.PrivateIngressClass,
 	})
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).Err(nil)
 	}
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	req.AddToOwnedResources(rr...)
@@ -435,54 +365,38 @@ func (r *Reconciler) setupEnvIngressController(req *rApi.Request[*crdsv1.Environ
 	// wait for helm chart to be ready
 	hc, err := rApi.Get(ctx, r.Client, fn.NN(releaseNamespace, releaseName), &crdsv1.HelmChart{})
 	if err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	if !hc.Status.IsReady {
 		if hc.Status.Message != nil {
 			check.Message = hc.Status.Message.ToString()
 		}
-		return fail(fmt.Errorf("waiting for helm chart to be ready"))
+		return check.StillRunning(fmt.Errorf("waiting for helm chart to be ready"))
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != obj.Status.Checks[setupEnvIngress] {
-		fn.MapSet(&obj.Status.Checks, setupEnvIngress, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) updateRouterIngressClasses(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	req.LogPreCheck(updateRouterIngress)
-	defer req.LogPostCheck(updateRouterIngress)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(updateRouterIngress, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(updateRouterIngress, req)
 
 	var routers crdsv1.RouterList
 	if err := r.List(ctx, &routers, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	for i := range routers.Items {
 		routers.Items[i].Spec.IngressClass = obj.GetIngressClassName()
 		if err := r.Update(ctx, &routers.Items[i]); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 	}
 
 	var ingressList networkingv1.IngressList
 	if err := r.List(ctx, &ingressList, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	for i := range ingressList.Items {
@@ -492,16 +406,7 @@ func (r *Reconciler) updateRouterIngressClasses(req *rApi.Request[*crdsv1.Enviro
 		}
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != obj.Status.Checks[updateRouterIngress] {
-		fn.MapSet(&obj.Status.Checks, updateRouterIngress, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

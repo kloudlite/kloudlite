@@ -8,6 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	fn "github.com/kloudlite/operator/pkg/functions"
 	rawJson "github.com/kloudlite/operator/pkg/raw-json"
 )
 
@@ -27,11 +28,28 @@ type Check struct {
 	Message    string `json:"message,omitempty"`
 	Generation int64  `json:"generation,omitempty"`
 
-	State     State        `json:"state,omitempty"`
+	State State `json:"state,omitempty"`
+
 	StartedAt *metav1.Time `json:"startedAt,omitempty"`
-	Info      string       `json:"info,omitempty"`
-	Debug     string       `json:"debug,omitempty"`
-	Error     string       `json:"error,omitempty"`
+	// CompletedAt *metav1.Time `json:"completedAt,omitempty"`
+
+	Info  string `json:"info,omitempty"`
+	Debug string `json:"debug,omitempty"`
+	Error string `json:"error,omitempty"`
+}
+
+func AreChecksEqual(c1 Check, c2 Check) bool {
+	c1.StartedAt = fn.New(fn.DefaultIfNil[metav1.Time](c1.StartedAt))
+	c2.StartedAt = fn.New(fn.DefaultIfNil[metav1.Time](c1.StartedAt))
+
+	// c1.CompletedAt = fn.New(fn.DefaultIfNil[metav1.Time](c1.StartedAt))
+	// c2.CompletedAt = fn.New(fn.DefaultIfNil[metav1.Time](c1.StartedAt))
+
+	return c1.Status == c2.Status &&
+		c1.Message == c2.Message &&
+		c1.Generation == c2.Generation &&
+		c1.State == c2.State &&
+		c1.StartedAt.Sub(c2.StartedAt.Time) == 0
 }
 
 // +kubebuilder:object:generate=true
