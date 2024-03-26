@@ -35,11 +35,16 @@ type Resource struct {
 	MemoryInMb int `json:"memoryInMb"`
 }
 
+type Cache struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
 // BuildRunSpec defines the desired state of BuildRun
 type BuildRunSpec struct {
-	CacheKeyName *string `json:"cacheKeyName,omitempty"`
-	AccountName  string  `json:"accountName" graphql:"noinput"`
+	AccountName string `json:"accountName" graphql:"noinput"`
 
+	Caches       []Cache       `json:"caches,omitempty"`
 	Registry     Registry      `json:"registry"`
 	GitRepo      GitRepo       `json:"gitRepo" graphql:"ignore"`
 	BuildOptions *BuildOptions `json:"buildOptions,omitempty"`
@@ -76,19 +81,9 @@ func (d *BuildRun) GetStatus() *rApi.Status {
 }
 
 func (d *BuildRun) GetEnsuredLabels() map[string]string {
-	if d.Spec.CacheKeyName != nil {
-		return map[string]string{
-			constants.CacheNameKey:    *d.Spec.CacheKeyName,
-			constants.AccountNameKey:  d.Spec.AccountName,
-			constants.BuildRunNameKey: d.Name,
-			// constants.BuildNameKey:   d.Name,
-		}
-	}
-
 	return map[string]string{
 		constants.AccountNameKey:  d.Spec.AccountName,
 		constants.BuildRunNameKey: d.Name,
-		// constants.BuildNameKey:   d.Name,
 	}
 }
 
