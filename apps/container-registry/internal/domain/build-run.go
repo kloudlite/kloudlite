@@ -236,7 +236,7 @@ func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *
 				Tags: build.Spec.Registry.Repo.Tags,
 			},
 		},
-		CacheKeyName: build.Spec.CacheKeyName,
+		Caches: build.Spec.Caches,
 		GitRepo: distributionv1.GitRepo{
 			Url:    hook.RepoUrl,
 			Branch: hook.CommitHash,
