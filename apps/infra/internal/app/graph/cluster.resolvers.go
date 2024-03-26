@@ -6,8 +6,9 @@ package graph
 
 import (
 	"context"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
@@ -43,6 +44,16 @@ func (r *clusterResolver) Spec(ctx context.Context, obj *entities.Cluster) (*mod
 	if err := fn.JsonConversion(&obj.Spec, &spec); err != nil {
 		return nil, errors.NewE(err)
 	}
+
+	// FIXME: remove after implementing BYOK on UI
+	if spec.AvailabilityMode == "" {
+		spec.AvailabilityMode = "dev"
+	}
+
+	if spec.CloudProvider == "" {
+		spec.CloudProvider = "aws"
+	}
+
 	return &spec, nil
 }
 
@@ -76,5 +87,7 @@ func (r *Resolver) Cluster() generated.ClusterResolver { return &clusterResolver
 // ClusterIn returns generated.ClusterInResolver implementation.
 func (r *Resolver) ClusterIn() generated.ClusterInResolver { return &clusterInResolver{r} }
 
-type clusterResolver struct{ *Resolver }
-type clusterInResolver struct{ *Resolver }
+type (
+	clusterResolver   struct{ *Resolver }
+	clusterInResolver struct{ *Resolver }
+)

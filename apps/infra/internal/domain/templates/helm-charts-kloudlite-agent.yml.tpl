@@ -5,6 +5,7 @@
 {{- $messageOfficeGrpcAddr := get . "message-office-grpc-addr" }}
 
 {{- $clusterToken := get . "cluster-token" }}
+{{- $publicDnsHost := get . "public-dns-host" }}
 
 ---
 apiVersion: crds.kloudlite.io/v1
@@ -21,6 +22,9 @@ spec:
     tolerations:
       - operator: Exists
     
+  preInstall: |+
+    kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/{{$kloudliteRelease}}/crds-kloudlite.yml
+
   postInstall: |+
     if kubectl get ns kloudlite-tmp;
     then
@@ -75,6 +79,9 @@ spec:
             enabled: true
             # must be one of aws,azure,gcp
             cloudprovider: "aws"
+
+          wireguard:
+            publicDNSHost: {{$publicDNSHost}}
 
           {{- /* wireguard: */}}
           {{- /*   podCIDR: 10.42.0.0/16 */}}
