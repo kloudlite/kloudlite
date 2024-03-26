@@ -231,20 +231,19 @@ func SetDnsSearch() error {
 		return err
 	}
 
-	//localIps, err := localIPs()
-	//if err != nil {
-	//	return err
-	//}
-	//ips := []net.IPNet{}
-	//for _, ip := range data.DnsValues {
-	//	if slices.Contains(localIps, ip) {
-	//		ips = append(ips, net.IPNet{IP: net.ParseIP(ip)})
-	//	}
-	//}
-	ips := []net.IPNet{{
-		IP: "10.13.0.3",
-	}}
-	err = setDnsServers(ips, constants.NetworkService, false)
+	var privateIPs []net.IPNet
+	for _, ipStr := range data.DnsValues {
+		ip := net.ParseIP(ipStr)
+		if ip == nil {
+			fmt.Printf("Invalid IP address: %s\n", ipStr)
+			continue
+		}
+		if isPrivateIP(ip) {
+			privateIPs = append(privateIPs, net.IPNet{IP: net.ParseIP(ipStr)})
+		}
+	}
+
+	err = setDnsServers(privateIPs, constants.NetworkService, false)
 	if err != nil {
 		return err
 	}
@@ -312,20 +311,17 @@ func UnsetDnsSearch() error {
 	return nil
 }
 
-//func localIPs() ([]string, error) {
-//	addrs, err := net.InterfaceAddrs()
-//	if err != nil {
-//		fmt.Println("Error:", err)
-//		return nil, err
-//	}
-//
-//	localIps := []string{}
-//	for _, addr := range addrs {
-//		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-//			if ipnet.IP.To4() != nil {
-//				localIps = append(localIps, ipnet.IP.String())
-//			}
-//		}
-//	}
-//	return localIps, nil
-//}
+func isPrivateIP(ip net.IP) bool {
+	private := false
+	if ip4 := ip.To4(); ip4 != nil {
+		switch {
+		case ip4[0] == 10:
+			private = true
+		case ip4[0] == 172 && ip4[1] >= 16 && ip4[1] <= 31:
+			private = true
+		case ip4[0] == 192 && ip4[1] == 168:
+			private = true
+		}
+	}
+	return private
+}
