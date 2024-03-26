@@ -119,6 +119,8 @@ type Mutation {
     infra_updateCluster(cluster: ClusterIn!): Cluster @isLoggedInAndVerified @hasAccount
     infra_deleteCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
     # infra_resyncCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+      
+    infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster @isLoggedInAndVerified @hasAccount
 
     infra_upgradeHelmKloudliteAgent(clusterName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
