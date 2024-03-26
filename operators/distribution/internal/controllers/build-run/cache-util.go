@@ -1,7 +1,6 @@
 package buildrun
 
 import (
-	"crypto/md5"
 	"fmt"
 
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
@@ -11,7 +10,7 @@ import (
 func (r *Reconciler) getCacheCmds(req *rApi.Request[*dbv1.BuildRun]) (string, string, error) {
 	obj := req.Object
 
-	if obj.Spec.CachePaths == nil || len(obj.Spec.CachePaths) == 0 {
+	if obj.Spec.Caches == nil || len(obj.Spec.Caches) == 0 {
 		return "", "", nil
 	}
 
@@ -24,8 +23,8 @@ func (r *Reconciler) getCacheCmds(req *rApi.Request[*dbv1.BuildRun]) (string, st
 
 	checkoutCmd := "echo '[#] checking out cache paths...'"
 	postCheckoutCmd := "echo '[#] pushing cache paths...'"
-	for i, path := range obj.Spec.CachePaths {
-		hash := fmt.Sprintf("%x", md5.Sum([]byte(path)))
+	for i, path := range obj.Spec.Caches {
+		name := path.Name
 		containerName := fmt.Sprintf("tmp_container_%d", i)
 
 		checkoutCmd += fmt.Sprintf(`
@@ -36,26 +35,26 @@ if [ "$(docker images -q %s:%s)" == "" ]; then
 else
     docker create --name %s %s:%s
 fi
-docker cp %s:/%s %q || mkdir -p %q
+docker cp %s:/data %q || mkdir -p %q
 		  `,
-			repoName, hash,
-			repoName, hash,
-			repoName, hash,
+			repoName, name,
+			repoName, name,
+			repoName, name,
 			containerName,
-			containerName, repoName, hash,
-			containerName, hash, path, path,
+			containerName, repoName, name,
+			containerName, name, path, path,
 		)
 
 		postCheckoutCmd += fmt.Sprintf(`
 mkdir -p %q
-docker cp %q %s:/%s || true
+docker cp %q %s:/data || true
 docker commit %s %s:%s
 docker push %s:%s
 		`,
 			path,
-			path, containerName, hash,
-			containerName, repoName, hash,
-			repoName, hash,
+			path, containerName, name,
+			containerName, repoName, name,
+			repoName, name,
 		)
 	}
 

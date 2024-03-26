@@ -43,7 +43,6 @@ type BuildObj struct {
 	GitRepoUrl    string
 	GitRepoBranch string
 	BuildOptions  BuildOptions
-	CachePaths    []string
 
 	ServerResource Resource
 	ClientResource Resource
@@ -146,7 +145,6 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 		RegistryPassword:     string(rp),
 		GitRepoUrl:           gitRepoUrl,
 		GitRepoBranch:        obj.Spec.GitRepo.Branch,
-		CachePaths:           obj.Spec.CachePaths,
 		CacheCheckoutCmd:     cacheCheckoutCmd,
 		CachePostCheckoutCmd: cachePostCheckoutCmd,
 		ClientResource: Resource{
