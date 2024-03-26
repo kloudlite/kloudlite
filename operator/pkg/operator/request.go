@@ -471,11 +471,13 @@ func (r *Request[T]) PostReconcile() {
 	m["kloudlite.io/checks"] = func() string {
 		checks := make([]string, 0, len(r.Object.GetStatus().Checks))
 		currentCheck := ""
-		for k, check := range r.Object.GetStatus().Checks {
-			if check.State == RunningState || check.State == ErroredState {
+		keys := fn.MapKeys(r.Object.GetStatus().Checks)
+		slices.Sort(keys)
+		for _, k := range keys {
+			if r.Object.GetStatus().Checks[k].State == RunningState || r.Object.GetStatus().Checks[k].State == ErroredState {
 				currentCheck = k
 			}
-			checks = append(checks, checkStates[check.State])
+			checks = append(checks, checkStates[r.Object.GetStatus().Checks[k].State])
 		}
 
 		if currentCheck != "" {
