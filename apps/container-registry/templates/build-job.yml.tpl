@@ -9,6 +9,7 @@
 {{- $gitRepo := .GitRepo -}}
 {{- $registry := .Registry -}}
 {{- $credentialsRef := .CredentialsRef -}}
+{{- $caches := .Caches -}}
 
 apiVersion: distribution.kloudlite.io/v1
 kind: BuildRun
@@ -25,9 +26,7 @@ spec:
   buildOptions: {{ $buildOptions | toJson }}
   {{- end }}
 
-  {{- if $cacheKeyName }}
-  cacheKeyName: {{ $cacheKeyName }}
-  {{- end }}
+  caches: {{ $caches | toJson }}
 
   resource: {{ $resource | toJson }}
   gitRepo: {{ $gitRepo | toJson }}
