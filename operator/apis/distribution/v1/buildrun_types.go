@@ -35,11 +35,16 @@ type Resource struct {
 	MemoryInMb int `json:"memoryInMb"`
 }
 
+type Cache struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
 // BuildRunSpec defines the desired state of BuildRun
 type BuildRunSpec struct {
 	AccountName string `json:"accountName" graphql:"noinput"`
 
-	CachePaths   []string      `json:"cachePaths,omitempty"`
+	Caches       []Cache       `json:"caches,omitempty"`
 	Registry     Registry      `json:"registry"`
 	GitRepo      GitRepo       `json:"gitRepo" graphql:"ignore"`
 	BuildOptions *BuildOptions `json:"buildOptions,omitempty"`
