@@ -231,17 +231,17 @@ func SetDnsSearch() error {
 		return err
 	}
 
-	localIps, err := localIPs()
-	if err != nil {
-		return err
-	}
-	ips := []net.IPNet{}
-	for _, ip := range data.DnsValues {
-		if !slices.Contains(localIps, ip) {
-			ips = append(ips, net.IPNet{IP: net.ParseIP(ip)})
-		}
-	}
-
+	//localIps, err := localIPs()
+	//if err != nil {
+	//	return err
+	//}
+	//ips := []net.IPNet{}
+	//for _, ip := range data.DnsValues {
+	//	if slices.Contains(localIps, ip) {
+	//		ips = append(ips, net.IPNet{IP: net.ParseIP(ip)})
+	//	}
+	//}
+	ips := []net.IPNet{"10.13.0.3"}
 	err = setDnsServers(ips, constants.NetworkService, false)
 	if err != nil {
 		return err
@@ -310,20 +310,20 @@ func UnsetDnsSearch() error {
 	return nil
 }
 
-func localIPs() ([]string, error) {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		fmt.Println("Error:", err)
-		return "", err
-	}
-
-	localIps := []string{}
-	for _, addr := range addrs {
-		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				localIps = append(localIps, ipnet.IP.String())
-			}
-		}
-	}
-	return localIps, nil
-}
+//func localIPs() ([]string, error) {
+//	addrs, err := net.InterfaceAddrs()
+//	if err != nil {
+//		fmt.Println("Error:", err)
+//		return nil, err
+//	}
+//
+//	localIps := []string{}
+//	for _, addr := range addrs {
+//		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+//			if ipnet.IP.To4() != nil {
+//				localIps = append(localIps, ipnet.IP.String())
+//			}
+//		}
+//	}
+//	return localIps, nil
+//}
