@@ -106,8 +106,8 @@ export const buildRunQueries = (executor: IExecutor) => ({
   ),
   getBuildRun: executor(
     gql`
-      query Cr_getBuildRun($buildID: ID!, $buildRunName: String!) {
-        cr_getBuildRun(buildID: $buildID, buildRunName: $buildRunName) {
+      query Cr_getBuildRun($buildId: ID!, $buildRunName: String!) {
+        cr_getBuildRun(buildID: $buildId, buildRunName: $buildRunName) {
           clusterName
           creationTime
           markedForDeletion

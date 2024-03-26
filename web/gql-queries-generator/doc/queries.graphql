@@ -2882,8 +2882,8 @@ query consoleListBuildRuns($search: SearchBuildRuns, $pq: CursorPaginationIn) {
   }
 }
 
-query consoleGetBuildRun($buildID: ID!, $buildRunName: String!) {
-  cr_getBuildRun(buildID: $buildID, buildRunName: $buildRunName) {
+query consoleGetBuildRun($buildId: ID!, $buildRunName: String!) {
+  cr_getBuildRun(buildID: $buildId, buildRunName: $buildRunName) {
     clusterName
     creationTime
     markedForDeletion

@@ -194,26 +194,6 @@ type BuildRunPaginatedRecords {
   totalCount: Int!
 }
 
-type BYOKCluster {
-  accountName: String!
-  ClusterSpec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec
-  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  creationTime: Date!
-  displayName: String!
-  id: ID!
-  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  markedForDeletion: Boolean
-  metadata: Metadata!
-  recordVersion: Int!
-  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
-  updateTime: Date!
-}
-
-input BYOKClusterIn {
-  displayName: String!
-  metadata: MetadataIn!
-}
-
 type CheckAwsAccessOutput {
   installationUrl: String
   result: Boolean!
@@ -1615,14 +1595,14 @@ input Github__com___kloudlite___operator___apis___distribution___v1__BuildOption
 type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec {
   accountName: String!
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
-  cacheKeyName: String
+  cachePaths: [String!]
   registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
 }
 
 input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn {
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
-  cacheKeyName: String
+  cachePaths: [String!]
   registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
 }
@@ -3072,7 +3052,6 @@ type Mutation {
   cr_triggerBuild(id: ID!): Boolean!
   cr_updateBuild(build: BuildIn!, id: ID!): Build
   cr_updateBuildCacheKey(buildCacheKey: BuildCacheKeyIn!, id: ID!): BuildCacheKey
-  infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
   infra_createClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
   infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
@@ -3444,7 +3423,7 @@ type Query {
   cr_getBuildRun(buildID: ID!, buildRunName: String!): BuildRun
   cr_getCredToken(username: String!): String!
   cr_listBuildCacheKeys(pq: CursorPaginationIn, search: SearchBuildCacheKeys): BuildCacheKeyPaginatedRecords
-  cr_listBuildRuns(pq: CursorPaginationIn, search: SearchBuildRuns): BuildRunPaginatedRecords
+  cr_listBuildRuns(buildID: ID!, pq: CursorPaginationIn, search: SearchBuildRuns): BuildRunPaginatedRecords
   cr_listBuilds(pagination: CursorPaginationIn, repoName: String!, search: SearchBuilds): BuildPaginatedRecords
   cr_listCreds(pagination: CursorPaginationIn, search: SearchCreds): CredentialPaginatedRecords
   cr_listDigests(pagination: CursorPaginationIn, repoName: String!, search: SearchRepos): DigestPaginatedRecords
@@ -3574,8 +3553,7 @@ input SearchBuildCacheKeys {
 }
 
 input SearchBuildRuns {
-  buildId: ID
-  repoName: MatchFilterIn
+  text: MatchFilterIn
 }
 
 input SearchBuilds {

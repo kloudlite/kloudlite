@@ -33,7 +33,7 @@ import CodeView from '~/console/components/code-view';
 import { InfoLabel } from '~/console/components/commons';
 import { parseValue } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
-import { IConsoleDevicesForUser } from '~/console/server/gql/queries/console-vpn-queries';
+import { IConsoleDevice } from '~/console/server/gql/queries/console-vpn-queries';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Select from '~/components/atoms/select';
 import { ConsoleApiType } from '../server/gql/saved-queries';
@@ -397,7 +397,7 @@ export const switchEnvironment = async ({
   project,
 }: {
   api: ConsoleApiType;
-  device: IConsoleDevicesForUser[number];
+  device: IConsoleDevice;
   environment: string;
   project: string;
 }) => {
@@ -424,7 +424,7 @@ export const switchEnvironment = async ({
   }
 };
 
-type IDialog = IDialogBase<IConsoleDevicesForUser[number]>;
+type IDialog = IDialogBase<IConsoleDevice>;
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;

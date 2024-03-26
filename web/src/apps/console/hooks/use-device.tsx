@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { NN } from '~/root/lib/types/common';
-import { useOutletContext } from '@remix-run/react';
+import { useParams } from '@remix-run/react';
 import { useConsoleApi } from '../server/gql/api-provider';
-import {
-  ExtractNodeType,
-  parseName,
-  parseNodes,
-} from '../server/r-utils/common';
+import { ExtractNodeType, parseNodes } from '../server/r-utils/common';
 import { IDnsHosts } from '../server/gql/queries/cluster-queries';
 import { IConsoleDevice } from '../server/gql/queries/console-vpn-queries';
-import { IAccountContext } from '../routes/_main+/$account+/_layout';
 
 type dev = {
   name: string;
@@ -65,7 +60,8 @@ const getDevice = async (
 
 const useActiveDevice = () => {
   const api = useConsoleApi();
-  const { account } = useOutletContext<IAccountContext>();
+  const { account } = useParams();
+  const [reload, setReload] = useState(true);
   const [state, setState] = useState<{
     device?: IConsoleDevice;
     loading: boolean;
@@ -86,7 +82,7 @@ const useActiveDevice = () => {
 
         const device = await getDevice(hosts);
 
-        if (device.accountName !== parseName(account)) {
+        if (device.accountName !== account) {
           throw new Error('No active device found');
         }
 
@@ -106,9 +102,12 @@ const useActiveDevice = () => {
         setState((prev) => ({ ...prev, loading: false }));
       }
     })();
-  }, []);
+  }, [reload]);
 
-  return state;
+  const reloadDevice = () => {
+    setReload((s) => !s);
+  };
+  return { ...state, reloadDevice };
 };
 
 export default useActiveDevice;

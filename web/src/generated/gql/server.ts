@@ -4327,7 +4327,7 @@ export type ConsoleListBuildRunsQuery = {
 };
 
 export type ConsoleGetBuildRunQueryVariables = Exact<{
-  buildID: Scalars['ID']['input'];
+  buildId: Scalars['ID']['input'];
   buildRunName: Scalars['String']['input'];
 }>;
 
