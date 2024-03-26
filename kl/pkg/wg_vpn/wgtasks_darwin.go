@@ -218,6 +218,15 @@ func getDnsSearchDomain(networkService string) ([]string, error) {
 }
 
 func SetDnsSearch() error {
+	data, err := client.GetExtraData()
+	if err != nil {
+		return err
+	}
+	data.DnsAdded = true
+	data.DnsValues = getCurrentDns(false)
+	if err := client.SaveExtraData(data); err != nil {
+		return err
+	}
 	searchDomains, err := getDnsSearchDomain(constants.NetworkService)
 	if err == nil {
 		if slices.Contains(searchDomains, constants.LocalSearchDomains) {
@@ -235,10 +244,6 @@ func SetDnsSearch() error {
 			return nil
 		}
 	}
-	data, err := client.GetExtraData()
-	if err != nil {
-		return err
-	}
 	data.SearchDomainAdded = true
 	if err := client.SaveExtraData(data); err != nil {
 		return err
@@ -251,6 +256,23 @@ func UnsetDnsSearch() error {
 	if err != nil {
 		return err
 	}
+
+	if data.DnsAdded {
+		ips := []net.IPNet{}
+		for _, dns := range data.DnsValues {
+			ips = append(ips, net.IPNet{IP: net.ParseIP(dns)})
+		}
+		if err := setDnsServers(ips, "Wi-Fi", false); err != nil {
+			return err
+		}
+	}
+	data.DnsAdded = false
+	data.DnsValues = nil
+
+	if err := client.SaveExtraData(data); err != nil {
+		return err
+	}
+
 	if data.SearchDomainAdded {
 		searchDomains, err := getDnsSearchDomain(constants.NetworkService)
 		if err != nil {

@@ -61,6 +61,8 @@ type ExtraData struct {
 	VpnConnected      bool            `json:"vpnConnected"`
 	DevInfo           string          `json:"devInfo"`
 	SearchDomainAdded bool            `json:"searchDomainAdded"`
+	DnsAdded          bool            `json:"dnsAdded"`
+	DnsValues         []string        `json:"dnsValues"`
 }
 
 func GetDevInfo() (string, error) {
