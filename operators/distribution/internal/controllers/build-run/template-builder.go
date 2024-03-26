@@ -43,10 +43,14 @@ type BuildObj struct {
 	GitRepoUrl    string
 	GitRepoBranch string
 	BuildOptions  BuildOptions
-	BuildCacheKey *string
+	CachePaths    []string
 
-	ServerResource  Resource
-	ClientResource  Resource
+	ServerResource Resource
+	ClientResource Resource
+
+	CacheCheckoutCmd     string
+	CachePostCheckoutCmd string
+
 	OwnerReferences []metav1.OwnerReference
 }
 
@@ -125,19 +129,26 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 
 	fn.MapSet(&obj.Labels, buildrunNamespaceAnn, obj.Namespace)
 
+	cacheCheckoutCmd, cachePostCheckoutCmd, err := r.getCacheCmds(req)
+	if err != nil {
+		return nil, err
+	}
+
 	o := &BuildObj{
-		Name:             fmt.Sprintf("build-%s", obj.Name),
-		Namespace:        r.Env.BuildNamespace,
-		Labels:           obj.Labels,
-		Annotations:      fn.FilterObservabilityAnnotations(obj.Annotations),
-		AccountName:      obj.Spec.AccountName,
-		RegistryHost:     string(rh),
-		RegistryReponame: obj.Spec.Registry.Repo.Name,
-		RegistryUsername: string(ra),
-		RegistryPassword: string(rp),
-		GitRepoUrl:       gitRepoUrl,
-		GitRepoBranch:    obj.Spec.GitRepo.Branch,
-		BuildCacheKey:    obj.Spec.CacheKeyName,
+		Name:                 fmt.Sprintf("build-%s", obj.Name),
+		Namespace:            r.Env.BuildNamespace,
+		Labels:               obj.Labels,
+		Annotations:          fn.FilterObservabilityAnnotations(obj.Annotations),
+		AccountName:          obj.Spec.AccountName,
+		RegistryHost:         string(rh),
+		RegistryReponame:     obj.Spec.Registry.Repo.Name,
+		RegistryUsername:     string(ra),
+		RegistryPassword:     string(rp),
+		GitRepoUrl:           gitRepoUrl,
+		GitRepoBranch:        obj.Spec.GitRepo.Branch,
+		CachePaths:           obj.Spec.CachePaths,
+		CacheCheckoutCmd:     cacheCheckoutCmd,
+		CachePostCheckoutCmd: cachePostCheckoutCmd,
 		ClientResource: Resource{
 			Cpu:    200,
 			Memory: 200,

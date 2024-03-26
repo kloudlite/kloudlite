@@ -15,7 +15,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -94,10 +93,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensurePvcCreated(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := r.ensureJobCreated(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -110,27 +105,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
-func (r *Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-
-	check := rApi.NewRunningCheck(PVCReady, req)
-
-	if obj.Spec.CacheKeyName == nil {
-		check.Message = "no cache key name specified, so not required"
-		return check.Completed()
-	}
-
-	_, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.BuildNamespace, *obj.Spec.CacheKeyName), &corev1.PersistentVolumeClaim{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return check.Failed(err)
-		}
-		return check.Failed(fmt.Errorf("pvc, required for cache not found, please create a pvc with name %s", *obj.Spec.CacheKeyName))
-	}
-
-	return check.Completed()
-}
-
 func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(JobCreated, req)
@@ -139,29 +113,12 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 		return check.Completed()
 	}
 
-	var jobs batchv1.JobList
-
-	if obj.Spec.CacheKeyName != nil {
-		if err := r.List(ctx, &jobs,
-			&client.ListOptions{
-				LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.BuildNameKey: *obj.Spec.CacheKeyName}),
-				Namespace:     r.Env.BuildNamespace,
-			},
-		); err != nil {
-			return check.Failed(err)
-		}
-
-		for _, j := range jobs.Items {
-			if j.Status.Active > 0 {
-				return check.StillRunning(fmt.Errorf("cache is in use, currently building %s", j.Name)).Err(nil)
-			}
-		}
-	}
-
 	b, err := r.getBuildTemplate(req)
 	if err != nil {
 		return check.Failed(err).Err(nil)
 	}
+
+	fmt.Println("*******************************\n", string(b), "\n***********************************")
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {

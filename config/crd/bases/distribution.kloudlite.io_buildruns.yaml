@@ -71,8 +71,10 @@ spec:
                       type: string
                     type: array
                 type: object
-              cacheKeyName:
-                type: string
+              cachePaths:
+                items:
+                  type: string
+                type: array
               credentialsRef:
                 properties:
                   name:
