@@ -241,7 +241,9 @@ func SetDnsSearch() error {
 	//		ips = append(ips, net.IPNet{IP: net.ParseIP(ip)})
 	//	}
 	//}
-	ips := []net.IPNet{"10.13.0.3"}
+	ips := []net.IPNet{{
+		IP: "10.13.0.3",
+	}}
 	err = setDnsServers(ips, constants.NetworkService, false)
 	if err != nil {
 		return err
