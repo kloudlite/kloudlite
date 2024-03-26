@@ -32,7 +32,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
 
   const { account } = useParams();
   const { project } = useOutletContext<IEnvironmentContext>();
-  const { hasChanges, performAction, setPerformAction } = useUnsavedChanges();
+  const { performAction } = useUnsavedChanges();
 
   // only for edit mode
   const [isEdited, setIsEdited] = useState(!app.ciBuildId);
@@ -56,9 +56,9 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       imageUrl: app.spec.containers[activeContIndex]?.image || '',
       manualRepo: '',
       source: {
-        branch: rootApp?.build?.source.branch,
-        repository: rootApp?.build?.source.repository,
-        provider: rootApp?.build?.source.provider,
+        branch: app?.build?.source.branch,
+        repository: app?.build?.source.repository,
+        provider: app?.build?.source.provider,
       },
       advanceOptions: false,
       buildArgs: {},
@@ -193,10 +193,6 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     },
   });
 
-  useEffect(() => {
-    console.log(rootApp);
-  }, [rootApp]);
-
   /** ---- Only for edit mode in settings ----* */
   useEffect(() => {
     if (mode === 'edit') {
@@ -280,7 +276,6 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             size="sm"
           />
 
-          {values.imageMode}
           {values.imageMode === 'default' && (
             <RepoSelector
               tag={values.imageUrl.split(':')[1]}
@@ -328,6 +323,14 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               errors={errors}
               handleChange={handleChange}
             />
+          )}
+
+          {values.imageMode === 'git' && (isEdited || !buildData?.name) && (
+            <div>
+              create new build
+              <div>or</div>
+              use existing
+            </div>
           )}
         </div>
       </div>
