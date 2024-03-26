@@ -45,7 +45,7 @@ func (d *domain) findProjectManagedService(ctx ConsoleContext, projectName strin
 	}
 
 	if pmsvc == nil {
-		return nil, errors.Newf("cmsvc with name %q not found", projectName)
+		return nil, errors.Newf("pmsvc with name %q not found", projectName)
 	}
 	return pmsvc, nil
 }
