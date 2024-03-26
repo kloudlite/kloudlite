@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -132,11 +131,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(DefaultsPatched)
-	defer req.LogPostCheck(DefaultsPatched)
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(DefaultsPatched, req)
 
 	hasUpdated := false
 
@@ -147,19 +143,12 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Router]) stepResult
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(DefaultsPatched, check, err.Error()).Err(nil)
+			return check.Failed(err)
 		}
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
-	check.Status = true
-	if check != checks[DefaultsPatched] {
-		checks[DefaultsPatched] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
@@ -203,28 +192,19 @@ func isHttpsEnabled(obj *crdsv1.Router) bool {
 
 func (r *Reconciler) EnsuringHttpsCerts(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := EnsuringHttpsCertsIfEnabled
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(EnsuringHttpsCertsIfEnabled, req)
 
 	if isHttpsEnabled(obj) {
 		_, nonWildcardDomains, err := r.parseAndExtractDomains(req)
 		if err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 
 		for _, domain := range nonWildcardDomains {
 			cert, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &certmanagerv1.Certificate{})
 			if err != nil {
 				if !apiErrors.IsNotFound(err) {
-					return fail(err)
+					return check.Failed(err)
 				}
 				cert = nil
 			}
@@ -257,17 +237,17 @@ func (r *Reconciler) EnsuringHttpsCerts(req *rApi.Request[*crdsv1.Router]) stepR
 					},
 				}
 				if err := r.Create(ctx, cert); err != nil {
-					return fail(err)
+					return check.Failed(err)
 				}
 			}
 
 			if _, err := IsHttpsCertReady(cert); err != nil {
-				return fail(err)
+				return check.Failed(err)
 			}
 
 			certSecret, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &corev1.Secret{})
 			if err != nil {
-				return fail(err)
+				return check.Failed(err)
 			}
 
 			copyTLSSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: genTLSCertName(domain), Namespace: obj.Namespace}, Type: corev1.SecretTypeTLS}
@@ -276,48 +256,29 @@ func (r *Reconciler) EnsuringHttpsCerts(req *rApi.Request[*crdsv1.Router]) stepR
 					copyTLSSecret.Annotations = make(map[string]string, 1)
 				}
 				copyTLSSecret.Annotations["kloudlite.io/secret.cloned-by"] = "router"
-				// copyTLSSecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 				copyTLSSecret.Data = certSecret.Data
 				copyTLSSecret.StringData = certSecret.StringData
 				return nil
 			}); err != nil {
-				return fail(err)
+				return check.Failed(err)
 			}
 		}
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := SettingUpBasicAuthIfEnabled
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(SettingUpBasicAuthIfEnabled, req)
 
 	if obj.Spec.BasicAuth != nil && obj.Spec.BasicAuth.Enabled {
 		if len(obj.Spec.BasicAuth.Username) == 0 {
-			return req.CheckFailed(BasicAuthReady, check, ".spec.basicAuth.username must be defined when .spec.basicAuth.enabled is set to true").Err(nil)
+			return check.Failed(fmt.Errorf(".spec.basicAuth.username must be defined when .spec.basicAuth.enabled is set to true")).Err(nil)
 		}
 
 		basicAuthScrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.BasicAuth.SecretName, Namespace: obj.Namespace}, Type: "Opaque"}
-
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, basicAuthScrt, func() error {
 			basicAuthScrt.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 			if _, ok := basicAuthScrt.Data["password"]; ok {
@@ -336,39 +297,22 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 			}
 			return nil
 		}); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 
 		req.AddToOwnedResources(rApi.ParseResourceRef(basicAuthScrt))
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := CreatingIngressResources
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(CreatingIngressResources, req)
 
 	wcDomains, nonWcDomains, err := r.parseAndExtractDomains(req)
 	if err != nil {
-		return req.CheckFailed(IngressReady, check, err.Error())
+		return check.Failed(err)
 	}
 
 	nginxIngressAnnotations := GenNginxIngressAnnotations(obj)
@@ -406,26 +350,18 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 			},
 		)
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err).Err(nil)
 		}
 
 		rr, err := r.yamlClient.ApplyYAML(ctx, b)
 		if err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 
 		req.AddToOwnedResources(rr...)
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
@@ -444,27 +380,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Owns(&networkingv1.Ingress{})
 	builder.Owns(&certmanagerv1.Certificate{})
 
-	// builder.Watches(&certmanagerv1.Certificate{},
-	// 	handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-	// 		if obj.GetNamespace() != r.Env.CertificateNamespace {
-	// 			return nil
-	// 		}
-	//
-	// 		rlist, err := kubectl.PaginatedList[*crdsv1.Router](ctx, r.Client, &crdsv1.RouterList{}, &client.ListOptions{Limit: 10})
-	// 		if err != nil {
-	// 			return nil
-	// 		}
-	//
-	// 		reqs := make([]reconcile.Request, 0, 10)
-	//
-	// 		for router := range rlist {
-	// 			reqs = append(reqs, reconcile.Request{NamespacedName: fn.NN(router.Namespace, router.Name)})
-	// 		}
-	//
-	// 		return reqs
-	// 	}))
-
-	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

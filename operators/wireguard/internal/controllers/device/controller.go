@@ -150,18 +150,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(DnsConfigReady, check, err.Error())
-	}
-
-	req.LogPreCheck(DnsConfigReady)
-	defer req.LogPostCheck(DnsConfigReady)
+	check := rApi.NewRunningCheck(DnsConfigReady, req)
 
 	kubeDns, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
 	if err != nil {
-		return failed(err)
+		return check.Failed(err)
 	}
 
 	dnsConfigName := fmt.Sprint(DNS_NAME_PREFIX, obj.Name)
@@ -277,31 +271,15 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 
 		return nil
 	}(); err != nil {
-		return failed(err)
+		return check.Failed(err)
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != req.Object.Status.Checks[DnsConfigReady] {
-		fn.MapSet(&req.Object.Status.Checks, DnsConfigReady, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(KeysAndSecretReady, check, err.Error())
-	}
-
-	req.LogPreCheck(KeysAndSecretReady)
-	defer req.LogPostCheck(KeysAndSecretReady)
-
+	check := rApi.NewRunningCheck(KeysAndSecretReady, req)
 	name := fmt.Sprint(DEVICE_KEY_PREFIX, obj.Name)
 
 	if err := func() error {
@@ -356,30 +334,15 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 
 		return nil
 	}(); err != nil {
-		return failed(err)
+		return check.Failed(err)
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != req.Object.Status.Checks[KeysAndSecretReady] {
-		fn.MapSet(&req.Object.Status.Checks, KeysAndSecretReady, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureSvcCreated(req *rApi.Request[*wgv1.Device]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(ServerSvcReady, check, err.Error())
-	}
-
-	req.LogPreCheck(ServerSvcReady)
-	defer req.LogPostCheck(ServerSvcReady)
+	check := rApi.NewRunningCheck(ServerSvcReady, req)
 
 	if err := func() error {
 		if _, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &corev1.Service{}); err != nil {
@@ -402,77 +365,45 @@ func (r *Reconciler) ensureSvcCreated(req *rApi.Request[*wgv1.Device]) stepResul
 
 		return nil
 	}(); err != nil {
-		return failed(err)
+		return check.Failed(err)
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != req.Object.Status.Checks[ServerSvcReady] {
-		fn.MapSet(&req.Object.Status.Checks, ServerSvcReady, check)
-		req.UpdateStatus()
-	}
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureConfig(req *rApi.Request[*wgv1.Device]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{
-		Generation: obj.Generation,
-		State:      rApi.RunningState,
-	}
 
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(ConfigReady, check, err.Error())
-	}
-
-	req.LogPreCheck(ConfigReady)
-	defer req.LogPostCheck(ConfigReady)
+	check := rApi.NewRunningCheck(ConfigReady, req)
 
 	devConfig, serverConfig, err := r.generateDeviceConfig(req)
 	if err != nil {
-		return failed(err)
+		return check.Failed(err)
 	}
 
 	conf, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint(DEVICE_CONFIG_PREFIX, obj.Name)), &corev1.Secret{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return failed(err)
+			return check.Failed(err)
 		}
 
 		if err := r.applyDeviceConfig(req, devConfig, serverConfig); err != nil {
-			return failed(err)
+			return check.Failed(err)
 		}
 	} else {
 		if string(conf.Data["config"]) != string(devConfig) || string(conf.Data["server-config"]) != string(serverConfig) {
 			if err := r.applyDeviceConfig(req, devConfig, serverConfig); err != nil {
-				return failed(err)
+				return check.Failed(err)
 			}
 		}
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != req.Object.Status.Checks[ConfigReady] {
-		fn.MapSet(&req.Object.Status.Checks, ConfigReady, check)
-		return req.UpdateStatus()
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	req.LogPreCheck(ServicesSynced)
-	defer req.LogPostCheck(ServicesSynced)
-
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(ServicesSynced, check, err.Error())
-	}
-
-	req.LogPreCheck(ServicesSynced)
-	defer req.LogPostCheck(ServicesSynced)
+	check := rApi.NewRunningCheck(ServicesSynced, req)
 
 	applyFreshSvc := func() error {
 		sPorts := []corev1.ServicePort{}
@@ -527,21 +458,22 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 	service, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return failed(err)
+			return check.Failed(err)
 		}
 
 		// update services
 		if err := applyFreshSvc(); err != nil {
-			return failed(err)
+			return check.Failed(err)
 		}
 
-		return failed(fmt.Errorf("no service was available, created new"))
+		return check.Failed(fmt.Errorf("no service was available, created new"))
+
 	}
 
 	if checkPortsDiffer(service.Spec.Ports, obj.Spec.Ports) {
 		// update services
 		if err := applyFreshSvc(); err != nil {
-			return failed(err)
+			return check.Failed(err)
 		}
 	}
 
@@ -620,31 +552,15 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 
 		return nil
 	}(); err != nil {
-		return failed(err)
+		return check.Failed(err)
 	}
 
-	check.Status = true
-	check.State = rApi.CompletedState
-	if check != req.Object.Status.Checks[ServicesSynced] {
-		fn.MapSet(&req.Object.Status.Checks, ServicesSynced, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(ServerReady, check, err.Error())
-	}
-
-	req.LogPreCheck(ServerReady)
-	defer req.LogPostCheck(ServerReady)
+	check := rApi.NewRunningCheck(ServerReady, req)
 
 	// check deployment
 	if err := func() error {
@@ -708,22 +624,15 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 
 		return nil
 	}(); err != nil {
-		return failed(err)
+		return check.Failed(err)
 	}
 
-	check.Status = true
-	if check != req.Object.Status.Checks[ServerReady] {
-		fn.MapSet(&req.Object.Status.Checks, ServerReady, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*wgv1.Device]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+	check := rApi.NewRunningCheck(DeviceDeleted, req)
 
 	if !slices.Equal(obj.Status.CheckList, DEV_DESTROY_CHECKLIST) {
 		req.Object.Status.CheckList = DEV_DESTROY_CHECKLIST
@@ -732,22 +641,17 @@ func (r *Reconciler) finalize(req *rApi.Request[*wgv1.Device]) stepResult.Result
 		}
 	}
 
-	failed := func(err error) stepResult.Result {
-		check.State = rApi.ErroredState
-		return req.CheckFailed(DeviceDeleted, check, err.Error())
-	}
-
 	var services corev1.ServiceList
 	if err := r.List(ctx, &services, &client.ListOptions{
 		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{constants.WGDeviceNameKey: obj.Name, "kloudlite.io/wg-svc-type": "external"}),
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return failed(err)
+			return check.Failed(err)
 		}
 	} else {
 		for _, svc := range services.Items {
 			if err := r.Delete(ctx, &svc); err != nil {
-				return failed(err)
+				return check.Failed(err)
 			}
 		}
 	}
