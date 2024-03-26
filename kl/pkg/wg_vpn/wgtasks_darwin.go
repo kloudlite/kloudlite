@@ -223,10 +223,30 @@ func SetDnsSearch() error {
 		return err
 	}
 	data.DnsAdded = true
-	data.DnsValues = getCurrentDns(false)
+	data.DnsValues, err = getCurrentDns(false)
+	if err != nil {
+		return err
+	}
 	if err := client.SaveExtraData(data); err != nil {
 		return err
 	}
+
+	localIps, err := localIPs()
+	if err != nil {
+		return err
+	}
+	ips := []net.IPNet{}
+	for _, ip := range data.DnsValues {
+		if !slices.Contains(localIps, ip) {
+			ips = append(ips, net.IPNet{IP: net.ParseIP(ip)})
+		}
+	}
+
+	err = setDnsServers(ips, constants.NetworkService, false)
+	if err != nil {
+		return err
+	}
+
 	searchDomains, err := getDnsSearchDomain(constants.NetworkService)
 	if err == nil {
 		if slices.Contains(searchDomains, constants.LocalSearchDomains) {
@@ -262,7 +282,7 @@ func UnsetDnsSearch() error {
 		for _, dns := range data.DnsValues {
 			ips = append(ips, net.IPNet{IP: net.ParseIP(dns)})
 		}
-		if err := setDnsServers(ips, "Wi-Fi", false); err != nil {
+		if err := setDnsServers(ips, constants.NetworkService, false); err != nil {
 			return err
 		}
 	}
@@ -288,4 +308,22 @@ func UnsetDnsSearch() error {
 		}
 	}
 	return nil
+}
+
+func localIPs() ([]string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return "", err
+	}
+
+	localIps := []string{}
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				localIps = append(localIps, ipnet.IP.String())
+			}
+		}
+	}
+	return localIps, nil
 }
