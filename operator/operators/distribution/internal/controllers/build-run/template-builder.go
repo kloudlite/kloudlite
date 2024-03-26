@@ -123,14 +123,13 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 		return nil, err
 	}
 
-	ann := obj.Annotations
-	fn.MapSet(&ann, buildrunNamespaceAnn, obj.Namespace)
+	fn.MapSet(&obj.Labels, buildrunNamespaceAnn, obj.Namespace)
 
 	o := &BuildObj{
-		Name:             obj.Name,
+		Name:             fmt.Sprintf("build-%s", obj.Name),
 		Namespace:        r.Env.BuildNamespace,
 		Labels:           obj.Labels,
-		Annotations:      fn.FilterObservabilityAnnotations(ann),
+		Annotations:      fn.FilterObservabilityAnnotations(obj.Annotations),
 		AccountName:      obj.Spec.AccountName,
 		RegistryHost:     string(rh),
 		RegistryReponame: obj.Spec.Registry.Repo.Name,

@@ -105,7 +105,7 @@ func ReconcileFilter() predicate.Funcs {
 			}
 
 			for k, v := range oldRes.Status.Checks {
-				if newRes.Status.Checks[k] != v {
+				if !AreChecksEqual(newRes.Status.Checks[k], v) {
 					return true
 				}
 			}

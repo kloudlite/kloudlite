@@ -78,15 +78,17 @@ func (d *BuildRun) GetStatus() *rApi.Status {
 func (d *BuildRun) GetEnsuredLabels() map[string]string {
 	if d.Spec.CacheKeyName != nil {
 		return map[string]string{
-			constants.CacheNameKey:   *d.Spec.CacheKeyName,
-			constants.AccountNameKey: d.Spec.AccountName,
-			constants.BuildNameKey:   d.Name,
+			constants.CacheNameKey:    *d.Spec.CacheKeyName,
+			constants.AccountNameKey:  d.Spec.AccountName,
+			constants.BuildRunNameKey: d.Name,
+			// constants.BuildNameKey:   d.Name,
 		}
 	}
 
 	return map[string]string{
-		constants.AccountNameKey: d.Spec.AccountName,
-		constants.BuildNameKey:   d.Name,
+		constants.AccountNameKey:  d.Spec.AccountName,
+		constants.BuildRunNameKey: d.Name,
+		// constants.BuildNameKey:   d.Name,
 	}
 }
 

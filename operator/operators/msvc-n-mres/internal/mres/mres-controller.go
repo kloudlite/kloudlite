@@ -365,6 +365,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&redisMsvcv1.StandaloneService{},
 		&redisMsvcv1.ClusterService{},
 		&redisMsvcv1.ACLAccount{},
+		&redisMsvcv1.Prefix{},
 
 		&mongodbMsvcv1.StandaloneService{},
 		&mongodbMsvcv1.ClusterService{},
