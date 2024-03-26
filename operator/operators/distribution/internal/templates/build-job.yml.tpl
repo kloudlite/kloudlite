@@ -15,6 +15,10 @@
 {{- $registryTags := .RegistryTags -}}
 {{- $ownerRefs := .OwnerReferences | default list -}}
 
+{{- $cacheCheckoutCmd := .CacheCheckoutCmd -}}
+{{- $cachePostCheckoutCmd := .CachePostCheckoutCmd -}}
+
+
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -40,7 +44,7 @@ spec:
           set -o errexit
           set -o pipefail
 
-          trap 'echo "[#] kill signal received" && pkill dockerd' SIGINT SIGTERM EXIT
+          trap 'echo "[#] Post Checkout" && pkill dockerd' SIGINT SIGTERM EXIT
 
           counter=0
           while [ $counter -lt 20 ]; do
@@ -57,6 +61,8 @@ spec:
 
           echo "[#] authenticating docker registry"
           echo $DOCKER_PSW | docker login -u {{ $registryUsername }} --password-stdin {{ $registryHost }} > /dev/null 2>&1
+
+          {{ $cacheCheckoutCmd | indent 10 }}
 
           # temporary work dir
           TEMP_DIR=$(mktemp -d -t ci-XXXXXXXXXX)
@@ -79,6 +85,8 @@ spec:
           {{- end}}
 
           {{/* docker buildx create --use > /dev/null 2>&1 */}}
+          export DOCKER_BUILDKIT=1
+
           echo "[#] Initalizing build and push"
           docker buildx build \
           {{$registryTags}} \
@@ -89,6 +97,8 @@ spec:
           -o type=registry,oci-mediatypes=true,compression=estargz,force-compression=true \
           $CONTEXT_DIR  \
           2>&1 | grep -v '\[internal\]'
+
+          {{ $cachePostCheckoutCmd | indent 10 }}
 
         command: ["bash", "-c"]
         volumeMounts:
@@ -115,10 +125,6 @@ spec:
         volumeMounts:
         - name: docker-socket
           mountPath: /var/run
-        {{- if .BuildCacheKey}}
-        - name: cache-volume
-          mountPath: /var/lib/docker
-        {{- end}}
         image: ghcr.io/kloudlite/platform/apis/docker:dind
         securityContext:
           privileged: true
@@ -133,10 +139,4 @@ spec:
       volumes:
       - name: docker-socket
         emptyDir: {}
-      {{- if .BuildCacheKey}}
-      - name: cache-volume
-        persistentVolumeClaim:
-          claimName: {{ .BuildCacheKey }}
-      {{- end}}
       restartPolicy: Never
-
