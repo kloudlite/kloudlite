@@ -55,7 +55,7 @@ async function getToken() {
 
 async function drainAndDeleteNode() {
   info("deleting node")
-  await $`kubectl delete --wait=false nodes.clusters.kloudlite.io/${nodename}`
+  await $`kubectl delete --wait=false nodes.clusters.kloudlite.io/${nodename}`.nothrow()
   await $`kubectl drain --ignore-daemonsets --delete-emptydir-data --force ${nodename} --timeout 10s`.nothrow()
 }
 
