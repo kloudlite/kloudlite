@@ -27,6 +27,8 @@ import { generatePlainColor } from '~/root/lib/utils/color-generator';
 
 import ReactPulsable from 'react-pulsable';
 import { ChildrenProps } from '~/components/types';
+// import { mapper } from '~/components/utils';
+// import Select from './log-select';
 import { logsMockData } from './dummy';
 import { LoadingIndicator } from '../reload-indicator';
 
@@ -622,6 +624,7 @@ export interface IHighlightJsLog {
   solid?: boolean;
   className?: string;
   dark?: boolean;
+  podSelect?: boolean;
 }
 
 const LogComp = ({
@@ -642,6 +645,7 @@ const LogComp = ({
   solid = false,
   className = '',
   dark = false,
+  podSelect = false,
 }: IHighlightJsLog) => {
   const [fullScreen, setFullScreen] = useState(false);
 
@@ -691,11 +695,41 @@ const LogComp = ({
 
   const [logData, setLogData] = useState<ISocketMessage[]>([]);
 
+  const [pods, setPods] = useState<{
+    [key: string]: boolean;
+  }>({});
+
+  const [selectedPod, setSelectedPod] = useState<string>('');
+
   useEffect(() => {
     if (logs.length) {
-      setLogData(logs.map((d) => d.data));
+      if (!podSelect) {
+        setLogData(logs.map((d) => d.data));
+        return;
+      }
+
+      const sp = selectedPod || logs[0].data.podName;
+      if (selectedPod === '') {
+        setSelectedPod(sp);
+      }
+
+      setPods(
+        logs.reduce((acc, curr) => {
+          return {
+            ...acc,
+            [curr.data.podName]: true,
+          };
+        }, {})
+      );
+
+      if (sp === 'all') {
+        setLogData(logs.map((d) => d.data));
+        return;
+      }
+
+      setLogData(logs.map((d) => d.data).filter((d) => d.podName === sp));
     }
-  }, [logs]);
+  }, [logs, selectedPod]);
 
   return isClientSide ? (
     <div
@@ -769,6 +803,26 @@ const LogComp = ({
               fontSize,
               actionComponent: (
                 <div className="flex gap-xl">
+                  {podSelect && (
+                    <select
+                      onChange={(e) => {
+                        setSelectedPod(e.target.value);
+                      }}
+                      className="hljs bg-transparent border border-surface-tertiary-default rounded-md px-lg py-xs w-[10rem]"
+                      onSelect={(e) => {
+                        console.log('select', e);
+                      }}
+                      value={selectedPod}
+                    >
+                      {Object.keys(pods).map((v) => (
+                        <option key={v} value={v}>
+                          {v.substring(v.length - 5, v.length)}
+                        </option>
+                      ))}
+                      <option value="all">All</option>
+                    </select>
+                  )}
+
                   <div
                     onClick={() => {
                       if (!fullScreen) {
