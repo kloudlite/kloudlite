@@ -44,7 +44,7 @@ const Layout = () => {
     setPerformAction,
     loading,
   } = useUnsavedChanges();
-  const { app, setApp } = useAppState();
+  const { app, buildData, setBuildData, setApp } = useAppState();
 
   const { account, project, environment, app: appId } = useParams();
 
@@ -67,9 +67,67 @@ const Layout = () => {
       if (!project || !environment) {
         throw new Error('Project and Environment is required!.');
       }
+
+      const gitMode =
+        app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
+      // update or create build first if git image is selected
+      let buildId = app.ciBuildId;
+
+      if (buildData && gitMode) {
+        try {
+          if (app.ciBuildId) {
+            const { errors, data } = await api.updateBuild({
+              crUpdateBuildId: app.ciBuildId,
+              build: buildData,
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            buildId = data.id;
+          } else {
+            const { errors, data } = await api.createBuild({
+              build: buildData,
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+
+            buildId = data.id;
+          }
+        } catch (err) {
+          handleError(err);
+          return;
+        }
+      }
+
       try {
         const { errors } = await api.updateApp({
-          app: getAppIn(app),
+          app: {
+            ...getAppIn(app),
+            ...(buildId
+              ? {
+                  ciBuildId: buildId,
+                  spec: {
+                    ...app.spec,
+                    ...(gitMode
+                      ? {
+                          containers: [
+                            {
+                              image: `${buildData?.spec.registry.repo.name}:${
+                                buildData?.spec.registry.repo.tags?.[0] ||
+                                'latest'
+                              }`,
+                              name: 'container-0',
+                            },
+                          ],
+                        }
+                      : {}),
+                  },
+                }
+              : {}),
+          },
           envName: environment,
           projectName: project,
         });
@@ -78,7 +136,11 @@ const Layout = () => {
         }
         toast.success('App updated successfully');
         // @ts-ignore
-        setPerformAction('');
+        setPerformAction('init');
+        if (!gitMode) {
+          // @ts-ignore
+          setBuildData(null);
+        }
         setHasChanges(false);
         reload();
       } catch (err) {
@@ -92,16 +154,27 @@ const Layout = () => {
       return;
     }
     const isNotSame = JSON.stringify(app) !== JSON.stringify(rootContext.app);
-    if (isNotSame) {
+
+    console.log('changes', isNotSame);
+    const isBuildNotSame =
+      JSON.stringify(buildData) !== JSON.stringify(rootContext.app.build);
+
+    const isBuildUndefAndNull =
+      buildData === undefined && rootContext.app.build === null;
+
+    if (isNotSame || (isBuildNotSame && !isBuildUndefAndNull)) {
       setHasChanges(true);
     } else {
       setHasChanges(false);
     }
-  }, [app, rootContext.app, loading]);
+  }, [app, rootContext.app, buildData, loading]);
 
   useEffect(() => {
     if (!loading) {
       setApp(rootContext.app);
+      const { build } = rootContext.app;
+      // @ts-ignore
+      setBuildData(build);
     }
     setHasChanges(false);
   }, [rootContext.app, loading]);
@@ -109,6 +182,9 @@ const Layout = () => {
   useEffect(() => {
     if (performAction === 'discard-changes') {
       setApp(rootContext.app);
+      // @ts-ignore
+
+      setBuildData(rootContext.app.build);
       setPerformAction('');
     }
   }, [performAction]);
@@ -129,7 +205,15 @@ const Layout = () => {
             rightTitle="New State"
             splitView
           />
+          <DiffViewer
+            oldValue={yamlDump(rootContext.app.build).toString()}
+            newValue={yamlDump(buildData).toString()}
+            leftTitle="Previous State"
+            rightTitle="New State"
+            splitView
+          />
         </Popup.Content>
+
         <Popup.Footer>
           <Popup.Button
             loading={isLoading}

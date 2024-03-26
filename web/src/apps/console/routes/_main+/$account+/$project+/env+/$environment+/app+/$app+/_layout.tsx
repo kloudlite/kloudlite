@@ -13,9 +13,12 @@ import logger from '~/lib/client/helpers/log';
 import { IRemixCtx } from '~/lib/types/common';
 
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import { BreadcrumSlash } from '~/console/utils/commons';
+import Breadcrum from '~/console/components/breadcrum';
+import { Truncate } from '~/root/lib/utils/common';
 import { IEnvironmentContext } from '../../_layout';
 
-const ProjectTabs = () => {
+const LocalTabs = () => {
   const { account, project, environment, app } = useParams();
   return (
     <CommonTabs
@@ -40,9 +43,25 @@ const ProjectTabs = () => {
   );
 };
 
-export const handle = () => {
+const LocalBreadcrum = ({ data }: { data: IApp }) => {
+  const { displayName } = data;
+  return (
+    <div className="flex flex-row items-center">
+      <BreadcrumSlash />
+      <Breadcrum.Button
+        content={<Truncate length={15}>{displayName || ''}</Truncate>}
+      />
+    </div>
+  );
+};
+
+export const handle = ({ promise: { app, error } }: { promise: any }) => {
+  if (error) {
+    return {};
+  }
   return {
-    navbar: <ProjectTabs />,
+    navbar: <LocalTabs />,
+    breadcrum: () => <LocalBreadcrum data={app} />,
   };
 };
 
@@ -86,6 +105,7 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const App = () => {
   const { promise } = useLoaderData<typeof loader>();
+  console.log('heree app', promise.app);
   return (
     <LoadingComp data={promise}>
       {({ app }) => {

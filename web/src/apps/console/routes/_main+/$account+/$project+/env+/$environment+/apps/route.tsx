@@ -10,7 +10,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/lib/types/common';
 import { clearAppState } from '~/console/page-components/app-states';
 import { useEffect } from 'react';
-import { Button } from '~/components/atoms/button.js';
+import { Button } from '~/components/atoms/button';
 import Tools from './tools';
 import AppsResourcesV2 from './apps-resources-v2';
 

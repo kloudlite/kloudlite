@@ -1,24 +1,78 @@
 import { useNavigate, useParams } from '@remix-run/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { useAppState } from '~/console/page-components/app-states';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm from '~/lib/client/hooks/use-form';
 import Yup from '~/lib/server/helpers/yup';
-import { handleError } from '~/lib/utils/common';
+import { handleError, sleep } from '~/lib/utils/common';
 import { validateType } from '~/root/src/generated/gql/validator';
 import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
 import {
   BottomNavigation,
-  GitDetail,
   GitDetailRaw,
   ReviewComponent,
 } from '~/console/components/commons';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { CheckCircleFill, CircleFill, CircleNotch } from '@jengaicons/react';
+
+const AppState = ({ message, state }: { message: string; state: string }) => {
+  const iconSize = 12;
+  const wrapperCss = 'flex flex-row gap-xl items-center bodySm';
+  switch (state) {
+    case 'in-progress':
+      return (
+        <div className={wrapperCss}>
+          <div className="flex animate-spin">
+            <CircleNotch size={iconSize} />
+          </div>
+          <div>{message}</div>
+        </div>
+      );
+
+    case 'done':
+      return (
+        <div className={wrapperCss}>
+          <div className="text-text-success">
+            <CheckCircleFill size={iconSize} />
+          </div>
+          <div>{message}</div>
+        </div>
+      );
+
+    case 'error':
+      return (
+        <div className={wrapperCss}>
+          <div className="bodyMd text-text-critical">!!</div>
+          <div>{message}</div>
+        </div>
+      );
+    case 'idle':
+    default:
+      return (
+        <div className={wrapperCss}>
+          <div className="text-text-soft animate-pulse">
+            <CircleFill size={iconSize} />
+          </div>
+          <div>{message}</div>
+        </div>
+      );
+  }
+};
 
 const AppReview = () => {
   const { app, buildData, setPage, resetState } = useAppState();
+  const [createState, setCreateState] = useState({
+    build: {
+      message: 'Creating build',
+      state: 'idle',
+    },
+    app: {
+      message: 'Creating app',
+      state: 'idle',
+    },
+  });
 
   const gitMode =
     app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
@@ -38,10 +92,13 @@ const AppReview = () => {
       let buildId = '';
 
       if (buildData && gitMode) {
-        toast.info('Creating build', {
-          toastId: 'app',
-        });
-
+        setCreateState((prev) => ({
+          ...prev,
+          build: {
+            ...prev.build,
+            state: 'in-progress',
+          },
+        }));
         try {
           const { errors, data } = await api.createBuild({
             build: buildData,
@@ -53,21 +110,35 @@ const AppReview = () => {
 
           buildId = data.id;
 
-          toast.update('app', {
-            type: 'success',
-            render: 'Build created successfully',
-          });
+          setCreateState((prev) => ({
+            ...prev,
+            build: {
+              ...prev.build,
+              state: 'done',
+            },
+          }));
         } catch (err) {
           handleError(err);
+          setCreateState((prev) => ({
+            ...prev,
+            build: {
+              ...prev.build,
+              state: 'error',
+            },
+          }));
           return;
         }
       }
 
       try {
-        toast.update('app', {
-          type: 'info',
-          render: 'Creating app',
-        });
+        setCreateState((prev) => ({
+          ...prev,
+          app: {
+            ...prev.app,
+            state: 'in-progress',
+          },
+        }));
+
         const { errors } = await api.createApp({
           envName: environment,
           projectName: project,
@@ -94,10 +165,21 @@ const AppReview = () => {
         if (errors) {
           throw errors[0];
         }
-        toast.update('app', {
-          type: 'success',
-          render: 'App created successfully',
-        });
+
+        if (gitMode && buildData) {
+          await sleep(2000);
+        }
+        toast.success('App created successfully');
+        setCreateState((prev) => ({
+          ...prev,
+          app: {
+            ...prev.app,
+            state: 'done',
+          },
+        }));
+        if (gitMode && buildData) {
+          await sleep(500);
+        }
         resetState();
         navigate('../apps');
       } catch (err) {
@@ -236,6 +318,21 @@ const AppReview = () => {
             </div>
           </div>
         </ReviewComponent>
+        {gitMode && buildData && isLoading && (
+          <ReviewComponent title="Status" canEdit={false} onEdit={() => {}}>
+            <div className="flex flex-col gap-xl">
+              {Object.entries(createState).map(([key, value]) => {
+                return (
+                  <AppState
+                    key={key}
+                    message={value.message}
+                    state={value.state}
+                  />
+                );
+              })}
+            </div>
+          </ReviewComponent>
+        )}
       </div>
 
       {errors.length > 0 && (

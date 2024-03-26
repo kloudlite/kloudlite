@@ -16,7 +16,6 @@ import {
   Database,
   GearSix,
   HouseLine,
-  WireGuardlogo,
 } from '@jengaicons/react';
 import {
   ICluster,

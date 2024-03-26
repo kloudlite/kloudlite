@@ -1,4 +1,5 @@
 import {
+  Link,
   Outlet,
   useLoaderData,
   useOutletContext,
@@ -13,6 +14,10 @@ import logger from '~/lib/client/helpers/log';
 import { defer } from '@remix-run/node';
 import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
 import { IProjectMSv } from '~/console/server/gql/queries/project-managed-services-queries';
+import Breadcrum from '~/console/components/breadcrum';
+import { parseName } from '~/console/server/r-utils/common';
+import { BreadcrumChevronRight, BreadcrumSlash } from '~/console/utils/commons';
+import { Truncate } from '~/root/lib/utils/common';
 
 const ManagedServiceTabs = () => {
   const { account, project, msv } = useParams();
@@ -34,9 +39,29 @@ const ManagedServiceTabs = () => {
   );
 };
 
-export const handle = () => {
+const LocalBreadcrum = ({ data }: { data: IProjectMSv }) => {
+  const { displayName } = data;
+  return (
+    <div className="flex flex-row items-center">
+      <BreadcrumSlash />
+      <Breadcrum.Button
+        content={<Truncate length={15}>{displayName || ''}</Truncate>}
+      />
+    </div>
+  );
+};
+
+export const handle = ({
+  promise: { managedService, error },
+}: {
+  promise: any;
+}) => {
+  if (error) {
+    return {};
+  }
   return {
     navbar: <ManagedServiceTabs />,
+    breadcrum: () => <LocalBreadcrum data={managedService} />,
   };
 };
 

@@ -2486,6 +2486,7 @@ export type ConsoleGetAppQuery = {
     environmentName: string;
     markedForDeletion?: boolean;
     projectName: string;
+    ciBuildId?: string;
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
@@ -2579,6 +2580,27 @@ export type ConsoleGetAppQuery = {
         name: string;
         namespace: string;
       }>;
+    };
+    build?: {
+      buildClusterName: string;
+      name: string;
+      source: {
+        branch: string;
+        provider: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GitProvider;
+        repository: string;
+      };
+      spec: {
+        buildOptions?: {
+          buildArgs?: any;
+          buildContexts?: any;
+          contextDir?: string;
+          dockerfileContent?: string;
+          dockerfilePath?: string;
+          targetPlatforms?: Array<string>;
+        };
+        registry: { repo: { name: string; tags: Array<string> } };
+        resource: { cpu: number; memoryInMb: number };
+      };
     };
   };
 };
