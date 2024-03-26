@@ -34,7 +34,7 @@ type BuildJobTemplateData struct {
 	Annotations map[string]string
 
 	Registry     dbv1.Registry
-	CacheKeyName *string
+	Caches       []dbv1.Cache
 	Resource     dbv1.Resource
 	GitRepo      dbv1.GitRepo
 	BuildOptions *dbv1.BuildOptions
