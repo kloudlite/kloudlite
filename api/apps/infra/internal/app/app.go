@@ -43,6 +43,8 @@ type (
 var Module = fx.Module(
 	"app",
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndices),
+	// repos.NewFxMongoRepo[*entities.BYOKCluster]("byok_clusters", "byok", entities.BYOKClusterIndices),
+	repos.NewFxMongoRepo[*entities.BYOKCluster]("clusters", "byok", entities.BYOKClusterIndices),
 	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cmsvcs", "cmsvcs", entities.ClusterManagedServiceIndices),
 	repos.NewFxMongoRepo[*entities.DomainEntry]("domain_entries", "de", entities.DomainEntryIndices),
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
@@ -207,12 +209,7 @@ var Module = fx.Module(
 
 			schema := generated.NewExecutableSchema(config)
 			server.SetupGraphqlServer(schema,
-				httpServer.NewSessionMiddleware(
-					sessionRepo,
-					"hotspot-session",
-					env.CookieDomain,
-					constants.CacheSessionPrefix,
-				),
+				httpServer.NewReadSessionMiddleware(sessionRepo, constants.CookieName, constants.CacheSessionPrefix),
 			)
 		},
 	),

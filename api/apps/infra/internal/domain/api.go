@@ -55,6 +55,8 @@ type Domain interface {
 	UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
 	DeleteCluster(ctx InfraContext, name string) error
 
+	CreateBYOKCluster(ctx InfraContext, cluster entities.BYOKCluster) (*entities.BYOKCluster, error)
+
 	UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string) error
 
 	ListClusters(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Cluster], error)
