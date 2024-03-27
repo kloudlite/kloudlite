@@ -11,7 +11,7 @@ import { mapper } from '~/components/utils';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { IApp } from '../server/gql/queries/app-queries';
 
-const defaultApp: AppIn = {
+const defaultApp: AppIn & { build?: BuildIn } = {
   metadata: {
     name: '',
     annotations: [],
@@ -69,7 +69,7 @@ interface IappState {
   page: number;
   app: AppIn;
   buildData?: BuildIn | null | undefined;
-  rootApp?: IApp;
+  readOnlyApp?: IApp;
 }
 
 export const useAppState = () => {
@@ -82,7 +82,7 @@ export const useAppState = () => {
     activeContIndex,
     completePages,
     buildData,
-    rootApp,
+    readOnlyApp,
   } = state;
 
   const getContainer = (index: number = activeContIndex) => {
@@ -98,22 +98,20 @@ export const useAppState = () => {
     );
   };
 
-  const setRootApp: ISetState<AppIn> = (fn) => {
+  const setReadOnlyApp: ISetState<IApp> = (fn) => {
     if (typeof fn === 'function') {
-      setState((s) => ({ ...s, rootApp: fn(s.rootApp!) }));
+      setState((s) => ({ ...s, readOnlyApp: fn(s.readOnlyApp) }));
     } else {
-      console.log('insi', fn);
-      setState((s) => ({ ...s, rootApp: fn }));
+      setState((s) => ({ ...s, readOnlyApp: fn }));
     }
   };
+
   const setApp: ISetState<typeof app> = (fn) => {
     if (typeof fn === 'function') {
       setState((s) => ({ ...s, app: fn(s.app) }));
     } else {
       setState((s) => ({ ...s, app: fn }));
     }
-
-    setRootApp(app);
   };
 
   const setContainer: ISetContainer<AppSpecContainersIn> = (
@@ -306,7 +304,8 @@ export const useAppState = () => {
     setBuildData,
     buildData,
     resetBuildData,
-    rootApp,
+    readOnlyApp,
+    setReadOnlyApp,
   };
 };
 
@@ -318,21 +317,26 @@ export const clearAppState = () => {
 export const AppContextProvider = ({
   children,
   initialAppState,
-}: ChildrenProps & { initialAppState?: AppIn }) => {
+}: ChildrenProps & { initialAppState?: AppIn & { build?: BuildIn } }) => {
   const loadSession = () => {
     if (typeof window === 'undefined')
       return {
         app: defaultApp,
+        readOnlyApp: defaultApp,
+        buildData: defaultApp?.build,
       };
     if (initialAppState) {
       return {
         app: initialAppState,
+        readOnlyApp: initialAppState,
+        buildData: initialAppState?.build,
       };
     }
     const stateString =
       sessionStorage.getItem('state') ||
       JSON.stringify({
         app: defaultApp,
+        readOnlyApp: defaultApp,
       });
 
     try {

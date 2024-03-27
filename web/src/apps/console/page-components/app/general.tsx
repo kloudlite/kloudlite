@@ -6,7 +6,7 @@ import { FadeIn } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
 import { BottomNavigation, GitDetail } from '~/console/components/commons';
 import { registryHost } from '~/lib/configs/base-url.cjs';
-import { useOutletContext, useParams } from '@remix-run/react';
+import { useOutletContext } from '@remix-run/react';
 import RepoSelector from '~/console/page-components/app/components';
 import AppBuildIntegration from '~/console/page-components/app/app-build-integration';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
@@ -16,11 +16,13 @@ import { useEffect, useState } from 'react';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import { getImageTag } from '~/console/routes/_main+/$account+/$project+/env+/$environment+/new-app/app-utils';
+import { constants } from '~/console/server/utils/constants';
 
 const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
   const {
     app,
-    rootApp,
+    readOnlyApp,
     setApp,
     setPage,
     setBuildData,
@@ -30,10 +32,15 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     activeContIndex,
   } = useAppState();
 
-  const { account } = useParams();
-  const { project } = useOutletContext<IEnvironmentContext>();
+  const { project, account, environment } =
+    useOutletContext<IEnvironmentContext>();
   const { performAction } = useUnsavedChanges();
 
+  const [projectName, envName, accountName] = [
+    parseName(project),
+    parseName(environment),
+    parseName(account),
+  ];
   // only for edit mode
   const [isEdited, setIsEdited] = useState(!app.ciBuildId);
 
@@ -52,13 +59,14 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       displayName: app.displayName,
       isNameError: false,
       imageMode:
-        rootApp?.metadata?.annotations[keyconstants.appImageMode] || 'default',
-      imageUrl: app.spec.containers[activeContIndex]?.image || '',
+        readOnlyApp?.metadata?.annotations[keyconstants.appImageMode] ||
+        'default',
+      imageUrl: readOnlyApp?.spec.containers[activeContIndex]?.image || '',
       manualRepo: '',
       source: {
-        branch: app?.build?.source.branch,
-        repository: app?.build?.source.repository,
-        provider: app?.build?.source.provider,
+        branch: readOnlyApp?.build?.source.branch,
+        repository: readOnlyApp?.build?.source.repository,
+        provider: readOnlyApp?.build?.source.provider,
       },
       advanceOptions: false,
       buildArgs: {},
@@ -101,9 +109,14 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       // setBuildData(buildData);
 
       const formBuildData = () => {
+        const imageTag = getImageTag({
+          environment: envName,
+          project: projectName,
+          app: val.name,
+        });
         return {
           buildClusterName: project.clusterName || '',
-          name: `app_build_${val.name}`,
+          name: imageTag,
           source: {
             branch: val.source.branch!,
             provider: (val.source.provider === 'github'
@@ -132,8 +145,8 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             },
             registry: {
               repo: {
-                name: `app_build_repo_${val.name}`,
-                tags: ['latest'],
+                name: constants.defaultAppRepoNameOnly,
+                tags: [imageTag],
               },
             },
             resource: {
@@ -198,7 +211,6 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     if (mode === 'edit') {
       submit();
     }
-    console.log(values);
   }, [values, mode]);
 
   useEffect(() => {
@@ -208,11 +220,15 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       }
       resetValues();
       // @ts-ignore
-      setBuildData(rootApp?.build);
+      setBuildData(readOnlyApp?.build);
     } else if (performAction === 'init') {
       setIsEdited(false);
     }
   }, [performAction]);
+
+  useEffect(() => {
+    resetValues();
+  }, [readOnlyApp]);
 
   return (
     <FadeIn
@@ -255,15 +271,16 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             value={values.imageMode}
             onChange={(e) => {
               handleChange('imageMode')(dummyEvent(e));
-              console.log(e);
-              if (e === 'default') {
-                // @ts-ignore
-                // setBuildData(rootApp?.build);
-              }
-              // setIsEdited(false);
-
               if (!app.ciBuildId && e === 'git') {
                 setIsEdited(true);
+              }
+              resetValues({
+                ...values,
+                imageMode: e,
+              });
+              if (e === 'default') {
+                // @ts-ignore
+                setBuildData(readOnlyApp?.build);
               }
             }}
             items={[
@@ -281,7 +298,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               tag={values.imageUrl.split(':')[1]}
               repo={
                 values.imageUrl
-                  .replace(`${registryHost}/${account}/`, '')
+                  .replace(`${registryHost}/${accountName}/`, '')
                   .split(':')[0]
               }
               onClear={() => {
@@ -300,12 +317,13 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               }}
               onValueChange={({ repo, tag }) => {
                 handleChange('imageUrl')(
-                  dummyEvent(`${registryHost}/${account}/${repo}:${tag}`)
+                  dummyEvent(`${registryHost}/${accountName}/${repo}:${tag}`)
                 );
               }}
               error={errors.manualRepo}
             />
           )}
+
           {buildData?.name && values.imageMode === 'git' && !isEdited && (
             <GitDetail
               provider={buildData.source.provider}
@@ -323,14 +341,6 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               errors={errors}
               handleChange={handleChange}
             />
-          )}
-
-          {values.imageMode === 'git' && (isEdited || !buildData?.name) && (
-            <div>
-              create new build
-              <div>or</div>
-              use existing
-            </div>
           )}
         </div>
       </div>

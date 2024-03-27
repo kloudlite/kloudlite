@@ -105,7 +105,6 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const App = () => {
   const { promise } = useLoaderData<typeof loader>();
-  console.log('heree app', promise.app);
   return (
     <LoadingComp data={promise}>
       {({ app }) => {

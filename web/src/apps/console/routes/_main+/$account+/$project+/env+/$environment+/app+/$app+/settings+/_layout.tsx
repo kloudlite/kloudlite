@@ -1,9 +1,4 @@
-import {
-  Outlet,
-  useNavigation,
-  useOutletContext,
-  useParams,
-} from '@remix-run/react';
+import { Outlet, useOutletContext } from '@remix-run/react';
 import SidebarLayout from '~/console/components/sidebar-layout';
 import {
   UnsavedChangesProvider,
@@ -24,7 +19,11 @@ import Yup from '~/lib/server/helpers/yup';
 import { DiffViewer, yamlDump } from '~/console/components/diff-viewer';
 import { useReload } from '~/lib/client/helpers/reloader';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { parseName } from '~/console/server/r-utils/common';
+import { constants } from '~/console/server/utils/constants';
 import { IAppContext } from '../_layout';
+import { getImageTag } from '../../../new-app/app-utils';
+import appFun from '../../../new-app/app-pre-submit';
 
 const navItems = [
   { label: 'General', value: 'general' },
@@ -44,15 +43,22 @@ const Layout = () => {
     setPerformAction,
     loading,
   } = useUnsavedChanges();
-  const { app, buildData, setBuildData, setApp } = useAppState();
+  const { app, buildData, setBuildData, setApp, setReadOnlyApp } =
+    useAppState();
 
-  const { account, project, environment, app: appId } = useParams();
+  const { project, environment, account } = useOutletContext<IAppContext>();
+  const [projectName, envName, accountName, appName] = [
+    parseName(project),
+    parseName(environment),
+    parseName(account),
+    parseName(app),
+  ];
 
   useEffect(() => {
     setIgnorePaths(
       navItems.map(
         (ni) =>
-          `/${account}/${project}/env/${environment}/app/${appId}/settings/${ni.value}`
+          `/${account}/${project}/env/${environment}/app/${appName}/settings/${ni.value}`
       )
     );
   }, []);
@@ -71,30 +77,31 @@ const Layout = () => {
       const gitMode =
         app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
       // update or create build first if git image is selected
-      let buildId = app.ciBuildId;
+      let buildId: string | null | undefined = app.ciBuildId;
+      let tagName = '';
 
       if (buildData && gitMode) {
         try {
+          tagName = getImageTag({
+            app: parseName(app),
+            environment: envName,
+            project: projectName,
+          });
           if (app.ciBuildId) {
-            const { errors, data } = await api.updateBuild({
-              crUpdateBuildId: app.ciBuildId,
+            buildId = await appFun.updateBuild({
+              api,
               build: buildData,
+              buildId: app.ciBuildId,
             });
-
-            if (errors) {
-              throw errors[0];
-            }
-            buildId = data.id;
           } else {
-            const { errors, data } = await api.createBuild({
+            buildId = await appFun.createBuild({
+              api,
               build: buildData,
             });
+          }
 
-            if (errors) {
-              throw errors[0];
-            }
-
-            buildId = data.id;
+          if (buildId) {
+            await appFun.triggerBuild({ api, buildId });
           }
         } catch (err) {
           handleError(err);
@@ -115,10 +122,9 @@ const Layout = () => {
                       ? {
                           containers: [
                             {
-                              image: `${buildData?.spec.registry.repo.name}:${
-                                buildData?.spec.registry.repo.tags?.[0] ||
-                                'latest'
-                              }`,
+                              image: `${constants.defaultAppRepoName(
+                                accountName
+                              )}:${tagName}`,
                               name: 'container-0',
                             },
                           ],
@@ -128,8 +134,8 @@ const Layout = () => {
                 }
               : {}),
           },
-          envName: environment,
-          projectName: project,
+          envName,
+          projectName,
         });
         if (errors) {
           throw errors[0];
@@ -155,7 +161,6 @@ const Layout = () => {
     }
     const isNotSame = JSON.stringify(app) !== JSON.stringify(rootContext.app);
 
-    console.log('changes', isNotSame);
     const isBuildNotSame =
       JSON.stringify(buildData) !== JSON.stringify(rootContext.app.build);
 
@@ -172,18 +177,18 @@ const Layout = () => {
   useEffect(() => {
     if (!loading) {
       setApp(rootContext.app);
-      const { build } = rootContext.app;
+      setReadOnlyApp(rootContext.app);
       // @ts-ignore
-      setBuildData(build);
+      setBuildData(rootContext.app.build);
     }
     setHasChanges(false);
-  }, [rootContext.app, loading]);
+  }, [rootContext.app]);
 
   useEffect(() => {
     if (performAction === 'discard-changes') {
       setApp(rootContext.app);
+      setReadOnlyApp(rootContext.app);
       // @ts-ignore
-
       setBuildData(rootContext.app.build);
       setPerformAction('');
     }
@@ -231,20 +236,6 @@ const Layout = () => {
 
 const Settings = () => {
   const rootContext = useOutletContext<IAppContext>();
-  if (!rootContext.app.metadata?.annotations?.[keyconstants.description]) {
-    rootContext.app = {
-      ...rootContext.app,
-      // @ts-ignore
-      metadata: {
-        ...(rootContext.app.metadata || {}),
-        annotations: {
-          ...(rootContext.app.metadata?.annotations || {}),
-          [keyconstants.description]: '',
-        },
-      },
-    };
-  }
-
   return (
     <AppContextProvider initialAppState={rootContext.app}>
       <UnsavedChangesProvider>

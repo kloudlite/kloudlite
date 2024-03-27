@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from '@remix-run/react';
+import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { useAppState } from '~/console/page-components/app-states';
@@ -16,6 +16,10 @@ import {
 } from '~/console/components/commons';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { CheckCircleFill, CircleFill, CircleNotch } from '@jengaicons/react';
+import { constants } from '~/console/server/utils/constants';
+import appFun from './app-pre-submit';
+import { IEnvironmentContext } from '../_layout';
+import { getImageTag } from './app-utils';
 
 const AppState = ({ message, state }: { message: string; state: string }) => {
   const iconSize = 12;
@@ -78,7 +82,13 @@ const AppReview = () => {
     app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
   const api = useConsoleApi();
   const navigate = useNavigate();
-  const { project, environment } = useParams();
+  const { project, environment, account } =
+    useOutletContext<IEnvironmentContext>();
+  const [projectName, envName, accountName] = [
+    parseName(project),
+    parseName(environment),
+    parseName(account),
+  ];
 
   const { handleSubmit, isLoading } = useForm({
     initialValues: app,
@@ -89,9 +99,16 @@ const AppReview = () => {
       }
 
       // create build first if git image is selected
-      let buildId = '';
+      let buildId: string | null = '';
+      let tagName = '';
 
       if (buildData && gitMode) {
+        tagName = getImageTag({
+          app: parseName(app),
+          environment: envName,
+          project: projectName,
+        });
+
         setCreateState((prev) => ({
           ...prev,
           build: {
@@ -99,17 +116,14 @@ const AppReview = () => {
             state: 'in-progress',
           },
         }));
-        try {
-          const { errors, data } = await api.createBuild({
-            build: buildData,
-          });
 
-          if (errors) {
-            throw errors[0];
-          }
+        buildId = await appFun.createBuild({
+          api,
+          build: buildData,
+        });
 
-          buildId = data.id;
-
+        if (buildId) {
+          await appFun.triggerBuild({ api, buildId });
           setCreateState((prev) => ({
             ...prev,
             build: {
@@ -117,8 +131,7 @@ const AppReview = () => {
               state: 'done',
             },
           }));
-        } catch (err) {
-          handleError(err);
+        } else {
           setCreateState((prev) => ({
             ...prev,
             build: {
@@ -140,8 +153,8 @@ const AppReview = () => {
         }));
 
         const { errors } = await api.createApp({
-          envName: environment,
-          projectName: project,
+          envName,
+          projectName,
           app: {
             ...app,
             ...(buildId && gitMode
@@ -151,9 +164,9 @@ const AppReview = () => {
                     ...app.spec,
                     containers: [
                       {
-                        image: `${buildData?.spec.registry.repo.name}:${
-                          buildData?.spec.registry.repo.tags?.[0] || 'latest'
-                        }`,
+                        image: `${constants.defaultAppRepoName(
+                          accountName
+                        )}:${tagName}`,
                         name: 'container-0',
                       },
                     ],

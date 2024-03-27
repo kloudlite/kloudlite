@@ -3,6 +3,18 @@ import { parseValue } from '~/console/page-components/util';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { AppIn } from '~/root/src/generated/gql/server';
 
+export const getImageTag = ({
+  project,
+  app,
+  environment,
+}: {
+  project: string;
+  app: string;
+  environment: string;
+}) => {
+  return `${project}_${environment}_${app}_v1`;
+};
+
 export const appInitialFormValues = ({
   app,
   getContainer,

@@ -11,7 +11,9 @@ import RepoSelector from '~/console/page-components/app/components';
 import AppBuildIntegration from '~/console/page-components/app/app-build-integration';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import { constants } from '~/console/server/utils/constants';
 import { IEnvironmentContext } from '../_layout';
+import { getImageTag } from './app-utils';
 
 const AppDetail = () => {
   const {
@@ -25,8 +27,13 @@ const AppDetail = () => {
     activeContIndex,
   } = useAppState();
 
-  const { account } = useParams();
-  const { project } = useOutletContext<IEnvironmentContext>();
+  const { project, environment, account } =
+    useOutletContext<IEnvironmentContext>();
+  const [projectName, envName, accountName] = [
+    parseName(project),
+    parseName(environment),
+    parseName(account),
+  ];
 
   const { values, errors, handleChange, handleSubmit, isLoading, setValues } =
     useForm({
@@ -58,7 +65,7 @@ const AppDetail = () => {
         manualRepo: Yup.string().when(
           ['imageUrl', 'imageMode'],
           ([imageUrl, imageMode], schema) => {
-            const regex = /^(\w+):(\w+)$/;
+            const regex = /[a-z0-9-/.]+[:][a-z0-9-.]+[a-z0-9]/;
             if (imageMode === 'git') {
               return schema;
             }
@@ -118,8 +125,13 @@ const AppDetail = () => {
           ) {
             throw new Error('Source is required');
           }
+          const imageTag = getImageTag({
+            environment: envName,
+            project: projectName,
+            app: val.name,
+          });
           setBuildData({
-            name: `app_build_${val.name}`,
+            name: imageTag,
             buildClusterName: project.clusterName,
             source: {
               branch: val.source.branch,
@@ -143,8 +155,8 @@ const AppDetail = () => {
               },
               registry: {
                 repo: {
-                  name: `app_build_repo_${val.name}`,
-                  tags: ['latest'],
+                  name: constants.defaultAppRepoNameOnly,
+                  tags: [imageTag],
                 },
               },
               resource: {
@@ -205,7 +217,7 @@ const AppDetail = () => {
               tag={values.imageUrl.split(':')[1]}
               repo={
                 values.imageUrl
-                  .replace(`${registryHost}/${account}/`, '')
+                  .replace(`${registryHost}/${accountName}/`, '')
                   .split(':')[0]
               }
               onClear={() => {
@@ -224,7 +236,7 @@ const AppDetail = () => {
               }}
               onValueChange={({ repo, tag }) => {
                 handleChange('imageUrl')(
-                  dummyEvent(`${registryHost}/${account}/${repo}:${tag}`)
+                  dummyEvent(`${registryHost}/${accountName}/${repo}:${tag}`)
                 );
               }}
               error={errors.manualRepo}
