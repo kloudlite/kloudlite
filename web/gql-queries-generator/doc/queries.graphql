@@ -2050,6 +2050,10 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
             cpu
             memoryInMb
           }
+          caches {
+            name
+            path
+          }
         }
         status
         updateTime

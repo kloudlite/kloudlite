@@ -15,9 +15,15 @@ interface IKeyValuePair {
   label?: ReactNode;
   message?: ReactNode;
   error?: boolean;
+  selectMessage?: ReactNode;
+  selectError?: boolean;
+  selectLoading?: boolean;
   size?: 'lg' | 'md';
   addText?: string;
   options: { label: string; value: string; updateInfo: null }[];
+  keyLabel?: string;
+  valueLabel?: string;
+  regexPath?: RegExp;
 }
 const KeyValuePairSelect = ({
   onChange,
@@ -25,45 +31,54 @@ const KeyValuePairSelect = ({
   label,
   message,
   error,
+  selectMessage,
+  selectError,
+  selectLoading,
   size,
   addText,
   options,
+  keyLabel = 'key',
+  valueLabel = 'value',
+  regexPath,
 }: IKeyValuePair) => {
-  const newItem = [{ key: '', value: '', id: uuid() }];
+  const newItem = [{ [keyLabel]: '', [valueLabel]: '', id: uuid() }];
   const [items, setItems] = useState<Array<Record<string, any>>>(newItem);
 
   const handleChange = (_value = '', id = '', target = {}) => {
-    setItems(
-      items.map((i) => {
-        if (i.id === id) {
-          switch (target) {
-            case 'key':
-              return { ...i, key: _value };
-            case 'value':
-            default:
-              return { ...i, value: _value };
-          }
-        }
-        return i;
-      })
-    );
-  };
+    const tempItems = items.map((i) => {
+      if (i.id === id) {
+        switch (target) {
+          case 'key':
+            return { ...i, [keyLabel]: _value };
 
-  useEffect(() => {
-    const formatItems = items.reduce((acc, curr) => {
+          case 'value':
+          default:
+            return { ...i, [valueLabel]: _value };
+        }
+      }
+      return i;
+    });
+    const formatItems = tempItems.reduce((acc, curr) => {
       if (curr.key && curr.value) {
         acc[curr.key] = curr.value;
       }
       return acc;
     }, {});
-    if (onChange) onChange(Array.from(items), formatItems);
-  }, [items]);
+    if (onChange) onChange(Array.from(tempItems), formatItems);
+  };
 
   useEffect(() => {
-    if (value.length > 0) {
-      setItems(Array.from(value).map((v) => ({ ...v, id: uuid() })));
+    if (value && value.length === 0) {
+      setItems(newItem);
+      return;
     }
-  }, []);
+    setItems(
+      Array.from(value || newItem).map((v) => ({
+        ...v,
+        id: v.id ? v.id : uuid(),
+      }))
+    );
+  }, [value]);
 
   const [isValidPath, setIsValidPath] = useState<{
     [key: string]: boolean;
@@ -82,38 +97,36 @@ const KeyValuePairSelect = ({
                 <Select
                   creatable
                   size={size || 'md'}
-                  // label={label}
-                  value={item.key}
+                  value={item[keyLabel]}
                   options={async () => options}
                   onChange={(_, val) => {
                     console.log('val', val);
                     handleChange(val, item.id, 'key');
-                    // handleChange('cacheKey')(dummyEvent(val));
                   }}
-                  error={error}
-                  message={message}
-                  // loading={digestLoading}
+                  error={selectError}
+                  message={selectMessage}
+                  loading={selectLoading}
                   disableWhileLoading
                 />
               </div>
               <div className="flex-1">
                 <TextInput
                   size={size || 'md'}
-                  error={!!isValidPath?.[item.id]}
-                  message={isValidPath?.[item.id] ? 'Invalid path' : ''}
+                  error={isValidPath?.[item.id] === false}
+                  message={
+                    isValidPath?.[item.id] === false ? 'Invalid path' : ''
+                  }
                   placeholder="Value"
-                  value={item.value}
+                  value={item[valueLabel]}
                   onChange={({ target }) => {
-                    const pathRegex = /^\/(?:[\w.-]+\/)*(?:[\w.-]*)$/;
-                    console.log('target.value', target.value);
-                    if (pathRegex.test(target.value)) {
+                    if (target.value === '') {
                       setIsValidPath({ ...isValidPath, [item.id]: true });
-                      // handleChange('cachePath')(dummyEvent(val));
+                    } else if (regexPath?.test(target.value)) {
+                      setIsValidPath({ ...isValidPath, [item.id]: true });
                     } else {
                       setIsValidPath({ ...isValidPath, [item.id]: false });
                     }
                     handleChange(target.value, item.id, 'value');
-                    // handleChange(target.value, item.id, 'value');
                   }}
                 />
               </div>
