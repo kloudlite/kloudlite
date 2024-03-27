@@ -164,22 +164,21 @@ func (r *Reconciler) finalize(req *rApi.Request[*dbv1.BuildRun]) stepResult.Resu
 		return step
 	}
 
-	s, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), &corev1.Secret{})
-	if err != nil {
+	if sec, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), &corev1.Secret{}); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return check.Failed(err)
 		}
-		return req.Finalize()
-	}
-	if err := r.Delete(ctx, s); err != nil {
+	} else if err := r.Delete(ctx, sec); err != nil {
 		return check.Failed(err)
 	}
 
-	if _, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.BuildNamespace, fmt.Sprintf("build-%s", obj.Name)), &batchv1.Job{}); err != nil {
+	if job, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.BuildNamespace, fmt.Sprintf("build-%s", obj.Name)), &batchv1.Job{}); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return check.Failed(err)
 		}
 		return req.Finalize()
+	} else if err := r.Delete(ctx, job); err != nil {
+		return check.Failed(err)
 	}
 
 	return req.Finalize()
