@@ -41,3 +41,11 @@ export const isValidRegex = (regexString = '') => {
   }
   return isValid;
 };
+
+export const base64Encrypt = (str: string) => {
+  return btoa(str);
+};
+
+export const base64Decrypt = (str: string) => {
+  return atob(str);
+};

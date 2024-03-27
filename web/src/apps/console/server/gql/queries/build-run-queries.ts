@@ -45,7 +45,7 @@ export const buildRunQueries = (executor: IExecutor) => ({
                   dockerfilePath
                   targetPlatforms
                 }
-                cacheKeyName
+
                 registry {
                   repo {
                     name
@@ -131,7 +131,7 @@ export const buildRunQueries = (executor: IExecutor) => ({
               dockerfilePath
               targetPlatforms
             }
-            cacheKeyName
+
             registry {
               repo {
                 name

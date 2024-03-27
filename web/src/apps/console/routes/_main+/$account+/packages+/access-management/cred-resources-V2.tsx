@@ -127,7 +127,7 @@ const TokenView = ({ username }: { username: string }) => {
     <ListBody
       data={
         <div
-          className="cursor-pointer flex flex-row items-center gap-lg truncate w-fit"
+          className="cursor-pointer flex flex-row items-center gap-lg truncate w-fit hover:text-text-default"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -259,7 +259,11 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
                 ),
               },
               registryUrl: {
-                render: () => <RegistryUrlView />,
+                render: () => (
+                  <div className="flex w-fit">
+                    <RegistryUrlView />
+                  </div>
+                ),
               },
               token: { render: () => <TokenView username={username} /> },
               updated: {

@@ -1,3 +1,4 @@
+import { useOutletContext } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { TextArea, TextInput } from '~/components/atoms/input';
@@ -8,6 +9,9 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import { constants } from '~/console/server/utils/constants';
+// import KeyValuePairSelect from '~/console/components/key-value-pair-select';
+import { IRepoContext } from '../_layout';
 
 const BuildPlatforms = ({
   value,
@@ -97,6 +101,29 @@ const BuildDetails = ({
     };
   });
 
+  const { repoName } = useOutletContext<IRepoContext>();
+  console.log('reponame', repoName);
+
+  const {
+    data: digestData,
+    isLoading: digestLoading,
+    error: digestError,
+  } = useCustomSwr(
+    () =>
+      constants.cacheRepoName ? `/digests_${constants.cacheRepoName}` : null,
+    async () => {
+      return api.listDigest({ repoName });
+    }
+  );
+
+  const tags = useMapper(parseNodes(digestData), (val) => val.tags)
+    .flat()
+    .flatMap((f) => ({ label: f, value: f, updateInfo: null }));
+
+  // const [isValidPath, setIsValidPath] = useState(false);
+
+  console.log('tags', tags);
+
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     ref.current?.focus();
@@ -144,6 +171,45 @@ const BuildDetails = ({
           (errorCluster ? 'Error loading clusters' : '')
         }
       />
+      {/* <div className="flex flex-row gap-3xl items-start">
+        <div className="basis-1/3">
+          <Select
+            creatable
+            size="lg"
+            label="CacheKey"
+            value={values.cacheKey}
+            options={async () => tags}
+            onChange={(_, val) => {
+              handleChange('cacheKey')(dummyEvent(val));
+            }}
+            error={!!errors.digestData || !!digestError}
+            message={
+              errors.digestData || (digestError ? 'Error fetching tags.' : '')
+            }
+            loading={digestLoading}
+            disableWhileLoading
+          />
+        </div>
+        <div className="flex-1">
+          <Select
+            creatable
+            size="lg"
+            label="CachePath"
+            value={values.cachePath}
+            options={async () => []}
+            onChange={(_, val) => {
+              const pathRegex = /^\/(?:[\w.-]+\/)*(?:[\w.-]*)$/;
+              if (pathRegex.test(val)) {
+                setIsValidPath(true);
+                handleChange('cachePath')(dummyEvent(val));
+              }
+            }}
+            error={!isValidPath}
+            message={!isValidPath ? 'Invalid path' : ''}
+            disableWhileLoading
+          />
+        </div>
+      </div> */}
       <Checkbox
         label="Advance options"
         checked={values.advanceOptions}
@@ -153,6 +219,20 @@ const BuildDetails = ({
       />
       {values.advanceOptions && (
         <div className="flex flex-col gap-3xl">
+          {/* <KeyValuePairSelect
+            size="lg"
+            label="Caches"
+            value={Object.entries(values.caches || {}).map(([key, value]) => ({
+              key,
+              value,
+            }))}
+            onChange={(_, items) => {
+              handleChange('caches')(dummyEvent(items));
+            }}
+            error={!!errors.buildArgs}
+            message={errors.buildArgs}
+            options={tags}
+          /> */}
           <KeyValuePair
             size="lg"
             label="Build args"
