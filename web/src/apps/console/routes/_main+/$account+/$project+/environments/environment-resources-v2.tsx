@@ -23,6 +23,8 @@ import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
 import ListV2 from '~/console/components/listV2';
+import { Globe, ShieldCheck } from '~/console/components/icons';
+import { Badge } from '~/components/atoms/badge';
 import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'environment';
@@ -173,7 +175,19 @@ const ListView = ({ items, onAction }: IResource) => {
                 render: () => <SyncStatusV2 item={i} />,
               },
               environment: {
-                render: () => <ListItem data={i.spec?.routing?.mode} />,
+                render: () => (
+                  <Badge
+                    icon={
+                      i.spec?.routing?.mode === 'private' ? (
+                        <ShieldCheck />
+                      ) : (
+                        <Globe />
+                      )
+                    }
+                  >
+                    {i.spec?.routing?.mode}
+                  </Badge>
+                ),
               },
               updated: {
                 render: () => (
