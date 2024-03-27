@@ -1,4 +1,3 @@
-import { GithubLogoFill, GitlabLogoFill } from '@jengaicons/react';
 import { Avatar } from '~/components/atoms/avatar';
 import { Button } from '~/components/atoms/button';
 import { generateKey } from '~/components/utils';
@@ -11,6 +10,12 @@ import { gitEnvs } from '~/root/lib/configs/base-url.cjs';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
+import {
+  ArrowsClockwise,
+  GithubLogoFill,
+  GitlabLogoFill,
+  GearSix,
+} from '~/console/components/icons';
 
 type gitProvider = 'github' | 'gitlab';
 export const loader = async (ctx: IRemixCtx) => {
@@ -65,12 +70,14 @@ const ExtraButton = ({ onAction }: IExtraButton) => {
         {
           label: 'Manage',
           type: 'item',
+          icon: <GearSix size={16} />,
           onClick: () => onAction({ action: 'manage' }),
           key: 'manage',
         },
         {
           label: 'Change',
           type: 'item',
+          icon: <ArrowsClockwise size={16} />,
           onClick: () => onAction({ action: 'change' }),
           key: 'change',
         },
