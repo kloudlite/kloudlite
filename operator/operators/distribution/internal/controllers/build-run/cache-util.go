@@ -2,10 +2,40 @@ package buildrun
 
 import (
 	"fmt"
+	"strings"
 
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 )
+
+const postScript = `
+# check if path exists
+if [ -d {{path}} ]; then
+    docker cp {{path}} {{containerName}}:/data
+    docker commit {{containerName}} {{repoName}}:{{tag}}
+    docker push {{repoName}}:{{tag}}
+else
+    echo "[#] cache path {{path}} not found, skipping..."
+fi
+`
+
+const preScript = `
+docker pull {{repoName}}:{{tag}} || true
+if [ "$(docker images -q {{repoName}}:{{tag}})" == "" ]; then
+    echo "[#] image {{repoName}}:{{tag}} not found, using new image instead."
+    docker create --name {{containerName}} alpine:latest
+else
+    docker create --name {{containerName}} {{repoName}}:{{tag}}
+fi
+docker cp {{containerName}}:/data {{path}} || echo "[#] failed to copy cache path {{path}}"
+`
+
+func parseScript(script string, data map[string]string) string {
+	for k, v := range data {
+		script = strings.ReplaceAll(script, fmt.Sprintf("{{%s}}", k), v)
+	}
+	return script
+}
 
 func (r *Reconciler) getCacheCmds(req *rApi.Request[*dbv1.BuildRun]) (string, string, error) {
 	obj := req.Object
@@ -23,39 +53,22 @@ func (r *Reconciler) getCacheCmds(req *rApi.Request[*dbv1.BuildRun]) (string, st
 
 	checkoutCmd := "echo '[#] checking out cache paths...'"
 	postCheckoutCmd := "echo '[#] pushing cache paths...'"
-	for i, path := range obj.Spec.Caches {
-		name := path.Name
+	for i, cache := range obj.Spec.Caches {
+		name := cache.Name
+		path := cache.Path
+
 		containerName := fmt.Sprintf("tmp_container_%d", i)
 
-		checkoutCmd += fmt.Sprintf(`
-docker pull %s:%s || true
-if [ "$(docker images -q %s:%s)" == "" ]; then
-    echo "[#] image %s:%s not found, using busybox instead."
-    docker create --name %s alpine:latest
-else
-    docker create --name %s %s:%s
-fi
-docker cp %s:/data %q || mkdir -p %q
-		  `,
-			repoName, name,
-			repoName, name,
-			repoName, name,
-			containerName,
-			containerName, repoName, name,
-			containerName, path, path,
-		)
+		data := map[string]string{
+			"repoName":      repoName,
+			"tag":           name,
+			"containerName": containerName,
+			"path":          fmt.Sprintf("%q", path),
+		}
 
-		postCheckoutCmd += fmt.Sprintf(`
-mkdir -p %q
-docker cp %q %s:/data || true
-docker commit %s %s:%s
-docker push %s:%s
-		`,
-			path,
-			path, containerName,
-			containerName, repoName, name,
-			repoName, name,
-		)
+		checkoutCmd += parseScript(preScript, data)
+		postCheckoutCmd += parseScript(postScript, data)
+
 	}
 
 	return checkoutCmd, postCheckoutCmd, nil
