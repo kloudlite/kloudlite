@@ -42,7 +42,7 @@ docker cp %s:/data %q || mkdir -p %q
 			repoName, name,
 			containerName,
 			containerName, repoName, name,
-			containerName, name, path, path,
+			containerName, path, path,
 		)
 
 		postCheckoutCmd += fmt.Sprintf(`
@@ -52,7 +52,7 @@ docker commit %s %s:%s
 docker push %s:%s
 		`,
 			path,
-			path, containerName, name,
+			path, containerName,
 			containerName, repoName, name,
 			repoName, name,
 		)
