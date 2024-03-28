@@ -122,6 +122,7 @@ const Layout = () => {
                       ? {
                           containers: [
                             {
+                              ...app.spec.containers?.[0],
                               image: `${constants.defaultAppRepoName(
                                 accountName
                               )}:${tagName}`,

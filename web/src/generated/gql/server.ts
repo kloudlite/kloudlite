@@ -203,10 +203,6 @@ export type CoreSearchVpnDevices = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
-export type SearchBuildCacheKeys = {
-  text?: InputMaybe<MatchFilterIn>;
-};
-
 export type SearchBuildRuns = {
   buildId?: InputMaybe<Scalars['ID']['input']>;
   repoName?: InputMaybe<MatchFilterIn>;
@@ -776,7 +772,9 @@ export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Inter
 export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__BuildRunSpecIn =
   {
     buildOptions?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Distribution___V1__BuildOptionsIn>;
-    cacheKeyName?: InputMaybe<Scalars['String']['input']>;
+    caches?: InputMaybe<
+      Array<Github__Com___Kloudlite___Operator___Apis___Distribution___V1__CacheIn>
+    >;
     registry: Github__Com___Kloudlite___Operator___Apis___Distribution___V1__RegistryIn;
     resource: Github__Com___Kloudlite___Operator___Apis___Distribution___V1__ResourceIn;
   };
@@ -789,6 +787,12 @@ export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__Build
     dockerfileContent?: InputMaybe<Scalars['String']['input']>;
     dockerfilePath?: InputMaybe<Scalars['String']['input']>;
     targetPlatforms?: InputMaybe<Array<Scalars['String']['input']>>;
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__CacheIn =
+  {
+    name: Scalars['String']['input'];
+    path: Scalars['String']['input'];
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__RegistryIn =
@@ -807,12 +811,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__Resou
     cpu: Scalars['Int']['input'];
     memoryInMb: Scalars['Int']['input'];
   };
-
-export type BuildCacheKeyIn = {
-  displayName: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-  volumeSizeInGB: Scalars['Float']['input'];
-};
 
 export type CredentialIn = {
   access: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__RepoAccess;
@@ -3587,7 +3585,6 @@ export type ConsoleListBuildsQuery = {
         };
         spec: {
           accountName: string;
-          cacheKeyName?: string;
           buildOptions?: {
             buildArgs?: any;
             buildContexts?: any;
@@ -3665,61 +3662,6 @@ export type ConsoleTriggerBuildMutationVariables = Exact<{
 }>;
 
 export type ConsoleTriggerBuildMutation = { cr_triggerBuild: boolean };
-
-export type ConsoleListBuildCachesQueryVariables = Exact<{
-  pq?: InputMaybe<CursorPaginationIn>;
-  search?: InputMaybe<SearchBuildCacheKeys>;
-}>;
-
-export type ConsoleListBuildCachesQuery = {
-  cr_listBuildCacheKeys?: {
-    totalCount: number;
-    edges: Array<{
-      cursor: string;
-      node: {
-        id: string;
-        creationTime: any;
-        displayName: string;
-        name: string;
-        updateTime: any;
-        volumeSizeInGB: number;
-        createdBy: { userEmail: string; userId: string; userName: string };
-        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-      };
-    }>;
-    pageInfo: {
-      endCursor?: string;
-      hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
-      startCursor?: string;
-    };
-  };
-};
-
-export type ConsoleCreateBuildCacheMutationVariables = Exact<{
-  buildCacheKey: BuildCacheKeyIn;
-}>;
-
-export type ConsoleCreateBuildCacheMutation = {
-  cr_addBuildCacheKey?: { id: string };
-};
-
-export type ConsoleUpdateBuildCachesMutationVariables = Exact<{
-  crUpdateBuildCacheKeyId: Scalars['ID']['input'];
-  buildCacheKey: BuildCacheKeyIn;
-}>;
-
-export type ConsoleUpdateBuildCachesMutation = {
-  cr_updateBuildCacheKey?: { id: string };
-};
-
-export type ConsoleDeleteBuildCacheMutationVariables = Exact<{
-  crDeleteBuildCacheKeyId: Scalars['ID']['input'];
-}>;
-
-export type ConsoleDeleteBuildCacheMutation = {
-  cr_deleteBuildCacheKey: boolean;
-};
 
 export type ConsoleGetPvcQueryVariables = Exact<{
   clusterName: Scalars['String']['input'];
@@ -4298,7 +4240,6 @@ export type ConsoleListBuildRunsQuery = {
         };
         spec?: {
           accountName: string;
-          cacheKeyName?: string;
           buildOptions?: {
             buildArgs?: any;
             buildContexts?: any;
@@ -4371,7 +4312,6 @@ export type ConsoleGetBuildRunQuery = {
     };
     spec?: {
       accountName: string;
-      cacheKeyName?: string;
       buildOptions?: {
         buildArgs?: any;
         buildContexts?: any;

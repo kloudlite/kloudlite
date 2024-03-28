@@ -5,7 +5,6 @@ import { accountQueries } from './queries/account-queries';
 import { appQueries } from './queries/app-queries';
 import { baseQueries } from './queries/base-queries';
 import { buildQueries } from './queries/build-queries';
-import { buildCachesQueries } from './queries/build-caches-queries';
 import { buildRunQueries } from './queries/build-run-queries';
 import { clusterQueries } from './queries/cluster-queries';
 import { configQueries } from './queries/config-queries';
@@ -52,7 +51,6 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...gitQueries(executor),
     ...domainQueries(executor),
     ...buildQueries(executor),
-    ...buildCachesQueries(executor),
     ...pvcQueries(executor),
     ...pvQueries(executor),
     ...buildRunQueries(executor),
