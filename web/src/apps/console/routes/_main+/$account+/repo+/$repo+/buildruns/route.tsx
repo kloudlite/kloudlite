@@ -4,7 +4,7 @@ import { IRemixCtx } from '~/lib/types/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { getPagination } from '~/console/server/utils/common';
+import { base64Decrypt, getPagination } from '~/console/server/utils/common';
 import { defer } from '@remix-run/node';
 import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
@@ -16,7 +16,12 @@ export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listBuildRuns({
       pq: getPagination(ctx),
-      search: {},
+      search: {
+        repoName: {
+          exact: base64Decrypt(ctx.params.repo),
+          matchType: 'exact',
+        },
+      },
     });
     console.log(data);
     if (errors) {

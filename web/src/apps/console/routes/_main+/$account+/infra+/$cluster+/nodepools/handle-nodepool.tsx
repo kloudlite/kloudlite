@@ -36,7 +36,7 @@ const Root = (props: IDialog) => {
 
   const filterLabels = (labels: Array<string>) => {
     if (isUpdate) {
-      const org = props.data.spec.nodeLabels;
+      const org = { ...props.data.spec.nodeLabels };
       labels.forEach((label) => {
         delete org[label];
       });
@@ -67,8 +67,8 @@ const Root = (props: IDialog) => {
             autoScale: props.data.spec.minCount !== props.data.spec.maxCount,
             isNameError: false,
             stateful:
-              props.data.spec.nodeLabels[keyconstants.nodepoolStateType] ||
-              false,
+              props.data.spec.nodeLabels[keyconstants.nodepoolStateType] ===
+              'stateful',
           }
         : {
             nvidiaGpuEnabled: false,
@@ -304,6 +304,7 @@ const Root = (props: IDialog) => {
                   <div className="flex items-center h-6xl">
                     <Switch
                       label=""
+                      disabled={isUpdate}
                       checked={values.stateful}
                       onChange={(val) => {
                         handleChange('stateful')(dummyEvent(val));

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cn, generateKey } from '~/components/utils';
+import { generateKey } from '~/components/utils';
 import {
   ListBody,
   ListItem,
@@ -17,13 +17,7 @@ import { useOutletContext, useParams } from '@remix-run/react';
 import { IBuildRuns } from '~/console/server/gql/queries/build-run-queries';
 import AnimateHide from '~/components/atoms/animate-hide';
 import { Button } from '~/components/atoms/button';
-import {
-  CheckCircleFill,
-  GitBranch,
-  PlayCircleFill,
-  Tag,
-  XCircleFill,
-} from '@jengaicons/react';
+import { GitBranch, Tag } from '@jengaicons/react';
 import dayjs from 'dayjs';
 import LogComp from '~/lib/client/components/logger';
 import LogAction from '~/console/page-components/log-action';
@@ -151,7 +145,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   <div className="flex flex-col">
                     <ListTitle title={name} />
 
-                    <div className="flex items-center gap-xl pt-md bodySm text-text-soft pulsable">
+                    <div className="flex flex-row items-center gap-xl pt-md bodySm text-text-soft pulsable truncate">
                       <div>
                         {`#${commitHash?.substring(
                           commitHash.length - 7,

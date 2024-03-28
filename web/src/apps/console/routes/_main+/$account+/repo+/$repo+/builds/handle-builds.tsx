@@ -1,14 +1,12 @@
 /* eslint-disable react/destructuring-assignment */
 import { IDialogBase } from '~/console/components/types.d';
 import { useOutletContext } from '@remix-run/react';
-import { Checkbox } from '~/components/atoms/checkbox';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
 import { useMapper } from '~/components/utils';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import { useEffect, useState } from 'react';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import Popup from '~/components/molecule/popup';
@@ -20,71 +18,13 @@ import {
   parseNodes,
 } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import KeyValuePair from '~/console/components/key-value-pair';
 import Git from '~/console/components/git';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
 import MultiStep, { useMultiStep } from '~/console/components/multi-step';
-import { TextArea, TextInput } from '~/components/atoms/input';
+import { TextInput } from '~/components/atoms/input';
 import { GitDetail } from '~/console/components/commons';
 import { IRepoContext } from '../_layout';
-
-const BuildPlatforms = ({
-  value,
-  onChange,
-}: {
-  value?: Array<string>;
-  onChange?(data: Array<string>): void;
-}) => {
-  const platforms = [
-    { label: 'Arm', value: 'arm', checked: false },
-    { label: 'x86', value: 'x86', checked: false },
-    { label: 'x64', value: 'x64', checked: false },
-  ];
-
-  const [options, setOptions] = useState(platforms);
-
-  useEffect(() => {
-    setOptions((prev) =>
-      prev.map((p) => {
-        if (value?.includes(p.value)) {
-          return { ...p, checked: true };
-        }
-        return { ...p, checked: false };
-      })
-    );
-  }, [value]);
-
-  useEffect(() => {
-    onChange?.(options.filter((opt) => opt.checked).map((op) => op.value));
-  }, [options]);
-
-  return (
-    <div className="flex flex-col gap-md">
-      <span className="text-text-default bodyMd-medium">Platforms</span>
-      <div className="flex flex-row items-center gap-xl">
-        {options.map((bp) => {
-          return (
-            <Checkbox
-              key={bp.label}
-              label={bp.label}
-              checked={bp.checked}
-              onChange={(checked) => {
-                setOptions((prev) =>
-                  prev.map((p) => {
-                    if (p.value === bp.value) {
-                      return { ...p, checked: !!checked };
-                    }
-                    return p;
-                  })
-                );
-              }}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
-};
+import AdvancedOptions from './advanced-options';
 
 type IDialog = IDialogBase<ExtractNodeType<IBuilds>>;
 
@@ -139,11 +79,31 @@ const Root = (props: IDialog) => {
           tags: props.data.spec.registry.repo.tags,
           buildClusterName: props.data.buildClusterName,
           repository: props.data.spec.registry.repo.name,
-          advanceOptions: isAdvanceOptions(props.data.spec.buildOptions),
+          advanceOptions:
+            isAdvanceOptions(props.data.spec.buildOptions) ||
+            (props.data.spec.caches || []).length > 0,
           ...props.data.spec.buildOptions,
-          ...(props.data.spec.buildOptions?.buildArgs || props),
+          caches: props.data.spec.caches || [],
         }
-      : {},
+      : {
+          name: '',
+          source: {
+            branch: '',
+            repository: '',
+            provider: '' as IGIT_PROVIDERS,
+          },
+          tags: [],
+          buildClusterName: '',
+          advanceOptions: false,
+          repository: '',
+          buildArgs: {},
+          buildContexts: {},
+          contextDir: '',
+          dockerfilePath: '',
+          dockerfileContent: '',
+          isGitLoading: false,
+          caches: [],
+        },
     validationSchema: Yup.object({
       source: Yup.object()
         .shape({
@@ -205,6 +165,10 @@ const Root = (props: IDialog) => {
                     cpu: 500,
                     memoryInMb: 1000,
                   },
+                  caches: val.caches.map((v) => ({
+                    path: v.path,
+                    name: v.name,
+                  })),
                 },
               },
             });
@@ -314,61 +278,11 @@ const Root = (props: IDialog) => {
                     loading={clusterLoading}
                   />
 
-                  <Checkbox
-                    label="Advance options"
-                    checked={values.advanceOptions}
-                    onChange={(check) => {
-                      handleChange('advanceOptions')(dummyEvent(!!check));
-                    }}
+                  <AdvancedOptions
+                    values={values}
+                    handleChange={handleChange}
+                    errors={errors}
                   />
-                  {values.advanceOptions && (
-                    <div className="flex flex-col gap-xl">
-                      <KeyValuePair
-                        label="Build args"
-                        value={Object.entries(values.buildArgs || {}).map(
-                          ([key, value]) => ({ key, value })
-                        )}
-                        onChange={(_, items) => {
-                          handleChange('buildArgs')(dummyEvent(items));
-                        }}
-                        error={!!errors.buildArgs}
-                        message={errors.buildArgs}
-                      />
-                      <KeyValuePair
-                        label="Build contexts"
-                        value={Object.entries(values.buildContexts || {}).map(
-                          ([key, value]) => ({ key, value })
-                        )}
-                        onChange={(_, items) => {
-                          handleChange('buildContexts')(dummyEvent(items));
-                        }}
-                        error={!!errors.buildContexts}
-                        message={errors.buildContexts}
-                      />
-                      <TextInput
-                        label="Context dir"
-                        value={values.contextDir}
-                        onChange={handleChange('contextDir')}
-                      />
-                      <TextInput
-                        label="Docker file path"
-                        value={values.dockerfilePath}
-                        onChange={handleChange('dockerfilePath')}
-                      />
-                      <TextArea
-                        label="Docker file content"
-                        value={values.dockerfileContent}
-                        onChange={handleChange('dockerfileContent')}
-                        resize={false}
-                        rows="6"
-                      />
-                      <BuildPlatforms
-                        onChange={(data) => {
-                          console.log(data);
-                        }}
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

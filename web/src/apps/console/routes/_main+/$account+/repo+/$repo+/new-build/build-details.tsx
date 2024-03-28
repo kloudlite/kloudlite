@@ -1,71 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { Checkbox } from '~/components/atoms/checkbox';
-import { TextArea, TextInput } from '~/components/atoms/input';
+import { useEffect, useRef } from 'react';
+import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { useMapper } from '~/components/utils';
-import KeyValuePair from '~/console/components/key-value-pair';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { dummyEvent } from '~/root/lib/client/hooks/use-form';
-
-const BuildPlatforms = ({
-  value,
-  onChange,
-}: {
-  value?: Array<string>;
-  onChange?(data: Array<string>): void;
-}) => {
-  const platforms = [
-    { label: 'Arm', value: 'arm', checked: false },
-    { label: 'x86', value: 'x86', checked: false },
-    { label: 'x64', value: 'x64', checked: false },
-  ];
-
-  const [options, setOptions] = useState(platforms);
-
-  useEffect(() => {
-    setOptions((prev) =>
-      prev.map((p) => {
-        if (value?.includes(p.value)) {
-          return { ...p, checked: true };
-        }
-        return { ...p, checked: false };
-      })
-    );
-  }, [value]);
-
-  useEffect(() => {
-    onChange?.(options.filter((opt) => opt.checked).map((op) => op.value));
-  }, [options]);
-
-  return (
-    <div className="flex flex-col gap-md">
-      <span className="text-text-default bodyMd-medium">Platforms</span>
-      <div className="flex flex-row items-center gap-xl">
-        {options.map((bp) => {
-          return (
-            <Checkbox
-              key={bp.label}
-              label={bp.label}
-              checked={bp.checked}
-              onChange={(checked) => {
-                setOptions((prev) =>
-                  prev.map((p) => {
-                    if (p.value === bp.value) {
-                      return { ...p, checked: !!checked };
-                    }
-                    return p;
-                  })
-                );
-              }}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
-};
+import AdvancedOptions from '../builds/advanced-options';
 
 const BuildDetails = ({
   values,
@@ -144,68 +85,11 @@ const BuildDetails = ({
           (errorCluster ? 'Error loading clusters' : '')
         }
       />
-      <Checkbox
-        label="Advance options"
-        checked={values.advanceOptions}
-        onChange={(check) => {
-          handleChange('advanceOptions')(dummyEvent(!!check));
-        }}
+      <AdvancedOptions
+        values={values}
+        handleChange={handleChange}
+        errors={errors}
       />
-      {values.advanceOptions && (
-        <div className="flex flex-col gap-3xl">
-          <KeyValuePair
-            size="lg"
-            label="Build args"
-            value={Object.entries(values.buildArgs || {}).map(
-              ([key, value]) => ({ key, value })
-            )}
-            onChange={(_, items) => {
-              handleChange('buildArgs')(dummyEvent(items));
-            }}
-            error={!!errors.buildArgs}
-            message={errors.buildArgs}
-          />
-          <KeyValuePair
-            size="lg"
-            label="Build contexts"
-            value={Object.entries(values.buildContexts || {}).map(
-              ([key, value]) => ({ key, value })
-            )}
-            onChange={(_, items) => {
-              handleChange('buildContexts')(dummyEvent(items));
-            }}
-            error={!!errors.buildContexts}
-            message={errors.buildContexts}
-          />
-          <TextInput
-            size="lg"
-            placeholder="Enter context dir"
-            label="Context dir"
-            value={values.contextDir}
-            onChange={handleChange('contextDir')}
-          />
-          <TextInput
-            size="lg"
-            placeholder="Enter docker file path"
-            label="Docker file path"
-            value={values.dockerfilePath}
-            onChange={handleChange('dockerfilePath')}
-          />
-          <TextArea
-            placeholder="Enter docker file content"
-            label="Docker file content"
-            value={values.dockerfileContent}
-            onChange={handleChange('dockerfileContent')}
-            resize={false}
-            rows="6"
-          />
-          <BuildPlatforms
-            onChange={(data) => {
-              console.log(data);
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 };

@@ -3595,6 +3595,7 @@ export type ConsoleListBuildsQuery = {
           };
           registry: { repo: { name: string; tags: Array<string> } };
           resource: { cpu: number; memoryInMb: number };
+          caches?: Array<{ name: string; path: string }>;
         };
         latestBuildRun?: {
           recordVersion: number;

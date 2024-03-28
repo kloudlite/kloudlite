@@ -79,6 +79,10 @@ export const buildQueries = (executor: IExecutor) => ({
                   cpu
                   memoryInMb
                 }
+                caches {
+                  name
+                  path
+                }
               }
               status
               updateTime

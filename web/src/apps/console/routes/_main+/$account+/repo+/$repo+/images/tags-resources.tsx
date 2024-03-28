@@ -21,7 +21,10 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
+import { useOutletContext } from '@remix-run/react';
+import { constants } from '~/console/server/utils/constants';
 import SHADialog from './sha-dialog';
+import { IRepoContext } from '../_layout';
 
 const RESOURCE_NAME = 'tag';
 type BaseType = ExtractNodeType<IDigests>;
@@ -71,6 +74,8 @@ const TagView = ({
   onDelete: () => void;
 }) => {
   const [toggleSha, setToggleSha] = useState(false);
+  const { repoName } = useOutletContext<IRepoContext>();
+  console.log('repoName', repoName);
 
   let data = (
     <code
@@ -128,7 +133,11 @@ const TagView = ({
     <ListItem
       data={data}
       subtitle={subtitle}
-      action={<ExtraButton onDelete={onDelete} />}
+      action={
+        repoName === constants.cacheRepoName ? null : (
+          <ExtraButton onDelete={onDelete} />
+        )
+      }
     />
   );
 };

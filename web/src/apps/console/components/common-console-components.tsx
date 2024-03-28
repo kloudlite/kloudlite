@@ -81,7 +81,7 @@ export const CopyContentToClipboard = ({
     <ListBody
       data={
         <div
-          className="cursor-pointer flex flex-row items-center gap-lg truncate"
+          className="cursor-pointer flex flex-row items-center gap-lg truncate hover:text-text-default"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
