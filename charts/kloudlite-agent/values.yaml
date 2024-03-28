@@ -110,7 +110,7 @@ helmCharts:
       tolerations: {}
 
       clusterAutoscaler:
-        enabled: false
+        enabled: true
 
   ingressNginx:
     enabled: true
@@ -146,8 +146,3 @@ helmCharts:
         image:
           repository: "ghcr.io/kloudlite/kloudlite/kubelet-metrics-reexporter"
           tag: ""
-
-  # clusterAutoscaler:
-  #   enabled: true
-  #   configuration:
-  #     chartVersion: ""

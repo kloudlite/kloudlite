@@ -3,6 +3,8 @@
 {{- $tolerations := .Values.common.certManager.configuration.tolerations | toYaml }}
 {{- $nodeSelector := .Values.common.certManager.configuration.nodeSelector | toYaml }}
 
+{{- $certManagerChartVersion := "v1.13.3" }}
+
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
 metadata:
@@ -11,7 +13,7 @@ metadata:
 spec:
   chartRepoURL: https://charts.jetstack.io
   chartName: cert-manager
-  chartVersion: v1.13.3
+  chartVersion: {{$certManagerChartVersion}}
 
   jobVars:
     backOffLimit: 1
@@ -20,12 +22,8 @@ spec:
 
   preInstall: |+
     echo installing cert-manager CRDs
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.3/cert-manager.crds.yaml
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/{{$certManagerChartVersion}}/cert-manager.crds.yaml
     echo installed cert-manager CRDs
-
-  {{- /* postInstall: |+ */}}
-  {{- /*   {{}} */}}
-
 
   values:
     # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
