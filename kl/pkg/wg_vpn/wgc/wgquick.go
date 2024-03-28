@@ -272,9 +272,13 @@ func parsePeerLine(peerCfg *wgtypes.PeerConfig, lhs string, rhs string) error {
 
 		udpAddr, err2 := func() (*net.UDPAddr, error) {
 			var dig dnsutil.Dig
-			_ = dig.At("1.1.1.1") //or ns.xxx.com
+			err := dig.At("1.1.1.1")
+			if err != nil {
+				fmt.Println("error", err)
+				return nil, err
+			}
 			strings.Split(rhs, ":")
-			a, err := dig.A(strings.Split(rhs, ":")[0]) // dig google.com @8.8.8.8
+			a, err := dig.A(strings.Split(rhs, ":")[0])
 			if err != nil {
 				return nil, err
 			}
