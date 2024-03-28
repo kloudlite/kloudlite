@@ -91,134 +91,6 @@ const GridView = ({ items }: IResource) => {
   );
 };
 
-const ListItem_ = ({ item }: { item: BaseType }) => {
-  const [open, setOpen] = useState<boolean>(false);
-  const { account } = useOutletContext<IAccountContext>();
-
-  if (item.metadata && !item.metadata.annotations) {
-    item.metadata.annotations = {};
-  }
-
-  const commitHash = item.metadata?.annotations?.['github.com/commit'];
-
-  // eslint-disable-next-line no-nested-ternary
-  const state: 'running' | 'done' | 'error' = item.status?.isReady
-    ? 'done'
-    : item.status?.message?.RawMessage
-    ? 'error'
-    : 'running';
-
-  const isLatest = dayjs(item.updateTime).isAfter(dayjs().subtract(3, 'hour'));
-
-  const { state: st } = useDataState<{
-    linesVisible: boolean;
-    timestampVisible: boolean;
-  }>('logs');
-
-  return (
-    <div className="flex flex-col flex-1">
-      <div className="flex flex-row justify-between items-center gap-6xl">
-        <div className="flex justify-between items-center flex-1">
-          <div className="flex gap-xl items-center justify-start flex-1">
-            <div>
-              <span
-                className={cn({
-                  'text-text-success': state === 'done',
-                  'text-text-critical': state === 'error',
-                  'text-text-warning': state === 'running',
-                })}
-                title={
-                  // eslint-disable-next-line no-nested-ternary
-                  state === 'done'
-                    ? 'Build completed successfully'
-                    : state === 'error'
-                    ? 'Build failed'
-                    : 'Build in progress'
-                }
-              >
-                {state === 'done' && (
-                  <CheckCircleFill size={16} color="currentColor" />
-                )}
-
-                {state === 'error' && (
-                  <XCircleFill size={16} color="currentColor" />
-                )}
-
-                {state === 'running' && (
-                  <PlayCircleFill size={16} color="currentColor" />
-                )}
-              </span>
-            </div>
-            <ListTitle
-              title={
-                <div className="flex items-center gap-xl">
-                  {item.metadata?.annotations?.['github.com/repository'] || ''}
-                </div>
-              }
-              subtitle={
-                <div className="flex items-center gap-xl pt-md">
-                  <div>
-                    {`#${commitHash?.substring(
-                      commitHash.length - 7,
-                      commitHash.length
-                    )}`}
-                  </div>
-                  <div className="flex items-center gap-md">
-                    <GitBranch size={12} />
-                    {item.metadata?.annotations?.['github.com/branch'] || ''}
-                  </div>
-
-                  <div className="flex items-center gap-md">
-                    {item.spec?.registry.repo.tags.map((tag) => (
-                      <div className="flex items-center gap-md" key={tag}>
-                        <Tag size={12} />
-                        {tag}{' '}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              }
-            />
-          </div>
-        </div>
-
-        <div className="bodyMd text-text-soft truncate">
-          {parseUpdateOrCreatedOn(item)}
-        </div>
-
-        {/* <pre>{JSON.stringify(item, null, 2)}</pre> */}
-        {isLatest && (
-          <Button
-            size="sm"
-            variant="basic"
-            content={open ? 'Hide Logs' : 'Show Logs'}
-            onClick={() => setOpen((s) => !s)}
-          />
-        )}
-      </div>
-
-      <AnimateHide show={open} className="w-full pt-4xl">
-        <LogComp
-          {...{
-            dark: true,
-            width: '100%',
-            height: '40rem',
-            title: 'Logs',
-            hideLineNumber: !st.linesVisible,
-            hideTimestamp: !st.timestampVisible,
-            actionComponent: <LogAction />,
-            websocket: {
-              account: parseName(account),
-              cluster: item.clusterName,
-              trackingId: item.id,
-            },
-          }}
-        />
-      </AnimateHide>
-    </div>
-  );
-};
-
 const ListView = ({ items }: { items: BaseType[] }) => {
   const [open, setOpen] = useState<string>('');
 
@@ -292,11 +164,16 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                           ''}
                       </div>
 
-                      <div className="flex items-center gap-md">
+                      <div className="flex items-center gap-md truncate">
                         {item.spec?.registry.repo.tags.map((tag) => (
-                          <div className="flex items-center gap-md" key={tag}>
-                            <Tag size={12} />
-                            {tag}{' '}
+                          <div
+                            className="flex items-center gap-md truncate"
+                            key={tag}
+                          >
+                            <span className="min-w-[12px]">
+                              <Tag size={12} />
+                            </span>
+                            <div className="truncate">{tag}</div>
                           </div>
                         ))}
                       </div>
