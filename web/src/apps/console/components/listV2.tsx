@@ -119,7 +119,6 @@ const RowBase = ({
   headers,
   disabled,
   detail,
-  hideDetailSeperator,
 }: IRowBase) => {
   let Component: any = linkComponent;
 
@@ -182,7 +181,7 @@ const RowBase = ({
 
   return (
     <div className={cn(css, commonCss, 'p-2xl')}>
-      <div role="row">
+      <div role="row" className="flex flex-row">
         {headers?.map((item) => (
           <div key={item.name} className={cn(item.className)}>
             {columns?.[item.name]?.render()}

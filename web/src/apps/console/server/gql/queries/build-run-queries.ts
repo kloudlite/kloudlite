@@ -45,7 +45,6 @@ export const buildRunQueries = (executor: IExecutor) => ({
                   dockerfilePath
                   targetPlatforms
                 }
-
                 registry {
                   repo {
                     name
@@ -131,7 +130,6 @@ export const buildRunQueries = (executor: IExecutor) => ({
               dockerfilePath
               targetPlatforms
             }
-
             registry {
               repo {
                 name

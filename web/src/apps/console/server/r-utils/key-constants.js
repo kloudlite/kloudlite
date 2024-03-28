@@ -17,4 +17,5 @@ export const keyconstants = {
   helmChartRepoPackageId: 'kloudlite.io/helm-chart-repo-package-id',
 
   appImageMode: 'kloudlite.io/ui-appImageMode',
+  appBuildData: 'kloudlite.io/app-build-data',
 };

@@ -296,7 +296,7 @@ const RepoSelector = ({
             !textValue ? (
               <ChipGroup onClick={() => setOpen(true)}>
                 <Chip
-                  label="Kloudlite repository"
+                  label="Kloudlite registery"
                   item="repo"
                   type="CLICKABLE"
                 />

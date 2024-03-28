@@ -58,4 +58,7 @@ export {
   Spinner,
   Globe,
   ShieldCheck,
+  NoOps,
+  Nodeless,
+  GitMerge,
 } from '@jengaicons/react';

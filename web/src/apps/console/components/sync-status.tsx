@@ -287,15 +287,21 @@ export const SyncStatusV2 = ({
           acc.items.push({
             ...curr,
             result: 'idle',
+            message: '',
           });
           return acc;
         }
 
-        const res = ((): { value: OverallStates; progress: string } => {
+        const res = ((): {
+          value: OverallStates;
+          progress: string;
+          message: string;
+        } => {
           if (k) {
             if (acc.value === 'idle' && k.state === 'yet-to-be-reconciled') {
               return {
                 value: 'idle',
+                message: k.message,
                 progress: 'done',
               };
             }
@@ -303,6 +309,8 @@ export const SyncStatusV2 = ({
             if (k.state === 'under-reconcilation') {
               return {
                 value: 'in-progress',
+
+                message: k.message,
                 progress: 'done',
               };
             }
@@ -310,6 +318,7 @@ export const SyncStatusV2 = ({
             if (k.state === 'errored-during-reconcilation') {
               return {
                 value: 'error',
+                message: k.message,
                 progress: 'done',
               };
             }
@@ -317,6 +326,7 @@ export const SyncStatusV2 = ({
             if (k.state === 'finished-reconcilation') {
               return {
                 value: 'ready',
+                message: k.message,
                 progress: 'init',
               };
             }
@@ -328,6 +338,7 @@ export const SyncStatusV2 = ({
         acc.items.push({
           ...curr,
           result: res?.value,
+          message: res.message,
         });
 
         acc.value = res.value;
@@ -337,7 +348,11 @@ export const SyncStatusV2 = ({
       },
       {
         value: 'idle' as OverallStates,
-        items: [] as ({ result: OverallStates } & ICheckList)[],
+        items: [] as ({
+          result: OverallStates;
+          message: string;
+        } & ICheckList)[],
+        message: '',
         progress: 'init',
       }
     );
@@ -389,12 +404,16 @@ export const SyncStatusV2 = ({
               )}
 
               {ic?.map((cl) => (
-                <div
-                  key={cl.name}
-                  className="bodySm flex flex-row gap-xl items-center"
-                >
-                  <span>{parseStage(cl.result).icon}</span>
-                  <span>{cl.title}</span>
+                <div key={cl.name} className="flex flex-col">
+                  <div className="bodySm flex flex-row gap-xl items-center">
+                    <span>{parseStage(cl.result).icon}</span>
+                    <span>{cl.title}</span>
+                  </div>
+                  {cl.message && (
+                    <div className="bodySm max-w-full break-words overflow-x-auto hljs rounded-md my-md p-lg">
+                      {cl.message}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

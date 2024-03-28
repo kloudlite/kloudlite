@@ -38,24 +38,6 @@ const BuildDetails = ({
     };
   });
 
-  // const {
-  //   data: digestData,
-  //   isLoading: digestLoading,
-  //   error: digestError,
-  // } = useCustomSwr(
-  //   () =>
-  //     constants.cacheRepoName ? `/digests_${constants.cacheRepoName}` : null,
-  //   async () => {
-  //     return api.listDigest({ repoName: constants.cacheRepoName });
-  //   }
-  // );
-
-  // const tags = useMapper(parseNodes(digestData), (val) => val.tags)
-  //   .flat()
-  //   .flatMap((f) => ({ label: f, value: f, updateInfo: null }));
-
-  // console.log('tags', tags);
-
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     ref.current?.focus();

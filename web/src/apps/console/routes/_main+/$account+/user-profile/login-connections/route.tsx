@@ -1,4 +1,3 @@
-import { GithubLogoFill, GitlabLogoFill } from '@jengaicons/react';
 import { Avatar } from '~/components/atoms/avatar';
 import { Button } from '~/components/atoms/button';
 import { generateKey } from '~/components/utils';
@@ -10,7 +9,15 @@ import { useExtLoaderData } from '~/root/lib/client/hooks/use-custom-loader-data
 import { gitEnvs } from '~/root/lib/configs/base-url.cjs';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
+import {
+  ArrowsClockwise,
+  GithubLogoFill,
+  GitlabLogoFill,
+  GearSix,
+} from '~/console/components/icons';
 
+type gitProvider = 'github' | 'gitlab';
 export const loader = async (ctx: IRemixCtx) => {
   const { data, errors } = await GQLServerHandler(
     ctx.request
@@ -21,8 +28,6 @@ export const loader = async (ctx: IRemixCtx) => {
   if (errors) {
     return handleError(errors[0]);
   }
-
-  console.log(data);
 
   return {
     gitConnections: data,
@@ -52,11 +57,40 @@ const LOGIN_CONNECTIONS = {
   },
 };
 
+type OnAction = ({ action }: { action: 'manage' | 'change' }) => void;
+
+type IExtraButton = {
+  onAction: OnAction;
+};
+
+const ExtraButton = ({ onAction }: IExtraButton) => {
+  return (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Manage',
+          type: 'item',
+          icon: <GearSix size={16} />,
+          onClick: () => onAction({ action: 'manage' }),
+          key: 'manage',
+        },
+        {
+          label: 'Change',
+          type: 'item',
+          icon: <ArrowsClockwise size={16} />,
+          onClick: () => onAction({ action: 'change' }),
+          key: 'change',
+        },
+      ]}
+    />
+  );
+};
+
 const ProfileLoginConnection = () => {
   const { gitConnections } = useExtLoaderData<typeof loader>();
   const reloadPage = useReload();
 
-  const addGitConnection = (provider: 'github' | 'gitlab') => {
+  const addGitConnection = (provider: gitProvider) => {
     // window.addEventListener('message', eventListner);
     switch (provider) {
       case 'github':
@@ -81,7 +115,7 @@ const ProfileLoginConnection = () => {
     }
   };
 
-  const manageGitConnection = (provider: 'github' | 'gitlab') => {
+  const manageGitConnection = (provider: gitProvider) => {
     switch (provider) {
       case 'github':
         popupWindow({
@@ -104,6 +138,21 @@ const ProfileLoginConnection = () => {
         break;
     }
   };
+
+  const onAction =
+    (pv: gitProvider) =>
+    ({ action }: { action: 'manage' | 'change' }) => {
+      switch (action) {
+        case 'manage':
+          manageGitConnection(pv);
+          break;
+        case 'change':
+          addGitConnection(pv);
+          break;
+        default:
+          break;
+      }
+    };
 
   return (
     <div className="flex flex-col gap-6xl">
@@ -129,6 +178,10 @@ const ProfileLoginConnection = () => {
             value.provider === 'github'
               ? gitConnections?.github
               : gitConnections?.gitlab;
+
+          const { provider } = value as {
+            provider: gitProvider;
+          };
 
           return (
             <List.Row
@@ -167,21 +220,17 @@ const ProfileLoginConnection = () => {
                 },
                 {
                   key: generateKey(key, 'action'),
-                  render: () => (
-                    <Button
-                      variant="primary-plain"
-                      content={data?.connected ? 'Manage' : 'Connect'}
-                      onClick={() => {
-                        if (data?.connected) {
-                          manageGitConnection(
-                            value.provider as 'github' | 'gitlab'
-                          );
-                          return;
-                        }
-                        addGitConnection(value.provider as 'github' | 'gitlab');
-                      }}
-                    />
-                  ),
+                  render: () => {
+                    return data?.connected ? (
+                      <ExtraButton onAction={onAction(provider)} />
+                    ) : (
+                      <Button
+                        variant="primary-plain"
+                        content="Connect"
+                        onClick={() => addGitConnection(provider)}
+                      />
+                    );
+                  },
                 },
               ]}
             />

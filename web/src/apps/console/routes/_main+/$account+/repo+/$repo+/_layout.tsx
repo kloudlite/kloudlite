@@ -9,10 +9,9 @@ import {
   ChevronRight,
   GearSix,
   GitMerge,
-  // NoOps,
-  Nodeless,
   NoOps,
-} from '@jengaicons/react';
+  Nodeless,
+} from '~/console/components/icons';
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 
@@ -83,7 +82,7 @@ const Tabs = () => {
           label: (
             <span className="flex flex-row items-center gap-lg">
               <NoOps size={iconSize} />
-              Build Runs
+              Buildruns
             </span>
           ),
           value: '/buildruns',
