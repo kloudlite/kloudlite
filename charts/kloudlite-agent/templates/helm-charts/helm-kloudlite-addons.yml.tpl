@@ -26,7 +26,7 @@ spec:
 
     common:
       clusterAutoscaler:
-        enabled: false
+        enabled: {{.Values.helmCharts.kloudliteAddons.configuration.clusterAutoscaler.enabled}}
         configuration:
           scaleDownUnneededTime: 3m
 

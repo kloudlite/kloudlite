@@ -4704,8 +4704,18 @@ spec:
                       type: string
                     type: array
                 type: object
-              cacheKeyName:
-                type: string
+              caches:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    path:
+                      type: string
+                  required:
+                  - name
+                  - path
+                  type: object
+                type: array
               credentialsRef:
                 properties:
                   name:
