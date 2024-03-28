@@ -304,6 +304,7 @@ const Root = (props: IDialog) => {
                   <div className="flex items-center h-6xl">
                     <Switch
                       label=""
+                      disabled={isUpdate}
                       checked={values.stateful}
                       onChange={(val) => {
                         handleChange('stateful')(dummyEvent(val));

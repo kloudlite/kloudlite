@@ -294,6 +294,12 @@ const FieldView = ({
         options={async () => [...nodepools]}
         error={!!errors.nodepoolName}
         message={errors.nodepoolName}
+        showclear
+        noOptionMessage={
+          <div className="p-2xl bodyMd text-center">
+            No stateful nodepools available
+          </div>
+        }
       />
 
       {selectedTemplate?.template.fields?.map((field) => {

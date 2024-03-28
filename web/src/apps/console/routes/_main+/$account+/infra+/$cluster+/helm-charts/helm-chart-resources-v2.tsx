@@ -26,6 +26,7 @@ import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$clust
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { SyncStatusV2 } from '~/console/components/sync-status';
+import { constants } from '~/console/server/utils/constants';
 import HandleHelmChart from './handle-helm-chart';
 
 const RESOURCE_NAME = 'helm chart';
@@ -56,8 +57,9 @@ type IExtraButton = {
 };
 
 const ExtraButton = ({ onAction, item }: IExtraButton) => {
+  const kloudliteAgentName = item.metadata?.name;
   const iconSize = 16;
-  return (
+  return kloudliteAgentName !== constants.kloudliteHelmAgentName ? (
     <ResourceExtraAction
       options={[
         {
@@ -77,7 +79,7 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
         },
       ]}
     />
-  );
+  ) : null;
 };
 
 interface IResource {

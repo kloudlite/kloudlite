@@ -279,7 +279,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   <div className="flex flex-col">
                     <ListTitle title={name} />
 
-                    <div className="flex items-center gap-xl pt-md bodySm text-text-soft pulsable">
+                    <div className="flex flex-row items-center gap-xl pt-md bodySm text-text-soft pulsable truncate">
                       <div>
                         {`#${commitHash?.substring(
                           commitHash.length - 7,
@@ -296,7 +296,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                         {item.spec?.registry.repo.tags.map((tag) => (
                           <div className="flex items-center gap-md" key={tag}>
                             <Tag size={12} />
-                            {tag}{' '}
+                            {tag}
                           </div>
                         ))}
                       </div>
