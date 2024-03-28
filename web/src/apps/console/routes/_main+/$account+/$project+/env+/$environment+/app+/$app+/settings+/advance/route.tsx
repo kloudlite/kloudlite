@@ -63,8 +63,8 @@ const SettingAdvance = () => {
             setDeleteApp(true);
           }}
         >
-          Permanently remove your application and all of its contents from the
-          “Lobster Early” project. This action is not reversible, so please
+          Permanently remove your application and all of its contents from the “
+          {app.displayName}” project. This action is not reversible, so please
           continue with caution.
         </DeleteContainer>
         <DeleteDialog

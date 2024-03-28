@@ -152,14 +152,14 @@ const ListView = ({ items, onDelete }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const { name, id, updateInfo } = parseItem(i);
+          const { name, updateInfo } = parseItem(i);
           return {
             columns: {
               name: {
                 render: () => (
                   <ListTitle
                     title={name}
-                    avatar={<ConsoleAvatar name={id} />}
+                    avatar={<ConsoleAvatar name={name} />}
                   />
                 ),
               },
