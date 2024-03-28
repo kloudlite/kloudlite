@@ -69,7 +69,7 @@ interface IappState {
   page: number;
   app: AppIn;
   buildData?: BuildIn | null | undefined;
-  readOnlyApp?: IApp;
+  readOnlyApp: IApp;
 }
 
 export const useAppState = () => {
@@ -245,6 +245,7 @@ export const useAppState = () => {
       envPage: 'environment_variables',
       activeContIndex: 0,
       buildData: defaultBuild,
+      readOnlyApp: iApp as IApp,
     });
   };
 

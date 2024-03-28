@@ -5,14 +5,7 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import {
-  ChevronRight,
-  GearSix,
-  GitMerge,
-  // NoOps,
-  Nodeless,
-  NoOps,
-} from '@jengaicons/react';
+import { ChevronRight, GearSix, GitMerge, Nodeless } from '@jengaicons/react';
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 

@@ -2070,7 +2070,6 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
             dockerfilePath
             targetPlatforms
           }
-          cacheKeyName
           registry {
             repo {
               name
@@ -2147,58 +2146,6 @@ mutation consoleDeleteBuild($crDeleteBuildId: ID!) {
 
 mutation consoleTriggerBuild($crTriggerBuildId: ID!) {
   cr_triggerBuild(id: $crTriggerBuildId)
-}
-
-query consoleListBuildCaches($pq: CursorPaginationIn, $search: SearchBuildCacheKeys) {
-  cr_listBuildCacheKeys(pq: $pq, search: $search) {
-    edges {
-      cursor
-      node {
-        id
-        createdBy {
-          userEmail
-          userId
-          userName
-        }
-        creationTime
-        displayName
-        lastUpdatedBy {
-          userEmail
-          userId
-          userName
-        }
-        name
-        updateTime
-        volumeSizeInGB
-      }
-    }
-    pageInfo {
-      endCursor
-      hasNextPage
-      hasPreviousPage
-      startCursor
-    }
-    totalCount
-  }
-}
-
-mutation consoleCreateBuildCache($buildCacheKey: BuildCacheKeyIn!) {
-  cr_addBuildCacheKey(buildCacheKey: $buildCacheKey) {
-    id
-  }
-}
-
-mutation consoleUpdateBuildCaches($crUpdateBuildCacheKeyId: ID!, $buildCacheKey: BuildCacheKeyIn!) {
-  cr_updateBuildCacheKey(
-    id: $crUpdateBuildCacheKeyId
-    buildCacheKey: $buildCacheKey
-  ) {
-    id
-  }
-}
-
-mutation consoleDeleteBuildCache($crDeleteBuildCacheKeyId: ID!) {
-  cr_deleteBuildCacheKey(id: $crDeleteBuildCacheKeyId)
 }
 
 query consoleGetPvc($clusterName: String!, $name: String!) {
@@ -2858,7 +2805,6 @@ query consoleListBuildRuns($search: SearchBuildRuns, $pq: CursorPaginationIn) {
             dockerfilePath
             targetPlatforms
           }
-          cacheKeyName
           registry {
             repo {
               name
@@ -2937,7 +2883,6 @@ query consoleGetBuildRun($buildId: ID!, $buildRunName: String!) {
         dockerfilePath
         targetPlatforms
       }
-      cacheKeyName
       registry {
         repo {
           name

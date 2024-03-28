@@ -69,7 +69,6 @@ export const buildQueries = (executor: IExecutor) => ({
                   dockerfilePath
                   targetPlatforms
                 }
-                cacheKeyName
                 registry {
                   repo {
                     name
