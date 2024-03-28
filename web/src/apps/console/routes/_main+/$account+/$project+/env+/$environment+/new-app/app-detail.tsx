@@ -4,14 +4,16 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
-import { BottomNavigation } from '~/console/components/commons';
+import { BottomNavigation, GitDetail } from '~/console/components/commons';
 import { registryHost } from '~/lib/configs/base-url.cjs';
 import { useOutletContext, useParams } from '@remix-run/react';
 import RepoSelector from '~/console/page-components/app/components';
-import ExtendedFilledTabWithContainer from '~/console/components/extended-filled-tab-with-container';
 import AppBuildIntegration from '~/console/page-components/app/app-build-integration';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import { constants } from '~/console/server/utils/constants';
 import { IEnvironmentContext } from '../_layout';
+import { getImageTag } from './app-utils';
 
 const AppDetail = () => {
   const {
@@ -19,12 +21,19 @@ const AppDetail = () => {
     setApp,
     setPage,
     setBuildData,
+    buildData,
+    resetBuildData,
     markPageAsCompleted,
     activeContIndex,
   } = useAppState();
 
-  const { account } = useParams();
-  const { project } = useOutletContext<IEnvironmentContext>();
+  const { project, environment, account } =
+    useOutletContext<IEnvironmentContext>();
+  const [projectName, envName, accountName] = [
+    parseName(project),
+    parseName(environment),
+    parseName(account),
+  ];
 
   const { values, errors, handleChange, handleSubmit, isLoading, setValues } =
     useForm({
@@ -37,9 +46,9 @@ const AppDetail = () => {
         imageUrl: app.spec.containers[activeContIndex]?.image || '',
         manualRepo: '',
         source: {
-          branch: '',
-          repository: '',
-          provider: '',
+          branch: buildData?.source.branch,
+          repository: buildData?.source.repository,
+          provider: buildData?.source.provider,
         },
         advanceOptions: false,
         buildArgs: {},
@@ -56,7 +65,7 @@ const AppDetail = () => {
         manualRepo: Yup.string().when(
           ['imageUrl', 'imageMode'],
           ([imageUrl, imageMode], schema) => {
-            const regex = /^(\w+):(\w+)$/;
+            const regex = /[a-z0-9-/.]+[:][a-z0-9-.]+[a-z0-9]/;
             if (imageMode === 'git') {
               return schema;
             }
@@ -70,7 +79,7 @@ const AppDetail = () => {
         source: Yup.object()
           .shape({})
           .test('is-empty', 'Branch is required.', (v, c) => {
-            // @ts-ignore
+            // @ts-ignoredfgdfg
             if (!v?.branch && c.parent.imageMode === 'git') {
               return false;
             }
@@ -79,6 +88,8 @@ const AppDetail = () => {
       }),
 
       onSubmit: async (val) => {
+        resetBuildData();
+
         setApp((a) => {
           return {
             ...a,
@@ -107,8 +118,20 @@ const AppDetail = () => {
           if (!project.clusterName) {
             throw new Error('Cluster name is required');
           }
+          if (
+            !val.source.provider ||
+            !val.source.branch ||
+            !val.source.repository
+          ) {
+            throw new Error('Source is required');
+          }
+          const imageTag = getImageTag({
+            environment: envName,
+            project: projectName,
+            app: val.name,
+          });
           setBuildData({
-            name: `app_build_${val.name}`,
+            name: imageTag,
             buildClusterName: project.clusterName,
             source: {
               branch: val.source.branch,
@@ -132,8 +155,8 @@ const AppDetail = () => {
               },
               registry: {
                 repo: {
-                  name: `app_build_repo_${val.name}`,
-                  tags: ['latest'],
+                  name: constants.defaultAppRepoNameOnly,
+                  tags: [imageTag],
                 },
               },
               resource: {
@@ -162,7 +185,7 @@ const AppDetail = () => {
         The application streamlines project management through intuitive task
         tracking and collaboration tools.
       </div>
-      <div className="flex flex-col gap-3xl">
+      <div className="flex flex-col gap-5xl">
         <NameIdView
           displayName={values.displayName}
           name={values.name}
@@ -173,26 +196,28 @@ const AppDetail = () => {
           handleChange={handleChange}
           nameErrorLabel="isNameError"
         />
-        <ExtendedFilledTabWithContainer
-          value={values.imageMode}
-          onChange={(e) => {
-            handleChange('imageMode')(dummyEvent(e));
-          }}
-          items={[
-            { label: 'Select image', value: 'default' },
-            {
-              label: 'Use git',
-              value: 'git',
-            },
-          ]}
-          size="sm"
-        >
+        <div className="flex flex-col gap-xl">
+          <ExtendedFilledTab
+            value={values.imageMode}
+            onChange={(e) => {
+              handleChange('imageMode')(dummyEvent(e));
+            }}
+            items={[
+              { label: 'Container repo', value: 'default' },
+              {
+                label: 'Git repo',
+                value: 'git',
+              },
+            ]}
+            size="sm"
+          />
+
           {values.imageMode === 'default' && (
             <RepoSelector
               tag={values.imageUrl.split(':')[1]}
               repo={
                 values.imageUrl
-                  .replace(`${registryHost}/${account}/`, '')
+                  .replace(`${registryHost}/${accountName}/`, '')
                   .split(':')[0]
               }
               onClear={() => {
@@ -211,20 +236,30 @@ const AppDetail = () => {
               }}
               onValueChange={({ repo, tag }) => {
                 handleChange('imageUrl')(
-                  dummyEvent(`${registryHost}/${account}/${repo}:${tag}`)
+                  dummyEvent(`${registryHost}/${accountName}/${repo}:${tag}`)
                 );
               }}
               error={errors.manualRepo}
             />
           )}
-          {values.imageMode === 'git' && (
+          {buildData?.name && values.imageMode === 'git' && (
+            <GitDetail
+              provider={buildData.source.provider}
+              repository={buildData.source.repository}
+              branch={buildData.source.branch}
+              onEdit={() => {
+                resetBuildData();
+              }}
+            />
+          )}
+          {values.imageMode === 'git' && !buildData?.name && (
             <AppBuildIntegration
               values={values}
               errors={errors}
               handleChange={handleChange}
             />
           )}
-        </ExtendedFilledTabWithContainer>
+        </div>
       </div>
       <BottomNavigation
         primaryButton={{

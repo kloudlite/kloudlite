@@ -1,30 +1,94 @@
-import { useNavigate, useParams } from '@remix-run/react';
-import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useOutletContext } from '@remix-run/react';
+import { useEffect, useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { useAppState } from '~/console/page-components/app-states';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm from '~/lib/client/hooks/use-form';
 import Yup from '~/lib/server/helpers/yup';
-import { handleError } from '~/lib/utils/common';
+import { handleError, sleep } from '~/lib/utils/common';
 import { validateType } from '~/root/src/generated/gql/validator';
 import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
 import {
   BottomNavigation,
-  GitDetail,
   GitDetailRaw,
   ReviewComponent,
 } from '~/console/components/commons';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { CheckCircleFill, CircleFill, CircleNotch } from '@jengaicons/react';
+import { constants } from '~/console/server/utils/constants';
+import appFun from './app-pre-submit';
+import { IEnvironmentContext } from '../_layout';
+import { getImageTag } from './app-utils';
+
+const AppState = ({ message, state }: { message: string; state: string }) => {
+  const iconSize = 12;
+  const wrapperCss = 'flex flex-row gap-xl items-center bodySm';
+  switch (state) {
+    case 'in-progress':
+      return (
+        <div className={wrapperCss}>
+          <div className="flex animate-spin">
+            <CircleNotch size={iconSize} />
+          </div>
+          <div>{message}</div>
+        </div>
+      );
+
+    case 'done':
+      return (
+        <div className={wrapperCss}>
+          <div className="text-text-success">
+            <CheckCircleFill size={iconSize} />
+          </div>
+          <div>{message}</div>
+        </div>
+      );
+
+    case 'error':
+      return (
+        <div className={wrapperCss}>
+          <div className="bodyMd text-text-critical">!!</div>
+          <div>{message}</div>
+        </div>
+      );
+    case 'idle':
+    default:
+      return (
+        <div className={wrapperCss}>
+          <div className="text-text-soft animate-pulse">
+            <CircleFill size={iconSize} />
+          </div>
+          <div>{message}</div>
+        </div>
+      );
+  }
+};
 
 const AppReview = () => {
   const { app, buildData, setPage, resetState } = useAppState();
+  const [createState, setCreateState] = useState({
+    build: {
+      message: 'Creating build',
+      state: 'idle',
+    },
+    app: {
+      message: 'Creating app',
+      state: 'idle',
+    },
+  });
 
   const gitMode =
     app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
   const api = useConsoleApi();
   const navigate = useNavigate();
-  const { project, environment } = useParams();
+  const { project, environment, account } =
+    useOutletContext<IEnvironmentContext>();
+  const [projectName, envName, accountName] = [
+    parseName(project),
+    parseName(environment),
+    parseName(account),
+  ];
 
   const { handleSubmit, isLoading } = useForm({
     initialValues: app,
@@ -35,42 +99,62 @@ const AppReview = () => {
       }
 
       // create build first if git image is selected
-      let buildId = '';
+      let buildId: string | null = '';
+      let tagName = '';
 
       if (buildData && gitMode) {
-        toast.info('Creating build', {
-          toastId: 'app',
+        tagName = getImageTag({
+          app: parseName(app),
+          environment: envName,
+          project: projectName,
         });
 
-        try {
-          const { errors, data } = await api.createBuild({
-            build: buildData,
-          });
+        setCreateState((prev) => ({
+          ...prev,
+          build: {
+            ...prev.build,
+            state: 'in-progress',
+          },
+        }));
 
-          if (errors) {
-            throw errors[0];
-          }
+        buildId = await appFun.createBuild({
+          api,
+          build: buildData,
+        });
 
-          buildId = data.id;
-
-          toast.update('app', {
-            type: 'success',
-            render: 'Build created successfully',
-          });
-        } catch (err) {
-          handleError(err);
+        if (buildId) {
+          await appFun.triggerBuild({ api, buildId });
+          setCreateState((prev) => ({
+            ...prev,
+            build: {
+              ...prev.build,
+              state: 'done',
+            },
+          }));
+        } else {
+          setCreateState((prev) => ({
+            ...prev,
+            build: {
+              ...prev.build,
+              state: 'error',
+            },
+          }));
           return;
         }
       }
 
       try {
-        toast.update('app', {
-          type: 'info',
-          render: 'Creating app',
-        });
+        setCreateState((prev) => ({
+          ...prev,
+          app: {
+            ...prev.app,
+            state: 'in-progress',
+          },
+        }));
+
         const { errors } = await api.createApp({
-          envName: environment,
-          projectName: project,
+          envName,
+          projectName,
           app: {
             ...app,
             ...(buildId && gitMode
@@ -80,9 +164,9 @@ const AppReview = () => {
                     ...app.spec,
                     containers: [
                       {
-                        image: `${buildData?.spec.registry.repo.name}:${
-                          buildData?.spec.registry.repo.tags?.[0] || 'latest'
-                        }`,
+                        image: `${constants.defaultAppRepoName(
+                          accountName
+                        )}:${tagName}`,
                         name: 'container-0',
                       },
                     ],
@@ -94,10 +178,21 @@ const AppReview = () => {
         if (errors) {
           throw errors[0];
         }
-        toast.update('app', {
-          type: 'success',
-          render: 'App created successfully',
-        });
+
+        if (gitMode && buildData) {
+          await sleep(2000);
+        }
+        toast.success('App created successfully');
+        setCreateState((prev) => ({
+          ...prev,
+          app: {
+            ...prev.app,
+            state: 'done',
+          },
+        }));
+        if (gitMode && buildData) {
+          await sleep(500);
+        }
         resetState();
         navigate('../apps');
       } catch (err) {
@@ -236,6 +331,21 @@ const AppReview = () => {
             </div>
           </div>
         </ReviewComponent>
+        {gitMode && buildData && isLoading && (
+          <ReviewComponent title="Status" canEdit={false} onEdit={() => {}}>
+            <div className="flex flex-col gap-xl">
+              {Object.entries(createState).map(([key, value]) => {
+                return (
+                  <AppState
+                    key={key}
+                    message={value.message}
+                    state={value.state}
+                  />
+                );
+              })}
+            </div>
+          </ReviewComponent>
+        )}
       </div>
 
       {errors.length > 0 && (

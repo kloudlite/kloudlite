@@ -268,7 +268,37 @@ export const appQueries = (executor: IExecutor) => ({
               namespace
             }
           }
+          ciBuildId
           updateTime
+          build {
+            buildClusterName
+            name
+            source {
+              branch
+              provider
+              repository
+            }
+            spec {
+              buildOptions {
+                buildArgs
+                buildContexts
+                contextDir
+                dockerfileContent
+                dockerfilePath
+                targetPlatforms
+              }
+              registry {
+                repo {
+                  name
+                  tags
+                }
+              }
+              resource {
+                cpu
+                memoryInMb
+              }
+            }
+          }
         }
       }
     `,

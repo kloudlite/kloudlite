@@ -1,9 +1,4 @@
-import {
-  Outlet,
-  useNavigation,
-  useOutletContext,
-  useParams,
-} from '@remix-run/react';
+import { Outlet, useOutletContext } from '@remix-run/react';
 import SidebarLayout from '~/console/components/sidebar-layout';
 import {
   UnsavedChangesProvider,
@@ -24,7 +19,11 @@ import Yup from '~/lib/server/helpers/yup';
 import { DiffViewer, yamlDump } from '~/console/components/diff-viewer';
 import { useReload } from '~/lib/client/helpers/reloader';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { parseName } from '~/console/server/r-utils/common';
+import { constants } from '~/console/server/utils/constants';
 import { IAppContext } from '../_layout';
+import { getImageTag } from '../../../new-app/app-utils';
+import appFun from '../../../new-app/app-pre-submit';
 
 const navItems = [
   { label: 'General', value: 'general' },
@@ -44,15 +43,22 @@ const Layout = () => {
     setPerformAction,
     loading,
   } = useUnsavedChanges();
-  const { app, setApp } = useAppState();
+  const { app, buildData, setBuildData, setApp, setReadOnlyApp } =
+    useAppState();
 
-  const { account, project, environment, app: appId } = useParams();
+  const { project, environment, account } = useOutletContext<IAppContext>();
+  const [projectName, envName, accountName, appName] = [
+    parseName(project),
+    parseName(environment),
+    parseName(account),
+    parseName(app),
+  ];
 
   useEffect(() => {
     setIgnorePaths(
       navItems.map(
         (ni) =>
-          `/${account}/${project}/env/${environment}/app/${appId}/settings/${ni.value}`
+          `/${account}/${project}/env/${environment}/app/${appName}/settings/${ni.value}`
       )
     );
   }, []);
@@ -67,18 +73,80 @@ const Layout = () => {
       if (!project || !environment) {
         throw new Error('Project and Environment is required!.');
       }
+
+      const gitMode =
+        app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
+      // update or create build first if git image is selected
+      let buildId: string | null | undefined = app.ciBuildId;
+      let tagName = '';
+
+      if (buildData && gitMode) {
+        try {
+          tagName = getImageTag({
+            app: parseName(app),
+            environment: envName,
+            project: projectName,
+          });
+          if (app.ciBuildId) {
+            buildId = await appFun.updateBuild({
+              api,
+              build: buildData,
+              buildId: app.ciBuildId,
+            });
+          } else {
+            buildId = await appFun.createBuild({
+              api,
+              build: buildData,
+            });
+          }
+
+          if (buildId) {
+            await appFun.triggerBuild({ api, buildId });
+          }
+        } catch (err) {
+          handleError(err);
+          return;
+        }
+      }
+
       try {
         const { errors } = await api.updateApp({
-          app: getAppIn(app),
-          envName: environment,
-          projectName: project,
+          app: {
+            ...getAppIn(app),
+            ...(buildId
+              ? {
+                  ciBuildId: buildId,
+                  spec: {
+                    ...app.spec,
+                    ...(gitMode
+                      ? {
+                          containers: [
+                            {
+                              image: `${constants.defaultAppRepoName(
+                                accountName
+                              )}:${tagName}`,
+                              name: 'container-0',
+                            },
+                          ],
+                        }
+                      : {}),
+                  },
+                }
+              : {}),
+          },
+          envName,
+          projectName,
         });
         if (errors) {
           throw errors[0];
         }
         toast.success('App updated successfully');
         // @ts-ignore
-        setPerformAction('');
+        setPerformAction('init');
+        if (!gitMode) {
+          // @ts-ignore
+          setBuildData(null);
+        }
         setHasChanges(false);
         reload();
       } catch (err) {
@@ -92,23 +160,36 @@ const Layout = () => {
       return;
     }
     const isNotSame = JSON.stringify(app) !== JSON.stringify(rootContext.app);
-    if (isNotSame) {
+
+    const isBuildNotSame =
+      JSON.stringify(buildData) !== JSON.stringify(rootContext.app.build);
+
+    const isBuildUndefAndNull =
+      buildData === undefined && rootContext.app.build === null;
+
+    if (isNotSame || (isBuildNotSame && !isBuildUndefAndNull)) {
       setHasChanges(true);
     } else {
       setHasChanges(false);
     }
-  }, [app, rootContext.app, loading]);
+  }, [app, rootContext.app, buildData, loading]);
 
   useEffect(() => {
     if (!loading) {
       setApp(rootContext.app);
+      setReadOnlyApp(rootContext.app);
+      // @ts-ignore
+      setBuildData(rootContext.app.build);
     }
     setHasChanges(false);
-  }, [rootContext.app, loading]);
+  }, [rootContext.app]);
 
   useEffect(() => {
     if (performAction === 'discard-changes') {
       setApp(rootContext.app);
+      setReadOnlyApp(rootContext.app);
+      // @ts-ignore
+      setBuildData(rootContext.app.build);
       setPerformAction('');
     }
   }, [performAction]);
@@ -129,7 +210,15 @@ const Layout = () => {
             rightTitle="New State"
             splitView
           />
+          <DiffViewer
+            oldValue={yamlDump(rootContext.app.build).toString()}
+            newValue={yamlDump(buildData).toString()}
+            leftTitle="Previous State"
+            rightTitle="New State"
+            splitView
+          />
         </Popup.Content>
+
         <Popup.Footer>
           <Popup.Button
             loading={isLoading}
@@ -147,20 +236,6 @@ const Layout = () => {
 
 const Settings = () => {
   const rootContext = useOutletContext<IAppContext>();
-  if (!rootContext.app.metadata?.annotations?.[keyconstants.description]) {
-    rootContext.app = {
-      ...rootContext.app,
-      // @ts-ignore
-      metadata: {
-        ...(rootContext.app.metadata || {}),
-        annotations: {
-          ...(rootContext.app.metadata?.annotations || {}),
-          [keyconstants.description]: '',
-        },
-      },
-    };
-  }
-
   return (
     <AppContextProvider initialAppState={rootContext.app}>
       <UnsavedChangesProvider>

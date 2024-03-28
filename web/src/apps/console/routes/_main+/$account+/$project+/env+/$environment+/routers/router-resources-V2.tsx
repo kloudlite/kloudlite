@@ -191,9 +191,8 @@ const ListView = ({ items, onAction }: IResource) => {
             render: () => 'Status',
             name: 'status',
             className:
-              'lg:flex-1 min-w-[80px] flex items-center lg:justify-center shrink-0',
+              'flex-1 min-w-[80px] flex items-center lg:justify-center shrink-0',
           },
-
           {
             render: () => 'Domains',
             name: 'domains',
