@@ -230,13 +230,13 @@ func SetDnsSearch() error {
 	if data.DnsAdded {
 		uniqueDns := make(map[string]bool)
 		for _, dns := range data.DnsValues {
-			uniqueValues[val] = true
+			uniqueDns[dns] = true
 		}
 		for _, val := range currentDns {
-			uniqueValues[val] = true
+			uniqueDns[val] = true
 		}
 		var combinedDns []string
-		for val := range uniqueValues {
+		for val := range uniqueDns {
 			combinedDns = append(combinedDns, val)
 		}
 		data.DnsValues = combinedDns
