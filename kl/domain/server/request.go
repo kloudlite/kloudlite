@@ -35,7 +35,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 		PreferGo: true,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 			// Specify the address of your custom DNS server
-			dnsServer := "1.1.1.1:53" // Google Public DNS for example
+			dnsServer := "1.1.1.1:53"
 			d := net.Dialer{
 				Timeout: time.Millisecond * time.Duration(10000),
 			}
@@ -47,8 +47,9 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 				// Use the custom DNS resolver to resolve the address
-				separaterIndex := len(addr) - len(":http")
-				host, port := addr[:separaterIndex], addr[separaterIndex+1:]
+
+				addrArray := strings.Split(addr, ":")
+				host, port := addrArray[0], addrArray[1]
 				ips, err := customResolver.LookupIPAddr(ctx, host)
 				if err != nil || len(ips) == 0 {
 					return nil, err // or: return nil, errors.New("couldn't resolve the host")
