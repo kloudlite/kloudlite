@@ -222,10 +222,27 @@ func SetDnsSearch() error {
 	if err != nil {
 		return err
 	}
-	data.DnsAdded = true
-	data.DnsValues, err = getCurrentDns(false)
+	currentDns, err := getCurrentDns(false)
 	if err != nil {
 		return err
+	}
+
+	if data.DnsAdded {
+		uniqueDns := make(map[string]bool)
+		for _, dns := range data.DnsValues {
+			uniqueValues[val] = true
+		}
+		for _, val := range currentDns {
+			uniqueValues[val] = true
+		}
+		var combinedDns []string
+		for val := range uniqueValues {
+			combinedDns = append(combinedDns, val)
+		}
+		data.DnsValues = combinedDns
+	} else {
+		data.DnsValues = currentDns
+		data.DnsAdded = true
 	}
 	if err := client.SaveExtraData(data); err != nil {
 		return err
