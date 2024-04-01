@@ -1,0 +1,20 @@
+type BYOKCluster @shareable {
+  accountName: String!
+  ClusterSpec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata! @goField(name: "objectMeta")
+  recordVersion: Int!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+input BYOKClusterIn {
+  displayName: String!
+  metadata: MetadataIn!
+}
+

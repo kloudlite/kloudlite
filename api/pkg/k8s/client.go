@@ -1,9 +1,12 @@
 package k8s
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
@@ -23,6 +26,7 @@ import (
 type Client interface {
 	// client go like
 	Get(ctx context.Context, nn types.NamespacedName, obj client.Object) error
+	List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error
 	Create(ctx context.Context, obj client.Object) error
 	Update(ctx context.Context, obj client.Object) error
 	Delete(ctx context.Context, obj client.Object) error
@@ -34,12 +38,80 @@ type Client interface {
 
 	ApplyYAML(ctx context.Context, yamls ...[]byte) error
 	DeleteYAML(ctx context.Context, yamls ...[]byte) error
+
+	ReadLogs(ctx context.Context, namespace, name string, writer io.WriteCloser, opts *ReadLogsOptions) error
+}
+
+type ReadLogsOptions struct {
+	ContainerName string
+	SinceSeconds  *int64
+	TailLines     *int64
 }
 
 type clientHandler struct {
 	kclient    client.Client
 	kclientset *clientset.Clientset
 	yamlclient kubectl.YAMLClient
+}
+
+// List implements Client.
+func (ch *clientHandler) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	return ch.kclient.List(ctx, list, opts...)
+}
+
+type LogLine struct {
+	Message       string `json:"message"`
+	Timestamp     string `json:"timestamp"`
+	PodName       string `json:"podName"`
+	ContainerName string `json:"containerName"`
+}
+
+// ReadLogs implements Client.
+func (ch *clientHandler) ReadLogs(ctx context.Context, namespace, name string, writer io.WriteCloser, opts *ReadLogsOptions) error {
+	defer writer.Close()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	req := ch.yamlclient.Client().CoreV1().Pods(namespace).GetLogs(name, &corev1.PodLogOptions{
+		Container:    opts.ContainerName,
+		Follow:       true,
+		Previous:     false,
+		SinceSeconds: opts.SinceSeconds,
+		// SinceTime:    nil,
+		Timestamps: true,
+		TailLines:  opts.TailLines,
+	})
+
+	rc, err := req.Stream(ctx)
+	if err != nil {
+		fmt.Println("err:", err)
+		return err
+	}
+	defer rc.Close()
+
+	r := bufio.NewReader(rc)
+
+	for {
+		b, err := r.ReadBytes('\n')
+		if err != nil {
+			return errors.NewE(err)
+		}
+
+		s := bytes.SplitN(b[:len(b)-1], []byte(" "), 2)
+		if len(s) != 2 {
+			return fmt.Errorf("invalid log line")
+		}
+
+		line := fmt.Sprintf(`{"timestamp": %q, "podName": %q, "containerName": %q, "message": %q}`, s[0], name, opts.ContainerName, s[1])
+		// fmt.Printf("[DEBUG] line: %s\n", line)
+		if _, err := writer.Write([]byte(line)); err != nil {
+			return err
+		}
+		if _, err := writer.Write([]byte("\n")); err != nil {
+			return err
+		}
+	}
 }
 
 // ListSecrets implements Client.
@@ -158,6 +230,9 @@ func NewClient(cfg *rest.Config, scheme *runtime.Scheme) (Client, error) {
 	c, err := client.New(cfg, client.Options{
 		Scheme: scheme,
 		Mapper: nil,
+		WarningHandler: client.WarningHandlerOptions{
+			SuppressWarnings: true,
+		},
 	})
 	if err != nil {
 		return nil, errors.NewE(err)

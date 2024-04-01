@@ -1,19 +1,25 @@
 package app
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/kloudlite/api/apps/observability/internal/env"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
+	"k8s.io/client-go/rest"
 
-	"github.com/gofiber/fiber/v2"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/pkg/errors"
@@ -21,6 +27,7 @@ import (
 
 type (
 	IAMGrpcClient grpc.Client
+	InfraClient   grpc.Client
 	SessionStore  kv.Repo[*common.AuthSession]
 )
 
@@ -33,65 +40,172 @@ var Module = fx.Module(
 		},
 	),
 
-	fx.Invoke(func(server httpServer.Server, sessStore SessionStore, ev *env.Env) {
-		a := server.Raw()
-		a.Use(httpServer.NewReadSessionMiddleware(sessStore, constants.CookieName, constants.CacheSessionPrefix))
+	fx.Provide(func(conn InfraClient) infra.InfraClient {
+		return infra.NewInfraClient(conn)
 	}),
 
-	fx.Invoke(
-		func(server httpServer.Server, ev *env.Env, sessionRepo kv.Repo[*common.AuthSession], iamCli iam.IAMClient,
-		) {
-			a := server.Raw()
+	fx.Provide(func(cfg *rest.Config) (k8s.Client, error) {
+		return k8s.NewClient(cfg, nil)
+	}),
 
-			a.Get("/observability/metrics/:metric_type", func(c *fiber.Ctx) error {
-				sess := httpServer.GetSession[*common.AuthSession](c.Context())
-				if sess == nil {
-					return fiber.ErrUnauthorized
-				}
+	fx.Invoke(func(infraCli infra.InfraClient, iamCli iam.IAMClient, mux *http.ServeMux, sessStore SessionStore, ev *env.Env, logger logging.Logger) {
+		sessionMiddleware := httpServer.NewReadSessionMiddlewareHandler(sessStore, constants.CookieName, constants.CacheSessionPrefix)
 
-				m := httpServer.GetHttpCookies(c.Context())
-				accountName := m[ev.AccountCookieName]
-				if accountName == "" {
-					return errors.Newf("no cookie named '%s' present in request", ev.AccountCookieName)
-				}
+		mux.HandleFunc("/observability/metrics/", sessionMiddleware(func(w http.ResponseWriter, r *http.Request) {
+			timestart := time.Now()
+			defer func() {
+				logger.Infof("%s %s took %.2fs", r.Method, r.URL.Path, time.Since(timestart).Seconds())
+			}()
+			metricsType := strings.TrimPrefix(r.URL.Path, "/observability/metrics/")
 
-				clusterName := c.Query("cluster_name")
-				if clusterName == "" {
-					return c.Status(http.StatusBadRequest).JSON(map[string]any{"error": "query param (cluster_name) must be provided"})
-				}
+			sess := httpServer.GetHttpSession[*common.AuthSession](r.Context())
+			if sess == nil {
+				http.Error(w, "not logged in", http.StatusUnauthorized)
+				return
+			}
 
-				trackingId := c.Query("tracking_id")
-				if trackingId == "" {
-					return c.Status(http.StatusBadRequest).JSON(map[string]any{"error": "query param (tracking_id) must be provided"})
-				}
+			m, ok := r.Context().Value("http-cookies").(map[string]string)
+			if !ok {
+				m = map[string]string{}
+			}
 
-				can, err := iamCli.Can(c.Context(), &iam.CanIn{
-					UserId: string(sess.UserId),
-					ResourceRefs: []string{
-						iamT.NewResourceRef(accountName, iamT.ResourceAccount, accountName),
-					},
-					Action: string(iamT.ReadMetrics),
-				})
-				if err != nil {
-					return &fiber.Error{Code: http.StatusUnauthorized, Message: errors.NewEf(err, "unauthorized to view metrics for resources belonging to account (%s)", accountName).Error()}
-				}
+			accountName := m[ev.AccountCookieName]
+			if accountName == "" {
+				http.Error(w, fmt.Sprintf("no cookie named '%s' present in request", ev.AccountCookieName), http.StatusBadRequest)
+				return
+			}
 
-				if !can.Status {
-					return &fiber.Error{Code: http.StatusUnauthorized, Message: fmt.Sprintf("unauthorized to view metrics for resources belonging to account (%s)", accountName)}
-				}
+			clusterName := r.URL.Query().Get("cluster_name")
+			if clusterName == "" {
+				http.Error(w, "query param (cluster_name) must be provided", http.StatusBadRequest)
+				return
+			}
 
-				metricType := c.Params("metric_type")
+			trackingId := r.URL.Query().Get("tracking_id")
+			if trackingId == "" {
+				http.Error(w, "query param (tracking_id) must be provided", http.StatusBadRequest)
+			}
 
-				st := c.Query("start_time", fmt.Sprintf("%d", time.Now().Add(-3*time.Hour).Unix()))
-				et := c.Query("end_time", fmt.Sprintf("%d", time.Now().Unix()))
-				step := c.Query("step", "5m")
-
-				return queryProm(ev.PromHttpAddr, PromMetricsType(metricType), map[string]string{
-					"kl_account_name": accountName,
-					"kl_cluster_name": clusterName,
-					"kl_tracking_id":  trackingId,
-				}, st, et, step, c.Response().BodyWriter())
+			can, err := iamCli.Can(r.Context(), &iam.CanIn{
+				UserId: string(sess.UserId),
+				ResourceRefs: []string{
+					iamT.NewResourceRef(accountName, iamT.ResourceAccount, accountName),
+				},
+				Action: string(iamT.ReadMetrics),
 			})
-		},
-	),
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			if !can.Status {
+				http.Error(w, errors.NewEf(err, "unauthorized to view metrics for resources belonging to account (%s)", accountName).Error(), http.StatusUnauthorized)
+				return
+			}
+
+			st := r.URL.Query().Get("start_time")
+			if st == "" {
+				st = fmt.Sprintf("%d", time.Now().Add(-3*time.Hour).Unix())
+			}
+
+			et := r.URL.Query().Get("end_time")
+			if et == "" {
+				et = fmt.Sprintf("%d", time.Now().Unix())
+			}
+
+			step := r.URL.Query().Get("step")
+			if step == "" {
+				step = "15s"
+			}
+
+			if err := queryProm(ev.PromHttpAddr, PromMetricsType(metricsType), map[string]string{
+				"kl_account_name": accountName,
+				"kl_cluster_name": clusterName,
+				"kl_tracking_id":  trackingId,
+			}, st, et, step, w); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}))
+
+		mux.HandleFunc("/observability/logs", sessionMiddleware(func(w http.ResponseWriter, r *http.Request) {
+			timestart := time.Now()
+			defer func() {
+				logger.Infof("%s %s took %.2fs", r.Method, r.URL.Path, time.Since(timestart).Seconds())
+			}()
+
+			sess := httpServer.GetHttpSession[*common.AuthSession](r.Context())
+			if sess == nil {
+				http.Error(w, "not logged in", http.StatusUnauthorized)
+				return
+			}
+
+			m, ok := r.Context().Value("http-cookies").(map[string]string)
+			if !ok {
+				m = map[string]string{}
+			}
+
+			accountName := m[ev.AccountCookieName]
+			if accountName == "" {
+				http.Error(w, fmt.Sprintf("no cookie named '%s' present in request", ev.AccountCookieName), http.StatusBadRequest)
+				return
+			}
+
+			clusterName := r.URL.Query().Get("cluster_name")
+			trackingId := r.URL.Query().Get("tracking_id")
+
+			out, err := infraCli.GetClusterKubeconfig(r.Context(), &infra.GetClusterIn{
+				UserId:      string(sess.UserId),
+				UserName:    sess.UserName,
+				UserEmail:   sess.UserEmail,
+				AccountName: accountName,
+				ClusterName: clusterName,
+			})
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
+
+			cfg, err := k8s.RestConfigFromKubeConfig(out.Kubeconfig)
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
+
+			kcli, err := k8s.NewClient(cfg, nil)
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
+
+			closed := false
+			go func() {
+				for {
+					if err := r.Context().Err(); err != nil {
+						closed = true
+						return
+					}
+					<-time.After(100 * time.Millisecond)
+				}
+			}()
+
+			pr, pw := io.Pipe()
+			go StreamLogs(r.Context(), kcli, pw, LogParams{
+				TrackingId: trackingId,
+			})
+
+			b := bufio.NewReader(pr)
+			for !closed {
+				msg, err := b.ReadBytes('\n')
+				if err != nil {
+					if !errors.Is(err, io.EOF) {
+						http.Error(w, err.Error(), 500)
+					}
+					return
+				}
+				fmt.Fprintf(w, "%s", msg)
+				w.(http.Flusher).Flush()
+			}
+		}))
+	}),
 )

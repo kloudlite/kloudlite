@@ -255,14 +255,14 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, nCluster.Name, PublishAdd)
 
-	if err := d.applyHelmKloudliteAgent(ctx, nCluster.Name, string(tokenScrt.Data[keyClusterToken])); err != nil {
+	if err := d.applyHelmKloudliteAgent(ctx, nCluster.Name, string(tokenScrt.Data[keyClusterToken]), nCluster.Spec.PublicDNSHost); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	return nCluster, nil
 }
 
-func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterName string, clusterToken string) error {
+func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterName string, clusterToken string, clusterPublicHost string) error {
 	b, err := templates.Read(templates.HelmKloudliteAgent)
 	if err != nil {
 		return errors.NewE(err)
@@ -276,6 +276,8 @@ func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterName string, c
 
 		"kloudlite-release":        d.env.KloudliteRelease,
 		"message-office-grpc-addr": d.env.MessageOfficeExternalGrpcAddr,
+
+		"public-dns-host": clusterPublicHost,
 	})
 	if err != nil {
 		return errors.NewE(err)
@@ -334,7 +336,12 @@ func (d *domain) UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string)
 		return errors.NewE(err)
 	}
 
-	if err := d.applyHelmKloudliteAgent(ctx, clusterName, out.ClusterToken); err != nil {
+	cluster, err := d.findCluster(ctx, clusterName)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.applyHelmKloudliteAgent(ctx, clusterName, out.ClusterToken, cluster.Spec.PublicDNSHost); err != nil {
 		return errors.NewE(err)
 	}
 

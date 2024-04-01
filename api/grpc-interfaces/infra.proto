@@ -1,11 +1,12 @@
 syntax = "proto3";
 
-option go_package = "kloudlite.io/rpc/infra";
+option go_package = "./infra";
 
 service Infra {
   rpc GetCluster(GetClusterIn) returns (GetClusterOut);
   rpc GetNodepool(GetNodepoolIn) returns (GetNodepoolOut);
   rpc ClusterExists(ClusterExistsIn) returns (ClusterExistsOut);
+  rpc GetClusterKubeconfig(GetClusterIn) returns (GetClusterKubeconfigOut);
 }
 
 message GetClusterIn {
@@ -53,4 +54,6 @@ message ClusterExistsOut {
   bool exists = 1;
 }
 
-
+message GetClusterKubeconfigOut {
+  bytes kubeconfig = 1;
+}
