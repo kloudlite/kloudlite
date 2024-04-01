@@ -3,7 +3,6 @@ package environment
 import (
 	"context"
 	"fmt"
-	"slices"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -54,7 +53,7 @@ const (
 )
 
 var (
-	ENV_CHECKLIST = []rApi.CheckMeta{
+	ApplyChecklist = []rApi.CheckMeta{
 		{Name: patchDefaults, Title: "Patching Defaults"},
 		{Name: ensureNamespace, Title: "Ensuring Namespace"},
 		{Name: ensureNamespaceRBACs, Title: "Ensuring Namespace RBACs"},
@@ -62,7 +61,7 @@ var (
 		{Name: updateRouterIngress, Title: "Updating Router Ingress"},
 	}
 
-	ENV_DESTROY_CHECKLIST = []rApi.CheckMeta{
+	DestroyChecklist = []rApi.CheckMeta{
 		{Name: envFinalizing, Title: "Finalizing Environment"},
 	}
 )
@@ -91,7 +90,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(ENV_CHECKLIST); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(ApplyChecklist); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -135,11 +134,8 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(envFinalizing, req)
 
-	if !slices.Equal(obj.Status.CheckList, ENV_DESTROY_CHECKLIST) {
-		req.Object.Status.CheckList = ENV_DESTROY_CHECKLIST
-		if step := req.UpdateStatus(); !step.ShouldProceed() {
-			return step
-		}
+	if step := req.EnsureCheckList(DestroyChecklist); !step.ShouldProceed() {
+		return step
 	}
 
 	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
@@ -149,7 +145,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	// ensure deletion of other kloudlite resources, that belong to this environment
 	var mresList crdsv1.ManagedResourceList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &mresList, obj.Spec.TargetNamespace); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	mres := make([]client.Object, len(mresList.Items))
@@ -158,13 +154,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, mres...); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	// routers
 	var routersList crdsv1.RouterList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &routersList, obj.Spec.TargetNamespace); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	routers := make([]client.Object, len(routersList.Items))
@@ -173,13 +169,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, routers...); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	// apps
 	var appsList crdsv1.AppList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &appsList, obj.Spec.TargetNamespace); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	apps := make([]client.Object, len(appsList.Items))
@@ -188,13 +184,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, apps...); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	// configs
 	var configsList corev1.ConfigMapList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &configsList, obj.Spec.TargetNamespace); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	configs := make([]client.Object, 0, len(configsList.Items))
@@ -206,13 +202,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, configs...); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	// secrets
 	var secretsList corev1.SecretList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &secretsList, obj.Spec.TargetNamespace); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	secrets := make([]client.Object, len(secretsList.Items))
@@ -221,10 +217,10 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, secrets...); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
-	return check.Completed()
+	return req.Finalize()
 }
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
@@ -256,7 +252,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepR
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
-			return check.Failed(err)
+			return check.StillRunning(err)
 		}
 		return req.Done()
 	}
@@ -270,7 +266,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 
 	var project crdsv1.Project
 	if err := r.Get(ctx, fn.NN("", obj.Spec.ProjectName), &project); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
@@ -290,7 +286,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 
 		return nil
 	}); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	return check.Completed()
@@ -324,7 +320,7 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return check.Failed(err).Err(nil)
+		return check.StillRunning(err)
 	}
 
 	req.AddToOwnedResources(rr...)
@@ -357,7 +353,7 @@ func (r *Reconciler) setupEnvIngressController(req *rApi.Request[*crdsv1.Environ
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	req.AddToOwnedResources(rr...)
