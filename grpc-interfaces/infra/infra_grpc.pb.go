@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Infra_GetCluster_FullMethodName    = "/Infra/GetCluster"
-	Infra_GetNodepool_FullMethodName   = "/Infra/GetNodepool"
-	Infra_ClusterExists_FullMethodName = "/Infra/ClusterExists"
+	Infra_GetCluster_FullMethodName           = "/Infra/GetCluster"
+	Infra_GetNodepool_FullMethodName          = "/Infra/GetNodepool"
+	Infra_ClusterExists_FullMethodName        = "/Infra/ClusterExists"
+	Infra_GetClusterKubeconfig_FullMethodName = "/Infra/GetClusterKubeconfig"
 )
 
 // InfraClient is the client API for Infra service.
@@ -31,6 +32,7 @@ type InfraClient interface {
 	GetCluster(ctx context.Context, in *GetClusterIn, opts ...grpc.CallOption) (*GetClusterOut, error)
 	GetNodepool(ctx context.Context, in *GetNodepoolIn, opts ...grpc.CallOption) (*GetNodepoolOut, error)
 	ClusterExists(ctx context.Context, in *ClusterExistsIn, opts ...grpc.CallOption) (*ClusterExistsOut, error)
+	GetClusterKubeconfig(ctx context.Context, in *GetClusterIn, opts ...grpc.CallOption) (*GetClusterKubeconfigOut, error)
 }
 
 type infraClient struct {
@@ -68,6 +70,15 @@ func (c *infraClient) ClusterExists(ctx context.Context, in *ClusterExistsIn, op
 	return out, nil
 }
 
+func (c *infraClient) GetClusterKubeconfig(ctx context.Context, in *GetClusterIn, opts ...grpc.CallOption) (*GetClusterKubeconfigOut, error) {
+	out := new(GetClusterKubeconfigOut)
+	err := c.cc.Invoke(ctx, Infra_GetClusterKubeconfig_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InfraServer is the server API for Infra service.
 // All implementations must embed UnimplementedInfraServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type InfraServer interface {
 	GetCluster(context.Context, *GetClusterIn) (*GetClusterOut, error)
 	GetNodepool(context.Context, *GetNodepoolIn) (*GetNodepoolOut, error)
 	ClusterExists(context.Context, *ClusterExistsIn) (*ClusterExistsOut, error)
+	GetClusterKubeconfig(context.Context, *GetClusterIn) (*GetClusterKubeconfigOut, error)
 	mustEmbedUnimplementedInfraServer()
 }
 
@@ -90,6 +102,9 @@ func (UnimplementedInfraServer) GetNodepool(context.Context, *GetNodepoolIn) (*G
 }
 func (UnimplementedInfraServer) ClusterExists(context.Context, *ClusterExistsIn) (*ClusterExistsOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClusterExists not implemented")
+}
+func (UnimplementedInfraServer) GetClusterKubeconfig(context.Context, *GetClusterIn) (*GetClusterKubeconfigOut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClusterKubeconfig not implemented")
 }
 func (UnimplementedInfraServer) mustEmbedUnimplementedInfraServer() {}
 
@@ -158,6 +173,24 @@ func _Infra_ClusterExists_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Infra_GetClusterKubeconfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClusterIn)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InfraServer).GetClusterKubeconfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Infra_GetClusterKubeconfig_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InfraServer).GetClusterKubeconfig(ctx, req.(*GetClusterIn))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Infra_ServiceDesc is the grpc.ServiceDesc for Infra service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +209,10 @@ var Infra_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ClusterExists",
 			Handler:    _Infra_ClusterExists_Handler,
+		},
+		{
+			MethodName: "GetClusterKubeconfig",
+			Handler:    _Infra_GetClusterKubeconfig_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
