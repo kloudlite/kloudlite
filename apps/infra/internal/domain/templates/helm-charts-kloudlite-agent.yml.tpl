@@ -123,5 +123,3 @@ spec:
 
       clusterAutoscaler:
         enabled: true
-        {{- /* configuration: */}}
-        {{- /*   chartVersion: "v1.0.3" */}}

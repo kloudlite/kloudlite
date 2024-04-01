@@ -27,8 +27,8 @@ import (
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/apps/console/internal/env"
 	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
-	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/repos"
@@ -83,6 +83,14 @@ func addTrackingId(obj client.Object, id repos.ID) {
 	}
 	ann[constants.ObservabilityTrackingKey] = string(id)
 	obj.SetAnnotations(ann)
+
+	labels := obj.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string, 1)
+	}
+
+	labels[constants.ObservabilityTrackingKey] = string(id)
+	obj.SetLabels(labels)
 }
 
 type K8sContext interface {

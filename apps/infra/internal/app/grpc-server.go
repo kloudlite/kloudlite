@@ -4,25 +4,44 @@ import (
 	"context"
 
 	"github.com/kloudlite/api/apps/infra/internal/domain"
-	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
+	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/repos"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type grpcServer struct {
 	d domain.Domain
 	infra.UnimplementedInfraServer
+	kcli k8s.Client
 }
 
-func (g *grpcServer) contextFromAccount(ctx context.Context, accountName string) domain.InfraContext {
-	dctx := domain.InfraContext{
+// GetClusterKubeconfig implements infra.InfraServer.
+func (g *grpcServer) GetClusterKubeconfig(ctx context.Context, in *infra.GetClusterIn) (*infra.GetClusterKubeconfigOut, error) {
+	infraCtx := domain.InfraContext{
 		Context:     ctx,
-		UserId:      "sys-user:error-on-apply-worker",
-		UserEmail:   "",
-		UserName:    "",
-		AccountName: accountName,
+		UserId:      repos.ID(in.UserId),
+		UserEmail:   in.UserEmail,
+		UserName:    in.UserName,
+		AccountName: in.AccountName,
 	}
-	return dctx
+	c, err := g.d.GetCluster(infraCtx, in.ClusterName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if c == nil {
+		return nil, errors.Newf("cluster %s not found", in.ClusterName)
+	}
+
+	creds := &corev1.Secret{}
+	if err := g.kcli.Get(ctx, fn.NN(c.Namespace, c.Spec.Output.SecretName), creds); err != nil {
+		return nil, err
+	}
+
+	return &infra.GetClusterKubeconfigOut{Kubeconfig: creds.Data[c.Spec.Output.KeyKubeconfig]}, nil
 }
 
 // GetCluster implements infra.InfraServer.
@@ -109,8 +128,9 @@ func (g *grpcServer) ClusterExists(ctx context.Context, in *infra.ClusterExistsI
 	return &infra.ClusterExistsOut{Exists: true}, nil
 }
 
-func newGrpcServer(d domain.Domain) infra.InfraServer {
+func newGrpcServer(d domain.Domain, kcli k8s.Client) infra.InfraServer {
 	return &grpcServer{
-		d: d,
+		d:    d,
+		kcli: kcli,
 	}
 }
