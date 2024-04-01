@@ -82,16 +82,16 @@ func NewSessionMiddleware(
 						fmt.Println("[ERROR]", err)
 					}
 					ck := &fiber.Cookie{
-						Name:     cookieName,
-						Value:    string(session.GetId()),
-						Path:     "/",
-						Domain:   fmt.Sprintf("%v", cookieDomain),
-						Expires:  time.Time{},
-						MaxAge:   0,
-						Secure:   true,
-						HTTPOnly: true,
-						// SameSite: http.SameSiteStrictMode,
-						SameSite: fiber.CookieSameSiteNoneMode,
+						Name:        cookieName,
+						Value:       string(session.GetId()),
+						Path:        "/",
+						Domain:      fmt.Sprintf("%v", cookieDomain),
+						MaxAge:      0,
+						Expires:     time.Time{},
+						Secure:      true,
+						HTTPOnly:    true,
+						SameSite:    fiber.CookieSameSiteNoneMode,
+						SessionOnly: false,
 					}
 					// fmt.Println("ck: ", ck)
 					ctx.Cookie(ck)
