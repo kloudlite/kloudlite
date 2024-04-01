@@ -5,7 +5,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
+
+	"github.com/kloudlite/api/grpc-interfaces/infra"
 
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
