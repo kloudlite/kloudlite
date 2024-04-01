@@ -1,0 +1,12 @@
+---
+label: Generate Cluster Token
+query: |+ #graphql
+  mutation GenerateClusterToken($accountName: String!, $clusterName: String!) {
+    generateClusterToken(accountName: $accountName, clusterName: $clusterName)
+  }
+variables:
+  accountName: "{{.accountName}}"
+  clusterName: "{{.clusterName}}"
+
+---
+
