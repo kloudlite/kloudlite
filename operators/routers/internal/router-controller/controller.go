@@ -56,6 +56,8 @@ const (
 	CreatingIngressResources    string = "creating-ingress-resources"
 
 	CleaningUpResources string = "cleaning-up-resourcess"
+
+	certCreatedByRouter string = "kloudlite.io/cert-created-by-router"
 )
 
 var (
@@ -152,21 +154,13 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Router]) stepResult
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
-	obj := req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
 	checkName := CleaningUpResources
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
 
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
 	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
-		_, err := step.ReconcilerResponse()
-		return fail(err)
+		return step
 	}
 
 	return req.Finalize()
@@ -194,75 +188,80 @@ func (r *Reconciler) EnsuringHttpsCerts(req *rApi.Request[*crdsv1.Router]) stepR
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(EnsuringHttpsCertsIfEnabled, req)
 
-	if isHttpsEnabled(obj) {
-		_, nonWildcardDomains, err := r.parseAndExtractDomains(req)
+	if !isHttpsEnabled(obj) {
+		return check.Completed()
+	}
+
+	_, nonWildcardDomains, err := r.parseAndExtractDomains(req)
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	for _, domain := range nonWildcardDomains {
+		cert, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &certmanagerv1.Certificate{})
 		if err != nil {
-			return check.Failed(err)
+			if !apiErrors.IsNotFound(err) {
+				return check.StillRunning(err)
+			}
+			cert = nil
 		}
 
-		for _, domain := range nonWildcardDomains {
-			cert, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &certmanagerv1.Certificate{})
-			if err != nil {
-				if !apiErrors.IsNotFound(err) {
-					return check.Failed(err)
-				}
-				cert = nil
-			}
-
-			if cert == nil {
-				cert := &certmanagerv1.Certificate{
-					TypeMeta: metav1.TypeMeta{
-						Kind:       "Certificate",
-						APIVersion: certmanagerv1.SchemeGroupVersion.String(),
+		if cert == nil {
+			cert := &certmanagerv1.Certificate{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Certificate",
+					APIVersion: certmanagerv1.SchemeGroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      genTLSCertName(domain),
+					Namespace: r.Env.CertificateNamespace,
+					Labels: map[string]string{
+						certCreatedByRouter: obj.Name,
 					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      genTLSCertName(domain),
-						Namespace: r.Env.CertificateNamespace,
+				},
+				Spec: certmanagerv1.CertificateSpec{
+					DNSNames: []string{domain},
+					IssuerRef: certmanagermetav1.ObjectReference{
+						Name:  r.getRouterClusterIssuer(obj),
+						Kind:  "ClusterIssuer",
+						Group: certmanagerv1.SchemeGroupVersion.Group,
 					},
-					Spec: certmanagerv1.CertificateSpec{
-						DNSNames: []string{domain},
-						IssuerRef: certmanagermetav1.ObjectReference{
-							Name:  r.getRouterClusterIssuer(obj),
-							Kind:  "ClusterIssuer",
-							Group: certmanagerv1.SchemeGroupVersion.Group,
-						},
-						RenewBefore: &metav1.Duration{
-							Duration: 15 * 24 * time.Hour, // 15 days prior
-						},
-						SecretName: genTLSCertName(domain),
-						Usages: []certmanagerv1.KeyUsage{
-							certmanagerv1.UsageDigitalSignature,
-							certmanagerv1.UsageKeyEncipherment,
-						},
+					RenewBefore: &metav1.Duration{
+						Duration: 15 * 24 * time.Hour, // 15 days prior
 					},
-				}
-				if err := r.Create(ctx, cert); err != nil {
-					return check.Failed(err)
-				}
+					SecretName: genTLSCertName(domain),
+					Usages: []certmanagerv1.KeyUsage{
+						certmanagerv1.UsageDigitalSignature,
+						certmanagerv1.UsageKeyEncipherment,
+					},
+				},
 			}
-
-			if _, err := IsHttpsCertReady(cert); err != nil {
-				return check.Failed(err)
+			if err := r.Create(ctx, cert); err != nil {
+				return check.StillRunning(err)
 			}
+		}
 
-			certSecret, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &corev1.Secret{})
-			if err != nil {
-				return check.Failed(err)
+		if _, err := IsHttpsCertReady(cert); err != nil {
+			return check.StillRunning(err).RequeueAfter(1 * time.Second)
+		}
+
+		certSecret, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &corev1.Secret{})
+		if err != nil {
+			return check.StillRunning(err)
+		}
+
+		copyTLSSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: genTLSCertName(domain), Namespace: obj.Namespace}, Type: corev1.SecretTypeTLS}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, copyTLSSecret, func() error {
+			if copyTLSSecret.Annotations == nil {
+				copyTLSSecret.Annotations = make(map[string]string, 1)
 			}
+			copyTLSSecret.Annotations["kloudlite.io/secret.cloned-by"] = "router"
 
-			copyTLSSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: genTLSCertName(domain), Namespace: obj.Namespace}, Type: corev1.SecretTypeTLS}
-			if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, copyTLSSecret, func() error {
-				if copyTLSSecret.Annotations == nil {
-					copyTLSSecret.Annotations = make(map[string]string, 1)
-				}
-				copyTLSSecret.Annotations["kloudlite.io/secret.cloned-by"] = "router"
-
-				copyTLSSecret.Data = certSecret.Data
-				copyTLSSecret.StringData = certSecret.StringData
-				return nil
-			}); err != nil {
-				return check.Failed(err)
-			}
+			copyTLSSecret.Data = certSecret.Data
+			copyTLSSecret.StringData = certSecret.StringData
+			return nil
+		}); err != nil {
+			return check.StillRunning(err)
 		}
 	}
 
@@ -297,7 +296,7 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 			}
 			return nil
 		}); err != nil {
-			return check.Failed(err)
+			return check.StillRunning(err)
 		}
 
 		req.AddToOwnedResources(rApi.ParseResourceRef(basicAuthScrt))
@@ -312,7 +311,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 
 	wcDomains, nonWcDomains, err := r.parseAndExtractDomains(req)
 	if err != nil {
-		return check.Failed(err)
+		return check.Failed(err).Err(nil)
 	}
 
 	nginxIngressAnnotations := GenNginxIngressAnnotations(obj)
@@ -355,7 +354,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 
 		rr, err := r.yamlClient.ApplyYAML(ctx, b)
 		if err != nil {
-			return check.Failed(err)
+			return check.StillRunning(err)
 		}
 
 		req.AddToOwnedResources(rr...)
@@ -378,7 +377,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Router{})
 	builder.Owns(&networkingv1.Ingress{})
-	builder.Owns(&certmanagerv1.Certificate{})
+	// builder.Owns(&certmanagerv1.Certificate{})
 
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
