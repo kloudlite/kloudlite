@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/kloudlite/api/common"
@@ -12,6 +13,7 @@ type For string
 
 const (
 	ForLogs           For = "logs"
+	ForJetstreamLogs  For = "jetstram-logs"
 	ForResourceUpdate For = "resource-update"
 )
 
@@ -33,6 +35,17 @@ type Response[T any] struct {
 	Id      string `json:"id"`
 }
 
+func CreateResponseJson(data []byte, id string) string {
+	// return map[string]any{
+	// 	"type":    "response",
+	// 	"for":     "logs",
+	// 	"data":    string(data),
+	// 	"message": "",
+	// 	"id":      id,
+	// }
+	return fmt.Sprintf(`{"type":"response","for":"logs","data":%s, "id":%q}`, data, id)
+}
+
 type Message struct {
 	For  For            `json:"for"`
 	Data map[string]any `json:"data"`
@@ -43,6 +56,16 @@ type Context struct {
 	Context context.Context
 	Session *common.AuthSession
 	// Connection *websocket.Conn
-	Mutex     *sync.Mutex
-	WriteJSON func(interface{}) error
+	Mutex *sync.Mutex
+
+	Write          func([]byte) error
+	WriteJSON      func(interface{}) error
+	OnDisconnectFn func() error
+}
+
+func (c Context) OnDisconnect() error {
+	if c.OnDisconnectFn != nil {
+		return c.OnDisconnectFn()
+	}
+	return nil
 }
