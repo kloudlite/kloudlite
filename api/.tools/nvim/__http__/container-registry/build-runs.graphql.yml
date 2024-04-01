@@ -1,0 +1,41 @@
+---
+global:
+  repoName: ""
+  crTriggerBuildId: ""
+---
+label: "list repos"
+query: |+
+  query Cr_listRepos {
+    cr_listRepos {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+variables: {}
+---
+query: |+
+  query Cr_listBuilds($repoName: String!) {
+    cr_listBuilds(repoName: $repoName) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+variables:
+  repoName: "{{.repoName}}"
+---
+
+query: |+
+  mutation Cr_triggerBuild($crTriggerBuildId: ID!) {
+    cr_triggerBuild(id: $crTriggerBuildId)
+  }
+variables:
+  crTriggerBuildId: "{{.crTriggerBuildId}}"
+---
