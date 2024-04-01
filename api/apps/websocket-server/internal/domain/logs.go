@@ -13,7 +13,6 @@ import (
 	"github.com/kloudlite/api/apps/websocket-server/internal/domain/types"
 	"github.com/kloudlite/api/apps/websocket-server/internal/domain/utils"
 	"github.com/kloudlite/api/pkg/errors"
-	"github.com/kloudlite/api/pkg/messaging/nats"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
 	msg_types "github.com/kloudlite/api/pkg/messaging/types"
 
@@ -56,7 +55,7 @@ func (d *domain) newJetstreamConsumerForLog(ctx context.Context, subject string,
 	})
 }
 
-func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, msgAny map[string]any) error {
+func (d *domain) handleLogsMsg(ctx types.Context, logsSubs logs.LogsSubsMap, msgAny map[string]any) error {
 	log := d.logger
 
 	var msg logs.Message
@@ -83,9 +82,9 @@ func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, ms
 				return err
 			}
 
-			if _, ok := (*logsSubs)[hash]; ok {
-				if (*logsSubs)[hash].Jc != nil {
-					if err := (*logsSubs)[hash].Jc.Stop(ctx.Context); err != nil {
+			if _, ok := logsSubs[hash]; ok {
+				if logsSubs[hash].Jc != nil {
+					if err := logsSubs[hash].Jc.Stop(ctx.Context); err != nil {
 						return err
 					}
 				}
@@ -99,11 +98,11 @@ func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, ms
 				return err
 			}
 
-			if (*logsSubs) == nil {
-				*logsSubs = make(logs.LogsSubsMap)
+			if logsSubs == nil {
+				logsSubs = make(logs.LogsSubsMap)
 			}
 
-			(*logsSubs)[hash] = logs.LogsSubs{
+			logsSubs[hash] = logs.LogsSubs{
 				Jc:       jc,
 				Id:       msg.Id,
 				Resource: msg.Spec,
@@ -114,7 +113,6 @@ func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, ms
 
 				if err := jc.Consume(
 					func(m *msg_types.ConsumeMsg) error {
-
 						var data logs.Response
 						var resp types.Response[logs.Response]
 						if err := json.Unmarshal(m.Payload, &data); err != nil {
@@ -152,19 +150,18 @@ func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, ms
 
 	case logs.EventUnsubscribe:
 		{
-
 			ctx.Mutex.Lock()
-			if res, ok := (*logsSubs)[hash]; ok {
+			if res, ok := logsSubs[hash]; ok {
 				if res.Jc != nil {
 					if err := res.Jc.Stop(ctx.Context); err != nil {
 						return err
 					}
 
-					if err := nats.DeleteConsumer(ctx.Context, d.jetStreamClient, res.Jc); err != nil {
+					if err := msg_nats.DeleteConsumer(ctx.Context, d.jetStreamClient, res.Jc); err != nil {
 						return err
 					}
 
-					delete(*logsSubs, hash)
+					delete(logsSubs, hash)
 				}
 				ctx.Mutex.Unlock()
 				utils.WriteInfo(ctx, "[logs] subscription cancelled for ", msg.Id, types.ForLogs)
