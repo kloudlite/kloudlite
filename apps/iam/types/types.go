@@ -146,6 +146,20 @@ const (
 
 	ReadLogs    Action = "read-logs"
 	ReadMetrics Action = "read-metrics"
+
+	// build runs
+	ListBuildRuns  Action = "list-build-runs"
+	GetBuildRun    Action = "get-build-run"
+	CreateBuildRun Action = "create-build-run"
+	UpdateBuildRun Action = "update-build-run"
+	DeleteBuildRun Action = "delete-build-run"
+
+	// build integrations
+	ListBuildIntegrations  Action = "list-build-integrations"
+	GetBuildIntegration    Action = "get-build-integration"
+	UpdateBuildIntegration Action = "update-build-integration"
+	CreateBuildIntegration Action = "create-build-integration"
+	DeleteBuildIntegration Action = "delete-build-integration"
 )
 
 func NewResourceRef(accountName string, resourceType ResourceType, resourceName string) string {

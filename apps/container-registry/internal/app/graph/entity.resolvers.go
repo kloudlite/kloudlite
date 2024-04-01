@@ -7,7 +7,7 @@ package graph
 import (
 	"context"
 
-	"github.com/gofiber/fiber/v2"
+	fiber "github.com/gofiber/fiber/v2"
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	"github.com/kloudlite/api/common"

@@ -68,6 +68,15 @@ func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, name string) 
 	return true, nil
 }
 
+// InfraCreateBYOKCluster is the resolver for the infra_createBYOKCluster field.
+func (r *mutationResolver) InfraCreateBYOKCluster(ctx context.Context, cluster entities.BYOKCluster) (*entities.BYOKCluster, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.CreateBYOKCluster(ictx, cluster)
+}
+
 // InfraUpgradeHelmKloudliteAgent is the resolver for the infra_upgradeHelmKloudliteAgent field.
 func (r *mutationResolver) InfraUpgradeHelmKloudliteAgent(ctx context.Context, clusterName string) (bool, error) {
 	ictx, err := toInfraContext(ctx)

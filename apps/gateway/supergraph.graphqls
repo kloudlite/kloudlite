@@ -1,0 +1,4866 @@
+schema
+  @link(url: "https://specs.apollo.dev/link/v1.0")
+  @link(url: "https://specs.apollo.dev/join/v0.3", for: EXECUTION)
+{
+  query: Query
+  mutation: Mutation
+}
+
+directive @join__enumValue(graph: join__Graph!) repeatable on ENUM_VALUE
+
+directive @join__field(graph: join__Graph, requires: join__FieldSet, provides: join__FieldSet, type: String, external: Boolean, override: String, usedOverridden: Boolean) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+directive @join__graph(name: String!, url: String!) on ENUM_VALUE
+
+directive @join__implements(graph: join__Graph!, interface: String!) repeatable on OBJECT | INTERFACE
+
+directive @join__type(graph: join__Graph!, key: join__FieldSet, extension: Boolean! = false, resolvable: Boolean! = true, isInterfaceObject: Boolean! = false) repeatable on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
+
+directive @join__unionMember(graph: join__Graph!, member: String!) repeatable on UNION
+
+directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) repeatable on SCHEMA
+
+type Account
+  @join__type(graph: ACCOUNT_API)
+{
+  contactEmail: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: String!
+  isActive: Boolean
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  logo: String
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  targetNamespace: String
+  updateTime: Date!
+}
+
+input AccountIn
+  @join__type(graph: ACCOUNT_API)
+{
+  contactEmail: String
+  displayName: String!
+  isActive: Boolean
+  logo: String
+  metadata: MetadataIn
+}
+
+type AccountMembership
+  @join__type(graph: ACCOUNT_API)
+{
+  accountName: String!
+  role: Github__com___kloudlite___api___apps___iam___types__Role!
+  userId: String!
+  user: User!
+}
+
+input AccountMembershipIn
+  @join__type(graph: ACCOUNT_API)
+{
+  accountName: String!
+  role: Github__com___kloudlite___api___apps___iam___types__Role!
+  userId: String!
+}
+
+type AccountsCheckNameAvailabilityOutput
+  @join__type(graph: ACCOUNT_API)
+{
+  result: Boolean!
+  suggestedNames: [String!]
+}
+
+scalar Any
+  @join__type(graph: ACCOUNT_API)
+  @join__type(graph: AUTH_API)
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+
+type App
+  @join__type(graph: CONSOLE_API)
+{
+  accountName: String!
+  apiVersion: String
+  ciBuildId: ID
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  enabled: Boolean
+  environmentName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String!
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+  build: Build
+}
+
+type AppEdge
+  @join__type(graph: CONSOLE_API)
+{
+  cursor: String!
+  node: App!
+}
+
+input AppIn
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String
+  ciBuildId: ID
+  displayName: String!
+  enabled: Boolean
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn!
+}
+
+type AppPaginatedRecords
+  @join__type(graph: CONSOLE_API)
+{
+  edges: [AppEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Build
+  @join__type(graph: CONSOLE_API, key: "id")
+  @join__type(graph: CONTAINER_REGISTRY_API, key: "id", extension: true)
+{
+  id: ID!
+  buildClusterName: String! @join__field(graph: CONTAINER_REGISTRY_API)
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy! @join__field(graph: CONTAINER_REGISTRY_API)
+  creationTime: Date! @join__field(graph: CONTAINER_REGISTRY_API)
+  credUser: Github__com___kloudlite___api___common__CreatedOrUpdatedBy! @join__field(graph: CONTAINER_REGISTRY_API)
+  errorMessages: Map! @join__field(graph: CONTAINER_REGISTRY_API)
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy! @join__field(graph: CONTAINER_REGISTRY_API)
+  markedForDeletion: Boolean @join__field(graph: CONTAINER_REGISTRY_API)
+  name: String! @join__field(graph: CONTAINER_REGISTRY_API)
+  recordVersion: Int! @join__field(graph: CONTAINER_REGISTRY_API)
+  source: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSource! @join__field(graph: CONTAINER_REGISTRY_API)
+  spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec! @join__field(graph: CONTAINER_REGISTRY_API)
+  status: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus! @join__field(graph: CONTAINER_REGISTRY_API)
+  updateTime: Date! @join__field(graph: CONTAINER_REGISTRY_API)
+  latestBuildRun: BuildRun @join__field(graph: CONTAINER_REGISTRY_API)
+}
+
+type BuildEdge
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  cursor: String!
+  node: Build!
+}
+
+input BuildIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  buildClusterName: String!
+  name: String!
+  source: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSourceIn!
+  spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn!
+}
+
+type BuildPaginatedRecords
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  edges: [BuildEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type BuildRun
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  accountName: String!
+  apiVersion: String
+  buildId: ID!
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type BuildRunEdge
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  cursor: String!
+  node: BuildRun!
+}
+
+input BuildRunIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  displayName: String!
+}
+
+type BuildRunPaginatedRecords
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  edges: [BuildRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type BYOKCluster
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  ClusterSpec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata!
+  recordVersion: Int!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+input BYOKClusterIn
+  @join__type(graph: INFRA_API)
+{
+  displayName: String!
+  metadata: MetadataIn!
+}
+
+type CheckAwsAccessOutput
+  @join__type(graph: INFRA_API)
+{
+  result: Boolean!
+  installationUrl: String
+}
+
+type CheckNameAvailabilityOutput
+  @join__type(graph: INFRA_API)
+{
+  result: Boolean!
+  suggestedNames: [String!]!
+}
+
+type CloudProviderSecret
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  aws: Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials
+  cloudProviderName: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type CloudProviderSecretEdge
+  @join__type(graph: INFRA_API)
+{
+  cursor: String!
+  node: CloudProviderSecret!
+}
+
+input CloudProviderSecretIn
+  @join__type(graph: INFRA_API)
+{
+  aws: Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentialsIn
+  cloudProviderName: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  displayName: String!
+  metadata: MetadataIn!
+}
+
+type CloudProviderSecretPaginatedRecords
+  @join__type(graph: INFRA_API)
+{
+  edges: [CloudProviderSecretEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Cluster
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  apiVersion: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata!
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+  adminKubeconfig: EncodedValue
+}
+
+type ClusterEdge
+  @join__type(graph: INFRA_API)
+{
+  cursor: String!
+  node: Cluster!
+}
+
+input ClusterIn
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String
+  displayName: String!
+  kind: String
+  metadata: MetadataIn!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn!
+}
+
+type ClusterManagedService
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ClusterManagedServiceEdge
+  @join__type(graph: INFRA_API)
+{
+  cursor: String!
+  node: ClusterManagedService!
+}
+
+input ClusterManagedServiceIn
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String
+  displayName: String!
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn
+}
+
+type ClusterManagedServicePaginatedRecords
+  @join__type(graph: INFRA_API)
+{
+  edges: [ClusterManagedServiceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ClusterPaginatedRecords
+  @join__type(graph: INFRA_API)
+{
+  edges: [ClusterEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Config
+  @join__type(graph: CONSOLE_API)
+{
+  accountName: String!
+  apiVersion: String
+  binaryData: Map
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  data: Map
+  displayName: String!
+  environmentName: String!
+  id: ID!
+  immutable: Boolean
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String!
+  recordVersion: Int!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ConfigEdge
+  @join__type(graph: CONSOLE_API)
+{
+  cursor: String!
+  node: Config!
+}
+
+input ConfigIn
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String
+  binaryData: Map
+  data: Map
+  displayName: String!
+  immutable: Boolean
+  kind: String
+  metadata: MetadataIn
+}
+
+type ConfigKeyRef
+  @join__type(graph: CONSOLE_API)
+{
+  configName: String!
+  key: String!
+}
+
+input ConfigKeyRefIn
+  @join__type(graph: CONSOLE_API)
+{
+  configName: String!
+  key: String!
+}
+
+type ConfigKeyValueRef
+  @join__type(graph: CONSOLE_API)
+{
+  configName: String!
+  key: String!
+  value: String!
+}
+
+input ConfigKeyValueRefIn
+  @join__type(graph: CONSOLE_API)
+{
+  configName: String!
+  key: String!
+  value: String!
+}
+
+type ConfigPaginatedRecords
+  @join__type(graph: CONSOLE_API)
+{
+  edges: [ConfigEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ConsoleCheckNameAvailabilityOutput
+  @join__type(graph: CONSOLE_API)
+{
+  result: Boolean!
+  suggestedNames: [String!]
+}
+
+enum ConsoleResType
+  @join__type(graph: CONSOLE_API)
+{
+  project @join__enumValue(graph: CONSOLE_API)
+  app @join__enumValue(graph: CONSOLE_API)
+  config @join__enumValue(graph: CONSOLE_API)
+  secret @join__enumValue(graph: CONSOLE_API)
+  router @join__enumValue(graph: CONSOLE_API)
+  managed_service @join__enumValue(graph: CONSOLE_API)
+  project_managed_service @join__enumValue(graph: CONSOLE_API)
+  managed_resource @join__enumValue(graph: CONSOLE_API)
+  environment @join__enumValue(graph: CONSOLE_API)
+  vpn_device @join__enumValue(graph: CONSOLE_API)
+}
+
+type ConsoleVPNDevice
+  @join__type(graph: CONSOLE_API)
+{
+  accountName: String!
+  apiVersion: String
+  clusterName: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  environmentName: String
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  linkedClusters: [String!]
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+  wireguardConfig: Github__com___kloudlite___api___pkg___types__EncodedString
+}
+
+type ConsoleVPNDeviceEdge
+  @join__type(graph: CONSOLE_API)
+{
+  cursor: String!
+  node: ConsoleVPNDevice!
+}
+
+input ConsoleVPNDeviceIn
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String
+  clusterName: String
+  displayName: String!
+  environmentName: String
+  kind: String
+  metadata: MetadataIn
+  projectName: String
+  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
+}
+
+type ConsoleVPNDevicePaginatedRecords
+  @join__type(graph: CONSOLE_API)
+{
+  edges: [ConsoleVPNDeviceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input CoreSearchVPNDevices
+  @join__type(graph: CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+type CRCheckNameAvailabilityOutput
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  result: Boolean!
+  suggestedNames: [String!]
+}
+
+type Credential
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  access: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__RepoAccess!
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  expiration: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__Expiration!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  updateTime: Date!
+  username: String!
+}
+
+type CredentialEdge
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  cursor: String!
+  node: Credential!
+}
+
+input CredentialIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  access: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__RepoAccess!
+  expiration: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationIn!
+  name: String!
+  username: String!
+}
+
+type CredentialPaginatedRecords
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  edges: [CredentialEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type CursorPagination
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  after: String
+  before: String
+  first: Int
+  last: Int
+  orderBy: String
+  sortDirection: CursorPaginationSortDirection
+}
+
+input CursorPaginationIn
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  after: String
+  before: String
+  first: Int
+  last: Int
+  orderBy: String = "_id"
+  sortDirection: CursorPaginationSortDirection = ASC
+}
+
+enum CursorPaginationSortDirection
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  ASC @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  DESC @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+}
+
+scalar Date
+  @join__type(graph: ACCOUNT_API)
+  @join__type(graph: AUTH_API)
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+
+type Digest
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  accountName: String!
+  actor: String!
+  creationTime: Date!
+  deleting: Boolean!
+  digest: String!
+  id: ID!
+  length: Int!
+  markedForDeletion: Boolean
+  mediaType: String!
+  recordVersion: Int!
+  repository: String!
+  size: Int!
+  tags: [String!]!
+  updateTime: Date!
+  url: String!
+}
+
+type DigestEdge
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  cursor: String!
+  node: Digest!
+}
+
+type DigestPaginatedRecords
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  edges: [DigestEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type DomainEntry
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  domainName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type DomainEntryEdge
+  @join__type(graph: INFRA_API)
+{
+  cursor: String!
+  node: DomainEntry!
+}
+
+input DomainEntryIn
+  @join__type(graph: INFRA_API)
+{
+  clusterName: String!
+  displayName: String!
+  domainName: String!
+}
+
+type DomainEntryPaginatedRecords
+  @join__type(graph: INFRA_API)
+{
+  edges: [DomainEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type EncodedValue
+  @join__type(graph: INFRA_API)
+{
+  value: String!
+  encoding: String!
+}
+
+type Environment
+  @join__type(graph: CONSOLE_API)
+{
+  accountName: String!
+  apiVersion: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String!
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type EnvironmentEdge
+  @join__type(graph: CONSOLE_API)
+{
+  cursor: String!
+  node: Environment!
+}
+
+input EnvironmentIn
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String
+  displayName: String!
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn
+}
+
+type EnvironmentPaginatedRecords
+  @join__type(graph: CONSOLE_API)
+{
+  edges: [EnvironmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type GitBranch
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  name: String
+  protected: Boolean
+}
+
+enum Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat
+  @join__type(graph: CONSOLE_API)
+{
+  dockerConfigJson @join__enumValue(graph: CONSOLE_API)
+  params @join__enumValue(graph: CONSOLE_API)
+}
+
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  error @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  failed @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  idle @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  pending @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  queued @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  running @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  success @join__enumValue(graph: CONTAINER_REGISTRY_API)
+}
+
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__Expiration
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  unit: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationUnit!
+  value: Int!
+}
+
+input Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  unit: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationUnit!
+  value: Int!
+}
+
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationUnit
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  d @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  h @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  m @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  w @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  y @join__enumValue(graph: CONTAINER_REGISTRY_API)
+}
+
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubRepository
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  archived: Boolean
+  cloneUrl: String
+  createdAt: Date
+  defaultBranch: String
+  description: String
+  disabled: Boolean
+  fullName: String
+  gitignoreTemplate: String
+  gitUrl: String
+  htmlUrl: String
+  id: Int
+  language: String
+  masterBranch: String
+  mirrorUrl: String
+  name: String
+  node_id: String
+  permissions: Map
+  private: Boolean
+  pushedAt: Date
+  size: Int
+  team_id: Int
+  updatedAt: Date
+  url: String
+  visibility: String
+}
+
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubUserAccount
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  avatarUrl: String
+  id: Int
+  login: String
+  nodeId: String
+  type: String
+}
+
+input Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubUserAccountIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  avatarUrl: String
+  id: Int
+  login: String
+  nodeId: String
+  type: String
+}
+
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitProvider
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  github @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  gitlab @join__enumValue(graph: CONTAINER_REGISTRY_API)
+}
+
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSource
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  branch: String!
+  provider: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitProvider!
+  repository: String!
+  webhookId: Int
+}
+
+input Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSourceIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  branch: String!
+  provider: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitProvider!
+  repository: String!
+}
+
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__RepoAccess
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  read @join__enumValue(graph: CONTAINER_REGISTRY_API)
+  read_write @join__enumValue(graph: CONTAINER_REGISTRY_API)
+}
+
+enum Github__com___kloudlite___api___apps___iam___types__Role
+  @join__type(graph: ACCOUNT_API)
+{
+  account_admin @join__enumValue(graph: ACCOUNT_API)
+  account_member @join__enumValue(graph: ACCOUNT_API)
+  account_owner @join__enumValue(graph: ACCOUNT_API)
+  project_admin @join__enumValue(graph: ACCOUNT_API)
+  project_member @join__enumValue(graph: ACCOUNT_API)
+  resource_owner @join__enumValue(graph: ACCOUNT_API)
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams
+  @join__type(graph: INFRA_API)
+{
+  awsAccountId: String!
+  cfParamTrustedARN: String!
+  externalID: String!
+  roleARN: String!
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn
+  @join__type(graph: INFRA_API)
+{
+  awsAccountId: String!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys
+  @join__type(graph: INFRA_API)
+{
+  accessKey: String!
+  cfParamUserName: String!
+  secretKey: String!
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn
+  @join__type(graph: INFRA_API)
+{
+  accessKey: String!
+  secretKey: String!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials
+  @join__type(graph: INFRA_API)
+{
+  assumeRoleParams: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys
+  cfParamInstanceProfileName: String
+  cfParamRoleName: String
+  cfParamStackName: String
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentialsIn
+  @join__type(graph: INFRA_API)
+{
+  assumeRoleParams: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__InputField
+  @join__type(graph: INFRA_API)
+{
+  defaultValue: Any
+  displayUnit: String
+  inputType: String!
+  label: String!
+  max: Float
+  min: Float
+  multiplier: Float
+  name: String!
+  required: Boolean
+  unit: String
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String
+  description: String!
+  displayName: String!
+  fields: [Github__com___kloudlite___api___apps___infra___internal___entities__InputField!]!
+  kind: String
+  name: String!
+  outputs: [Github__com___kloudlite___api___apps___infra___internal___entities__OutputField!]!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry
+  @join__type(graph: INFRA_API)
+{
+  active: Boolean!
+  apiVersion: String
+  description: String!
+  displayName: String!
+  fields: [Github__com___kloudlite___api___apps___infra___internal___entities__InputField!]!
+  kind: String
+  logoUrl: String!
+  name: String!
+  outputs: [Github__com___kloudlite___api___apps___infra___internal___entities__OutputField!]!
+  resources: [Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate!]!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__OutputField
+  @join__type(graph: INFRA_API)
+{
+  description: String!
+  label: String!
+  name: String!
+}
+
+type Github__com___kloudlite___api___common__CreatedOrUpdatedBy
+  @join__type(graph: ACCOUNT_API)
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  userEmail: String!
+  userId: String!
+  userName: String!
+}
+
+type Github__com___kloudlite___api___pkg___types__EncodedString
+  @join__type(graph: CONSOLE_API)
+{
+  encoding: String!
+  value: String!
+}
+
+enum Github__com___kloudlite___api___pkg___types__SyncAction
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  APPLY @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  DELETE @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+}
+
+enum Github__com___kloudlite___api___pkg___types__SyncState
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  APPLIED_AT_AGENT @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  DELETED_AT_AGENT @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  DELETING_AT_AGENT @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  ERRORED_AT_AGENT @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  IDLE @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  IN_QUEUE @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  UPDATED_AT_AGENT @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+}
+
+type Github__com___kloudlite___api___pkg___types__SyncStatus
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  action: Github__com___kloudlite___api___pkg___types__SyncAction!
+  error: String
+  lastSyncedAt: Date
+  recordVersion: Int!
+  state: Github__com___kloudlite___api___pkg___types__SyncState!
+  syncScheduledAt: Date
+}
+
+enum Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism
+  @join__type(graph: INFRA_API)
+{
+  assume_role @join__enumValue(graph: INFRA_API)
+  secret_keys @join__enumValue(graph: INFRA_API)
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
+  @join__type(graph: INFRA_API)
+{
+  credentials: Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials!
+  k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
+  nodePools: Map
+  region: String!
+  spotNodePools: Map
+  vpc: Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn
+  @join__type(graph: INFRA_API)
+{
+  credentials: Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn!
+  k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
+  region: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials
+  @join__type(graph: INFRA_API)
+{
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn
+  @join__type(graph: INFRA_API)
+{
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig
+  @join__type(graph: INFRA_API)
+{
+  instanceType: String!
+  nodes: Map
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn
+  @join__type(graph: INFRA_API)
+{
+  instanceType: String!
+  nodes: Map
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
+  @join__type(graph: INFRA_API)
+{
+  iamInstanceProfileRole: String
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
+  @join__type(graph: INFRA_API)
+{
+  instanceType: String!
+  nvidiaGpuEnabled: Boolean!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
+  @join__type(graph: INFRA_API)
+{
+  availabilityZone: String!
+  ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig
+  iamInstanceProfileRole: String
+  nvidiaGpuEnabled: Boolean!
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig
+  vpcId: String!
+  vpcSubnetId: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn
+  @join__type(graph: INFRA_API)
+{
+  availabilityZone: String!
+  ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn
+  nvidiaGpuEnabled: Boolean!
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn
+}
+
+enum Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType
+  @join__type(graph: INFRA_API)
+{
+  ec2 @join__enumValue(graph: INFRA_API)
+  spot @join__enumValue(graph: INFRA_API)
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode
+  @join__type(graph: INFRA_API)
+{
+  memoryPerVcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloat
+  vcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloat!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn
+  @join__type(graph: INFRA_API)
+{
+  memoryPerVcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn
+  vcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode
+  @join__type(graph: INFRA_API)
+{
+  instanceTypes: [String!]!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn
+  @join__type(graph: INFRA_API)
+{
+  instanceTypes: [String!]!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig
+  @join__type(graph: INFRA_API)
+{
+  cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode
+  gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode
+  nodes: Map
+  spotFleetTaggingRoleName: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn
+  @join__type(graph: INFRA_API)
+{
+  cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn
+  gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn
+  nodes: Map
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID
+  @join__type(graph: INFRA_API)
+{
+  availabilityZone: String!
+  id: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams
+  @join__type(graph: INFRA_API)
+{
+  id: String!
+  publicSubnets: [Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID!]!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput
+  @join__type(graph: INFRA_API)
+{
+  jobName: String!
+  jobNamespace: String!
+  keyAWSVPCId: String
+  keyAWSVPCPublicSubnets: String
+  keyK3sAgentJoinToken: String!
+  keyK3sServerJoinToken: String!
+  keyKubeconfig: String!
+  secretName: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec
+  @join__type(graph: INFRA_API)
+{
+  accountId: String!
+  accountName: String!
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
+  backupToS3Enabled: Boolean!
+  cloudflareEnabled: Boolean
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  clusterInternalDnsHost: String
+  clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
+  kloudliteRelease: String!
+  messageQueueTopicName: String!
+  output: Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput
+  publicDNSHost: String!
+  taintMasterNodes: Boolean!
+}
+
+enum Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode
+  @join__type(graph: INFRA_API)
+{
+  dev @join__enumValue(graph: INFRA_API)
+  HA @join__enumValue(graph: INFRA_API)
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn
+  @join__type(graph: INFRA_API)
+{
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn
+  cloudflareEnabled: Boolean
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig
+  @join__type(graph: INFRA_API)
+{
+  availabilityZone: String!
+  bootVolumeSize: Int!
+  bootVolumeType: String!
+  credentials: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  machineType: String!
+  nodes: Map
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
+  region: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn
+  @join__type(graph: INFRA_API)
+{
+  availabilityZone: String!
+  bootVolumeSize: Int!
+  bootVolumeType: String!
+  credentials: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+  machineType: String!
+  nodes: Map
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
+  region: String!
+}
+
+enum Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType
+  @join__type(graph: INFRA_API)
+{
+  SPOT @join__enumValue(graph: INFRA_API)
+  STANDARD @join__enumValue(graph: INFRA_API)
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps
+  @join__type(graph: INFRA_API)
+{
+  availabilityZone: String!
+  kloudliteRelease: String!
+  lastRecreatedAt: Date
+  role: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec
+  @join__type(graph: INFRA_API)
+{
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig
+  maxCount: Int!
+  minCount: Int!
+  nodeLabels: Map
+  nodeTaints: [K8s__io___api___core___v1__Taint!]
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn
+  @join__type(graph: INFRA_API)
+{
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn
+  maxCount: Int!
+  minCount: Int!
+  nodeLabels: Map
+  nodeTaints: [K8s__io___api___core___v1__TaintIn!]
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodeProps
+  @join__type(graph: INFRA_API)
+{
+  lastRecreatedAt: Date
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__NodePropsIn
+  @join__type(graph: INFRA_API)
+{
+  lastRecreatedAt: Date
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec
+  @join__type(graph: INFRA_API)
+{
+  nodepoolName: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn
+  @join__type(graph: INFRA_API)
+{
+  nodepoolName: String!
+}
+
+enum Github__com___kloudlite___operator___apis___common____types__CloudProvider
+  @join__type(graph: INFRA_API)
+{
+  aws @join__enumValue(graph: INFRA_API)
+  azure @join__enumValue(graph: INFRA_API)
+  digitalocean @join__enumValue(graph: INFRA_API)
+  gcp @join__enumValue(graph: INFRA_API)
+}
+
+type Github__com___kloudlite___operator___apis___common____types__MinMaxFloat
+  @join__type(graph: INFRA_API)
+{
+  max: String!
+  min: String!
+}
+
+input Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn
+  @join__type(graph: INFRA_API)
+{
+  max: String!
+  min: String!
+}
+
+type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
+  @join__type(graph: INFRA_API)
+{
+  key: String!
+  name: String!
+  namespace: String
+}
+
+type Github__com___kloudlite___operator___apis___common____types__SecretRef
+  @join__type(graph: INFRA_API)
+{
+  name: String!
+  namespace: String
+}
+
+input Github__com___kloudlite___operator___apis___common____types__SecretRefIn
+  @join__type(graph: INFRA_API)
+{
+  name: String!
+  namespace: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__AppContainer
+  @join__type(graph: CONSOLE_API)
+{
+  args: [String!]
+  command: [String!]
+  env: [Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv!]
+  envFrom: [Github__com___kloudlite___operator___apis___crds___v1__EnvFrom!]
+  image: String!
+  imagePullPolicy: String
+  livenessProbe: Github__com___kloudlite___operator___apis___crds___v1__Probe
+  name: String!
+  readinessProbe: Github__com___kloudlite___operator___apis___crds___v1__Probe
+  resourceCpu: Github__com___kloudlite___operator___apis___crds___v1__ContainerResource
+  resourceMemory: Github__com___kloudlite___operator___apis___crds___v1__ContainerResource
+  volumes: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn
+  @join__type(graph: CONSOLE_API)
+{
+  args: [String!]
+  command: [String!]
+  env: [Github__com___kloudlite___operator___apis___crds___v1__ContainerEnvIn!]
+  envFrom: [Github__com___kloudlite___operator___apis___crds___v1__EnvFromIn!]
+  image: String!
+  imagePullPolicy: String
+  livenessProbe: Github__com___kloudlite___operator___apis___crds___v1__ProbeIn
+  name: String!
+  readinessProbe: Github__com___kloudlite___operator___apis___crds___v1__ProbeIn
+  resourceCpu: Github__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn
+  resourceMemory: Github__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn
+  volumes: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeIn!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__AppSpec
+  @join__type(graph: CONSOLE_API)
+{
+  containers: [Github__com___kloudlite___operator___apis___crds___v1__AppContainer!]!
+  displayName: String
+  freeze: Boolean
+  hpa: Github__com___kloudlite___operator___apis___crds___v1__HPA
+  intercept: Github__com___kloudlite___operator___apis___crds___v1__Intercept
+  nodeSelector: Map
+  region: String
+  replicas: Int
+  serviceAccount: String
+  services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvc!]
+  tolerations: [K8s__io___api___core___v1__Toleration!]
+  topologySpreadConstraints: [K8s__io___api___core___v1__TopologySpreadConstraint!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn
+  @join__type(graph: CONSOLE_API)
+{
+  containers: [Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn!]!
+  displayName: String
+  freeze: Boolean
+  hpa: Github__com___kloudlite___operator___apis___crds___v1__HPAIn
+  intercept: Github__com___kloudlite___operator___apis___crds___v1__InterceptIn
+  nodeSelector: Map
+  region: String
+  replicas: Int
+  serviceAccount: String
+  services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn!]
+  tolerations: [K8s__io___api___core___v1__TolerationIn!]
+  topologySpreadConstraints: [K8s__io___api___core___v1__TopologySpreadConstraintIn!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__AppSvc
+  @join__type(graph: CONSOLE_API)
+{
+  name: String
+  port: Int!
+  targetPort: Int
+  type: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn
+  @join__type(graph: CONSOLE_API)
+{
+  name: String
+  port: Int!
+  targetPort: Int
+  type: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__BasicAuth
+  @join__type(graph: CONSOLE_API)
+{
+  enabled: Boolean!
+  secretName: String
+  username: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn
+  @join__type(graph: CONSOLE_API)
+{
+  enabled: Boolean!
+  secretName: String
+  username: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec
+  @join__type(graph: INFRA_API)
+{
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
+  targetNamespace: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn
+  @join__type(graph: INFRA_API)
+{
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
+  targetNamespace: String!
+}
+
+enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret
+  @join__type(graph: CONSOLE_API)
+{
+  config @join__enumValue(graph: CONSOLE_API)
+  secret @join__enumValue(graph: CONSOLE_API)
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv
+  @join__type(graph: CONSOLE_API)
+{
+  key: String!
+  optional: Boolean
+  refKey: String
+  refName: String
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret
+  value: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ContainerEnvIn
+  @join__type(graph: CONSOLE_API)
+{
+  key: String!
+  optional: Boolean
+  refKey: String
+  refName: String
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret
+  value: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ContainerResource
+  @join__type(graph: CONSOLE_API)
+{
+  max: String
+  min: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn
+  @join__type(graph: CONSOLE_API)
+{
+  max: String
+  min: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume
+  @join__type(graph: CONSOLE_API)
+{
+  items: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem!]
+  mountPath: String!
+  refName: String!
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeIn
+  @join__type(graph: CONSOLE_API)
+{
+  items: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItemIn!]
+  mountPath: String!
+  refName: String!
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem
+  @join__type(graph: CONSOLE_API)
+{
+  fileName: String
+  key: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItemIn
+  @join__type(graph: CONSOLE_API)
+{
+  fileName: String
+  key: String!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__Cors
+  @join__type(graph: CONSOLE_API)
+{
+  allowCredentials: Boolean
+  enabled: Boolean
+  origins: [String!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__CorsIn
+  @join__type(graph: CONSOLE_API)
+{
+  allowCredentials: Boolean
+  enabled: Boolean
+  origins: [String!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__EnvFrom
+  @join__type(graph: CONSOLE_API)
+{
+  refName: String!
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__EnvFromIn
+  @join__type(graph: CONSOLE_API)
+{
+  refName: String!
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting
+  @join__type(graph: CONSOLE_API)
+{
+  mode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode
+  privateIngressClass: String
+  publicIngressClass: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn
+  @join__type(graph: CONSOLE_API)
+{
+  mode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode
+}
+
+enum Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode
+  @join__type(graph: CONSOLE_API)
+{
+  private @join__enumValue(graph: CONSOLE_API)
+  public @join__enumValue(graph: CONSOLE_API)
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec
+  @join__type(graph: CONSOLE_API)
+{
+  projectName: String!
+  routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting
+  targetNamespace: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn
+  @join__type(graph: CONSOLE_API)
+{
+  projectName: String!
+  routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn
+  targetNamespace: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec
+  @join__type(graph: INFRA_API)
+{
+  chartName: String!
+  chartRepoURL: String!
+  chartVersion: String!
+  jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVars
+  postInstall: String
+  postUninstall: String
+  preInstall: String
+  preUninstall: String
+  releaseName: String
+  values: Map!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn
+  @join__type(graph: INFRA_API)
+{
+  chartName: String!
+  chartRepoURL: String!
+  chartVersion: String!
+  jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn
+  postInstall: String
+  postUninstall: String
+  preInstall: String
+  preUninstall: String
+  values: Map!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus
+  @join__type(graph: INFRA_API)
+{
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  releaseNotes: String!
+  releaseStatus: String!
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__HPA
+  @join__type(graph: CONSOLE_API)
+{
+  enabled: Boolean!
+  maxReplicas: Int
+  minReplicas: Int
+  thresholdCpu: Int
+  thresholdMemory: Int
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__HPAIn
+  @join__type(graph: CONSOLE_API)
+{
+  enabled: Boolean!
+  maxReplicas: Int
+  minReplicas: Int
+  thresholdCpu: Int
+  thresholdMemory: Int
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe
+  @join__type(graph: CONSOLE_API)
+{
+  httpHeaders: Map
+  path: String!
+  port: Int!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn
+  @join__type(graph: CONSOLE_API)
+{
+  httpHeaders: Map
+  path: String!
+  port: Int!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__Https
+  @join__type(graph: CONSOLE_API)
+{
+  clusterIssuer: String
+  enabled: Boolean!
+  forceRedirect: Boolean
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn
+  @join__type(graph: CONSOLE_API)
+{
+  clusterIssuer: String
+  enabled: Boolean!
+  forceRedirect: Boolean
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__Intercept
+  @join__type(graph: CONSOLE_API)
+{
+  enabled: Boolean!
+  toDevice: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn
+  @join__type(graph: CONSOLE_API)
+{
+  enabled: Boolean!
+  toDevice: String!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__JobVars
+  @join__type(graph: INFRA_API)
+{
+  affinity: K8s__io___api___core___v1__Affinity
+  backOffLimit: Int
+  nodeSelector: Map
+  tolerations: [K8s__io___api___core___v1__Toleration!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn
+  @join__type(graph: INFRA_API)
+{
+  affinity: K8s__io___api___core___v1__AffinityIn
+  backOffLimit: Int
+  nodeSelector: Map
+  tolerations: [K8s__io___api___core___v1__TolerationIn!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec
+  @join__type(graph: CONSOLE_API)
+{
+  resourceNamePrefix: String
+  resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn
+  @join__type(graph: CONSOLE_API)
+{
+  resourceNamePrefix: String
+  resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  nodeSelector: Map
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate!
+  tolerations: [K8s__io___api___core___v1__Toleration!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  nodeSelector: Map
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn!
+  tolerations: [K8s__io___api___core___v1__TolerationIn!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String!
+  kind: String!
+  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef!
+  spec: Map!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String!
+  kind: String!
+  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn!
+  spec: Map!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__Probe
+  @join__type(graph: CONSOLE_API)
+{
+  failureThreshold: Int
+  httpGet: Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe
+  initialDelay: Int
+  interval: Int
+  shell: Github__com___kloudlite___operator___apis___crds___v1__ShellProbe
+  tcp: Github__com___kloudlite___operator___apis___crds___v1__TcpProbe
+  type: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn
+  @join__type(graph: CONSOLE_API)
+{
+  failureThreshold: Int
+  httpGet: Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn
+  initialDelay: Int
+  interval: Int
+  shell: Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn
+  tcp: Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn
+  type: String!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpec
+  @join__type(graph: CONSOLE_API)
+{
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
+  targetNamespace: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpecIn
+  @join__type(graph: CONSOLE_API)
+{
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
+  targetNamespace: String!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec
+  @join__type(graph: CONSOLE_API)
+{
+  targetNamespace: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn
+  @join__type(graph: CONSOLE_API)
+{
+  targetNamespace: String!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__RateLimit
+  @join__type(graph: CONSOLE_API)
+{
+  connections: Int
+  enabled: Boolean
+  rpm: Int
+  rps: Int
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
+  @join__type(graph: CONSOLE_API)
+{
+  connections: Int
+  enabled: Boolean
+  rpm: Int
+  rps: Int
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__Route
+  @join__type(graph: CONSOLE_API)
+{
+  app: String!
+  path: String!
+  port: Int!
+  rewrite: Boolean
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__RouteIn
+  @join__type(graph: CONSOLE_API)
+{
+  app: String!
+  path: String!
+  port: Int!
+  rewrite: Boolean
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__RouterSpec
+  @join__type(graph: CONSOLE_API)
+{
+  backendProtocol: String
+  basicAuth: Github__com___kloudlite___operator___apis___crds___v1__BasicAuth
+  cors: Github__com___kloudlite___operator___apis___crds___v1__Cors
+  domains: [String!]!
+  https: Github__com___kloudlite___operator___apis___crds___v1__Https
+  ingressClass: String
+  maxBodySizeInMB: Int
+  rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimit
+  routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn
+  @join__type(graph: CONSOLE_API)
+{
+  backendProtocol: String
+  basicAuth: Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn
+  cors: Github__com___kloudlite___operator___apis___crds___v1__CorsIn
+  domains: [String!]!
+  https: Github__com___kloudlite___operator___apis___crds___v1__HttpsIn
+  ingressClass: String
+  maxBodySizeInMB: Int
+  rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
+  routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String!
+  kind: String!
+  spec: Map!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String!
+  kind: String!
+  spec: Map!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ShellProbe
+  @join__type(graph: CONSOLE_API)
+{
+  command: [String!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn
+  @join__type(graph: CONSOLE_API)
+{
+  command: [String!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__TcpProbe
+  @join__type(graph: CONSOLE_API)
+{
+  port: Int!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn
+  @join__type(graph: CONSOLE_API)
+{
+  port: Int!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  buildArgs: Map
+  buildContexts: Map
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  buildArgs: Map
+  buildContexts: Map
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  accountName: String!
+  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
+  caches: [Github__com___kloudlite___operator___apis___distribution___v1__Cache!]
+  registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
+  resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
+  caches: [Github__com___kloudlite___operator___apis___distribution___v1__CacheIn!]
+  registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
+  resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Cache
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  name: String!
+  path: String!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__CacheIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  name: String!
+  path: String!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Registry
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  repo: Github__com___kloudlite___operator___apis___distribution___v1__Repo!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  repo: Github__com___kloudlite___operator___apis___distribution___v1__RepoIn!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Repo
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  name: String!
+  tags: [String!]!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__RepoIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  name: String!
+  tags: [String!]!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Resource
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  cpu: Int!
+  memoryInMb: Int!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  cpu: Int!
+  memoryInMb: Int!
+}
+
+type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord
+  @join__type(graph: CONSOLE_API)
+{
+  host: String
+  target: String
+}
+
+input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn
+  @join__type(graph: CONSOLE_API)
+{
+  host: String
+  target: String
+}
+
+type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
+  @join__type(graph: CONSOLE_API)
+{
+  activeNamespace: String
+  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
+  disabled: Boolean
+  nodeSelector: Map
+  noExternalService: Boolean
+  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
+}
+
+input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
+  @join__type(graph: CONSOLE_API)
+{
+  activeNamespace: String
+  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
+  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
+}
+
+type Github__com___kloudlite___operator___apis___wireguard___v1__Port
+  @join__type(graph: CONSOLE_API)
+{
+  port: Int
+  targetPort: Int
+}
+
+input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn
+  @join__type(graph: CONSOLE_API)
+{
+  port: Int
+  targetPort: Int
+}
+
+type Github__com___kloudlite___operator___pkg___operator__Check
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  debug: String
+  error: String
+  generation: Int
+  info: String
+  message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___pkg___operator__State
+  status: Boolean!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__CheckIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  debug: String
+  error: String
+  generation: Int
+  info: String
+  message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___pkg___operator__State
+  status: Boolean!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__CheckMeta
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  debug: Boolean
+  description: String
+  name: String!
+  title: String!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  debug: Boolean
+  description: String
+  name: String!
+  title: String!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__ResourceRef
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+enum Github__com___kloudlite___operator___pkg___operator__State
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  errored____during____reconcilation @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  finished____reconcilation @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  under____reconcilation @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  yet____to____be____reconciled @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+}
+
+type Github__com___kloudlite___operator___pkg___operator__Status
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
+}
+
+input Github__com___kloudlite___operator___pkg___operator__StatusIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMetaIn!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRefIn!]
+}
+
+type Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  RawMessage: Any
+}
+
+input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  RawMessage: Any
+}
+
+type GithubBranch
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  name: String
+  protected: Boolean
+}
+
+type GithubInstallation
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  account: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubUserAccount
+  appId: Int
+  id: Int
+  nodeId: String
+  repositoriesUrl: String
+  targetId: Int
+  targetType: String
+}
+
+type GithubListRepository
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  repositories: [Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubRepository]!
+  totalCount: Int
+}
+
+type GithubSearchRepository
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  incompleteResults: Boolean
+  repositories: [Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubRepository]!
+  total: Int
+}
+
+type GitlabBranch
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  canPush: Boolean!
+  default: Boolean!
+  developersCanMerge: Boolean!
+  developersCanPush: Boolean!
+  merged: Boolean!
+  name: String!
+  protected: Boolean!
+  webUrl: String!
+}
+
+type GitlabGroup
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  avatarUrl: String!
+  fullName: String!
+  id: String!
+}
+
+type GitlabProject
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  archived: Boolean!
+  avatarUrl: String!
+  createdAt: Date
+  creatorId: Int!
+  defaultBranch: String!
+  description: String!
+  emptyRepo: Boolean!
+  httpUrlToRepo: String!
+  id: Int!
+  lastActivityAt: Date
+  name: String!
+  nameWithNamespace: String!
+  path: String!
+  pathWithNamespace: String!
+  public: Boolean!
+  sshUrlToRepo: String!
+  tagList: [String!]!
+  topics: [String!]!
+  webUrl: String!
+}
+
+type HelmRelease
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec
+  status: Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type HelmReleaseEdge
+  @join__type(graph: INFRA_API)
+{
+  cursor: String!
+  node: HelmRelease!
+}
+
+input HelmReleaseIn
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String
+  displayName: String!
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn
+}
+
+type HelmReleasePaginatedRecords
+  @join__type(graph: INFRA_API)
+{
+  edges: [HelmReleaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ImagePullSecret
+  @join__type(graph: CONSOLE_API)
+{
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  dockerConfigJson: String
+  environmentName: String!
+  format: Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata!
+  projectName: String!
+  recordVersion: Int!
+  registryPassword: String
+  registryURL: String
+  registryUsername: String
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ImagePullSecretEdge
+  @join__type(graph: CONSOLE_API)
+{
+  cursor: String!
+  node: ImagePullSecret!
+}
+
+input ImagePullSecretIn
+  @join__type(graph: CONSOLE_API)
+{
+  displayName: String!
+  dockerConfigJson: String
+  format: Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat!
+  metadata: MetadataIn!
+  registryPassword: String
+  registryURL: String
+  registryUsername: String
+}
+
+type ImagePullSecretPaginatedRecords
+  @join__type(graph: CONSOLE_API)
+{
+  edges: [ImagePullSecretEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Invitation
+  @join__type(graph: ACCOUNT_API)
+{
+  accepted: Boolean
+  accountName: String!
+  creationTime: Date!
+  id: String!
+  invitedBy: String!
+  inviteToken: String!
+  markedForDeletion: Boolean
+  recordVersion: Int!
+  rejected: Boolean
+  updateTime: Date!
+  userEmail: String
+  userName: String
+  userRole: Github__com___kloudlite___api___apps___iam___types__Role!
+}
+
+input InvitationIn
+  @join__type(graph: ACCOUNT_API)
+{
+  userEmail: String
+  userName: String
+  userRole: Github__com___kloudlite___api___apps___iam___types__Role!
+}
+
+scalar join__FieldSet
+
+enum join__Graph {
+  ACCOUNT_API @join__graph(name: "account-api", url: "http://accounts-api/query")
+  AUTH_API @join__graph(name: "auth-api", url: "http://auth-api/query")
+  CONSOLE_API @join__graph(name: "console-api", url: "http://console-api/query")
+  CONTAINER_REGISTRY_API @join__graph(name: "container-registry-api", url: "http://container-registry-api/query")
+  INFRA_API @join__graph(name: "infra-api", url: "http://infra-api/query")
+}
+
+scalar Json
+  @join__type(graph: ACCOUNT_API)
+  @join__type(graph: AUTH_API)
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+
+type K8s__io___api___core___v1__Affinity
+  @join__type(graph: INFRA_API)
+{
+  nodeAffinity: K8s__io___api___core___v1__NodeAffinity
+  podAffinity: K8s__io___api___core___v1__PodAffinity
+  podAntiAffinity: K8s__io___api___core___v1__PodAntiAffinity
+}
+
+input K8s__io___api___core___v1__AffinityIn
+  @join__type(graph: INFRA_API)
+{
+  nodeAffinity: K8s__io___api___core___v1__NodeAffinityIn
+  podAffinity: K8s__io___api___core___v1__PodAffinityIn
+  podAntiAffinity: K8s__io___api___core___v1__PodAntiAffinityIn
+}
+
+type K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  partition: Int
+  readOnly: Boolean
+  volumeID: String!
+}
+
+input K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  partition: Int
+  readOnly: Boolean
+  volumeID: String!
+}
+
+type K8s__io___api___core___v1__AzureDiskVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  cachingMode: String
+  diskName: String!
+  diskURI: String!
+  fsType: String
+  kind: String
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__AzureDiskVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  cachingMode: String
+  diskName: String!
+  diskURI: String!
+  fsType: String
+  kind: String
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__AzureFilePersistentVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  readOnly: Boolean
+  secretName: String!
+  secretNamespace: String
+  shareName: String!
+}
+
+input K8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  readOnly: Boolean
+  secretName: String!
+  secretNamespace: String
+  shareName: String!
+}
+
+type K8s__io___api___core___v1__CephFSPersistentVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  monitors: [String!]!
+  path: String
+  readOnly: Boolean
+  secretFile: String
+  secretRef: K8s__io___api___core___v1__SecretReference
+  user: String
+}
+
+input K8s__io___api___core___v1__CephFSPersistentVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  monitors: [String!]!
+  path: String
+  readOnly: Boolean
+  secretFile: String
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  user: String
+}
+
+type K8s__io___api___core___v1__CinderPersistentVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  volumeID: String!
+}
+
+input K8s__io___api___core___v1__CinderPersistentVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  volumeID: String!
+}
+
+enum K8s__io___api___core___v1__ConditionStatus
+  @join__type(graph: INFRA_API)
+{
+  False @join__enumValue(graph: INFRA_API)
+  True @join__enumValue(graph: INFRA_API)
+  Unknown @join__enumValue(graph: INFRA_API)
+}
+
+type K8s__io___api___core___v1__CSIPersistentVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  controllerExpandSecretRef: K8s__io___api___core___v1__SecretReference
+  controllerPublishSecretRef: K8s__io___api___core___v1__SecretReference
+  driver: String!
+  fsType: String
+  nodeExpandSecretRef: K8s__io___api___core___v1__SecretReference
+  nodePublishSecretRef: K8s__io___api___core___v1__SecretReference
+  nodeStageSecretRef: K8s__io___api___core___v1__SecretReference
+  readOnly: Boolean
+  volumeAttributes: Map
+  volumeHandle: String!
+}
+
+input K8s__io___api___core___v1__CSIPersistentVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  controllerExpandSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  controllerPublishSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  driver: String!
+  fsType: String
+  nodeExpandSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  nodePublishSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  nodeStageSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  readOnly: Boolean
+  volumeAttributes: Map
+  volumeHandle: String!
+}
+
+type K8s__io___api___core___v1__FCVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  lun: Int
+  readOnly: Boolean
+  targetWWNs: [String!]
+  wwids: [String!]
+}
+
+input K8s__io___api___core___v1__FCVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  lun: Int
+  readOnly: Boolean
+  targetWWNs: [String!]
+  wwids: [String!]
+}
+
+type K8s__io___api___core___v1__FlexPersistentVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  driver: String!
+  fsType: String
+  options: Map
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+}
+
+input K8s__io___api___core___v1__FlexPersistentVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  driver: String!
+  fsType: String
+  options: Map
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+}
+
+type K8s__io___api___core___v1__FlockerVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  datasetName: String
+  datasetUUID: String
+}
+
+input K8s__io___api___core___v1__FlockerVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  datasetName: String
+  datasetUUID: String
+}
+
+type K8s__io___api___core___v1__GCEPersistentDiskVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  partition: Int
+  pdName: String!
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  partition: Int
+  pdName: String!
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__GlusterfsPersistentVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  endpoints: String!
+  endpointsNamespace: String
+  path: String!
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  endpoints: String!
+  endpointsNamespace: String
+  path: String!
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__HostPathVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  path: String!
+  type: String
+}
+
+input K8s__io___api___core___v1__HostPathVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  path: String!
+  type: String
+}
+
+type K8s__io___api___core___v1__ISCSIPersistentVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  chapAuthDiscovery: Boolean
+  chapAuthSession: Boolean
+  fsType: String
+  initiatorName: String
+  iqn: String!
+  iscsiInterface: String
+  lun: Int!
+  portals: [String!]
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  targetPortal: String!
+}
+
+input K8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  chapAuthDiscovery: Boolean
+  chapAuthSession: Boolean
+  fsType: String
+  initiatorName: String
+  iqn: String!
+  iscsiInterface: String
+  lun: Int!
+  portals: [String!]
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  targetPortal: String!
+}
+
+type K8s__io___api___core___v1__LocalVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  path: String!
+}
+
+input K8s__io___api___core___v1__LocalVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  path: String!
+}
+
+type K8s__io___api___core___v1__NamespaceCondition
+  @join__type(graph: INFRA_API)
+{
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__NamespaceConditionType!
+}
+
+input K8s__io___api___core___v1__NamespaceConditionIn
+  @join__type(graph: INFRA_API)
+{
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__NamespaceConditionType!
+}
+
+enum K8s__io___api___core___v1__NamespaceConditionType
+  @join__type(graph: INFRA_API)
+{
+  NamespaceContentRemaining @join__enumValue(graph: INFRA_API)
+  NamespaceDeletionContentFailure @join__enumValue(graph: INFRA_API)
+  NamespaceDeletionDiscoveryFailure @join__enumValue(graph: INFRA_API)
+  NamespaceDeletionGroupVersionParsingFailure @join__enumValue(graph: INFRA_API)
+  NamespaceFinalizersRemaining @join__enumValue(graph: INFRA_API)
+}
+
+enum K8s__io___api___core___v1__NamespacePhase
+  @join__type(graph: INFRA_API)
+{
+  Active @join__enumValue(graph: INFRA_API)
+  Terminating @join__enumValue(graph: INFRA_API)
+}
+
+type K8s__io___api___core___v1__NamespaceSpec
+  @join__type(graph: INFRA_API)
+{
+  finalizers: [String!]
+}
+
+input K8s__io___api___core___v1__NamespaceSpecIn
+  @join__type(graph: INFRA_API)
+{
+  finalizers: [String!]
+}
+
+type K8s__io___api___core___v1__NamespaceStatus
+  @join__type(graph: INFRA_API)
+{
+  conditions: [K8s__io___api___core___v1__NamespaceCondition!]
+  phase: K8s__io___api___core___v1__NamespacePhase
+}
+
+input K8s__io___api___core___v1__NamespaceStatusIn
+  @join__type(graph: INFRA_API)
+{
+  conditions: [K8s__io___api___core___v1__NamespaceConditionIn!]
+  phase: K8s__io___api___core___v1__NamespacePhase
+}
+
+type K8s__io___api___core___v1__NFSVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  path: String!
+  readOnly: Boolean
+  server: String!
+}
+
+input K8s__io___api___core___v1__NFSVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  path: String!
+  readOnly: Boolean
+  server: String!
+}
+
+type K8s__io___api___core___v1__NodeAffinity
+  @join__type(graph: INFRA_API)
+{
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PreferredSchedulingTerm!]
+  requiredDuringSchedulingIgnoredDuringExecution: K8s__io___api___core___v1__NodeSelector
+}
+
+input K8s__io___api___core___v1__NodeAffinityIn
+  @join__type(graph: INFRA_API)
+{
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PreferredSchedulingTermIn!]
+  requiredDuringSchedulingIgnoredDuringExecution: K8s__io___api___core___v1__NodeSelectorIn
+}
+
+type K8s__io___api___core___v1__NodeSelector
+  @join__type(graph: INFRA_API)
+{
+  nodeSelectorTerms: [K8s__io___api___core___v1__NodeSelectorTerm!]!
+}
+
+input K8s__io___api___core___v1__NodeSelectorIn
+  @join__type(graph: INFRA_API)
+{
+  nodeSelectorTerms: [K8s__io___api___core___v1__NodeSelectorTermIn!]!
+}
+
+enum K8s__io___api___core___v1__NodeSelectorOperator
+  @join__type(graph: INFRA_API)
+{
+  DoesNotExist @join__enumValue(graph: INFRA_API)
+  Exists @join__enumValue(graph: INFRA_API)
+  Gt @join__enumValue(graph: INFRA_API)
+  In @join__enumValue(graph: INFRA_API)
+  Lt @join__enumValue(graph: INFRA_API)
+  NotIn @join__enumValue(graph: INFRA_API)
+}
+
+type K8s__io___api___core___v1__NodeSelectorRequirement
+  @join__type(graph: INFRA_API)
+{
+  key: String!
+  operator: K8s__io___api___core___v1__NodeSelectorOperator!
+  values: [String!]
+}
+
+input K8s__io___api___core___v1__NodeSelectorRequirementIn
+  @join__type(graph: INFRA_API)
+{
+  key: String!
+  operator: K8s__io___api___core___v1__NodeSelectorOperator!
+  values: [String!]
+}
+
+type K8s__io___api___core___v1__NodeSelectorTerm
+  @join__type(graph: INFRA_API)
+{
+  matchExpressions: [K8s__io___api___core___v1__NodeSelectorRequirement!]
+  matchFields: [K8s__io___api___core___v1__NodeSelectorRequirement!]
+}
+
+input K8s__io___api___core___v1__NodeSelectorTermIn
+  @join__type(graph: INFRA_API)
+{
+  matchExpressions: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
+  matchFields: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
+}
+
+type K8s__io___api___core___v1__ObjectReference
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String
+  fieldPath: String
+  kind: String
+  name: String
+  namespace: String
+  resourceVersion: String
+  uid: String
+}
+
+input K8s__io___api___core___v1__ObjectReferenceIn
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String
+  fieldPath: String
+  kind: String
+  name: String
+  namespace: String
+  resourceVersion: String
+  uid: String
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimCondition
+  @join__type(graph: INFRA_API)
+{
+  lastProbeTime: Date
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__PersistentVolumeClaimConditionType!
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimConditionIn
+  @join__type(graph: INFRA_API)
+{
+  lastProbeTime: Date
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__PersistentVolumeClaimConditionType!
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimConditionType
+  @join__type(graph: INFRA_API)
+{
+  FileSystemResizePending @join__enumValue(graph: INFRA_API)
+  Resizing @join__enumValue(graph: INFRA_API)
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimPhase
+  @join__type(graph: INFRA_API)
+{
+  Bound @join__enumValue(graph: INFRA_API)
+  Lost @join__enumValue(graph: INFRA_API)
+  Pending @join__enumValue(graph: INFRA_API)
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimSpec
+  @join__type(graph: INFRA_API)
+{
+  accessModes: [String!]
+  dataSource: K8s__io___api___core___v1__TypedLocalObjectReference
+  dataSourceRef: K8s__io___api___core___v1__TypedObjectReference
+  resources: K8s__io___api___core___v1__ResourceRequirements
+  selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  storageClassName: String
+  volumeMode: String
+  volumeName: String
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimSpecIn
+  @join__type(graph: INFRA_API)
+{
+  accessModes: [String!]
+  dataSource: K8s__io___api___core___v1__TypedLocalObjectReferenceIn
+  dataSourceRef: K8s__io___api___core___v1__TypedObjectReferenceIn
+  resources: K8s__io___api___core___v1__ResourceRequirementsIn
+  selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  storageClassName: String
+  volumeMode: String
+  volumeName: String
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimStatus
+  @join__type(graph: INFRA_API)
+{
+  accessModes: [String!]
+  allocatedResources: Map
+  allocatedResourceStatuses: Map
+  capacity: Map
+  conditions: [K8s__io___api___core___v1__PersistentVolumeClaimCondition!]
+  phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn
+  @join__type(graph: INFRA_API)
+{
+  accessModes: [String!]
+  allocatedResources: Map
+  allocatedResourceStatuses: Map
+  capacity: Map
+  conditions: [K8s__io___api___core___v1__PersistentVolumeClaimConditionIn!]
+  phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+}
+
+enum K8s__io___api___core___v1__PersistentVolumePhase
+  @join__type(graph: INFRA_API)
+{
+  Available @join__enumValue(graph: INFRA_API)
+  Bound @join__enumValue(graph: INFRA_API)
+  Failed @join__enumValue(graph: INFRA_API)
+  Pending @join__enumValue(graph: INFRA_API)
+  Released @join__enumValue(graph: INFRA_API)
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeReclaimPolicy
+  @join__type(graph: INFRA_API)
+{
+  Delete @join__enumValue(graph: INFRA_API)
+  Recycle @join__enumValue(graph: INFRA_API)
+  Retain @join__enumValue(graph: INFRA_API)
+}
+
+type K8s__io___api___core___v1__PersistentVolumeSpec
+  @join__type(graph: INFRA_API)
+{
+  accessModes: [String!]
+  awsElasticBlockStore: K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource
+  azureDisk: K8s__io___api___core___v1__AzureDiskVolumeSource
+  azureFile: K8s__io___api___core___v1__AzureFilePersistentVolumeSource
+  capacity: Map
+  cephfs: K8s__io___api___core___v1__CephFSPersistentVolumeSource
+  cinder: K8s__io___api___core___v1__CinderPersistentVolumeSource
+  claimRef: K8s__io___api___core___v1__ObjectReference
+  csi: K8s__io___api___core___v1__CSIPersistentVolumeSource
+  fc: K8s__io___api___core___v1__FCVolumeSource
+  flexVolume: K8s__io___api___core___v1__FlexPersistentVolumeSource
+  flocker: K8s__io___api___core___v1__FlockerVolumeSource
+  gcePersistentDisk: K8s__io___api___core___v1__GCEPersistentDiskVolumeSource
+  glusterfs: K8s__io___api___core___v1__GlusterfsPersistentVolumeSource
+  hostPath: K8s__io___api___core___v1__HostPathVolumeSource
+  iscsi: K8s__io___api___core___v1__ISCSIPersistentVolumeSource
+  local: K8s__io___api___core___v1__LocalVolumeSource
+  mountOptions: [String!]
+  nfs: K8s__io___api___core___v1__NFSVolumeSource
+  nodeAffinity: K8s__io___api___core___v1__VolumeNodeAffinity
+  persistentVolumeReclaimPolicy: K8s__io___api___core___v1__PersistentVolumeReclaimPolicy
+  photonPersistentDisk: K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource
+  portworxVolume: K8s__io___api___core___v1__PortworxVolumeSource
+  quobyte: K8s__io___api___core___v1__QuobyteVolumeSource
+  rbd: K8s__io___api___core___v1__RBDPersistentVolumeSource
+  scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSource
+  storageClassName: String
+  storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSource
+  volumeMode: String
+  vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource
+}
+
+input K8s__io___api___core___v1__PersistentVolumeSpecIn
+  @join__type(graph: INFRA_API)
+{
+  accessModes: [String!]
+  awsElasticBlockStore: K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn
+  azureDisk: K8s__io___api___core___v1__AzureDiskVolumeSourceIn
+  azureFile: K8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn
+  capacity: Map
+  cephfs: K8s__io___api___core___v1__CephFSPersistentVolumeSourceIn
+  cinder: K8s__io___api___core___v1__CinderPersistentVolumeSourceIn
+  claimRef: K8s__io___api___core___v1__ObjectReferenceIn
+  csi: K8s__io___api___core___v1__CSIPersistentVolumeSourceIn
+  fc: K8s__io___api___core___v1__FCVolumeSourceIn
+  flexVolume: K8s__io___api___core___v1__FlexPersistentVolumeSourceIn
+  flocker: K8s__io___api___core___v1__FlockerVolumeSourceIn
+  gcePersistentDisk: K8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn
+  glusterfs: K8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn
+  hostPath: K8s__io___api___core___v1__HostPathVolumeSourceIn
+  iscsi: K8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn
+  local: K8s__io___api___core___v1__LocalVolumeSourceIn
+  mountOptions: [String!]
+  nfs: K8s__io___api___core___v1__NFSVolumeSourceIn
+  nodeAffinity: K8s__io___api___core___v1__VolumeNodeAffinityIn
+  persistentVolumeReclaimPolicy: K8s__io___api___core___v1__PersistentVolumeReclaimPolicy
+  photonPersistentDisk: K8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn
+  portworxVolume: K8s__io___api___core___v1__PortworxVolumeSourceIn
+  quobyte: K8s__io___api___core___v1__QuobyteVolumeSourceIn
+  rbd: K8s__io___api___core___v1__RBDPersistentVolumeSourceIn
+  scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn
+  storageClassName: String
+  storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn
+  volumeMode: String
+  vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn
+}
+
+type K8s__io___api___core___v1__PersistentVolumeStatus
+  @join__type(graph: INFRA_API)
+{
+  lastPhaseTransitionTime: Date
+  message: String
+  phase: K8s__io___api___core___v1__PersistentVolumePhase
+  reason: String
+}
+
+input K8s__io___api___core___v1__PersistentVolumeStatusIn
+  @join__type(graph: INFRA_API)
+{
+  lastPhaseTransitionTime: Date
+  message: String
+  phase: K8s__io___api___core___v1__PersistentVolumePhase
+  reason: String
+}
+
+type K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  pdID: String!
+}
+
+input K8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  pdID: String!
+}
+
+type K8s__io___api___core___v1__PodAffinity
+  @join__type(graph: INFRA_API)
+{
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTerm!]
+  requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTerm!]
+}
+
+input K8s__io___api___core___v1__PodAffinityIn
+  @join__type(graph: INFRA_API)
+{
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTermIn!]
+  requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTermIn!]
+}
+
+type K8s__io___api___core___v1__PodAffinityTerm
+  @join__type(graph: INFRA_API)
+{
+  labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  namespaces: [String!]
+  namespaceSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  topologyKey: String!
+}
+
+input K8s__io___api___core___v1__PodAffinityTermIn
+  @join__type(graph: INFRA_API)
+{
+  labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  namespaces: [String!]
+  namespaceSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  topologyKey: String!
+}
+
+type K8s__io___api___core___v1__PodAntiAffinity
+  @join__type(graph: INFRA_API)
+{
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTerm!]
+  requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTerm!]
+}
+
+input K8s__io___api___core___v1__PodAntiAffinityIn
+  @join__type(graph: INFRA_API)
+{
+  preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTermIn!]
+  requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTermIn!]
+}
+
+type K8s__io___api___core___v1__PortworxVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  readOnly: Boolean
+  volumeID: String!
+}
+
+input K8s__io___api___core___v1__PortworxVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  readOnly: Boolean
+  volumeID: String!
+}
+
+type K8s__io___api___core___v1__PreferredSchedulingTerm
+  @join__type(graph: INFRA_API)
+{
+  preference: K8s__io___api___core___v1__NodeSelectorTerm!
+  weight: Int!
+}
+
+input K8s__io___api___core___v1__PreferredSchedulingTermIn
+  @join__type(graph: INFRA_API)
+{
+  preference: K8s__io___api___core___v1__NodeSelectorTermIn!
+  weight: Int!
+}
+
+type K8s__io___api___core___v1__QuobyteVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  group: String
+  readOnly: Boolean
+  registry: String!
+  tenant: String
+  user: String
+  volume: String!
+}
+
+input K8s__io___api___core___v1__QuobyteVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  group: String
+  readOnly: Boolean
+  registry: String!
+  tenant: String
+  user: String
+  volume: String!
+}
+
+type K8s__io___api___core___v1__RBDPersistentVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  image: String!
+  keyring: String
+  monitors: [String!]!
+  pool: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  user: String
+}
+
+input K8s__io___api___core___v1__RBDPersistentVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  image: String!
+  keyring: String
+  monitors: [String!]!
+  pool: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  user: String
+}
+
+type K8s__io___api___core___v1__ResourceClaim
+  @join__type(graph: INFRA_API)
+{
+  name: String!
+}
+
+input K8s__io___api___core___v1__ResourceClaimIn
+  @join__type(graph: INFRA_API)
+{
+  name: String!
+}
+
+type K8s__io___api___core___v1__ResourceRequirements
+  @join__type(graph: INFRA_API)
+{
+  claims: [K8s__io___api___core___v1__ResourceClaim!]
+  limits: Map
+  requests: Map
+}
+
+input K8s__io___api___core___v1__ResourceRequirementsIn
+  @join__type(graph: INFRA_API)
+{
+  claims: [K8s__io___api___core___v1__ResourceClaimIn!]
+  limits: Map
+  requests: Map
+}
+
+type K8s__io___api___core___v1__ScaleIOPersistentVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  gateway: String!
+  protectionDomain: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  sslEnabled: Boolean
+  storageMode: String
+  storagePool: String
+  system: String!
+  volumeName: String
+}
+
+input K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  gateway: String!
+  protectionDomain: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  sslEnabled: Boolean
+  storageMode: String
+  storagePool: String
+  system: String!
+  volumeName: String
+}
+
+type K8s__io___api___core___v1__Secret
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String
+  data: Map
+  immutable: Boolean
+  kind: String
+  metadata: Metadata
+  stringData: Map
+  type: K8s__io___api___core___v1__SecretType
+}
+
+type K8s__io___api___core___v1__SecretReference
+  @join__type(graph: INFRA_API)
+{
+  name: String
+  namespace: String
+}
+
+input K8s__io___api___core___v1__SecretReferenceIn
+  @join__type(graph: INFRA_API)
+{
+  name: String
+  namespace: String
+}
+
+enum K8s__io___api___core___v1__SecretType
+  @join__type(graph: CONSOLE_API)
+{
+  bootstrap__kubernetes__io___token @join__enumValue(graph: CONSOLE_API)
+  kubernetes__io___basic____auth @join__enumValue(graph: CONSOLE_API)
+  kubernetes__io___dockercfg @join__enumValue(graph: CONSOLE_API)
+  kubernetes__io___dockerconfigjson @join__enumValue(graph: CONSOLE_API)
+  kubernetes__io___service____account____token @join__enumValue(graph: CONSOLE_API)
+  kubernetes__io___ssh____auth @join__enumValue(graph: CONSOLE_API)
+  kubernetes__io___tls @join__enumValue(graph: CONSOLE_API)
+  Opaque @join__enumValue(graph: CONSOLE_API)
+}
+
+type K8s__io___api___core___v1__StorageOSPersistentVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__ObjectReference
+  volumeName: String
+  volumeNamespace: String
+}
+
+input K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__ObjectReferenceIn
+  volumeName: String
+  volumeNamespace: String
+}
+
+type K8s__io___api___core___v1__Taint
+  @join__type(graph: INFRA_API)
+{
+  effect: K8s__io___api___core___v1__TaintEffect!
+  key: String!
+  timeAdded: Date
+  value: String
+}
+
+enum K8s__io___api___core___v1__TaintEffect
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  NoExecute @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  NoSchedule @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  PreferNoSchedule @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+}
+
+input K8s__io___api___core___v1__TaintIn
+  @join__type(graph: INFRA_API)
+{
+  effect: K8s__io___api___core___v1__TaintEffect!
+  key: String!
+  timeAdded: Date
+  value: String
+}
+
+type K8s__io___api___core___v1__Toleration
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  effect: K8s__io___api___core___v1__TaintEffect
+  key: String
+  operator: K8s__io___api___core___v1__TolerationOperator
+  tolerationSeconds: Int
+  value: String
+}
+
+input K8s__io___api___core___v1__TolerationIn
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  effect: K8s__io___api___core___v1__TaintEffect
+  key: String
+  operator: K8s__io___api___core___v1__TolerationOperator
+  tolerationSeconds: Int
+  value: String
+}
+
+enum K8s__io___api___core___v1__TolerationOperator
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  Equal @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  Exists @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+}
+
+type K8s__io___api___core___v1__TopologySpreadConstraint
+  @join__type(graph: CONSOLE_API)
+{
+  labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  matchLabelKeys: [String!]
+  maxSkew: Int!
+  minDomains: Int
+  nodeAffinityPolicy: String
+  nodeTaintsPolicy: String
+  topologyKey: String!
+  whenUnsatisfiable: K8s__io___api___core___v1__UnsatisfiableConstraintAction!
+}
+
+input K8s__io___api___core___v1__TopologySpreadConstraintIn
+  @join__type(graph: CONSOLE_API)
+{
+  labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  matchLabelKeys: [String!]
+  maxSkew: Int!
+  minDomains: Int
+  nodeAffinityPolicy: String
+  nodeTaintsPolicy: String
+  topologyKey: String!
+  whenUnsatisfiable: K8s__io___api___core___v1__UnsatisfiableConstraintAction!
+}
+
+type K8s__io___api___core___v1__TypedLocalObjectReference
+  @join__type(graph: INFRA_API)
+{
+  apiGroup: String
+  kind: String!
+  name: String!
+}
+
+input K8s__io___api___core___v1__TypedLocalObjectReferenceIn
+  @join__type(graph: INFRA_API)
+{
+  apiGroup: String
+  kind: String!
+  name: String!
+}
+
+type K8s__io___api___core___v1__TypedObjectReference
+  @join__type(graph: INFRA_API)
+{
+  apiGroup: String
+  kind: String!
+  name: String!
+  namespace: String
+}
+
+input K8s__io___api___core___v1__TypedObjectReferenceIn
+  @join__type(graph: INFRA_API)
+{
+  apiGroup: String
+  kind: String!
+  name: String!
+  namespace: String
+}
+
+enum K8s__io___api___core___v1__UnsatisfiableConstraintAction
+  @join__type(graph: CONSOLE_API)
+{
+  DoNotSchedule @join__enumValue(graph: CONSOLE_API)
+  ScheduleAnyway @join__enumValue(graph: CONSOLE_API)
+}
+
+type K8s__io___api___core___v1__VolumeNodeAffinity
+  @join__type(graph: INFRA_API)
+{
+  required: K8s__io___api___core___v1__NodeSelector
+}
+
+input K8s__io___api___core___v1__VolumeNodeAffinityIn
+  @join__type(graph: INFRA_API)
+{
+  required: K8s__io___api___core___v1__NodeSelectorIn
+}
+
+type K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  storagePolicyID: String
+  storagePolicyName: String
+  volumePath: String!
+}
+
+input K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn
+  @join__type(graph: INFRA_API)
+{
+  fsType: String
+  storagePolicyID: String
+  storagePolicyName: String
+  volumePath: String!
+}
+
+type K8s__io___api___core___v1__WeightedPodAffinityTerm
+  @join__type(graph: INFRA_API)
+{
+  podAffinityTerm: K8s__io___api___core___v1__PodAffinityTerm!
+  weight: Int!
+}
+
+input K8s__io___api___core___v1__WeightedPodAffinityTermIn
+  @join__type(graph: INFRA_API)
+{
+  podAffinityTerm: K8s__io___api___core___v1__PodAffinityTermIn!
+  weight: Int!
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentSource
+  @join__type(graph: INFRA_API)
+{
+  inlineVolumeSpec: K8s__io___api___core___v1__PersistentVolumeSpec
+  persistentVolumeName: String
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentSourceIn
+  @join__type(graph: INFRA_API)
+{
+  inlineVolumeSpec: K8s__io___api___core___v1__PersistentVolumeSpecIn
+  persistentVolumeName: String
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentSpec
+  @join__type(graph: INFRA_API)
+{
+  attacher: String!
+  nodeName: String!
+  source: K8s__io___api___storage___v1__VolumeAttachmentSource!
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentSpecIn
+  @join__type(graph: INFRA_API)
+{
+  attacher: String!
+  nodeName: String!
+  source: K8s__io___api___storage___v1__VolumeAttachmentSourceIn!
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentStatus
+  @join__type(graph: INFRA_API)
+{
+  attached: Boolean!
+  attachError: K8s__io___api___storage___v1__VolumeError
+  attachmentMetadata: Map
+  detachError: K8s__io___api___storage___v1__VolumeError
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentStatusIn
+  @join__type(graph: INFRA_API)
+{
+  attached: Boolean!
+  attachError: K8s__io___api___storage___v1__VolumeErrorIn
+  attachmentMetadata: Map
+  detachError: K8s__io___api___storage___v1__VolumeErrorIn
+}
+
+type K8s__io___api___storage___v1__VolumeError
+  @join__type(graph: INFRA_API)
+{
+  message: String
+  time: Date
+}
+
+input K8s__io___api___storage___v1__VolumeErrorIn
+  @join__type(graph: INFRA_API)
+{
+  message: String
+  time: Date
+}
+
+enum K8s__io___apimachinery___pkg___api___resource__Format
+  @join__type(graph: INFRA_API)
+{
+  BinarySI @join__enumValue(graph: INFRA_API)
+  DecimalExponent @join__enumValue(graph: INFRA_API)
+  DecimalSI @join__enumValue(graph: INFRA_API)
+}
+
+type K8s__io___apimachinery___pkg___api___resource__Quantity
+  @join__type(graph: INFRA_API)
+{
+  Format: K8s__io___apimachinery___pkg___api___resource__Format!
+}
+
+input K8s__io___apimachinery___pkg___api___resource__QuantityIn
+  @join__type(graph: INFRA_API)
+{
+  Format: K8s__io___apimachinery___pkg___api___resource__Format!
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement!]
+  matchLabels: Map
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn!]
+  matchLabels: Map
+}
+
+enum K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  DoesNotExist @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  Exists @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  In @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  NotIn @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: INFRA_API)
+{
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
+}
+
+scalar link__Import
+
+enum link__Purpose {
+  """
+  `SECURITY` features provide metadata necessary to securely resolve fields.
+  """
+  SECURITY
+
+  """
+  `EXECUTION` features provide metadata necessary for operation execution.
+  """
+  EXECUTION
+}
+
+type ManagedResource
+  @join__type(graph: CONSOLE_API)
+{
+  accountName: String!
+  apiVersion: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  enabled: Boolean
+  environmentName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String!
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncedOutputSecretRef: K8s__io___api___core___v1__Secret
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ManagedResourceEdge
+  @join__type(graph: CONSOLE_API)
+{
+  cursor: String!
+  node: ManagedResource!
+}
+
+input ManagedResourceIn
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String
+  displayName: String!
+  enabled: Boolean
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn!
+}
+
+type ManagedResourceKeyRef
+  @join__type(graph: CONSOLE_API)
+{
+  key: String!
+  mresName: String!
+}
+
+input ManagedResourceKeyRefIn
+  @join__type(graph: CONSOLE_API)
+{
+  key: String!
+  mresName: String!
+}
+
+type ManagedResourceKeyValueRef
+  @join__type(graph: CONSOLE_API)
+{
+  key: String!
+  mresName: String!
+  value: String!
+}
+
+input ManagedResourceKeyValueRefIn
+  @join__type(graph: CONSOLE_API)
+{
+  key: String!
+  mresName: String!
+  value: String!
+}
+
+type ManagedResourcePaginatedRecords
+  @join__type(graph: CONSOLE_API)
+{
+  edges: [ManagedResourceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+scalar Map
+  @join__type(graph: ACCOUNT_API)
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+
+type MatchFilter
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  array: [Any!]
+  exact: Any
+  matchType: MatchFilterMatchType!
+  regex: String
+}
+
+input MatchFilterIn
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  array: [Any!]
+  exact: Any
+  matchType: MatchFilterMatchType!
+  regex: String
+}
+
+enum MatchFilterMatchType
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  array @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  exact @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  regex @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+}
+
+type Metadata
+  @join__type(graph: ACCOUNT_API)
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  annotations: Map
+  creationTimestamp: Date!
+  deletionTimestamp: Date
+  generation: Int!
+  labels: Map
+  name: String!
+  namespace: String
+}
+
+input MetadataIn
+  @join__type(graph: ACCOUNT_API)
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  annotations: Map
+  labels: Map
+  name: String!
+  namespace: String
+}
+
+type MsvcTemplate
+  @join__type(graph: INFRA_API)
+{
+  category: String!
+  displayName: String!
+  items: [Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry!]!
+}
+
+type Mutation
+  @join__type(graph: ACCOUNT_API)
+  @join__type(graph: AUTH_API)
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  accounts_createAccount(account: AccountIn!): Account! @join__field(graph: ACCOUNT_API)
+  accounts_updateAccount(account: AccountIn!): Account! @join__field(graph: ACCOUNT_API)
+  accounts_deactivateAccount(accountName: String!): Boolean! @join__field(graph: ACCOUNT_API)
+  accounts_activateAccount(accountName: String!): Boolean! @join__field(graph: ACCOUNT_API)
+  accounts_deleteAccount(accountName: String!): Boolean! @join__field(graph: ACCOUNT_API)
+  accounts_inviteMembers(accountName: String!, invitations: [InvitationIn!]!): [Invitation!] @join__field(graph: ACCOUNT_API)
+  accounts_resendInviteMail(accountName: String!, invitationId: String!): Boolean! @join__field(graph: ACCOUNT_API)
+  accounts_deleteInvitation(accountName: String!, invitationId: String!): Boolean! @join__field(graph: ACCOUNT_API)
+  accounts_acceptInvitation(accountName: String!, inviteToken: String!): Boolean! @join__field(graph: ACCOUNT_API)
+  accounts_rejectInvitation(accountName: String!, inviteToken: String!): Boolean! @join__field(graph: ACCOUNT_API)
+  accounts_removeAccountMembership(accountName: String!, memberId: ID!): Boolean! @join__field(graph: ACCOUNT_API)
+  accounts_updateAccountMembership(accountName: String!, memberId: ID!, role: Github__com___kloudlite___api___apps___iam___types__Role!): Boolean! @join__field(graph: ACCOUNT_API)
+  auth_setRemoteAuthHeader(loginId: String!, authHeader: String): Boolean! @join__field(graph: AUTH_API)
+  auth_createRemoteLogin(secret: String): String! @join__field(graph: AUTH_API)
+  auth_login(email: String!, password: String!): Session @join__field(graph: AUTH_API)
+  auth_signup(name: String!, email: String!, password: String!): Session @join__field(graph: AUTH_API)
+  oAuth_login(provider: String!, code: String!, state: String): Session! @join__field(graph: AUTH_API)
+  oAuth_addLogin(provider: String!, state: String!, code: String!): Boolean! @join__field(graph: AUTH_API)
+  auth_logout: Boolean! @join__field(graph: AUTH_API)
+  auth_setMetadata(values: Json!): User! @join__field(graph: AUTH_API)
+  auth_clearMetadata: User! @join__field(graph: AUTH_API)
+  auth_verifyEmail(token: String!): Session! @join__field(graph: AUTH_API)
+  auth_resetPassword(token: String!, password: String!): Boolean! @join__field(graph: AUTH_API)
+  auth_requestResetPassword(email: String!): Boolean! @join__field(graph: AUTH_API)
+  auth_changeEmail(email: String!): Boolean! @join__field(graph: AUTH_API)
+  auth_resendVerificationEmail: Boolean! @join__field(graph: AUTH_API)
+  auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! @join__field(graph: AUTH_API)
+  core_createProject(project: ProjectIn!): Project @join__field(graph: CONSOLE_API)
+  core_updateProject(project: ProjectIn!): Project @join__field(graph: CONSOLE_API)
+  core_deleteProject(name: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_createEnvironment(projectName: String!, env: EnvironmentIn!): Environment @join__field(graph: CONSOLE_API)
+  core_updateEnvironment(projectName: String!, env: EnvironmentIn!): Environment @join__field(graph: CONSOLE_API)
+  core_deleteEnvironment(projectName: String!, envName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_cloneEnvironment(projectName: String!, sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @join__field(graph: CONSOLE_API)
+  core_createImagePullSecret(projectName: String!, envName: String!, imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @join__field(graph: CONSOLE_API)
+  core_deleteImagePullSecret(projectName: String!, envName: String!, secretName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_createApp(projectName: String!, envName: String!, app: AppIn!): App @join__field(graph: CONSOLE_API)
+  core_updateApp(projectName: String!, envName: String!, app: AppIn!): App @join__field(graph: CONSOLE_API)
+  core_deleteApp(projectName: String!, envName: String!, appName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_interceptApp(projectName: String!, envName: String!, appname: String!, deviceName: String!, intercept: Boolean!): Boolean! @join__field(graph: CONSOLE_API)
+  core_createConfig(projectName: String!, envName: String!, config: ConfigIn!): Config @join__field(graph: CONSOLE_API)
+  core_updateConfig(projectName: String!, envName: String!, config: ConfigIn!): Config @join__field(graph: CONSOLE_API)
+  core_deleteConfig(projectName: String!, envName: String!, configName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_createSecret(projectName: String!, envName: String!, secret: SecretIn!): Secret @join__field(graph: CONSOLE_API)
+  core_updateSecret(projectName: String!, envName: String!, secret: SecretIn!): Secret @join__field(graph: CONSOLE_API)
+  core_deleteSecret(projectName: String!, envName: String!, secretName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_createRouter(projectName: String!, envName: String!, router: RouterIn!): Router @join__field(graph: CONSOLE_API)
+  core_updateRouter(projectName: String!, envName: String!, router: RouterIn!): Router @join__field(graph: CONSOLE_API)
+  core_deleteRouter(projectName: String!, envName: String!, routerName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_createManagedResource(projectName: String!, envName: String!, mres: ManagedResourceIn!): ManagedResource @join__field(graph: CONSOLE_API)
+  core_updateManagedResource(projectName: String!, envName: String!, mres: ManagedResourceIn!): ManagedResource @join__field(graph: CONSOLE_API)
+  core_deleteManagedResource(projectName: String!, envName: String!, mresName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_createProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @join__field(graph: CONSOLE_API)
+  core_updateProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @join__field(graph: CONSOLE_API)
+  core_deleteProjectManagedService(projectName: String!, pmsvcName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @join__field(graph: CONSOLE_API)
+  core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @join__field(graph: CONSOLE_API)
+  core_updateVPNDevicePorts(deviceName: String!, ports: [PortIn!]!): Boolean! @join__field(graph: CONSOLE_API)
+  core_updateVPNDeviceEnv(deviceName: String!, projectName: String!, envName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_updateVpnDeviceNs(deviceName: String!, ns: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_updateVpnClusterName(deviceName: String!, clusterName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_deleteVPNDevice(deviceName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  cr_createRepo(repository: RepositoryIn!): Repository @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_createCred(credential: CredentialIn!): Credential @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_deleteRepo(name: String!): Boolean! @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_deleteCred(username: String!): Boolean! @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_deleteDigest(repoName: String!, digest: String!): Boolean! @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_addBuild(build: BuildIn!): Build @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_updateBuild(id: ID!, build: BuildIn!): Build @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_deleteBuild(id: ID!): Boolean! @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_triggerBuild(id: ID!): Boolean! @join__field(graph: CONTAINER_REGISTRY_API)
+  infra_createCluster(cluster: ClusterIn!): Cluster @join__field(graph: INFRA_API)
+  infra_updateCluster(cluster: ClusterIn!): Cluster @join__field(graph: INFRA_API)
+  infra_deleteCluster(name: String!): Boolean! @join__field(graph: INFRA_API)
+  infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster @join__field(graph: INFRA_API)
+  infra_upgradeHelmKloudliteAgent(clusterName: String!): Boolean! @join__field(graph: INFRA_API)
+  infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @join__field(graph: INFRA_API)
+  infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @join__field(graph: INFRA_API)
+  infra_deleteProviderSecret(secretName: String!): Boolean! @join__field(graph: INFRA_API)
+  infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry @join__field(graph: INFRA_API)
+  infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry @join__field(graph: INFRA_API)
+  infra_deleteDomainEntry(domainName: String!): Boolean! @join__field(graph: INFRA_API)
+  infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @join__field(graph: INFRA_API)
+  infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @join__field(graph: INFRA_API)
+  infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean! @join__field(graph: INFRA_API)
+  infra_createClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService @join__field(graph: INFRA_API)
+  infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService @join__field(graph: INFRA_API)
+  infra_deleteClusterManagedService(clusterName: String!, serviceName: String!): Boolean! @join__field(graph: INFRA_API)
+  infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @join__field(graph: INFRA_API)
+  infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @join__field(graph: INFRA_API)
+  infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean! @join__field(graph: INFRA_API)
+  infra_deletePV(clusterName: String!, pvName: String!): Boolean! @join__field(graph: INFRA_API)
+}
+
+type Namespace
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__NamespaceSpec
+  status: K8s__io___api___core___v1__NamespaceStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type NamespaceEdge
+  @join__type(graph: INFRA_API)
+{
+  cursor: String!
+  node: Namespace!
+}
+
+input NamespaceIn
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String
+  kind: String
+  metadata: MetadataIn
+  spec: K8s__io___api___core___v1__NamespaceSpecIn
+  status: K8s__io___api___core___v1__NamespaceStatusIn
+}
+
+type NamespacePaginatedRecords
+  @join__type(graph: INFRA_API)
+{
+  edges: [NamespaceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Node
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  creationTime: Date!
+  id: ID!
+  kind: String
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type NodeEdge
+  @join__type(graph: INFRA_API)
+{
+  cursor: String!
+  node: Node!
+}
+
+input NodeIn
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn!
+}
+
+type NodePaginatedRecords
+  @join__type(graph: INFRA_API)
+{
+  edges: [NodeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type NodePool
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type NodePoolEdge
+  @join__type(graph: INFRA_API)
+{
+  cursor: String!
+  node: NodePool!
+}
+
+input NodePoolIn
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String
+  displayName: String!
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn!
+}
+
+type NodePoolPaginatedRecords
+  @join__type(graph: INFRA_API)
+{
+  edges: [NodePoolEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type OAuthProviderStatus
+  @join__type(graph: AUTH_API)
+{
+  provider: String!
+  enabled: Boolean!
+}
+
+type PageInfo
+  @join__type(graph: ACCOUNT_API)
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  endCursor: String
+  hasNextPage: Boolean
+  hasPreviousPage: Boolean
+  startCursor: String
+}
+
+type Pagination
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  page: Int
+  per_page: Int
+}
+
+input PaginationIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  page: Int
+  per_page: Int
+}
+
+type PersistentVolume
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__PersistentVolumeSpec
+  status: K8s__io___api___core___v1__PersistentVolumeStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type PersistentVolumeClaim
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__PersistentVolumeClaimSpec
+  status: K8s__io___api___core___v1__PersistentVolumeClaimStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type PersistentVolumeClaimEdge
+  @join__type(graph: INFRA_API)
+{
+  cursor: String!
+  node: PersistentVolumeClaim!
+}
+
+type PersistentVolumeClaimPaginatedRecords
+  @join__type(graph: INFRA_API)
+{
+  edges: [PersistentVolumeClaimEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type PersistentVolumeEdge
+  @join__type(graph: INFRA_API)
+{
+  cursor: String!
+  node: PersistentVolume!
+}
+
+input PersistentVolumeIn
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String
+  kind: String
+  metadata: MetadataIn
+  spec: K8s__io___api___core___v1__PersistentVolumeSpecIn
+  status: K8s__io___api___core___v1__PersistentVolumeStatusIn
+}
+
+type PersistentVolumePaginatedRecords
+  @join__type(graph: INFRA_API)
+{
+  edges: [PersistentVolumeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Port
+  @join__type(graph: CONSOLE_API)
+{
+  port: Int
+  targetPort: Int
+}
+
+input PortIn
+  @join__type(graph: CONSOLE_API)
+{
+  port: Int
+  targetPort: Int
+}
+
+type Project
+  @join__type(graph: CONSOLE_API)
+{
+  accountName: String!
+  apiVersion: String
+  clusterName: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ProjectEdge
+  @join__type(graph: CONSOLE_API)
+{
+  cursor: String!
+  node: Project!
+}
+
+input ProjectIn
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String
+  clusterName: String
+  displayName: String!
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn!
+}
+
+type ProjectManagedService
+  @join__type(graph: CONSOLE_API)
+{
+  accountName: String!
+  apiVersion: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String!
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ProjectManagedServiceEdge
+  @join__type(graph: CONSOLE_API)
+{
+  cursor: String!
+  node: ProjectManagedService!
+}
+
+input ProjectManagedServiceIn
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String
+  displayName: String!
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpecIn
+}
+
+type ProjectManagedServicePaginatedRecords
+  @join__type(graph: CONSOLE_API)
+{
+  edges: [ProjectManagedServiceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ProjectPaginatedRecords
+  @join__type(graph: CONSOLE_API)
+{
+  edges: [ProjectEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+scalar ProviderDetail
+  @join__type(graph: AUTH_API)
+
+type Query
+  @join__type(graph: ACCOUNT_API)
+  @join__type(graph: AUTH_API)
+  @join__type(graph: CONSOLE_API)
+  @join__type(graph: CONTAINER_REGISTRY_API)
+  @join__type(graph: INFRA_API)
+{
+  accounts_listAccounts: [Account] @join__field(graph: ACCOUNT_API)
+  accounts_getAccount(accountName: String!): Account @join__field(graph: ACCOUNT_API)
+  accounts_resyncAccount(accountName: String!): Boolean! @join__field(graph: ACCOUNT_API)
+  accounts_listInvitations(accountName: String!): [Invitation!] @join__field(graph: ACCOUNT_API)
+  accounts_getInvitation(accountName: String!, invitationId: String!): Invitation @join__field(graph: ACCOUNT_API)
+  accounts_listInvitationsForUser(onlyPending: Boolean!): [Invitation!] @join__field(graph: ACCOUNT_API)
+  accounts_checkNameAvailability(name: String!): AccountsCheckNameAvailabilityOutput! @join__field(graph: ACCOUNT_API)
+  accounts_listMembershipsForUser: [AccountMembership!] @join__field(graph: ACCOUNT_API)
+  accounts_listMembershipsForAccount(accountName: String!, role: Github__com___kloudlite___api___apps___iam___types__Role): [AccountMembership!] @join__field(graph: ACCOUNT_API)
+  accounts_getAccountMembership(accountName: String!): AccountMembership @join__field(graph: ACCOUNT_API)
+  accounts_ensureKloudliteRegistryPullSecrets(accountName: String!): Boolean! @join__field(graph: ACCOUNT_API)
+  auth_me: User @join__field(graph: AUTH_API)
+  auth_findByEmail(email: String!): User @join__field(graph: AUTH_API)
+  oAuth_requestLogin(provider: String!, state: String): URL! @join__field(graph: AUTH_API)
+  auth_getRemoteLogin(loginId: String!, secret: String!): RemoteLogin @join__field(graph: AUTH_API)
+  auth_listOAuthProviders: [OAuthProviderStatus!] @join__field(graph: AUTH_API)
+  core_checkNameAvailability(projectName: String, envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @join__field(graph: CONSOLE_API)
+  core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @join__field(graph: CONSOLE_API)
+  core_getProject(name: String!): Project @join__field(graph: CONSOLE_API)
+  core_resyncProject(name: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_listEnvironments(projectName: String!, search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @join__field(graph: CONSOLE_API)
+  core_getEnvironment(projectName: String!, name: String!): Environment @join__field(graph: CONSOLE_API)
+  core_resyncEnvironment(projectName: String!, name: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_listImagePullSecrets(projectName: String!, envName: String!, search: SearchImagePullSecrets, pq: CursorPaginationIn): ImagePullSecretPaginatedRecords @join__field(graph: CONSOLE_API)
+  core_getImagePullSecret(projectName: String!, envName: String!, name: String!): ImagePullSecret @join__field(graph: CONSOLE_API)
+  core_resyncImagePullSecret(projectName: String!, envName: String!, name: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_listApps(projectName: String!, envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @join__field(graph: CONSOLE_API)
+  core_getApp(projectName: String!, envName: String!, name: String!): App @join__field(graph: CONSOLE_API)
+  core_resyncApp(projectName: String!, envName: String!, name: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_restartApp(projectName: String!, envName: String!, appName: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_getConfigValues(projectName: String!, envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!] @join__field(graph: CONSOLE_API)
+  core_listConfigs(projectName: String!, envName: String!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @join__field(graph: CONSOLE_API)
+  core_getConfig(projectName: String!, envName: String!, name: String!): Config @join__field(graph: CONSOLE_API)
+  core_resyncConfig(projectName: String!, envName: String!, name: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_getSecretValues(projectName: String!, envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!] @join__field(graph: CONSOLE_API)
+  core_listSecrets(projectName: String!, envName: String!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @join__field(graph: CONSOLE_API)
+  core_getSecret(projectName: String!, envName: String!, name: String!): Secret @join__field(graph: CONSOLE_API)
+  core_resyncSecret(projectName: String!, envName: String!, name: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_listRouters(projectName: String!, envName: String!, search: SearchRouters, pq: CursorPaginationIn): RouterPaginatedRecords @join__field(graph: CONSOLE_API)
+  core_getRouter(projectName: String!, envName: String!, name: String!): Router @join__field(graph: CONSOLE_API)
+  core_resyncRouter(projectName: String!, envName: String!, name: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_getManagedResouceOutputKeys(projectName: String!, envName: String!, name: String!): [String!]! @join__field(graph: CONSOLE_API)
+  core_getManagedResouceOutputKeyValues(projectName: String!, envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @join__field(graph: CONSOLE_API)
+  core_listManagedResources(projectName: String!, envName: String!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @join__field(graph: CONSOLE_API)
+  core_getManagedResource(projectName: String!, envName: String!, name: String!): ManagedResource @join__field(graph: CONSOLE_API)
+  core_resyncManagedResource(projectName: String!, envName: String!, name: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_listProjectManagedServices(projectName: String!, search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @join__field(graph: CONSOLE_API)
+  core_getProjectManagedService(projectName: String!, name: String!): ProjectManagedService @join__field(graph: CONSOLE_API)
+  core_resyncProjectManagedService(projectName: String!, name: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_restartProjectManagedService(projectName: String!, name: String!): Boolean! @join__field(graph: CONSOLE_API)
+  core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @join__field(graph: CONSOLE_API)
+  core_listVPNDevicesForUser: [ConsoleVPNDevice!] @join__field(graph: CONSOLE_API)
+  core_getVPNDevice(name: String!): ConsoleVPNDevice @join__field(graph: CONSOLE_API)
+  cr_listRepos(search: SearchRepos, pagination: CursorPaginationIn): RepositoryPaginatedRecords @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_listCreds(search: SearchCreds, pagination: CursorPaginationIn): CredentialPaginatedRecords @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_listDigests(repoName: String!, search: SearchRepos, pagination: CursorPaginationIn): DigestPaginatedRecords @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_getCredToken(username: String!): String! @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput! @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_getBuild(id: ID!): Build @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_listBuilds(repoName: String!, search: SearchBuilds, pagination: CursorPaginationIn): BuildPaginatedRecords @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_listGithubInstallations(pagination: PaginationIn): [GithubInstallation!] @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_listGithubRepos(installationId: Int!, pagination: PaginationIn): GithubListRepository @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_searchGithubRepos(organization: String!, search: String!, pagination: PaginationIn): GithubSearchRepository @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_listGithubBranches(repoUrl: String!, pagination: PaginationIn): [GitBranch!] @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_listGitlabGroups(query: String, pagination: PaginationIn): [GitlabGroup!] @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_listGitlabRepositories(groupId: String!, query: String, pagination: PaginationIn): [GitlabProject!] @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_listGitlabBranches(repoId: String!, query: String, pagination: PaginationIn): [GitBranch!] @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_listBuildRuns(search: SearchBuildRuns, pq: CursorPaginationIn): BuildRunPaginatedRecords @join__field(graph: CONTAINER_REGISTRY_API)
+  cr_getBuildRun(buildID: ID!, buildRunName: String!): BuildRun @join__field(graph: CONTAINER_REGISTRY_API)
+  infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @join__field(graph: INFRA_API)
+  infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @join__field(graph: INFRA_API)
+  infra_getCluster(name: String!): Cluster @join__field(graph: INFRA_API)
+  infra_listNodePools(clusterName: String!, search: SearchNodepool, pagination: CursorPaginationIn): NodePoolPaginatedRecords @join__field(graph: INFRA_API)
+  infra_getNodePool(clusterName: String!, poolName: String!): NodePool @join__field(graph: INFRA_API)
+  infra_listProviderSecrets(search: SearchProviderSecret, pagination: CursorPaginationIn): CloudProviderSecretPaginatedRecords @join__field(graph: INFRA_API)
+  infra_getProviderSecret(name: String!): CloudProviderSecret @join__field(graph: INFRA_API)
+  infra_listDomainEntries(search: SearchDomainEntry, pagination: CursorPaginationIn): DomainEntryPaginatedRecords @join__field(graph: INFRA_API)
+  infra_getDomainEntry(domainName: String!): DomainEntry @join__field(graph: INFRA_API)
+  infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput! @join__field(graph: INFRA_API)
+  infra_listClusterManagedServices(clusterName: String!, search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @join__field(graph: INFRA_API)
+  infra_getClusterManagedService(clusterName: String!, name: String!): ClusterManagedService @join__field(graph: INFRA_API)
+  infra_listHelmReleases(clusterName: String!, search: SearchHelmRelease, pagination: CursorPaginationIn): HelmReleasePaginatedRecords @join__field(graph: INFRA_API)
+  infra_getHelmRelease(clusterName: String!, name: String!): HelmRelease @join__field(graph: INFRA_API)
+  infra_listManagedServiceTemplates: [MsvcTemplate!] @join__field(graph: INFRA_API)
+  infra_getManagedServiceTemplate(category: String!, name: String!): Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry @join__field(graph: INFRA_API)
+  infra_listPVCs(clusterName: String!, search: SearchPersistentVolumeClaims, pq: CursorPaginationIn): PersistentVolumeClaimPaginatedRecords @join__field(graph: INFRA_API)
+  infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim @join__field(graph: INFRA_API)
+  infra_listNamespaces(clusterName: String!, search: SearchNamespaces, pq: CursorPaginationIn): NamespacePaginatedRecords @join__field(graph: INFRA_API)
+  infra_getNamespace(clusterName: String!, name: String!): Namespace @join__field(graph: INFRA_API)
+  infra_listPVs(clusterName: String!, search: SearchPersistentVolumes, pq: CursorPaginationIn): PersistentVolumePaginatedRecords @join__field(graph: INFRA_API)
+  infra_getPV(clusterName: String!, name: String!): PersistentVolume @join__field(graph: INFRA_API)
+  infra_listVolumeAttachments(clusterName: String!, search: SearchVolumeAttachments, pq: CursorPaginationIn): VolumeAttachmentPaginatedRecords @join__field(graph: INFRA_API)
+  infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment @join__field(graph: INFRA_API)
+}
+
+type RemoteLogin
+  @join__type(graph: AUTH_API)
+{
+  status: String!
+  authHeader: String
+}
+
+type Repository
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type RepositoryEdge
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  cursor: String!
+  node: Repository!
+}
+
+input RepositoryIn
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  name: String!
+}
+
+type RepositoryPaginatedRecords
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  edges: [RepositoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+enum ResType
+  @join__type(graph: INFRA_API)
+{
+  cluster @join__enumValue(graph: INFRA_API)
+  providersecret @join__enumValue(graph: INFRA_API)
+  nodepool @join__enumValue(graph: INFRA_API)
+  helm_release @join__enumValue(graph: INFRA_API)
+}
+
+type Router
+  @join__type(graph: CONSOLE_API)
+{
+  accountName: String!
+  apiVersion: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  enabled: Boolean
+  environmentName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String!
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__RouterSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type RouterEdge
+  @join__type(graph: CONSOLE_API)
+{
+  cursor: String!
+  node: Router!
+}
+
+input RouterIn
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String
+  displayName: String!
+  enabled: Boolean
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn!
+}
+
+type RouterPaginatedRecords
+  @join__type(graph: CONSOLE_API)
+{
+  edges: [RouterEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input SearchApps
+  @join__type(graph: CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchBuildRuns
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  buildId: ID
+  repoName: MatchFilterIn
+}
+
+input SearchBuilds
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  text: MatchFilterIn
+}
+
+input SearchCluster
+  @join__type(graph: INFRA_API)
+{
+  cloudProviderName: MatchFilterIn
+  isReady: MatchFilterIn
+  region: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchClusterManagedService
+  @join__type(graph: INFRA_API)
+{
+  isReady: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchConfigs
+  @join__type(graph: CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchCreds
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  text: MatchFilterIn
+}
+
+input SearchDomainEntry
+  @join__type(graph: INFRA_API)
+{
+  clusterName: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchEnvironments
+  @join__type(graph: CONSOLE_API)
+{
+  text: MatchFilterIn
+  projectName: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchHelmRelease
+  @join__type(graph: INFRA_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+}
+
+input SearchImagePullSecrets
+  @join__type(graph: CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchManagedResources
+  @join__type(graph: CONSOLE_API)
+{
+  text: MatchFilterIn
+  managedServiceName: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchNamespaces
+  @join__type(graph: INFRA_API)
+{
+  text: MatchFilterIn
+}
+
+input SearchNodepool
+  @join__type(graph: INFRA_API)
+{
+  text: MatchFilterIn
+}
+
+input SearchPersistentVolumeClaims
+  @join__type(graph: INFRA_API)
+{
+  text: MatchFilterIn
+}
+
+input SearchPersistentVolumes
+  @join__type(graph: INFRA_API)
+{
+  text: MatchFilterIn
+}
+
+input SearchProjectManagedService
+  @join__type(graph: CONSOLE_API)
+{
+  text: MatchFilterIn
+  managedServiceName: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchProjects
+  @join__type(graph: CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchProviderSecret
+  @join__type(graph: INFRA_API)
+{
+  cloudProviderName: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchRepos
+  @join__type(graph: CONTAINER_REGISTRY_API)
+{
+  text: MatchFilterIn
+}
+
+input SearchRouters
+  @join__type(graph: CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchSecrets
+  @join__type(graph: CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchVolumeAttachments
+  @join__type(graph: INFRA_API)
+{
+  text: MatchFilterIn
+}
+
+type Secret
+  @join__type(graph: CONSOLE_API)
+{
+  accountName: String!
+  apiVersion: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  data: Map
+  displayName: String!
+  environmentName: String!
+  id: ID!
+  immutable: Boolean
+  isReadyOnly: Boolean!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String!
+  recordVersion: Int!
+  stringData: Map
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  type: K8s__io___api___core___v1__SecretType
+  updateTime: Date!
+}
+
+type SecretEdge
+  @join__type(graph: CONSOLE_API)
+{
+  cursor: String!
+  node: Secret!
+}
+
+input SecretIn
+  @join__type(graph: CONSOLE_API)
+{
+  apiVersion: String
+  data: Map
+  displayName: String!
+  immutable: Boolean
+  kind: String
+  metadata: MetadataIn
+  stringData: Map
+  type: K8s__io___api___core___v1__SecretType
+}
+
+type SecretKeyRef
+  @join__type(graph: CONSOLE_API)
+{
+  key: String!
+  secretName: String!
+}
+
+input SecretKeyRefIn
+  @join__type(graph: CONSOLE_API)
+{
+  key: String!
+  secretName: String!
+}
+
+type SecretKeyValueRef
+  @join__type(graph: CONSOLE_API)
+{
+  key: String!
+  secretName: String!
+  value: String!
+}
+
+input SecretKeyValueRefIn
+  @join__type(graph: CONSOLE_API)
+{
+  key: String!
+  secretName: String!
+  value: String!
+}
+
+type SecretPaginatedRecords
+  @join__type(graph: CONSOLE_API)
+{
+  edges: [SecretEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Session
+  @join__type(graph: AUTH_API)
+{
+  id: ID!
+  userId: ID!
+  userEmail: String!
+  loginMethod: String!
+  userVerified: Boolean!
+}
+
+scalar URL
+  @join__type(graph: AUTH_API)
+
+type User
+  @join__type(graph: ACCOUNT_API, key: "id", extension: true)
+  @join__type(graph: AUTH_API, key: "id")
+{
+  id: ID!
+  accounts: [AccountMembership!] @join__field(graph: ACCOUNT_API)
+  accountInvitations(onlyPending: Boolean!): [Invitation!] @join__field(graph: ACCOUNT_API)
+  name: String! @join__field(graph: AUTH_API)
+  email: String! @join__field(graph: AUTH_API)
+  avatar: String @join__field(graph: AUTH_API)
+  invite: String! @join__field(graph: AUTH_API)
+  verified: Boolean! @join__field(graph: AUTH_API)
+  metadata: Json @join__field(graph: AUTH_API)
+  joined: Date! @join__field(graph: AUTH_API)
+  providerGitlab: ProviderDetail @join__field(graph: AUTH_API)
+  providerGithub: ProviderDetail @join__field(graph: AUTH_API)
+  providerGoogle: ProviderDetail @join__field(graph: AUTH_API)
+}
+
+type VolumeAttachment
+  @join__type(graph: INFRA_API)
+{
+  accountName: String!
+  apiVersion: String
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: K8s__io___api___storage___v1__VolumeAttachmentSpec!
+  status: K8s__io___api___storage___v1__VolumeAttachmentStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type VolumeAttachmentEdge
+  @join__type(graph: INFRA_API)
+{
+  cursor: String!
+  node: VolumeAttachment!
+}
+
+input VolumeAttachmentIn
+  @join__type(graph: INFRA_API)
+{
+  apiVersion: String
+  kind: String
+  metadata: MetadataIn
+  spec: K8s__io___api___storage___v1__VolumeAttachmentSpecIn!
+  status: K8s__io___api___storage___v1__VolumeAttachmentStatusIn
+}
+
+type VolumeAttachmentPaginatedRecords
+  @join__type(graph: INFRA_API)
+{
+  edges: [VolumeAttachmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}

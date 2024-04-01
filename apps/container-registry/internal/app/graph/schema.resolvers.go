@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+
 	generated1 "github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain"
@@ -127,73 +128,6 @@ func (r *mutationResolver) CrTriggerBuild(ctx context.Context, id repos.ID) (boo
 		return false, errors.NewE(err)
 	}
 	return true, nil
-}
-
-// CrAddBuildCacheKey is the resolver for the cr_addBuildCacheKey field.
-func (r *mutationResolver) CrAddBuildCacheKey(ctx context.Context, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.AddBuildCache(cc, buildCacheKey)
-}
-
-// CrDeleteBuildCacheKey is the resolver for the cr_deleteBuildCacheKey field.
-func (r *mutationResolver) CrDeleteBuildCacheKey(ctx context.Context, id repos.ID) (bool, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-
-	if err := r.Domain.DeleteBuildCache(cc, id); err != nil {
-		return false, errors.NewE(err)
-	}
-	return true, nil
-}
-
-// CrUpdateBuildCacheKey is the resolver for the cr_updateBuildCacheKey field.
-func (r *mutationResolver) CrUpdateBuildCacheKey(ctx context.Context, id repos.ID, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.UpdateBuildCache(cc, id, buildCacheKey)
-}
-
-// CrListBuildsByBuildCacheID is the resolver for the cr_listBuildsByBuildCacheId field.
-func (r *mutationResolver) CrListBuildsByBuildCacheID(ctx context.Context, buildCacheKeyID repos.ID, pagination *repos.CursorPagination) (*model.BuildPaginatedRecords, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	rr, err := r.Domain.ListBuildsByCache(cc, buildCacheKeyID, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	records := make([]*model.BuildEdge, len(rr.Edges))
-
-	for i := range rr.Edges {
-		records[i] = &model.BuildEdge{
-			Node:   rr.Edges[i].Node,
-			Cursor: rr.Edges[i].Cursor,
-		}
-	}
-
-	m := &model.BuildPaginatedRecords{
-		Edges: records,
-		PageInfo: &model.PageInfo{
-			HasNextPage:     rr.PageInfo.HasNextPage,
-			HasPreviousPage: rr.PageInfo.HasPrevPage,
-			StartCursor:     &rr.PageInfo.StartCursor,
-			EndCursor:       &rr.PageInfo.EndCursor,
-		},
-	}
-
-	return m, nil
 }
 
 // CrListRepos is the resolver for the cr_listRepos field.
@@ -467,53 +401,19 @@ func (r *queryResolver) CrListGitlabBranches(ctx context.Context, repoID string,
 	return r.Domain.GitlabListBranches(ctx, userId, repoID, query, pagination)
 }
 
-// CrListBuildCacheKeys is the resolver for the cr_listBuildCacheKeys field.
-func (r *queryResolver) CrListBuildCacheKeys(ctx context.Context, pq *repos.CursorPagination, search *model.SearchBuildCacheKeys) (*model.BuildCacheKeyPaginatedRecords, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	filter := map[string]repos.MatchFilter{}
-	if search != nil {
-		if search.Text != nil {
-			filter["name"] = *search.Text
-		}
-	}
-
-	rr, err := r.Domain.ListBuildCaches(cc, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	records := make([]*model.BuildCacheKeyEdge, len(rr.Edges))
-
-	for i := range rr.Edges {
-		records[i] = &model.BuildCacheKeyEdge{
-			Node:   rr.Edges[i].Node,
-			Cursor: rr.Edges[i].Cursor,
-		}
-	}
-
-	m := &model.BuildCacheKeyPaginatedRecords{
-		Edges: records,
-		PageInfo: &model.PageInfo{
-			HasNextPage:     rr.PageInfo.HasNextPage,
-			HasPreviousPage: rr.PageInfo.HasPrevPage,
-			StartCursor:     &rr.PageInfo.StartCursor,
-			EndCursor:       &rr.PageInfo.EndCursor,
-		},
-	}
-
-	return m, nil
-}
-
 // CrListBuildRuns is the resolver for the cr_listBuildRuns field.
-func (r *queryResolver) CrListBuildRuns(ctx context.Context, buildID repos.ID, search *model.SearchBuildRuns, pq *repos.CursorPagination) (*model.BuildRunPaginatedRecords, error) {
+func (r *queryResolver) CrListBuildRuns(ctx context.Context, search *model.SearchBuildRuns, pq *repos.CursorPagination) (*model.BuildRunPaginatedRecords, error) {
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
+		if search.BuildID != nil {
+			filter["buildId"] = repos.MatchFilter{
+				MatchType: repos.MatchTypeExact,
+				Exact:     *search.BuildID,
+			}
+		}
+
+		if search.RepoName != nil {
+			filter["spec.registry.repo.name"] = *search.RepoName
 		}
 	}
 
@@ -522,7 +422,7 @@ func (r *queryResolver) CrListBuildRuns(ctx context.Context, buildID repos.ID, s
 		return nil, errors.NewE(err)
 	}
 
-	buildRuns, err := r.Domain.ListBuildRuns(cc, buildID, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	buildRuns, err := r.Domain.ListBuildRuns(cc, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -546,5 +446,7 @@ func (r *Resolver) Mutation() generated1.MutationResolver { return &mutationReso
 // Query returns generated1.QueryResolver implementation.
 func (r *Resolver) Query() generated1.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

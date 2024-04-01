@@ -99,11 +99,12 @@ func buildPromQuery(resType PromMetricsType, filters map[string]string) (string,
 	switch resType {
 	case Memory:
 		// return fmt.Sprintf(`sum(avg_over_time(container_memory_working_set_bytes{namespace="%s",pod=~"%s.*",container!="POD",image!=""}[30s]))/1024/1024`, namespace, name), nil
-		return fmt.Sprintf(`sum by(exported_pod) (avg_over_time(pod_memory_working_set_bytes{%s}[1m]))/1024/1024`, strings.Join(tags, ",")), nil
-		// return fmt.Sprintf(`sum by(pod_name) (kl_pod_mem_used{%s}/1000)`, strings.Join(tags, ",")), nil
+		// return fmt.Sprintf(`sum by(exported_pod) (avg_over_time(pod_memory_working_set_bytes{%s}[1m]))/1024/1024`, strings.Join(tags, ",")), nil
+		return fmt.Sprintf(`sum by(pod_name) (kl_pod_mem_used{%s}/1024/1024)`, strings.Join(tags, ",")), nil
 	case Cpu:
 		// 	return fmt.Sprintf(`sum(rate(container_cpu_usage_seconds_total{namespace="%s", pod=~"%s.*", image!="", container!="POD"}[1m])) * 1000`, namespace, name), nil
-		return fmt.Sprintf(`sum by(exported_pod) (rate(pod_cpu_usage_seconds_total{%s}[2m])) * 1000`, strings.Join(tags, ",")), nil
+		// return fmt.Sprintf(`sum by(exported_pod) (rate(pod_cpu_usage_seconds_total{%s}[10s])) * 1000`, strings.Join(tags, ",")), nil
+		return fmt.Sprintf(`sum by(pod_name) (avg_over_time(kl_pod_cpu_usage{%s}[10s]))`, strings.Join(tags, ",")), nil
 		// return fmt.Sprintf(`sum by(pod_name) (kl_pod_cpu_usage{%s})`, strings.Join(tags, ",")), nil
 	case NetworkRead:
 		return fmt.Sprintf(`sum by(pod_name) (rate(kl_pod_network_read{%s}[30s]))`, strings.Join(tags, ",")), nil

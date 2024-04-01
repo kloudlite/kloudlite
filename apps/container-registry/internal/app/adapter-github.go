@@ -253,7 +253,19 @@ func (gh *githubI) SearchRepos(ctx context.Context, accToken *entities.AccessTok
 	if err != nil {
 		return nil, errors.NewEf(err, "could not search repositories")
 	}
+
+	pushFilteredRepos := make([]*github.Repository, 0, len(rsr.Repositories))
+
+	for i := range rsr.Repositories {
+		if rsr.Repositories[i].Permissions["push"] {
+			pushFilteredRepos = append(pushFilteredRepos, rsr.Repositories[i])
+		}
+	}
+
 	gh.logger.Warnf("github rate {limit: %d, remaining: %d}", resp.Rate.Limit, resp.Rate.Remaining)
+
+	rsr.Repositories = pushFilteredRepos
+
 	return rsr, nil
 }
 

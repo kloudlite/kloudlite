@@ -22,7 +22,7 @@ tasks:
       push: "{{.push | default false}}"
     cmds:
       - task generate-schema
-      - docker buildx build -f ./Containerfile -t {{.Image}} . --push={{.push}}
+      - nerdctl build -t {{.Image}} . --cache-from=type=local,src=/tmp/buildx-cache --cache-to=type=local,dest=/tmp/buildx-cache
 
   container:build-and-push:
     preconditions:
@@ -34,5 +34,5 @@ tasks:
       - task: generate-schema
         vars:
           Output: "{{.SupergraphSchemaFile}}"
-      - docker buildx build -f ./Containerfile --build-arg SUPERGRAPH_FILE="{{.SupergraphSchemaFile}}" -t {{.Image}} . --push
+      - docker buildx build --build-arg SUPERGRAPH_FILE="{{.SupergraphSchemaFile}}" -t {{.Image}} . --push
 

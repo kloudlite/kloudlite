@@ -14,12 +14,13 @@ import (
 	"github.com/kloudlite/api/apps/infra/internal/env"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
+	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
-	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
 	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
@@ -43,6 +44,8 @@ type (
 var Module = fx.Module(
 	"app",
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndices),
+	// repos.NewFxMongoRepo[*entities.BYOKCluster]("byok_clusters", "byok", entities.BYOKClusterIndices),
+	repos.NewFxMongoRepo[*entities.BYOKCluster]("clusters", "byok", entities.BYOKClusterIndices),
 	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cmsvcs", "cmsvcs", entities.ClusterManagedServiceIndices),
 	repos.NewFxMongoRepo[*entities.DomainEntry]("domain_entries", "de", entities.DomainEntryIndices),
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
@@ -93,8 +96,8 @@ var Module = fx.Module(
 
 	domain.Module,
 
-	fx.Provide(func(d domain.Domain) infra.InfraServer {
-		return newGrpcServer(d)
+	fx.Provide(func(d domain.Domain, kcli k8s.Client) infra.InfraServer {
+		return newGrpcServer(d, kcli)
 	}),
 
 	fx.Invoke(func(gserver InfraGrpcServer, srv infra.InfraServer) {
@@ -207,12 +210,7 @@ var Module = fx.Module(
 
 			schema := generated.NewExecutableSchema(config)
 			server.SetupGraphqlServer(schema,
-				httpServer.NewSessionMiddleware(
-					sessionRepo,
-					"hotspot-session",
-					env.CookieDomain,
-					constants.CacheSessionPrefix,
-				),
+				httpServer.NewReadSessionMiddleware(sessionRepo, constants.CookieName, constants.CacheSessionPrefix),
 			)
 		},
 	),
