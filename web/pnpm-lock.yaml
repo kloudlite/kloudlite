@@ -22,7 +22,7 @@ dependencies:
     version: 2.3.0(react@18.2.0)
   '@oshq/react-select':
     specifier: ^1.4.2
-    version: 1.4.2(@radix-ui/react-portal@1.0.4)(classnames@2.5.1)(framer-motion@10.17.8)(rc-virtual-list@3.11.4)(react@18.2.0)
+    version: 1.4.2(@radix-ui/react-portal@1.0.4)(classnames@2.5.1)(framer-motion@11.0.23)(rc-virtual-list@3.11.4)(react@18.2.0)
   '@radix-ui/primitive':
     specifier: ^1.0.1
     version: 1.0.1
@@ -153,8 +153,8 @@ dependencies:
     specifier: ^1.11.10
     version: 1.11.10
   framer-motion:
-    specifier: ^10.17.0
-    version: 10.17.8(react-dom@18.2.0)(react@18.2.0)
+    specifier: ^11.0.23
+    version: 11.0.23(react-dom@18.2.0)(react@18.2.0)
   fuse.js:
     specifier: ^6.6.2
     version: 6.6.2
@@ -1758,14 +1758,6 @@ packages:
     resolution: {integrity: sha512-gJB6HLm5rYwSLI6PQa+X1t5CFGrv1J1TWG+sOyMCeKz2ojaj6Fnl/rZEspogG+cvqbt4AE/2eIyD2QfLKTBNlQ==}
     dev: true
 
-  /@emotion/is-prop-valid@0.8.8:
-    resolution: {integrity: sha512-u5WtneEAr5IDG2Wv65yhunPSMLIpuKsbuOktRojfrEiEvRyC85LgPMZI63cr7NUqT8ZIGdSVg8ZKGxIug4lXcA==}
-    requiresBuild: true
-    dependencies:
-      '@emotion/memoize': 0.7.4
-    dev: false
-    optional: true
-
   /@emotion/memoize@0.7.4:
     resolution: {integrity: sha512-Ja/Vfqe3HpuzRsG1oBtWTHk2PGZ7GR+2Vz5iYGelAw8dx32K0y7PjVuxK6z1nMpZOqAFsRUPCkK1YjJ56qJlgw==}
     requiresBuild: true
@@ -2706,7 +2698,7 @@ packages:
       json-parse-even-better-errors: 2.3.1
     dev: true
 
-  /@oshq/react-select@1.4.2(@radix-ui/react-portal@1.0.4)(classnames@2.5.1)(framer-motion@10.17.8)(rc-virtual-list@3.11.4)(react@18.2.0):
+  /@oshq/react-select@1.4.2(@radix-ui/react-portal@1.0.4)(classnames@2.5.1)(framer-motion@11.0.23)(rc-virtual-list@3.11.4)(react@18.2.0):
     resolution: {integrity: sha512-yQwzBxFb5z2XwmuEZHLdJGmpzn1+Xo+zn5u/DV1FzvUKlRUWXo/ChQ73ZG62uN/mODTEJhsUW8SbPiP93G89iw==}
     peerDependencies:
       '@radix-ui/react-portal': ^1.0.4
@@ -2717,7 +2709,7 @@ packages:
     dependencies:
       '@radix-ui/react-portal': 1.0.4(@types/react-dom@18.2.18)(@types/react@18.2.46)(react-dom@18.2.0)(react@18.2.0)
       classnames: 2.5.1
-      framer-motion: 10.17.8(react-dom@18.2.0)(react@18.2.0)
+      framer-motion: 11.0.23(react-dom@18.2.0)(react@18.2.0)
       rc-virtual-list: 3.11.4(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
     dev: false
@@ -6693,12 +6685,15 @@ packages:
     resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
     dev: true
 
-  /framer-motion@10.17.8(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-Flmw+iVuE3xZGGCF+Oy45RxYuNot0aUg9HngeLf6EdzhC517yV7Kt/dqeazo1drr0xu/PCXEINDc2N96UzlGeQ==}
+  /framer-motion@11.0.23(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-V2xdf9hYJKPml7412Ghmh3LZYjiCAEDIIxR9JOb/ni4GHLQFLE+51wG89/3NhheX1vfYBI1SnicXSyHtzfTPqg==}
     peerDependencies:
+      '@emotion/is-prop-valid': '*'
       react: ^18.0.0
       react-dom: ^18.0.0
     peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
       react:
         optional: true
       react-dom:
@@ -6707,8 +6702,6 @@ packages:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
       tslib: 2.6.2
-    optionalDependencies:
-      '@emotion/is-prop-valid': 0.8.8
     dev: false
 
   /fresh@0.5.2:

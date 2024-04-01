@@ -1104,6 +1104,7 @@ query consoleGetApp($projectName: String!, $envName: String!, $name: String!) {
     ciBuildId
     updateTime
     build {
+      id
       buildClusterName
       name
       source {
@@ -2061,7 +2062,6 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
           webhookId
         }
         spec {
-          accountName
           buildOptions {
             buildArgs
             buildContexts

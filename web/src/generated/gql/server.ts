@@ -2599,6 +2599,7 @@ export type ConsoleGetAppQuery = {
       }>;
     };
     build?: {
+      id: string;
       buildClusterName: string;
       name: string;
       source: {
@@ -3584,7 +3585,6 @@ export type ConsoleListBuildsQuery = {
           webhookId?: number;
         };
         spec: {
-          accountName: string;
           buildOptions?: {
             buildArgs?: any;
             buildContexts?: any;

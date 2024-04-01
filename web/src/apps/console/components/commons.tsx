@@ -303,14 +303,16 @@ export const GitDetailRaw = ({
   provider,
   repository,
   branch,
+  extra,
 }: {
   provider: IGIT_PROVIDERS;
   repository: string;
   branch: string;
+  extra?: ReactNode;
 }) => {
   const gitIconSize = 16;
   return (
-    <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
+    <div className="flex flex-row p-xl items-center gap-lg rounded border border-border-default flex-1 overflow-hidden">
       <div className="flex flex-col gap-md">
         <div className="bodyMd-medium text-text-default">Source</div>
         <div className="flex flex-row items-center gap-3xl bodySm">
@@ -330,6 +332,7 @@ export const GitDetailRaw = ({
           </div>
         </div>
       </div>
+      {extra}
     </div>
   );
 };

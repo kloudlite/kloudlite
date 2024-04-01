@@ -6,7 +6,7 @@ import { FadeIn } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
 import { BottomNavigation, GitDetail } from '~/console/components/commons';
 import { registryHost } from '~/lib/configs/base-url.cjs';
-import { useOutletContext, useParams } from '@remix-run/react';
+import { useOutletContext } from '@remix-run/react';
 import RepoSelector from '~/console/page-components/app/components';
 import AppBuildIntegration from '~/console/page-components/app/app-build-integration';
 import { keyconstants } from '~/console/server/r-utils/key-constants';

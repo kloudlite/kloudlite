@@ -4,7 +4,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
-import { BottomNavigation, GitDetail } from '~/console/components/commons';
+import { BottomNavigation, GitDetailRaw } from '~/console/components/commons';
 import { registryHost } from '~/lib/configs/base-url.cjs';
 import { useOutletContext } from '@remix-run/react';
 import RepoSelector from '~/console/page-components/app/components';
@@ -18,6 +18,41 @@ import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { getImageTag } from '~/console/routes/_main+/$account+/$project+/env+/$environment+/new-app/app-utils';
 import { constants } from '~/console/server/utils/constants';
+import HandleBuild from '~/console/routes/_main+/$account+/repo+/$repo+/builds/handle-builds';
+import { ArrowClockwise, PencilSimple } from '~/console/components/icons';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
+import appFun from '~/console/routes/_main+/$account+/$project+/env+/$environment+/new-app/app-pre-submit';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { toast } from '~/components/molecule/toast';
+
+const ExtraButton = ({
+  onEdit,
+  onTrigger,
+}: {
+  onEdit: () => void;
+  onTrigger: () => void;
+}) => {
+  return (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Edit',
+          icon: <PencilSimple size={16} />,
+          type: 'item',
+          key: 'edit',
+          onClick: onEdit,
+        },
+        {
+          label: 'Trigger',
+          icon: <ArrowClockwise size={16} />,
+          type: 'item',
+          key: 'trigger',
+          onClick: onTrigger,
+        },
+      ]}
+    />
+  );
+};
 
 const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
   const {
@@ -27,7 +62,6 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     setPage,
     setBuildData,
     buildData,
-    resetBuildData,
     markPageAsCompleted,
     activeContIndex,
   } = useAppState();
@@ -43,6 +77,9 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
   ];
   // only for edit mode
   const [isEdited, setIsEdited] = useState(!app.ciBuildId);
+  const [showBuildEdit, setShowBuildEdit] = useState(false);
+
+  const api = useConsoleApi();
 
   const {
     values,
@@ -58,9 +95,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       name: parseName(app),
       displayName: app.displayName,
       isNameError: false,
-      imageMode:
-        readOnlyApp?.metadata?.annotations[keyconstants.appImageMode] ||
-        'default',
+      imageMode: 'default',
       imageUrl: readOnlyApp?.spec.containers[activeContIndex]?.image || '',
       manualRepo: '',
       source: {
@@ -164,7 +199,6 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             ...a.metadata,
             annotations: {
               ...(a.metadata?.annotations || {}),
-              [keyconstants.appImageMode]: val.imageMode,
             },
             name: val.name,
           },
@@ -325,14 +359,32 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           )}
 
           {buildData?.name && values.imageMode === 'git' && !isEdited && (
-            <GitDetail
+            <GitDetailRaw
               provider={buildData.source.provider}
               repository={buildData.source.repository}
               branch={buildData.source.branch}
-              onEdit={() => {
-                resetBuildData();
-                setIsEdited(true);
-              }}
+              extra={
+                <div className="flex-1 flex justify-end">
+                  <ExtraButton
+                    onEdit={() => {
+                      setShowBuildEdit(true);
+                    }}
+                    onTrigger={async () => {
+                      if (readOnlyApp.ciBuildId) {
+                        const res = await appFun.triggerBuild({
+                          api,
+                          buildId: readOnlyApp.ciBuildId,
+                        });
+                        if (res) {
+                          toast.info('Build triggered successfully');
+                        } else {
+                          toast.info('Build trigger failed');
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              }
             />
           )}
           {values.imageMode === 'git' && (isEdited || !buildData?.name) && (
@@ -354,6 +406,14 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           }}
         />
       )}
+      <HandleBuild
+        {...{
+          isUpdate: true,
+          data: { mode: 'app', ...readOnlyApp.build! },
+          visible: showBuildEdit,
+          setVisible: () => setShowBuildEdit(false),
+        }}
+      />
     </FadeIn>
   );
 };
