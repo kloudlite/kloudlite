@@ -32,6 +32,7 @@ type domain struct {
 	env    *env.Env
 
 	clusterRepo               repos.DbRepo[*entities.Cluster]
+	byokClusterRepo           repos.DbRepo[*entities.BYOKCluster]
 	clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService]
 	helmReleaseRepo           repos.DbRepo[*entities.HelmRelease]
 	nodeRepo                  repos.DbRepo[*entities.Node]
@@ -150,6 +151,7 @@ var Module = fx.Module("domain",
 		func(
 			env *env.Env,
 			clusterRepo repos.DbRepo[*entities.Cluster],
+			byokClusterRepo repos.DbRepo[*entities.BYOKCluster],
 			clustermanagedserviceRepo repos.DbRepo[*entities.ClusterManagedService],
 			nodeRepo repos.DbRepo[*entities.Node],
 			nodePoolRepo repos.DbRepo[*entities.NodePool],
@@ -204,6 +206,7 @@ var Module = fx.Module("domain",
 				logger:                      logger,
 				env:                         env,
 				clusterRepo:                 clusterRepo,
+				byokClusterRepo:             byokClusterRepo,
 				clusterManagedServiceRepo:   clustermanagedserviceRepo,
 				nodeRepo:                    nodeRepo,
 				nodePoolRepo:                nodePoolRepo,

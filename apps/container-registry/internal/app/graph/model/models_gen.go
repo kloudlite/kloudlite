@@ -11,17 +11,6 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 )
 
-type BuildCacheKeyEdge struct {
-	Cursor string                  `json:"cursor"`
-	Node   *entities.BuildCacheKey `json:"node"`
-}
-
-type BuildCacheKeyPaginatedRecords struct {
-	Edges      []*BuildCacheKeyEdge `json:"edges"`
-	PageInfo   *PageInfo            `json:"pageInfo"`
-	TotalCount int                  `json:"totalCount"`
-}
-
 type BuildEdge struct {
 	Cursor string          `json:"cursor"`
 	Node   *entities.Build `json:"node"`
@@ -167,16 +156,26 @@ type GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn struct {
 type GithubComKloudliteOperatorApisDistributionV1BuildRunSpec struct {
 	AccountName  string                                                    `json:"accountName"`
 	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptions `json:"buildOptions,omitempty"`
-	CacheKeyName *string                                                   `json:"cacheKeyName,omitempty"`
+	Caches       []*GithubComKloudliteOperatorApisDistributionV1Cache      `json:"caches,omitempty"`
 	Registry     *GithubComKloudliteOperatorApisDistributionV1Registry     `json:"registry"`
 	Resource     *GithubComKloudliteOperatorApisDistributionV1Resource     `json:"resource"`
 }
 
 type GithubComKloudliteOperatorApisDistributionV1BuildRunSpecIn struct {
 	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn `json:"buildOptions,omitempty"`
-	CacheKeyName *string                                                     `json:"cacheKeyName,omitempty"`
+	Caches       []*GithubComKloudliteOperatorApisDistributionV1CacheIn      `json:"caches,omitempty"`
 	Registry     *GithubComKloudliteOperatorApisDistributionV1RegistryIn     `json:"registry"`
 	Resource     *GithubComKloudliteOperatorApisDistributionV1ResourceIn     `json:"resource"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1Cache struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1CacheIn struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
 }
 
 type GithubComKloudliteOperatorApisDistributionV1Registry struct {
@@ -314,12 +313,9 @@ type RepositoryPaginatedRecords struct {
 	TotalCount int               `json:"totalCount"`
 }
 
-type SearchBuildCacheKeys struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
-}
-
 type SearchBuildRuns struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	BuildID  *repos.ID          `json:"buildId,omitempty"`
+	RepoName *repos.MatchFilter `json:"repoName,omitempty"`
 }
 
 type SearchBuilds struct {

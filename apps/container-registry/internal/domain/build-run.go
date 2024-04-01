@@ -27,10 +27,9 @@ import (
 	fn "github.com/kloudlite/operator/pkg/functions"
 )
 
-func (d *Impl) ListBuildRuns(ctx RegistryContext, buildId repos.ID, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error) {
+func (d *Impl) ListBuildRuns(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error) {
 	filter := repos.Filter{
 		fields.AccountName: ctx.AccountName,
-		fc.BuildRunBuildId: buildId,
 	}
 	paginated, err := d.buildRunRepo.FindPaginated(ctx, d.buildRunRepo.MergeMatchFilters(filter, search), pagination)
 	return paginated, err
@@ -237,7 +236,7 @@ func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *
 				Tags: build.Spec.Registry.Repo.Tags,
 			},
 		},
-		CacheKeyName: build.Spec.CacheKeyName,
+		Caches: build.Spec.Caches,
 		GitRepo: distributionv1.GitRepo{
 			Url:    hook.RepoUrl,
 			Branch: hook.CommitHash,

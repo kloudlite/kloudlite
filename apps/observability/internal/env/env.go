@@ -11,11 +11,14 @@ type Env struct {
 	NatsURL         string `env:"NATS_URL" required:"true"`
 	SessionKVBucket string `env:"SESSION_KV_BUCKET" required:"true"`
 
-	IAMGrpcAddr string `env:"IAM_GRPC_ADDR" required:"true"`
+	IAMGrpcAddr   string `env:"IAM_GRPC_ADDR" required:"true"`
+	InfraGrpcAddr string `env:"INFRA_GRPC_ADDR" required:"true"`
 
 	PromHttpAddr string `env:"PROM_HTTP_ADDR" required:"true"`
 
 	IsDev bool
+
+	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY" default:"localhost:8080"`
 }
 
 func LoadEnv() (*Env, error) {

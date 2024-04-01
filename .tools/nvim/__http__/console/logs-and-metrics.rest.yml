@@ -37,3 +37,9 @@ query:
   method: GET
   url: 'http://console-api.kl-core.svc.cluster.local:9100/observability/logs/cluster-job?start_time={{.startTime}}&end_time={{.endTime}}'
 ---
+
+label: Get Logs for pod with a tracking id
+query:
+  method: GET
+  url: 'http://localhost:12121/observability/logs?tracking_id={{.trackingId}}&cluster_name={{.clusterName}}'
+---

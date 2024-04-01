@@ -51,11 +51,29 @@ tasks:
     cmds:
       - go run ./main.go --dev
 
+  gen:constants:
+    cmds:
+      - go generate ./internal/entities/field-constants/gen.go
+
   build:
     cmds:
+      - task: gen:constants
       - task: go:build 
         vars: 
           Out: ./bin/{{.app}}
+
+  local:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    vars:
+      push: "{{.push | default false}}"
+    cmds:
+      - task: build
+      - nerdctl build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}}
+      - |+
+        [ {{.push}} = "true" ] && nerdctl push {{.Image}}
+
 
   container:build-and-push:
     preconditions:

@@ -36,41 +36,148 @@ variables:
 
 label: List Clusters
 query: |+ #graphql
-  query Infra_listClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
-    infra_listClusters(search: $search, pagination: $pagination) {
-      edges {
-        cursor
-        node {
-          id
-          kind
-          metadata {
-            name
-            namespace
+  # query Infra_listClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
+  #   infra_listClusters(search: $search, pagination: $pagination) {
+  #     edges {
+  #       cursor
+  #       node {
+  #         id
+  #         kind
+  #         metadata {
+  #           name
+  #           namespace
+  #         }
+  #         status {
+  #           checks
+  #         }
+  #         spec {
+  #           messageQueueTopicName
+  #         }
+  #         # clusterToken
+  #         markedForDeletion
+  #         syncStatus {
+  #           action
+  #           error
+  #           lastSyncedAt
+  #           state
+  #           syncScheduledAt
+  #           recordVersion
+  #         }
+  #         # adminKubeconfig {
+  #         #   value
+  #         #   encoding
+  #         # }
+  #       }
+  #     }
+  #   }
+  # }
+  query Infra_listClusterss(
+        $search: SearchCluster
+        $pagination: CursorPaginationIn
+      ) {
+        infra_listClusters(search: $search, pagination: $pagination) {
+          totalCount
+          pageInfo {
+            startCursor
+            hasPreviousPage
+            hasNextPage
+            endCursor
           }
-          status {
-            checks
+          edges {
+            cursor
+            node {
+              id
+              displayName
+              markedForDeletion
+              metadata {
+                name
+                annotations
+                generation
+              }
+              creationTime
+              lastUpdatedBy {
+                userId
+                userName
+                userEmail
+              }
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              updateTime
+              status {
+                checks
+                checkList {
+                  description
+                  debug
+                  name
+                  title
+                }
+                isReady
+                lastReadyGeneration
+                lastReconcileTime
+                message {
+                  RawMessage
+                }
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
+              recordVersion
+              spec {
+                messageQueueTopicName
+                kloudliteRelease
+
+                clusterTokenRef {
+                  key
+                  name
+                  namespace
+                }
+                accountId
+                accountName
+                availabilityMode
+                aws {
+                  k3sMasters {
+                    iamInstanceProfileRole
+                    instanceType
+                    nodes
+                    nvidiaGpuEnabled
+                    rootVolumeSize
+                    rootVolumeType
+                  }
+                  nodePools
+                  region
+                  spotNodePools
+                }
+                cloudProvider
+                backupToS3Enabled
+                cloudflareEnabled
+                clusterInternalDnsHost
+                output {
+                  keyK3sAgentJoinToken
+                  keyK3sServerJoinToken
+                  keyKubeconfig
+                  secretName
+                }
+                publicDNSHost
+                taintMasterNodes
+              }
+            }
           }
-          spec {
-            messageQueueTopicName
-          }
-          # clusterToken
-          markedForDeletion
-          syncStatus {
-            action
-            error
-            lastSyncedAt
-            state
-            syncScheduledAt
-            recordVersion
-          }
-          # adminKubeconfig {
-          #   value
-          #   encoding
-          # }
         }
       }
-    }
-  }
 variables:
   search:
     text:
