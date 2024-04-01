@@ -26,7 +26,22 @@ import { GitDetail } from '~/console/components/commons';
 import { IRepoContext } from '../_layout';
 import AdvancedOptions from './advanced-options';
 
-type IDialog = IDialogBase<ExtractNodeType<IBuilds>>;
+type IDialog = IDialogBase<
+  Omit<
+    ExtractNodeType<IBuilds>,
+    | 'creationTime'
+    | 'latestBuildRun'
+    | 'errorMessages'
+    | 'status'
+    | 'markedForDeletion'
+    | 'updateTime'
+    | 'createdBy'
+    | 'credUser'
+    | 'lastUpdatedBy'
+  > & {
+    mode?: 'app' | 'build';
+  }
+>;
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;
@@ -67,137 +82,140 @@ const Root = (props: IDialog) => {
       return !!d;
     });
   };
-  const { values, errors, handleChange, handleSubmit, resetValues } = useForm({
-    initialValues: isUpdate
-      ? {
-          name: props.data.name,
-          source: {
-            branch: props.data.source.branch,
-            repository: props.data.source.repository,
-            provider: props.data.source.provider,
-          },
-          tags: props.data.spec.registry.repo.tags,
-          buildClusterName: props.data.buildClusterName,
-          repository: props.data.spec.registry.repo.name,
-          advanceOptions:
-            isAdvanceOptions(props.data.spec.buildOptions) ||
-            (props.data.spec.caches || []).length > 0,
-          ...props.data.spec.buildOptions,
-          caches: props.data.spec.caches || [],
-        }
-      : {
-          name: '',
-          source: {
-            branch: '',
-            repository: '',
-            provider: '' as IGIT_PROVIDERS,
-          },
-          tags: [],
-          buildClusterName: '',
-          advanceOptions: false,
-          repository: '',
-          buildArgs: {},
-          buildContexts: {},
-          contextDir: '',
-          dockerfilePath: '',
-          dockerfileContent: '',
-          isGitLoading: false,
-          caches: [],
-        },
-    validationSchema: Yup.object({
-      source: Yup.object()
-        .shape({
-          branch: Yup.string().required('Branch is required'),
-        })
-        .required('Branch is required'),
-      name: Yup.string().test('required', 'Name is required', (v) => {
-        return !(currentStep === 2 && !v);
-      }),
-      buildClusterName: Yup.string().test(
-        'required',
-        'Build cluster name is required',
-        (v) => {
-          return !(currentStep === 2 && !v);
-        }
-      ),
-      tags: Yup.array().test('required', 'Tags is required', (value = []) => {
-        return !(currentStep === 2 && !(value.length > 0));
-      }),
-    }),
-
-    onSubmit: async (val) => {
-      const submit = async () => {
-        try {
-          if (isUpdate) {
-            const { errors: e } = await api.updateBuild({
-              crUpdateBuildId: props.data.id,
-              build: {
-                name: val.name,
-                buildClusterName: val.buildClusterName,
-                source: {
-                  branch: val.source.branch,
-                  provider:
-                    val.source.provider === 'github' ? 'github' : 'gitlab',
-                  repository: val.source.repository,
-                },
-                spec: {
-                  ...{
-                    ...(val.advanceOptions
-                      ? {
-                          buildOptions: {
-                            buildArgs: val.buildArgs,
-                            buildContexts: val.buildContexts,
-                            contextDir: val.contextDir,
-                            dockerfileContent: val.dockerfileContent,
-                            dockerfilePath: val.dockerfilePath,
-                            targetPlatforms: [],
-                          },
-                        }
-                      : {}),
-                  },
-                  registry: {
-                    repo: {
-                      name: val.repository,
-                      tags: val.tags,
-                    },
-                  },
-                  resource: {
-                    cpu: 500,
-                    memoryInMb: 1000,
-                  },
-                  caches: val.caches.map((v) => ({
-                    path: v.path,
-                    name: v.name,
-                  })),
-                },
-              },
-            });
-            if (e) {
-              throw e[0];
-            }
+  const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
+    useForm({
+      initialValues: isUpdate
+        ? {
+            name: props.data.name,
+            source: {
+              branch: props.data.source.branch,
+              repository: props.data.source.repository,
+              provider: props.data.source.provider,
+            },
+            tags: props.data.spec.registry.repo.tags,
+            buildClusterName: props.data.buildClusterName,
+            repository: props.data.spec.registry.repo.name,
+            advanceOptions:
+              isAdvanceOptions(props.data.spec.buildOptions) ||
+              (props.data.spec.caches || []).length > 0,
+            ...props.data.spec.buildOptions,
+            caches: props.data.spec.caches || [],
           }
-          reloadPage();
-          resetValues();
-          toast.success(
-            `Build ${isUpdate ? 'updated' : 'created'} successfully`
-          );
-          setVisible(false);
-        } catch (err) {
-          handleError(err);
+        : {
+            name: '',
+            source: {
+              branch: '',
+              repository: '',
+              provider: '' as IGIT_PROVIDERS,
+            },
+            tags: [],
+            buildClusterName: '',
+            advanceOptions: false,
+            repository: '',
+            buildArgs: {},
+            buildContexts: {},
+            contextDir: '',
+            dockerfilePath: '',
+            dockerfileContent: '',
+            isGitLoading: false,
+            caches: [],
+          },
+      validationSchema: Yup.object({
+        source: Yup.object()
+          .shape({
+            branch: Yup.string().required('Branch is required'),
+          })
+          .required('Branch is required'),
+        name: Yup.string().test('required', 'Name is required', (v) => {
+          return !(currentStep === 2 && !v);
+        }),
+        buildClusterName: Yup.string().test(
+          'required',
+          'Build cluster name is required',
+          (v) => {
+            return !(currentStep === 2 && !v);
+          }
+        ),
+        tags: Yup.array().test('required', 'Tags is required', (value = []) => {
+          return !(currentStep === 2 && !(value.length > 0));
+        }),
+      }),
+
+      onSubmit: async (val) => {
+        const submit = async () => {
+          try {
+            if (isUpdate) {
+              console.log('build data', props.data);
+              const { errors: e } = await api.updateBuild({
+                crUpdateBuildId: props.data.id,
+                build: {
+                  name: val.name,
+                  buildClusterName: val.buildClusterName,
+                  source: {
+                    branch: val.source.branch,
+                    provider:
+                      val.source.provider === 'github' ? 'github' : 'gitlab',
+                    repository: val.source.repository,
+                  },
+                  spec: {
+                    ...{
+                      ...(val.advanceOptions
+                        ? {
+                            buildOptions: {
+                              buildArgs: val.buildArgs,
+                              buildContexts: val.buildContexts,
+                              contextDir: val.contextDir,
+                              dockerfileContent: val.dockerfileContent,
+                              dockerfilePath: val.dockerfilePath,
+                              targetPlatforms: [],
+                            },
+                          }
+                        : {}),
+                    },
+                    registry: {
+                      repo: {
+                        name: val.repository,
+                        tags: val.tags,
+                      },
+                    },
+                    resource: {
+                      cpu: 500,
+                      memoryInMb: 1000,
+                    },
+                    caches: val.caches.map((v) => ({
+                      path: v.path,
+                      name: v.name,
+                    })),
+                  },
+                },
+              });
+              if (e) {
+                throw e[0];
+              }
+            }
+
+            reloadPage();
+            resetValues();
+            toast.success(
+              `Build ${isUpdate ? 'updated' : 'created'} successfully`
+            );
+            setVisible(false);
+          } catch (err) {
+            handleError(err);
+          }
+        };
+        switch (currentStep) {
+          case 1:
+            onNext();
+            break;
+          case 2:
+            await submit();
+            break;
+          default:
+            break;
         }
-      };
-      switch (currentStep) {
-        case 1:
-          onNext();
-          break;
-        case 2:
-          await submit();
-          break;
-        default:
-          break;
-      }
-    },
-  });
+      },
+    });
 
   return (
     <Popup.Form onSubmit={handleSubmit}>
@@ -241,6 +259,7 @@ const Root = (props: IDialog) => {
                     onChange={handleChange('name')}
                     error={!!errors.name}
                     message={errors.name}
+                    disabled={props.isUpdate && props.data.mode === 'app'}
                   />
                   <Select
                     label="Tags"
@@ -256,6 +275,7 @@ const Root = (props: IDialog) => {
                     }}
                     error={!!errors.tags}
                     message={errors.tags}
+                    disabled={props.isUpdate && props.data.mode === 'app'}
                   />
 
                   <Select
@@ -276,6 +296,7 @@ const Root = (props: IDialog) => {
                         : ''
                     }
                     loading={clusterLoading}
+                    disabled={props.isUpdate && props.data.mode === 'app'}
                   />
 
                   <AdvancedOptions
@@ -295,6 +316,7 @@ const Root = (props: IDialog) => {
           type="submit"
           content={currentStep === 1 ? 'Continue' : 'Update'}
           variant="primary"
+          loading={isLoading}
         />
       </Popup.Footer>
     </Popup.Form>

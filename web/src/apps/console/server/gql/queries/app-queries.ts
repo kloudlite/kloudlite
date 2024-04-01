@@ -271,6 +271,7 @@ export const appQueries = (executor: IExecutor) => ({
           ciBuildId
           updateTime
           build {
+            id
             buildClusterName
             name
             source {

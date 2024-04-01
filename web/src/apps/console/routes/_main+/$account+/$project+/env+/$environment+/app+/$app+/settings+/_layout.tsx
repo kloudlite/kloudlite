@@ -87,13 +87,7 @@ const Layout = () => {
             environment: envName,
             project: projectName,
           });
-          if (app.ciBuildId) {
-            buildId = await appFun.updateBuild({
-              api,
-              build: buildData,
-              buildId: app.ciBuildId,
-            });
-          } else {
+          if (!app.ciBuildId) {
             buildId = await appFun.createBuild({
               api,
               build: buildData,

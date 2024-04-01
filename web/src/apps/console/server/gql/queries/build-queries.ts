@@ -60,7 +60,6 @@ export const buildQueries = (executor: IExecutor) => ({
                 webhookId
               }
               spec {
-                accountName
                 buildOptions {
                   buildArgs
                   buildContexts
