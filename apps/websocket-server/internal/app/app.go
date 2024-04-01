@@ -40,24 +40,21 @@ var Module = fx.Module("app",
 		) {
 			a := server.Raw()
 
-			a.Use(
-				httpServer.NewSessionMiddleware(
-					sessionRepo,
-					constants.CookieName,
-					env.CookieDomain,
-					constants.CacheSessionPrefix,
-				),
-			)
+			a.Use(httpServer.NewReadSessionMiddleware(sessionRepo, constants.CookieName, constants.CacheSessionPrefix))
 
-			setUpgradable := func(c *fiber.Ctx) error {
+			// Web socket route
+			a.Use("/ws", func(c *fiber.Ctx) error {
 				if websocket.IsWebSocketUpgrade(c) {
 					return c.Next()
 				}
 				return fiber.ErrUpgradeRequired
-			}
+			})
 
-			// Web socket route
-			a.Use("/ws", setUpgradable)
+			// a.Use("/ws", websocket.New(func(c *websocket.Conn) {
+			// 	if err := d.HandleWebSocket(context.TODO(), c); err != nil {
+			// 		logr.Errorf(err, "while handling websocket for resource update")
+			// 	}
+			// }))
 			a.Use("/ws", func(c *fiber.Ctx) error {
 				ctx := c.Context()
 
