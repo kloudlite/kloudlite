@@ -4,12 +4,11 @@
 {{- $labels := .Labels -}}
 {{- $annotations := .Annotations -}}
 {{- $buildOptions := .BuildOptions -}}
-{{- $cacheKeyName := .CacheKeyName -}}
 {{- $resource := .Resource -}}
 {{- $gitRepo := .GitRepo -}}
 {{- $registry := .Registry -}}
 {{- $credentialsRef := .CredentialsRef -}}
-{{- $caches := .Caches -}}
+{{- $caches := .Caches | default list -}}
 
 apiVersion: distribution.kloudlite.io/v1
 kind: BuildRun
@@ -26,7 +25,10 @@ spec:
   buildOptions: {{ $buildOptions | toJson }}
   {{- end }}
 
+
+  {{- if $caches }}
   caches: {{ $caches | toJson }}
+  {{- end }}
 
   resource: {{ $resource | toJson }}
   gitRepo: {{ $gitRepo | toJson }}

@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+
 	generated1 "github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain"
@@ -412,7 +413,7 @@ func (r *queryResolver) CrListBuildRuns(ctx context.Context, search *model.Searc
 		}
 
 		if search.RepoName != nil {
-			filter["spec.registry.repo"] = *search.RepoName
+			filter["spec.registry.repo.name"] = *search.RepoName
 		}
 	}
 
@@ -445,110 +446,7 @@ func (r *Resolver) Mutation() generated1.MutationResolver { return &mutationReso
 // Query returns generated1.QueryResolver implementation.
 func (r *Resolver) Query() generated1.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *mutationResolver) CrAddBuildCacheKey(ctx context.Context, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.AddBuildCache(cc, buildCacheKey)
-}
-func (r *mutationResolver) CrDeleteBuildCacheKey(ctx context.Context, id repos.ID) (bool, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-
-	if err := r.Domain.DeleteBuildCache(cc, id); err != nil {
-		return false, errors.NewE(err)
-	}
-	return true, nil
-}
-func (r *mutationResolver) CrUpdateBuildCacheKey(ctx context.Context, id repos.ID, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.UpdateBuildCache(cc, id, buildCacheKey)
-}
-func (r *mutationResolver) CrListBuildsByBuildCacheID(ctx context.Context, buildCacheKeyID repos.ID, pagination *repos.CursorPagination) (*model.BuildPaginatedRecords, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	rr, err := r.Domain.ListBuildsByCache(cc, buildCacheKeyID, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	records := make([]*model.BuildEdge, len(rr.Edges))
-
-	for i := range rr.Edges {
-		records[i] = &model.BuildEdge{
-			Node:   rr.Edges[i].Node,
-			Cursor: rr.Edges[i].Cursor,
-		}
-	}
-
-	m := &model.BuildPaginatedRecords{
-		Edges: records,
-		PageInfo: &model.PageInfo{
-			HasNextPage:     rr.PageInfo.HasNextPage,
-			HasPreviousPage: rr.PageInfo.HasPrevPage,
-			StartCursor:     &rr.PageInfo.StartCursor,
-			EndCursor:       &rr.PageInfo.EndCursor,
-		},
-	}
-
-	return m, nil
-}
-func (r *queryResolver) CrListBuildCacheKeys(ctx context.Context, pq *repos.CursorPagination, search *model.SearchBuildCacheKeys) (*model.BuildCacheKeyPaginatedRecords, error) {
-	cc, err := toRegistryContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	filter := map[string]repos.MatchFilter{}
-	if search != nil {
-		if search.Text != nil {
-			filter["name"] = *search.Text
-		}
-	}
-
-	rr, err := r.Domain.ListBuildCaches(cc, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	records := make([]*model.BuildCacheKeyEdge, len(rr.Edges))
-
-	for i := range rr.Edges {
-		records[i] = &model.BuildCacheKeyEdge{
-			Node:   rr.Edges[i].Node,
-			Cursor: rr.Edges[i].Cursor,
-		}
-	}
-
-	m := &model.BuildCacheKeyPaginatedRecords{
-		Edges: records,
-		PageInfo: &model.PageInfo{
-			HasNextPage:     rr.PageInfo.HasNextPage,
-			HasPreviousPage: rr.PageInfo.HasPrevPage,
-			StartCursor:     &rr.PageInfo.StartCursor,
-			EndCursor:       &rr.PageInfo.EndCursor,
-		},
-	}
-
-	return m, nil
-}
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)
