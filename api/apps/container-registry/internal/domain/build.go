@@ -81,6 +81,10 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 		return nil, errors.NewE(err)
 	}
 
+	if build.Spec.AccountName == "" {
+		build.Spec.AccountName = ctx.AccountName
+	}
+
 	patchDoc := repos.Document{
 		fc.BuildName:             build.Name,
 		fc.BuildBuildClusterName: build.BuildClusterName,
@@ -153,13 +157,16 @@ func (d *Impl) GetBuild(ctx RegistryContext, buildId repos.ID) (*entities.Build,
 		return nil, errors.Newf("unauthorized to get build")
 	}
 
-	b, err := d.buildRepo.FindOne(ctx, repos.Filter{"spec.accountName": ctx.AccountName, "id": buildId})
+	b, err := d.buildRepo.FindOne(ctx, repos.Filter{
+		"spec.accountName": ctx.AccountName,
+		"id":               buildId,
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	if b == nil {
-		return nil, errors.Newf("build not found")
+		return nil, errors.Newf("build (id=%s) not found", buildId)
 	}
 
 	return b, nil
