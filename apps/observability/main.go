@@ -12,6 +12,9 @@ import (
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
+
+	"github.com/kloudlite/api/pkg/k8s"
+	"k8s.io/client-go/rest"
 )
 
 func main() {
@@ -45,6 +48,15 @@ func main() {
 				e.IsDev = isDev
 				return e, nil
 			}
+		}),
+
+		fx.Provide(func(e *env.Env) (*rest.Config, error) {
+			if e.KubernetesApiProxy != "" {
+				return &rest.Config{
+					Host: e.KubernetesApiProxy,
+				}, nil
+			}
+			return k8s.RestInclusterConfig()
 		}),
 
 		framework.Module,
