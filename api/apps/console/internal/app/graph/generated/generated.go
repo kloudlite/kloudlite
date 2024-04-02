@@ -6260,6 +6260,7 @@ enum Github__com___kloudlite___api___pkg___types__SyncState {
 
 enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret {
   config
+  pvc
   secret
 }
 
