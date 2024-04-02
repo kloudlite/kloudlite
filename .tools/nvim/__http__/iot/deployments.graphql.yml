@@ -1,0 +1,57 @@
+---
+label: "Create Deployment"
+query: |+
+  mutation Iot_createDeployment($deployment: IOTDeploymentIn!) {
+    iot_createDeployment(deployment: $deployment) {
+      CIDR
+    }
+  }
+variables:
+  deployment: {
+      "CIDR": "10.0.0.0/16",
+      "displayName": "sample deployment",
+      "name": "asdfa",
+      "exposedServices": [
+        {
+          "name": "asfd",
+          "ip": "10.21.32.4"
+        }
+      ]
+    }
+---
+
+label: list deployments
+query: |+
+  query Iot_listDeployments {
+    iot_listDeployments {
+      totalCount
+      edges {
+        node {
+          name
+          CIDR
+        }
+      }
+    }
+  }
+---
+
+query: |+
+  mutation Iot_deleteDeployment($name: String!) {
+    iot_deleteDeployment(name: $name)
+  }
+variables:
+  name: "asdfa"
+---
+
+label: get deployment
+query: |+
+  query Iot_getDeployment($name: String!) {
+    iot_getDeployment(name: $name) {
+      CIDR
+      id
+    }
+  }
+variables:
+  {
+    "name":
+  }
