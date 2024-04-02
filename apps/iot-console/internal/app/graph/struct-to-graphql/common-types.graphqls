@@ -1,21 +1,12 @@
+type Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedService @shareable {
+  ip: String!
+  name: String!
+}
+
 type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
   userEmail: String!
   userId: String!
   userName: String!
-}
-
-type Github__com___kloudlite___api___pkg___types__EncodedString @shareable {
-  encoding: String!
-  value: String!
-}
-
-type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
-  action: Github__com___kloudlite___api___pkg___types__SyncAction!
-  error: String
-  lastSyncedAt: Date
-  recordVersion: Int!
-  state: Github__com___kloudlite___api___pkg___types__SyncState!
-  syncScheduledAt: Date
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppContainer @shareable {
@@ -55,12 +46,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppSvc @shareable {
   type: String
 }
 
-type Github__com___kloudlite___operator___apis___crds___v1__BasicAuth @shareable {
-  enabled: Boolean!
-  secretName: String
-  username: String
-}
-
 type Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv @shareable {
   key: String!
   optional: Boolean
@@ -87,27 +72,9 @@ type Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem 
   key: String!
 }
 
-type Github__com___kloudlite___operator___apis___crds___v1__Cors @shareable {
-  allowCredentials: Boolean
-  enabled: Boolean
-  origins: [String!]
-}
-
 type Github__com___kloudlite___operator___apis___crds___v1__EnvFrom @shareable {
   refName: String!
   type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting @shareable {
-  mode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode
-  privateIngressClass: String
-  publicIngressClass: String
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec @shareable {
-  projectName: String!
-  routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting
-  targetNamespace: String
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HPA @shareable {
@@ -124,40 +91,9 @@ type Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe @sharea
   port: Int!
 }
 
-type Github__com___kloudlite___operator___apis___crds___v1__Https @shareable {
-  clusterIssuer: String
-  enabled: Boolean!
-  forceRedirect: Boolean
-}
-
 type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable {
   enabled: Boolean!
   toDevice: String!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec @shareable {
-  resourceNamePrefix: String
-  resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec @shareable {
-  nodeSelector: Map
-  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate!
-  tolerations: [K8s__io___api___core___v1__Toleration!]
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate @shareable {
-  apiVersion: String!
-  kind: String!
-  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef!
-  spec: Map!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef @shareable {
-  apiVersion: String!
-  kind: String!
-  name: String!
-  namespace: String!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Probe @shareable {
@@ -170,72 +106,12 @@ type Github__com___kloudlite___operator___apis___crds___v1__Probe @shareable {
   type: String!
 }
 
-type Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpec @shareable {
-  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
-  targetNamespace: String!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec @shareable {
-  targetNamespace: String!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__RateLimit @shareable {
-  connections: Int
-  enabled: Boolean
-  rpm: Int
-  rps: Int
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__Route @shareable {
-  app: String!
-  path: String!
-  port: Int!
-  rewrite: Boolean
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__RouterSpec @shareable {
-  backendProtocol: String
-  basicAuth: Github__com___kloudlite___operator___apis___crds___v1__BasicAuth
-  cors: Github__com___kloudlite___operator___apis___crds___v1__Cors
-  domains: [String!]!
-  https: Github__com___kloudlite___operator___apis___crds___v1__Https
-  ingressClass: String
-  maxBodySizeInMB: Int
-  rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimit
-  routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @shareable {
-  apiVersion: String!
-  kind: String!
-  spec: Map!
-}
-
 type Github__com___kloudlite___operator___apis___crds___v1__ShellProbe @shareable {
   command: [String!]
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__TcpProbe @shareable {
   port: Int!
-}
-
-type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord @shareable {
-  host: String
-  target: String
-}
-
-type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
-  activeNamespace: String
-  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
-  disabled: Boolean
-  nodeSelector: Map
-  noExternalService: Boolean
-  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
-}
-
-type Github__com___kloudlite___operator___apis___wireguard___v1__Port @shareable {
-  port: Int
-  targetPort: Int
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
@@ -275,16 +151,6 @@ type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
 
 type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable {
   RawMessage: Any
-}
-
-type K8s__io___api___core___v1__Secret @shareable {
-  apiVersion: String
-  data: Map
-  immutable: Boolean
-  kind: String
-  metadata: Metadata @goField(name: "objectMeta")
-  stringData: Map
-  type: K8s__io___api___core___v1__SecretType
 }
 
 type K8s__io___api___core___v1__Toleration @shareable {
@@ -334,6 +200,11 @@ type PageInfo @shareable {
   startCursor: String
 }
 
+input Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedServiceIn {
+  ip: String!
+  name: String!
+}
+
 input Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn {
   args: [String!]
   command: [String!]
@@ -371,12 +242,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn {
   type: String
 }
 
-input Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn {
-  enabled: Boolean!
-  secretName: String
-  username: String
-}
-
 input Github__com___kloudlite___operator___apis___crds___v1__ContainerEnvIn {
   key: String!
   optional: Boolean
@@ -403,25 +268,9 @@ input Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem
   key: String!
 }
 
-input Github__com___kloudlite___operator___apis___crds___v1__CorsIn {
-  allowCredentials: Boolean
-  enabled: Boolean
-  origins: [String!]
-}
-
 input Github__com___kloudlite___operator___apis___crds___v1__EnvFromIn {
   refName: String!
   type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn {
-  mode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
-  projectName: String!
-  routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn
-  targetNamespace: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__HPAIn {
@@ -438,40 +287,9 @@ input Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn {
   port: Int!
 }
 
-input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn {
-  clusterIssuer: String
-  enabled: Boolean!
-  forceRedirect: Boolean
-}
-
 input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
   enabled: Boolean!
   toDevice: String!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
-  resourceNamePrefix: String
-  resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn {
-  nodeSelector: Map
-  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn!
-  tolerations: [K8s__io___api___core___v1__TolerationIn!]
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
-  apiVersion: String!
-  kind: String!
-  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn!
-  spec: Map!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn {
-  apiVersion: String!
-  kind: String!
-  name: String!
-  namespace: String!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn {
@@ -484,69 +302,12 @@ input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn {
   type: String!
 }
 
-input Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpecIn {
-  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
-  targetNamespace: String!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn {
-  targetNamespace: String!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn {
-  connections: Int
-  enabled: Boolean
-  rpm: Int
-  rps: Int
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__RouteIn {
-  app: String!
-  path: String!
-  port: Int!
-  rewrite: Boolean
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn {
-  backendProtocol: String
-  basicAuth: Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn
-  cors: Github__com___kloudlite___operator___apis___crds___v1__CorsIn
-  domains: [String!]!
-  https: Github__com___kloudlite___operator___apis___crds___v1__HttpsIn
-  ingressClass: String
-  maxBodySizeInMB: Int
-  rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
-  routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
-  apiVersion: String!
-  kind: String!
-  spec: Map!
-}
-
 input Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn {
   command: [String!]
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn {
   port: Int!
-}
-
-input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn {
-  host: String
-  target: String
-}
-
-input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
-  activeNamespace: String
-  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
-  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
-}
-
-input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
-  port: Int
-  targetPort: Int
 }
 
 input K8s__io___api___core___v1__TolerationIn {
@@ -586,35 +347,10 @@ input MetadataIn {
   namespace: String
 }
 
-enum Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat {
-  dockerConfigJson
-  params
-}
-
-enum Github__com___kloudlite___api___pkg___types__SyncAction {
-  APPLY
-  DELETE
-}
-
-enum Github__com___kloudlite___api___pkg___types__SyncState {
-  APPLIED_AT_AGENT
-  DELETED_AT_AGENT
-  DELETING_AT_AGENT
-  ERRORED_AT_AGENT
-  IDLE
-  IN_QUEUE
-  UPDATED_AT_AGENT
-}
-
 enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret {
   config
   pvc
   secret
-}
-
-enum Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode {
-  private
-  public
 }
 
 enum Github__com___kloudlite___operator___pkg___operator__State {
@@ -622,17 +358,6 @@ enum Github__com___kloudlite___operator___pkg___operator__State {
   finished____reconcilation
   under____reconcilation
   yet____to____be____reconciled
-}
-
-enum K8s__io___api___core___v1__SecretType {
-  bootstrap__kubernetes__io___token
-  kubernetes__io___basic____auth
-  kubernetes__io___dockercfg
-  kubernetes__io___dockerconfigjson
-  kubernetes__io___service____account____token
-  kubernetes__io___ssh____auth
-  kubernetes__io___tls
-  Opaque
 }
 
 enum K8s__io___api___core___v1__TaintEffect {
