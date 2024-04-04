@@ -377,4 +377,12 @@ resources:
   kind: Prefix
   path: github.com/kloudlite/operator/apis/redis.msvc/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: wireguard
+  kind: ClusterConnection
+  path: github.com/kloudlite/operator/apis/wireguard/v1
+  version: v1
 version: "3"

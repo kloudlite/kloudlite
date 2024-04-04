@@ -86,7 +86,7 @@ spec:
         - /etc/coredns/Corefile
         - --debug
         image: ghcr.io/kloudlite/operator/components/coredns:v1.0.5-nightly
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: coredns
         resources:
           limits:

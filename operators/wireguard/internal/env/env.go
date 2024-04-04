@@ -23,6 +23,9 @@ type Env struct {
 
 	DefaultIngressClass    string `env:"DEFAULT_INGRESS_CLASS" required:"true"`
 	EnvironmentIngressName string `env:"ENVIRONMENT_INGRESS_NAME" default:"env-ingress"`
+
+	WgGatewayImage string `env:"WG_GATEWAY_IMAGE"`
+	WgAgentImage   string `env:"WG_AGENT_IMAGE"`
 }
 
 func GetEnvOrDie() *Env {
