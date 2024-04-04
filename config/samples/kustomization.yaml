@@ -91,4 +91,5 @@ resources:
 - crds_v1_clustermanagedservice.yaml
 - clusters_v1_awsvpc.yaml
 - redis.msvc_v1_prefix.yaml
+- wireguard_v1_connection.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

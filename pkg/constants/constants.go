@@ -60,9 +60,10 @@ var AnnotationKeys = struct {
 
 // wireguard secrets
 const (
-	WGDeviceSeceret string = "kloudlite.io/wg-device-sec"
-	WGServerNameKey string = "kloudlite.io/wg-server.name"
-	WGDeviceNameKey string = "kloudlite.io/wg-device.name"
+	WGDeviceSeceret     string = "kloudlite.io/wg-device-sec"
+	WGServerNameKey     string = "kloudlite.io/wg-server.name"
+	WGDeviceNameKey     string = "kloudlite.io/wg-device.name"
+	WGConnectionNameKey string = "kloudlite.io/wg-cluster-connection.name"
 )
 
 const (
@@ -316,6 +317,11 @@ var (
 const (
 	DefaultIngressClass  = "nginx"
 	DefaultClusterIssuer = "kl-cert-issuer"
+)
+
+const (
+	DefaultWgGatewayImage = "ghcr.io/kloudlite/operator/components/multi-cluster-gateway:v1.0.5-nightly"
+	DefaultWgAgentImage   = "ghcr.io/kloudlite/operator/components/multi-cluster-agent:v1.0.5-nightly"
 )
 
 const KloudliteLabelPrefix = "kloudlite.io"
