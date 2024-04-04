@@ -67,8 +67,10 @@ const Root = (props: IDialog) => {
             autoScale: props.data.spec.minCount !== props.data.spec.maxCount,
             isNameError: false,
             stateful:
-              props.data.spec.nodeLabels[keyconstants.nodepoolStateType] ===
-              'stateful',
+              cloudProvider === 'aws'
+                ? props.data.spec.nodeLabels[keyconstants.nodepoolStateType] ===
+                  'stateful'
+                : false,
           }
         : {
             nvidiaGpuEnabled: false,

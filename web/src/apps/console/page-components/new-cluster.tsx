@@ -29,6 +29,7 @@ import { TitleBox } from '../components/raw-wrapper';
 import { BottomNavigation, ReviewComponent } from '../components/commons';
 import FillerCluster from '../assets/filler-cluster';
 import { IAccountContext } from '../routes/_main+/$account+/_layout';
+import FillerClusterReview from '../assets/filler-cluster-review';
 
 type props =
   | {
@@ -266,7 +267,9 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
       }}
     >
       <MultiStepProgressWrapper
-        fillerImage={<FillerCluster />}
+        fillerImage={
+          currentStep === 1 ? <FillerCluster /> : <FillerClusterReview />
+        }
         title={
           isOnboarding ? 'Setup your account!' : 'Let’s create new cluster.'
         }
@@ -293,20 +296,27 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
               </MultiStepProgress.Step>
               <MultiStepProgress.Step label="Review" step={2}>
                 <ReviewComponent
-                  title="Cluster detail"
+                  title="Basic details"
                   onEdit={() => {
                     jumpStep(1);
                   }}
                 >
-                  <div className="flex flex-col p-xl gap-lg rounded border border-border-default flex-1 overflow-hidden">
-                    <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
+                  <div className="flex flex-col rounded border border-border-default">
+                    <div className="flex flex-col p-xl gap-md">
                       <div className="bodyMd-semibold text-text-default">
                         Cluster name
                       </div>
                       <div className="bodySm text-text-soft">{values.name}</div>
                     </div>
-                    <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
-                      <div className="bodyMd-semibold text-text-default">
+                  </div>
+
+                  <span className="text-text-soft bodyMd">
+                    Provider details
+                  </span>
+
+                  <div className="flex flex-col p-xl gap-lg rounded border border-border-default flex-1 overflow-hidden">
+                    <div className="flex flex-row justify-between pb-lg  border-b border-border-default">
+                      <div className="bodyMd-medium text-text-default">
                         Cloud provider
                       </div>
                       <div className="bodySm text-text-soft">
@@ -314,8 +324,8 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                       </div>
                     </div>
                     {values.cloudProvider === 'aws' && (
-                      <div className="flex flex-col gap-md">
-                        <div className="bodyMd-semibold text-text-default">
+                      <div className="flex flex-row justify-between pb-lg border-b border-border-default">
+                        <div className="bodyMd-medium text-text-default">
                           Region
                         </div>
                         <div className="bodySm text-text-soft">
@@ -323,8 +333,8 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                         </div>
                       </div>
                     )}
-                    <div className="flex flex-col gap-md  pb-lg">
-                      <div className="bodyMd-semibold text-text-default">
+                    <div className="flex flex-row justify-between ">
+                      <div className="bodyMd-medium text-text-default">
                         Availability Mode
                       </div>
                       <div className="bodySm text-text-soft">
