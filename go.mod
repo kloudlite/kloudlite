@@ -45,9 +45,14 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/josharian/native v1.1.0 // indirect
+	github.com/mdlayher/genetlink v1.3.2 // indirect
+	github.com/mdlayher/netlink v1.7.2 // indirect
+	github.com/mdlayher/socket v0.4.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
+	golang.zx2c4.com/wireguard v0.0.0-20230325221338-052af4a8072b // indirect
 )
 
 require (
