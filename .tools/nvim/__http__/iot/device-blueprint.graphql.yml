@@ -1,0 +1,98 @@
+---
+label: "Create Device Blueprint"
+query: |+
+  mutation Iot_createDeviceBlueprint($projectName: String!, $envName: String!, $deviceBlueprint: IOTDeviceBlueprintIn!) {
+    iot_createDeviceBlueprint(projectName: $projectName, envName: $envName, deviceBlueprint: $deviceBlueprint) {
+      displayName
+      id
+      name
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "deviceBlueprint": {
+      "bluePrintType": "singleton_blueprint",
+      "displayName": "sample device blueprint",
+      "name": "sample-device-blueprint",
+      "version": "1"
+    }
+  }
+
+---
+
+label: "update Device Blueprint"
+query: |+
+  mutation Iot_updateDeviceBlueprint($projectName: String!, $envName: String!, $deviceBlueprint: IOTDeviceBlueprintIn!) {
+    iot_updateDeviceBlueprint(projectName: $projectName, envName: $envName, deviceBlueprint: $deviceBlueprint) {
+      bluePrintType
+      name
+      displayName
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "deviceBlueprint": {
+      "bluePrintType": "group____blueprint",
+      "displayName": "sample device blueprint",
+      "name": "sample-device-blueprint-one",
+      "version": 1
+    }
+  }
+
+---
+
+label: "delete Device Blueprint"
+query: |+
+  mutation Iot_deleteDeviceBlueprint($projectName: String!, $envName: String!, $name: String!) {
+    iot_deleteDeviceBlueprint(projectName: $projectName, envName: $envName, name: $name)
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "name": "sample-device-blueprint"
+  }
+
+---
+
+label: "get Device Blueprint"
+query: |+
+  query Iot_getDeviceBlueprint($projectName: String!, $envName: String!, $name: String!) {
+    iot_getDeviceBlueprint(projectName: $projectName, envName: $envName, name: $name) {
+      displayName
+      id
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "name": "sample-device-blueprint"
+  }
+
+---
+
+label: "list Device Blueprint"
+query: |+
+  query Iot_listDeployments($projectName: String!, $envName: String!) {
+    iot_listDeployments(projectName: $projectName, envName: $envName) {
+      totalCount
+      edges {
+        node {
+          displayName
+          accountName
+        }
+      }
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env"
+  }
+
+---

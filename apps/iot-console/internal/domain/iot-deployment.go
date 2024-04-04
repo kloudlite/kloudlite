@@ -2,15 +2,15 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/iot-console/internal/entities"
+	fc "github.com/kloudlite/api/apps/iot-console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *domain) findDeployment(ctx IotResourceContext, name string) (*entities.IOTDeployment, error) {
-	prj, err := d.iotDeploymentRepo.FindOne(ctx, repos.Filter{
-		"name": name,
-	})
+	prj, err := d.iotDeploymentRepo.FindOne(ctx, ctx.IOTConsoleDBFilters().Add(fc.IOTDeploymentName, name))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -31,6 +31,8 @@ func (d domain) GetDeployment(ctx IotResourceContext, name string) (*entities.IO
 
 func (d domain) CreateDeployment(ctx IotResourceContext, deployment entities.IOTDeployment) (*entities.IOTDeployment, error) {
 	deployment.AccountName = ctx.AccountName
+	deployment.ProjectName = ctx.ProjectName
+	deployment.EnvironmentName = ctx.EnvironmentName
 	deployment.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
@@ -47,14 +49,33 @@ func (d domain) CreateDeployment(ctx IotResourceContext, deployment entities.IOT
 }
 
 func (d domain) UpdateDeployment(ctx IotResourceContext, deployment entities.IOTDeployment) (*entities.IOTDeployment, error) {
-	//TODO implement me
-	panic("implement me")
+	patchForUpdate := repos.Document{
+		fields.DisplayName: deployment.DisplayName,
+		fields.LastUpdatedBy: common.CreatedOrUpdatedBy{
+			UserId:    ctx.GetUserId(),
+			UserName:  ctx.GetUserName(),
+			UserEmail: ctx.GetUserEmail(),
+		},
+	}
+
+	patchFilter := ctx.IOTConsoleDBFilters().Add(fc.IOTDeploymentName, deployment.Name)
+
+	upDep, err := d.iotDeploymentRepo.Patch(
+		ctx,
+		patchFilter,
+		patchForUpdate,
+	)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return upDep, nil
 }
 
 func (d domain) DeleteDeployment(ctx IotResourceContext, name string) error {
 	err := d.iotDeploymentRepo.DeleteOne(
 		ctx,
-		ctx.IOTConsoleDBFilters().Add("name", name),
+		ctx.IOTConsoleDBFilters().Add(fc.IOTDeploymentName, name),
 	)
 	if err != nil {
 		return errors.NewE(err)

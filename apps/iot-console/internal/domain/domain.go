@@ -14,11 +14,6 @@ type domain struct {
 	k8sClient k8s.Client
 	logger    logging.Logger
 
-	//producer MessageDispatcher
-	//
-	//iamClient   iam.IAMClient
-	//infraClient infra.InfraClient
-
 	iotProjectRepo         repos.DbRepo[*entities.IOTProject]
 	iotEnvironmentRepo     repos.DbRepo[*entities.IOTEnvironment]
 	iotDeploymentRepo      repos.DbRepo[*entities.IOTDeployment]
@@ -27,7 +22,6 @@ type domain struct {
 	iotAppRepo             repos.DbRepo[*entities.IOTApp]
 
 	envVars *env.Env
-	//consoleCacheStore kv.BinaryDataRepo
 }
 
 type IOTConsoleCacheStore kv.BinaryDataRepo

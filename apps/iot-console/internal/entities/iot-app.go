@@ -16,7 +16,7 @@ type IOTApp struct {
 	AccountName         string `json:"accountName" graphql:"noinput"`
 	ProjectName         string `json:"projectName" graphql:"noinput"`
 	EnvironmentName     string `json:"environmentName" graphql:"noinput"`
-	DeviceBlueprintName string `json:"deviceBlueprintName"`
+	DeviceBlueprintName string `json:"deviceBlueprintName" graphql:"noinput"`
 }
 
 var IOTAppIndexes = []repos.IndexField{
