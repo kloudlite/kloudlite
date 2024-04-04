@@ -736,6 +736,32 @@ rules:
 - apiGroups:
   - wireguard.kloudlite.io
   resources:
+  - connections
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - connections/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - connections/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
   - devices
   verbs:
   - create
