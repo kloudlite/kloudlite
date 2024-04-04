@@ -347,6 +347,11 @@ input MetadataIn {
   namespace: String
 }
 
+enum Github__com___kloudlite___api___apps___iot____console___internal___entities__BluePrintType {
+  group_blueprint
+  singleton_blueprint
+}
+
 enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret {
   config
   pvc

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/iot-console/internal/entities"
+	fc "github.com/kloudlite/api/apps/iot-console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
@@ -10,9 +11,9 @@ import (
 
 func (d *domain) findEnvironment(ctx IotConsoleContext, projectName string, name string) (*entities.IOTEnvironment, error) {
 	env, err := d.iotEnvironmentRepo.FindOne(ctx, repos.Filter{
-		fields.AccountName: ctx.AccountName,
-		fields.ProjectName: projectName,
-		"name":             name,
+		fields.AccountName:    ctx.AccountName,
+		fields.ProjectName:    projectName,
+		fc.IOTEnvironmentName: name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -54,17 +55,38 @@ func (d *domain) CreateEnvironment(ctx IotConsoleContext, projectName string, en
 }
 
 func (d *domain) UpdateEnvironment(ctx IotConsoleContext, projectName string, env entities.IOTEnvironment) (*entities.IOTEnvironment, error) {
-	//TODO implement me
-	panic("implement me")
+	patchForUpdate := repos.Document{
+		fields.DisplayName: env.DisplayName,
+		fields.LastUpdatedBy: common.CreatedOrUpdatedBy{
+			UserId:    ctx.GetUserId(),
+			UserName:  ctx.GetUserName(),
+			UserEmail: ctx.GetUserEmail(),
+		},
+	}
+
+	upEnv, err := d.iotEnvironmentRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.AccountName:    ctx.AccountName,
+			fields.ProjectName:    projectName,
+			fc.IOTEnvironmentName: env.Name,
+		},
+		patchForUpdate,
+	)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return upEnv, nil
 }
 
 func (d *domain) DeleteEnvironment(ctx IotConsoleContext, projectName string, name string) error {
 	err := d.iotEnvironmentRepo.DeleteOne(
 		ctx,
 		repos.Filter{
-			fields.AccountName: ctx.AccountName,
-			fields.ProjectName: projectName,
-			"name":             name,
+			fields.AccountName:    ctx.AccountName,
+			fields.ProjectName:    projectName,
+			fc.IOTEnvironmentName: name,
 		},
 	)
 	if err != nil {

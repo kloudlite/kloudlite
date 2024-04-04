@@ -440,6 +440,47 @@ type SearchIOTProjects struct {
 	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
+type GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType string
+
+const (
+	GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintTypeGroupBlueprint     GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType = "group_blueprint"
+	GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintTypeSingletonBlueprint GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType = "singleton_blueprint"
+)
+
+var AllGithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType = []GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType{
+	GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintTypeGroupBlueprint,
+	GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintTypeSingletonBlueprint,
+}
+
+func (e GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType) IsValid() bool {
+	switch e {
+	case GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintTypeGroupBlueprint, GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintTypeSingletonBlueprint:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___apps___iot____console___internal___entities__BluePrintType", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type GithubComKloudliteOperatorApisCrdsV1ConfigOrSecret string
 
 const (

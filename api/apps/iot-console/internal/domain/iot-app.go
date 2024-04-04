@@ -2,15 +2,17 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/iot-console/internal/entities"
+	fc "github.com/kloudlite/api/apps/iot-console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *domain) findApp(ctx IotResourceContext, deviceBlueprintName string, name string) (*entities.IOTApp, error) {
 	filter := ctx.IOTConsoleDBFilters()
-	filter.Add("deviceBlueprintName", deviceBlueprintName)
-	filter.Add("name", name)
+	filter.Add(fc.IOTAppDeviceBlueprintName, deviceBlueprintName)
+	filter.Add(fields.MetadataName, name)
 	app, err := d.iotAppRepo.FindOne(ctx, filter)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -23,7 +25,7 @@ func (d *domain) findApp(ctx IotResourceContext, deviceBlueprintName string, nam
 
 func (d *domain) ListApps(ctx IotResourceContext, deviceBlueprintName string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTApp], error) {
 	filter := ctx.IOTConsoleDBFilters()
-	filter.Add("deviceBlueprintName", deviceBlueprintName)
+	filter.Add(fc.IOTAppDeviceBlueprintName, deviceBlueprintName)
 	return d.iotAppRepo.FindPaginated(ctx, d.iotDeviceRepo.MergeMatchFilters(filter, search), pq)
 }
 
@@ -52,14 +54,35 @@ func (d *domain) CreateApp(ctx IotResourceContext, deviceBlueprintName string, a
 }
 
 func (d *domain) UpdateApp(ctx IotResourceContext, deviceBlueprintName string, app entities.IOTApp) (*entities.IOTApp, error) {
-	//TODO implement me
-	panic("implement me")
+	patchForUpdate := repos.Document{
+		fields.DisplayName: app.DisplayName,
+		fields.LastUpdatedBy: common.CreatedOrUpdatedBy{
+			UserId:    ctx.GetUserId(),
+			UserName:  ctx.GetUserName(),
+			UserEmail: ctx.GetUserEmail(),
+		},
+		fc.IOTAppDeviceBlueprintName: deviceBlueprintName,
+	}
+	patchFilter := ctx.IOTConsoleDBFilters()
+	patchFilter.Add(fc.IOTAppDeviceBlueprintName, deviceBlueprintName)
+	patchFilter.Add(fields.MetadataName, app.Name)
+
+	upApp, err := d.iotAppRepo.Patch(
+		ctx,
+		patchFilter,
+		patchForUpdate,
+	)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return upApp, nil
 }
 
 func (d *domain) DeleteApp(ctx IotResourceContext, deviceBlueprintName string, name string) error {
 	filter := ctx.IOTConsoleDBFilters()
-	filter.Add("deviceBlueprintName", deviceBlueprintName)
-	filter.Add("name", name)
+	filter.Add(fc.IOTAppDeviceBlueprintName, deviceBlueprintName)
+	filter.Add(fields.MetadataName, name)
 	err := d.iotAppRepo.DeleteOne(
 		ctx,
 		filter,

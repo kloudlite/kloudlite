@@ -19,4 +19,7 @@ cat ../infra/internal/app/graph/struct-to-graphql/*.graphqls >>./schemas/infra-a
 cat ../auth/internal/app/graph/*.graphqls >./schemas/auth-api.schema
 cat ../message-office/internal/app/graph/*.graphqls >./schemas/message-office-api.schema
 
+cat ../iot-console/internal/app/graph/*.graphqls >./schemas/iot-console-api.schema
+cat ../iot-console/internal/app/graph/struct-to-graphql/*.graphqls >>./schemas/iot-console-api.schema
+
 rover supergraph compose --config ./supergraph.yml --output "$out" --elv2-license accept

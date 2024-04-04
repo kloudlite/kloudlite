@@ -1,57 +1,112 @@
 ---
 label: "Create Deployment"
 query: |+
-  mutation Iot_createDeployment($deployment: IOTDeploymentIn!) {
-    iot_createDeployment(deployment: $deployment) {
+  mutation Iot_createDeployment($projectName: String!, $envName: String!, $deployment: IOTDeploymentIn!) {
+    iot_createDeployment(projectName: $projectName, envName: $envName, deployment: $deployment) {
       CIDR
-    }
-  }
-variables:
-  deployment: {
-      "CIDR": "10.0.0.0/16",
-      "displayName": "sample deployment",
-      "name": "asdfa",
-      "exposedServices": [
-        {
-          "name": "asfd",
-          "ip": "10.21.32.4"
-        }
-      ]
-    }
----
-
-label: list deployments
-query: |+
-  query Iot_listDeployments {
-    iot_listDeployments {
-      totalCount
-      edges {
-        node {
-          name
-          CIDR
-        }
-      }
-    }
-  }
----
-
-query: |+
-  mutation Iot_deleteDeployment($name: String!) {
-    iot_deleteDeployment(name: $name)
-  }
-variables:
-  name: "asdfa"
----
-
-label: get deployment
-query: |+
-  query Iot_getDeployment($name: String!) {
-    iot_getDeployment(name: $name) {
-      CIDR
+      displayName
       id
     }
   }
 variables:
   {
-    "name":
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "deployment": {
+      "CIDR": "10.0.0.0/16",
+      "displayName": "sample deployment",
+      "name": "sample-deployment",
+      "exposedServices": [
+        {
+          "ip": "sample-ip",
+          "name": "10.21.32.4"
+        }
+      ]
+    }
   }
+
+---
+
+label: "update deployment"
+query: |+
+  mutation Iot_updateDeployment($projectName: String!, $envName: String!, $deployment: IOTDeploymentIn!) {
+    iot_updateDeployment(projectName: $projectName, envName: $envName, deployment: $deployment) {
+      CIDR
+      displayName
+      id
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "deployment": {
+      "displayName": "sample depl one",
+      "CIDR": "10.0.0.1",
+      "name": "sample-deployment",
+      "exposedServices": [
+        {
+          "ip": "sample-ip-one",
+          "name": "10.12.13.4"
+        }
+      ]
+    }
+  }
+
+---
+
+label: "delete deployment"
+query: |+
+  mutation Iot_deleteDeployment($projectName: String!, $envName: String!, $name: String!) {
+    iot_deleteDeployment(projectName: $projectName, envName: $envName, name: $name)
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "name": "sample-deployment"
+  }
+
+---
+
+label: "get deployment"
+query: |+
+  query Iot_getDeployment($projectName: String!, $envName: String!, $name: String!) {
+    iot_getDeployment(projectName: $projectName, envName: $envName, name: $name) {
+      CIDR
+      displayName
+      id
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "name": "sample-deployment"
+  }
+
+---
+
+label: "list deployments"
+query: |+
+  query Iot_listDeployments($projectName: String!, $envName: String!) {
+    iot_listDeployments(projectName: $projectName, envName: $envName) {
+      totalCount
+      edges {
+        node {
+          CIDR
+          displayName
+          name
+        }
+      }
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env"
+  }
+
+---
+
+
