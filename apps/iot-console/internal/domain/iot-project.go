@@ -2,6 +2,7 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/iot-console/internal/entities"
+	fc "github.com/kloudlite/api/apps/iot-console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
@@ -10,7 +11,7 @@ import (
 
 func (d *domain) findProject(ctx IotConsoleContext, name string) (*entities.IOTProject, error) {
 	prj, err := d.iotProjectRepo.FindOne(ctx, repos.Filter{
-		"name": name,
+		fc.IOTProjectName: name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -50,8 +51,28 @@ func (d *domain) CreateProject(ctx IotConsoleContext, project entities.IOTProjec
 }
 
 func (d *domain) UpdateProject(ctx IotConsoleContext, project entities.IOTProject) (*entities.IOTProject, error) {
-	//TODO implement me
-	panic("implement me")
+	patchForUpdate := repos.Document{
+		fields.DisplayName: project.DisplayName,
+		fields.LastUpdatedBy: common.CreatedOrUpdatedBy{
+			UserId:    ctx.GetUserId(),
+			UserName:  ctx.GetUserName(),
+			UserEmail: ctx.GetUserEmail(),
+		},
+	}
+
+	upProject, err := d.iotProjectRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.AccountName: ctx.AccountName,
+			fc.IOTProjectName:  project.Name,
+		},
+		patchForUpdate,
+	)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return upProject, nil
 }
 
 func (d *domain) DeleteProject(ctx IotConsoleContext, name string) error {
@@ -59,7 +80,7 @@ func (d *domain) DeleteProject(ctx IotConsoleContext, name string) error {
 		ctx,
 		repos.Filter{
 			fields.AccountName: ctx.AccountName,
-			"name":             name,
+			fc.IOTProjectName:  name,
 		},
 	)
 	if err != nil {

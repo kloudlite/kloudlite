@@ -23,6 +23,15 @@ func (r *mutationResolver) IotCreateProject(ctx context.Context, project entitie
 	return r.Domain.CreateProject(ic, project)
 }
 
+// IotUpdateProject is the resolver for the iot_updateProject field.
+func (r *mutationResolver) IotUpdateProject(ctx context.Context, project entities.IOTProject) (*entities.IOTProject, error) {
+	ic, err := toIOTConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.UpdateProject(ic, project)
+}
+
 // IotDeleteProject is the resolver for the iot_deleteProject field.
 func (r *mutationResolver) IotDeleteProject(ctx context.Context, name string) (bool, error) {
 	ic, err := toIOTConsoleContext(ctx)
@@ -42,6 +51,15 @@ func (r *mutationResolver) IotCreateEnvironment(ctx context.Context, projectName
 		return nil, errors.NewE(err)
 	}
 	return r.Domain.CreateEnvironment(ic, projectName, env)
+}
+
+// IotUpdateEnvironment is the resolver for the iot_updateEnvironment field.
+func (r *mutationResolver) IotUpdateEnvironment(ctx context.Context, projectName string, env entities.IOTEnvironment) (*entities.IOTEnvironment, error) {
+	ic, err := toIOTConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.UpdateEnvironment(ic, projectName, env)
 }
 
 // IotDeleteEnvironment is the resolver for the iot_deleteEnvironment field.
@@ -65,6 +83,15 @@ func (r *mutationResolver) IotCreateDevice(ctx context.Context, projectName stri
 	return r.Domain.CreateDevice(newIOTResourceContext(ic, projectName, envName), device)
 }
 
+// IotUpdateDevice is the resolver for the iot_updateDevice field.
+func (r *mutationResolver) IotUpdateDevice(ctx context.Context, projectName string, envName string, device entities.IOTDevice) (*entities.IOTDevice, error) {
+	ic, err := toIOTConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.UpdateDevice(newIOTResourceContext(ic, projectName, envName), device)
+}
+
 // IotDeleteDevice is the resolver for the iot_deleteDevice field.
 func (r *mutationResolver) IotDeleteDevice(ctx context.Context, projectName string, envName string, name string) (bool, error) {
 	ic, err := toIOTConsoleContext(ctx)
@@ -84,6 +111,15 @@ func (r *mutationResolver) IotCreateDeviceBlueprint(ctx context.Context, project
 		return nil, errors.NewE(err)
 	}
 	return r.Domain.CreateDeviceBlueprint(newIOTResourceContext(ic, projectName, envName), deviceBlueprint)
+}
+
+// IotUpdateDeviceBlueprint is the resolver for the iot_updateDeviceBlueprint field.
+func (r *mutationResolver) IotUpdateDeviceBlueprint(ctx context.Context, projectName string, envName string, deviceBlueprint entities.IOTDeviceBlueprint) (*entities.IOTDeviceBlueprint, error) {
+	ic, err := toIOTConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.UpdateDeviceBlueprint(newIOTResourceContext(ic, projectName, envName), deviceBlueprint)
 }
 
 // IotDeleteDeviceBlueprint is the resolver for the iot_deleteDeviceBlueprint field.
@@ -107,6 +143,15 @@ func (r *mutationResolver) IotCreateDeployment(ctx context.Context, projectName 
 	return r.Domain.CreateDeployment(newIOTResourceContext(ic, projectName, envName), deployment)
 }
 
+// IotUpdateDeployment is the resolver for the iot_updateDeployment field.
+func (r *mutationResolver) IotUpdateDeployment(ctx context.Context, projectName string, envName string, deployment entities.IOTDeployment) (*entities.IOTDeployment, error) {
+	ic, err := toIOTConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.UpdateDeployment(newIOTResourceContext(ic, projectName, envName), deployment)
+}
+
 // IotDeleteDeployment is the resolver for the iot_deleteDeployment field.
 func (r *mutationResolver) IotDeleteDeployment(ctx context.Context, projectName string, envName string, name string) (bool, error) {
 	ic, err := toIOTConsoleContext(ctx)
@@ -120,21 +165,30 @@ func (r *mutationResolver) IotDeleteDeployment(ctx context.Context, projectName 
 }
 
 // IotCreateApp is the resolver for the iot_createApp field.
-func (r *mutationResolver) IotCreateApp(ctx context.Context, projectName string, envName string, blueprintDeviceName string, app entities.IOTApp) (*entities.IOTApp, error) {
+func (r *mutationResolver) IotCreateApp(ctx context.Context, projectName string, envName string, deviceBlueprintName string, app entities.IOTApp) (*entities.IOTApp, error) {
 	ic, err := toIOTConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.CreateApp(newIOTResourceContext(ic, projectName, envName), blueprintDeviceName, app)
+	return r.Domain.CreateApp(newIOTResourceContext(ic, projectName, envName), deviceBlueprintName, app)
+}
+
+// IotUpdateApp is the resolver for the iot_updateApp field.
+func (r *mutationResolver) IotUpdateApp(ctx context.Context, projectName string, envName string, deviceBlueprintName string, app entities.IOTApp) (*entities.IOTApp, error) {
+	ic, err := toIOTConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.UpdateApp(newIOTResourceContext(ic, projectName, envName), deviceBlueprintName, app)
 }
 
 // IotDeleteApp is the resolver for the iot_deleteApp field.
-func (r *mutationResolver) IotDeleteApp(ctx context.Context, projectName string, envName string, blueprintDeviceName string, name string) (bool, error) {
+func (r *mutationResolver) IotDeleteApp(ctx context.Context, projectName string, envName string, deviceBlueprintName string, name string) (bool, error) {
 	ic, err := toIOTConsoleContext(ctx)
 	if err != nil {
 		return false, errors.NewE(err)
 	}
-	if err := r.Domain.DeleteApp(newIOTResourceContext(ic, projectName, envName), blueprintDeviceName, name); err != nil {
+	if err := r.Domain.DeleteApp(newIOTResourceContext(ic, projectName, envName), deviceBlueprintName, name); err != nil {
 		return false, errors.NewE(err)
 	}
 	return true, nil
@@ -292,7 +346,7 @@ func (r *queryResolver) IotGetDeployment(ctx context.Context, projectName string
 }
 
 // IotListApps is the resolver for the iot_listApps field.
-func (r *queryResolver) IotListApps(ctx context.Context, projectName string, envName string, blueprintDeviceName string, search *model.SearchIOTApps, pq *repos.CursorPagination) (*model.IOTAppPaginatedRecords, error) {
+func (r *queryResolver) IotListApps(ctx context.Context, projectName string, envName string, deviceBlueprintName string, search *model.SearchIOTApps, pq *repos.CursorPagination) (*model.IOTAppPaginatedRecords, error) {
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -304,7 +358,7 @@ func (r *queryResolver) IotListApps(ctx context.Context, projectName string, env
 		return nil, errors.NewE(err)
 	}
 
-	d, err := r.Domain.ListApps(newIOTResourceContext(ic, projectName, envName), blueprintDeviceName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	d, err := r.Domain.ListApps(newIOTResourceContext(ic, projectName, envName), deviceBlueprintName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -313,12 +367,12 @@ func (r *queryResolver) IotListApps(ctx context.Context, projectName string, env
 }
 
 // IotGetApp is the resolver for the iot_getApp field.
-func (r *queryResolver) IotGetApp(ctx context.Context, projectName string, envName string, blueprintDeviceName string, name string) (*entities.IOTApp, error) {
+func (r *queryResolver) IotGetApp(ctx context.Context, projectName string, envName string, deviceBlueprintName string, name string) (*entities.IOTApp, error) {
 	ic, err := toIOTConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.GetApp(newIOTResourceContext(ic, projectName, envName), blueprintDeviceName, name)
+	return r.Domain.GetApp(newIOTResourceContext(ic, projectName, envName), deviceBlueprintName, name)
 }
 
 // Mutation returns generated.MutationResolver implementation.

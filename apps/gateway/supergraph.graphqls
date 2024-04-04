@@ -78,6 +78,7 @@ scalar Any
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 
 type App
   @join__type(graph: CONSOLE_API)
@@ -605,6 +606,7 @@ type CursorPagination
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   after: String
   before: String
@@ -618,6 +620,7 @@ input CursorPaginationIn
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   after: String
   before: String
@@ -631,9 +634,10 @@ enum CursorPaginationSortDirection
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
-  ASC @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
-  DESC @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  ASC @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  DESC @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
 }
 
 scalar Date
@@ -642,6 +646,7 @@ scalar Date
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 
 type Digest
   @join__type(graph: CONTAINER_REGISTRY_API)
@@ -1010,11 +1015,33 @@ type Github__com___kloudlite___api___apps___infra___internal___entities__OutputF
   name: String!
 }
 
+enum Github__com___kloudlite___api___apps___iot____console___internal___entities__BluePrintType
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  group_blueprint @join__enumValue(graph: IOT_CONSOLE_API)
+  singleton_blueprint @join__enumValue(graph: IOT_CONSOLE_API)
+}
+
+type Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedService
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  ip: String!
+  name: String!
+}
+
+input Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedServiceIn
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  ip: String!
+  name: String!
+}
+
 type Github__com___kloudlite___api___common__CreatedOrUpdatedBy
   @join__type(graph: ACCOUNT_API)
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   userEmail: String!
   userId: String!
@@ -1410,6 +1437,7 @@ input Github__com___kloudlite___operator___apis___common____types__SecretRefIn
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppContainer
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   args: [String!]
   command: [String!]
@@ -1427,6 +1455,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppContainer
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   args: [String!]
   command: [String!]
@@ -1444,6 +1473,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppSpec
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   containers: [Github__com___kloudlite___operator___apis___crds___v1__AppContainer!]!
   displayName: String
@@ -1461,6 +1491,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppSpec
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   containers: [Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn!]!
   displayName: String
@@ -1478,6 +1509,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppSvc
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   name: String
   port: Int!
@@ -1487,6 +1519,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppSvc
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   name: String
   port: Int!
@@ -1526,13 +1559,16 @@ input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServi
 
 enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
-  config @join__enumValue(graph: CONSOLE_API)
-  secret @join__enumValue(graph: CONSOLE_API)
+  config @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  pvc @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  secret @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: IOT_CONSOLE_API)
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   key: String!
   optional: Boolean
@@ -1544,6 +1580,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv
 
 input Github__com___kloudlite___operator___apis___crds___v1__ContainerEnvIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   key: String!
   optional: Boolean
@@ -1555,6 +1592,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__ContainerEnvIn
 
 type Github__com___kloudlite___operator___apis___crds___v1__ContainerResource
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   max: String
   min: String
@@ -1562,6 +1600,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__ContainerResource
 
 input Github__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   max: String
   min: String
@@ -1569,6 +1608,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn
 
 type Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   items: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem!]
   mountPath: String!
@@ -1578,6 +1618,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume
 
 input Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   items: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItemIn!]
   mountPath: String!
@@ -1587,6 +1628,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeIn
 
 type Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   fileName: String
   key: String!
@@ -1594,6 +1636,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem
 
 input Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItemIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   fileName: String
   key: String!
@@ -1617,6 +1660,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__CorsIn
 
 type Github__com___kloudlite___operator___apis___crds___v1__EnvFrom
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   refName: String!
   type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
@@ -1624,6 +1668,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__EnvFrom
 
 input Github__com___kloudlite___operator___apis___crds___v1__EnvFromIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   refName: String!
   type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
@@ -1711,6 +1756,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus
 
 type Github__com___kloudlite___operator___apis___crds___v1__HPA
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   enabled: Boolean!
   maxReplicas: Int
@@ -1721,6 +1767,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__HPA
 
 input Github__com___kloudlite___operator___apis___crds___v1__HPAIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   enabled: Boolean!
   maxReplicas: Int
@@ -1731,6 +1778,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__HPAIn
 
 type Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   httpHeaders: Map
   path: String!
@@ -1739,6 +1787,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe
 
 input Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   httpHeaders: Map
   path: String!
@@ -1763,6 +1812,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn
 
 type Github__com___kloudlite___operator___apis___crds___v1__Intercept
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   enabled: Boolean!
   toDevice: String!
@@ -1770,6 +1820,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__Intercept
 
 input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   enabled: Boolean!
   toDevice: String!
@@ -1863,6 +1914,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn
 
 type Github__com___kloudlite___operator___apis___crds___v1__Probe
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   failureThreshold: Int
   httpGet: Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe
@@ -1875,6 +1927,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__Probe
 
 input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   failureThreshold: Int
   httpGet: Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn
@@ -1995,24 +2048,28 @@ input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn
 
 type Github__com___kloudlite___operator___apis___crds___v1__ShellProbe
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   command: [String!]
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   command: [String!]
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__TcpProbe
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   port: Int!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   port: Int!
 }
@@ -2163,6 +2220,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   debug: String
   error: String
@@ -2191,6 +2249,7 @@ type Github__com___kloudlite___operator___pkg___operator__CheckMeta
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   debug: Boolean
   description: String
@@ -2211,6 +2270,7 @@ type Github__com___kloudlite___operator___pkg___operator__ResourceRef
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   apiVersion: String!
   kind: String!
@@ -2231,17 +2291,19 @@ enum Github__com___kloudlite___operator___pkg___operator__State
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
-  errored____during____reconcilation @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
-  finished____reconcilation @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
-  under____reconcilation @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
-  yet____to____be____reconciled @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  errored____during____reconcilation @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  finished____reconcilation @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  under____reconcilation @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  yet____to____be____reconciled @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Status
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
   checks: Map
@@ -2268,6 +2330,7 @@ type Github__com___kloudlite___operator___pkg___raw____json__RawJson
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   RawMessage: Any
 }
@@ -2479,6 +2542,269 @@ input InvitationIn
   userRole: Github__com___kloudlite___api___apps___iam___types__Role!
 }
 
+type IOTApp
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  accountName: String!
+  apiVersion: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  deviceBlueprintName: String!
+  displayName: String!
+  enabled: Boolean
+  environmentName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String!
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  updateTime: Date!
+}
+
+type IOTAppEdge
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  cursor: String!
+  node: IOTApp!
+}
+
+input IOTAppIn
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  apiVersion: String
+  displayName: String!
+  enabled: Boolean
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn!
+}
+
+type IOTAppPaginatedRecords
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  edges: [IOTAppEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IOTDeployment
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  accountName: String!
+  CIDR: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  environmentName: String!
+  exposedServices: [Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedService!]!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  projectName: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type IOTDeploymentEdge
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  cursor: String!
+  node: IOTDeployment!
+}
+
+input IOTDeploymentIn
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  CIDR: String!
+  displayName: String!
+  exposedServices: [Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedServiceIn!]!
+  name: String!
+}
+
+type IOTDeploymentPaginatedRecords
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  edges: [IOTDeploymentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IOTDevice
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  accountName: String!
+  blueprint: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  deployment: String!
+  displayName: String!
+  environmentName: String!
+  id: ID!
+  ip: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  podCIDR: String!
+  projectName: String!
+  publicKey: String!
+  recordVersion: Int!
+  serviceCIDR: String!
+  updateTime: Date!
+  version: String!
+}
+
+type IOTDeviceBlueprint
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  accountName: String!
+  bluePrintType: Github__com___kloudlite___api___apps___iot____console___internal___entities__BluePrintType!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  environmentName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  projectName: String!
+  recordVersion: Int!
+  updateTime: Date!
+  version: String!
+}
+
+type IOTDeviceBlueprintEdge
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  cursor: String!
+  node: IOTDeviceBlueprint!
+}
+
+input IOTDeviceBlueprintIn
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  bluePrintType: Github__com___kloudlite___api___apps___iot____console___internal___entities__BluePrintType!
+  displayName: String!
+  name: String!
+  version: String!
+}
+
+type IOTDeviceBlueprintPaginatedRecords
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  edges: [IOTDeviceBlueprintEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IOTDeviceEdge
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  cursor: String!
+  node: IOTDevice!
+}
+
+input IOTDeviceIn
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  blueprint: String!
+  deployment: String!
+  displayName: String!
+  ip: String!
+  name: String!
+  podCIDR: String!
+  publicKey: String!
+  serviceCIDR: String!
+  version: String!
+}
+
+type IOTDevicePaginatedRecords
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  edges: [IOTDeviceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IOTEnvironment
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  projectName: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type IOTEnvironmentEdge
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  cursor: String!
+  node: IOTEnvironment!
+}
+
+input IOTEnvironmentIn
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  displayName: String!
+  name: String!
+}
+
+type IOTEnvironmentPaginatedRecords
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  edges: [IOTEnvironmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IOTProject
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type IOTProjectEdge
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  cursor: String!
+  node: IOTProject!
+}
+
+input IOTProjectIn
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  displayName: String!
+  name: String!
+}
+
+type IOTProjectPaginatedRecords
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  edges: [IOTProjectEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 scalar join__FieldSet
 
 enum join__Graph {
@@ -2487,6 +2813,7 @@ enum join__Graph {
   CONSOLE_API @join__graph(name: "console-api", url: "http://console-api/query")
   CONTAINER_REGISTRY_API @join__graph(name: "container-registry-api", url: "http://container-registry-api/query")
   INFRA_API @join__graph(name: "infra-api", url: "http://infra-api/query")
+  IOT_CONSOLE_API @join__graph(name: "iot-console-api", url: "http://iot-console-api/query")
 }
 
 scalar Json
@@ -2495,6 +2822,7 @@ scalar Json
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 
 type K8s__io___api___core___v1__Affinity
   @join__type(graph: INFRA_API)
@@ -3426,10 +3754,11 @@ type K8s__io___api___core___v1__Taint
 enum K8s__io___api___core___v1__TaintEffect
   @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
-  NoExecute @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
-  NoSchedule @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
-  PreferNoSchedule @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  NoExecute @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  NoSchedule @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  PreferNoSchedule @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
 }
 
 input K8s__io___api___core___v1__TaintIn
@@ -3444,6 +3773,7 @@ input K8s__io___api___core___v1__TaintIn
 type K8s__io___api___core___v1__Toleration
   @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   effect: K8s__io___api___core___v1__TaintEffect
   key: String
@@ -3455,6 +3785,7 @@ type K8s__io___api___core___v1__Toleration
 input K8s__io___api___core___v1__TolerationIn
   @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   effect: K8s__io___api___core___v1__TaintEffect
   key: String
@@ -3466,13 +3797,15 @@ input K8s__io___api___core___v1__TolerationIn
 enum K8s__io___api___core___v1__TolerationOperator
   @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
-  Equal @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
-  Exists @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  Equal @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  Exists @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
 }
 
 type K8s__io___api___core___v1__TopologySpreadConstraint
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
   matchLabelKeys: [String!]
@@ -3486,6 +3819,7 @@ type K8s__io___api___core___v1__TopologySpreadConstraint
 
 input K8s__io___api___core___v1__TopologySpreadConstraintIn
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   labelSelector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
   matchLabelKeys: [String!]
@@ -3533,9 +3867,10 @@ input K8s__io___api___core___v1__TypedObjectReferenceIn
 
 enum K8s__io___api___core___v1__UnsatisfiableConstraintAction
   @join__type(graph: CONSOLE_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
-  DoNotSchedule @join__enumValue(graph: CONSOLE_API)
-  ScheduleAnyway @join__enumValue(graph: CONSOLE_API)
+  DoNotSchedule @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  ScheduleAnyway @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: IOT_CONSOLE_API)
 }
 
 type K8s__io___api___core___v1__VolumeNodeAffinity
@@ -3667,6 +4002,7 @@ input K8s__io___apimachinery___pkg___api___resource__QuantityIn
 type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
   @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement!]
   matchLabels: Map
@@ -3675,6 +4011,7 @@ type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
 input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
   @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn!]
   matchLabels: Map
@@ -3683,16 +4020,18 @@ input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
 enum K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator
   @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
-  DoesNotExist @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
-  Exists @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
-  In @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
-  NotIn @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API)
+  DoesNotExist @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  Exists @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  In @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  NotIn @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
 }
 
 type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement
   @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   key: String!
   operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
@@ -3702,6 +4041,7 @@ type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement
 input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn
   @join__type(graph: CONSOLE_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   key: String!
   operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
@@ -3807,11 +4147,13 @@ scalar Map
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 
 type MatchFilter
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   array: [Any!]
   exact: Any
@@ -3823,6 +4165,7 @@ input MatchFilterIn
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   array: [Any!]
   exact: Any
@@ -3834,10 +4177,11 @@ enum MatchFilterMatchType
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
-  array @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
-  exact @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
-  regex @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API)
+  array @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  exact @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
+  regex @join__enumValue(graph: CONSOLE_API) @join__enumValue(graph: CONTAINER_REGISTRY_API) @join__enumValue(graph: INFRA_API) @join__enumValue(graph: IOT_CONSOLE_API)
 }
 
 type Metadata
@@ -3845,6 +4189,7 @@ type Metadata
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   annotations: Map
   creationTimestamp: Date!
@@ -3860,6 +4205,7 @@ input MetadataIn
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   annotations: Map
   labels: Map
@@ -3881,6 +4227,7 @@ type Mutation
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   accounts_createAccount(account: AccountIn!): Account! @join__field(graph: ACCOUNT_API)
   accounts_updateAccount(account: AccountIn!): Account! @join__field(graph: ACCOUNT_API)
@@ -3974,6 +4321,24 @@ type Mutation
   infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @join__field(graph: INFRA_API)
   infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean! @join__field(graph: INFRA_API)
   infra_deletePV(clusterName: String!, pvName: String!): Boolean! @join__field(graph: INFRA_API)
+  iot_createProject(project: IOTProjectIn!): IOTProject @join__field(graph: IOT_CONSOLE_API)
+  iot_updateProject(project: IOTProjectIn!): IOTProject @join__field(graph: IOT_CONSOLE_API)
+  iot_deleteProject(name: String!): Boolean! @join__field(graph: IOT_CONSOLE_API)
+  iot_createEnvironment(projectName: String!, env: IOTEnvironmentIn!): IOTEnvironment @join__field(graph: IOT_CONSOLE_API)
+  iot_updateEnvironment(projectName: String!, env: IOTEnvironmentIn!): IOTEnvironment @join__field(graph: IOT_CONSOLE_API)
+  iot_deleteEnvironment(projectName: String!, name: String!): Boolean! @join__field(graph: IOT_CONSOLE_API)
+  iot_createDevice(projectName: String!, envName: String!, device: IOTDeviceIn!): IOTDevice @join__field(graph: IOT_CONSOLE_API)
+  iot_updateDevice(projectName: String!, envName: String!, device: IOTDeviceIn!): IOTDevice @join__field(graph: IOT_CONSOLE_API)
+  iot_deleteDevice(projectName: String!, envName: String!, name: String!): Boolean! @join__field(graph: IOT_CONSOLE_API)
+  iot_createDeviceBlueprint(projectName: String!, envName: String!, deviceBlueprint: IOTDeviceBlueprintIn!): IOTDeviceBlueprint @join__field(graph: IOT_CONSOLE_API)
+  iot_updateDeviceBlueprint(projectName: String!, envName: String!, deviceBlueprint: IOTDeviceBlueprintIn!): IOTDeviceBlueprint @join__field(graph: IOT_CONSOLE_API)
+  iot_deleteDeviceBlueprint(projectName: String!, envName: String!, name: String!): Boolean! @join__field(graph: IOT_CONSOLE_API)
+  iot_createDeployment(projectName: String!, envName: String!, deployment: IOTDeploymentIn!): IOTDeployment @join__field(graph: IOT_CONSOLE_API)
+  iot_updateDeployment(projectName: String!, envName: String!, deployment: IOTDeploymentIn!): IOTDeployment @join__field(graph: IOT_CONSOLE_API)
+  iot_deleteDeployment(projectName: String!, envName: String!, name: String!): Boolean! @join__field(graph: IOT_CONSOLE_API)
+  iot_createApp(projectName: String!, envName: String!, deviceBlueprintName: String!, app: IOTAppIn!): IOTApp @join__field(graph: IOT_CONSOLE_API)
+  iot_updateApp(projectName: String!, envName: String!, deviceBlueprintName: String!, app: IOTAppIn!): IOTApp @join__field(graph: IOT_CONSOLE_API)
+  iot_deleteApp(projectName: String!, envName: String!, deviceBlueprintName: String!, name: String!): Boolean! @join__field(graph: IOT_CONSOLE_API)
 }
 
 type Namespace
@@ -4122,6 +4487,7 @@ type PageInfo
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   endCursor: String
   hasNextPage: Boolean
@@ -4341,6 +4707,7 @@ type Query
   @join__type(graph: CONSOLE_API)
   @join__type(graph: CONTAINER_REGISTRY_API)
   @join__type(graph: INFRA_API)
+  @join__type(graph: IOT_CONSOLE_API)
 {
   accounts_listAccounts: [Account] @join__field(graph: ACCOUNT_API)
   accounts_getAccount(accountName: String!): Account @join__field(graph: ACCOUNT_API)
@@ -4435,6 +4802,18 @@ type Query
   infra_getPV(clusterName: String!, name: String!): PersistentVolume @join__field(graph: INFRA_API)
   infra_listVolumeAttachments(clusterName: String!, search: SearchVolumeAttachments, pq: CursorPaginationIn): VolumeAttachmentPaginatedRecords @join__field(graph: INFRA_API)
   infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment @join__field(graph: INFRA_API)
+  iot_listProjects(search: SearchIOTProjects, pq: CursorPaginationIn): IOTProjectPaginatedRecords @join__field(graph: IOT_CONSOLE_API)
+  iot_getProject(name: String!): IOTProject @join__field(graph: IOT_CONSOLE_API)
+  iot_listEnvironments(projectName: String!, search: SearchIOTEnvironments, pq: CursorPaginationIn): IOTEnvironmentPaginatedRecords @join__field(graph: IOT_CONSOLE_API)
+  iot_getEnvironment(projectName: String!, name: String!): IOTEnvironment @join__field(graph: IOT_CONSOLE_API)
+  iot_listDevices(projectName: String!, envName: String!, search: SearchIOTDevices, pq: CursorPaginationIn): IOTDevicePaginatedRecords @join__field(graph: IOT_CONSOLE_API)
+  iot_getDevice(projectName: String!, envName: String!, name: String!): IOTDevice @join__field(graph: IOT_CONSOLE_API)
+  iot_listDeviceBlueprints(projectName: String!, envName: String!, search: SearchIOTDeviceBlueprints, pq: CursorPaginationIn): IOTDeviceBlueprintPaginatedRecords @join__field(graph: IOT_CONSOLE_API)
+  iot_getDeviceBlueprint(projectName: String!, envName: String!, name: String!): IOTDeviceBlueprint @join__field(graph: IOT_CONSOLE_API)
+  iot_listDeployments(projectName: String!, envName: String!, search: SearchIOTDeployments, pq: CursorPaginationIn): IOTDeploymentPaginatedRecords @join__field(graph: IOT_CONSOLE_API)
+  iot_getDeployment(projectName: String!, envName: String!, name: String!): IOTDeployment @join__field(graph: IOT_CONSOLE_API)
+  iot_listApps(projectName: String!, envName: String!, deviceBlueprintName: String!, search: SearchIOTApps, pq: CursorPaginationIn): IOTAppPaginatedRecords @join__field(graph: IOT_CONSOLE_API)
+  iot_getApp(projectName: String!, envName: String!, deviceBlueprintName: String!, name: String!): IOTApp @join__field(graph: IOT_CONSOLE_API)
 }
 
 type RemoteLogin
@@ -4613,6 +4992,55 @@ input SearchHelmRelease
 
 input SearchImagePullSecrets
   @join__type(graph: CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchIOTApps
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchIOTDeployments
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchIOTDeviceBlueprints
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchIOTDevices
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchIOTEnvironments
+  @join__type(graph: IOT_CONSOLE_API)
+{
+  text: MatchFilterIn
+  projectName: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+}
+
+input SearchIOTProjects
+  @join__type(graph: IOT_CONSOLE_API)
 {
   text: MatchFilterIn
   isReady: MatchFilterIn

@@ -10,20 +10,21 @@ import (
 	"time"
 
 	"github.com/kloudlite/api/apps/iot-console/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/iot-console/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/iot-console/internal/entities"
 	fn "github.com/kloudlite/api/pkg/functions"
 )
 
 // BluePrintType is the resolver for the bluePrintType field.
-func (r *iOTDeviceBlueprintResolver) BluePrintType(ctx context.Context, obj *entities.IOTDeviceBlueprint) (*string, error) {
+func (r *iOTDeviceBlueprintResolver) BluePrintType(ctx context.Context, obj *entities.IOTDeviceBlueprint) (model.GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType, error) {
 	if obj == nil {
-		return nil, errNilProject
+		return "", errNilProject
 	}
-	var m string
+	var m model.GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType
 	if err := fn.JsonConversion(obj.BluePrintType, &m); err != nil {
-		return nil, errors.NewE(err)
+		return "", errors.NewE(err)
 	}
-	return &m, nil
+	return m, nil
 }
 
 // CreationTime is the resolver for the creationTime field.
@@ -43,7 +44,7 @@ func (r *iOTDeviceBlueprintResolver) UpdateTime(ctx context.Context, obj *entiti
 }
 
 // BluePrintType is the resolver for the bluePrintType field.
-func (r *iOTDeviceBlueprintInResolver) BluePrintType(ctx context.Context, obj *entities.IOTDeviceBlueprint, data *string) error {
+func (r *iOTDeviceBlueprintInResolver) BluePrintType(ctx context.Context, obj *entities.IOTDeviceBlueprint, data model.GithubComKloudliteAPIAppsIotConsoleInternalEntitiesBluePrintType) error {
 	if obj == nil {
 		return errNilDeviceBlueprint
 	}
