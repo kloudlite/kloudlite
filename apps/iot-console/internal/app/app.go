@@ -22,9 +22,9 @@ import (
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.IOTProject]("projects", "prj", entities.IOTProjectIndexes),
 	repos.NewFxMongoRepo[*entities.IOTEnvironment]("environments", "env", entities.IOTEnvironmentIndexes),
-	repos.NewFxMongoRepo[*entities.IOTDeployment]("deployment", "depl", entities.IOTDeploymentIndexes),
+	repos.NewFxMongoRepo[*entities.IOTDeployment]("deployments", "depl", entities.IOTDeploymentIndexes),
 	repos.NewFxMongoRepo[*entities.IOTDevice]("devices", "dev", entities.IOTDeviceIndexes),
-	repos.NewFxMongoRepo[*entities.IOTDeviceBlueprint]("device_blueprint", "devgrp", entities.IOTDeviceBlueprintIndexes),
+	repos.NewFxMongoRepo[*entities.IOTDeviceBlueprint]("device_blueprints", "devblueprint", entities.IOTDeviceBlueprintIndexes),
 	repos.NewFxMongoRepo[*entities.IOTApp]("apps", "app", entities.IOTAppIndexes),
 
 	fx.Invoke(

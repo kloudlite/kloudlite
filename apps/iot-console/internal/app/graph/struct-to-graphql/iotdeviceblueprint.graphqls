@@ -1,6 +1,6 @@
 type IOTDeviceBlueprint @shareable {
   accountName: String!
-  bluePrintType: String
+  bluePrintType: Github__com___kloudlite___api___apps___iot____console___internal___entities__BluePrintType!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -27,7 +27,7 @@ type IOTDeviceBlueprintPaginatedRecords @shareable {
 }
 
 input IOTDeviceBlueprintIn {
-  bluePrintType: String
+  bluePrintType: Github__com___kloudlite___api___apps___iot____console___internal___entities__BluePrintType!
   displayName: String!
   name: String!
   version: String!

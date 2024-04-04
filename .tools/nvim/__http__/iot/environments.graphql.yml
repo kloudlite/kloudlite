@@ -1,0 +1,93 @@
+---
+label: "Create Environment"
+query: |+
+  mutation Iot_createEnvironment($projectName: String!, $env: IOTEnvironmentIn!) {
+    iot_createEnvironment(projectName: $projectName, env: $env) {
+      displayName
+      id
+      name
+    }
+  }
+variables:
+  {
+    "projectName": sample-project,
+    "env": {
+      "displayName": "sample env one",
+      "name": "sample-env-one"
+    }
+  }
+
+---
+
+label: "update Environment"
+query: |+
+  mutation Iot_updateEnvironment($projectName: String!, $env: IOTEnvironmentIn!) {
+    iot_updateEnvironment(projectName: $projectName, env: $env) {
+      displayName
+      id
+      name
+    }
+  }
+variables:
+  {
+    "projectName": null,
+    "env": {
+      "displayName": null,
+      "name": null
+    }
+  }
+
+---
+
+label: "delete Environment"
+query: |+
+  mutation Iot_deleteEnvironment($projectName: String!, $name: String!) {
+    iot_deleteEnvironment(projectName: $projectName, name: $name)
+  }
+variables:
+  {
+    "projectName": null,
+    "name": null
+  }
+
+---
+
+label: "get Environment"
+query: |+
+  query Iot_getEnvironment($projectName: String!, $name: String!) {
+    iot_getEnvironment(projectName: $projectName, name: $name) {
+      accountName
+      displayName
+      name
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "name": "sample-env"
+  }
+
+---
+
+label: "list Environment"
+query: |+
+  query Iot_listEnvironments($projectName: String!) {
+    iot_listEnvironments(projectName: $projectName) {
+      edges {
+        node {
+          name
+          id
+          accountName
+        }
+      }
+      totalCount
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project"
+  }
+
+---
+
+

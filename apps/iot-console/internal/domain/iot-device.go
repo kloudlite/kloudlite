@@ -2,7 +2,9 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/iot-console/internal/entities"
+	fc "github.com/kloudlite/api/apps/iot-console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -10,7 +12,7 @@ import (
 func (d *domain) findDevice(ctx IotResourceContext, name string) (*entities.IOTDevice, error) {
 	filter := ctx.IOTConsoleDBFilters()
 	filter.Add("name", name)
-	dev, err := d.iotDeviceRepo.FindOne(ctx, ctx.IOTConsoleDBFilters().Add("name", name))
+	dev, err := d.iotDeviceRepo.FindOne(ctx, ctx.IOTConsoleDBFilters().Add(fc.IOTDeviceName, name))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -49,14 +51,33 @@ func (d *domain) CreateDevice(ctx IotResourceContext, device entities.IOTDevice)
 }
 
 func (d *domain) UpdateDevice(ctx IotResourceContext, device entities.IOTDevice) (*entities.IOTDevice, error) {
-	//TODO implement me
-	panic("implement me")
+	patchForUpdate := repos.Document{
+		fields.DisplayName: device.DisplayName,
+		fields.LastUpdatedBy: common.CreatedOrUpdatedBy{
+			UserId:    ctx.GetUserId(),
+			UserName:  ctx.GetUserName(),
+			UserEmail: ctx.GetUserEmail(),
+		},
+	}
+
+	patchFilter := ctx.IOTConsoleDBFilters().Add(fc.IOTDeviceName, device.Name)
+
+	upDev, err := d.iotDeviceRepo.Patch(
+		ctx,
+		patchFilter,
+		patchForUpdate,
+	)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return upDev, nil
 }
 
 func (d *domain) DeleteDevice(ctx IotResourceContext, name string) error {
 	err := d.iotDeviceRepo.DeleteOne(
 		ctx,
-		ctx.IOTConsoleDBFilters().Add("name", name),
+		ctx.IOTConsoleDBFilters().Add(fc.IOTDeviceName, name),
 	)
 	if err != nil {
 		return errors.NewE(err)

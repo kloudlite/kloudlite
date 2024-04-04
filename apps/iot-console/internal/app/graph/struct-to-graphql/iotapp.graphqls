@@ -32,7 +32,6 @@ type IOTAppPaginatedRecords @shareable {
 
 input IOTAppIn {
   apiVersion: String
-  deviceBlueprintName: String!
   displayName: String!
   enabled: Boolean
   kind: String
