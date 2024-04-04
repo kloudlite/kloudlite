@@ -1,0 +1,55 @@
+version: v3
+vars:
+  ImageRegistry: "ghcr.io/kloudlite/operator/components/multi-cluster"
+
+tasks:
+  client:dev:
+    env:
+      SERVER_ADDR: http://localhost:8001
+      MY_IP_ADDRESS: 10.13.0.3
+    cmds:
+      - nodemon -q -e 'go' --signal SIGTERM --exec "task client:build && ./bin/client || exit 0"
+  server:dev:
+    env:
+      ADDR: :8001
+      CONFIG_PATH: ./examples/server.yml
+      ENDPOINT: localhost:8001
+    cmds:
+      - nodemon -q -e 'go' --signal SIGTERM --exec "task server:build && ./bin/server || exit 0"
+
+  server:build:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -ldflags="-s -w -X github.com/kloudlite/operator/apps/multi-cluster/flags.Mode=server" -o ./bin/server main.go
+
+  client:build:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -ldflags="-s -w -X github.com/kloudlite/operator/apps/multi-cluster/flags.Mode=client" -o ./bin/client main.go
+
+  docker-build:client:
+    preconditions:
+    - sh: '[[ -n "{{.image}}" ]]'
+      msg: "var app must have a value"
+    cmds:
+      - docker build -t {{.image}} .
+
+
+  container:build:
+    cmds:
+      - rm -rf ./bin/*
+      - task: server:build
+      - task: client:build
+      - podman build -t {{.ImageRegistry}}-agent:v1.0.5-nightly . --build-arg APP=client
+      - podman push {{.ImageRegistry}}-agent:v1.0.5-nightly
+
+      - podman build -t {{.ImageRegistry}}-gateway:v1.0.5-nightly . --build-arg APP=server
+      - podman push {{.ImageRegistry}}-gateway:v1.0.5-nightly
+
+  dev:
+    cmds:
+      - podman build -t sample:latest .
+      - podman run -p 5959:53/udp -p 22220:22222 --rm -it sample:latest
+

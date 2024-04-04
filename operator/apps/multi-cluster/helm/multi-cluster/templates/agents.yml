@@ -1,0 +1,76 @@
+{{- $name := printf "%s-agent" .Release.Name -}}
+{{- $namespace := .Release.Namespace -}}
+{{- $image := .Values.image.agent -}}
+{{- $tag := .Values.image.tag -}}
+{{- $pullPolicy := .Values.image.pullPolicy -}}
+{{- $resources := .Values.resources.agent -}}
+{{- $coredns_svc_ip := .Values.coredns_svc_ip -}}
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ $name }}
+  namespace: {{ $namespace }}
+  labels: &labels
+    kloudlite.io/cluster-agent: "true"
+    kloudlite.io/pod-type: {{ $name }}
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels: *labels
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+      # - image: alpine:latest
+      #   name: sidecar
+      #   command:
+      #   - /bin/sh
+      #   - -c
+      #   - tail -f /dev/null
+      - image: {{ $image }}:{{- $tag}}
+        imagePullPolicy: {{ $pullPolicy }}
+        name: agent
+        env:
+        - name: SERVER_ADDR
+          value: http://{{ .Release.Name }}-gateway.{{ $namespace }}.svc.cluster.local:3000
+        - name: KUBE_DNS_IP
+          value: {{ $coredns_svc_ip }}
+        - name: MY_IP_ADDRESS
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        resources: {{ $resources | toJson }}
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+            - SYS_MODULE
+          privileged: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /lib/modules
+          name: host-volumes
+        - mountPath: /etc/sysctl.conf
+          name: sysctl
+          subPath: sysctl.conf
+      priorityClassName: system-cluster-critical
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      hostNetwork: true
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - hostPath:
+          path: /lib/modules
+          type: Directory
+        name: host-volumes
+      - name: sysctl
+        secret:
+          defaultMode: 420
+          items:
+          - key: sysctl
+            path: sysctl.conf
+          secretName: {{ .Release.Name }}-gateway-configs
