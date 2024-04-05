@@ -848,6 +848,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSp
     aws?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsClusterConfigIn>;
     cloudflareEnabled?: InputMaybe<Scalars['Boolean']['input']>;
     cloudProvider: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
+    gcp?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpClusterConfigIn>;
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsClusterConfigIn =
@@ -873,6 +874,13 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__Awsk3sMas
   {
     instanceType: Scalars['String']['input'];
     nvidiaGpuEnabled: Scalars['Boolean']['input'];
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpClusterConfigIn =
+  {
+    credentialsRef: Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn;
+    gcpProjectID: Scalars['String']['input'];
+    region: Scalars['String']['input'];
   };
 
 export type ClusterManagedServiceIn = {
@@ -1051,13 +1059,8 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotGp
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpNodePoolConfigIn =
   {
     availabilityZone: Scalars['String']['input'];
-    bootVolumeSize: Scalars['Int']['input'];
-    bootVolumeType: Scalars['String']['input'];
-    credentials: Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn;
     machineType: Scalars['String']['input'];
-    nodes?: InputMaybe<Scalars['Map']['input']>;
     poolType: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpPoolType;
-    region: Scalars['String']['input'];
   };
 
 export type K8s__Io___Api___Core___V1__TaintIn = {
@@ -1071,6 +1074,7 @@ export type CloudProviderSecretIn = {
   aws?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__AwsSecretCredentialsIn>;
   cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
   displayName: Scalars['String']['input'];
+  gcp?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__GcpSecretCredentialsIn>;
   metadata: MetadataIn;
 };
 
@@ -1090,6 +1094,11 @@ export type Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__
   {
     accessKey: Scalars['String']['input'];
     secretKey: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__GcpSecretCredentialsIn =
+  {
+    serviceAccountJSON: Scalars['String']['input'];
   };
 
 export type AccountMembershipIn = {

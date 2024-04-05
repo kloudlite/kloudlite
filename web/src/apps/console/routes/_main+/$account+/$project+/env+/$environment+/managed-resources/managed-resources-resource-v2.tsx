@@ -20,13 +20,13 @@ import { useReload } from '~/lib/client/helpers/reloader';
 import { useState } from 'react';
 import { handleError } from '~/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
-import { Link, useParams } from '@remix-run/react';
+import { useParams } from '@remix-run/react';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import HandleManagedResources from './handle-managed-resource';
+import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
 
 const RESOURCE_NAME = 'managed resource';
 type BaseType = ExtractNodeType<IManagedResources>;
@@ -46,7 +46,7 @@ type OnAction = ({
   action,
   item,
 }: {
-  action: 'delete' | 'edit';
+  action: 'delete' | 'edit' | 'view_secret';
   item: BaseType;
 }) => void;
 
@@ -122,8 +122,6 @@ const GridView = ({ items = [], onAction }: IResource) => {
 };
 
 const ListView = ({ items = [], onAction }: IResource) => {
-  const { environment, project, account } = useParams();
-  const preUrl = `/${account}/${project}/env/${environment}/secret/`;
   return (
     <ListV2.Root
       data={{
@@ -167,8 +165,9 @@ const ListView = ({ items = [], onAction }: IResource) => {
                     <Button
                       content="View secrets"
                       variant="plain"
-                      LinkComponent={Link}
-                      to={`${preUrl}${i.syncedOutputSecretRef?.metadata?.name}`}
+                      onClick={() =>
+                        onAction({ action: 'view_secret', item: i })
+                      }
                     />
                   ) : null,
               },
@@ -204,6 +203,7 @@ const ManagedResourceResourcesV2 = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
+  const [showSecret, setShowSecret] = useState<BaseType | null>(null);
   const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
@@ -228,6 +228,9 @@ const ManagedResourceResourcesV2 = ({
           break;
         case 'edit':
           setVisible(item);
+          break;
+        case 'view_secret':
+          setShowSecret(item);
           break;
         default:
           break;
@@ -276,6 +279,16 @@ const ManagedResourceResourcesV2 = ({
           templates: templates || [],
         }}
       />
+
+      {showSecret && (
+        <ViewSecret
+          show={!!showSecret}
+          setShow={() => {
+            setShowSecret(null);
+          }}
+          item={showSecret!}
+        />
+      )}
     </>
   );
 };

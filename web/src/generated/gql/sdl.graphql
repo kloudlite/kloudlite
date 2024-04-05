@@ -200,6 +200,7 @@ type CloudProviderSecret {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
+  gcp: Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentials
   id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -217,6 +218,7 @@ input CloudProviderSecretIn {
   aws: Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentialsIn
   cloudProviderName: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   displayName: String!
+  gcp: Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentialsIn
   metadata: MetadataIn!
 }
 
@@ -751,6 +753,14 @@ input Github__com___kloudlite___api___apps___infra___internal___entities__AWSSec
   authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn
 }
 
+type Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentials {
+  serviceAccountJSON: String!
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentialsIn {
+  serviceAccountJSON: String!
+}
+
 type Github__com___kloudlite___api___apps___infra___internal___entities__InputField {
   defaultValue: Any
   displayUnit: String
@@ -970,6 +980,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec {
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   clusterInternalDnsHost: String
   clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig
   kloudliteRelease: String!
   messageQueueTopicName: String!
   output: Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput
@@ -987,6 +998,26 @@ input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn
   cloudflareEnabled: Boolean
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfigIn
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig {
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  gcpProjectID: String!
+  masterNodes: Github__com___kloudlite___operator___apis___clusters___v1__GCPMasterNodesConfig
+  region: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfigIn {
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+  gcpProjectID: String!
+  region: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPMasterNodesConfig {
+  nodes: Map
+  rootVolumeSize: Int!
+  rootVolumeType: String!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig {
@@ -994,6 +1025,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfi
   bootVolumeSize: Int!
   bootVolumeType: String!
   credentials: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  gcpProjectID: String!
   machineType: String!
   nodes: Map
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
@@ -1002,13 +1034,8 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfi
 
 input Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn {
   availabilityZone: String!
-  bootVolumeSize: Int!
-  bootVolumeType: String!
-  credentials: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
   machineType: String!
-  nodes: Map
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
-  region: String!
 }
 
 enum Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType {

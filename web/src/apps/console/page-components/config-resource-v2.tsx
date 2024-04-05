@@ -38,7 +38,7 @@ interface IResource {
 
 const parseItem = (item: BaseType) => {
   return {
-    name: titleCase(item.displayName),
+    name: item.displayName,
     id: parseName(item),
     entries: [`${Object.keys(item?.data).length || 0} Entries`],
     updateInfo: {
