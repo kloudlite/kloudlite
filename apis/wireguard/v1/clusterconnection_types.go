@@ -19,14 +19,14 @@ type Peer struct {
 type ConnectionSpec struct {
 	Id int `json:"id"`
 
-	PrivateKey *string `json:"privateKey,omitempty"`
-	Interface  *string `json:"interface,omitempty"`
-	Nodeport   *int    `json:"nodeport,omitempty"`
-	IpAddress  *string `json:"ipAddress,omitempty"`
-	DnsServer  *string `json:"dnsServer,omitempty"`
-	PublicKey  *string `json:"publicKey,omitempty"`
+	PrivateKey *string `json:"privateKey,omitempty" graphql:"ignore"`
+	Interface  *string `json:"interface,omitempty" graphql:"ignore"`
+	Nodeport   *int    `json:"nodeport,omitempty" graphql:"noinput"`
+	IpAddress  *string `json:"ipAddress,omitempty" graphql:"noinput"`
+	DnsServer  *string `json:"dnsServer,omitempty" graphql:"noinput"`
+	PublicKey  *string `json:"publicKey,omitempty" graphql:"noinput"`
 
-	Peers []Peer `json:"peers,omitempty"`
+	Peers []Peer `json:"peers,omitempty" graphql:"noinput"`
 
 	GatewayResources *corev1.ResourceRequirements `json:"gatewayResources,omitempty"`
 	AgentsResources  *corev1.ResourceRequirements `json:"agentsResources,omitempty"`
