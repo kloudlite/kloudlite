@@ -149,6 +149,7 @@ spec:
               id:
                 type: integer
               interface:
+                description: PrivateKey *string `json:"privateKey,omitempty"`
                 type: string
               ipAddress:
                 type: string
@@ -173,8 +174,6 @@ spec:
                   - publicKey
                   type: object
                 type: array
-              privateKey:
-                type: string
               publicKey:
                 type: string
             required:
