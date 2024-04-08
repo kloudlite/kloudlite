@@ -879,7 +879,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__Awsk3sMas
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpClusterConfigIn =
   {
     credentialsRef: Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn;
-    gcpProjectID: Scalars['String']['input'];
     region: Scalars['String']['input'];
   };
 
@@ -1928,6 +1927,11 @@ export type ConsoleListClustersQuery = {
               rootVolumeType: string;
             };
           };
+          gcp?: {
+            gcpProjectID: string;
+            region: string;
+            credentialsRef: { name: string; namespace?: string };
+          };
           output?: {
             keyK3sAgentJoinToken: string;
             keyK3sServerJoinToken: string;
@@ -2076,6 +2080,7 @@ export type ConsoleListProviderSecretsQuery = {
         aws?: {
           authMechanism: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsAuthMechanism;
         };
+        gcp?: { serviceAccountJSON: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata: {
           namespace?: string;

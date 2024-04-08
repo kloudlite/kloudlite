@@ -183,6 +183,14 @@ export const clusterQueries = (executor: IExecutor) => ({
                   region
                   spotNodePools
                 }
+                gcp {
+                  credentialsRef {
+                    name
+                    namespace
+                  }
+                  gcpProjectID
+                  region
+                }
                 cloudProvider
                 backupToS3Enabled
                 cloudflareEnabled

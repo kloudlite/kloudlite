@@ -1010,7 +1010,6 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig
 
 input Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfigIn {
   credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
-  gcpProjectID: String!
   region: String!
 }
 
