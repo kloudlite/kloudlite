@@ -30,7 +30,7 @@ var peerMap = make(PeerMap)
 var config Config
 
 type Config struct {
-	Endpoint   string `json:"endpoint"`
+	Endpoint   string `json:"endpoint,omitempty"`
 	PrivateKey string `json:"privateKey"`
 	PublicKey  string `json:"publicKey,omitempty"`
 	IpAddress  string `json:"ip"`

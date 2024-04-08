@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -34,14 +35,16 @@ import (
 
 /*
 steps to be implemented:
+-> connection
 [x] ensure namespace is ready
 [x] ensure spec datas
 [x] ensure gateway created and up to date
 [x] ensure agent created and up to date
 [x] handle delete
 
-TODO: yet to decide on the following:
-[ ] service discovery ( service discovery is not decided yet )
+-> service discovery
+[ ] ensure coredns is up to date
+[ ] ensure dns server is up to date
 */
 
 const (
@@ -67,6 +70,8 @@ const (
 	AgtReady  string = "agent-ready"
 	SpecReady string = "spec-ready"
 
+	CorednsConfigUpdate string = "coredns-config-update"
+
 	// ConnectDeleted string = "connect-deleted"
 )
 
@@ -76,6 +81,7 @@ var (
 		{Name: SpecReady, Title: "making sure spec data is ready"},
 		{Name: GWReady, Title: "making sure gateway is ready"},
 		{Name: AgtReady, Title: "making sure agent is ready"},
+		{Name: CorednsConfigUpdate, Title: "updating coredns config"},
 	}
 
 	// CONN_DESTROY_CHECKLIST = []rApi.CheckMeta{
@@ -138,6 +144,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := r.reconAgent(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.reconCoredns(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -267,6 +277,38 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) st
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(GWReady, req)
 
+	corefile := ""
+	kubeDns, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	corefile += fmt.Sprintf("\n\trewrite name regex (^[a-zA-Z0-9-_]+)[.]([a-zA-Z0-9-_]+)[.]svc[.]cluster%d[.]local {1}.{2}.svc.%s answer auto",
+		obj.Spec.Id,
+		r.Env.ClusterInternalDns,
+	)
+
+	corefile += fmt.Sprintf("\n\trewrite name regex (^[a-zA-Z0-9-_]+)[.]([a-zA-Z0-9-_]+)[.]cluster%d[.]local {1}.{2}.svc.%s answer auto",
+		obj.Spec.Id,
+		r.Env.ClusterInternalDns,
+	)
+
+	corefile = fmt.Sprintf(`
+.:53 {
+    errors
+    health
+    ready
+
+%s
+
+    forward . %s
+    cache 30
+    loop
+    reload
+    loadbalance
+}
+`, corefile, kubeDns.Spec.ClusterIP)
+
 	var peers []appCommon.Peer
 	for i, peer := range obj.Spec.Peers {
 		if peer.Id == 0 || peer.Id > 499 {
@@ -306,6 +348,12 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) st
 		return check.Failed(err)
 	}
 
+	needsToRollout := false
+	s, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, fmt.Sprintf("%s-gateway-configs", obj.Name)), &corev1.Secret{})
+	if err == nil && (strings.TrimSpace(string(secBytes)) != strings.TrimSpace(string(s.Data["server-config"]))) {
+		needsToRollout = true
+	}
+
 	gw, err := templates.ParseTemplate(templates.Gateway, map[string]interface{}{
 		"name":      fmt.Sprintf("%s-gateway", obj.Name),
 		"namespace": ResourceNamespace,
@@ -319,6 +367,7 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) st
 		"serverConfig": string(secBytes),
 		"ownerRefs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		"interface":    *obj.Spec.Interface,
+		"corefile":     corefile,
 		"nodeport": func() int32 {
 			if obj.Spec.Nodeport == nil {
 				return 0
@@ -335,8 +384,7 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) st
 		return check.Failed(err).Err(nil)
 	}
 
-	s, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, fmt.Sprintf("%s-gateway-configs", obj.Name)), &corev1.Secret{})
-	if err == nil && !slices.Equal(secBytes, s.Data["server-config"]) {
+	if needsToRollout {
 		if err := fn.RolloutRestart(r.Client, fn.Deployment, ResourceNamespace, map[string]string{
 			constants.WGConnectionNameKey:                 fmt.Sprintf("%s-gateway", obj.Name),
 			"kloudlite.io/wg-cluster-connection.resource": "gateway",
@@ -344,6 +392,7 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) st
 			return check.Failed(err)
 		}
 	}
+
 	return check.Completed()
 }
 
@@ -366,12 +415,60 @@ func (r *Reconciler) reconAgent(req *rApi.Request[*wgv1.ClusterConnection]) step
 		"interface": *obj.Spec.Interface,
 		"ownerRefs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 	})
+
 	if err != nil {
 		return check.Failed(err).Err(nil)
 	}
 
 	if _, err = r.yamlClient.ApplyYAML(ctx, agent); err != nil {
 		return check.Failed(err).Err(nil)
+	}
+
+	return check.Completed()
+}
+
+func (r *Reconciler) reconCoredns(req *rApi.Request[*wgv1.ClusterConnection]) stepResult.Result {
+	fName := "kldns.server"
+	ctx, _ := req.Context(), req.Object
+	check := rApi.NewRunningCheck(CorednsConfigUpdate, req)
+	current := ``
+	cm, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "coredns-custom"), &corev1.ConfigMap{})
+	if err == nil {
+		if s, ok := cm.Data[fName]; ok {
+			current = s
+		}
+	}
+
+	resp, err := r.getCorednsConfig(req, []byte(current))
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	if strings.TrimSpace(string(resp)) != strings.TrimSpace(current) {
+		if cm == nil {
+			cm = &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "coredns-custom", Namespace: "kube-system"}, TypeMeta: metav1.TypeMeta{Kind: "ConfigMap", APIVersion: "v1"}}
+			_, err := controllerutil.CreateOrUpdate(ctx, r.Client, cm, func() error {
+				cm.Data = map[string]string{fName: string(resp)}
+				return nil
+			})
+			if err != nil {
+				return check.Failed(err)
+			}
+
+		} else {
+			cm.Data[fName] = string(resp)
+			if err := r.Client.Update(ctx, cm); err != nil {
+				return check.Failed(err)
+			}
+		}
+
+		if err := fn.RolloutRestart(r.Client, fn.Deployment, "kube-system", map[string]string{
+			"k8s-app":            "kube-dns",
+			"kubernetes.io/name": "CoreDNS",
+		}); err != nil {
+			return check.Failed(err)
+		}
+
 	}
 
 	return check.Completed()
