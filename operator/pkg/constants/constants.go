@@ -64,6 +64,8 @@ const (
 	WGServerNameKey     string = "kloudlite.io/wg-server.name"
 	WGDeviceNameKey     string = "kloudlite.io/wg-device.name"
 	WGConnectionNameKey string = "kloudlite.io/wg-cluster-connection.name"
+
+	WGConnExposedSvcNameKey string = "kloudlite.io/conn-expose"
 )
 
 const (

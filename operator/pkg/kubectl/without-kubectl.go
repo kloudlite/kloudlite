@@ -8,6 +8,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/kloudlite/operator/pkg/logging"
 
 	"github.com/kloudlite/operator/pkg/constants"
@@ -129,7 +130,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			obj.SetLabels(labels)
 			_, err = resourceClient.Create(ctx, &obj, metav1.CreateOptions{})
 			if err != nil {
-				return resources, err
+				return resources, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
 			}
 			yc.logger.Infof("created resource (gvk: %s) (%s/%s)", gvk.String(), obj.GetNamespace(), obj.GetName())
 			continue
@@ -172,7 +173,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 
 		// If exists, update it
 		if _, err = resourceClient.Update(ctx, &obj, metav1.UpdateOptions{}); err != nil {
-			return resources, err
+			return resources, errors.NewEf(err, "resource: %s/%s", obj.GetNamespace(), obj.GetName())
 		}
 		yc.logger.Infof("updated resource (gvk: %s) (%s/%s)", gvk.String(), obj.GetNamespace(), obj.GetName())
 	}

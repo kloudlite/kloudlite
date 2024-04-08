@@ -66,11 +66,6 @@ spec:
             # cpu: "200m"
 
       # this is for coredns
-        {{- /* - args */}}
-        {{- /* - -conf */}}
-        {{- /* - /etc/coredns/Corefile */}}
-        {{- /* image: rancher/mirrored-coredns-coredns:1.9.1 */}}
-        {{- /* imagePullPolicy: IfNotPresent */}}
       - args:
         {{- if $devInfo}}
         - --dev-info
@@ -126,7 +121,6 @@ spec:
         {{- end}}
 
       # end of coredns
-
       volumes:
         - name: sysctl
           secret:
