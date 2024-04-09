@@ -40,6 +40,43 @@ variables:
 
 ---
 
+label: Create GCP Nodepool
+query: |+
+  mutation Infra_createNodePool($clusterName: String!, $pool: NodePoolIn!) {
+    infra_createNodePool(clusterName: $clusterName, pool: $pool) {
+      id
+      kind
+      metadata {
+        name
+        namespace
+        annotations
+      }
+      recordVersion
+      spec {
+        minCount
+        maxCount
+      }
+    }
+  }
+variables:
+  clusterName: "{{.gcpClusterName}}"
+  pool:
+    displayName: sample
+    # stateful: false
+    metadata:
+      name: first
+    spec:
+      minCount: 1
+      maxCount: 2
+      # targetCount: 1
+      cloudProvider: "gcp"
+      gcp:
+        availabilityZone: asia-south1-a
+        poolType: "SPOT"
+        machineType: e2-custom-2-4096
+
+---
+
 label: Create Spot EC2 Nodepool
 query: |+
   mutation Infra_createNodePool($clusterName: String!, $pool: NodePoolIn!) {
@@ -142,15 +179,16 @@ query: |+ #graphql
     }
   }
 variables:
-  clusterName: "{{.clusterName}}"
+  # clusterName: "{{.clusterName}}"
+  clusterName: "{{.gcpClusterName}}"
   pool:
-    displayName: "sample nodepool"
+    displayName: "First GCP Nodepool"
     metadata:
       name: first
     spec:
       minCount: 1
       maxCount: 1
-      cloudProvider: "aws"
+      cloudProvider: "gcp"
 
 ---
 
@@ -196,7 +234,8 @@ query: |+ #graphql
     }
   }
 variables:
-  clusterName: "{{.clusterName}}"
+  # clusterName: "{{.clusterName}}"
+  clusterName: "{{.gcpClusterName}}"
 
 ---
 label: Get Nodepool
@@ -233,6 +272,7 @@ query: |+ #graphql
   }
 variables:
   clusterName: "{{.clusterName}}"
+  # clusterName: "{{.gcpClusterName}}"
   poolName: first
 
 ---
