@@ -111,11 +111,35 @@ func (avp *AwsVPCParams) GetSubnetId(az string) string {
 	return ""
 }
 
+type GCPCredentials struct {
+	ServiceAccountJSON string `json:"serviceAccountJSON"`
+}
+
 type DigitalOceanConfig struct{}
 
 type AzureConfig struct{}
 
-type GCPConfig struct{}
+type GcpVPCParams struct {
+	Name string `json:"name"`
+}
+
+type GCPClusterConfig struct {
+	Region       string `json:"region"`
+	GCPProjectID string `json:"gcpProjectID" graphql:"noinput"`
+
+	VPC *GcpVPCParams `json:"vpc,omitempty" graphql:"noinput"`
+
+	// This secret will be unmarshalled into type GCPCredentials
+	CredentialsRef ct.SecretRef `json:"credentialsRef"`
+
+	MasterNodes GCPMasterNodesConfig `json:"masterNodes,omitempty" graphql:"noinput"`
+}
+
+type GCPMasterNodesConfig struct {
+	RootVolumeType string                     `json:"rootVolumeType"`
+	RootVolumeSize int                        `json:"rootVolumeSize"`
+	Nodes          map[string]MasterNodeProps `json:"nodes,omitempty"`
+}
 
 type ClusterOutput struct {
 	JobName      string `json:"jobName"`
@@ -150,6 +174,7 @@ type ClusterSpec struct {
 	CloudProvider ct.CloudProvider `json:"cloudProvider"`
 
 	AWS *AWSClusterConfig `json:"aws,omitempty"`
+	GCP *GCPClusterConfig `json:"gcp,omitempty"`
 
 	MessageQueueTopicName string `json:"messageQueueTopicName" graphql:"noinput"`
 	KloudliteRelease      string `json:"kloudliteRelease" graphql:"noinput"`

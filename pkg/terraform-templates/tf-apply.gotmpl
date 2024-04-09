@@ -1,0 +1,35 @@
+{{- /* vim: set ft=gotmpl: */}}
+
+{{- define "tf-apply" -}}
+{{- $workspace := get . "workspace" }}
+{{- $valuesJson := get . "values.json" }}
+envsubst < state-backend.tf.tpl > state-backend.tf
+
+terraform init -reconfigure -no-color 2>&1 | tee /dev/termination-log
+terraform workspace select --or-create {{$workspace}}
+
+cat > values.json <<EOF
+{{$valuesJson}}
+EOF
+
+terraform plan -parallelism=2 -out tfplan --var-file ./values.json -no-color 2>&1 | tee /dev/termination-log
+terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log
+
+terraform state pull | jq '.outputs' -r > outputs.json
+{{- end -}}
+
+{{- define "tf-delete" -}}
+{{- $workspace := get . "workspace" }}
+{{- $valuesJson := get . "values.json" }}
+envsubst < state-backend.tf.tpl > state-backend.tf
+
+terraform init -reconfigure -no-color 2>&1 | tee /dev/termination-log
+terraform workspace select --or-create {{$workspace}}
+
+cat > values.json <<EOF
+{{$valuesJson}}
+EOF
+
+terraform plan -parallelism=2 --destroy --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
+terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log
+{{- end -}}

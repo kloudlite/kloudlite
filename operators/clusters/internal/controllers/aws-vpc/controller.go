@@ -9,11 +9,11 @@ import (
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	common_types "github.com/kloudlite/operator/apis/common-types"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
 	"github.com/kloudlite/operator/operators/clusters/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
-	job_manager "github.com/kloudlite/operator/pkg/job-helper"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
@@ -35,8 +35,7 @@ type AwsVPCReconciler struct {
 	Name       string
 	yamlClient kubectl.YAMLClient
 
-	templateAwsVPCJob     []byte
-	templateAwsVPCJobRBAC []byte
+	templateAwsVPCJob []byte
 }
 
 func (r *AwsVPCReconciler) GetName() string {
@@ -53,18 +52,15 @@ func getPrefixedName(base string) string {
 	return fmt.Sprintf("aws-vpc-%s", base)
 }
 
-const vpcJobServiceAccount = "aws-vpc-job-sa"
-
 const (
-	labelResourceGeneration string = "kloudlite.io/controller.resource-generation"
-	labelVPCCreate          string = "kloudlite.io/aws-vpc.create"
-	labelVPCDelete          string = "kloudlite.io/aws-vpc.delete"
+	createVPCJob string = "create-vpc-job"
+	deleteVPCJob string = "delete-vpc-job"
 )
 
-// var (
-// 	creationCheckList = []string{"patch-defaults", "ensures-job-rbac", "create-vpc-job"}
-// 	deletionCheckList = []string{"patch-defaults", "ensures-job-rbac", "delete-vpc-job"}
-// )
+var (
+	ApplyChecklist  = []rApi.CheckMeta{{Name: createVPCJob, Title: "Create VPC Job"}}
+	DeleteChecklist = []rApi.CheckMeta{{Name: createVPCJob, Title: "Delete VPC Job"}}
+)
 
 // +kubebuilder:rbac:groups=clusters,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=clusters,resources=clusters/status,verbs=get;update;patch
@@ -98,15 +94,15 @@ func (r *AwsVPCReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 		return step.ReconcilerResponse()
 	}
 
+	if step := req.EnsureCheckList(ApplyChecklist); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureJobRBAC(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.createVPC(req); !step.ShouldProceed() {
+	if step := r.applyVPC(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -115,12 +111,11 @@ func (r *AwsVPCReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 }
 
 func (r *AwsVPCReconciler) finalize(req *rApi.Request[*clustersv1.AwsVPC]) stepResult.Result {
-	checkName := "finalizing"
+	if step := req.EnsureCheckList(DeleteChecklist); !step.ShouldProceed() {
+		return step
+	}
 
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	if step := r.cleanupVPC(req); !step.ShouldProceed() {
+	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
 		return step
 	}
 
@@ -158,7 +153,6 @@ func (r *AwsVPCReconciler) patchDefaults(req *rApi.Request[*clustersv1.AwsVPC]) 
 			}
 
 			obj.Spec.PublicSubnets = make([]clustersv1.AwsSubnet, len(zones))
-
 			slices.Sort(zones)
 
 			for i := range zones {
@@ -183,42 +177,6 @@ func (r *AwsVPCReconciler) patchDefaults(req *rApi.Request[*clustersv1.AwsVPC]) 
 			return fail(err)
 		}
 		return req.Done().RequeueAfter(500 * time.Millisecond)
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
-}
-
-func (r *AwsVPCReconciler) ensureJobRBAC(req *rApi.Request[*clustersv1.AwsVPC]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	checkName := "job-rbac"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	b, err := templates.ParseBytes(r.templateAwsVPCJobRBAC, map[string]any{
-		"service-account-name": vpcJobServiceAccount,
-		"namespace":            obj.Namespace,
-	})
-	if err != nil {
-		return fail(err).Err(nil)
-	}
-
-	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-		return fail(err)
 	}
 
 	check.Status = true
@@ -301,228 +259,67 @@ func genTFValues(obj *clustersv1.AwsVPC, credsSecret *corev1.Secret, ev *env.Env
 	}
 }
 
-func (r *AwsVPCReconciler) createVPC(req *rApi.Request[*clustersv1.AwsVPC]) stepResult.Result {
+func (r *AwsVPCReconciler) applyVPC(req *rApi.Request[*clustersv1.AwsVPC]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.NewRunningCheck(createVPCJob, req)
 
-	checkName := "checkName"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+	credsSecret := &corev1.Secret{}
+	if err := r.Get(ctx, fn.NN(obj.Spec.Credentials.SecretRef.Namespace, obj.Spec.Credentials.SecretRef.Name), credsSecret); err != nil {
+		return check.Failed(err).Err(nil)
 	}
 
-	job := &batchv1.Job{}
-	if err := r.Get(ctx, fn.NN(obj.Namespace, getPrefixedName(obj.Name)), job); err != nil {
-		job = nil
+	valuesBytes, err := genTFValues(obj, credsSecret, r.Env)
+	if err != nil {
+		return check.Failed(err).Err(nil)
 	}
 
-	if job == nil {
-		credsSecret := &corev1.Secret{}
-		if err := r.Get(ctx, fn.NN(obj.Spec.Credentials.SecretRef.Namespace, obj.Spec.Credentials.SecretRef.Name), credsSecret); err != nil {
-			return fail(err)
-		}
+	b, err := templates.ParseBytes(r.templateAwsVPCJob, templates.AwsVPCJobVars{
+		JobMetadata: metav1.ObjectMeta{
+			Name:            getPrefixedName(obj.Name),
+			Namespace:       obj.Namespace,
+			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			Labels:          obj.GetLabels(),
+			Annotations:     fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
+		},
+		NodeSelector: r.Env.IACJobNodeSelector,
+		Tolerations:  r.Env.IACJobTolerations,
+		JobImage:     r.Env.IACJobImage,
 
-		valuesBytes, err := genTFValues(obj, credsSecret, r.Env)
-		if err != nil {
-			return fail(err).Err(nil)
-		}
-
-		b, err := templates.ParseBytes(r.templateAwsVPCJob, map[string]any{
-			"action": "apply",
-
-			"job-name":          getPrefixedName(obj.Name),
-			"job-namespace":     obj.Namespace,
-			"job-image":         r.Env.IACJobImage,
-			"job-tolerations":   r.Env.IACJobTolerations,
-			"job-node-selector": r.Env.IACJobNodeSelector,
-
-			"labels": map[string]string{
-				labelVPCCreate:          "true",
-				labelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
-			},
-
-			"pod-annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
-
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-
-			"service-account-name": vpcJobServiceAccount,
-
-			"tf-state-secret-name":      fmt.Sprintf("aws-vpc-%s", obj.Name),
-			"tf-state-secret-namespace": obj.GetNamespace(),
-
-			"aws-access-key-id":     r.Env.KlAwsAccessKey,
-			"aws-secret-access-key": r.Env.KlAwsSecretKey,
-
-			"values.json": string(valuesBytes),
-
-			"vpc-output-secret-name":      obj.Spec.Output.Name,
-			"vpc-output-secret-namespace": obj.Spec.Output.Namespace,
-		})
-		if err != nil {
-			return fail(err).Err(nil)
-		}
-
-		rr, err := r.yamlClient.ApplyYAML(ctx, b)
-		if err != nil {
-			return fail(err)
-		}
-
-		req.AddToOwnedResources(rr...)
-		return fail(fmt.Errorf("waiting for job to be created"))
+		TFWorkspaceName:            fmt.Sprintf("aws-vpc-%s", obj.Name),
+		TFWorkspaceSecretNamespace: obj.Namespace,
+		ValuesJSON:                 string(valuesBytes),
+		AWS: templates.AWSClusterJobParams{
+			AccessKeyID:     r.Env.KlAwsAccessKey,
+			AccessKeySecret: r.Env.KlAwsSecretKey,
+		},
+		VPCOutputSecretName:      obj.Spec.Output.Name,
+		VPCOutputSecretNamespace: obj.Spec.Output.Namespace,
+	})
+	if err != nil {
+		return check.Failed(err).NoRequeue()
 	}
 
-	isMyJob := job.Labels[labelResourceGeneration] == fmt.Sprintf("%d", obj.Generation) && job.Labels[labelVPCCreate] == "true"
-
-	if !isMyJob {
-		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return fail(fmt.Errorf("waiting for previous jobs to finish execution"))
-		}
-
-		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return fail(err)
-		}
+	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	if err != nil {
+		return check.Failed(err)
 	}
 
-	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return fail(fmt.Errorf("waiting for job to finish execution"))
+	req.AddToOwnedResources(rr...)
+
+	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getPrefixedName(obj.Name)), &crdsv1.Job{})
+	if err != nil {
+		return check.Failed(err)
 	}
 
-	// tlog := job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
-	// check.Message = tlog
-	// if tlog == "" {
-	// 	check.Message = "bucket creation job failed"
-	// }
-
-	if job.Status.Failed >= 1 {
-		// means job failed
-		return fail(fmt.Errorf("job failed, checkout logs for more details")).Err(nil)
+	if job.Status.Running != nil && *job.Status.Running {
+		return check.StillRunning(fmt.Errorf("waiting for vpc creation job to complete"))
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
+	if job.Status.Failed != nil && *job.Status.Failed {
+		return check.Failed(fmt.Errorf("vpc creation job failed, could not proceed with vpc creation")).NoRequeue()
 	}
 
-	return req.Next()
-}
-
-func (r *AwsVPCReconciler) cleanupVPC(req *rApi.Request[*clustersv1.AwsVPC]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	checkName := "cleanup-vpc"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	job := &batchv1.Job{}
-	if err := r.Get(ctx, fn.NN(obj.Namespace, getPrefixedName(obj.Name)), job); err != nil {
-		job = nil
-	}
-
-	if job == nil {
-		credsSecret := &corev1.Secret{}
-		if err := r.Get(ctx, fn.NN(obj.Spec.Credentials.SecretRef.Namespace, obj.Spec.Credentials.SecretRef.Name), credsSecret); err != nil {
-			return fail(err)
-		}
-
-		valuesBytes, err := genTFValues(obj, credsSecret, r.Env)
-		if err != nil {
-			return fail(err).Err(nil)
-		}
-
-		b, err := templates.ParseBytes(r.templateAwsVPCJob, map[string]any{
-			"action": "delete",
-
-			"job-name":          getPrefixedName(obj.Name),
-			"job-namespace":     obj.Namespace,
-			"job-image":         r.Env.IACJobImage,
-			"job-tolerations":   r.Env.IACJobTolerations,
-			"job-node-selector": r.Env.IACJobNodeSelector,
-
-			"labels": map[string]string{
-				labelVPCDelete:          "true",
-				labelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
-			},
-
-			"pod-annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
-
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-
-			"service-account-name": vpcJobServiceAccount,
-
-			"tf-state-secret-name":      fmt.Sprintf("aws-vpc-%s", obj.Name),
-			"tf-state-secret-namespace": obj.GetNamespace(),
-
-			"aws-access-key-id":     r.Env.KlAwsAccessKey,
-			"aws-secret-access-key": r.Env.KlAwsSecretKey,
-
-			"values.json": string(valuesBytes),
-
-			"vpc-output-secret-name":      obj.Spec.Output.Name,
-			"vpc-output-secret-namespace": obj.Spec.Output.Namespace,
-		})
-		if err != nil {
-			return fail(err).Err(nil)
-		}
-
-		rr, err := r.yamlClient.ApplyYAML(ctx, b)
-		if err != nil {
-			return fail(err)
-		}
-
-		req.AddToOwnedResources(rr...)
-		return fail(fmt.Errorf("waiting for job to be created"))
-	}
-
-	isMyJob := job.Labels[labelResourceGeneration] == fmt.Sprintf("%d", obj.Generation) && job.Labels[labelVPCDelete] == "true"
-
-	if !isMyJob {
-		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return fail(fmt.Errorf("waiting for previous jobs to finish execution"))
-		}
-
-		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return fail(err)
-		}
-
-		return req.Done()
-	}
-
-	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return fail(fmt.Errorf("waiting for job to finish execution"))
-	}
-
-	// tlog := job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
-	// check.Message = tlog
-	// if tlog == "" {
-	// 	check.Message = "bucket creation job failed"
-	// }
-
-	if job.Status.Succeeded < 1 {
-		// means job failed
-		return fail(fmt.Errorf("job failed, checkout logs for more details")).Err(nil)
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *AwsVPCReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
@@ -536,12 +333,6 @@ func (r *AwsVPCReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Log
 		return err
 	}
 	r.templateAwsVPCJob = b
-
-	b, err = templates.Read(templates.RBACForClusterJobTemplate)
-	if err != nil {
-		return err
-	}
-	r.templateAwsVPCJobRBAC = b
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.AwsVPC{})
 	builder.Owns(&batchv1.Job{})
