@@ -1,17 +1,16 @@
 ---
 label: "Create Deployment"
 query: |+
-  mutation Iot_createDeployment($projectName: String!, $envName: String!, $deployment: IOTDeploymentIn!) {
-    iot_createDeployment(projectName: $projectName, envName: $envName, deployment: $deployment) {
+  mutation Iot_createDeployment($projectName: String!, $deployment: IOTDeploymentIn!) {
+    iot_createDeployment(projectName: $projectName, deployment: $deployment) {
       CIDR
-      displayName
       id
+      displayName
     }
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "deployment": {
       "CIDR": "10.0.0.0/16",
       "displayName": "sample deployment",
@@ -29,17 +28,16 @@ variables:
 
 label: "update deployment"
 query: |+
-  mutation Iot_updateDeployment($projectName: String!, $envName: String!, $deployment: IOTDeploymentIn!) {
-    iot_updateDeployment(projectName: $projectName, envName: $envName, deployment: $deployment) {
-      CIDR
+  mutation Iot_updateDeployment($projectName: String!, $deployment: IOTDeploymentIn!) {
+    iot_updateDeployment(projectName: $projectName, deployment: $deployment) {
       displayName
+      CIDR
       id
     }
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "deployment": {
       "displayName": "sample depl one",
       "CIDR": "10.0.0.1",
@@ -57,13 +55,12 @@ variables:
 
 label: "delete deployment"
 query: |+
-  mutation Iot_deleteDeployment($projectName: String!, $envName: String!, $name: String!) {
-    iot_deleteDeployment(projectName: $projectName, envName: $envName, name: $name)
+  mutation Iot_deleteDeployment($projectName: String!, $name: String!) {
+    iot_deleteDeployment(projectName: $projectName, name: $name)
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "name": "sample-deployment"
   }
 
@@ -71,17 +68,16 @@ variables:
 
 label: "get deployment"
 query: |+
-  query Iot_getDeployment($projectName: String!, $envName: String!, $name: String!) {
-    iot_getDeployment(projectName: $projectName, envName: $envName, name: $name) {
+  query Iot_getDeployment($projectName: String!, $name: String!) {
+    iot_getDeployment(projectName: $projectName, name: $name) {
       CIDR
-      displayName
       id
+      displayName
     }
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "name": "sample-deployment"
   }
 
@@ -89,13 +85,13 @@ variables:
 
 label: "list deployments"
 query: |+
-  query Iot_listDeployments($projectName: String!, $envName: String!) {
-    iot_listDeployments(projectName: $projectName, envName: $envName) {
+  query Iot_listDeployments($projectName: String!) {
+    iot_listDeployments(projectName: $projectName) {
       totalCount
       edges {
         node {
-          CIDR
           displayName
+          CIDR
           name
         }
       }
@@ -104,7 +100,6 @@ query: |+
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env"
   }
 
 ---

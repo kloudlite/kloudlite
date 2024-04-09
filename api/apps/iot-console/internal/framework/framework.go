@@ -52,7 +52,7 @@ var Module = fx.Module("framework",
 
 	fx.Provide(
 		func(ev *env.Env, jc *nats.JetstreamClient) (domain.IOTConsoleCacheStore, error) {
-			return kv.NewNatsKVBinaryRepo(context.TODO(), ev.ConsoleCacheKVBucket, jc)
+			return kv.NewNatsKVBinaryRepo(context.TODO(), ev.IOTConsoleCacheKVBucket, jc)
 		},
 	),
 
