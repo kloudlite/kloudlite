@@ -23,6 +23,10 @@ input SearchCluster {
     text: MatchFilterIn
 }
 
+input SearchClusterGroup {
+    text: MatchFilterIn
+}
+
 input SearchClusterManagedService {
     isReady: MatchFilterIn
     text: MatchFilterIn
@@ -76,6 +80,10 @@ type Query {
     infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getCluster(name: String!): Cluster @isLoggedInAndVerified @hasAccount
 
+    # cluster groups
+    infra_listClusterGroups(search: SearchClusterGroup, pagination: CursorPaginationIn): ClusterGroupPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getClusterGroup(name: String!): ClusterGroup @isLoggedInAndVerified @hasAccount
+
     # get node pools
     infra_listNodePools(clusterName: String!, search: SearchNodepool, pagination: CursorPaginationIn): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getNodePool(clusterName: String!, poolName: String!): NodePool @isLoggedInAndVerified @hasAccount
@@ -119,6 +127,10 @@ type Mutation {
     infra_updateCluster(cluster: ClusterIn!): Cluster @isLoggedInAndVerified @hasAccount
     infra_deleteCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
     # infra_resyncCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_createClusterGroup(cluster: ClusterGroupIn!): ClusterGroup @isLoggedInAndVerified @hasAccount
+    infra_updateClusterGroup(cluster: ClusterGroupIn!): ClusterGroup @isLoggedInAndVerified @hasAccount
+    infra_deleteClusterGroup(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
       
     infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster @isLoggedInAndVerified @hasAccount
 

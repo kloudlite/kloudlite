@@ -427,7 +427,7 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 		fields.MetadataNamespace: accNs,
 	}
 
-	pr, err := d.clusterRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, mf), pagination)
+	pr, err := d.clusterRepo.FindPaginated(ctx, d.clusterRepo.MergeMatchFilters(f, mf), pagination)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}

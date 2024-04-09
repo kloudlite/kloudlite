@@ -7,11 +7,14 @@ package graph
 import (
 	"context"
 	"encoding/base64"
+
+	"github.com/kloudlite/api/common/fields"
+	"github.com/kloudlite/api/pkg/errors"
+
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
-	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -63,6 +66,37 @@ func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, name string) 
 		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteCluster(ictx, name); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
+// InfraCreateClusterGroup is the resolver for the infra_createClusterGroup field.
+func (r *mutationResolver) InfraCreateClusterGroup(ctx context.Context, clusterGroup entities.ClusterGroup) (*entities.ClusterGroup, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.CreateClusterGroup(ictx, clusterGroup)
+}
+
+// InfraUpdateClusterGroup is the resolver for the infra_updateClusterGroup field.
+func (r *mutationResolver) InfraUpdateClusterGroup(ctx context.Context, clusterGroup entities.ClusterGroup) (*entities.ClusterGroup, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.UpdateClusterGroup(ictx, clusterGroup)
+}
+
+// InfraDeleteClusterGroup is the resolver for the infra_deleteClusterGroup field.
+func (r *mutationResolver) InfraDeleteClusterGroup(ctx context.Context, name string) (bool, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.DeleteClusterGroup(ictx, name); err != nil {
 		return false, errors.NewE(err)
 	}
 	return true, nil
@@ -297,7 +331,7 @@ func (r *queryResolver) InfraListClusters(ctx context.Context, search *model.Sea
 		}
 
 		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
+			filter[fields.MetadataName] = *search.Text
 		}
 	}
 
@@ -336,6 +370,62 @@ func (r *queryResolver) InfraGetCluster(ctx context.Context, name string) (*enti
 	}
 
 	return r.Domain.GetCluster(ictx, name)
+}
+
+// InfraListClusterGroups is the resolver for the infra_listClusterGroups field.
+func (r *queryResolver) InfraListClusterGroups(ctx context.Context, search *model.SearchClusterGroup, pagination *repos.CursorPagination) (*model.ClusterGroupPaginatedRecords, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if pagination == nil {
+		pagination = &repos.DefaultCursorPagination
+	}
+
+	filter := map[string]repos.MatchFilter{}
+
+	if search != nil {
+		if search.Text != nil {
+			filter[fields.MetadataName] = *search.Text
+		}
+	}
+
+	pClusters, err := r.Domain.ListClustersGroup(ictx, filter, *pagination)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	ce := make([]*model.ClusterGroupEdge, len(pClusters.Edges))
+	for i := range pClusters.Edges {
+		ce[i] = &model.ClusterGroupEdge{
+			Node:   pClusters.Edges[i].Node,
+			Cursor: pClusters.Edges[i].Cursor,
+		}
+	}
+
+	m := model.ClusterGroupPaginatedRecords{
+		Edges: ce,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pClusters.PageInfo.EndCursor,
+			HasNextPage:     pClusters.PageInfo.HasNextPage,
+			HasPreviousPage: pClusters.PageInfo.HasPrevPage,
+			StartCursor:     &pClusters.PageInfo.StartCursor,
+		},
+		TotalCount: int(pClusters.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// InfraGetClusterGroup is the resolver for the infra_getClusterGroup field.
+func (r *queryResolver) InfraGetClusterGroup(ctx context.Context, name string) (*entities.ClusterGroup, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GetClusterGroup(ictx, name)
 }
 
 // InfraListNodePools is the resolver for the infra_listNodePools field.
