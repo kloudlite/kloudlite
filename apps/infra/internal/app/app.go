@@ -44,6 +44,8 @@ type (
 var Module = fx.Module(
 	"app",
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndices),
+	repos.NewFxMongoRepo[*entities.ClusterConnection]("cluster-connections", "clus-cn", entities.ClusterConnIndices),
+	repos.NewFxMongoRepo[*entities.ClusterGroup]("cluster-groups", "clus-grp", entities.ClusterGroupIndices),
 	// repos.NewFxMongoRepo[*entities.BYOKCluster]("byok_clusters", "byok", entities.BYOKClusterIndices),
 	repos.NewFxMongoRepo[*entities.BYOKCluster]("clusters", "byok", entities.BYOKClusterIndices),
 	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cmsvcs", "cmsvcs", entities.ClusterManagedServiceIndices),

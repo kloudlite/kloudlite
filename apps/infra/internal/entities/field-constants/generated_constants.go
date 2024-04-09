@@ -113,6 +113,7 @@ const (
 
 // constant vars generated for struct Cluster
 const (
+	ClusterClusterGroupName                        = "clusterGroupName"
 	ClusterSpec                                    = "spec"
 	ClusterSpecAccountId                           = "spec.accountId"
 	ClusterSpecAccountName                         = "spec.accountName"
@@ -167,6 +168,32 @@ const (
 	ClusterSpecOutputSecretName                    = "spec.output.secretName"
 	ClusterSpecPublicDNSHost                       = "spec.publicDNSHost"
 	ClusterSpecTaintMasterNodes                    = "spec.taintMasterNodes"
+)
+
+// constant vars generated for struct ClusterConnection
+const (
+	ClusterConnectionClusterGroupName             = "clusterGroupName"
+	ClusterConnectionSpec                         = "spec"
+	ClusterConnectionSpecAgentsResources          = "spec.agentsResources"
+	ClusterConnectionSpecAgentsResourcesClaims    = "spec.agentsResources.claims"
+	ClusterConnectionSpecAgentsResourcesLimits    = "spec.agentsResources.limits"
+	ClusterConnectionSpecAgentsResourcesRequests  = "spec.agentsResources.requests"
+	ClusterConnectionSpecDnsServer                = "spec.dnsServer"
+	ClusterConnectionSpecGatewayResources         = "spec.gatewayResources"
+	ClusterConnectionSpecGatewayResourcesClaims   = "spec.gatewayResources.claims"
+	ClusterConnectionSpecGatewayResourcesLimits   = "spec.gatewayResources.limits"
+	ClusterConnectionSpecGatewayResourcesRequests = "spec.gatewayResources.requests"
+	ClusterConnectionSpecId                       = "spec.id"
+	ClusterConnectionSpecInterface                = "spec.interface"
+	ClusterConnectionSpecIpAddress                = "spec.ipAddress"
+	ClusterConnectionSpecNodeport                 = "spec.nodeport"
+	ClusterConnectionSpecPeers                    = "spec.peers"
+	ClusterConnectionSpecPublicKey                = "spec.publicKey"
+)
+
+// constant vars generated for struct ClusterGroup
+const (
+	ClusterGroupPeers = "peers"
 )
 
 // constant vars generated for struct ClusterManagedService
@@ -349,6 +376,14 @@ const (
 	OutputFieldDescription = "description"
 	OutputFieldLabel       = "label"
 	OutputFieldName        = "name"
+)
+
+// constant vars generated for struct Peers
+const (
+	PeersAllowedIps = "allowedIps"
+	PeersName       = "name"
+	PeersNamespace  = "namespace"
+	PeersPubKey     = "pubKey"
 )
 
 // constant vars generated for struct PersistentVolume
