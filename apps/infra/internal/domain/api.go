@@ -40,6 +40,7 @@ type ResourceType string
 const (
 	ResourceTypeClusterManagedService ResourceType = "cluster_managed_service"
 	ResourceTypeCluster               ResourceType = "cluster"
+	ResourceTypeClusterGroup          ResourceType = "cluster_group"
 	ResourceTypeDomainEntries         ResourceType = "domain_entries"
 	ResourceTypeHelmRelease           ResourceType = "helm_release"
 	ResourceTypeNodePool              ResourceType = "nodepool"
@@ -51,6 +52,13 @@ const (
 
 type Domain interface {
 	CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error)
+
+	CreateClusterGroup(ctx InfraContext, cluster entities.ClusterGroup) (*entities.ClusterGroup, error)
+	UpdateClusterGroup(ctx InfraContext, cluster entities.ClusterGroup) (*entities.ClusterGroup, error)
+	DeleteClusterGroup(ctx InfraContext, name string) error
+
+	ListClustersGroup(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterGroup], error)
+	GetClusterGroup(ctx InfraContext, name string) (*entities.ClusterGroup, error)
 
 	CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
 	UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)

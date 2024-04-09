@@ -74,6 +74,13 @@ models:
         resolver: true
   ClusterIn: *cluster-model
 
+  ClusterGroup: &cluster-group-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.ClusterGroup
+    fields:
+      adminKubeconfig:
+        resolver: true
+  ClusterGroupIn: *cluster-group-model
+
   BYOKCluster: &byok-cluster-model
     model: github.com/kloudlite/api/apps/infra/internal/entities.BYOKCluster
   BYOKClusterIn: *byok-cluster-model
