@@ -48,7 +48,7 @@ var Module = fx.Module(
 		return k8s.NewClient(cfg, nil)
 	}),
 
-	fx.Invoke(func(infraCli infra.InfraClient, iamCli iam.IAMClient, mux *http.ServeMux, sessStore SessionStore, ev *env.Env, logger logging.Logger) {
+	fx.Invoke(func(infraCli infra.InfraClient, kcli k8s.Client, iamCli iam.IAMClient, mux *http.ServeMux, sessStore SessionStore, ev *env.Env, logger logging.Logger) {
 		sessionMiddleware := httpServer.NewReadSessionMiddlewareHandler(sessStore, constants.CookieName, constants.CacheSessionPrefix)
 
 		mux.HandleFunc("/observability/metrics/", sessionMiddleware(func(w http.ResponseWriter, r *http.Request) {
@@ -130,6 +130,7 @@ var Module = fx.Module(
 
 		mux.HandleFunc("/observability/logs", sessionMiddleware(func(w http.ResponseWriter, r *http.Request) {
 			timestart := time.Now()
+			logger.Infof("%s %s", r.Method, r.URL.Path)
 			defer func() {
 				logger.Infof("%s %s took %.2fs", r.Method, r.URL.Path, time.Since(timestart).Seconds())
 			}()
@@ -154,28 +155,30 @@ var Module = fx.Module(
 			clusterName := r.URL.Query().Get("cluster_name")
 			trackingId := r.URL.Query().Get("tracking_id")
 
-			out, err := infraCli.GetClusterKubeconfig(r.Context(), &infra.GetClusterIn{
-				UserId:      string(sess.UserId),
-				UserName:    sess.UserName,
-				UserEmail:   sess.UserEmail,
-				AccountName: accountName,
-				ClusterName: clusterName,
-			})
-			if err != nil {
-				http.Error(w, err.Error(), 500)
-				return
-			}
+			if !strings.HasPrefix(trackingId, "clus-") {
+				out, err := infraCli.GetClusterKubeconfig(r.Context(), &infra.GetClusterIn{
+					UserId:      string(sess.UserId),
+					UserName:    sess.UserName,
+					UserEmail:   sess.UserEmail,
+					AccountName: accountName,
+					ClusterName: clusterName,
+				})
+				if err != nil {
+					http.Error(w, err.Error(), 500)
+					return
+				}
 
-			cfg, err := k8s.RestConfigFromKubeConfig(out.Kubeconfig)
-			if err != nil {
-				http.Error(w, err.Error(), 500)
-				return
-			}
+				cfg, err := k8s.RestConfigFromKubeConfig(out.Kubeconfig)
+				if err != nil {
+					http.Error(w, err.Error(), 500)
+					return
+				}
 
-			kcli, err := k8s.NewClient(cfg, nil)
-			if err != nil {
-				http.Error(w, err.Error(), 500)
-				return
+				kcli, err = k8s.NewClient(cfg, nil)
+				if err != nil {
+					http.Error(w, err.Error(), 500)
+					return
+				}
 			}
 
 			closed := false
@@ -190,21 +193,24 @@ var Module = fx.Module(
 			}()
 
 			pr, pw := io.Pipe()
-			go StreamLogs(r.Context(), kcli, pw, LogParams{
-				TrackingId: trackingId,
-			})
 
-			b := bufio.NewReader(pr)
-			for !closed {
-				msg, err := b.ReadBytes('\n')
-				if err != nil {
-					if !errors.Is(err, io.EOF) {
-						http.Error(w, err.Error(), 500)
+			go func() {
+				b := bufio.NewReader(pr)
+				for !closed {
+					msg, err := b.ReadBytes('\n')
+					if err != nil {
+						if !errors.Is(err, io.EOF) {
+							http.Error(w, err.Error(), 500)
+						}
+						return
 					}
-					return
+					fmt.Fprintf(w, "%s", msg)
+					w.(http.Flusher).Flush()
 				}
-				fmt.Fprintf(w, "%s", msg)
-				w.(http.Flusher).Flush()
+			}()
+
+			if err := StreamLogs(r.Context(), kcli, pw, LogParams{TrackingId: trackingId}, logger); err != nil {
+				http.Error(w, err.Error(), 500)
 			}
 		}))
 	}),

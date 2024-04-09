@@ -2,12 +2,13 @@ package app
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"io"
 
 	"github.com/kloudlite/api/constants"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/logging"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
@@ -18,7 +19,7 @@ type LogParams struct {
 	TrackingId string
 }
 
-func StreamLogs(ctx context.Context, kcli k8s.Client, writer io.WriteCloser, params LogParams) error {
+func StreamLogs(ctx context.Context, kcli k8s.Client, writer io.WriteCloser, params LogParams, logger logging.Logger) error {
 	var pods corev1.PodList
 
 	if err := kcli.List(ctx, &pods, &client.ListOptions{
@@ -31,22 +32,28 @@ func StreamLogs(ctx context.Context, kcli k8s.Client, writer io.WriteCloser, par
 
 	g, ctx := errgroup.WithContext(ctx)
 
+	if len(pods.Items) == 0 {
+		return nil
+	}
+
 	for i := range pods.Items {
 		pod := pods.Items[i]
 		for j := range pod.Spec.Containers {
 			container := pod.Spec.Containers[j]
 			g.Go(func() error {
 				defer func() {
-					fmt.Printf("\n-------disconnected for (%s/%s)---------\n", pod.Namespace, pod.Name)
+					logger.Infof("disconnected for (%s/%s)", pod.Namespace, pod.Name)
 				}()
+				logger.Infof("streaming logs for (%s/%s)", pod.Namespace, pod.Name)
 				if err := kcli.ReadLogs(ctx, pod.Namespace, pod.Name, writer, &k8s.ReadLogsOptions{
 					ContainerName: container.Name,
 					SinceSeconds:  nil,
 					TailLines:     fn.New(int64(300)),
 				}); err != nil {
-					fmt.Printf("ERR: %v", err)
-					return err
-					// return err
+					if !errors.Is(err, io.EOF) {
+						return err
+					}
+					return nil
 				}
 				return nil
 			})

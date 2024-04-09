@@ -11,7 +11,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gobuffalo/flect v1.0.2
 	github.com/gofiber/adaptor/v2 v2.1.23
-	github.com/gofiber/fiber/v2 v2.52.1
+	github.com/gofiber/fiber/v2 v2.52.2
 	github.com/gofiber/websocket/v2 v2.0.21
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
@@ -42,11 +42,10 @@ require (
 
 require (
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
-	github.com/kloudlite/operator v1.0.4-0.20240326121100-7a59627e6d54
+	github.com/kloudlite/operator v1.0.4-0.20240409082541-b8ead24a9fad
 	github.com/nats-io/nats.go v1.31.0
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
-	github.com/shamaton/msgpack/v2 v2.2.0
 	github.com/stretchr/testify v1.9.0
 	github.com/ztrue/tracerr v0.4.0
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9

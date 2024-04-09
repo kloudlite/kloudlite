@@ -5,7 +5,9 @@
 {{- $messageOfficeGrpcAddr := get . "message-office-grpc-addr" }}
 
 {{- $clusterToken := get . "cluster-token" }}
-{{- $publicDnsHost := get . "public-dns-host" }}
+{{- $publicDNSHost := get . "public-dns-host" }}
+
+{{- $cloudprovider := get . "cloudprovider" }}
 
 ---
 apiVersion: crds.kloudlite.io/v1
@@ -54,7 +56,7 @@ spec:
         operator: "Exists"
         effect: "NoSchedule"
 
-    cloudProvider: "aws"
+    cloudProvider: "{{$cloudprovider}}"
 
     agent:
       enabled: true
@@ -78,7 +80,7 @@ spec:
           nodepools:
             enabled: true
             # must be one of aws,azure,gcp
-            cloudprovider: "aws"
+            cloudprovider: "{{$cloudprovider}}"
 
           wireguard:
             publicDNSHost: {{$publicDNSHost}}
