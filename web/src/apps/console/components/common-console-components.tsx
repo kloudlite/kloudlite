@@ -59,9 +59,11 @@ export const Box = ({ children, title, className }: IBox) => {
 export const CopyContentToClipboard = ({
   content,
   toastMessage,
+  label,
 }: {
   content: string;
   toastMessage: string;
+  label?: ReactNode;
 }) => {
   const iconSize = 16;
   const { copy } = useClipboard({});
@@ -90,7 +92,7 @@ export const CopyContentToClipboard = ({
             }
           }}
         >
-          <span className="truncate">{content}</span>
+          <span className="truncate">{label || content}</span>
           {copied ? (
             <span>
               <Check size={iconSize} />

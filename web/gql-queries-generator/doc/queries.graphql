@@ -357,6 +357,14 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
             region
             spotNodePools
           }
+          gcp {
+            credentialsRef {
+              name
+              namespace
+            }
+            gcpProjectID
+            region
+          }
           cloudProvider
           backupToS3Enabled
           cloudflareEnabled
@@ -516,6 +524,9 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
           authMechanism
         }
         creationTime
+        gcp {
+          serviceAccountJSON
+        }
         displayName
         lastUpdatedBy {
           userEmail

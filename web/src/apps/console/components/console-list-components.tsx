@@ -73,19 +73,17 @@ const ListItem = ({
     <div className={cn(BaseStyle, className)}>
       <div className="flex flex-col flex-1 truncate">
         <Tooltip.Root
-          className="!w-fit !max-w-fit"
+          className="!w-fit !max-w-[500px]"
           side="top"
           content={
-            <div className="flex flex-col flex-1 truncate">
+            <div className="flex flex-col flex-1">
               {data && (
-                <div className="flex-1 bodyMd-medium text-text-strong truncate pulsable">
+                <div className="flex-1 bodyMd-medium text-text-strong pulsable">
                   {data}
                 </div>
               )}
               {subtitle && (
-                <div className="pulsable bodyMd text-text-soft truncate">
-                  {subtitle}
-                </div>
+                <div className="pulsable bodyMd text-text-soft">{subtitle}</div>
               )}
             </div>
           }
