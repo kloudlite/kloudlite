@@ -1,8 +1,8 @@
 ---
 label: "Create Device Blueprint"
 query: |+
-  mutation Iot_createDeviceBlueprint($projectName: String!, $envName: String!, $deviceBlueprint: IOTDeviceBlueprintIn!) {
-    iot_createDeviceBlueprint(projectName: $projectName, envName: $envName, deviceBlueprint: $deviceBlueprint) {
+  mutation Iot_createDeviceBlueprint($projectName: String!, $deviceBlueprint: IOTDeviceBlueprintIn!) {
+    iot_createDeviceBlueprint(projectName: $projectName, deviceBlueprint: $deviceBlueprint) {
       displayName
       id
       name
@@ -11,7 +11,6 @@ query: |+
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "deviceBlueprint": {
       "bluePrintType": "singleton_blueprint",
       "displayName": "sample device blueprint",
@@ -24,21 +23,20 @@ variables:
 
 label: "update Device Blueprint"
 query: |+
-  mutation Iot_updateDeviceBlueprint($projectName: String!, $envName: String!, $deviceBlueprint: IOTDeviceBlueprintIn!) {
-    iot_updateDeviceBlueprint(projectName: $projectName, envName: $envName, deviceBlueprint: $deviceBlueprint) {
+  mutation Iot_updateDeviceBlueprint($projectName: String!, $deviceBlueprint: IOTDeviceBlueprintIn!) {
+    iot_updateDeviceBlueprint(projectName: $projectName, deviceBlueprint: $deviceBlueprint) {
       bluePrintType
-      name
       displayName
+      name
     }
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "deviceBlueprint": {
-      "bluePrintType": "group____blueprint",
-      "displayName": "sample device blueprint",
-      "name": "sample-device-blueprint-one",
+      "bluePrintType": "group_blueprint",
+      "displayName": "sample device blueprint update",
+      "name": "sample-device-blueprint",
       "version": 1
     }
   }
@@ -47,13 +45,12 @@ variables:
 
 label: "delete Device Blueprint"
 query: |+
-  mutation Iot_deleteDeviceBlueprint($projectName: String!, $envName: String!, $name: String!) {
-    iot_deleteDeviceBlueprint(projectName: $projectName, envName: $envName, name: $name)
+  mutation Iot_deleteDeviceBlueprint($projectName: String!, $name: String!) {
+    iot_deleteDeviceBlueprint(projectName: $projectName, name: $name)
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "name": "sample-device-blueprint"
   }
 
@@ -61,16 +58,16 @@ variables:
 
 label: "get Device Blueprint"
 query: |+
-  query Iot_getDeviceBlueprint($projectName: String!, $envName: String!, $name: String!) {
-    iot_getDeviceBlueprint(projectName: $projectName, envName: $envName, name: $name) {
-      displayName
+  query Iot_getDeviceBlueprint($projectName: String!, $name: String!) {
+    iot_getDeviceBlueprint(projectName: $projectName, name: $name) {
       id
+      name
+      displayName
     }
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "name": "sample-device-blueprint"
   }
 
@@ -78,13 +75,14 @@ variables:
 
 label: "list Device Blueprint"
 query: |+
-  query Iot_listDeployments($projectName: String!, $envName: String!) {
-    iot_listDeployments(projectName: $projectName, envName: $envName) {
+  query Iot_listDeviceBlueprints($projectName: String!) {
+    iot_listDeviceBlueprints(projectName: $projectName) {
       totalCount
       edges {
         node {
           displayName
           accountName
+          projectName
         }
       }
     }
@@ -92,7 +90,6 @@ query: |+
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env"
   }
 
 ---

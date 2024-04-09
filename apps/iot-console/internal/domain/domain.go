@@ -15,7 +15,6 @@ type domain struct {
 	logger    logging.Logger
 
 	iotProjectRepo         repos.DbRepo[*entities.IOTProject]
-	iotEnvironmentRepo     repos.DbRepo[*entities.IOTEnvironment]
 	iotDeploymentRepo      repos.DbRepo[*entities.IOTDeployment]
 	iotDeviceRepo          repos.DbRepo[*entities.IOTDevice]
 	iotDeviceBlueprintRepo repos.DbRepo[*entities.IOTDeviceBlueprint]
@@ -32,7 +31,6 @@ var Module = fx.Module("domain",
 		logger logging.Logger,
 
 		iotProjectRepo repos.DbRepo[*entities.IOTProject],
-		iotEnvironmentRepo repos.DbRepo[*entities.IOTEnvironment],
 		iotDeploymentRepo repos.DbRepo[*entities.IOTDeployment],
 		iotDeviceRepo repos.DbRepo[*entities.IOTDevice],
 		iotDeviceBlueprintRepo repos.DbRepo[*entities.IOTDeviceBlueprint],
@@ -44,7 +42,6 @@ var Module = fx.Module("domain",
 			k8sClient:              k8sClient,
 			logger:                 logger,
 			iotProjectRepo:         iotProjectRepo,
-			iotEnvironmentRepo:     iotEnvironmentRepo,
 			iotDeploymentRepo:      iotDeploymentRepo,
 			iotDeviceRepo:          iotDeviceRepo,
 			iotDeviceBlueprintRepo: iotDeviceBlueprintRepo,

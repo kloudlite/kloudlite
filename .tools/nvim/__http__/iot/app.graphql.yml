@@ -1,16 +1,15 @@
 ---
 label: "Create App"
 query: |+
-  mutation Iot_createApp($projectName: String!, $envName: String!, $deviceBlueprintName: String!, $app: IOTAppIn!) {
-    iot_createApp(projectName: $projectName, envName: $envName, deviceBlueprintName: $deviceBlueprintName, app: $app) {
-      displayName
+  mutation Iot_createApp($projectName: String!, $deviceBlueprintName: String!, $app: IOTAppIn!) {
+    iot_createApp(projectName: $projectName, deviceBlueprintName: $deviceBlueprintName, app: $app) {
       id
+      displayName
     }
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "deviceBlueprintName": "sample-device-blueprint",
     "app": {
       "displayName": "sample app",
@@ -33,16 +32,16 @@ variables:
 
 label: "update App"
 query: |+
-  mutation Iot_updateApp($projectName: String!, $envName: String!, $deviceBlueprintName: String!, $app: IOTAppIn!) {
-    iot_updateApp(projectName: $projectName, envName: $envName, deviceBlueprintName: $deviceBlueprintName, app: $app) {
-      accountName
+  mutation Iot_updateApp($projectName: String!, $deviceBlueprintName: String!, $app: IOTAppIn!) {
+    iot_updateApp(projectName: $projectName, deviceBlueprintName: $deviceBlueprintName, app: $app) {
       id
+      accountName
+      displayName
     }
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "deviceBlueprintName": "sample-device-blueprint",
     "app": {
       "displayName": "sample app",
@@ -65,13 +64,12 @@ variables:
 
 label: "delete App"
 query: |+
-  mutation Iot_deleteApp($projectName: String!, $envName: String!, $deviceBlueprintName: String!, $name: String!) {
-    iot_deleteApp(projectName: $projectName, envName: $envName, deviceBlueprintName: $deviceBlueprintName, name: $name)
+  mutation Iot_deleteApp($projectName: String!, $deviceBlueprintName: String!, $name: String!) {
+    iot_deleteApp(projectName: $projectName, deviceBlueprintName: $deviceBlueprintName, name: $name)
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "deviceBlueprintName": "sample-device-blueprint",
     "name": "sample-app"
   }
@@ -80,16 +78,15 @@ variables:
 
 label: "get App"
 query: |+
-  query Iot_getApp($projectName: String!, $envName: String!, $deviceBlueprintName: String!, $name: String!) {
-    iot_getApp(projectName: $projectName, envName: $envName, deviceBlueprintName: $deviceBlueprintName, name: $name) {
-      id
+  query Iot_getApp($projectName: String!, $deviceBlueprintName: String!, $name: String!) {
+    iot_getApp(projectName: $projectName, deviceBlueprintName: $deviceBlueprintName, name: $name) {
       displayName
+      id
     }
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "deviceBlueprintName": "sample-device-blueprint",
     "name": "sample-app"
   }
@@ -98,8 +95,8 @@ variables:
 
 label: "list App"
 query: |+
-  query Iot_listApps($projectName: String!, $envName: String!, $deviceBlueprintName: String!) {
-    iot_listApps(projectName: $projectName, envName: $envName, deviceBlueprintName: $deviceBlueprintName) {
+  query Iot_listApps($projectName: String!, $deviceBlueprintName: String!) {
+    iot_listApps(projectName: $projectName, deviceBlueprintName: $deviceBlueprintName) {
       totalCount
       edges {
         node {
@@ -112,7 +109,6 @@ query: |+
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
     "deviceBlueprintName": "sample-device-blueprint",
   }
 

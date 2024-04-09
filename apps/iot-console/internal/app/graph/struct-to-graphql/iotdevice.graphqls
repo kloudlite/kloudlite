@@ -1,11 +1,10 @@
 type IOTDevice @shareable {
   accountName: String!
-  blueprint: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   deployment: String!
+  deviceBlueprintName: String!
   displayName: String!
-  environmentName: String!
   id: ID!
   ip: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -32,7 +31,6 @@ type IOTDevicePaginatedRecords @shareable {
 }
 
 input IOTDeviceIn {
-  blueprint: String!
   deployment: String!
   displayName: String!
   ip: String!
