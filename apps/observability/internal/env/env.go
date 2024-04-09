@@ -18,7 +18,7 @@ type Env struct {
 
 	IsDev bool
 
-	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY" default:"localhost:8080"`
+	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY"`
 }
 
 func LoadEnv() (*Env, error) {

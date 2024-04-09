@@ -41,8 +41,7 @@ func (d *domain) handleObservabilityLogsMsg(ctx types.Context, subscriptions map
 		msg.Id = "default"
 	}
 
-	// hash := logs.LogHash(msg.Spec, ctx.Session.UserId, msg.Id)
-	hash := "tmp"
+	hash := logs.LogHash(msg.Spec, ctx.Session.UserId, msg.Id)
 
 	switch msg.Event {
 	case logs.EventSubscribe:
@@ -56,7 +55,7 @@ func (d *domain) handleObservabilityLogsMsg(ctx types.Context, subscriptions map
 
 			utils.WriteInfo(ctx, "subscribed to logs", msg.Id, types.ForLogs)
 
-			nctx, cf := context.WithCancel(context.TODO())
+			nctx, cf := context.WithCancel(ctx.Context)
 
 			req, err := http.NewRequestWithContext(nctx, http.MethodGet, fmt.Sprintf("http://%s/observability/logs", d.env.ObservabilityApiAddr), nil)
 			if err != nil {
