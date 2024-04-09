@@ -2,7 +2,6 @@ package framework
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/kloudlite/api/apps/observability/internal/app"
@@ -26,7 +25,7 @@ var Module = fx.Module("framework",
 
 	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.Client, error) {
 		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
-			Name:   "console",
+			Name:   "observability-api",
 			Logger: logger,
 		})
 	}),
@@ -51,34 +50,19 @@ var Module = fx.Module("framework",
 
 	app.Module,
 
-	// fx.Provide(func(logger logging.Logger, ev *env.Env) httpServer.Server {
-	// 	return httpServer.NewServer(httpServer.ServerArgs{
-	// 		Logger:           logger,
-	// 		CorsAllowOrigins: &ev.HttpCorsOrigins,
-	// 		IsDev:            ev.IsDev,
-	// 	})
-	// }),
-	//
-	// fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
-	// 	lf.Append(fx.Hook{
-	// 		OnStart: func(context.Context) error {
-	// 			return server.Listen(fmt.Sprintf(":%d", ev.HttpPort))
-	// 		},
-	// 		OnStop: func(context.Context) error {
-	// 			return server.Close()
-	// 		},
-	// 	})
-	// }),
-
 	fx.Provide(func() *http.ServeMux {
 		return http.NewServeMux()
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, ev *env.Env, mux *http.ServeMux) {
+		server := &http.Server{Addr: ":8080", Handler: mux}
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
-				go http.ListenAndServe(fmt.Sprintf(":%d", ev.HttpPort), mux)
+				go server.ListenAndServe()
 				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return server.Shutdown(ctx)
 			},
 		})
 	}),
