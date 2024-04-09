@@ -68,6 +68,9 @@ export const providerSecretQueries = (executor: IExecutor) => ({
                 authMechanism
               }
               creationTime
+              gcp {
+                serviceAccountJSON
+              }
               displayName
               lastUpdatedBy {
                 userEmail

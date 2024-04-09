@@ -6,6 +6,7 @@ import { mapper, useMapper } from '~/components/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import { TextInput } from '~/components/atoms/input';
 import { constDatas, awsRegions } from '../dummy/consts';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
@@ -101,6 +102,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
       availabilityMode: '',
       displayName: '',
       isNameError: false,
+      selectedGcpRegion: '',
     },
     validationSchema: Yup.object({
       region: Yup.string().trim().required('Region is required'),
@@ -119,37 +121,75 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
           return;
         }
         try {
-          ensureAccountClientSide({ account: accountName });
-          const { errors: e } = await api.createCluster({
-            cluster: {
-              displayName: val.displayName,
-              spec: {
-                cloudProvider: validateClusterCloudProvider(val.cloudProvider),
-                aws: {
-                  credentials: {
-                    authMechanism: 'secret_keys',
-                    secretRef: {
-                      name: val.credentialsRef,
-                      namespace: account.targetNamespace,
+          switch (val.cloudProvider) {
+            case 'aws':
+              ensureAccountClientSide({ account: accountName });
+              const { errors: e } = await api.createCluster({
+                cluster: {
+                  displayName: val.displayName,
+                  spec: {
+                    cloudProvider: validateClusterCloudProvider(
+                      val.cloudProvider
+                    ),
+                    aws: {
+                      credentials: {
+                        authMechanism: 'secret_keys',
+                        secretRef: {
+                          name: val.credentialsRef,
+                          namespace: account.targetNamespace,
+                        },
+                      },
+                      region: selectedRegion.Name,
+                      k3sMasters: {
+                        nvidiaGpuEnabled: true,
+                        instanceType: 'c6a.large',
+                      },
                     },
+                    availabilityMode: validateAvailabilityMode(
+                      val.availabilityMode
+                    ),
                   },
-                  region: selectedRegion.Name,
-                  k3sMasters: {
-                    nvidiaGpuEnabled: true,
-                    instanceType: 'c6a.large',
+                  metadata: {
+                    name: val.name,
                   },
                 },
-                availabilityMode: validateAvailabilityMode(
-                  val.availabilityMode
-                ),
-              },
-              metadata: {
-                name: val.name,
-              },
-            },
-          });
-          if (e) {
-            throw e[0];
+              });
+              if (e) {
+                throw e[0];
+              }
+              break;
+            case 'gcp':
+              console.log('gcp', val.cloudProvider);
+              ensureAccountClientSide({ account: accountName });
+              const { errors: err } = await api.createCluster({
+                cluster: {
+                  displayName: val.displayName,
+                  spec: {
+                    cloudProvider: validateClusterCloudProvider(
+                      val.cloudProvider
+                    ),
+                    gcp: {
+                      credentialsRef: {
+                        name: val.credentialsRef,
+                        namespace: account.targetNamespace,
+                      },
+                      region: val.selectedGcpRegion,
+                    },
+                    availabilityMode: validateAvailabilityMode(
+                      val.availabilityMode
+                    ),
+                  },
+                  metadata: {
+                    name: val.name,
+                  },
+                },
+              });
+              if (err) {
+                throw err[0];
+              }
+              break;
+            default:
+              throw new Error('Invalid cloud provider');
           }
           toast.success('Cluster created successfully');
           navigate(rootUrl);
@@ -209,25 +249,37 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                 }}
               />
             )}
-            <Select
-              label="Region"
-              size="lg"
-              placeholder="Select region"
-              value={selectedRegion?.Name}
-              options={async () =>
-                mapper(awsRegions, (v) => {
-                  return {
-                    value: v.Name,
-                    label: v.Name,
-                    region: v,
-                  };
-                })
-              }
-              onChange={(region) => {
-                handleChange('region')(dummyEvent(region.value));
-                setSelectedRegion(region.region);
-              }}
-            />
+            {values.cloudProvider === 'aws' && (
+              <Select
+                label="Region"
+                size="lg"
+                placeholder="Select region"
+                value={selectedRegion?.Name}
+                options={async () =>
+                  mapper(awsRegions, (v) => {
+                    return {
+                      value: v.Name,
+                      label: v.Name,
+                      region: v,
+                    };
+                  })
+                }
+                onChange={(region) => {
+                  handleChange('region')(dummyEvent(region.value));
+                  setSelectedRegion(region.region);
+                }}
+              />
+            )}
+
+            {values.cloudProvider === 'gcp' && (
+              <TextInput
+                placeholder="Enter region name"
+                label="Region"
+                value={values.selectedGcpRegion}
+                size="lg"
+                onChange={handleChange('selectedGcpRegion')}
+              />
+            )}
 
             <Select
               label="Availabity"
@@ -330,6 +382,16 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                         </div>
                         <div className="bodySm text-text-soft">
                           {values.region}
+                        </div>
+                      </div>
+                    )}
+                    {values.cloudProvider === 'gcp' && (
+                      <div className="flex flex-row justify-between pb-lg border-b border-border-default">
+                        <div className="bodyMd-medium text-text-default">
+                          Region
+                        </div>
+                        <div className="bodySm text-text-soft">
+                          {values.selectedGcpRegion}
                         </div>
                       </div>
                     )}

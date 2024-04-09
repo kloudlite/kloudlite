@@ -83,6 +83,7 @@ const AwsValidationPopup = ({
     initialValues: {
       accessKey: '',
       secretKey: '',
+      serviceAccountJson: '',
     },
     validationSchema: Yup.object({
       accessKey: Yup.string().test(
@@ -146,9 +147,20 @@ const AwsValidationPopup = ({
     },
   });
 
+  function validateProvider(providername: string): string {
+    switch (providername) {
+      case 'aws':
+        return 'Validate Aws Provider';
+      case 'gcp':
+        return 'Validate Gcp Provider';
+      default:
+        return 'invalid provider name';
+    }
+  }
+
   return (
     <Popup.Root onOpenChange={onClose} show={show}>
-      <Popup.Header>Validate Aws Provider</Popup.Header>
+      <Popup.Header>{validateProvider(item.cloudProviderName)}</Popup.Header>
       <Popup.Content>
         <form onSubmit={handleSubmit} className="flex flex-col gap-2xl">
           {/* <div className="flex gap-xl items-center"> */}
@@ -200,23 +212,27 @@ const AwsValidationPopup = ({
                 cloudformation stack.
               </div>
 
-              <PasswordInput
-                name="accessKey"
-                onChange={handleChange('accessKey')}
-                error={!!errors.accessKey}
-                message={errors.accessKey}
-                value={values.accessKey}
-                label="Access Key"
-              />
+              {item.cloudProviderName === 'aws' && (
+                <>
+                  <PasswordInput
+                    name="accessKey"
+                    onChange={handleChange('accessKey')}
+                    error={!!errors.accessKey}
+                    message={errors.accessKey}
+                    value={values.accessKey}
+                    label="Access Key"
+                  />
 
-              <PasswordInput
-                name="secretKey"
-                onChange={handleChange('secretKey')}
-                error={!!errors.secretKey}
-                message={errors.secretKey}
-                value={values.secretKey}
-                label="Secret Key"
-              />
+                  <PasswordInput
+                    name="secretKey"
+                    onChange={handleChange('secretKey')}
+                    error={!!errors.secretKey}
+                    message={errors.secretKey}
+                    value={values.secretKey}
+                    label="Secret Key"
+                  />
+                </>
+              )}
 
               <Button
                 loading={il}
@@ -297,6 +313,35 @@ const AwsCheckBody = ({ item }: { item: BaseType }) => {
       ) : (
         <div className="flex gap-xl items-center pulsable">
           {/* <span>{item.aws?.awsAccountId}</span> */}
+          <IconButton
+            onClick={() => {
+              setShow(true);
+            }}
+            size="sm"
+            variant="outline"
+            icon={<ArrowCounterClockwise size={16} />}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const GcpCheckBody = ({ item }: { item: BaseType }) => {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div>
+      {show ? (
+        <div className="flex gap-xl items-center pulsable">
+          <Button
+            size="sm"
+            variant="primary-outline"
+            content={<Check size={16} />}
+          />
+        </div>
+      ) : (
+        <div className="flex gap-xl items-center pulsable">
           <IconButton
             onClick={() => {
               setShow(true);
@@ -459,7 +504,15 @@ const ListView = ({ items = [], onDelete, onEdit }: IResource) => {
               },
               status: {
                 render: () => (
-                  <ListBody data={i.aws ? <AwsCheckBody item={i} /> : null} />
+                  <ListBody
+                    data={
+                      i.aws ? (
+                        <AwsCheckBody item={i} />
+                      ) : (
+                        <GcpCheckBody item={i} />
+                      )
+                    }
+                  />
                 ),
               },
               provider: {

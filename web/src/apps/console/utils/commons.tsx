@@ -1,5 +1,5 @@
 /* eslint-disable guard-for-in */
-import { AWSlogoFill, ChevronRight } from '@jengaicons/react';
+import { AWSlogoFill, ChevronRight, GoogleCloudlogo } from '@jengaicons/react';
 import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
 import { cn } from '~/components/utils';
 import yup from '~/root/lib/server/helpers/yup';
@@ -108,7 +108,10 @@ export const downloadFile = ({
 };
 
 export const providerIcons = (iconsSize = 16) => {
-  return { aws: <AWSlogoFill size={iconsSize} /> };
+  return {
+    aws: <AWSlogoFill size={iconsSize} />,
+    gcp: <GoogleCloudlogo size={iconsSize} />,
+  };
 };
 
 export const renderCloudProvider = ({
@@ -122,6 +125,13 @@ export const renderCloudProvider = ({
       return (
         <div className="flex flex-row gap-xl items-center">
           {providerIcons(iconSize).aws}
+          <span>{cloudprovider}</span>
+        </div>
+      );
+    case 'gcp':
+      return (
+        <div className="flex flex-row gap-xl items-center">
+          {providerIcons(iconSize).gcp}
           <span>{cloudprovider}</span>
         </div>
       );
