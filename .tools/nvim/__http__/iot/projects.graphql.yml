@@ -30,8 +30,8 @@ query: |+
 variables:
   {
     "project": {
-      "name": null,
-      "displayName": null
+      "name": "sample-project",
+      "displayName": "sample project"
     }
   }
 

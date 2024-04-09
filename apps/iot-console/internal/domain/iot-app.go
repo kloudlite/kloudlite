@@ -36,7 +36,6 @@ func (d *domain) GetApp(ctx IotResourceContext, deviceBlueprintName string, name
 func (d *domain) CreateApp(ctx IotResourceContext, deviceBlueprintName string, app entities.IOTApp) (*entities.IOTApp, error) {
 	app.ProjectName = ctx.ProjectName
 	app.AccountName = ctx.AccountName
-	app.EnvironmentName = ctx.EnvironmentName
 	app.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,

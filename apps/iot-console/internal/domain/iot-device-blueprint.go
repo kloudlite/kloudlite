@@ -34,7 +34,6 @@ func (d *domain) GetDeviceBlueprint(ctx IotResourceContext, name string) (*entit
 func (d *domain) CreateDeviceBlueprint(ctx IotResourceContext, deviceBlueprint entities.IOTDeviceBlueprint) (*entities.IOTDeviceBlueprint, error) {
 	deviceBlueprint.ProjectName = ctx.ProjectName
 	deviceBlueprint.AccountName = ctx.AccountName
-	deviceBlueprint.EnvironmentName = ctx.EnvironmentName
 	deviceBlueprint.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,

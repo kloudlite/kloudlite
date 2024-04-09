@@ -18,15 +18,14 @@ type IotConsoleContext struct {
 
 type IotResourceContext struct {
 	IotConsoleContext
-	ProjectName     string
-	EnvironmentName string
+	ProjectName string
+	//EnvironmentName string
 }
 
 func (r IotResourceContext) IOTConsoleDBFilters() repos.Filter {
 	return repos.Filter{
-		fields.AccountName:     r.AccountName,
-		fields.ProjectName:     r.ProjectName,
-		fields.EnvironmentName: r.EnvironmentName,
+		fields.AccountName: r.AccountName,
+		fields.ProjectName: r.ProjectName,
 	}
 }
 
@@ -49,13 +48,6 @@ type Domain interface {
 	UpdateProject(ctx IotConsoleContext, project entities.IOTProject) (*entities.IOTProject, error)
 	DeleteProject(ctx IotConsoleContext, name string) error
 
-	ListEnvironments(ctx IotConsoleContext, projectName string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTEnvironment], error)
-	GetEnvironment(ctx IotConsoleContext, projectName string, name string) (*entities.IOTEnvironment, error)
-
-	CreateEnvironment(ctx IotConsoleContext, projectName string, env entities.IOTEnvironment) (*entities.IOTEnvironment, error)
-	UpdateEnvironment(ctx IotConsoleContext, projectName string, env entities.IOTEnvironment) (*entities.IOTEnvironment, error)
-	DeleteEnvironment(ctx IotConsoleContext, projectName string, name string) error
-
 	ListDeployments(ctx IotResourceContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTDeployment], error)
 	GetDeployment(ctx IotResourceContext, name string) (*entities.IOTDeployment, error)
 
@@ -63,12 +55,17 @@ type Domain interface {
 	UpdateDeployment(ctx IotResourceContext, deployment entities.IOTDeployment) (*entities.IOTDeployment, error)
 	DeleteDeployment(ctx IotResourceContext, name string) error
 
-	ListDevices(ctx IotResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTDevice], error)
-	GetDevice(ctx IotResourceContext, name string) (*entities.IOTDevice, error)
+	ListDevices(ctx IotResourceContext, deviceBlueprintName string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTDevice], error)
+	GetDevice(ctx IotResourceContext, name string, deviceBlueprintName string) (*entities.IOTDevice, error)
+	ListDeploymentDevices(ctx IotResourceContext, deploymentName string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTDevice], error)
+	GetDeploymentDevice(ctx IotResourceContext, name string, deploymentName string) (*entities.IOTDevice, error)
 
-	CreateDevice(ctx IotResourceContext, device entities.IOTDevice) (*entities.IOTDevice, error)
-	UpdateDevice(ctx IotResourceContext, device entities.IOTDevice) (*entities.IOTDevice, error)
-	DeleteDevice(ctx IotResourceContext, name string) error
+	CreateDevice(ctx IotResourceContext, deviceBlueprintName string, device entities.IOTDevice) (*entities.IOTDevice, error)
+	UpdateDevice(ctx IotResourceContext, deviceBlueprintName string, device entities.IOTDevice) (*entities.IOTDevice, error)
+	DeleteDevice(ctx IotResourceContext, deviceBlueprintName string, name string) error
+
+	AddDeviceToDeployment(ctx IotResourceContext, deploymentName string, deviceName string, deviceBlueprintName string) (*entities.IOTDevice, error)
+	RemoveDeviceOfDeployment(ctx IotResourceContext, deploymentName string, deviceName string, deviceBlueprintName string) (*entities.IOTDevice, error)
 
 	ListDeviceBlueprints(ctx IotResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTDeviceBlueprint], error)
 	GetDeviceBlueprint(ctx IotResourceContext, name string) (*entities.IOTDeviceBlueprint, error)

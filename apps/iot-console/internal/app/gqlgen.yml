@@ -71,10 +71,6 @@ models:
     model: github.com/kloudlite/api/apps/iot-console/internal/entities.IOTProject
   IOTProjectIn: *iot-project-model
 
-  IOTEnvironment: &iot-environment-model
-    model: github.com/kloudlite/api/apps/iot-console/internal/entities.IOTEnvironment
-  IOTEnvironmentIn: *iot-environment-model
-
   IOTDevice: &iot-device-model
     model: github.com/kloudlite/api/apps/iot-console/internal/entities.IOTDevice
   IOTDeviceIn: *iot-device-model
