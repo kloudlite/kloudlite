@@ -34,6 +34,17 @@ type ClusterEdge struct {
 	Node   *entities.Cluster `json:"node"`
 }
 
+type ClusterGroupEdge struct {
+	Cursor string                 `json:"cursor"`
+	Node   *entities.ClusterGroup `json:"node"`
+}
+
+type ClusterGroupPaginatedRecords struct {
+	Edges      []*ClusterGroupEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount int                 `json:"totalCount"`
+}
+
 type ClusterManagedServiceEdge struct {
 	Cursor string                          `json:"cursor"`
 	Node   *entities.ClusterManagedService `json:"node"`
@@ -294,6 +305,7 @@ type GithubComKloudliteOperatorApisClustersV1GCPClusterConfig struct {
 	GcpProjectID   string                                                        `json:"gcpProjectID"`
 	MasterNodes    *GithubComKloudliteOperatorApisClustersV1GCPMasterNodesConfig `json:"masterNodes,omitempty"`
 	Region         string                                                        `json:"region"`
+	Vpc            *GithubComKloudliteOperatorApisClustersV1GcpVPCParams         `json:"vpc,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1GCPClusterConfigIn struct {
@@ -323,6 +335,10 @@ type GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfigIn struct {
 	AvailabilityZone string                                              `json:"availabilityZone"`
 	MachineType      string                                              `json:"machineType"`
 	PoolType         GithubComKloudliteOperatorApisClustersV1GCPPoolType `json:"poolType"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1GcpVPCParams struct {
+	Name string `json:"name"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1MasterNodeProps struct {
@@ -1395,6 +1411,10 @@ type SearchCluster struct {
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
 	Region            *repos.MatchFilter `json:"region,omitempty"`
 	Text              *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchClusterGroup struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type SearchClusterManagedService struct {
