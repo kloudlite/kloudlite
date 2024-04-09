@@ -182,6 +182,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig
   gcpProjectID: String!
   masterNodes: Github__com___kloudlite___operator___apis___clusters___v1__GCPMasterNodesConfig
   region: String!
+  vpc: Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__GCPMasterNodesConfig @shareable {
@@ -200,6 +201,10 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfi
   nodes: Map
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
   region: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams @shareable {
+  name: String!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps @shareable {

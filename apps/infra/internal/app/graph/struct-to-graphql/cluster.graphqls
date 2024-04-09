@@ -1,6 +1,7 @@
 type Cluster @shareable {
   accountName: String!
   apiVersion: String
+  clusterGroupName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -29,6 +30,7 @@ type ClusterPaginatedRecords @shareable {
 
 input ClusterIn {
   apiVersion: String
+  clusterGroupName: String
   displayName: String!
   kind: String
   metadata: MetadataIn!
