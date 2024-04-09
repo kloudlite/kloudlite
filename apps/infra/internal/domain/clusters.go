@@ -99,6 +99,8 @@ func (d *domain) GetClusterAdminKubeconfig(ctx InfraContext, clusterName string)
 func (d *domain) applyCluster(ctx InfraContext, cluster *entities.Cluster) error {
 	addTrackingId(&cluster.Cluster, cluster.Id)
 	return d.applyK8sResource(ctx, &cluster.Cluster, cluster.RecordVersion)
+
+	// TODO: create cluster connection and apply to target cluster
 }
 
 func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
