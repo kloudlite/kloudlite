@@ -23,6 +23,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
@@ -42,6 +43,7 @@ type Reconciler struct {
 	recorder   record.EventRecorder
 
 	appDeploymentTemplate []byte
+	hpaTemplate           []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -49,17 +51,19 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	DeploymentSvcAndHpaCreated string = "deployment-svc-and-hpa-created"
-	ImagesLabelled             string = "images-labelled"
-	DeploymentReady            string = "deployment-ready"
+	ImagesLabelled  string = "images-labelled"
+	DeploymentReady string = "deployment-ready"
+	HPAConfigured   string = "hpa-configured"
 
 	CleanedOwnedResources string = "cleaned-owned-resources"
+	DeploymentSvcCreated  string = "deployment-svc-created"
 )
 
 var (
 	ApplyChecklist = []rApi.CheckMeta{
-		{Name: DeploymentSvcAndHpaCreated, Title: "Scaling configured"},
-		{Name: DeploymentReady, Title: "Deployment ready"},
+		{Name: DeploymentSvcCreated, Title: "Deployment And Service Created"},
+		{Name: DeploymentReady, Title: "Deployment Ready"},
+		{Name: HPAConfigured, Title: "Horizontal pod autoscaling configured"},
 	}
 
 	DeleteChecklist = []rApi.CheckMeta{
@@ -95,10 +99,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(DeploymentSvcAndHpaCreated, ImagesLabelled, DeploymentReady); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -116,6 +116,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := r.ensureDeploymentThings(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureHPA(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -172,7 +176,7 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 
 func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(DeploymentSvcAndHpaCreated, req)
+	check := rApi.NewRunningCheck(DeploymentSvcCreated, req)
 
 	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
 
@@ -198,6 +202,51 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 	}
 
 	req.AddToOwnedResources(resRefs...)
+
+	return check.Completed()
+}
+
+func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(HPAConfigured, req)
+
+	hpaVars := templates.HPATemplateVars{
+		Metadata: metav1.ObjectMeta{
+			Name:            obj.Name,
+			Namespace:       obj.Namespace,
+			Labels:          obj.GetLabels(),
+			Annotations:     fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
+			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		},
+		HPA: obj.Spec.Hpa,
+	}
+
+	if obj.Spec.Hpa == nil || !obj.Spec.Hpa.Enabled {
+		hpa, err := rApi.Get(ctx, r.Client, fn.NN(hpaVars.Metadata.Namespace, hpaVars.Metadata.Name), &autoscalingv2.HorizontalPodAutoscaler{})
+		if err != nil {
+			if apiErrors.IsNotFound(err) {
+				return check.Completed()
+			}
+			return check.Failed(err)
+		}
+
+		if err := r.Delete(ctx, hpa); err != nil {
+			return check.Failed(err)
+		}
+		return check.Completed()
+	}
+
+	b, err := templates.ParseBytes(r.hpaTemplate, hpaVars)
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	rr, err := r.YamlClient.ApplyYAML(ctx, b)
+	if err != nil {
+		return check.StillRunning(err)
+	}
+
+	req.AddToOwnedResources(rr...)
 
 	return check.Completed()
 }
@@ -253,6 +302,11 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	var err error
 	r.appDeploymentTemplate, err = templates.Read(templates.AppDeployment)
+	if err != nil {
+		return err
+	}
+
+	r.hpaTemplate, err = templates.Read(templates.HPATemplate)
 	if err != nil {
 		return err
 	}

@@ -56,12 +56,10 @@ const (
 )
 
 const (
-	KeyMsvcOutput   string = "msvc-output"
-	DefaultsPatched string = "defaults-patched"
+	KeyMsvcOutput string = "msvc-output"
 )
 
 var ApplyCheckList = []rApi.CheckMeta{
-	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
 	{Name: AccessCredsGenerated, Title: "Access Credentials Generated"},
 	{Name: RedisHelmApplied, Title: "Redis Helm Applied"},
 	{Name: RedisHelmReady, Title: "Redis Helm Ready"},
