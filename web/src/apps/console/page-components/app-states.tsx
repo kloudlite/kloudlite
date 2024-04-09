@@ -70,6 +70,7 @@ interface IappState {
   app: AppIn;
   buildData?: BuildIn | null | undefined;
   readOnlyApp: IApp;
+  existingBuildId: string | null;
 }
 
 export const useAppState = () => {
@@ -83,6 +84,7 @@ export const useAppState = () => {
     completePages,
     buildData,
     readOnlyApp,
+    existingBuildId,
   } = state;
 
   const getContainer = (index: number = activeContIndex) => {
@@ -96,6 +98,14 @@ export const useAppState = () => {
         image: '',
       }
     );
+  };
+
+  const setExistingBuildID: ISetState<string | null> = (fn) => {
+    if (typeof fn === 'function') {
+      setState((s) => ({ ...s, existingBuildId: fn(s.existingBuildId) }));
+    } else {
+      setState((s) => ({ ...s, existingBuildId: fn }));
+    }
   };
 
   const setReadOnlyApp: ISetState<IApp> = (fn) => {
@@ -246,6 +256,7 @@ export const useAppState = () => {
       activeContIndex: 0,
       buildData: defaultBuild,
       readOnlyApp: iApp as IApp,
+      existingBuildId: null,
     });
   };
 
@@ -307,6 +318,8 @@ export const useAppState = () => {
     resetBuildData,
     readOnlyApp,
     setReadOnlyApp,
+    existingBuildId,
+    setExistingBuildID,
   };
 };
 

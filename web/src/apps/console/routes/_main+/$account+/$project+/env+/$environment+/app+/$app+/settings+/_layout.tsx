@@ -21,6 +21,7 @@ import { useReload } from '~/lib/client/helpers/reloader';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { parseName } from '~/console/server/r-utils/common';
 import { constants } from '~/console/server/utils/constants';
+import { registryHost } from '~/root/lib/configs/base-url.cjs';
 import { IAppContext } from '../_layout';
 import { getImageTag } from '../../../new-app/app-utils';
 import appFun from '../../../new-app/app-pre-submit';
@@ -43,8 +44,16 @@ const Layout = () => {
     setPerformAction,
     loading,
   } = useUnsavedChanges();
-  const { app, buildData, setBuildData, setApp, setReadOnlyApp } =
-    useAppState();
+  const {
+    app,
+    readOnlyApp,
+    buildData,
+    setBuildData,
+    setApp,
+    setReadOnlyApp,
+    existingBuildId,
+    setExistingBuildID,
+  } = useAppState();
 
   const { project, environment, account } = useOutletContext<IAppContext>();
   const [projectName, envName, accountName, appName] = [
@@ -87,11 +96,15 @@ const Layout = () => {
             environment: envName,
             project: projectName,
           });
-          if (!app.ciBuildId) {
+          if (!app.ciBuildId && !existingBuildId) {
             buildId = await appFun.createBuild({
               api,
               build: buildData,
             });
+          }
+
+          if (existingBuildId) {
+            buildId = existingBuildId;
           }
 
           if (buildId) {
@@ -117,9 +130,36 @@ const Layout = () => {
                           containers: [
                             {
                               ...app.spec.containers?.[0],
-                              image: `${constants.defaultAppRepoName(
-                                accountName
-                              )}:${tagName}`,
+                              image: (() => {
+                                if (existingBuildId) {
+                                  return `${registryHost}/${accountName}/${
+                                    buildData?.spec.registry.repo.name
+                                  }:${
+                                    buildData?.spec.registry.repo.tags?.[0] ||
+                                    'latest'
+                                  }`;
+                                }
+                                if (app.ciBuildId) {
+                                  if (
+                                    readOnlyApp.spec.containers?.[0].image.includes(
+                                      constants.defaultAppRepoNameOnly
+                                    )
+                                  ) {
+                                    return `${constants.defaultAppRepoName(
+                                      accountName
+                                    )}:${tagName}`;
+                                  }
+                                  return `${registryHost}/${accountName}/${
+                                    buildData?.spec.registry.repo.name
+                                  }:${
+                                    buildData?.spec.registry.repo.tags?.[0] ||
+                                    'latest'
+                                  }`;
+                                }
+                                return `${constants.defaultAppRepoName(
+                                  accountName
+                                )}:${tagName}`;
+                              })(),
                               name: 'container-0',
                             },
                           ],
@@ -142,6 +182,7 @@ const Layout = () => {
           // @ts-ignore
           setBuildData(null);
         }
+        setExistingBuildID(null);
         setHasChanges(false);
         reload();
       } catch (err) {
