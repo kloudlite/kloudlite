@@ -11,7 +11,6 @@ type IOTDeployment struct {
 	Name             string           `json:"name"`
 	AccountName      string           `json:"accountName" graphql:"noinput"`
 	ProjectName      string           `json:"projectName" graphql:"noinput"`
-	EnvironmentName  string           `json:"environmentName" graphql:"noinput"`
 	CIDR             string           `json:"CIDR"`
 	ExposedServices  []ExposedService `json:"exposedServices"`
 

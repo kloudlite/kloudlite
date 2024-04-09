@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/kloudlite/api/apps/iot-console/internal/entities"
+	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -314,9 +315,28 @@ type IOTDevicePaginatedRecords struct {
 	TotalCount int              `json:"totalCount"`
 }
 
+type IOTEnvironment struct {
+	AccountName       string                     `json:"accountName"`
+	CreatedBy         *common.CreatedOrUpdatedBy `json:"createdBy"`
+	CreationTime      string                     `json:"creationTime"`
+	DisplayName       string                     `json:"displayName"`
+	ID                repos.ID                   `json:"id"`
+	LastUpdatedBy     *common.CreatedOrUpdatedBy `json:"lastUpdatedBy"`
+	MarkedForDeletion *bool                      `json:"markedForDeletion,omitempty"`
+	Name              string                     `json:"name"`
+	ProjectName       string                     `json:"projectName"`
+	RecordVersion     int                        `json:"recordVersion"`
+	UpdateTime        string                     `json:"updateTime"`
+}
+
 type IOTEnvironmentEdge struct {
-	Cursor string                   `json:"cursor"`
-	Node   *entities.IOTEnvironment `json:"node"`
+	Cursor string          `json:"cursor"`
+	Node   *IOTEnvironment `json:"node"`
+}
+
+type IOTEnvironmentIn struct {
+	DisplayName string `json:"displayName"`
+	Name        string `json:"name"`
 }
 
 type IOTEnvironmentPaginatedRecords struct {
@@ -423,13 +443,6 @@ type SearchIOTDeviceBlueprints struct {
 
 type SearchIOTDevices struct {
 	Text              *repos.MatchFilter `json:"text,omitempty"`
-	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
-	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
-}
-
-type SearchIOTEnvironments struct {
-	Text              *repos.MatchFilter `json:"text,omitempty"`
-	ProjectName       *repos.MatchFilter `json:"projectName,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
 	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }

@@ -18,7 +18,6 @@ tasks:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
         --struct github.com/kloudlite/api/apps/iot-console/internal/entities.IOTProject
-        --struct github.com/kloudlite/api/apps/iot-console/internal/entities.IOTEnvironment
         --struct github.com/kloudlite/api/apps/iot-console/internal/entities.IOTDevice
         --struct github.com/kloudlite/api/apps/iot-console/internal/entities.IOTDeviceBlueprint
         --struct github.com/kloudlite/api/apps/iot-console/internal/entities.IOTDeployment
@@ -28,7 +27,7 @@ tasks:
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination IOTProject,IOTEnvironment,IOTDevice,IOTDeviceBlueprint,IOTDeployment,IOTApp
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination IOTProject,IOTDevice,IOTDeviceBlueprint,IOTDeployment,IOTApp
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
