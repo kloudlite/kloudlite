@@ -20,9 +20,10 @@ tasks:
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     vars:
       push: "{{.push | default false}}"
+      SupergraphSchemaFile: "./supergraph.graphqls"
     cmds:
-      - task generate-schema
-      - nerdctl build -t {{.Image}} . --cache-from=type=local,src=/tmp/buildx-cache --cache-to=type=local,dest=/tmp/buildx-cache
+      - task: generate-schema
+      - podman build -t {{.Image}} . --cache-from=type=local,src=/tmp/buildx-cache --cache-to=type=local,dest=/tmp/buildx-cache
 
   container:build-and-push:
     preconditions:
