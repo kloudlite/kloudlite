@@ -15,8 +15,9 @@ type Cluster struct {
 
 	common.ResourceMetadata `json:",inline"`
 
-	AccountName string       `json:"accountName" graphql:"noinput"`
-	SyncStatus  t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+	ClusterGroupName *string      `json:"clusterGroupName"`
+	AccountName      string       `json:"accountName" graphql:"noinput"`
+	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 func (c *Cluster) GetDisplayName() string {

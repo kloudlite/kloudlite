@@ -52,6 +52,18 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 
 		gvkstr := obj.GroupVersionKind().String()
 		switch gvkstr {
+		case clusterConnGVK.String():
+			{
+				cc, err := fn.JsonConvert[entities.ClusterConnection](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnClusterConnApplyError(dctx, errObj.ClusterName, obj.GetName(), errObj.Error, opts)
+				}
+				return d.OnClusterConnDeleteMessage(dctx, errObj.ClusterName, cc)
+			}
 		case nodepoolGVK.String():
 			{
 				nodepool, err := fn.JsonConvert[entities.NodePool](obj.Object)

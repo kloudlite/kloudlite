@@ -37,6 +37,8 @@ type domain struct {
 	helmReleaseRepo           repos.DbRepo[*entities.HelmRelease]
 	nodeRepo                  repos.DbRepo[*entities.Node]
 	nodePoolRepo              repos.DbRepo[*entities.NodePool]
+	clusterConnRepo           repos.DbRepo[*entities.ClusterConnection]
+	clusterGroupRepo          repos.DbRepo[*entities.ClusterGroup]
 	domainEntryRepo           repos.DbRepo[*entities.DomainEntry]
 	secretRepo                repos.DbRepo[*entities.CloudProviderSecret]
 	pvcRepo                   repos.DbRepo[*entities.PersistentVolumeClaim]
@@ -166,6 +168,9 @@ var Module = fx.Module("domain",
 			resourceDispatcher ResourceDispatcher,
 			helmReleaseRepo repos.DbRepo[*entities.HelmRelease],
 
+			clusterConnRepo repos.DbRepo[*entities.ClusterConnection],
+			clusterGroupRepo repos.DbRepo[*entities.ClusterGroup],
+
 			pvcRepo repos.DbRepo[*entities.PersistentVolumeClaim],
 			pvRepo repos.DbRepo[*entities.PersistentVolume],
 			namespaceRepo repos.DbRepo[*entities.Namespace],
@@ -212,6 +217,8 @@ var Module = fx.Module("domain",
 				logger:                      logger,
 				env:                         env,
 				clusterRepo:                 clusterRepo,
+				clusterConnRepo:             clusterConnRepo,
+				clusterGroupRepo:            clusterGroupRepo,
 				byokClusterRepo:             byokClusterRepo,
 				clusterManagedServiceRepo:   clustermanagedserviceRepo,
 				nodeRepo:                    nodeRepo,
