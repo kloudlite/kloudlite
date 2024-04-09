@@ -36,6 +36,7 @@ spec:
   template:
     metadata:
       annotations: {{$podAnnotations | toYAML | nindent 8 }}
+      labels: {{$labels | toYAML | nindent 8 }}
     spec:
       tolerations:
         - effect: NoSchedule

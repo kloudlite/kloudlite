@@ -7,10 +7,12 @@ import (
 	"time"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operator"
 
 	// account_s3_bucket "github.com/kloudlite/operator/operators/clusters/internal/controllers/account-s3-bucket"
 	aws_vpc "github.com/kloudlite/operator/operators/clusters/internal/controllers/aws-vpc"
+	gcp_vpc "github.com/kloudlite/operator/operators/clusters/internal/controllers/gcp-vpc"
 	"github.com/kloudlite/operator/operators/clusters/internal/controllers/target"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -21,6 +23,7 @@ import (
 func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(clustersv1.AddToScheme)
+	mgr.AddToSchemes(crdsv1.AddToScheme)
 
 	logger := mgr.Operator().Logger
 
@@ -63,6 +66,10 @@ func RegisterInto(mgr operator.Operator) {
 		&aws_vpc.AwsVPCReconciler{
 			Env:  ev,
 			Name: "aws-vpc:controller",
+		},
+		&gcp_vpc.GcpVPCReconciler{
+			Env:  ev,
+			Name: "gcp-vpc:controller",
 		},
 		&target.ClusterReconciler{
 			Env:  ev,

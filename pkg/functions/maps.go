@@ -63,10 +63,10 @@ func MapValues[K comparable, V any](m map[K]V) []V {
 	return values
 }
 
-func MapFilter[K string, V any](m map[K]V, prefix string) map[K]V {
+func MapFilter[K string, V any](m map[K]V, keyPrefix string) map[K]V {
 	result := make(map[K]V, len(m)/2)
 	for k, v := range m {
-		if strings.HasPrefix(string(k), prefix) {
+		if strings.HasPrefix(string(k), keyPrefix) {
 			result[k] = v
 		}
 	}

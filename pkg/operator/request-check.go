@@ -42,7 +42,8 @@ func (cw *checkWrapper[T]) Failed(err error) step_result.Result {
 
 	cw.request.Object.GetStatus().Checks[cw.checkName] = cw.Check
 
-	return cw.request.updateStatus().Continue(false)
+	// FIXME: change `Err(err)` to `Err(nil)`, once failed calls are checked on each of the controllers
+	return cw.request.updateStatus().Continue(false).Err(err)
 }
 
 func (cw *checkWrapper[T]) StillRunning(err error) step_result.Result {
@@ -56,7 +57,7 @@ func (cw *checkWrapper[T]) StillRunning(err error) step_result.Result {
 
 	cw.request.Object.GetStatus().Checks[cw.checkName] = cw.Check
 
-	return cw.request.updateStatus().Continue(false)
+	return cw.request.updateStatus().Continue(false).Err(err)
 }
 
 func (cw *checkWrapper[T]) Completed() step_result.Result {

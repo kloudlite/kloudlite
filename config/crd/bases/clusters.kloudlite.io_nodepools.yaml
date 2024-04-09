@@ -175,6 +175,8 @@ spec:
                     required:
                     - name
                     type: object
+                  gcpProjectID:
+                    type: string
                   machineType:
                     type: string
                   nodes:
@@ -197,6 +199,7 @@ spec:
                 - bootVolumeSize
                 - bootVolumeType
                 - credentials
+                - gcpProjectID
                 - machineType
                 - poolType
                 - region
