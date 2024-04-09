@@ -71,7 +71,6 @@ interface IappState {
   buildData?: BuildIn | null | undefined;
   readOnlyApp: IApp;
   existingBuildId: string | null;
-  gitMode: boolean;
 }
 
 export const useAppState = () => {
@@ -86,7 +85,6 @@ export const useAppState = () => {
     buildData,
     readOnlyApp,
     existingBuildId,
-    gitMode,
   } = state;
 
   const getContainer = (index: number = activeContIndex) => {
@@ -100,14 +98,6 @@ export const useAppState = () => {
         image: '',
       }
     );
-  };
-
-  const setGitMode: ISetState<boolean> = (fn) => {
-    if (typeof fn === 'function') {
-      setState((s) => ({ ...s, gitMode: fn(s.gitMode) }));
-    } else {
-      setState((s) => ({ ...s, gitMode: fn }));
-    }
   };
 
   const setExistingBuildID: ISetState<string | null> = (fn) => {
@@ -266,6 +256,7 @@ export const useAppState = () => {
       activeContIndex: 0,
       buildData: defaultBuild,
       readOnlyApp: iApp as IApp,
+      existingBuildId: null,
     });
   };
 
@@ -329,8 +320,6 @@ export const useAppState = () => {
     setReadOnlyApp,
     existingBuildId,
     setExistingBuildID,
-    gitMode,
-    setGitMode,
   };
 };
 

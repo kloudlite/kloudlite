@@ -173,9 +173,6 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     }),
 
     onSubmit: async (val) => {
-      // setBuildData(buildData);
-
-      console.log('here sub', val);
       const imageTag = getImageTag({
         environment: envName,
         project: projectName,
@@ -339,7 +336,6 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           <ExtendedFilledTab
             value={values.imageMode}
             onChange={(e) => {
-              console.log('here', e);
               handleChange('imageMode')(dummyEvent(e));
               if (!app.ciBuildId && e === 'git') {
                 if (!existingBuildId) {

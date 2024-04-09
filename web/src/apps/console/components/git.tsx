@@ -231,10 +231,8 @@ const Git = ({
     defaultFetch: true,
     onChange: (e) => {
       if (!showProviderOverlay) {
-        console.log('git', e);
         onChange?.(e);
       } else {
-        console.log('git not');
         onChange?.({ repo: '', branch: '', provider });
       }
     },
