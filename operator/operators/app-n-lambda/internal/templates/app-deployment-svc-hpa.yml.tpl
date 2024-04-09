@@ -118,35 +118,5 @@ spec:
     {{- end }}
     {{- end }}
 {{- end}}
-
-{{- if $isHpaEnabled }}
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: {{.Name}}
-  namespace: {{.Namespace}}
-  ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: {{.Name}}
-  minReplicas: {{ .Spec.Hpa.MinReplicas }}
-  maxReplicas: {{ .Spec.Hpa.MaxReplicas }}
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: {{.Spec.Hpa.ThresholdCpu}}
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: {{.Spec.Hpa.ThresholdMemory}}
-{{- end }}
 {{- end }}
 
