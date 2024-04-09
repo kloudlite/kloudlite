@@ -34,6 +34,34 @@ variables:
 
 ---
 
+label: Create GCP Cluster
+query: |+ #graphql
+  mutation Infra_createCluster($cluster: ClusterIn!) {
+    infra_createCluster(cluster: $cluster) {
+      metadata {
+        name
+      }
+      spec {
+        accountName
+      }
+    }
+  }
+variables:
+  cluster:
+    displayName: "Sample Cluster 2"
+    metadata:
+      name: "{{.gcpClusterName}}"
+    spec:
+      cloudflareEnabled: true
+      availabilityMode: dev
+      cloudProvider: gcp
+      gcp:
+        credentialsRef:
+          name: "{{.gcpCloudproviderName}}"
+        region: asia-south1
+        gcpProjectID: "rich-wavelet-412321"
+---
+
 label: List Clusters
 query: |+ #graphql
   # query Infra_listClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
@@ -249,7 +277,8 @@ query: |+ #graphql
     infra_upgradeHelmKloudliteAgent(clusterName: $clusterName)
   }
 variables:
-  clusterName: "{{.clusterName}}"
+  # clusterName: "{{.clusterName}}"
+  clusterName: "{{.gcpClusterName}}"
 ---
 
 label: Delete Cluster
@@ -258,7 +287,8 @@ query: |+ #graphql
     infra_deleteCluster(name: $name)
   }
 variables:
-  name: "{{.clusterName}}"
+  # name: "{{.clusterName}}"
+  name: "{{.gcpClusterName}}"
 
 ---
 

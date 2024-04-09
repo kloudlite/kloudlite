@@ -1,2 +1,2 @@
 schemas
-prod-schema.graphql
+*.graphqls

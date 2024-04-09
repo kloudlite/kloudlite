@@ -71,7 +71,13 @@ func addTrackingId(obj client.Object, id repos.ID) {
 		ann = make(map[string]string, 1)
 	}
 	ann[constant.ObservabilityTrackingKey] = string(id)
-	obj.SetAnnotations(ann)
+
+	labels := obj.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string, 1)
+	}
+	labels[constant.ObservabilityTrackingKey] = string(id)
+	obj.SetLabels(labels)
 }
 
 func (d *domain) applyK8sResource(ctx InfraContext, obj client.Object, recordVersion int) error {
