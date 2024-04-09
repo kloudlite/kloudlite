@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/pkg/operator"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -38,6 +39,7 @@ type ClusterGroup struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
 	common.ResourceMetadata `json:",inline"`
+	metav1.ObjectMeta       `json:"metadata"`
 
 	// Peers []Peer `json:"peers" graphql:"noinput"`
 
