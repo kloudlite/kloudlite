@@ -22,6 +22,7 @@ tasks:
           --struct github.com/kloudlite/api/apps/infra/internal/entities.MsvcTemplate
           --struct github.com/kloudlite/api/apps/infra/internal/entities.Node
           --struct github.com/kloudlite/api/apps/infra/internal/entities.NodePool
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.ClusterGroup
           --struct github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderSecret
           --struct github.com/kloudlite/api/apps/infra/internal/entities.DomainEntry
           --struct github.com/kloudlite/api/apps/infra/internal/entities.HelmRelease
@@ -35,7 +36,7 @@ tasks:
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,Node,NodePool,CloudProviderSecret,DomainEntry,PersistentVolumeClaim,ClusterManagedService,HelmRelease,Namespace,VolumeAttachment,PersistentVolume
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,Node,NodePool,ClusterGroup,CloudProviderSecret,DomainEntry,PersistentVolumeClaim,ClusterManagedService,HelmRelease,Namespace,VolumeAttachment,PersistentVolume
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
