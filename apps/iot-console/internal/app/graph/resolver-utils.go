@@ -46,16 +46,14 @@ func toIOTConsoleContext(ctx context.Context) (domain.IotConsoleContext, error) 
 var (
 	errNilDeployment      = errors.Newf("deployment object is nil")
 	errNilProject         = errors.Newf("project object is nil")
-	errNilEnvironment     = errors.Newf("environment object is nil")
 	errNilDevice          = errors.Newf("device object is nil")
 	errNilDeviceBlueprint = errors.Newf("device group object is nil")
 	errNilApp             = errors.Newf("app object is nil")
 )
 
-func newIOTResourceContext(ctx domain.IotConsoleContext, projectName string, environmentName string) domain.IotResourceContext {
+func newIOTResourceContext(ctx domain.IotConsoleContext, projectName string) domain.IotResourceContext {
 	return domain.IotResourceContext{
 		IotConsoleContext: ctx,
 		ProjectName:       projectName,
-		EnvironmentName:   environmentName,
 	}
 }

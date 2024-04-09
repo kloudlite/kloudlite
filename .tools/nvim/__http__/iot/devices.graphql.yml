@@ -1,23 +1,24 @@
 ---
 label: "Create Device"
 query: |+
-  mutation Iot_createDevice($projectName: String!, $envName: String!, $device: IOTDeviceIn!) {
-    iot_createDevice(projectName: $projectName, envName: $envName, device: $device) {
-      id
+  mutation Iot_createDevice($projectName: String!, $deviceBlueprintName: String!, $device: IOTDeviceIn!) {
+    iot_createDevice(projectName: $projectName, deviceBlueprintName: $deviceBlueprintName, device: $device) {
       deployment
+      deviceBlueprintName
       name
+      accountName
+      displayName
     }
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
+    "deviceBlueprintName": "sample-device-blueprint",
     "device": {
-      "blueprint": "sample-device-blueprint-one",
-      "deployment": "sample-deployment",
+      "deployment": "",
       "displayName": "sample device",
       "ip": "10.10.11.4",
-      "name": "sample-device",
+      "name": "sample-device-one",
       "podCIDR": "10.1.1.1",
       "publicKey": "10.2.2.2",
       "serviceCIDR": "10.3.3.3",
@@ -29,19 +30,19 @@ variables:
 
 label: "update Device"
 query: |+
-  mutation Iot_updateDevice($projectName: String!, $envName: String!, $device: IOTDeviceIn!) {
-    iot_updateDevice(projectName: $projectName, envName: $envName, device: $device) {
-      blueprint
-      id
+  mutation Iot_updateDevice($projectName: String!, $deviceBlueprintName: String!, $device: IOTDeviceIn!) {
+    iot_updateDevice(projectName: $projectName, deviceBlueprintName: $deviceBlueprintName, device: $device) {
+      accountName
+      deployment
+      deviceBlueprintName
       name
     }
   }
 variables:
   {
     "projectName": "sample-project",
-    "envName": "sample-env",
+    "deviceBlueprintName": "sample-device-blueprint",
     "device": {
-      "blueprint": "sample-device-blueprint-one",
       "deployment": "sample-deployment",
       "displayName": "sample device",
       "ip": "10.10.11.4",
@@ -57,46 +58,47 @@ variables:
 
 label: "delete Device"
 query: |+
-  mutation Iot_deleteDevice($projectName: String!, $envName: String!, $name: String!) {
-    iot_deleteDevice(projectName: $projectName, envName: $envName, name: $name)
+  mutation Iot_deleteDevice($projectName: String!, $deviceBlueprintName: String!, $name: String!) {
+    iot_deleteDevice(projectName: $projectName, deviceBlueprintName: $deviceBlueprintName, name: $name)
   }
 variables:
   {
-    "projectName": null,
-    "envName": null,
-    "name": null
+    "projectName": "sample-project",
+    "deviceBlueprintName": "sample-device-blueprint",
+    "name": "sample-device"
   }
 
 ---
 
 label: "get Device"
 query: |+
-  query Iot_getDevice($projectName: String!, $envName: String!, $name: String!) {
-    iot_getDevice(projectName: $projectName, envName: $envName, name: $name) {
+  query Iot_getDevice($projectName: String!, $deviceBlueprintName: String!, $name: String!) {
+    iot_getDevice(projectName: $projectName, deviceBlueprintName: $deviceBlueprintName, name: $name) {
       accountName
-      displayName
-      id
+      deployment
+      deviceBlueprintName
       name
     }
   }
 variables:
   {
-    "projectName": null,
-    "envName": null,
-    "name": null
+    "projectName": "sample-project",
+    "deviceBlueprintName": "sample-device-blueprint",
+    "name": "sample-device"
   }
 
 ---
 
 label: "list Device"
 query: |+
-  query Iot_listDevices($projectName: String!, $envName: String!) {
-    iot_listDevices(projectName: $projectName, envName: $envName) {
+  query Iot_listDevices($projectName: String!, $deviceBlueprintName: String!) {
+    iot_listDevices(projectName: $projectName, deviceBlueprintName: $deviceBlueprintName) {
       totalCount
       edges {
         node {
+          accountName
           deployment
-          id
+          deviceBlueprintName
           name
         }
       }
@@ -104,8 +106,90 @@ query: |+
   }
 variables:
   {
-    "projectName": null,
-    "envName": null
+    "projectName": "sample-project",
+    "deviceBlueprintName": "sample-device-blueprint"
+  }
+
+---
+
+label: "Add Deployment Device"
+query: |+
+  mutation Iot_addDeviceToDeployment($projectName: String!, $deploymentName: String!, $deviceName: String!, $deviceBlueprintName: String!) {
+    iot_addDeviceToDeployment(projectName: $projectName, deploymentName: $deploymentName, deviceName: $deviceName, deviceBlueprintName: $deviceBlueprintName) {
+      accountName
+      deployment
+      name
+      deviceBlueprintName
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deploymentName": "sample-deployment",
+    "deviceName": "sample-device",
+    "deviceBlueprintName": "sample-device-blueprint"
+  }
+
+---
+
+label: "Remove Deployment Device"
+query: |+
+  mutation Iot_removeDeviceOfDeployment($projectName: String!, $deploymentName: String!, $deviceName: String!, $deviceBlueprintName: String!) {
+    iot_removeDeviceOfDeployment(projectName: $projectName, deploymentName: $deploymentName, deviceName: $deviceName, deviceBlueprintName: $deviceBlueprintName) {
+      accountName
+      deployment
+      deviceBlueprintName
+      name
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deploymentName": "sample-deployment",
+    "deviceName": "sample-device",
+    "deviceBlueprintName": "sample-device-blueprint"
+  }
+
+---
+
+label: "get Deployment Device"
+query: |+
+  query Iot_getDeploymentDevice($projectName: String!, $deploymentName: String!, $name: String!) {
+    iot_getDeploymentDevice(projectName: $projectName, deploymentName: $deploymentName, name: $name) {
+      accountName
+      deployment
+      deviceBlueprintName
+      name
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deploymentName": "sample-deployment",
+    "name": "sample-device"
+  }
+
+---
+
+label: "list Deployment Device"
+query: |+
+  query Iot_listDeploymentDevices($projectName: String!, $deploymentName: String!) {
+    iot_listDeploymentDevices(projectName: $projectName, deploymentName: $deploymentName) {
+      totalCount
+      edges {
+        node {
+          accountName
+          deployment
+          deviceBlueprintName
+          name
+        }
+      }
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "deploymentName": "sample-deployment"
   }
 
 ---

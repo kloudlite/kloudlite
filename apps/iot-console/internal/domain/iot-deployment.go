@@ -20,19 +20,18 @@ func (d *domain) findDeployment(ctx IotResourceContext, name string) (*entities.
 	return prj, nil
 }
 
-func (d domain) ListDeployments(ctx IotResourceContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTDeployment], error) {
+func (d *domain) ListDeployments(ctx IotResourceContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTDeployment], error) {
 	filter := ctx.IOTConsoleDBFilters()
 	return d.iotDeploymentRepo.FindPaginated(ctx, d.iotDeploymentRepo.MergeMatchFilters(filter, search), pagination)
 }
 
-func (d domain) GetDeployment(ctx IotResourceContext, name string) (*entities.IOTDeployment, error) {
+func (d *domain) GetDeployment(ctx IotResourceContext, name string) (*entities.IOTDeployment, error) {
 	return d.findDeployment(ctx, name)
 }
 
-func (d domain) CreateDeployment(ctx IotResourceContext, deployment entities.IOTDeployment) (*entities.IOTDeployment, error) {
+func (d *domain) CreateDeployment(ctx IotResourceContext, deployment entities.IOTDeployment) (*entities.IOTDeployment, error) {
 	deployment.AccountName = ctx.AccountName
 	deployment.ProjectName = ctx.ProjectName
-	deployment.EnvironmentName = ctx.EnvironmentName
 	deployment.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
@@ -48,7 +47,7 @@ func (d domain) CreateDeployment(ctx IotResourceContext, deployment entities.IOT
 	return dep, nil
 }
 
-func (d domain) UpdateDeployment(ctx IotResourceContext, deployment entities.IOTDeployment) (*entities.IOTDeployment, error) {
+func (d *domain) UpdateDeployment(ctx IotResourceContext, deployment entities.IOTDeployment) (*entities.IOTDeployment, error) {
 	patchForUpdate := repos.Document{
 		fields.DisplayName: deployment.DisplayName,
 		fields.LastUpdatedBy: common.CreatedOrUpdatedBy{
@@ -72,7 +71,7 @@ func (d domain) UpdateDeployment(ctx IotResourceContext, deployment entities.IOT
 	return upDep, nil
 }
 
-func (d domain) DeleteDeployment(ctx IotResourceContext, name string) error {
+func (d *domain) DeleteDeployment(ctx IotResourceContext, name string) error {
 	err := d.iotDeploymentRepo.DeleteOne(
 		ctx,
 		ctx.IOTConsoleDBFilters().Add(fc.IOTDeploymentName, name),

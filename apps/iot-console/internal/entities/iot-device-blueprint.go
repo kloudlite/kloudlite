@@ -17,12 +17,11 @@ type IOTDeviceBlueprint struct {
 	repos.BaseEntity        `json:",inline" graphql:"noinput"`
 	common.ResourceMetadata `json:",inline"`
 
-	Name            string        `json:"name"`
-	AccountName     string        `json:"accountName" graphql:"noinput"`
-	ProjectName     string        `json:"projectName" graphql:"noinput"`
-	EnvironmentName string        `json:"environmentName" graphql:"noinput"`
-	BluePrintType   BluePrintType `json:"bluePrintType"`
-	Version         string        `json:"version"`
+	Name          string        `json:"name"`
+	AccountName   string        `json:"accountName" graphql:"noinput"`
+	ProjectName   string        `json:"projectName" graphql:"noinput"`
+	BluePrintType BluePrintType `json:"bluePrintType"`
+	Version       string        `json:"version"`
 }
 
 var IOTDeviceBlueprintIndexes = []repos.IndexField{
