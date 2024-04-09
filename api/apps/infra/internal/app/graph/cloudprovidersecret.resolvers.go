@@ -40,6 +40,11 @@ func (r *cloudProviderSecretResolver) CreationTime(ctx context.Context, obj *ent
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
 
+// Gcp is the resolver for the gcp field.
+func (r *cloudProviderSecretResolver) Gcp(ctx context.Context, obj *entities.CloudProviderSecret) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentials, error) {
+	return fn.JsonConvertP[model.GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentials](obj.GCP)
+}
+
 // ID is the resolver for the id field.
 func (r *cloudProviderSecretResolver) ID(ctx context.Context, obj *entities.CloudProviderSecret) (repos.ID, error) {
 	if obj == nil {
@@ -71,6 +76,11 @@ func (r *cloudProviderSecretInResolver) CloudProviderName(ctx context.Context, o
 	// obj.CloudProviderName = ct.CloudProvider(parser.RestoreSanitizedPackagePath(data.String()))
 	obj.CloudProviderName = ct.CloudProvider(data)
 	return nil
+}
+
+// Gcp is the resolver for the gcp field.
+func (r *cloudProviderSecretInResolver) Gcp(ctx context.Context, obj *entities.CloudProviderSecret, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentialsIn) error {
+	return fn.JsonConversion(data, &obj.GCP)
 }
 
 // Metadata is the resolver for the metadata field.

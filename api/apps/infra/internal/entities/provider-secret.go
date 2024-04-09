@@ -21,6 +21,8 @@ const (
 	AWSAssumeRoleExternalId string = "awsAssumeRoleExternalId"
 	AWAssumeRoleRoleARN     string = "awsAssumeRoleRoleARN"
 	AWSInstanceProfileName  string = "awsInstanceProfileName"
+
+	KeyGCPServiceAccountJSON string = "gcp-creds.json"
 )
 
 type AWSAssumeRoleParams struct {
@@ -107,6 +109,22 @@ func (asc *AWSSecretCredentials) Validate() error {
 	return nil
 }
 
+type GCPSecretCredentials struct {
+	clustersv1.GCPCredentials `json:",inline"`
+}
+
+func (gcp *GCPSecretCredentials) Validate() error {
+	if gcp == nil {
+		return fmt.Errorf("gcp credentials is nil")
+	}
+
+	if gcp.ServiceAccountJSON == "" {
+		return fmt.Errorf("serviceAccountJSON must be set")
+	}
+
+	return nil
+}
+
 type CloudProviderSecret struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 	AccountName      string `json:"accountName" graphql:"noinput"`
@@ -117,6 +135,7 @@ type CloudProviderSecret struct {
 
 	common.ResourceMetadata `json:",inline"`
 	AWS                     *AWSSecretCredentials `json:"aws,omitempty"`
+	GCP                     *GCPSecretCredentials `json:"gcp,omitempty"`
 }
 
 func (cps *CloudProviderSecret) GetDisplayName() string {
@@ -150,26 +169,4 @@ var CloudProviderSecretIndices = []repos.IndexField{
 		},
 		Unique: true,
 	},
-}
-
-func (cps *CloudProviderSecret) Validate() error {
-	if cps == nil {
-		return errors.Newf("cloud provider secret is nil")
-	}
-
-	switch cps.CloudProviderName {
-	case ct.CloudProviderAWS:
-		{
-			if cps.AWS == nil {
-				return errors.Newf(".aws is nil, it must be provided when cloudproviderName is set to aws")
-			}
-
-			return nil
-			// return cps.AWS.Validate()
-		}
-	default:
-		{
-			return fmt.Errorf("not implemented for cloudprovider (%s)", cps.CloudProviderName)
-		}
-	}
 }

@@ -153,7 +153,7 @@ func (d *domain) ValidateProviderSecretAWSAccess(ctx InfraContext, name string) 
 		return nil, errors.NewE(err)
 	}
 
-	if err := psecret.Validate(); err != nil {
+	if err := psecret.AWS.Validate(); err != nil {
 		return nil, errors.NewE(err)
 	}
 
