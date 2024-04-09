@@ -303,12 +303,14 @@ export const GitDetailRaw = ({
   provider,
   repository,
   branch,
+  children,
   extra,
 }: {
   provider: IGIT_PROVIDERS;
   repository: string;
   branch: string;
   extra?: ReactNode;
+  children?: ReactNode;
 }) => {
   const gitIconSize = 16;
   return (
@@ -331,6 +333,7 @@ export const GitDetailRaw = ({
             <span>{branch}</span>
           </div>
         </div>
+        {children}
       </div>
       {extra}
     </div>

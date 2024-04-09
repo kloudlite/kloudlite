@@ -4,7 +4,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
-import { BottomNavigation, GitDetail } from '~/console/components/commons';
+import { BottomNavigation, GitDetailRaw } from '~/console/components/commons';
 import { registryHost } from '~/lib/configs/base-url.cjs';
 import { useOutletContext } from '@remix-run/react';
 import RepoSelector from '~/console/page-components/app/components';
@@ -12,8 +12,47 @@ import AppBuildIntegration from '~/console/page-components/app/app-build-integra
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { constants } from '~/console/server/utils/constants';
+import { Button } from '~/components/atoms/button';
+import { useState } from 'react';
+import { toast } from '~/components/molecule/toast';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
+import {
+  ArrowClockwise,
+  GitMerge,
+  PencilSimple,
+} from '~/console/components/icons';
 import { IEnvironmentContext } from '../_layout';
 import { getImageTag } from './app-utils';
+import BuildSelectionDialog from './app-build-selection-dialog';
+
+const ExtraButton = ({
+  onNew,
+  onExisting,
+}: {
+  onNew: () => void;
+  onExisting: () => void;
+}) => {
+  return (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Connect new',
+          icon: <PencilSimple size={16} />,
+          type: 'item',
+          key: 'new',
+          onClick: onNew,
+        },
+        {
+          label: 'Choose from existing',
+          icon: <ArrowClockwise size={16} />,
+          type: 'item',
+          key: 'existing',
+          onClick: onExisting,
+        },
+      ]}
+    />
+  );
+};
 
 const AppDetail = () => {
   const {
@@ -25,6 +64,8 @@ const AppDetail = () => {
     resetBuildData,
     markPageAsCompleted,
     activeContIndex,
+    existingBuildId,
+    setExistingBuildID,
   } = useAppState();
 
   const { project, environment, account } =
@@ -34,6 +75,8 @@ const AppDetail = () => {
     parseName(environment),
     parseName(account),
   ];
+
+  const [openBuildSelection, setOpenBuildSelection] = useState(false);
 
   const { values, errors, handleChange, handleSubmit, isLoading, setValues } =
     useForm({
@@ -88,7 +131,14 @@ const AppDetail = () => {
       }),
 
       onSubmit: async (val) => {
-        resetBuildData();
+        const imageTag = getImageTag({
+          environment: envName,
+          project: projectName,
+          app: val.name,
+        });
+        if (!existingBuildId) {
+          resetBuildData();
+        }
 
         setApp((a) => {
           return {
@@ -115,6 +165,11 @@ const AppDetail = () => {
         });
 
         if (val.imageMode === 'git') {
+          if (existingBuildId) {
+            setPage(2);
+            markPageAsCompleted(1);
+            return;
+          }
           if (!project.clusterName) {
             throw new Error('Cluster name is required');
           }
@@ -125,11 +180,6 @@ const AppDetail = () => {
           ) {
             throw new Error('Source is required');
           }
-          const imageTag = getImageTag({
-            environment: envName,
-            project: projectName,
-            app: val.name,
-          });
           setBuildData({
             name: imageTag,
             buildClusterName: project.clusterName,
@@ -243,14 +293,46 @@ const AppDetail = () => {
             />
           )}
           {buildData?.name && values.imageMode === 'git' && (
-            <GitDetail
+            <GitDetailRaw
               provider={buildData.source.provider}
               repository={buildData.source.repository}
               branch={buildData.source.branch}
-              onEdit={() => {
-                resetBuildData();
-              }}
-            />
+              extra={
+                <div className="flex-1 flex justify-end">
+                  <ExtraButton
+                    onNew={() => {
+                      resetBuildData();
+                    }}
+                    onExisting={() => {
+                      setOpenBuildSelection(true);
+                    }}
+                  />
+                </div>
+              }
+            >
+              {existingBuildId && (
+                <div className="text-text-soft bodySm pt-lg flex flex-col gap-md">
+                  <div className="bodyMd-medium text-text-default">Build</div>
+                  <div className="flex flex-row items-center gap-xl">
+                    <GitMerge size={16} />
+                    <span>{buildData.name}</span>
+                  </div>
+                </div>
+              )}
+            </GitDetailRaw>
+          )}
+
+          {values.imageMode === 'git' && !buildData?.name && (
+            <div className="flex flex-col gap-lg items-center pt-lg">
+              <Button
+                content="Choose from existing builds"
+                variant="primary-outline"
+                onClick={() => {
+                  setOpenBuildSelection(true);
+                }}
+              />
+              <span className="pl-3xl text-text-soft">or</span>
+            </div>
           )}
           {values.imageMode === 'git' && !buildData?.name && (
             <AppBuildIntegration
@@ -260,6 +342,19 @@ const AppDetail = () => {
             />
           )}
         </div>
+
+        <BuildSelectionDialog
+          open={openBuildSelection}
+          setOpen={setOpenBuildSelection}
+          onChange={(e) => {
+            if (e.build?.id) {
+              setExistingBuildID(e.build?.id);
+              setBuildData(e.build);
+            } else {
+              toast.error('Something went wrong');
+            }
+          }}
+        />
       </div>
       <BottomNavigation
         primaryButton={{

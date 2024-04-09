@@ -87,7 +87,6 @@ const useGit = ({
 
   const revalidate = (prov?: IGIT_PROVIDERS) => {
     if (prov) {
-      console.log('here');
       if (provider === prov) {
         setRevalidate((prev) => prev + 1);
       }
@@ -206,11 +205,12 @@ const useGit = ({
   }, [branches.data, branches.isValidating]);
 
   useEffect(() => {
-    onChange?.({
-      branch,
-      repo,
-      provider,
-    });
+    if (branch && repo && provider)
+      onChange?.({
+        branch,
+        repo,
+        provider,
+      });
   }, [branch, repo]);
 
   useEffect(() => {

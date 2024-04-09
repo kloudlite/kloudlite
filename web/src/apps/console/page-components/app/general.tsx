@@ -9,7 +9,6 @@ import { registryHost } from '~/lib/configs/base-url.cjs';
 import { useOutletContext } from '@remix-run/react';
 import RepoSelector from '~/console/page-components/app/components';
 import AppBuildIntegration from '~/console/page-components/app/app-build-integration';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { IEnvironmentContext } from '~/console/routes/_main+/$account+/$project+/env+/$environment+/_layout';
 import { TextInput } from '~/components/atoms/input';
 import { useEffect, useState } from 'react';
@@ -19,39 +18,65 @@ import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { getImageTag } from '~/console/routes/_main+/$account+/$project+/env+/$environment+/new-app/app-utils';
 import { constants } from '~/console/server/utils/constants';
 import HandleBuild from '~/console/routes/_main+/$account+/repo+/$repo+/builds/handle-builds';
-import { ArrowClockwise, PencilSimple } from '~/console/components/icons';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
+import {
+  ArrowClockwise,
+  GitMerge,
+  PencilSimple,
+} from '~/console/components/icons';
+import ResourceExtraAction, {
+  IResourceExtraItem,
+} from '~/console/components/resource-extra-action';
 import appFun from '~/console/routes/_main+/$account+/$project+/env+/$environment+/new-app/app-pre-submit';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { toast } from '~/components/molecule/toast';
+import { Button } from '~/components/atoms/button';
+import BuildSelectionDialog from '~/console/routes/_main+/$account+/$project+/env+/$environment+/new-app/app-build-selection-dialog';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 
 const ExtraButton = ({
+  onNew,
   onEdit,
   onTrigger,
+  isExistingBuild,
 }: {
+  onNew: () => void;
   onEdit: () => void;
   onTrigger: () => void;
+  isExistingBuild: boolean;
 }) => {
-  return (
-    <ResourceExtraAction
-      options={[
-        {
-          label: 'Edit',
-          icon: <PencilSimple size={16} />,
-          type: 'item',
-          key: 'edit',
-          onClick: onEdit,
-        },
-        {
-          label: 'Trigger',
-          icon: <ArrowClockwise size={16} />,
-          type: 'item',
-          key: 'trigger',
-          onClick: onTrigger,
-        },
-      ]}
-    />
-  );
+  let options: IResourceExtraItem[] = [];
+
+  if (isExistingBuild) {
+    options = [
+      {
+        label: 'Connect new',
+        icon: <PencilSimple size={16} />,
+        type: 'item',
+        key: 'new',
+        onClick: onNew,
+      },
+      ...options,
+    ];
+  } else {
+    options = [
+      {
+        label: 'Edit',
+        icon: <PencilSimple size={16} />,
+        type: 'item',
+        key: 'edit',
+        onClick: onEdit,
+      },
+      {
+        label: 'Trigger',
+        icon: <ArrowClockwise size={16} />,
+        type: 'item',
+        key: 'trigger',
+        onClick: onTrigger,
+      },
+      ...options,
+    ];
+  }
+  return <ResourceExtraAction options={options} />;
 };
 
 const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
@@ -64,6 +89,8 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     buildData,
     markPageAsCompleted,
     activeContIndex,
+    setExistingBuildID,
+    existingBuildId,
   } = useAppState();
 
   const { project, account, environment } =
@@ -75,6 +102,9 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     parseName(environment),
     parseName(account),
   ];
+
+  const [openBuildSelection, setOpenBuildSelection] = useState(false);
+
   // only for edit mode
   const [isEdited, setIsEdited] = useState(!app.ciBuildId);
   const [showBuildEdit, setShowBuildEdit] = useState(false);
@@ -95,7 +125,9 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       name: parseName(app),
       displayName: app.displayName,
       isNameError: false,
-      imageMode: 'default',
+      imageMode:
+        readOnlyApp.metadata?.annotations[keyconstants.appImageMode] ||
+        'default',
       imageUrl: readOnlyApp?.spec.containers[activeContIndex]?.image || '',
       manualRepo: '',
       source: {
@@ -143,12 +175,14 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     onSubmit: async (val) => {
       // setBuildData(buildData);
 
+      console.log('here sub', val);
+      const imageTag = getImageTag({
+        environment: envName,
+        project: projectName,
+        app: val.name,
+      });
+
       const formBuildData = () => {
-        const imageTag = getImageTag({
-          environment: envName,
-          project: projectName,
-          app: val.name,
-        });
         return {
           buildClusterName: project.clusterName || '',
           name: imageTag,
@@ -199,6 +233,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             ...a.metadata,
             annotations: {
               ...(a.metadata?.annotations || {}),
+              [keyconstants.appImageMode]: val.imageMode,
             },
             name: val.name,
           },
@@ -304,15 +339,20 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           <ExtendedFilledTab
             value={values.imageMode}
             onChange={(e) => {
+              console.log('here', e);
               handleChange('imageMode')(dummyEvent(e));
               if (!app.ciBuildId && e === 'git') {
-                setIsEdited(true);
+                if (!existingBuildId) {
+                  setIsEdited(true);
+                } else {
+                  setIsEdited(false);
+                }
               }
-              resetValues({
-                ...values,
-                imageMode: e,
-              });
-              if (e === 'default') {
+              // resetValues({
+              //   ...values,
+              //   imageMode: e,
+              // });
+              if (e === 'default' && !existingBuildId) {
                 // @ts-ignore
                 setBuildData(readOnlyApp?.build);
               }
@@ -366,6 +406,11 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               extra={
                 <div className="flex-1 flex justify-end">
                   <ExtraButton
+                    isExistingBuild={!!existingBuildId}
+                    onNew={() => {
+                      setIsEdited(true);
+                      setExistingBuildID(null);
+                    }}
                     onEdit={() => {
                       setShowBuildEdit(true);
                     }}
@@ -385,8 +430,32 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
                   />
                 </div>
               }
-            />
+            >
+              {existingBuildId && (
+                <div className="text-text-soft bodySm pt-lg flex flex-col gap-md">
+                  <div className="bodyMd-medium text-text-default">Build</div>
+                  <div className="flex flex-row items-center gap-xl">
+                    <GitMerge size={16} />
+                    <span>{buildData.name}</span>
+                  </div>
+                </div>
+              )}
+            </GitDetailRaw>
           )}
+
+          {values.imageMode === 'git' && (isEdited || !buildData?.name) && (
+            <div className="flex flex-col gap-lg items-center pt-lg">
+              <Button
+                content="Choose from existing builds"
+                variant="primary-outline"
+                onClick={() => {
+                  setOpenBuildSelection(true);
+                }}
+              />
+              <span className="pl-3xl text-text-soft">or</span>
+            </div>
+          )}
+
           {values.imageMode === 'git' && (isEdited || !buildData?.name) && (
             <AppBuildIntegration
               values={values}
@@ -394,6 +463,28 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               handleChange={handleChange}
             />
           )}
+
+          <BuildSelectionDialog
+            open={openBuildSelection}
+            setOpen={setOpenBuildSelection}
+            onChange={(e) => {
+              if (e.build?.id) {
+                setExistingBuildID(e.build?.id);
+                setBuildData({
+                  buildClusterName: e.build.buildClusterName,
+                  name: e.build.name,
+                  source: e.build.source,
+                  spec: {
+                    registry: e.build.spec.registry,
+                    resource: e.build.spec.resource,
+                  },
+                });
+                setIsEdited(false);
+              } else {
+                toast.error('Something went wrong');
+              }
+            }}
+          />
         </div>
       </div>
       {mode === 'new' && (

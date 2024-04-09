@@ -17,6 +17,7 @@ import {
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { CheckCircleFill, CircleFill, CircleNotch } from '@jengaicons/react';
 import { constants } from '~/console/server/utils/constants';
+import { registryHost } from '~/root/lib/configs/base-url.cjs';
 import appFun from './app-pre-submit';
 import { IEnvironmentContext } from '../_layout';
 import { getImageTag } from './app-utils';
@@ -66,7 +67,8 @@ const AppState = ({ message, state }: { message: string; state: string }) => {
 };
 
 const AppReview = () => {
-  const { app, buildData, setPage, resetState } = useAppState();
+  const { app, buildData, setPage, resetState, existingBuildId } =
+    useAppState();
   const [createState, setCreateState] = useState({
     build: {
       message: 'Creating build',
@@ -78,8 +80,6 @@ const AppReview = () => {
     },
   });
 
-  const gitMode =
-    app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
   const api = useConsoleApi();
   const navigate = useNavigate();
   const { project, environment, account } =
@@ -90,6 +90,9 @@ const AppReview = () => {
     parseName(account),
   ];
 
+  const gitMode =
+    app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
+
   const { handleSubmit, isLoading } = useForm({
     initialValues: app,
     validationSchema: Yup.object({}),
@@ -99,10 +102,10 @@ const AppReview = () => {
       }
 
       // create build first if git image is selected
-      let buildId: string | null = '';
+      let buildId: string | null = existingBuildId;
       let tagName = '';
 
-      if (buildData && gitMode) {
+      if (buildData && gitMode && !existingBuildId) {
         tagName = getImageTag({
           app: parseName(app),
           environment: envName,
@@ -141,6 +144,14 @@ const AppReview = () => {
           }));
           return;
         }
+      } else {
+        setCreateState((prev) => ({
+          ...prev,
+          build: {
+            ...prev.build,
+            state: 'done',
+          },
+        }));
       }
 
       try {
@@ -165,9 +176,16 @@ const AppReview = () => {
                     containers: [
                       {
                         ...app.spec.containers?.[0],
-                        image: `${constants.defaultAppRepoName(
-                          accountName
-                        )}:${tagName}`,
+                        image: existingBuildId
+                          ? `${registryHost}/${accountName}/${
+                              buildData?.spec.registry.repo.name
+                            }:${
+                              buildData?.spec.registry.repo.tags?.[0] ||
+                              'latest'
+                            }`
+                          : `${constants.defaultAppRepoName(
+                              accountName
+                            )}:${tagName}`,
                         name: 'container-0',
                       },
                     ],
