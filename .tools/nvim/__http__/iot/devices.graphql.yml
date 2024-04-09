@@ -1,0 +1,113 @@
+---
+label: "Create Device"
+query: |+
+  mutation Iot_createDevice($projectName: String!, $envName: String!, $device: IOTDeviceIn!) {
+    iot_createDevice(projectName: $projectName, envName: $envName, device: $device) {
+      id
+      deployment
+      name
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "device": {
+      "blueprint": "sample-device-blueprint-one",
+      "deployment": "sample-deployment",
+      "displayName": "sample device",
+      "ip": "10.10.11.4",
+      "name": "sample-device",
+      "podCIDR": "10.1.1.1",
+      "publicKey": "10.2.2.2",
+      "serviceCIDR": "10.3.3.3",
+      "version": "1"
+    }
+  }
+
+---
+
+label: "update Device"
+query: |+
+  mutation Iot_updateDevice($projectName: String!, $envName: String!, $device: IOTDeviceIn!) {
+    iot_updateDevice(projectName: $projectName, envName: $envName, device: $device) {
+      blueprint
+      id
+      name
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "device": {
+      "blueprint": "sample-device-blueprint-one",
+      "deployment": "sample-deployment",
+      "displayName": "sample device",
+      "ip": "10.10.11.4",
+      "name": "sample-device",
+      "podCIDR": "10.1.1.1",
+      "publicKey": "10.2.2.2",
+      "serviceCIDR": "10.3.3.3",
+      "version": "1"
+    }
+  }
+
+---
+
+label: "delete Device"
+query: |+
+  mutation Iot_deleteDevice($projectName: String!, $envName: String!, $name: String!) {
+    iot_deleteDevice(projectName: $projectName, envName: $envName, name: $name)
+  }
+variables:
+  {
+    "projectName": null,
+    "envName": null,
+    "name": null
+  }
+
+---
+
+label: "get Device"
+query: |+
+  query Iot_getDevice($projectName: String!, $envName: String!, $name: String!) {
+    iot_getDevice(projectName: $projectName, envName: $envName, name: $name) {
+      accountName
+      displayName
+      id
+      name
+    }
+  }
+variables:
+  {
+    "projectName": null,
+    "envName": null,
+    "name": null
+  }
+
+---
+
+label: "list Device"
+query: |+
+  query Iot_listDevices($projectName: String!, $envName: String!) {
+    iot_listDevices(projectName: $projectName, envName: $envName) {
+      totalCount
+      edges {
+        node {
+          deployment
+          id
+          name
+        }
+      }
+    }
+  }
+variables:
+  {
+    "projectName": null,
+    "envName": null
+  }
+
+---
+
+

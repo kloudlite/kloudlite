@@ -1,0 +1,119 @@
+---
+label: "Create App"
+query: |+
+  mutation Iot_createApp($projectName: String!, $envName: String!, $deviceBlueprintName: String!, $app: IOTAppIn!) {
+    iot_createApp(projectName: $projectName, envName: $envName, deviceBlueprintName: $deviceBlueprintName, app: $app) {
+      displayName
+      id
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "deviceBlueprintName": "sample-device-blueprint",
+    "app": {
+      "displayName": "sample app",
+      "spec": {
+        "containers": [
+          {
+            "image": "nginx:latest",
+            "imagePullPolicy": "always",
+            "name": "container-0"
+          }
+        ]
+      },
+      "metadata": {
+        "name": "sample-app"
+      }
+    }
+  }
+
+---
+
+label: "update App"
+query: |+
+  mutation Iot_updateApp($projectName: String!, $envName: String!, $deviceBlueprintName: String!, $app: IOTAppIn!) {
+    iot_updateApp(projectName: $projectName, envName: $envName, deviceBlueprintName: $deviceBlueprintName, app: $app) {
+      accountName
+      id
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "deviceBlueprintName": "sample-device-blueprint",
+    "app": {
+      "displayName": "sample app",
+      "spec": {
+        "containers": [
+          {
+            "image": "nginx:latest",
+            "imagePullPolicy": "always",
+            "name": "container-0"
+          }
+        ]
+      },
+      "metadata": {
+        "name": "sample-app"
+      }
+    }
+  }
+
+---
+
+label: "delete App"
+query: |+
+  mutation Iot_deleteApp($projectName: String!, $envName: String!, $deviceBlueprintName: String!, $name: String!) {
+    iot_deleteApp(projectName: $projectName, envName: $envName, deviceBlueprintName: $deviceBlueprintName, name: $name)
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "deviceBlueprintName": "sample-device-blueprint",
+    "name": "sample-app"
+  }
+
+---
+
+label: "get App"
+query: |+
+  query Iot_getApp($projectName: String!, $envName: String!, $deviceBlueprintName: String!, $name: String!) {
+    iot_getApp(projectName: $projectName, envName: $envName, deviceBlueprintName: $deviceBlueprintName, name: $name) {
+      id
+      displayName
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "deviceBlueprintName": "sample-device-blueprint",
+    "name": "sample-app"
+  }
+
+---
+
+label: "list App"
+query: |+
+  query Iot_listApps($projectName: String!, $envName: String!, $deviceBlueprintName: String!) {
+    iot_listApps(projectName: $projectName, envName: $envName, deviceBlueprintName: $deviceBlueprintName) {
+      totalCount
+      edges {
+        node {
+          displayName
+          id
+        }
+      }
+    }
+  }
+variables:
+  {
+    "projectName": "sample-project",
+    "envName": "sample-env",
+    "deviceBlueprintName": "sample-device-blueprint",
+  }
+
+---

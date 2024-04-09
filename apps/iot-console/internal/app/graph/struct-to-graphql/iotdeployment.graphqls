@@ -1,0 +1,35 @@
+type IOTDeployment @shareable {
+  accountName: String!
+  CIDR: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  environmentName: String!
+  exposedServices: [Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedService!]!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  projectName: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type IOTDeploymentEdge @shareable {
+  cursor: String!
+  node: IOTDeployment!
+}
+
+type IOTDeploymentPaginatedRecords @shareable {
+  edges: [IOTDeploymentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input IOTDeploymentIn {
+  CIDR: String!
+  displayName: String!
+  exposedServices: [Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedServiceIn!]!
+  name: String!
+}
+
