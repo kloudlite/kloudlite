@@ -3,25 +3,24 @@ package target
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"slices"
 	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
 	"github.com/kloudlite/operator/operators/clusters/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
-	job_manager "github.com/kloudlite/operator/pkg/job-helper"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +29,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -44,6 +44,8 @@ type ClusterReconciler struct {
 
 	templateClusterJob        []byte
 	templateRBACForClusterJob []byte
+
+	templateGcpVPCJob []byte
 
 	NotifyOnClusterUpdate func(ctx context.Context, obj *clustersv1.Cluster) error
 }
@@ -82,7 +84,6 @@ var ApplyCheckList = []rApi.CheckMeta{
 	{Name: ClusterCreateJobAppliedAndReady, Title: "Cluster Create Job Applied"},
 }
 
-// DefaultsPatched string = "defaults-patched"
 var DeleteCheckList = []rApi.CheckMeta{}
 
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -124,10 +125,6 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(DefaultsPatched, ClusterPrerequisitesReady, ClusterJobRBACReady, ClusterCreateJobAppliedAndReady); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return notifyAndExit(step)
 	}
@@ -144,9 +141,13 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.startClusterApplyJob(req); !step.ShouldProceed() {
+	if step := r.applyClusterJob(req); !step.ShouldProceed() {
 		return notifyAndExit(step)
 	}
+
+	// if step := r.startClusterApplyJob(req); !step.ShouldProceed() {
+	// 	return notifyAndExit(step)
+	// }
 
 	req.Object.Status.IsReady = true
 	if err := r.NotifyOnClusterUpdate(ctx, req.Object); err != nil {
@@ -207,19 +208,12 @@ func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]
 }
 
 func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
-	_, obj := req.Context(), req.Object
-
-	if !slices.Equal(obj.Status.CheckList, DeleteCheckList) {
-		req.Object.Status.CheckList = DeleteCheckList
-		if step := req.UpdateStatus(); !step.ShouldProceed() {
-			return step
-		}
+	if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
+		return step
 	}
 
-	check := rApi.NewRunningCheck("finalizing", req)
-
-	if step := r.startClusterDestroyJob(req); !step.ShouldProceed() {
-		return check.StillRunning(fmt.Errorf("waiting for cluster destroy job check to be completed"))
+	if step := req.CleanupOwnedResources(); step.ShouldProceed() {
+		return step
 	}
 
 	return req.Finalize()
@@ -320,6 +314,39 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 				return req.Done().RequeueAfter(500 * time.Millisecond)
 			}
 		}
+	case ct.CloudProviderGCP:
+		{
+			if obj.Spec.GCP.VPC == nil {
+				gcpVpc := &clustersv1.GcpVPC{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "kloudlite-vpc",
+						Namespace: obj.Namespace,
+					},
+				}
+
+				if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, gcpVpc, func() error {
+					gcpVpc.Spec.GCPProjectID = obj.Spec.GCP.GCPProjectID
+					gcpVpc.Spec.Region = obj.Spec.GCP.Region
+					gcpVpc.Spec.CredentialsRef = obj.Spec.GCP.CredentialsRef
+
+					return nil
+				}); err != nil {
+					return check.Failed(err)
+				}
+
+				if !gcpVpc.Status.IsReady {
+					return check.StillRunning(fmt.Errorf("waiting for a kloudlite-vpc to be ready, before proceeding"))
+				}
+
+				obj.Spec.GCP.VPC = &clustersv1.GcpVPCParams{
+					Name: gcpVpc.Name,
+				}
+
+				if err := r.Update(ctx, obj); err != nil {
+					return check.StillRunning(err)
+				}
+			}
+		}
 	default:
 		{
 			return check.Failed(fmt.Errorf("unsupported cloudprovider %s", obj.Spec.CloudProvider)).Err(nil)
@@ -358,29 +385,6 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clu
 			}
 
 			values := map[string]any{
-				// "aws_access_key": func() string {
-				// 	if !isAssumeRole {
-				// 		return string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAccessKey])
-				// 	}
-				// 	return r.Env.KlAwsAccessKey
-				// }(),
-				// "aws_secret_key": func() string {
-				// 	if !isAssumeRole {
-				// 		return string(providerCreds.Data[obj.Spec.CredentialKeys.KeySecretKey])
-				// 	}
-				// 	return r.Env.KlAwsSecretKey
-				// }(),
-				// "aws_assume_role": func() map[string]any {
-				// 	if !isAssumeRole {
-				// 		return nil
-				// 	}
-				// 	return map[string]any{
-				// 		"enabled":     true,
-				// 		"role_arn":    string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleRoleARN]),
-				// 		"external_id": string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleExternalID]),
-				// 	}
-				// }(),
-
 				"aws_region":                obj.Spec.AWS.Region,
 				"tracker_id":                fmt.Sprintf("cluster-%s", obj.Name),
 				"enable_nvidia_gpu_support": obj.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
@@ -482,179 +486,139 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clu
 			}
 			return string(valuesBytes), nil
 		}
+	case ct.CloudProviderGCP:
+		{
+			if obj.Spec.GCP == nil {
+				return "", fmt.Errorf("when cloudprovider is set to gcp, .spec.gcp must be provided")
+			}
+
+			credsSecret := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(obj.Spec.GCP.CredentialsRef.Namespace, obj.Spec.GCP.CredentialsRef.Name), credsSecret); err != nil {
+				return "", errors.NewEf(err, "failed to get gcp credentials")
+			}
+
+			gcpCreds, err := fn.ParseFromSecret[clustersv1.GCPCredentials](credsSecret)
+			if err != nil {
+				return "", errors.NewE(err)
+			}
+
+			values := GcpClusterTFValues{
+				GcpProjectId:              obj.Spec.GCP.GCPProjectID,
+				GcpRegion:                 obj.Spec.GCP.Region,
+				GcpCredentialsJson:        base64.StdEncoding.EncodeToString([]byte(gcpCreds.ServiceAccountJSON)),
+				NamePrefix:                fmt.Sprintf("%s-%s", obj.Spec.AccountName, obj.Name),
+				ProvisionMode:             "STANDARD",
+				Network:                   obj.Spec.GCP.VPC.Name,
+				UseAsLonghornStorageNodes: false,
+				MachineType:               "e2-custom-2-4096",
+				Nodes: func() map[string]TFGcpNode {
+					nodes := make(map[string]TFGcpNode)
+					for k, v := range obj.Spec.GCP.MasterNodes.Nodes {
+						az := v.AvailabilityZone
+
+						nodes[k] = TFGcpNode{
+							AvailabilityZone: az,
+							K3SRole:          v.Role,
+							KloudliteRelease: v.KloudliteRelease,
+							BootvolumeType:   obj.Spec.GCP.MasterNodes.RootVolumeType,
+							BootvolumeSize:   obj.Spec.GCP.MasterNodes.RootVolumeSize,
+						}
+					}
+					return nodes
+				}(),
+				PublicDnsHost: obj.Spec.PublicDNSHost,
+				Cloudflare: TFCloudflareParams{
+					Enabled:  obj.Spec.CloudflareEnabled,
+					ApiToken: r.Env.CloudflareApiToken,
+					ZoneId:   r.Env.CloudflareZoneId,
+					Domain:   obj.Spec.PublicDNSHost,
+				},
+				KloudliteParams: TFKloudliteParams{
+					Release:          obj.Spec.KloudliteRelease,
+					InstallCRDs:      true,
+					InstallCsiDriver: false,
+					InstallOperators: false,
+					InstallAgent:     true,
+					AgentVars: TFKloudliteAgentParams{
+						AccountName:           obj.Spec.AccountName,
+						ClusterName:           obj.Name,
+						ClusterToken:          string(clusterTokenScrt.Data[obj.Spec.ClusterTokenRef.Key]),
+						MessageOfficeGRPCAddr: r.Env.MessageOfficeGRPCAddr,
+					},
+				},
+			}
+
+			valuesBytes, err := json.Marshal(values)
+			if err != nil {
+				return "", err
+			}
+			return string(valuesBytes), nil
+		}
 	default:
 		return "", fmt.Errorf("unknown cloud provider %s", obj.Spec.CloudProvider)
 	}
 }
 
-func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
+func (r *ClusterReconciler) applyClusterJob(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(ClusterCreateJobAppliedAndReady, req)
 
-	job := &batchv1.Job{}
-	if err := r.Get(ctx, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), job); err != nil {
-		job = nil
+	valuesJson, err := r.parseSpecToVarFileJson(ctx, obj)
+	if err != nil {
+		return check.Failed(err).Err(nil)
 	}
 
-	if job == nil {
-		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj)
-		if err != nil {
-			return check.Failed(err).Err(nil)
-		}
+	b, err := templates.ParseBytes(r.templateClusterJob, templates.ClusterJobVars{
+		JobMetadata: metav1.ObjectMeta{
+			Name:            obj.Spec.Output.JobName,
+			Namespace:       obj.Spec.Output.JobNamespace,
+			Labels:          obj.GetLabels(),
+			Annotations:     fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
+			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		},
+		NodeSelector:               r.Env.IACJobNodeSelector,
+		Tolerations:                r.Env.IACJobTolerations,
+		JobImage:                   r.Env.IACJobImage,
+		TFWorkspaceName:            obj.Name,
+		TFWorkspaceSecretNamespace: obj.Namespace,
 
-		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
-			"action":        "apply",
-			"job-name":      obj.Spec.Output.JobName,
-			"job-namespace": obj.Namespace,
+		ClusterSecretName:      obj.Spec.Output.SecretName,
+		ClusterSecretNamespace: obj.Namespace,
 
-			"labels": map[string]string{
-				LabelClusterApplyJob:    "true",
-				LabelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
-			},
-			"pod-annotations": fn.MapMerge(fn.FilterObservabilityAnnotations(obj.GetAnnotations()), map[string]string{
-				constants.ObservabilityAccountNameKey: obj.Spec.AccountName,
-				constants.ObservabilityClusterNameKey: obj.Name,
-			}),
-
-			"job-node-selector": r.Env.IACJobNodeSelector,
-			"job-tolerations":   r.Env.IACJobTolerations,
-
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-
-			"service-account-name": clusterJobServiceAccount,
-
-			"kubeconfig-secret-name":      obj.Spec.Output.SecretName,
-			"kubeconfig-secret-namespace": obj.Namespace,
-			"kubeconfig-secret-annotations": map[string]string{
-				constants.DescriptionKey: fmt.Sprintf("kubeconfig for cluster %s", obj.Name),
-			},
-
-			"cluster-name":              obj.Name,
-			"tf-state-secret-namespace": obj.Namespace,
-
-			"aws-access-key-id":     r.Env.KlAwsAccessKey,
-			"aws-secret-access-key": r.Env.KlAwsSecretKey,
-
-			"values.json": string(valuesJson),
-			"job-image":   r.Env.IACJobImage,
-		})
-		if err != nil {
-			return check.Failed(err).Err(nil)
-		}
-
-		rr, err := r.yamlClient.ApplyYAML(ctx, b)
-		if err != nil {
-			return check.Failed(err)
-		}
-		req.AddToOwnedResources(rr...)
-		req.Logger.Infof("waiting for job to be created")
-		return req.Done().RequeueAfter(1 * time.Second)
+		ValuesJSON:    valuesJson,
+		CloudProvider: string(obj.Spec.CloudProvider),
+		AWS: func() *templates.AWSClusterJobParams {
+			if obj.Spec.CloudProvider == ct.CloudProviderAWS {
+				return &templates.AWSClusterJobParams{
+					AccessKeyID:     r.Env.KlAwsAccessKey,
+					AccessKeySecret: r.Env.KlAwsSecretKey,
+				}
+			}
+			return nil
+		}(),
+	})
+	if err != nil {
+		return check.Failed(err).Err(nil)
 	}
 
-	isMyJob := job.Labels[LabelResourceGeneration] == fmt.Sprintf("%d", obj.Generation) && job.Labels[LabelClusterApplyJob] == "true"
+	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	if err != nil {
+		return check.Failed(err)
+	}
+	req.AddToOwnedResources(rr...)
 
-	if !isMyJob {
-		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return check.Failed(fmt.Errorf("waiting for previous jobs to finish execution")).Err(nil)
-		}
-
-		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return check.Failed(err)
-		}
-
-		return req.Done().RequeueAfter(1 * time.Second)
+	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), &crdsv1.Job{})
+	if err != nil {
+		return check.Failed(err)
 	}
 
-	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return check.Failed(fmt.Errorf("waiting for job to finish execution"))
-	}
-
-	if job.Status.Succeeded == 0 {
-		return check.Failed(fmt.Errorf("cluster creation job did not succeed"))
-	}
-
-	return check.Completed()
-}
-
-func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(ClusterDeleteJobApplied, req)
-
-	job := &batchv1.Job{}
-	if err := r.Get(ctx, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), job); err != nil {
-		job = nil
-	}
-
-	if job == nil {
-		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj)
-		if err != nil {
-			return check.Failed(err).Err(nil)
-		}
-
-		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
-			"action":        "delete",
-			"job-name":      obj.Spec.Output.JobName,
-			"job-namespace": obj.Spec.Output.JobNamespace,
-			"labels": map[string]string{
-				LabelClusterDestroyJob:  "true",
-				LabelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
-			},
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-
-			"job-node-selector": r.Env.IACJobNodeSelector,
-			"job-tolerations":   r.Env.IACJobTolerations,
-
-			"service-account-name": clusterJobServiceAccount,
-
-			"kubeconfig-secret-name":      obj.Spec.Output.SecretName,
-			"kubeconfig-secret-namespace": obj.Namespace,
-
-			"cluster-name":              obj.Name,
-			"tf-state-secret-namespace": obj.Namespace,
-
-			"aws-access-key-id":     r.Env.KlAwsAccessKey,
-			"aws-secret-access-key": r.Env.KlAwsSecretKey,
-			"values.json":           string(valuesJson),
-
-			"job-image": r.Env.IACJobImage,
-		})
-		if err != nil {
-			return check.Failed(err).Err(nil)
-		}
-
-		rr, err := r.yamlClient.ApplyYAML(ctx, b)
-		if err != nil {
-			return check.Failed(err)
-		}
-		req.AddToOwnedResources(rr...)
-		req.Logger.Infof("waiting for job to be created")
-		return req.Done().RequeueAfter(1 * time.Second)
-	}
-
-	isMyJob := job.Labels[LabelResourceGeneration] == fmt.Sprintf("%d", obj.Generation) && job.Labels[LabelClusterDestroyJob] == "true"
-
-	if !isMyJob {
-		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return check.StillRunning(fmt.Errorf("waiting for previous jobs to finish execution"))
-		}
-
-		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return check.Failed(err)
-		}
-
-		return req.Done().RequeueAfter(1 * time.Second)
-	}
-
-	if !job_manager.HasJobFinished(ctx, r.Client, job) {
+	if job.Status.Running != nil && *job.Status.Running {
 		return check.StillRunning(fmt.Errorf("waiting for job to finish execution"))
 	}
 
-	if job.Status.Succeeded < 1 {
-		// means job failed
-		return check.Failed(fmt.Errorf("job failed, checkout logs for more details")).Err(nil)
+	if job.Status.Failed != nil && *job.Status.Failed {
+		return check.Failed(fmt.Errorf("job failed"))
 	}
-
-	// check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
 
 	return check.Completed()
 }
@@ -676,8 +640,13 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 		return err
 	}
 
+	r.templateGcpVPCJob, err = templates.Read(templates.GcpVPCJob)
+	if err != nil {
+		return err
+	}
+
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.Cluster{})
-	builder.Owns(&batchv1.Job{})
+	builder.Owns(&crdsv1.Job{})
 	builder.Watches(&clustersv1.AwsVPC{}, handler.EnqueueRequestsFromMapFunc(
 		func(ctx context.Context, obj client.Object) []reconcile.Request {
 			if v, ok := obj.GetLabels()[constants.RegionKey]; ok {

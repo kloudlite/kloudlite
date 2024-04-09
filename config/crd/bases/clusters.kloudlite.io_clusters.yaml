@@ -256,6 +256,66 @@ spec:
                 - key
                 - name
                 type: object
+              gcp:
+                properties:
+                  credentialsRef:
+                    description: This secret will be unmarshalled into type GCPCredentials
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  gcpProjectID:
+                    type: string
+                  masterNodes:
+                    properties:
+                      nodes:
+                        additionalProperties:
+                          properties:
+                            availabilityZone:
+                              description: AvailabilityZone AwsAZ  `json:"availabilityZone"`
+                              type: string
+                            kloudliteRelease:
+                              type: string
+                            lastRecreatedAt:
+                              format: date-time
+                              type: string
+                            role:
+                              enum:
+                              - primary-master
+                              - secondary-master
+                              type: string
+                          required:
+                          - availabilityZone
+                          - kloudliteRelease
+                          - role
+                          type: object
+                        type: object
+                      rootVolumeSize:
+                        type: integer
+                      rootVolumeType:
+                        type: string
+                    required:
+                    - rootVolumeSize
+                    - rootVolumeType
+                    type: object
+                  region:
+                    type: string
+                  vpc:
+                    properties:
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - credentialsRef
+                - gcpProjectID
+                - region
+                type: object
               kloudliteRelease:
                 type: string
               messageQueueTopicName:

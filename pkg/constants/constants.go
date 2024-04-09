@@ -87,6 +87,7 @@ const (
 	IsMresOutput                 string = "kloudlite.io/is-mres-output"
 	MresNameKey                  string = "kloudlite.io/mres.name"
 	AppNameKey                   string = "kloudlite.io/app.name"
+	JobNameKey                   string = "kloudlite.io/job.name"
 	RouterNameKey                string = "kloudlite.io/router.name"
 	LambdaNameKey                string = "kloudlite.io/lambda.name"
 	AccountRouterNameKey         string = "kloudlite.io/account-router.name"

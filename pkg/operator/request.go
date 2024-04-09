@@ -160,43 +160,53 @@ func (r *Request[T]) ShouldReconcile() bool {
 }
 
 func (r *Request[T]) EnsureCheckList(expected []CheckMeta) stepResult.Result {
-	if slices.Equal(expected, r.Object.GetStatus().CheckList) {
-		return stepResult.New().Continue(true)
+	// return stepResult.New().Continue(true)
+	checkNames := make([]string, len(expected))
+	for i := range expected {
+		checkNames[i] = expected[i].Name
 	}
 
-	r.Object.GetStatus().CheckList = expected
-	if err := r.client.Status().Update(r.ctx, r.Object); err != nil {
-		return stepResult.New().Err(err)
+	if r.Object.GetStatus().Checks == nil {
+		r.Object.GetStatus().Checks = make(map[string]Check)
 	}
-	return stepResult.New().RequeueAfter(1 * time.Second)
+
+	checksUpdated := ensureChecks(r.Object.GetStatus().Checks, checkNames...)
+	if checksUpdated || !slices.Equal(expected, r.Object.GetStatus().CheckList) {
+		r.Object.GetStatus().CheckList = expected
+
+		if err := r.client.Status().Update(r.ctx, r.Object); err != nil {
+			return stepResult.New().Err(err)
+		}
+		return stepResult.New().RequeueAfter(1 * time.Second)
+	}
+	return stepResult.New().Continue(true)
+}
+
+func ensureChecks(checks map[string]Check, checkNames ...string) bool {
+	updated := false
+	for _, name := range checkNames {
+		if _, ok := checks[name]; !ok {
+			updated = true
+			checks[name] = Check{State: WaitingState}
+		}
+	}
+	return updated
 }
 
 func (r *Request[T]) EnsureChecks(names ...string) stepResult.Result {
-	obj, ctx := r.Object, r.Context()
-
-	oldChecks := obj.GetStatus().Checks
-	checks := map[string]Check{}
-
-	for _, name := range names {
-		if v, ok := oldChecks[name]; ok {
-			checks[name] = v
-			continue
-		}
-		if _, ok := checks[name]; !ok {
-			checks[name] = Check{
-				State: WaitingState,
-			}
-		}
-	}
-
-	if !fn.MapContains(oldChecks, checks) {
-		obj.GetStatus().Checks = checks
-		if err := r.client.Status().Update(ctx, obj); err != nil {
-			return r.Done().Err(err)
-		}
-	}
-
 	return stepResult.New().Continue(true)
+	// obj, ctx := r.Object, r.Context()
+	//
+	// checks := fn.MapMerge(obj.GetStatus().Checks)
+	// updated := ensureChecks(checks, names...)
+	//
+	// if updated {
+	// 	obj.GetStatus().Checks = checks
+	// 	if err := r.client.Status().Update(ctx, obj); err != nil {
+	// 		return r.Done().Err(err)
+	// 	}
+	// }
+	// return stepResult.New().Continue(true)
 }
 
 func (r *Request[T]) ClearStatusIfAnnotated() stepResult.Result {
