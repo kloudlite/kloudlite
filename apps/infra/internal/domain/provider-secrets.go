@@ -48,6 +48,16 @@ func corev1SecretFromProviderSecret(ps *entities.CloudProviderSecret) (*corev1.S
 				}
 			}
 		}
+	case ct.CloudProviderGCP:
+		{
+			if err := ps.GCP.Validate(); err != nil {
+				return nil, err
+			}
+
+			if err := fn.JsonConversion(ps.GCP.GCPCredentials, &stringData); err != nil {
+				return nil, err
+			}
+		}
 	default:
 		{
 			return nil, fmt.Errorf("unknown cloudprovider (%s)", ps.CloudProviderName)
@@ -122,13 +132,19 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, psecretIn entities.Cloud
 					return nil, fmt.Errorf("unknown aws auth mechanism (%s)", psecretIn.AWS.AuthMechanism)
 				}
 			}
+
+			// if err := psecretIn.AWS.Validate(); err != nil {
+			// 	return nil, errors.NewE(err)
+			// }
+		}
+	case ct.CloudProviderGCP:
+		{
+			if err := psecretIn.GCP.Validate(); err != nil {
+				return nil, errors.NewE(err)
+			}
 		}
 	default:
 		return nil, errors.Newf("unknown cloud provider")
-	}
-
-	if err := psecretIn.Validate(); err != nil {
-		return nil, errors.NewE(err)
 	}
 
 	psecretIn.IncrementRecordVersion()
@@ -159,10 +175,6 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, psecretIn entities.Cloud
 
 func (d *domain) UpdateProviderSecret(ctx InfraContext, providerSecretIn entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateCloudProviderSecret); err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if err := providerSecretIn.Validate(); err != nil {
 		return nil, errors.NewE(err)
 	}
 
