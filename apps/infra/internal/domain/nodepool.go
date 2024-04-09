@@ -41,7 +41,6 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 	switch nodepool.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
 		{
-
 			ps, err := d.findProviderSecret(ctx, cluster.Spec.AWS.Credentials.SecretRef.Name)
 			if err != nil {
 				return nil, errors.NewE(err)
@@ -79,6 +78,40 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 						Nodes:                    nodepool.Spec.AWS.SpotPool.Nodes,
 					}
 				}(),
+			}
+		}
+	case ct.CloudProviderGCP:
+		{
+			ps, err := d.findProviderSecret(ctx, cluster.Spec.GCP.CredentialsRef.Name)
+			if err != nil {
+				return nil, errors.NewE(err)
+			}
+
+			k8sSecret, err := corev1SecretFromProviderSecret(ps)
+			if err != nil {
+				return nil, errors.NewE(err)
+			}
+
+			// INFO: because kube-system is omnipresent on k8s
+			k8sSecret.Namespace = "kube-system"
+
+			if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, k8sSecret, nodepool.RecordVersion); err != nil {
+				return nil, errors.NewE(err)
+			}
+
+			nodepool.Spec.GCP = &clustersv1.GCPNodePoolConfig{
+				Region:           cluster.Spec.GCP.Region,
+				AvailabilityZone: nodepool.Spec.GCP.AvailabilityZone,
+				GCPProjectID:     cluster.Spec.GCP.GCPProjectID,
+				Credentials: ct.SecretRef{
+					Name:      k8sSecret.Name,
+					Namespace: k8sSecret.Namespace,
+				},
+				PoolType:       nodepool.Spec.GCP.PoolType,
+				MachineType:    nodepool.Spec.GCP.MachineType,
+				BootVolumeType: "pd-ssd",
+				BootVolumeSize: 50,
+				Nodes:          map[string]clustersv1.NodeProps{},
 			}
 		}
 	default:

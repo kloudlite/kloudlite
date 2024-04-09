@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"fmt"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -139,10 +140,6 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.k8sClient.ValidateObject(ctx, &cluster.Cluster); err != nil {
-		return nil, errors.NewE(err)
-	}
-
 	if err := d.applyK8sResource(ctx, tokenScrt, 1); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -223,7 +220,67 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 				},
 			}
 		}(),
-		// MessageQueueTopicName: fmt.Sprintf("kl-acc-%s-clus-%s", ctx.AccountName, cluster.Name),
+		GCP: func() *clustersv1.GCPClusterConfig {
+			if cluster.Spec.CloudProvider != ct.CloudProviderGCP {
+				return nil
+			}
+
+			cps, err := d.findProviderSecret(ctx, cluster.Spec.GCP.CredentialsRef.Name)
+			if err != nil {
+				return nil
+			}
+
+			var gcpServiceAccountJSON struct {
+				ProjectID string `json:"project_id"`
+			}
+
+			if cps.GCP != nil {
+				if err := json.Unmarshal([]byte(cps.GCP.ServiceAccountJSON), &gcpServiceAccountJSON); err != nil {
+					return nil
+				}
+			}
+
+			return &clustersv1.GCPClusterConfig{
+				Region:       cluster.Spec.GCP.Region,
+				GCPProjectID: gcpServiceAccountJSON.ProjectID,
+				CredentialsRef: ct.SecretRef{
+					Name:      cps.Name,
+					Namespace: cps.Namespace,
+				},
+				MasterNodes: clustersv1.GCPMasterNodesConfig{
+					RootVolumeType: "pd-ssd",
+					RootVolumeSize: 50,
+					Nodes: func() map[string]clustersv1.MasterNodeProps {
+						if cluster.Spec.AvailabilityMode == "dev" {
+							return map[string]clustersv1.MasterNodeProps{
+								"master-1": {
+									Role:             "primary-master",
+									AvailabilityZone: fmt.Sprintf("%s-a", cluster.Spec.GCP.Region), // defaults to {{.region}}-a zone
+									KloudliteRelease: d.env.KloudliteRelease,
+								},
+							}
+						}
+						return map[string]clustersv1.MasterNodeProps{
+							"master-1": {
+								Role:             "primary-master",
+								AvailabilityZone: fmt.Sprintf("%s-a", cluster.Spec.GCP.Region),
+								KloudliteRelease: d.env.KloudliteRelease,
+							},
+							"master-2": {
+								Role:             "secondary-master",
+								AvailabilityZone: fmt.Sprintf("%s-a", cluster.Spec.GCP.Region),
+								KloudliteRelease: d.env.KloudliteRelease,
+							},
+							"master-3": {
+								Role:             "secondary-master",
+								AvailabilityZone: fmt.Sprintf("%s-a", cluster.Spec.GCP.Region),
+								KloudliteRelease: d.env.KloudliteRelease,
+							},
+						}
+					}(),
+				},
+			}
+		}(),
 		MessageQueueTopicName: common.GetTenantClusterMessagingTopic(ctx.AccountName, cluster.Name),
 		KloudliteRelease:      d.env.KloudliteRelease,
 		Output:                nil,
@@ -241,6 +298,10 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	cluster.Spec.AccountName = ctx.AccountName
 	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
+	if err := d.k8sClient.ValidateObject(ctx, &cluster.Cluster); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	nCluster, err := d.clusterRepo.Create(ctx, &cluster)
 	if err != nil {
 		if d.clusterRepo.ErrAlreadyExists(err) {
@@ -255,14 +316,14 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, nCluster.Name, PublishAdd)
 
-	if err := d.applyHelmKloudliteAgent(ctx, nCluster.Name, string(tokenScrt.Data[keyClusterToken]), nCluster.Spec.PublicDNSHost); err != nil {
+	if err := d.applyHelmKloudliteAgent(ctx, nCluster.Name, string(tokenScrt.Data[keyClusterToken]), nCluster.Spec.PublicDNSHost, string(nCluster.Spec.CloudProvider)); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	return nCluster, nil
 }
 
-func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterName string, clusterToken string, clusterPublicHost string) error {
+func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterName string, clusterToken string, clusterPublicHost string, cloudprovider string) error {
 	b, err := templates.Read(templates.HelmKloudliteAgent)
 	if err != nil {
 		return errors.NewE(err)
@@ -278,6 +339,7 @@ func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterName string, c
 		"message-office-grpc-addr": d.env.MessageOfficeExternalGrpcAddr,
 
 		"public-dns-host": clusterPublicHost,
+		"cloudprovider":   cloudprovider,
 	})
 	if err != nil {
 		return errors.NewE(err)
@@ -341,7 +403,7 @@ func (d *domain) UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string)
 		return errors.NewE(err)
 	}
 
-	if err := d.applyHelmKloudliteAgent(ctx, clusterName, out.ClusterToken, cluster.Spec.PublicDNSHost); err != nil {
+	if err := d.applyHelmKloudliteAgent(ctx, clusterName, out.ClusterToken, cluster.Spec.PublicDNSHost, string(cluster.Spec.CloudProvider)); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -495,15 +557,21 @@ func (d *domain) OnClusterUpdateMessage(ctx InfraContext, cluster entities.Clust
 		return nil
 	}
 
+	patchDoc := repos.Document{}
+	if cluster.Spec.Output != nil {
+		patchDoc[fc.ClusterSpecOutput] = cluster.Spec.Output
+	}
+
+	if cluster.Spec.AWS != nil && cluster.Spec.AWS.VPC != nil {
+		patchDoc[fc.ClusterSpecAwsVpc] = cluster.Spec.AWS.VPC
+	}
+
 	uCluster, err := d.clusterRepo.PatchById(
 		ctx,
 		xCluster.Id,
 		common.PatchForSyncFromAgent(&cluster, recordVersion, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
-			XPatch: repos.Document{
-				fc.ClusterSpecOutput: cluster.Spec.Output,
-				fc.ClusterSpecAwsVpc: cluster.Spec.AWS.VPC,
-			},
+			XPatch:           patchDoc,
 		}))
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, uCluster.GetName(), PublishUpdate)
 	return errors.NewE(err)

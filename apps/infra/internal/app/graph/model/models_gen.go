@@ -104,6 +104,14 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn struct
 	AuthSecretKeys   *GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAuthSecretKeysIn   `json:"authSecretKeys,omitempty"`
 }
 
+type GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentials struct {
+	ServiceAccountJSON string `json:"serviceAccountJSON"`
+}
+
+type GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentialsIn struct {
+	ServiceAccountJSON string `json:"serviceAccountJSON"`
+}
+
 type GithubComKloudliteAPIAppsInfraInternalEntitiesInputField struct {
 	DefaultValue interface{} `json:"defaultValue,omitempty"`
 	DisplayUnit  *string     `json:"displayUnit,omitempty"`
@@ -265,6 +273,7 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpec struct {
 	CloudProvider          GithubComKloudliteOperatorApisCommonTypesCloudProvider              `json:"cloudProvider"`
 	ClusterInternalDNSHost *string                                                             `json:"clusterInternalDnsHost,omitempty"`
 	ClusterTokenRef        *GithubComKloudliteOperatorApisCommonTypesSecretKeyRef              `json:"clusterTokenRef,omitempty"`
+	Gcp                    *GithubComKloudliteOperatorApisClustersV1GCPClusterConfig           `json:"gcp,omitempty"`
 	KloudliteRelease       string                                                              `json:"kloudliteRelease"`
 	MessageQueueTopicName  string                                                              `json:"messageQueueTopicName"`
 	Output                 *GithubComKloudliteOperatorApisClustersV1ClusterOutput              `json:"output,omitempty"`
@@ -277,6 +286,25 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpecIn struct {
 	Aws               *GithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn         `json:"aws,omitempty"`
 	CloudflareEnabled *bool                                                               `json:"cloudflareEnabled,omitempty"`
 	CloudProvider     GithubComKloudliteOperatorApisCommonTypesCloudProvider              `json:"cloudProvider"`
+	Gcp               *GithubComKloudliteOperatorApisClustersV1GCPClusterConfigIn         `json:"gcp,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1GCPClusterConfig struct {
+	CredentialsRef *GithubComKloudliteOperatorApisCommonTypesSecretRef           `json:"credentialsRef"`
+	GcpProjectID   string                                                        `json:"gcpProjectID"`
+	MasterNodes    *GithubComKloudliteOperatorApisClustersV1GCPMasterNodesConfig `json:"masterNodes,omitempty"`
+	Region         string                                                        `json:"region"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1GCPClusterConfigIn struct {
+	CredentialsRef *GithubComKloudliteOperatorApisCommonTypesSecretRefIn `json:"credentialsRef"`
+	Region         string                                                `json:"region"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1GCPMasterNodesConfig struct {
+	Nodes          map[string]interface{} `json:"nodes,omitempty"`
+	RootVolumeSize int                    `json:"rootVolumeSize"`
+	RootVolumeType string                 `json:"rootVolumeType"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfig struct {
@@ -284,6 +312,7 @@ type GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfig struct {
 	BootVolumeSize   int                                                 `json:"bootVolumeSize"`
 	BootVolumeType   string                                              `json:"bootVolumeType"`
 	Credentials      *GithubComKloudliteOperatorApisCommonTypesSecretRef `json:"credentials"`
+	GcpProjectID     string                                              `json:"gcpProjectID"`
 	MachineType      string                                              `json:"machineType"`
 	Nodes            map[string]interface{}                              `json:"nodes,omitempty"`
 	PoolType         GithubComKloudliteOperatorApisClustersV1GCPPoolType `json:"poolType"`
@@ -291,14 +320,9 @@ type GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfig struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfigIn struct {
-	AvailabilityZone string                                                `json:"availabilityZone"`
-	BootVolumeSize   int                                                   `json:"bootVolumeSize"`
-	BootVolumeType   string                                                `json:"bootVolumeType"`
-	Credentials      *GithubComKloudliteOperatorApisCommonTypesSecretRefIn `json:"credentials"`
-	MachineType      string                                                `json:"machineType"`
-	Nodes            map[string]interface{}                                `json:"nodes,omitempty"`
-	PoolType         GithubComKloudliteOperatorApisClustersV1GCPPoolType   `json:"poolType"`
-	Region           string                                                `json:"region"`
+	AvailabilityZone string                                              `json:"availabilityZone"`
+	MachineType      string                                              `json:"machineType"`
+	PoolType         GithubComKloudliteOperatorApisClustersV1GCPPoolType `json:"poolType"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1MasterNodeProps struct {
