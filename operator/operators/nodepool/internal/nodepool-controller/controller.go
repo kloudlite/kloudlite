@@ -70,12 +70,12 @@ const (
 )
 
 var (
-	NP_CHECKLIST = []rApi.CheckMeta{
+	ApplyChecklist = []rApi.CheckMeta{
 		{Name: updateNodeTaintsAndLabels, Title: "Update Node Taints and Labels"},
 		{Name: ensureJobNamespaceRBACs, Title: "Configure Job Namespace RBACs"},
 		{Name: syncNodepool, Title: "Syncing Nodepool"},
 	}
-	NP_DESTROY_CHECKLIST = []rApi.CheckMeta{
+	DeleteChecklist = []rApi.CheckMeta{
 		{Name: finalizeNodepool, Title: "Finalizing Nodepool"},
 	}
 )
@@ -108,11 +108,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(NP_CHECKLIST); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.EnsureChecks(updateNodeTaintsAndLabels, ensureJobNamespaceRBACs, syncNodepool); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(ApplyChecklist); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -140,8 +136,8 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResul
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	if !slices.Equal(obj.Status.CheckList, NP_DESTROY_CHECKLIST) {
-		req.Object.Status.CheckList = NP_DESTROY_CHECKLIST
+	if !slices.Equal(obj.Status.CheckList, DeleteChecklist) {
+		req.Object.Status.CheckList = DeleteChecklist
 		if step := req.UpdateStatus(); !step.ShouldProceed() {
 			return step
 		}
@@ -299,22 +295,15 @@ func (r *Reconciler) ensureJobNamespaceRBACs(req *rApi.Request[*clustersv1.NodeP
 
 func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	req.LogPreCheck(syncNodepool)
-	defer req.LogPostCheck(syncNodepool)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(syncNodepool, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(syncNodepool, req)
 
 	nodes, err := nodesBelongingToNodepool(ctx, r.Client, obj.Name)
 	if err != nil {
-		return fail(err)
+		return check.StillRunning(err)
 	}
 
 	if err := addFinalizersOnNodes(ctx, r.Client, nodes, nodeFinalizer); err != nil {
-		return fail(err)
+		return check.StillRunning(err)
 	}
 
 	markedForDeletion := filterNodesMarkedForDeletion(nodes)
@@ -331,7 +320,7 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 
 	varfileJson, err := r.parseSpecToVarFileJson(ctx, obj, nodesMap)
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err)
 	}
 
 	jobRef := strings.Split(obj.Annotations[annNodepoolJobRef], "/")
@@ -355,14 +344,19 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 
 			"job-name":      jobName,
 			"job-namespace": jobNamespace,
-			"labels": map[string]string{
-				constants.NodePoolNameKey: obj.Name,
-				labelNodePoolApplyJob:     "true",
-				labelResourceGeneration:   fmt.Sprintf("%d", obj.Generation),
-			},
-			"annotations": map[string]string{
+			"labels": func() map[string]string {
+				labels := obj.GetLabels()
+				if labels == nil {
+					labels = make(map[string]string, 3)
+				}
+				labels[constants.NodePoolNameKey] = obj.Name
+				labels[labelNodePoolApplyJob] = "true"
+				labels[labelResourceGeneration] = fmt.Sprintf("%d", obj.Generation)
+				return labels
+			}(),
+			"annotations": fn.MapMerge(fn.FilterObservabilityAnnotations(obj.GetAnnotations()), map[string]string{
 				annotationNodesChecksum: checksum,
-			},
+			}),
 			"pod-annotations": fn.MapMerge(fn.FilterObservabilityAnnotations(obj.GetAnnotations()), map[string]string{
 				constants.ObservabilityAccountNameKey: r.Env.AccountName,
 				constants.ObservabilityClusterNameKey: r.Env.ClusterName,
@@ -381,12 +375,12 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 			"cloudprovider": obj.Spec.CloudProvider,
 		})
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err)
 		}
 
 		rr, err := r.yamlClient.ApplyYAML(ctx, b)
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.StillRunning(err)
 		}
 
 		req.AddToOwnedResources(rr...)
@@ -398,51 +392,34 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return fail(fmt.Errorf("waiting for previous jobs to finish execution"))
+			return check.StillRunning(fmt.Errorf("waiting for previous jobs to finish execution"))
 		}
 
 		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return fail(fmt.Errorf("waiting for job to finish execution")).Err(nil)
+		return check.StillRunning(fmt.Errorf("waiting for job to finish execution"))
 	}
 
-	jobSucceeded := job.Status.Succeeded > 0
+	if job.Status.Failed > 0 {
+		return check.Failed(fmt.Errorf("job failed with error: %s", job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)))
+	}
 
-	if jobSucceeded {
+	if markedForDeletion != nil {
 		if err := deleteFinalizersOnNodes(ctx, r.Client, fn.MapValues(markedForDeletion), nodeFinalizer); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 		if err := deleteNodes(ctx, r.Client, fn.MapValues(markedForDeletion)...); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 	}
 
-	check.Status = jobSucceeded
-	check.State = rApi.CompletedState
-
-	if !check.Status {
-		check.State = rApi.ErroredState
-		check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
-		check.Error = check.Message
-	}
-	if check != obj.Status.Checks[syncNodepool] {
-		obj.Status.Checks[syncNodepool] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	if !check.Status {
-		return req.Done()
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 // func (r *Reconciler) getAccessAndSecretKey(ctx context.Context, obj *clustersv1.NodePool) (accessKey string, secretKey string, err error) {

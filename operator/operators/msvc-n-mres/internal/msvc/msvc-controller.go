@@ -105,10 +105,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(ManagedServiceApplied, ManagedServiceReady); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}

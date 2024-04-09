@@ -161,7 +161,7 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 	if !reflect.DeepEqual(newLabels, obj.GetLabels()) {
 		obj.SetLabels(newLabels)
 		if err := r.Update(ctx, obj); err != nil {
-			return check.Failed(err)
+			return check.StillRunning(err)
 		}
 
 		return req.Done().RequeueAfter(500 * time.Millisecond)
@@ -213,7 +213,7 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 
 	cds, err := conditions.FromObject(deployment)
 	if err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	isReady := meta.IsStatusConditionTrue(cds, "Available")
@@ -226,19 +226,19 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 				Namespace:     obj.Namespace,
 			},
 		); err != nil {
-			return check.Failed(err)
+			return check.StillRunning(err)
 		}
 
 		pMessages := rApi.GetMessagesFromPods(podList.Items...)
 		bMsg, err := json.Marshal(pMessages)
 		if err != nil {
-			return check.Failed(err)
+			return check.StillRunning(err)
 		}
-		return check.Failed(fmt.Errorf(string(bMsg)))
+		return check.StillRunning(fmt.Errorf(string(bMsg)))
 	}
 
 	if deployment.Status.ReadyReplicas != deployment.Status.Replicas {
-		return check.Failed(fmt.Errorf("ready-replicas (%d) != total replicas (%d)", deployment.Status.ReadyReplicas, deployment.Status.Replicas))
+		return check.StillRunning(fmt.Errorf("ready-replicas (%d) != total replicas (%d)", deployment.Status.ReadyReplicas, deployment.Status.Replicas))
 	}
 
 	return check.Completed()

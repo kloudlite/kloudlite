@@ -2,7 +2,7 @@ package project
 
 import (
 	"context"
-	"slices"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 
@@ -48,11 +48,11 @@ const (
 )
 
 var (
-	P_CHECKLIST = []rApi.CheckMeta{
+	ApplyChecklist = []rApi.CheckMeta{
 		{Name: NamespaceExists, Title: "ensure namespace exists"},
 		{Name: NamespacedRBACsReady, Title: "ensure namespaced rbacs are ready"},
 	}
-	P_DESTROY_CHECKLIST = []rApi.CheckMeta{
+	DestroyChecklist = []rApi.CheckMeta{
 		{Name: ProjectFinalizing, Title: "finalizing project"},
 	}
 )
@@ -89,7 +89,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(P_CHECKLIST); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(ApplyChecklist); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -123,17 +123,14 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Res
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(ProjectFinalizing, req)
 
-	if !slices.Equal(obj.Status.CheckList, P_DESTROY_CHECKLIST) {
-		req.Object.Status.CheckList = P_DESTROY_CHECKLIST
-		if step := req.UpdateStatus(); !step.ShouldProceed() {
-			return step
-		}
+	if step := req.EnsureCheckList(DestroyChecklist); !step.ShouldProceed() {
+		return step
 	}
 
 	// ensure deletion of other kloudlite resources, that belong to this project
 	var envList crdsv1.EnvironmentList
 	if err := findResourceBelongingToProject(ctx, r.Client, &envList, obj.Spec.TargetNamespace); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	envs := make([]client.Object, len(envList.Items))
@@ -142,12 +139,12 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Res
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, envs...); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err).RequeueAfter(500 * time.Millisecond)
 	}
 
 	var projectMsvcList crdsv1.ProjectManagedServiceList
 	if err := findResourceBelongingToProject(ctx, r.Client, &projectMsvcList, obj.Spec.TargetNamespace); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err).RequeueAfter(500 * time.Millisecond)
 	}
 
 	projectMsvcs := make([]client.Object, len(projectMsvcList.Items))
@@ -156,12 +153,12 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Res
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, projectMsvcs...); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err).RequeueAfter(500 * time.Millisecond)
 	}
 
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, ns); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err).RequeueAfter(500 * time.Millisecond)
 	}
 
 	return check.Completed()
@@ -187,7 +184,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Project]) stepRes
 		ns.Annotations[constants.DescriptionKey] = "this namespace is now being managed by kloudlite project"
 		return nil
 	}); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	return check.Completed()
@@ -199,7 +196,7 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*crdsv1.Project]) s
 
 	var pullSecrets corev1.SecretList
 	if err := r.List(ctx, &pullSecrets, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
-		return check.Failed(err)
+		return check.StillRunning(err)
 	}
 
 	secretNames := make([]string, 0, len(pullSecrets.Items))
@@ -223,7 +220,7 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*crdsv1.Project]) s
 
 	refs, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return check.Failed(err).Err(nil)
+		return check.StillRunning(err)
 	}
 
 	req.AddToOwnedResources(refs...)
