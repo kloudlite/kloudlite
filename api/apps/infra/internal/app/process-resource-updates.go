@@ -33,6 +33,7 @@ func gvk(obj client.Object) string {
 
 var (
 	clusterGVK          = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
+	clusterConnGVK      = fn.GVK("wireguard.kloudlite.io/v1", "ClusterConnection")
 	nodepoolGVK         = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
 	helmreleaseGVK      = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
 	pvcGVK              = fn.GVK("v1", "PersistentVolumeClaim")
@@ -108,6 +109,18 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 					return d.OnClusterDeleteMessage(dctx, clus)
 				}
 				return d.OnClusterUpdateMessage(dctx, clus, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+			}
+		case clusterConnGVK.String():
+			{
+				var np entities.ClusterConnection
+				if err := fn.JsonConversion(su.Object, &np); err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnClusterConnDeleteMessage(dctx, su.ClusterName, np)
+				}
+				return d.OnClusterConnUpdateMessage(dctx, su.ClusterName, np, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case nodepoolGVK.String():
 			{
