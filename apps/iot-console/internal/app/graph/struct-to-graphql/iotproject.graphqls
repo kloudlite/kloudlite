@@ -1,0 +1,29 @@
+type IOTProject @shareable {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type IOTProjectEdge @shareable {
+  cursor: String!
+  node: IOTProject!
+}
+
+type IOTProjectPaginatedRecords @shareable {
+  edges: [IOTProjectEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input IOTProjectIn {
+  displayName: String!
+  name: String!
+}
+
