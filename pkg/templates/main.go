@@ -58,13 +58,24 @@ func Parse(f templateFile, values any) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
+func ParseBytes2(t *template.Template, b []byte, values any) ([]byte, error) {
+	if _, err := t.Parse(string(b)); err != nil {
+		return nil, err
+	}
+	out := new(bytes.Buffer)
+	if err := t.ExecuteTemplate(out, t.Name(), values); err != nil {
+		return nil, errors.NewEf(err, "could not execute template")
+	}
+	return out.Bytes(), nil
+}
+
 func ParseBytes(b []byte, values any) ([]byte, error) {
 	t, err := newTemplate("parse-bytes")
 	if err != nil {
 		return nil, err
 	}
-	//t := template.New("parse-bytes")
-	//t.Funcs(txtFuncs(t))
+	// t := template.New("parse-bytes")
+	// t.Funcs(txtFuncs(t))
 	if _, err := t.Parse(string(b)); err != nil {
 		return nil, err
 	}

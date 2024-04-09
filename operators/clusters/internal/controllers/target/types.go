@@ -4,6 +4,29 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type TFCloudflareParams struct {
+	Enabled  *bool  `json:"enabled"`
+	ApiToken string `json:"api_token"`
+	ZoneId   string `json:"zone_id"`
+	Domain   string `json:"domain"`
+}
+
+type TFKloudliteParams struct {
+	Release          string                 `json:"release"`
+	InstallCRDs      bool                   `json:"install_crds"`
+	InstallCsiDriver bool                   `json:"install_csi_driver"`
+	InstallOperators bool                   `json:"install_operators"`
+	InstallAgent     bool                   `json:"install_agent"`
+	AgentVars        TFKloudliteAgentParams `json:"agent_vars"`
+}
+
+type TFKloudliteAgentParams struct {
+	AccountName           string `json:"account_name"`
+	ClusterName           string `json:"cluster_name"`
+	ClusterToken          string `json:"cluster_token"`
+	MessageOfficeGRPCAddr string `json:"message_office_grpc_addr"`
+}
+
 type AwsClusterTFValues struct {
 	TrackerId     string `json:"tracker_id"`
 	AwsRegion     string `json:"aws_region"`
@@ -27,12 +50,7 @@ type AwsClusterTFValues struct {
 		PublicDNSHost          string `json:"public_dns_host"`
 		ClusterInternalDnsHost string `json:"cluster_internal_dns_host"`
 
-		Cloudflare struct {
-			Enabled  bool   `json:"enabled"`
-			ApiToken string `json:"api_token"`
-			ZoneId   string `json:"zone_id"`
-			Domain   string `json:"domain"`
-		} `json:"cloudflare"`
+		Cloudflare TFCloudflareParams `json:"cloudflare"`
 
 		TaintMasterNodes bool `json:"taint_master_nodes"`
 
@@ -49,17 +67,30 @@ type AwsClusterTFValues struct {
 		} `json:"nodes"`
 	} `json:"k3s_masters"`
 
-  KloudliteParams struct{
-    Release              string `json:"release"`
-    InstallCRDs          bool   `json:"install_crds"`
-    InstallCsiDriver     bool   `json:"install_csi_driver"`
-    InstallOperators     bool   `json:"install_operators"`
-    InstallAgent         bool   `json:"install_agent"`
-    AgentVars struct {
-      AccountName string `json:"account_name"`
-      ClusterName string `json:"cluster_name"`
-      ClusterToken string `json:"cluster_token"`
-      MessageOfficeGRPCAddr string `json:"message_office_grpc_addr"`
-    } `json:"agent_vars"`
-  } `json:"kloudlite_params"`
+	KloudliteParams TFKloudliteParams `json:"kloudlite_params"`
+}
+
+type TFGcpNode struct {
+	AvailabilityZone string `json:"availability_zone"`
+	K3SRole          string `json:"k3s_role"`
+	KloudliteRelease string `json:"kloudlite_release"`
+	BootvolumeType   string `json:"bootvolume_type"`
+	BootvolumeSize   int    `json:"bootvolume_size"`
+}
+
+type GcpClusterTFValues struct {
+	GcpProjectId              string               `json:"gcp_project_id"`
+	GcpRegion                 string               `json:"gcp_region"`
+	GcpCredentialsJson        string               `json:"gcp_credentials_json"`
+	NamePrefix                string               `json:"name_prefix"`
+	ProvisionMode             string               `json:"provision_mode"`
+	Network                   string               `json:"network"`
+	UseAsLonghornStorageNodes bool                 `json:"use_as_longhorn_storage_nodes"`
+	MachineType               string               `json:"machine_type"`
+	Nodes                     map[string]TFGcpNode `json:"nodes"`
+	SaveSshKeyToPath          string               `json:"save_ssh_key_to_path,omitempty"`
+	SaveKubeconfigToPath      string               `json:"save_kubeconfig_to_path,omitempty"`
+	PublicDnsHost             string               `json:"public_dns_host"`
+	Cloudflare                TFCloudflareParams   `json:"cloudflare"`
+	KloudliteParams           TFKloudliteParams    `json:"kloudlite_params"`
 }
