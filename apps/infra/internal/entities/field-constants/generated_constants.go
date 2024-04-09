@@ -65,6 +65,16 @@ const (
 	BYOKClusterClusterTokenRefKey                  = "clusterTokenRef.key"
 	BYOKClusterClusterTokenRefName                 = "clusterTokenRef.name"
 	BYOKClusterClusterTokenRefNamespace            = "clusterTokenRef.namespace"
+	BYOKClusterGcp                                 = "gcp"
+	BYOKClusterGcpCredentialsRef                   = "gcp.credentialsRef"
+	BYOKClusterGcpCredentialsRefName               = "gcp.credentialsRef.name"
+	BYOKClusterGcpCredentialsRefNamespace          = "gcp.credentialsRef.namespace"
+	BYOKClusterGcpGcpProjectID                     = "gcp.gcpProjectID"
+	BYOKClusterGcpMasterNodes                      = "gcp.masterNodes"
+	BYOKClusterGcpMasterNodesNodes                 = "gcp.masterNodes.nodes"
+	BYOKClusterGcpMasterNodesRootVolumeSize        = "gcp.masterNodes.rootVolumeSize"
+	BYOKClusterGcpMasterNodesRootVolumeType        = "gcp.masterNodes.rootVolumeType"
+	BYOKClusterGcpRegion                           = "gcp.region"
 	BYOKClusterKloudliteRelease                    = "kloudliteRelease"
 	BYOKClusterMessageQueueTopicName               = "messageQueueTopicName"
 	BYOKClusterOutput                              = "output"
@@ -97,6 +107,8 @@ const (
 	CloudProviderSecretAwsCfParamRoleName                   = "aws.cfParamRoleName"
 	CloudProviderSecretAwsCfParamStackName                  = "aws.cfParamStackName"
 	CloudProviderSecretCloudProviderName                    = "cloudProviderName"
+	CloudProviderSecretGcp                                  = "gcp"
+	CloudProviderSecretGcpServiceAccountJSON                = "gcp.serviceAccountJSON"
 )
 
 // constant vars generated for struct Cluster
@@ -132,6 +144,16 @@ const (
 	ClusterSpecClusterTokenRefKey                  = "spec.clusterTokenRef.key"
 	ClusterSpecClusterTokenRefName                 = "spec.clusterTokenRef.name"
 	ClusterSpecClusterTokenRefNamespace            = "spec.clusterTokenRef.namespace"
+	ClusterSpecGcp                                 = "spec.gcp"
+	ClusterSpecGcpCredentialsRef                   = "spec.gcp.credentialsRef"
+	ClusterSpecGcpCredentialsRefName               = "spec.gcp.credentialsRef.name"
+	ClusterSpecGcpCredentialsRefNamespace          = "spec.gcp.credentialsRef.namespace"
+	ClusterSpecGcpGcpProjectID                     = "spec.gcp.gcpProjectID"
+	ClusterSpecGcpMasterNodes                      = "spec.gcp.masterNodes"
+	ClusterSpecGcpMasterNodesNodes                 = "spec.gcp.masterNodes.nodes"
+	ClusterSpecGcpMasterNodesRootVolumeSize        = "spec.gcp.masterNodes.rootVolumeSize"
+	ClusterSpecGcpMasterNodesRootVolumeType        = "spec.gcp.masterNodes.rootVolumeType"
+	ClusterSpecGcpRegion                           = "spec.gcp.region"
 	ClusterSpecKloudliteRelease                    = "spec.kloudliteRelease"
 	ClusterSpecMessageQueueTopicName               = "spec.messageQueueTopicName"
 	ClusterSpecOutput                              = "spec.output"
@@ -189,6 +211,11 @@ const (
 // constant vars generated for struct DomainEntry
 const (
 	DomainEntryDomainName = "domainName"
+)
+
+// constant vars generated for struct GCPSecretCredentials
+const (
+	GCPSecretCredentialsServiceAccountJSON = "serviceAccountJSON"
 )
 
 // constant vars generated for struct HelmRelease
@@ -306,6 +333,7 @@ const (
 	NodePoolSpecGcpCredentials                      = "spec.gcp.credentials"
 	NodePoolSpecGcpCredentialsName                  = "spec.gcp.credentials.name"
 	NodePoolSpecGcpCredentialsNamespace             = "spec.gcp.credentials.namespace"
+	NodePoolSpecGcpGcpProjectID                     = "spec.gcp.gcpProjectID"
 	NodePoolSpecGcpMachineType                      = "spec.gcp.machineType"
 	NodePoolSpecGcpNodes                            = "spec.gcp.nodes"
 	NodePoolSpecGcpPoolType                         = "spec.gcp.poolType"

@@ -50,11 +50,6 @@ var Module = fx.Module("app",
 				return fiber.ErrUpgradeRequired
 			})
 
-			// a.Use("/ws", websocket.New(func(c *websocket.Conn) {
-			// 	if err := d.HandleWebSocket(context.TODO(), c); err != nil {
-			// 		logr.Errorf(err, "while handling websocket for resource update")
-			// 	}
-			// }))
 			a.Use("/ws", func(c *fiber.Ctx) error {
 				ctx := c.Context()
 
