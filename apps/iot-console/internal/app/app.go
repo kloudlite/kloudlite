@@ -15,13 +15,13 @@ import (
 	"github.com/kloudlite/api/pkg/errors"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 )
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.IOTProject]("projects", "prj", entities.IOTProjectIndexes),
-	repos.NewFxMongoRepo[*entities.IOTEnvironment]("environments", "env", entities.IOTEnvironmentIndexes),
 	repos.NewFxMongoRepo[*entities.IOTDeployment]("deployments", "depl", entities.IOTDeploymentIndexes),
 	repos.NewFxMongoRepo[*entities.IOTDevice]("devices", "dev", entities.IOTDeviceIndexes),
 	repos.NewFxMongoRepo[*entities.IOTDeviceBlueprint]("device_blueprints", "devblueprint", entities.IOTDeviceBlueprintIndexes),
@@ -83,4 +83,13 @@ var Module = fx.Module("app",
 	),
 
 	domain.Module,
+
+	fx.Invoke(func(server httpServer.Server, envs *env.Env, d domain.Domain, logger logging.Logger) {
+
+		a := server.Raw()
+
+		a.Get("/healthy", func(c *fiber.Ctx) error {
+			return c.SendString("OK")
+		})
+	}),
 )

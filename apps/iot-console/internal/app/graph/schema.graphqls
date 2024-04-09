@@ -8,13 +8,6 @@ input SearchIOTProjects {
     markedForDeletion: MatchFilterIn
 }
 
-input SearchIOTEnvironments {
-    text: MatchFilterIn
-    projectName: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
-}
-
 input SearchIOTDeployments {
     text: MatchFilterIn
     isReady: MatchFilterIn
@@ -43,20 +36,20 @@ type Query {
     iot_listProjects(search: SearchIOTProjects, pq: CursorPaginationIn): IOTProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
     iot_getProject(name: String!): IOTProject @isLoggedInAndVerified @hasAccount
 
-    iot_listEnvironments(projectName: String!,search: SearchIOTEnvironments, pq: CursorPaginationIn): IOTEnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
-    iot_getEnvironment(projectName: String!, name: String!): IOTEnvironment @isLoggedInAndVerified @hasAccount
+    iot_listDevices(projectName: String!, deviceBlueprintName: String!, search: SearchIOTDevices, pq: CursorPaginationIn): IOTDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    iot_getDevice(projectName: String!, deviceBlueprintName: String!,  name: String!): IOTDevice @isLoggedInAndVerified @hasAccount
 
-    iot_listDevices(projectName: String!, envName: String!,search: SearchIOTDevices, pq: CursorPaginationIn): IOTDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    iot_getDevice(projectName: String!, envName: String!, name: String!): IOTDevice @isLoggedInAndVerified @hasAccount
+    iot_listDeploymentDevices(projectName: String!, deploymentName: String!, search: SearchIOTDevices, pq: CursorPaginationIn): IOTDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    iot_getDeploymentDevice(projectName: String!, deploymentName: String!,  name: String!): IOTDevice @isLoggedInAndVerified @hasAccount
 
-    iot_listDeviceBlueprints(projectName: String!, envName: String!,search: SearchIOTDeviceBlueprints, pq: CursorPaginationIn): IOTDeviceBlueprintPaginatedRecords @isLoggedInAndVerified @hasAccount
-    iot_getDeviceBlueprint(projectName: String!, envName: String!, name: String!): IOTDeviceBlueprint @isLoggedInAndVerified @hasAccount
+    iot_listDeviceBlueprints(projectName: String!,search: SearchIOTDeviceBlueprints, pq: CursorPaginationIn): IOTDeviceBlueprintPaginatedRecords @isLoggedInAndVerified @hasAccount
+    iot_getDeviceBlueprint(projectName: String!, name: String!): IOTDeviceBlueprint @isLoggedInAndVerified @hasAccount
 
-    iot_listDeployments(projectName: String!, envName: String!,search: SearchIOTDeployments, pq: CursorPaginationIn): IOTDeploymentPaginatedRecords @isLoggedInAndVerified @hasAccount
-    iot_getDeployment(projectName: String!, envName: String!, name: String!): IOTDeployment @isLoggedInAndVerified @hasAccount
+    iot_listDeployments(projectName: String!,search: SearchIOTDeployments, pq: CursorPaginationIn): IOTDeploymentPaginatedRecords @isLoggedInAndVerified @hasAccount
+    iot_getDeployment(projectName: String!, name: String!): IOTDeployment @isLoggedInAndVerified @hasAccount
 
-    iot_listApps(projectName: String!, envName: String!, deviceBlueprintName: String!,search: SearchIOTApps, pq: CursorPaginationIn): IOTAppPaginatedRecords @isLoggedInAndVerified @hasAccount
-    iot_getApp(projectName: String!, envName: String!, deviceBlueprintName: String!, name: String!): IOTApp @isLoggedInAndVerified @hasAccount
+    iot_listApps(projectName: String!, deviceBlueprintName: String!,search: SearchIOTApps, pq: CursorPaginationIn): IOTAppPaginatedRecords @isLoggedInAndVerified @hasAccount
+    iot_getApp(projectName: String!, deviceBlueprintName: String!, name: String!): IOTApp @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -64,23 +57,22 @@ type Mutation {
     iot_updateProject(project: IOTProjectIn!): IOTProject @isLoggedInAndVerified @hasAccount
     iot_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    iot_createEnvironment(projectName: String!,env: IOTEnvironmentIn!): IOTEnvironment @isLoggedInAndVerified @hasAccount
-    iot_updateEnvironment(projectName: String!,env: IOTEnvironmentIn!): IOTEnvironment @isLoggedInAndVerified @hasAccount
-    iot_deleteEnvironment(projectName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    iot_createDevice(projectName: String!, deviceBlueprintName: String!, device: IOTDeviceIn!): IOTDevice @isLoggedInAndVerified @hasAccount
+    iot_updateDevice(projectName: String!, deviceBlueprintName: String!, device: IOTDeviceIn!): IOTDevice @isLoggedInAndVerified @hasAccount
+    iot_deleteDevice(projectName: String!, deviceBlueprintName: String!,name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    iot_createDevice(projectName: String!, envName: String!,  device: IOTDeviceIn!): IOTDevice @isLoggedInAndVerified @hasAccount
-    iot_updateDevice(projectName: String!, envName: String!,  device: IOTDeviceIn!): IOTDevice @isLoggedInAndVerified @hasAccount
-    iot_deleteDevice(projectName: String!, envName: String!,name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    iot_addDeviceToDeployment(projectName: String!,deploymentName: String!, deviceName: String!, deviceBlueprintName: String!): IOTDevice @isLoggedInAndVerified @hasAccount
+    iot_removeDeviceOfDeployment(projectName: String!,deploymentName: String!, deviceName: String!, deviceBlueprintName: String!): IOTDevice @isLoggedInAndVerified @hasAccount
 
-    iot_createDeviceBlueprint(projectName: String!, envName: String!, deviceBlueprint: IOTDeviceBlueprintIn!): IOTDeviceBlueprint @isLoggedInAndVerified @hasAccount
-    iot_updateDeviceBlueprint(projectName: String!, envName: String!, deviceBlueprint: IOTDeviceBlueprintIn!): IOTDeviceBlueprint @isLoggedInAndVerified @hasAccount
-    iot_deleteDeviceBlueprint(projectName: String!, envName: String!,name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    iot_createDeviceBlueprint(projectName: String!, deviceBlueprint: IOTDeviceBlueprintIn!): IOTDeviceBlueprint @isLoggedInAndVerified @hasAccount
+    iot_updateDeviceBlueprint(projectName: String!, deviceBlueprint: IOTDeviceBlueprintIn!): IOTDeviceBlueprint @isLoggedInAndVerified @hasAccount
+    iot_deleteDeviceBlueprint(projectName: String!,name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    iot_createDeployment(projectName: String!, envName: String!, deployment: IOTDeploymentIn!): IOTDeployment @isLoggedInAndVerified @hasAccount
-    iot_updateDeployment(projectName: String!, envName: String!, deployment: IOTDeploymentIn!): IOTDeployment @isLoggedInAndVerified @hasAccount
-    iot_deleteDeployment(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    iot_createDeployment(projectName: String!, deployment: IOTDeploymentIn!): IOTDeployment @isLoggedInAndVerified @hasAccount
+    iot_updateDeployment(projectName: String!, deployment: IOTDeploymentIn!): IOTDeployment @isLoggedInAndVerified @hasAccount
+    iot_deleteDeployment(projectName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    iot_createApp(projectName: String!, envName: String!, deviceBlueprintName: String!, app: IOTAppIn!): IOTApp @isLoggedInAndVerified @hasAccount
-    iot_updateApp(projectName: String!, envName: String!, deviceBlueprintName: String!, app: IOTAppIn!): IOTApp @isLoggedInAndVerified @hasAccount
-    iot_deleteApp(projectName: String!, envName: String!, deviceBlueprintName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    iot_createApp(projectName: String!, deviceBlueprintName: String!, app: IOTAppIn!): IOTApp @isLoggedInAndVerified @hasAccount
+    iot_updateApp(projectName: String!, deviceBlueprintName: String!, app: IOTAppIn!): IOTApp @isLoggedInAndVerified @hasAccount
+    iot_deleteApp(projectName: String!, deviceBlueprintName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
