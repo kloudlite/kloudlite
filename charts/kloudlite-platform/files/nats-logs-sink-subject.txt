@@ -2,5 +2,6 @@ logs.
 {{- printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/observability.account.name" -}}.
 {{- printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/observability.cluster.name" -}}.
 {{- printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/observability.tracking.id" -}}.
+{{- printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/observability.record-version" -}}.
 {{- printf "{{kubernetes.pod_name}}" -}}.
 {{- printf "{{kubernetes.container_name}}" }}

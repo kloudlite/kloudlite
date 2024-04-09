@@ -18,7 +18,7 @@ spec:
     enabled: true
     forceRedirect: true
   routes:
-    - app: console-api
+    - app: observability-api
       path: /
-      port: 9100
+      port: 80
 ---

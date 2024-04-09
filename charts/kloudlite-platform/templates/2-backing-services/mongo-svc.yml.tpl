@@ -20,6 +20,9 @@ spec:
     storage:
       size: {{.Values.mongo.configuration.volumeSize}}
       storageClass: sc-xfs
+output:
+  credentialsRef:
+    name: msvc-{{$name}}-creds
 {{ else }}
 apiVersion: mongodb.msvc.kloudlite.io/v1
 kind: StandaloneService
@@ -39,5 +42,8 @@ spec:
     storage:
       size: {{.Values.mongo.configuration.volumeSize}}
       storageClass: sc-xfs
+output:
+  credentialsRef:
+    name: msvc-{{$name}}-creds
 {{- end }}
 ---

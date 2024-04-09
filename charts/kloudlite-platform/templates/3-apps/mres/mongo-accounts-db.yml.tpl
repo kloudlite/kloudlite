@@ -13,4 +13,6 @@ spec:
     {{- end }}
     name: mongo-svc
     namespace: {{.Release.Namespace}}
-  resourceName: accounts-db
+output:
+  credentialsRef:
+    name: mres-{{.Values.envVars.db.accountsDB}}-creds

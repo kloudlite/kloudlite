@@ -3,27 +3,38 @@
 
 apiVersion: v1
 data:
+  gcp-credentials.json: |+
+    {{.Values.distribution.storage.gcs.keyfileJson}}
   config.yml: |-
     version: 0.1
     log:
+      level: debug
       fields:
         service: registry
     storage:
       delete:
         enabled: true
 
-      {{if .Values.distribution.s3.enabled }}
+      {{- if eq .Values.distribution.storage.driver "gcs"}}
+      gcs:
+        bucket: {{.Values.distribution.storage.gcs.bucket}}
+        keyfile: /etc/docker/registry/gcp-credentials.json
+      {{- end }}
+
+      {{if eq .Values.distribution.storage.driver "s3" }}
       s3:
-        accesskey: {{ .Values.distribution.s3.accessKey }}
-        secretkey: {{ .Values.distribution.s3.secretKey }}
-        region: {{ .Values.distribution.s3.region }}
-        bucket: {{ .Values.distribution.s3.bucketName }}
-        {{ if .Values.distribution.s3.endpoint }}
-        regionendpoint: {{ .Values.distribution.s3.endpoint }}
+        accesskey: {{ .Values.distribution.storage.s3.accessKey }}
+        secretkey: {{ .Values.distribution.storage.s3.secretKey }}
+        region: {{ .Values.distribution.storage.s3.region }}
+        bucket: {{ .Values.distribution.storage.s3.bucketName }}
+        {{ if .Values.distribution.storage.s3.endpoint }}
+        regionendpoint: {{ .Values.distribution.storage.s3.endpoint }}
         {{end}}
-      {{else}}
-      filesystem:
-        rootdirectory: /var/lib/registry
+        v4Auth: false
+        secure: true
+      {{- /* {{else}} */}}
+      {{- /* filesystem: */}}
+      {{- /*   rootdirectory: /var/lib/registry */}}
       {{end}}
 
     http:

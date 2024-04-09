@@ -81,33 +81,22 @@ ingressController:
 
 nodepools:
   stateless:
-    min: 2
-    max: 2
     labels:
       kloudlite.io/nodepool.role: "stateless"
-    aws:
-      vpcId: ""
-      vpcSubnetId: ""
-
-    taints: []
+    tolerations: []
     # taints
     #   - key: "kloudlite.io/nodepool.role"
     #     value: "stateless"
     #     effect: "NoExecute"
-    tolerations:
-      - key: "kloudlite.io/nodepool.role"
-        operator: "Equal"
-        value: "stateless"
-        effect: "NoExecute"
+    # tolerations:
+    #   - key: "kloudlite.io/nodepool.role"
+    #     operator: "Equal"
+    #     value: "stateless"
+    #     effect: "NoExecute"
 
   stateful:
-    min: 2
-    max: 2
     labels:
       kloudlite.io/nodepool.role: "stateful"
-    aws:
-      vpcId: ""
-      vpcSubnetId: ""
     taints:
       - key: "kloudlite.io/nodepool.role"
         value: "stateful"
@@ -118,12 +107,6 @@ nodepools:
         value: "stateful"
         effect: "NoExecute"
   iac:
-    enabled: true
-    min: 2
-    max: 10
-    aws:
-      vpcId: ""
-      vpcSubnetId: ""
     labels:
       kloudlite.io/nodepool.role: "iac"
     taints:
@@ -219,14 +202,22 @@ distribution:
   secret: <distribution-secret>
   tls:
     enabled: true
-  s3:
-    enabled: false
+  storage:
+    # -- should be one of gcs or s3
+    driver: "" 
 
-    bucketName: ""
-    endpoint: ""
-    accessKey: ""
-    secretKey: ""
-    region: ""
+    gcs:
+      bucket: ""
+      keyfileJson: ""
+
+    s3:
+      enabled: false
+
+      bucketName: ""
+      endpoint: ""
+      accessKey: ""
+      secretKey: ""
+      region: ""
 
 mongo:
   # rootPassword: <mongo-root-password>
@@ -246,6 +237,9 @@ persistence:
     ext4: sc-ext4
     # -- xfs storage class name
     xfs: sc-xfs
+
+longhorn:
+  enabled: false
 
 # Configs & Secrets
 oAuth:
@@ -328,23 +322,31 @@ apps:
       # repository: ghcr.io/kloudlite/api/websocket-server
       repository: ghcr.io/kloudlite/kloudlite/api/websocket-server
       tag: ""
+    configuration:
+      replicas: 1
 
   authApi:
     # -- image (with tag) for auth api
     image: 
       repository: ghcr.io/kloudlite/kloudlite/api/auth
       tag: ""
+    configuration:
+      replicas: 1
 
   klInstaller:
     image:
       repository: ghcr.io/kloudlite/bin-installer
       tag: ""
+    configuration:
+      replicas: 1
 
   commsApi:
     # -- image (with tag) for comms api
     image:
       repository: ghcr.io/kloudlite/kloudlite/api/comms
       tag: ""
+    configuration:
+      replicas: 1
 
   consoleApi:
     # -- image (with tag) for console api
@@ -354,31 +356,40 @@ apps:
     configuration:
       logsAndMetricsHttpPort: 9100
       vpnDeviceNamespace: "kl-vpn-devices"
+
+      replicas: 1
         
   accountsApi:
     # -- image (with tag) for accounts api
     image: 
       repository: ghcr.io/kloudlite/kloudlite/api/accounts
       tag: ""
+    configuration:
+      replicas: 1
 
   iamApi:
     image:
       repository: ghcr.io/kloudlite/kloudlite/api/iam
       tag: ""
+    configuration:
+      replicas: 1
 
   infraApi:
     # -- image (with tag) for infra api
     image:
       repository: ghcr.io/kloudlite/kloudlite/api/infra
       tag: ""
-
     configuration:
+      replicas: 1
       kloudliteRelease: ""
 
   gatewayApi:
     image:
       repository: ghcr.io/kloudlite/kloudlite/api/gateway
       tag: ""
+    configuration:
+      replicas: 1
+
 
   containerRegistryApi:
     # -- image (with tag) for container registry api
@@ -387,6 +398,8 @@ apps:
       tag: ""
 
     configuration:
+      replicas: 1
+
       # -- (number) port on which container registry event listener should listen
       eventListenerPort: 4001
       registrySecret: ""
@@ -402,12 +415,16 @@ apps:
     image: 
       repository: ghcr.io/kloudlite/kloudlite/api/worker-audit-logging
       tag: ""
+    configuration:
+      replicas: 1
 
   webhooksApi:
     # -- image (with tag) for webhooks api
     image: 
       repository: ghcr.io/kloudlite/kloudlite/api/webhook
       tag: ""
+    configuration:
+      replicas: 1
 
   messageOfficeApi:
     # -- image (with tag) for message office api
@@ -416,6 +433,8 @@ apps:
       tag: ""
 
     configuration:
+      replicas: 1
+
       # @ignored
       externalGrpcPort: 3001
 
@@ -427,12 +446,31 @@ apps:
       tokenHashingSecret: ""
       platformAccessToken: "sample"
 
+  observabilityApi:
+    image:
+      repository: "ghcr.io/kloudlite/kloudlite/api/observability"
+      tag: ""
+    configuration:
+      replicas: 1
+
+  iotConsoleApi:
+    image:
+      repository: "ghcr.io/kloudlite/kloudlite/api/iot-console-api"
+      tag: ""
+    configuration:
+      replicas: 1
+
   consoleWeb:
     enabled: true
     # -- image (with tag) for console web
     image: 
       repository: ghcr.io/kloudlite/kloudlite/web/console
       tag: ""
+    configuration:
+      replicas: 1
+
+      artifactHubKeyID: ""
+      artifactHubKeySecret: ""
 
   authWeb:
     enabled: true
@@ -440,6 +478,9 @@ apps:
     image:
       repository: ghcr.io/kloudlite/kloudlite/web/auth
       tag: ""
+    configuration:
+      replicas: 1
+
 
 operators:
   preferOperatorsOnMasterNodes: true
@@ -503,6 +544,7 @@ envVars:
   db:
     authDB: auth-db
     consoleDB: console-db
+    iotConsoleDB: "iot-console-db"
     accountsDB: accounts-db
     registryDB: registry-db
     eventsDB: events-db
@@ -539,6 +581,9 @@ envVars:
         storage: file
       consoleCacheBucket:
         name: console-cache
+        storage: file
+      iotConsoleCacheBucket:
+        name: iot-console-cache
         storage: file
       resetTokenBucket:
         name: reset-token

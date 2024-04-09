@@ -1,4 +1,4 @@
-{{- if .Values.nodepools.iac.enabled }}
+{{- if (and .Values.nodepools.enabled .Values.nodepools.iac.enabled) }}
 apiVersion: clusters.kloudlite.io/v1
 kind: NodePool
 metadata:

@@ -1,3 +1,5 @@
+{{- $appName := "console-api" }}
+
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
@@ -6,9 +8,15 @@ metadata:
 spec:
   serviceAccount: {{.Values.global.clusterSvcAccount}}
 
-  tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 4}}
-  nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 4}}
+  nodeSelector: {{include "stateless-node-selector" . | nindent 4 }}
+  tolerations: {{include "stateless-tolerations" . | nindent 4 }}
   
+  topologySpreadConstraints:
+    {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
+    {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
+
+  replicas: {{.Values.apps.consoleApi.configuration.replicas}}
+
   services:
     - port: 80
       targetPort: 3000
@@ -88,7 +96,7 @@ spec:
           value: http://{{ .Values.loki.name }}.{{.Release.Namespace}}.svc.{{.Values.global.clusterInternalDNS}}:3100
 
         - key: PROM_HTTP_ADDR
-          value: http://vmselect-{{ .Values.victoriaMetrics.name }}.{{.Release.Namespace}}.svc.{{.Values.global.clusterInternalDNS}}:8481/select/0/prometheus
+          value: {{include "prom-http-addr" .}}
 
         - key: DEVICE_NAMESPACE
           value: {{.Values.apps.consoleApi.configuration.vpnDeviceNamespace}}

@@ -1,9 +1,9 @@
-{{- $appName := "websocket-api" }}
+{{- $appName := "observability-api" }}
 
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
-  name: websocket-api
+  name: observability-api
   namespace: {{.Release.Namespace}}
 spec:
   serviceAccount: {{ .Values.global.clusterSvcAccount }}
@@ -15,7 +15,7 @@ spec:
     {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
     {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
-  replicas: {{.Values.apps.websocketApi.configuration.replicas}}
+  replicas: {{.Values.apps.observabilityApi.configuration.replicas}}
 
   services:
     - port: 80
@@ -25,7 +25,7 @@ spec:
 
   containers:
     - name: main
-      image: {{.Values.apps.websocketApi.image.repository}}:{{.Values.apps.websocketApi.image.tag | default (include "image-tag" .) }}
+      image: {{.Values.apps.observabilityApi.image.repository}}:{{.Values.apps.observabilityApi.image.tag | default (include "image-tag" .) }}
       imagePullPolicy: {{ include "image-pull-policy" .}}
       resourceCpu:
         min: "50m"
@@ -34,7 +34,7 @@ spec:
         min: "80Mi"
         max: "120Mi"
       env:
-        - key: SOCKET_PORT
+        - key: HTTP_PORT
           value: "3000"
 
         - key: IAM_GRPC_ADDR
@@ -46,5 +46,8 @@ spec:
         - key: NATS_URL
           value: {{.Values.envVars.nats.url}}
 
-        - key: COOKIE_DOMAIN
-          value: "{{.Values.global.cookieDomain}}"
+        - key: ACCOUNT_COOKIE_NAME
+          value: {{.Values.global.accountCookieName}}
+
+        - key: PROM_HTTP_ADDR
+          value: {{ include "prom-http-addr" .}}
