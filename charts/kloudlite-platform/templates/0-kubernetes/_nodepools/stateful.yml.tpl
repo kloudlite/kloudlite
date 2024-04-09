@@ -1,3 +1,4 @@
+{{- if .Values.nodepools.enabled }}
 apiVersion: clusters.kloudlite.io/v1
 kind: NodePool
 metadata:
@@ -30,3 +31,4 @@ spec:
     poolType: ec2
     ec2Pool:
       instanceType: c6a.xlarge
+{{- end }}

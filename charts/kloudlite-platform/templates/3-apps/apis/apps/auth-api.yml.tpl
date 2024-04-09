@@ -1,3 +1,5 @@
+{{- $appName := "auth-api" }}
+
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
@@ -7,9 +9,15 @@ metadata:
     kloudlite.io/checksum.oauth-secrets: {{ include (print $.Template.BasePath "/3-apps/apis/secrets/oauth-secrets.yml.tpl") . | sha256sum }}
 spec:
   serviceAccount: {{ .Values.global.clusterSvcAccount }}
-  tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 4}}
-  nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 4}}
 
+  nodeSelector: {{ include "stateless-node-selector" . | nindent 4 }}
+  tolerations: {{ include "stateless-tolerations" . | nindent 4 }}
+  
+  topologySpreadConstraints:
+    {{- include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
+    {{- include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
+
+  replicas: {{.Values.apps.authApi.configuration.replicas }}
   services:
     - port: 80
       targetPort: 3000

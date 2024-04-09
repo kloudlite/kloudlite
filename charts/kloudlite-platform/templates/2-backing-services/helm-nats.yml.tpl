@@ -49,7 +49,7 @@ spec:
           user: {{.Values.nats.configuration.user}}
           password: {{.Values.nats.configuration.password}}
           useFQDN: true
-          k8sClusterDomain: {{.Values.clusterInternalDNS}}
+          k8sClusterDomain: {{.Values.global.clusterInternalDNS}}
 
       jetstream:
         enabled: true

@@ -18,5 +18,9 @@ spec:
     - name: main
       image: {{.Values.apps.klInstaller.image.repository}}:{{.Values.apps.klInstaller.image.tag | default (include "image-tag" .) }}
       imagePullPolicy: {{ include "image-pull-policy" .}}
-      
+      env:
+        - key: DEFAULT_USER
+          value: "kloudlite"
 
+        - key: FORCE_USER
+          value: "kloudlite"

@@ -27,23 +27,6 @@ tolerations: {{ include "tolerations" . | nindent 2 }}
 {{- printf "%s-tls" .Values.cloudflareWildCardCert.name }}
 {{- end -}}
 
-{{- /* {{- define "build-router-domain" -}} */}}
-{{- /* {{- $name := index . 0 -}} */}}
-{{- /* {{- $baseDomain := index . 1 -}} */}}
-{{- /* {{- printf "%s.%s" $name $baseDomain -}} */}}
-{{- /* {{- end -}} */}}
-
-{{/* [helm: redpanda-operator] */}}
-{{- /* {{- define "redpanda-operator.name" -}} */}}
-{{- /* {{- printf "%s-redpanda-operator" .Release.Name -}} */}}
-{{- /* {{- end -}} */}}
-
-{{/* [helm: cert-manager] */}}
-{{- /* {{- define "cert-manager.name" -}} */}}
-{{- /* {{- printf "%s-cert-manager" .Release.Name -}} */}}
-{{- /* {{- end -}} */}}
-{{- /**/}}
-
 {{/* helm: ingress-nginx */}}
 {{- define "ingress-nginx.name" -}}
 {{- printf "%s-ingress-nginx" .Release.Name -}}
@@ -131,4 +114,52 @@ node-role.kubernetes.io/master: "true"
 
 {{- define "has-aws-vpc" -}}
 {{ and .Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.readFromCluster (eq .Values.operators.platformOperator.configuration.nodepools.cloudproviderName "aws") }}
+{{- end -}}
+
+{{- define "stateless-node-selector" -}}
+{{.Values.nodepools.stateless.labels | toYaml}}
+{{- end -}}
+
+{{- define "stateful-node-selector" -}}
+{{.Values.nodepools.stateful.labels | toYaml}}
+{{- end -}}
+
+{{- define "iac-node-selector" -}}
+{{.Values.nodepools.iac.labels | toYaml}}
+{{- end -}}
+
+{{- define "stateless-tolerations" -}}
+{{.Values.nodepools.stateless.tolerations | toYaml}}
+{{- end -}}
+
+{{- define "stateful-tolerations" -}}
+{{.Values.nodepools.stateful.tolerations | toYaml}}
+{{- end -}}
+
+{{- define "iac-tolerations" -}}
+{{.Values.nodepools.iac.tolerations | toYaml}}
+{{- end -}}
+
+{{- define "tsc-nodepool" -}}
+- maxSkew: 1
+  topologyKey: kloudlite.io/nodepool.name
+  whenUnsatisfiable: DoNotSchedule
+  nodeAffinityPolicy: Honor
+  nodeTaintsPolicy: Honor
+  labelSelector:
+    matchLabels: {{ . | toYaml | nindent 6 }}
+{{- end -}}
+
+{{- define "tsc-hostname" -}}
+- maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: DoNotSchedule
+  nodeAffinityPolicy: Honor
+  nodeTaintsPolicy: Honor
+  labelSelector:
+    matchLabels: {{ . | toYaml | nindent 6 }}
+{{- end -}}
+
+{{- define "prom-http-addr" -}}
+http://vmselect-{{ $.Values.victoriaMetrics.name }}.{{$.Release.Namespace}}.svc.{{$.Values.global.clusterInternalDNS}}:8481/select/0/prometheus
 {{- end -}}

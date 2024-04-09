@@ -22,6 +22,7 @@ stringData:
   GITHUB_CLIENT_ID: {{.Values.oAuth.providers.github.clientId |squote}}
   GITHUB_CLIENT_SECRET: {{.Values.oAuth.providers.github.clientSecret| squote}}
   GITHUB_APP_ID: {{.Values.oAuth.providers.github.appId | squote}}
+  GITHUB_APP_NAME: {{.Values.oAuth.providers.github.githubAppName | squote}}
   GITHUB_SCOPES: "user:email,admin:org"
   {{- end }}
 

@@ -53,18 +53,19 @@
   value: {{ .Values.apps.infraApi.configuration.kloudliteRelease | default (include "image-tag" .) }}
 {{- end }}
 
-{{- if (and .Values.operators.platformOperator.configuration.nodepools.enabled (include "has-aws-vpc" .)) }}
-- name: AWS_VPC_ID
-  valueFrom:
-    secretKeyRef:
-      name: {{.Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.name}}
-      key: {{.Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcId}}
-
-- name: AWS_VPC_PUBLIC_SUBNETS
-  valueFrom:
-    secretKeyRef:
-      name: {{.Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.name}}
-      key: {{.Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcPublicSubnets}}
-{{- end }}
+{{- /* {{- if (and .Values.operators.platformOperator.configuration.nodepools.enabled (include "has-aws-vpc" .)) }} */}}
+{{- /* - name: AWS_VPC_ID */}}
+{{- /*   value: "" */}}
+{{- /*   valueFrom: */}}
+{{- /*     secretKeyRef: */}}
+{{- /*       name: {{.Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.name}} */}}
+{{- /*       key: {{.Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcId}} */}}
+{{- /**/}}
+{{- /* - name: AWS_VPC_PUBLIC_SUBNETS */}}
+{{- /*   valueFrom: */}}
+{{- /*     secretKeyRef: */}}
+{{- /*       name: {{.Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.name}} */}}
+{{- /*       key: {{.Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcPublicSubnets}} */}}
+{{- /* {{- end }} */}}
 
 {{- end}}

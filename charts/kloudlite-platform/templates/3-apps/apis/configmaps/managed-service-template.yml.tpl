@@ -315,29 +315,29 @@ data:
               label: Redis ROOT Uri
           resources:
             - apiVersion: redis.msvc.kloudlite.io/v1
-              kind: ACLAccount
-              name: ACLAccount
+              kind: Prefix
+              name: kp
+              displayName: "Key Prefix"
               fields:
-                # - name: name
-                #   label: ACL Account Name
-
                 - name: prefix
                   label: Redis Key Prefix
+                  inputType: String
+                  required: true
               outputs:
                 - name: HOSTS
                   label: Redis Hosts
-
-                - name: PREFIX
-                  label: Redis Prefix
-
-                - name: URI
-                  label: Redis Connection URI
 
                 - name: USERNAME
                   label: Redis User
 
                 - name: PASSWORD
                   label: Redis User Password
+
+                - name: PREFIX
+                  label: Redis Prefix
+
+                - name: URI
+                  label: Redis Connection URI
 
           active: true
 

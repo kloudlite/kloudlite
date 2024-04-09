@@ -1,3 +1,4 @@
+{{- if .Values.nodepools.enabled }}
 apiVersion: clusters.kloudlite.io/v1
 kind: NodePool
 metadata:
@@ -29,3 +30,4 @@ spec:
         memoryPerVcpu:
           min: "2"
           max: "2"
+{{- end }}

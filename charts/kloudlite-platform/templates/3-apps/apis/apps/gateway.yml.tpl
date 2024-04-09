@@ -1,3 +1,5 @@
+{{- $appName := "gateway" }}
+
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
@@ -8,10 +10,15 @@ metadata:
 spec:
   serviceAccount: {{.Values.global.normalSvcAccount}}
 
-  tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 4}}
-  nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 4}}
-
+  nodeSelector: {{include "stateless-node-selector" . | nindent 4 }}
+  tolerations: {{include "stateless-tolerations" . | nindent 4 }}
   
+  topologySpreadConstraints:
+    {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
+    {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
+
+  replicas: {{.Values.apps.gatewayApi.configuration.replicas}}
+
   services:
     - port: 80
       targetPort: 3000
@@ -31,8 +38,8 @@ spec:
         - key: SUPERGRAPH_CONFIG
           value: /kloudlite/config
       resourceCpu:
-        min: 80m
-        max: 200m
+        min: 100m
+        max: 1000m
       resourceMemory:
         min: 200Mi
         max: 300Mi
@@ -47,7 +54,7 @@ spec:
         httpGet:
           path: /healthz 
           port: 3000
-        initialDelay: 20
+        initialDelay: 7
         interval: 10
 
       readinessProbe:
@@ -55,5 +62,5 @@ spec:
         httpGet:
           path: /healthz
           port: 3000
-        initialDelay: 20
+        initialDelay: 7
         interval: 10

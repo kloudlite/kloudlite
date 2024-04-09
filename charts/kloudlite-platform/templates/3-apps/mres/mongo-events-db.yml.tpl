@@ -13,4 +13,6 @@ spec:
     {{- end }}
     name: mongo-svc
     namespace: {{.Release.Namespace}}
-  resourceName: events-db
+output:
+  credentialsRef:
+    name: mres-{{.Values.envVars.db.eventsDB}}-creds

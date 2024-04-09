@@ -1,7 +1,7 @@
 apiVersion: mongodb.msvc.kloudlite.io/v1
 kind: Database
 metadata:
-  name: {{.Values.envVars.db.consoleDB}}
+  name: {{.Values.envVars.db.iotConsoleDB}}
   namespace: {{.Release.Namespace}}
 spec:
   msvcRef:
@@ -15,5 +15,5 @@ spec:
     namespace: {{.Release.Namespace}}
 output:
   credentialsRef:
-    name: mres-{{.Values.envVars.db.consoleDB}}-creds
+    name: mres-{{.Values.envVars.db.iotConsoleDB}}-creds
 

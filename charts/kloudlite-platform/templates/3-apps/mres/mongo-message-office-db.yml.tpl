@@ -13,4 +13,7 @@ spec:
     {{- end }}
     name: mongo-svc
     namespace: {{.Release.Namespace}}
-  resourceName: message-office-db
+output:
+  credentialsRef:
+    name: mres-{{.Values.envVars.db.messageOfficeDB}}-creds
+

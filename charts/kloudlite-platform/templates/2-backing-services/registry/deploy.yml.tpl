@@ -31,6 +31,8 @@ spec:
         volumeMounts:
         - name: config-volume
           mountPath: /etc/docker/registry
+        - name: config-volume
+          mountPath: /etc/docker/registry
 
       volumes:
       - name: config-volume

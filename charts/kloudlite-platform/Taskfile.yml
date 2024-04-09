@@ -32,3 +32,4 @@ tasks:
           curl -L0 https://raw.githubusercontent.com/redpanda-data/redpanda/{{.redpandaVersion}}/src/go/k8s/config/crd/bases/redpanda.vectorized.io_clusters.yaml > ./templates/redpanda/crd-redpanda.vectorized.io_clusters.yaml
         fi
       - helm dependency update
+

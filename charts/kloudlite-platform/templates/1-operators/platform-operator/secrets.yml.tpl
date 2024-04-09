@@ -9,7 +9,7 @@ stringData:
 
 ---
 
-{{- if .Values.operators.platformOperator.configuration.nodepool.extractFromCluster }}
+{{- if .Values.operators.platformOperator.configuration.nodepools.extractFromCluster }}
 {{- $k3sParams := (lookup "v1" "Secret" "kube-system" "k3s-params") -}}
 
 {{- if not $k3sParams }}
@@ -24,21 +24,21 @@ metadata:
 data: {{ $k3sParams.data | toYaml | nindent 2 }}
 {{- end }}
 
----
-{{- if (include "has-aws-vpc" .) }}
-
-{{- $awsSettings := (lookup "v1" "Secret" .Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.namespace .Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.name ) -}}
-
-{{- if not $awsSettings }}
-{{ fail "secret kloudlite-aws-settings is not present in namespace kube-system, could not proceed with helm installation" }}
-{{- end }}
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{.Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.name}}
-  namespace: {{.Release.Namespace}}
-data: {{ $awsSettings.data | toYaml | nindent 2 }}
-
-{{- end }}
-
+{{- /* --- */}}
+{{- /* {{- if (include "has-aws-vpc" .) }} */}}
+{{- /**/}}
+{{- /* {{- $awsSettings := (lookup "v1" "Secret" .Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.namespace .Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.name ) -}} */}}
+{{- /**/}}
+{{- /* {{- if not $awsSettings }} */}}
+{{- /* {{ fail "secret kloudlite-aws-settings is not present in namespace kube-system, could not proceed with helm installation" }} */}}
+{{- /* {{- end }} */}}
+{{- /**/}}
+{{- /* apiVersion: v1 */}}
+{{- /* kind: Secret */}}
+{{- /* metadata: */}}
+{{- /*   name: {{.Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.name}} */}}
+{{- /*   namespace: {{.Release.Namespace}} */}}
+{{- /* data: {{ $awsSettings.data | toYaml | nindent 2 }} */}}
+{{- /**/}}
+{{- /* {{- end }} */}}
+{{- /**/}}
