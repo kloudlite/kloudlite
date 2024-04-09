@@ -1,0 +1,84 @@
+---
+label: "Create Project"
+query: |+
+  mutation Iot_createProject($project: IOTProjectIn!) {
+    iot_createProject(project: $project) {
+      displayName
+      id
+      name
+    }
+  }
+variables:
+  {
+    "project": {
+      "name": "sample-project",
+      "displayName": "sample project"
+    }
+  }
+
+---
+
+label: "update Project"
+query: |+
+  mutation Iot_updateProject($project: IOTProjectIn!) {
+    iot_updateProject(project: $project) {
+      displayName
+      id
+      name
+    }
+  }
+variables:
+  {
+    "project": {
+      "name": null,
+      "displayName": null
+    }
+  }
+
+---
+
+label: "delete Project"
+query: |+
+  mutation Iot_deleteProject($name: String!) {
+    iot_deleteProject(name: $name)
+  }
+variables:
+  {
+    "name": null
+  }
+
+---
+
+label: "get Project"
+query: |+
+  query Iot_getProject($name: String!) {
+    iot_getProject(name: $name) {
+      displayName
+      id
+      name
+    }
+  }
+variables:
+  {
+    "name": "sample-project"
+  }
+
+---
+
+label: "list Project"
+query: |+
+  query Iot_listProjects {
+    iot_listProjects {
+      edges {
+        node {
+          displayName
+          name
+          accountName
+        }
+      }
+    }
+  }
+
+---
+
+

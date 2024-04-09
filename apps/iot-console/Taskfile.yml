@@ -1,0 +1,55 @@
+version: "3"
+
+vars:
+  app: iot-device
+
+includes:
+  go: ../../.tools/taskfiles/go-build.yml
+
+tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
+
+  k8s-schema:
+    cmds:
+      - mkdir -p "./internal/app/_struct-to-graphql"
+      - go run ../../cmd/struct-to-graphql
+        --struct github.com/kloudlite/api/apps/iot-console/internal/entities.IOTProject
+        --struct github.com/kloudlite/api/apps/iot-console/internal/entities.IOTEnvironment
+        --struct github.com/kloudlite/api/apps/iot-console/internal/entities.IOTDevice
+        --struct github.com/kloudlite/api/apps/iot-console/internal/entities.IOTDeviceBlueprint
+        --struct github.com/kloudlite/api/apps/iot-console/internal/entities.IOTDeployment
+        --struct github.com/kloudlite/api/apps/iot-console/internal/entities.IOTApp
+        --struct github.com/kloudlite/api/pkg/repos.MatchFilter
+        --struct github.com/kloudlite/api/pkg/repos.CursorPagination
+        > ./internal/app/_struct-to-graphql/main.go
+      - |+
+        pushd ./internal/app/_struct-to-graphql
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination IOTProject,IOTEnvironment,IOTDevice,IOTDeviceBlueprint,IOTDeployment,IOTApp
+        popd
+      - rm -rf ./internal/app/_struct-to-graphql
+
+  run:
+    dotenv:
+      - .secrets/env
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go run ./main.go --dev
+
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          Out: ./bin/{{.app}}
+
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
