@@ -62,7 +62,7 @@ func (r *Reconciler) GCPJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 	}
 
 	values := GCPWorkerValues{
-		GCPProjectID:       gcpCreds.ProjectID,
+		GCPProjectID:       obj.Spec.GCP.GCPProjectID,
 		GCPRegion:          obj.Spec.GCP.Region,
 		GCPCredentialsJSON: base64.StdEncoding.EncodeToString([]byte(gcpCreds.ServiceAccountJSON)),
 

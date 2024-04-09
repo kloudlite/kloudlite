@@ -108,10 +108,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(DnsConfigReady, KeysAndSecretReady, ConfigReady, ServerSvcReady, ServicesSynced, ServerReady); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -440,7 +436,8 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 				Ports: func() []corev1.ServicePort {
 					ports := []corev1.ServicePort{
 						{Name: "kl-coredns", Port: 17171},
-						{Name: "kl-coredns-https", Port: 17172}}
+						{Name: "kl-coredns-https", Port: 17172},
+					}
 					return append(sPorts, ports...)
 				}(),
 				Selector: map[string]string{
@@ -564,7 +561,6 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 
 	// check deployment
 	if err := func() error {
-
 		deviceInfo := devinfo.DeviceInfo{
 			Name:        obj.Name,
 			AccountName: r.Env.AccountName,

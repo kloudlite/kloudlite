@@ -61,25 +61,22 @@ type AWSNodePoolConfig struct {
 	SpotPool *AwsSpotPoolConfig `json:"spotPool,omitempty"`
 }
 
-type GCPCredentials struct {
-	ProjectID          string `json:"projectID"`
-	ServiceAccountJSON string `json:"serviceAccountJSON"`
-}
-
 type GCPNodePoolConfig struct {
-	Region           string `json:"region"`
+	Region       string `json:"region" graphql:"noinput"`
+	GCPProjectID string `json:"gcpProjectID" graphql:"noinput"`
+
 	AvailabilityZone string `json:"availabilityZone"`
 
 	// this secret's `.data` will be unmarshaled into type `GCPCredentials`
-	Credentials ct.SecretRef `json:"credentials"`
+	Credentials ct.SecretRef `json:"credentials" graphql:"noinput"`
 
 	PoolType GCPPoolType `json:"poolType"`
 
 	MachineType    string `json:"machineType"`
-	BootVolumeType string `json:"bootVolumeType"`
-	BootVolumeSize int    `json:"bootVolumeSize"`
+	BootVolumeType string `json:"bootVolumeType" graphql:"noinput"`
+	BootVolumeSize int    `json:"bootVolumeSize" graphql:"noinput"`
 
-	Nodes map[string]NodeProps `json:"nodes,omitempty"`
+	Nodes map[string]NodeProps `json:"nodes,omitempty" graphql:"noinput"`
 }
 
 type Credentials struct {
