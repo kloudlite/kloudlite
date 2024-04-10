@@ -199,6 +199,27 @@ EOF
   }
 }
 
+module "fix-k3s-metrics-server" {
+  source     = "../../modules/kloudlite/execute_command_over_ssh"
+  depends_on = [
+    module.k3s-masters.kubeconfig_with_public_host
+  ]
+  command = <<EOF
+cat > /tmp/patch.yml <<EOP
+- op: replace
+  path: /spec/template/spec/containers/0/args/2
+  value: --kubelet-preferred-address-types=InternalIP,Hostname,ExternalIP
+EOP
+kubectl patch deploy/metrics-server -n kube-system --type=json --patch-file /tmp/patch.yml
+EOF
+
+  ssh_params = {
+    public_ip   = module.k3s-masters.k3s_primary_public_ip
+    username    = var.ssh_username
+    private_key = var.ssh_private_key
+  }
+}
+
 module "nvidia-container-runtime" {
   count      = var.enable_nvidia_gpu_support ? 1 : 0
   source     = "../../modules/nvidia-container-runtime"

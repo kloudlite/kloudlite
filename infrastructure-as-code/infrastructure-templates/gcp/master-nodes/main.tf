@@ -11,6 +11,6 @@ module "master-nodes-on-gcp" {
   save_kubeconfig_to_path    = var.save_kubeconfig_to_path
   tags                       = var.tags
   label_cloudprovider_region = var.gcp_region
-  network                    = "default"
+  network                    = var.network
 }
 

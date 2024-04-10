@@ -1,0 +1,4 @@
+gcp_project_id: "$GCP_PROJECT_ID"
+gcp_region: "$GCP_REGION"
+gcp_credentials_json: "${GCP_CREDENTIALS_JSON}"
+vpc_name: "example-vpc"

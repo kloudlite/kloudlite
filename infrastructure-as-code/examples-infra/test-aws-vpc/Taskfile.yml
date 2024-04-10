@@ -9,7 +9,7 @@ vars:
 tasks:
   sync-from-template:
     vars:
-      InfrastructureTemplate: ../../infrastructure-templates/aws-vpc
+      InfrastructureTemplate: ../../infrastructure-templates/vpc
     env:
       SHELL: bash
     silent: true

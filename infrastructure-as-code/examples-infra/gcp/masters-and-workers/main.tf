@@ -34,7 +34,7 @@ module "worker-nodes" {
   nodes                       = each.value.nodes
   node_labels                 = each.value.node_labels
   provision_mode              = each.value.provision_mode
-  nodepool_name             = each.key
+  nodepool_name               = each.key
   bootvolume_type             = each.value.bootvolume_type
   bootvolume_size             = each.value.bootvolume_size
   additional_disk             = each.value.additional_disk

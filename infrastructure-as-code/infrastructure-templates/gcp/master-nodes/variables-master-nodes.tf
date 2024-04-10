@@ -13,13 +13,26 @@ variable "provision_mode" {
   type = string
 }
 
+variable "network" {
+  description = "GCP Network"
+  type        = string
+}
+
 variable "nodes" {
   type = map(object({
     availability_zone = string
     k3s_role          = string
     kloudlite_release = string
+    bootvolume_size   = number
+    bootvolume_type   = string
+    node_labels       = optional(map(string))
   }))
   description = "map of node name to its availability_zone and k3s role"
+}
+
+variable "use_as_longhorn_storage_nodes" {
+  type    = bool
+  default = false
 }
 
 variable "machine_type" {
@@ -89,6 +102,12 @@ variable "save_ssh_key_to_path" {
 variable "save_kubeconfig_to_path" {
   description = "save kubeconfig to this path"
   type        = string
+  default     = ""
+}
+
+variable "label_cloudprovider_region" {
+  type        = string
+  description = "cloudprovider region"
   default     = ""
 }
 

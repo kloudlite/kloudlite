@@ -1,6 +1,13 @@
 **
+# !terraform
+# !build-scripts
+# !infrastructure-templates
+# infrastructure-templates/**/.terraform.d
+# !.ci
+# !flake.nix
+# !flake.lock
+# !context.tar
 !terraform
-!build-scripts
 !infrastructure-templates
-!.ci
-!.terraform.d.zip
+infrastructure-templates/**/.terraform.d
+!context.tar
