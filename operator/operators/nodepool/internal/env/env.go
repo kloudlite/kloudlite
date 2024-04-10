@@ -17,7 +17,7 @@ type baseEnv struct {
 }
 
 type kloudliteNodepoolEnv struct {
-	CloudProviderName   string `env:"CLOUD_PROVIDER_NAME" required:"true"`
+	// CloudProviderName   string `env:"CLOUD_PROVIDER_NAME" required:"true"`
 	CloudProviderRegion string `env:"CLOUD_PROVIDER_REGION" required:"true"`
 
 	JobsNamespace string `env:"JOBS_NAMESPACE" default:"kloudlite-jobs"`
