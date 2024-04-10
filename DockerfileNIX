@@ -1,0 +1,107 @@
+# vim: set ft=dockerfile:
+FROM nixos/nix:latest AS builder
+
+WORKDIR /app
+
+# COPY flake.nix flake.lock ./
+ENV NIX_STORE_DIR=/nix/store2
+
+RUN --mount=type=bind,source=flake.nix,target=flake.nix \
+  --mount=type=bind,source=flake.lock,target=flake.lock \
+  --mount=type=cache,target=/nix/store2 \
+  cp -R /nix/store /nix/store2 && nix \
+  --extra-experimental-features "nix-command flakes" \
+  --option filter-syscalls false \
+  build .#container
+
+# Copy the Nix store closure into a directory. The Nix store closure is the
+# entire set of Nix store values that we need for our build.
+RUN mkdir /tmp/nix-store-closure
+RUN cp -R $(nix-store -qR result/) /tmp/nix-store-closure
+
+# Set up the environment to use the packages defined in the flake
+# ENV PATH /root/.nix-profile/bin:$PATH
+
+# Your application's setup continues here...
+# FROM ubuntu:latest
+# FROM cgr.dev/chainguard/busybox:latest
+# FROM debian:12-slim
+# FROM busybox:latest
+FROM cgr.dev/chainguard/bash:latest
+# FROM gcr.io/distroless/static:latest
+COPY --from=builder /tmp/nix-store-closure /nix/store
+RUN mkdir -p /usr/local/bin
+COPY --from=builder /app/result/bin/* /usr/local/bin
+
+RUN mkdir -p /etc/ssl/certs
+COPY --from=builder /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
+
+WORKDIR /app
+COPY ./terraform ./terraform
+ARG CLOUD_PROVIDER
+RUN mkdir -p infrastructure-templates
+COPY ./infrastructure-templates/${CLOUD_PROVIDER} ./infrastructure-templates/${CLOUD_PROVIDER}
+ENV TF_PLUGIN_CACHE_DIR="/app/.terraform.d/plugin-cache"
+# COPY .terraform.d.zip /app/terraform.zip
+RUN mkdir -p $TF_PLUGIN_CACHE_DIR
+SHELL ["bash", "-c"]
+RUN <<'EOF'
+  # for dir in $(ls -d ./infrastructure-templates/{gcp,aws}/*); do
+  for dir in $(ls -d ./infrastructure-templates/${CLOUD_PROVIDER}/*); do
+    pushd $dir
+    terraform init -backend=false &
+    popd
+  done
+
+  wait
+
+  tdir=$(basename $(dirname $TF_PLUGIN_CACHE_DIR))
+  # tar cf - $tdir | lz4 -v -5 > tf.lz4 && rm -rf $tdir
+  tar cf - $tdir | zstd -12 --compress > tf.zst && rm -rf $tdir
+EOF
+# ENV DECOMPRESS_CMD="lz4 -d tf.lz4 | tar xf -"
+ENV DECOMPRESS_CMD="zstd --decompress tf.zst --stdout | tar xf -"
+ENV TEMPLATES_DIR="/app/infrastructure-templates"
+
+# # Your application's setup continues here...
+# FROM ubuntu:latest
+# # FROM debian:12-slim
+# RUN mkdir -p /etc/ssl/certs
+# COPY --from=builder /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
+#
+# COPY --from=builder /tmp/nix-store-closure /nix/store
+# COPY --from=builder /app/result/bin/* /usr/local/bin
+#
+# WORKDIR /app
+# # COPY ./terraform ./terraform
+# # RUN mkdir -p infrastructure-templates
+# # COPY ./infrastructure-templates ./infrastructure-templates
+# ENV TF_PLUGIN_CACHE_DIR="/app/.terraform.d/plugin-cache"
+# # COPY .terraform.d.zip /app/terraform.zip
+# RUN mkdir -p $TF_PLUGIN_CACHE_DIR
+# RUN cat > script.sh <<EOF
+#   #!/usr/bin/env bash
+#   echo "hi"
+#   # ls -d ./infrastructure-templates/{gcp,aws}/* | tee log.file | xargs -I{} bash -c "echo name is {}; pushd {}; terraform init -backend=false ;popd"
+#   item=$(ls -d infrastructure-templates/{gcp,aws}/* | xargs -I{} printf "%s " {})
+#   echo "$item"
+#   exit 1
+#   # for dir in $(ls -d infrastructure-templates/{gcp,aws}/*); do
+#   #   echo $dir >> log.file
+#   #   pushd $dir
+#   #   terraform init -backend=false &
+#   #   popd
+#   # done
+#
+#   wait
+#
+#   # exit 1
+#   tdir=$(basename $(dirname $TF_PLUGIN_CACHE_DIR))
+#   tar cf - $tdir | lz4 -v -5 > tf.lz4 && rm -rf $tdir
+# EOF
+# RUN --mount=type=bind,source=infrastructure-templates,target=infrastructure-templates,readwrite \
+#   --mount=type=bind,source=terraform,target=terraform \
+#   --mount=type=cache,target=/app/.terraform.d/plugin-cache \
+#   chmod +x ./script.sh && bash ./script.sh && cat log.file && exit 1
+# ENV DECOMPRESS_CMD="lz4 -d tf.lz4 | tar xf -"
+# ENV TEMPLATES_DIR="/app/infrastructure-templates"

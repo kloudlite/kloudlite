@@ -60,7 +60,6 @@ variable "additional_disk" {
 variable "network" {
   type        = string
   description = "network name"
-  default     = "default"
 }
 
 variable "tags" {

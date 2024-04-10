@@ -54,6 +54,7 @@ module "worker-nodes" {
   provision_mode    = var.provision_mode
   ssh_key           = module.ssh-rsa-key.public_key
   availability_zone = var.availability_zone
+  network           = var.network
 
   tags = concat(flatten([for k, v in var.tags : [k, v]]), local.k3s_worker_tags)
 

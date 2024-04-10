@@ -15,7 +15,7 @@ resource "ssh_resource" "apply_kloudlite_crds" {
   commands = [
     <<EOC
 export KUBECTL="sudo k3s kubectl"
-$KUBECTL apply -f https://github.com/kloudlite/helm-charts/releases/download/${var.kloudlite_release}/crds-all.yml
+$KUBECTL apply -f https://github.com/kloudlite/helm-charts/releases/download/${var.kloudlite_release}/crds-all.yml --server-side
 EOC
   ]
 }

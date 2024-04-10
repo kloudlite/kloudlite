@@ -14,6 +14,18 @@
             allowUnfree = true;
           };
         };
+        binaries = with pkgs; [
+          bash
+          # coreutils
+          # gettext
+          envsubst
+          # busybox-sandbox-shell
+          jq
+          # lz4
+          zstd
+          kubectl
+          terraform
+        ];
       in
       {
         devShells.default = pkgs.mkShell {
@@ -50,6 +62,23 @@
             export TF_PLUGIN_CACHE_DIR="$PWD/.terraform.d/plugin-cache"
             export PATH="$PWD/cmd:$PATH"
             mkdir -p $TF_PLUGIN_CACHE_DIR
+          '';
+        };
+
+        packages.container = pkgs.stdenv.mkDerivation {
+          name = "hello";
+          buildInputs = binaries;
+          buildCommand = let
+            copyBinaries = builtins.concatStringsSep "\n" (builtins.map(input: 
+            ''
+              if [ -e "${input}/bin" ]; then
+                cp ${input}/bin/* $out/bin/
+              fi
+            ''
+            ) binaries);
+          in ''
+            mkdir -p $out/bin
+            ${copyBinaries}
           '';
         };
       }

@@ -9,7 +9,7 @@ vars:
 tasks:
   sync-from-template:
     vars:
-      InfrastructureTemplate: ../../infrastructure-templates/aws-s3-bucket
+      InfrastructureTemplate: ../../infrastructure-templates/s3-bucket
     env:
       SHELL: bash
     silent: true

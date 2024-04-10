@@ -8,3 +8,4 @@
 .direnv
 .terraform.d
 .dump
+.buildx-cache

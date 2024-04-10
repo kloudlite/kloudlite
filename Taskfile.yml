@@ -11,15 +11,56 @@ tasks:
     preconditions:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: 'var Image must have a value'
+      - sh: '[[ -n "{{.cloudprovider}}" ]]'
+        msg: 'var cloudprovider must have a value'
     vars:
-      Push: "{{.Push | default false}}"
+      push: "{{.push | default false}}"
     # silent: true
     cmds:
-      - nerdctl build -t {{.Image}} .
+      - nerdctl build -f DockerfileNIX --build-arg CLOUD_PROVIDER={{.cloudprovider}} -t {{.Image}} . --cache-from=type=local,src=$PWD/.buildx-cache --cache-to=type=local,dest=$PWD/.buildx-cache,mode=max
       - |+
-        if [ "{{.Push}}" == "true" ]; then
+        if [ "{{.push}}" == "true" ]; then
           nerdctl push {{.Image}}
         fi
+
+  local:build:iac-job:
+    preconditions:
+      - sh: '[[ -n "{{.cloudprovider}}" ]]'
+        msg: 'var cloudprovider must have a value'
+    vars:
+      nix_store_closure: /tmp/nix-store-closure
+    cmds:
+      - sudo rm -rf result
+      - nix build .#container
+      - sudo rm -rf {{.nix_store_closure}}
+      - mkdir {{.nix_store_closure}}
+      - cp -R $(nix-store -qR result/) {{.nix_store_closure}}
+      - |+
+        export TF_PLUGIN_CACHE_DIR="$PWD/.terraform.d/plugin-cache"
+        # for dir in $(ls -d ./infrastructure-templates/{{.cloudprovider}}/*); do
+        for dir in $(ls -d ./infrastructure-templates/{gcp,aws}/*); do
+          terraform -chdir=$dir init -backend=false -upgrade &
+        done
+
+        wait
+
+        echo "compressing"
+        tdir=$(basename $(dirname $TF_PLUGIN_CACHE_DIR))
+        # tar cf - $tdir | zstd -12 --compress > tf.zst
+        tar cf - $tdir | zstd --compress > tf.zst
+
+      # - docker buildx build -f DockerfileNIX2 --build-arg CLOUD_PROVIDER={{.cloudprovider}} --build-context builder=result --build-context nixstore={{.nix_store_closure}} -t {{.Image}} --output type=image,oci-mediatypes=true,compression=zstd,compression-level=10,force-compression=true,push=true . --no-cache
+      - |+
+        dir=$(mktemp -d)
+        rm -rf context.tar
+        mv tf.zst result $dir
+        mv /tmp/nix-store-closure $dir/nixstore
+        pushd $dir
+        tar cf context.tar .
+        popd
+        mv $dir/context.tar .
+      - nerdctl build -f DockerfileNIX2 --build-arg CLOUD_PROVIDER={{.cloudprovider}} -t {{.Image}} . --no-cache
+      # - rm ./context.tar
 
   container:build-and-push:
     preconditions:

@@ -9,7 +9,7 @@ vars:
 tasks:
   sync-from-template:
     vars:
-      InfrastructureTemplate: ../../infrastructure-templates/kl-target-cluster-aws
+      InfrastructureTemplate: ../../infrastructure-templates/master-and-worker-nodes
     env:
       SHELL: bash
     silent: true

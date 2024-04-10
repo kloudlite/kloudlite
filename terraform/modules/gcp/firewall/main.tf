@@ -168,11 +168,11 @@ resource "google_compute_firewall" "k3s_worker_nodes" {
     }
   }
 
-  dynamic "allow" {
+  dynamic "deny" {
     for_each = {for k, v in local.incoming_ssh_connection : k => v}
     content {
-      protocol = allow.value.protocol
-      ports    = allow.value.ports
+      protocol = deny.value.protocol
+      ports    = deny.value.ports
     }
   }
 

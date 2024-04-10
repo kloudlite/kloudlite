@@ -45,6 +45,7 @@ module "master-nodes" {
 
   machine_type      = var.machine_type
   name              = "${var.name_prefix}-${each.key}"
+  network           = var.network
   provision_mode    = var.provision_mode
   ssh_key           = module.ssh-rsa-key.public_key
   availability_zone = each.value.availability_zone
@@ -78,6 +79,7 @@ module "kloudlite-k3s-masters" {
         (module.constants.node_labels.provider_region) : var.label_cloudprovider_region,
         (module.constants.node_labels.provider_az) : cfg.availability_zone,
         (module.constants.node_labels.node_has_role) : cfg.k3s_role,
+        (module.constants.node_labels.node_is_master) : "true",
         #        (module.constants.node_labels.provider_aws_instance_profile_name) : "",
         (module.constants.node_labels.provider_instance_type) : var.machine_type,
       },
