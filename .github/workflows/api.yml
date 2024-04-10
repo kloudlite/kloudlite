@@ -46,6 +46,7 @@ jobs:
           - auth
           - comms
           - console
+          - iot-console
           - container-registry
           - iam
           - infra
