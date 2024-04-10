@@ -1,0 +1,17 @@
+image:
+  repository: "ghcr.io/kloudlite/kloudlite/operator/wireguard"
+  tag: ""
+  pullPolicy: Always
+
+serviceAccount:
+  create: true
+  nameSuffix: "sa"
+
+nodeSelector: {}
+tolerations: []
+
+podCIDR: "10.42.0.0/16"
+svcCIDR: "10.43.0.0/16"
+
+clusterInternalDNS: "cluster.local"
+publicDNSHost: ""

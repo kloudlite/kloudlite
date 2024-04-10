@@ -16,6 +16,12 @@ aws:
     configuration:
       chartVersion: ""
 
+gcp:
+  projectName: ""
+  gcloudServiceAccountCreds:
+    json: ""
+    nameSuffix: "gcp-creds"
+
 common:
   clusterAutoscaler:
     enabled: true
