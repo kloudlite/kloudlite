@@ -39,7 +39,7 @@ type AwsVPCJobVars struct {
 
 	ValuesJSON string
 
-	AWS                      AWSClusterJobParams
+	// AWS                      AWSClusterJobParams
 	VPCOutputSecretName      string
 	VPCOutputSecretNamespace string
 }
