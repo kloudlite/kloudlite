@@ -163,6 +163,8 @@ github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30
 github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55/go.mod h1:GZj3wZmIw/qCciclRhgQTgmGiqe8wxoVzMXQjbOfnbc=
 github.com/kloudlite/operator v1.0.4-0.20240409082541-b8ead24a9fad h1:uJWUGbOPS72pxoFpxRpqr3bT9cBptRcNseytCWY/2KE=
 github.com/kloudlite/operator v1.0.4-0.20240409082541-b8ead24a9fad/go.mod h1:ozyCDuQNCcMRu2XYZz4OtWr38IwRZ50ZCOcBsobj60c=
+github.com/kloudlite/operator v1.0.4-0.20240410110352-9d89459d8651 h1:O4iQybfIdEs0Dl0wSUrju6Dtw9X5HrOBDjrpyqnkGhA=
+github.com/kloudlite/operator v1.0.4-0.20240410110352-9d89459d8651/go.mod h1:ozyCDuQNCcMRu2XYZz4OtWr38IwRZ50ZCOcBsobj60c=
 github.com/kr/pretty v0.2.1/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
