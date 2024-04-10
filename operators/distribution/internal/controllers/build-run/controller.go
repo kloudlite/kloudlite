@@ -36,9 +36,6 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	// CredsAvailable string = "creds-available"
-
-	PVCReady     string = "pvc-ready"
 	JobCreated   string = "job-created"
 	JobCompleted string = "job-completed"
 	JobFailed    string = "job-failed"
@@ -46,13 +43,12 @@ const (
 )
 
 var (
-	B_CHECKLIST = []rApi.CheckMeta{
-		{Name: PVCReady, Title: "PVC ready for cache"},
+	ApplyChecklist = []rApi.CheckMeta{
 		{Name: JobCreated, Title: "Job created for build"},
 		{Name: JobCompleted, Title: "Job completed"},
 	}
 
-	B_DESTROY_CHECKLIST = []rApi.CheckMeta{
+	DeleteChecklist = []rApi.CheckMeta{
 		{Name: JobDeleted, Title: "Cleaning up resources"},
 	}
 )
@@ -81,7 +77,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(B_CHECKLIST); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(ApplyChecklist); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
