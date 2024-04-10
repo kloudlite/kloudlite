@@ -55,17 +55,14 @@ type Domain interface {
 	UpdateDeployment(ctx IotResourceContext, deployment entities.IOTDeployment) (*entities.IOTDeployment, error)
 	DeleteDeployment(ctx IotResourceContext, name string) error
 
-	ListDevices(ctx IotResourceContext, deviceBlueprintName string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTDevice], error)
-	GetDevice(ctx IotResourceContext, name string, deviceBlueprintName string) (*entities.IOTDevice, error)
-	ListDeploymentDevices(ctx IotResourceContext, deploymentName string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTDevice], error)
-	GetDeploymentDevice(ctx IotResourceContext, name string, deploymentName string) (*entities.IOTDevice, error)
+	ListDevices(ctx IotResourceContext, deploymentName string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTDevice], error)
+	GetDevice(ctx IotResourceContext, name string, deploymentName string) (*entities.IOTDevice, error)
 
-	CreateDevice(ctx IotResourceContext, deviceBlueprintName string, device entities.IOTDevice) (*entities.IOTDevice, error)
-	UpdateDevice(ctx IotResourceContext, deviceBlueprintName string, device entities.IOTDevice) (*entities.IOTDevice, error)
-	DeleteDevice(ctx IotResourceContext, deviceBlueprintName string, name string) error
+	GetPublicKeyDevice(ctx context.Context, publicKey string) (*entities.IOTDevice, error)
 
-	AddDeviceToDeployment(ctx IotResourceContext, deploymentName string, deviceName string, deviceBlueprintName string) (*entities.IOTDevice, error)
-	RemoveDeviceOfDeployment(ctx IotResourceContext, deploymentName string, deviceName string, deviceBlueprintName string) (*entities.IOTDevice, error)
+	CreateDevice(ctx IotResourceContext, deploymentName string, device entities.IOTDevice) (*entities.IOTDevice, error)
+	UpdateDevice(ctx IotResourceContext, deploymentName string, device entities.IOTDevice) (*entities.IOTDevice, error)
+	DeleteDevice(ctx IotResourceContext, deploymentName string, name string) error
 
 	ListDeviceBlueprints(ctx IotResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.IOTDeviceBlueprint], error)
 	GetDeviceBlueprint(ctx IotResourceContext, name string) (*entities.IOTDeviceBlueprint, error)

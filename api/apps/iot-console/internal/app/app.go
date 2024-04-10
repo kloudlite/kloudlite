@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
@@ -82,8 +83,6 @@ var Module = fx.Module("app",
 		},
 	),
 
-	domain.Module,
-
 	fx.Invoke(func(server httpServer.Server, envs *env.Env, d domain.Domain, logger logging.Logger) {
 
 		a := server.Raw()
@@ -91,5 +90,28 @@ var Module = fx.Module("app",
 		a.Get("/healthy", func(c *fiber.Ctx) error {
 			return c.SendString("OK")
 		})
+
+		a.Post("/device", func(c *fiber.Ctx) error {
+			data := struct {
+				PublicKey string `json:"publicKey"`
+			}{}
+			body := c.Body()
+			err := json.Unmarshal(body, &data)
+			if err != nil {
+				return err
+			}
+			ctx := c.Context()
+
+			dev, err := d.GetPublicKeyDevice(ctx, data.PublicKey)
+			if err != nil {
+				return c.JSON(struct {
+					ErrorMessage string `json:"errorMessage"`
+				}{
+					ErrorMessage: err.Error(),
+				})
+			}
+			return c.JSON(dev)
+		})
 	}),
+	domain.Module,
 )
