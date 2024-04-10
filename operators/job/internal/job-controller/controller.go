@@ -63,10 +63,6 @@ var DeleteCheckList = []rApi.CheckMeta{
 	{Name: DeleteK8sJob, Title: "Delete Kubernetes Job"},
 }
 
-func getJobName(resName string) string {
-	return fmt.Sprintf("job-%s", resName)
-}
-
 func getJobSvcAccountName() string {
 	return "job-svc-account"
 }
@@ -189,15 +185,18 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Resu
 	check := rApi.NewRunningCheck(ApplyK8sJob, req)
 
 	job := &batchv1.Job{}
-	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
+	if err := r.Get(ctx, fn.NN(obj.Namespace, obj.Name), job); err != nil {
 		job = nil
 	}
 
 	if job == nil {
 		obj.Spec.OnApply.PodSpec.ServiceAccountName = getJobSvcAccountName()
+		if obj.Spec.OnApply.PodSpec.RestartPolicy == "" {
+			obj.Spec.OnApply.PodSpec.RestartPolicy = corev1.RestartPolicyNever
+		}
 		jobTemplate := &batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:            getJobName(obj.Name),
+				Name:            obj.Name,
 				Namespace:       obj.Namespace,
 				Labels:          obj.GetLabels(),
 				Annotations:     fn.MapMerge(obj.GetAnnotations(), map[string]string{AnnApplyJobPhase: fmt.Sprintf("%d", obj.Generation)}),
@@ -259,6 +258,14 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Resu
 		return check.StillRunning(fmt.Errorf("waiting for job to finish execution"))
 	}
 
+	if job.Status.Succeeded > 0 {
+		obj.Status.Succeeded = fn.New(true)
+		obj.Status.Failed = nil
+		obj.Status.Running = nil
+
+		return check.Completed()
+	}
+
 	// check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
 	if job.Status.Failed > 0 {
 		obj.Status.Succeeded = nil
@@ -268,11 +275,7 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Resu
 		return check.Failed(fmt.Errorf("job failed"))
 	}
 
-	obj.Status.Succeeded = fn.New(true)
-	obj.Status.Failed = nil
-	obj.Status.Running = nil
-
-	return check.Completed()
+	return check.StillRunning(fmt.Errorf("waiting for k8s job to start"))
 }
 
 func (r *Reconciler) deleteK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Result {
@@ -284,15 +287,18 @@ func (r *Reconciler) deleteK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Res
 	}
 
 	job := &batchv1.Job{}
-	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
+	if err := r.Get(ctx, fn.NN(obj.Namespace, obj.Name), job); err != nil {
 		job = nil
 	}
 
 	if job == nil {
 		obj.Spec.OnDelete.PodSpec.ServiceAccountName = getJobSvcAccountName()
+		if obj.Spec.OnDelete.PodSpec.RestartPolicy == "" {
+			obj.Spec.OnDelete.PodSpec.RestartPolicy = corev1.RestartPolicyNever
+		}
 		jobTemplate := &batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:            getJobName(obj.Name),
+				Name:            obj.Name,
 				Namespace:       obj.Namespace,
 				Labels:          obj.GetLabels(),
 				Annotations:     fn.MapMerge(obj.GetAnnotations(), map[string]string{AnnDeleteJobPhase: fmt.Sprintf("%d", obj.Generation)}),
@@ -359,6 +365,14 @@ func (r *Reconciler) deleteK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Res
 		return check.StillRunning(fmt.Errorf("waiting for deletion job to finish execution"))
 	}
 
+	if job.Status.Succeeded > 0 {
+		obj.Status.Succeeded = fn.New(true)
+		obj.Status.Failed = nil
+		obj.Status.Running = nil
+
+		return check.Completed()
+	}
+
 	// check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
 	if job.Status.Failed > 0 {
 		obj.Status.Succeeded = nil
@@ -368,11 +382,7 @@ func (r *Reconciler) deleteK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Res
 		return check.Failed(fmt.Errorf("deletion job failed"))
 	}
 
-	obj.Status.Succeeded = fn.New(true)
-	obj.Status.Failed = nil
-	obj.Status.Running = nil
-
-	return check.Completed()
+	return check.StillRunning(fmt.Errorf("waiting for k8s job to start"))
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

@@ -58,11 +58,12 @@ spec:
             - name: KUBE_NAMESPACE
               value: {{.TFWorkspaceSecretNamespace | squote}}
 
-            - name: AWS_ACCESS_KEY_ID
-              value: {{ .AWS.AccessKeyID }}
-
-            - name: AWS_SECRET_ACCESS_KEY
-              value: {{.AWS.AccessKeySecret}}
+            {{- /* # since we are not using Assume Role Model, we do not need it */}}
+            {{- /* - name: AWS_ACCESS_KEY_ID */}}
+            {{- /*   value: {{.AWS.AccessKeyID }} */}}
+            {{- /**/}}
+            {{- /* - name: AWS_SECRET_ACCESS_KEY */}}
+            {{- /*   value: {{.AWS.AccessKeySecret}} */}}
 
           command:
             - bash
