@@ -5,7 +5,7 @@ kind: Job
 metadata: {{.JobMetadata | toYAML | nindent 4 }}
 spec:
   onApply:
-    BackOffLimit: 1
+    backOffLimit: 1
     podSpec:
       restartPolicy: Never
       nodeSelector: {{ .NodeSelector | default dict | toYAML | nindent 8 }}
@@ -30,13 +30,13 @@ spec:
           - name: KUBE_NAMESPACE
             value: {{ .TFWorkspaceSecretNamespace | squote}}
 
-          {{- if eq .CloudProvider "aws" }}
-          - name: AWS_ACCESS_KEY_ID
-            value: {{.AWS.AccessKeyID}}
-
-          - name: AWS_SECRET_ACCESS_KEY
-            value: {{.AWS.AccessKeySecret }}
-          {{- end }}
+          {{- /* {{- if eq .CloudProvider "aws" }} */}}
+          {{- /* - name: AWS_ACCESS_KEY_ID */}}
+          {{- /*   value: {{.AWS.AccessKeyID}} */}}
+          {{- /**/}}
+          {{- /* - name: AWS_SECRET_ACCESS_KEY */}}
+          {{- /*   value: {{.AWS.AccessKeySecret }} */}}
+          {{- /* {{- end }} */}}
 
         command:
           - bash
@@ -108,13 +108,7 @@ spec:
 
               eval $DECOMPRESS_CMD
 
-              {{- if eq .CloudProvider "aws" }}
-              pushd "$TEMPLATES_DIR/kl-target-cluster-aws-only-masters"
-              {{else}}
-              {{- if eq .CloudProvider "gcp"}}
-              pushd "$TEMPLATES_DIR/gcp/master-nodes"
-              {{- end }}
-              {{- end }}
+              pushd "$TEMPLATES_DIR/{{.CloudProvider}}/master-nodes"
 
               envsubst < state-backend.tf.tpl > state-backend.tf
 
