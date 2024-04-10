@@ -77,6 +77,10 @@ const (
 	AnnotationCurrentStorageSize string = "kloudlite.io/msvc.storage-size"
 )
 
+const (
+	deleteClusterJob string = "delete-cluster-job"
+)
+
 var ApplyCheckList = []rApi.CheckMeta{
 	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
 	{Name: ClusterPrerequisitesReady, Title: "Cluster Pre-Requisites Ready"},
@@ -84,7 +88,9 @@ var ApplyCheckList = []rApi.CheckMeta{
 	{Name: ClusterCreateJobAppliedAndReady, Title: "Cluster Create Job Applied"},
 }
 
-var DeleteCheckList = []rApi.CheckMeta{}
+var DeleteCheckList = []rApi.CheckMeta{
+	{Name: deleteClusterJob, Title: "Delete Cluster Job"},
+}
 
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters/status,verbs=get;update;patch
@@ -212,7 +218,7 @@ func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) ste
 		return step
 	}
 
-	if step := req.CleanupOwnedResources(); step.ShouldProceed() {
+	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
 		return step
 	}
 
@@ -587,15 +593,15 @@ func (r *ClusterReconciler) applyClusterJob(req *rApi.Request[*clustersv1.Cluste
 
 		ValuesJSON:    valuesJson,
 		CloudProvider: string(obj.Spec.CloudProvider),
-		AWS: func() *templates.AWSClusterJobParams {
-			if obj.Spec.CloudProvider == ct.CloudProviderAWS {
-				return &templates.AWSClusterJobParams{
-					AccessKeyID:     r.Env.KlAwsAccessKey,
-					AccessKeySecret: r.Env.KlAwsSecretKey,
-				}
-			}
-			return nil
-		}(),
+		// AWS: func() *templates.AWSClusterJobParams {
+		// 	if obj.Spec.CloudProvider == ct.CloudProviderAWS {
+		// 		return &templates.AWSClusterJobParams{
+		// 			AccessKeyID:     r.Env.KlAwsAccessKey,
+		// 			AccessKeySecret: r.Env.KlAwsSecretKey,
+		// 		}
+		// 	}
+		// 	return nil
+		// }(),
 	})
 	if err != nil {
 		return check.Failed(err).Err(nil)
@@ -620,7 +626,11 @@ func (r *ClusterReconciler) applyClusterJob(req *rApi.Request[*clustersv1.Cluste
 		return check.Failed(fmt.Errorf("job failed"))
 	}
 
-	return check.Completed()
+	if job.Status.Succeeded != nil && *job.Status.Succeeded {
+		return check.Completed()
+	}
+
+	return check.StillRunning(fmt.Errorf("waiting for job to start"))
 }
 
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

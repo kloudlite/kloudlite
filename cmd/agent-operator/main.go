@@ -5,6 +5,7 @@ import (
 
 	app "github.com/kloudlite/operator/operators/app-n-lambda/controller"
 	helmCharts "github.com/kloudlite/operator/operators/helm-charts/controller"
+	jobs "github.com/kloudlite/operator/operators/job/controller"
 	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
 	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
 
@@ -33,6 +34,8 @@ func main() {
 
 	// kloudlite cluster management
 	nodepool.RegisterInto(mgr)
+
+	jobs.RegisterInto(mgr)
 
 	// kloudlite resource status updates
 	resourceWatcher.RegisterInto(mgr)
