@@ -20,6 +20,7 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -53,12 +54,16 @@ func getPrefixedName(base string) string {
 }
 
 const (
-	createVPCJob string = "create-vpc-job"
-	deleteVPCJob string = "delete-vpc-job"
+	patchDefaults string = "patch-defaults"
+	createVPCJob  string = "create-vpc-job"
+	deleteVPCJob  string = "delete-vpc-job"
 )
 
 var (
-	ApplyChecklist  = []rApi.CheckMeta{{Name: createVPCJob, Title: "Create VPC Job"}}
+	ApplyChecklist = []rApi.CheckMeta{
+		{Name: patchDefaults, Title: "Patch Defaults"},
+		{Name: createVPCJob, Title: "Create VPC Job"},
+	}
 	DeleteChecklist = []rApi.CheckMeta{{Name: createVPCJob, Title: "Delete VPC Job"}}
 )
 
@@ -124,16 +129,7 @@ func (r *AwsVPCReconciler) finalize(req *rApi.Request[*clustersv1.AwsVPC]) stepR
 
 func (r *AwsVPCReconciler) patchDefaults(req *rApi.Request[*clustersv1.AwsVPC]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	checkName := "patch-defaults"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(patchDefaults, req)
 
 	hasUpdated := false
 
@@ -149,7 +145,7 @@ func (r *AwsVPCReconciler) patchDefaults(req *rApi.Request[*clustersv1.AwsVPC]) 
 
 			zones, ok := clustersv1.AwsRegionToAZs[clustersv1.AwsRegion(obj.Spec.Region)]
 			if !ok {
-				return fail(fmt.Errorf("invalid region (%s), no Availability zones defined for it", obj.Spec.Region)).Err(nil)
+				return check.Failed(fmt.Errorf("invalid region (%s), no Availability zones defined for it", obj.Spec.Region))
 			}
 
 			obj.Spec.PublicSubnets = make([]clustersv1.AwsSubnet, len(zones))
@@ -174,20 +170,12 @@ func (r *AwsVPCReconciler) patchDefaults(req *rApi.Request[*clustersv1.AwsVPC]) 
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 		return req.Done().RequeueAfter(500 * time.Millisecond)
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func genTFValues(obj *clustersv1.AwsVPC, credsSecret *corev1.Secret, ev *env.Env) ([]byte, error) {
@@ -263,6 +251,18 @@ func (r *AwsVPCReconciler) applyVPC(req *rApi.Request[*clustersv1.AwsVPC]) stepR
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(createVPCJob, req)
 
+	vpcOutput, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.Output.Namespace, obj.Spec.Output.Name), &corev1.Secret{})
+	if err != nil {
+		if apiErrors.IsNotFound(err) {
+			return check.StillRunning(err)
+		}
+		vpcOutput = nil
+	}
+
+	if vpcOutput != nil {
+		return check.Completed()
+	}
+
 	credsSecret := &corev1.Secret{}
 	if err := r.Get(ctx, fn.NN(obj.Spec.Credentials.SecretRef.Namespace, obj.Spec.Credentials.SecretRef.Name), credsSecret); err != nil {
 		return check.Failed(err).Err(nil)
@@ -288,10 +288,10 @@ func (r *AwsVPCReconciler) applyVPC(req *rApi.Request[*clustersv1.AwsVPC]) stepR
 		TFWorkspaceName:            fmt.Sprintf("aws-vpc-%s", obj.Name),
 		TFWorkspaceSecretNamespace: obj.Namespace,
 		ValuesJSON:                 string(valuesBytes),
-		AWS: templates.AWSClusterJobParams{
-			AccessKeyID:     r.Env.KlAwsAccessKey,
-			AccessKeySecret: r.Env.KlAwsSecretKey,
-		},
+		// AWS: templates.AWSClusterJobParams{
+		// 	AccessKeyID:     r.Env.KlAwsAccessKey,
+		// 	AccessKeySecret: r.Env.KlAwsSecretKey,
+		// },
 		VPCOutputSecretName:      obj.Spec.Output.Name,
 		VPCOutputSecretNamespace: obj.Spec.Output.Namespace,
 	})
