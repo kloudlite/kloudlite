@@ -1,5 +1,5 @@
 module "kl-master-nodes-on-aws" {
-  source                    = "../../terraform/bundles/kl-master-nodes-on-aws"
+  source                    = "../../terraform/bundles/aws/master-nodes"
   aws_region                = var.aws_region
   enable_nvidia_gpu_support = var.enable_nvidia_gpu_support
   k3s_masters               = var.k3s_masters
@@ -13,7 +13,7 @@ module "kl-master-nodes-on-aws" {
 }
 
 module "kl-worker-nodes-on-aws" {
-  source     = "../../terraform/bundles/kl-worker-nodes-on-aws"
+  source     = "../../terraform/bundles/aws/worker-nodes"
   depends_on = [module.kl-master-nodes-on-aws]
   aws_region = var.aws_region
 

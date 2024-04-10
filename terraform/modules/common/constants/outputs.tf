@@ -8,10 +8,11 @@ locals {
 
     provider_aws_instance_profile_name = "kloudlite.io/provider.aws.instance-profile-name"
 
-    nodepool_name = "kloudlite.io/nodepool.name"
-    node_has_role = "kloudlite.io/node.has-role"
-    node_has_gpu  = "kloudlite.io/node.has-gpu"
-    node_is_spot  = "kloudlite.io/node.is-spot"
+    nodepool_name  = "kloudlite.io/nodepool.name"
+    node_has_role  = "kloudlite.io/node.has-role"
+    node_has_gpu   = "kloudlite.io/node.has-gpu"
+    node_is_spot   = "kloudlite.io/node.is-spot"
+    node_is_master = "kloudlite.io/node.is-master"
   }
 
   k8s_default_node_labels = {
