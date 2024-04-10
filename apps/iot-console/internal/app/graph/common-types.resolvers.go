@@ -7,36 +7,32 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/iot-console/internal/app/graph/generated"
 	"github.com/kloudlite/api/common"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // UserID is the resolver for the userId field.
 func (r *github__com___kloudlite___api___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("obj is nil")
-	}
 	return string(obj.UserId), nil
 }
 
 // Annotations is the resolver for the annotations field.
 func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
-	var m map[string]any
-	if err := fn.JsonConversion(obj.Annotations, &m); err != nil {
-		return nil, errors.NewE(err)
+	if obj == nil {
+		return nil, fmt.Errorf("obj is null")
 	}
-	return m, nil
+
+	return fn.JsonConvert[map[string]any](obj.Annotations)
 }
 
 // CreationTimestamp is the resolver for the creationTimestamp field.
 func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("metadata is nil")
+		return "", fmt.Errorf("obj is null")
 	}
 	return obj.CreationTimestamp.Format(time.RFC3339), nil
 }
@@ -44,43 +40,36 @@ func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.Object
 // DeletionTimestamp is the resolver for the deletionTimestamp field.
 func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
 	if obj == nil {
-		return nil, errors.Newf("metadata is nil")
+		return nil, fmt.Errorf("obj is null")
 	}
-
-	if obj.DeletionTimestamp == nil {
-		return nil, nil
-	}
-
 	return fn.New(obj.DeletionTimestamp.Format(time.RFC3339)), nil
 }
 
 // Labels is the resolver for the labels field.
 func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
-	var m map[string]any
-	if err := fn.JsonConversion(obj.Labels, &m); err != nil {
-		return nil, errors.NewE(err)
+	if obj == nil {
+		return nil, fmt.Errorf("obj is null")
 	}
-	return m, nil
+
+	return fn.JsonConvert[map[string]any](obj.Labels)
 }
 
 // Annotations is the resolver for the annotations field.
 func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
-	var m map[string]string
-	if err := fn.JsonConversion(data, &m); err != nil {
-		return errors.NewE(err)
+	if obj == nil {
+		return fmt.Errorf("obj is null")
 	}
-	obj.SetAnnotations(m)
-	return nil
+
+	return fn.JsonConversion(data, &obj.Annotations)
 }
 
 // Labels is the resolver for the labels field.
 func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
-	var m map[string]string
-	if err := fn.JsonConversion(data, &m); err != nil {
-		return errors.NewE(err)
+	if obj == nil {
+		return fmt.Errorf("obj is null")
 	}
-	obj.SetLabels(m)
-	return nil
+
+	return fn.JsonConversion(data, &obj.Labels)
 }
 
 // Github__com___kloudlite___api___common__CreatedOrUpdatedBy returns generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver implementation.
@@ -94,6 +83,8 @@ func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResol
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
-type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
-type metadataResolver struct{ *Resolver }
-type metadataInResolver struct{ *Resolver }
+type (
+	github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
+	metadataResolver                                                   struct{ *Resolver }
+	metadataInResolver                                                 struct{ *Resolver }
+)
