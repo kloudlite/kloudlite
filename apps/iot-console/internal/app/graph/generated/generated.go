@@ -288,24 +288,23 @@ type ComplexityRoot struct {
 	}
 
 	IOTDevice struct {
-		AccountName         func(childComplexity int) int
-		CreatedBy           func(childComplexity int) int
-		CreationTime        func(childComplexity int) int
-		Deployment          func(childComplexity int) int
-		DeviceBlueprintName func(childComplexity int) int
-		DisplayName         func(childComplexity int) int
-		IP                  func(childComplexity int) int
-		Id                  func(childComplexity int) int
-		LastUpdatedBy       func(childComplexity int) int
-		MarkedForDeletion   func(childComplexity int) int
-		Name                func(childComplexity int) int
-		PodCIDR             func(childComplexity int) int
-		ProjectName         func(childComplexity int) int
-		PublicKey           func(childComplexity int) int
-		RecordVersion       func(childComplexity int) int
-		ServiceCIDR         func(childComplexity int) int
-		UpdateTime          func(childComplexity int) int
-		Version             func(childComplexity int) int
+		AccountName       func(childComplexity int) int
+		CreatedBy         func(childComplexity int) int
+		CreationTime      func(childComplexity int) int
+		DeploymentName    func(childComplexity int) int
+		DisplayName       func(childComplexity int) int
+		IP                func(childComplexity int) int
+		Id                func(childComplexity int) int
+		LastUpdatedBy     func(childComplexity int) int
+		MarkedForDeletion func(childComplexity int) int
+		Name              func(childComplexity int) int
+		PodCIDR           func(childComplexity int) int
+		ProjectName       func(childComplexity int) int
+		PublicKey         func(childComplexity int) int
+		RecordVersion     func(childComplexity int) int
+		ServiceCIDR       func(childComplexity int) int
+		UpdateTime        func(childComplexity int) int
+		Version           func(childComplexity int) int
 	}
 
 	IOTDeviceBlueprint struct {
@@ -443,23 +442,21 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		IotAddDeviceToDeployment    func(childComplexity int, projectName string, deploymentName string, deviceName string, deviceBlueprintName string) int
-		IotCreateApp                func(childComplexity int, projectName string, deviceBlueprintName string, app entities.IOTApp) int
-		IotCreateDeployment         func(childComplexity int, projectName string, deployment entities.IOTDeployment) int
-		IotCreateDevice             func(childComplexity int, projectName string, deviceBlueprintName string, device entities.IOTDevice) int
-		IotCreateDeviceBlueprint    func(childComplexity int, projectName string, deviceBlueprint entities.IOTDeviceBlueprint) int
-		IotCreateProject            func(childComplexity int, project entities.IOTProject) int
-		IotDeleteApp                func(childComplexity int, projectName string, deviceBlueprintName string, name string) int
-		IotDeleteDeployment         func(childComplexity int, projectName string, name string) int
-		IotDeleteDevice             func(childComplexity int, projectName string, deviceBlueprintName string, name string) int
-		IotDeleteDeviceBlueprint    func(childComplexity int, projectName string, name string) int
-		IotDeleteProject            func(childComplexity int, name string) int
-		IotRemoveDeviceOfDeployment func(childComplexity int, projectName string, deploymentName string, deviceName string, deviceBlueprintName string) int
-		IotUpdateApp                func(childComplexity int, projectName string, deviceBlueprintName string, app entities.IOTApp) int
-		IotUpdateDeployment         func(childComplexity int, projectName string, deployment entities.IOTDeployment) int
-		IotUpdateDevice             func(childComplexity int, projectName string, deviceBlueprintName string, device entities.IOTDevice) int
-		IotUpdateDeviceBlueprint    func(childComplexity int, projectName string, deviceBlueprint entities.IOTDeviceBlueprint) int
-		IotUpdateProject            func(childComplexity int, project entities.IOTProject) int
+		IotCreateApp             func(childComplexity int, projectName string, deviceBlueprintName string, app entities.IOTApp) int
+		IotCreateDeployment      func(childComplexity int, projectName string, deployment entities.IOTDeployment) int
+		IotCreateDevice          func(childComplexity int, projectName string, deploymentName string, device entities.IOTDevice) int
+		IotCreateDeviceBlueprint func(childComplexity int, projectName string, deviceBlueprint entities.IOTDeviceBlueprint) int
+		IotCreateProject         func(childComplexity int, project entities.IOTProject) int
+		IotDeleteApp             func(childComplexity int, projectName string, deviceBlueprintName string, name string) int
+		IotDeleteDeployment      func(childComplexity int, projectName string, name string) int
+		IotDeleteDevice          func(childComplexity int, projectName string, deploymentName string, name string) int
+		IotDeleteDeviceBlueprint func(childComplexity int, projectName string, name string) int
+		IotDeleteProject         func(childComplexity int, name string) int
+		IotUpdateApp             func(childComplexity int, projectName string, deviceBlueprintName string, app entities.IOTApp) int
+		IotUpdateDeployment      func(childComplexity int, projectName string, deployment entities.IOTDeployment) int
+		IotUpdateDevice          func(childComplexity int, projectName string, deploymentName string, device entities.IOTDevice) int
+		IotUpdateDeviceBlueprint func(childComplexity int, projectName string, deviceBlueprint entities.IOTDeviceBlueprint) int
+		IotUpdateProject         func(childComplexity int, project entities.IOTProject) int
 	}
 
 	PageInfo struct {
@@ -470,19 +467,17 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		IotGetApp                func(childComplexity int, projectName string, deviceBlueprintName string, name string) int
-		IotGetDeployment         func(childComplexity int, projectName string, name string) int
-		IotGetDeploymentDevice   func(childComplexity int, projectName string, deploymentName string, name string) int
-		IotGetDevice             func(childComplexity int, projectName string, deviceBlueprintName string, name string) int
-		IotGetDeviceBlueprint    func(childComplexity int, projectName string, name string) int
-		IotGetProject            func(childComplexity int, name string) int
-		IotListApps              func(childComplexity int, projectName string, deviceBlueprintName string, search *model.SearchIOTApps, pq *repos.CursorPagination) int
-		IotListDeploymentDevices func(childComplexity int, projectName string, deploymentName string, search *model.SearchIOTDevices, pq *repos.CursorPagination) int
-		IotListDeployments       func(childComplexity int, projectName string, search *model.SearchIOTDeployments, pq *repos.CursorPagination) int
-		IotListDeviceBlueprints  func(childComplexity int, projectName string, search *model.SearchIOTDeviceBlueprints, pq *repos.CursorPagination) int
-		IotListDevices           func(childComplexity int, projectName string, deviceBlueprintName string, search *model.SearchIOTDevices, pq *repos.CursorPagination) int
-		IotListProjects          func(childComplexity int, search *model.SearchIOTProjects, pq *repos.CursorPagination) int
-		__resolve__service       func(childComplexity int) int
+		IotGetApp               func(childComplexity int, projectName string, deviceBlueprintName string, name string) int
+		IotGetDeployment        func(childComplexity int, projectName string, name string) int
+		IotGetDevice            func(childComplexity int, projectName string, deploymentName string, name string) int
+		IotGetDeviceBlueprint   func(childComplexity int, projectName string, name string) int
+		IotGetProject           func(childComplexity int, name string) int
+		IotListApps             func(childComplexity int, projectName string, deviceBlueprintName string, search *model.SearchIOTApps, pq *repos.CursorPagination) int
+		IotListDeployments      func(childComplexity int, projectName string, search *model.SearchIOTDeployments, pq *repos.CursorPagination) int
+		IotListDeviceBlueprints func(childComplexity int, projectName string, search *model.SearchIOTDeviceBlueprints, pq *repos.CursorPagination) int
+		IotListDevices          func(childComplexity int, projectName string, deploymentName string, search *model.SearchIOTDevices, pq *repos.CursorPagination) int
+		IotListProjects         func(childComplexity int, search *model.SearchIOTProjects, pq *repos.CursorPagination) int
+		__resolve__service      func(childComplexity int) int
 	}
 
 	_Service struct {
@@ -535,11 +530,9 @@ type MutationResolver interface {
 	IotCreateProject(ctx context.Context, project entities.IOTProject) (*entities.IOTProject, error)
 	IotUpdateProject(ctx context.Context, project entities.IOTProject) (*entities.IOTProject, error)
 	IotDeleteProject(ctx context.Context, name string) (bool, error)
-	IotCreateDevice(ctx context.Context, projectName string, deviceBlueprintName string, device entities.IOTDevice) (*entities.IOTDevice, error)
-	IotUpdateDevice(ctx context.Context, projectName string, deviceBlueprintName string, device entities.IOTDevice) (*entities.IOTDevice, error)
-	IotDeleteDevice(ctx context.Context, projectName string, deviceBlueprintName string, name string) (bool, error)
-	IotAddDeviceToDeployment(ctx context.Context, projectName string, deploymentName string, deviceName string, deviceBlueprintName string) (*entities.IOTDevice, error)
-	IotRemoveDeviceOfDeployment(ctx context.Context, projectName string, deploymentName string, deviceName string, deviceBlueprintName string) (*entities.IOTDevice, error)
+	IotCreateDevice(ctx context.Context, projectName string, deploymentName string, device entities.IOTDevice) (*entities.IOTDevice, error)
+	IotUpdateDevice(ctx context.Context, projectName string, deploymentName string, device entities.IOTDevice) (*entities.IOTDevice, error)
+	IotDeleteDevice(ctx context.Context, projectName string, deploymentName string, name string) (bool, error)
 	IotCreateDeviceBlueprint(ctx context.Context, projectName string, deviceBlueprint entities.IOTDeviceBlueprint) (*entities.IOTDeviceBlueprint, error)
 	IotUpdateDeviceBlueprint(ctx context.Context, projectName string, deviceBlueprint entities.IOTDeviceBlueprint) (*entities.IOTDeviceBlueprint, error)
 	IotDeleteDeviceBlueprint(ctx context.Context, projectName string, name string) (bool, error)
@@ -553,10 +546,8 @@ type MutationResolver interface {
 type QueryResolver interface {
 	IotListProjects(ctx context.Context, search *model.SearchIOTProjects, pq *repos.CursorPagination) (*model.IOTProjectPaginatedRecords, error)
 	IotGetProject(ctx context.Context, name string) (*entities.IOTProject, error)
-	IotListDevices(ctx context.Context, projectName string, deviceBlueprintName string, search *model.SearchIOTDevices, pq *repos.CursorPagination) (*model.IOTDevicePaginatedRecords, error)
-	IotGetDevice(ctx context.Context, projectName string, deviceBlueprintName string, name string) (*entities.IOTDevice, error)
-	IotListDeploymentDevices(ctx context.Context, projectName string, deploymentName string, search *model.SearchIOTDevices, pq *repos.CursorPagination) (*model.IOTDevicePaginatedRecords, error)
-	IotGetDeploymentDevice(ctx context.Context, projectName string, deploymentName string, name string) (*entities.IOTDevice, error)
+	IotListDevices(ctx context.Context, projectName string, deploymentName string, search *model.SearchIOTDevices, pq *repos.CursorPagination) (*model.IOTDevicePaginatedRecords, error)
+	IotGetDevice(ctx context.Context, projectName string, deploymentName string, name string) (*entities.IOTDevice, error)
 	IotListDeviceBlueprints(ctx context.Context, projectName string, search *model.SearchIOTDeviceBlueprints, pq *repos.CursorPagination) (*model.IOTDeviceBlueprintPaginatedRecords, error)
 	IotGetDeviceBlueprint(ctx context.Context, projectName string, name string) (*entities.IOTDeviceBlueprint, error)
 	IotListDeployments(ctx context.Context, projectName string, search *model.SearchIOTDeployments, pq *repos.CursorPagination) (*model.IOTDeploymentPaginatedRecords, error)
@@ -1586,19 +1577,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.IOTDevice.CreationTime(childComplexity), true
 
-	case "IOTDevice.deployment":
-		if e.complexity.IOTDevice.Deployment == nil {
+	case "IOTDevice.deploymentName":
+		if e.complexity.IOTDevice.DeploymentName == nil {
 			break
 		}
 
-		return e.complexity.IOTDevice.Deployment(childComplexity), true
-
-	case "IOTDevice.deviceBlueprintName":
-		if e.complexity.IOTDevice.DeviceBlueprintName == nil {
-			break
-		}
-
-		return e.complexity.IOTDevice.DeviceBlueprintName(childComplexity), true
+		return e.complexity.IOTDevice.DeploymentName(childComplexity), true
 
 	case "IOTDevice.displayName":
 		if e.complexity.IOTDevice.DisplayName == nil {
@@ -2272,18 +2256,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Metadata.Namespace(childComplexity), true
 
-	case "Mutation.iot_addDeviceToDeployment":
-		if e.complexity.Mutation.IotAddDeviceToDeployment == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_iot_addDeviceToDeployment_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.IotAddDeviceToDeployment(childComplexity, args["projectName"].(string), args["deploymentName"].(string), args["deviceName"].(string), args["deviceBlueprintName"].(string)), true
-
 	case "Mutation.iot_createApp":
 		if e.complexity.Mutation.IotCreateApp == nil {
 			break
@@ -2318,7 +2290,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.IotCreateDevice(childComplexity, args["projectName"].(string), args["deviceBlueprintName"].(string), args["device"].(entities.IOTDevice)), true
+		return e.complexity.Mutation.IotCreateDevice(childComplexity, args["projectName"].(string), args["deploymentName"].(string), args["device"].(entities.IOTDevice)), true
 
 	case "Mutation.iot_createDeviceBlueprint":
 		if e.complexity.Mutation.IotCreateDeviceBlueprint == nil {
@@ -2378,7 +2350,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.IotDeleteDevice(childComplexity, args["projectName"].(string), args["deviceBlueprintName"].(string), args["name"].(string)), true
+		return e.complexity.Mutation.IotDeleteDevice(childComplexity, args["projectName"].(string), args["deploymentName"].(string), args["name"].(string)), true
 
 	case "Mutation.iot_deleteDeviceBlueprint":
 		if e.complexity.Mutation.IotDeleteDeviceBlueprint == nil {
@@ -2403,18 +2375,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.IotDeleteProject(childComplexity, args["name"].(string)), true
-
-	case "Mutation.iot_removeDeviceOfDeployment":
-		if e.complexity.Mutation.IotRemoveDeviceOfDeployment == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_iot_removeDeviceOfDeployment_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.IotRemoveDeviceOfDeployment(childComplexity, args["projectName"].(string), args["deploymentName"].(string), args["deviceName"].(string), args["deviceBlueprintName"].(string)), true
 
 	case "Mutation.iot_updateApp":
 		if e.complexity.Mutation.IotUpdateApp == nil {
@@ -2450,7 +2410,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.IotUpdateDevice(childComplexity, args["projectName"].(string), args["deviceBlueprintName"].(string), args["device"].(entities.IOTDevice)), true
+		return e.complexity.Mutation.IotUpdateDevice(childComplexity, args["projectName"].(string), args["deploymentName"].(string), args["device"].(entities.IOTDevice)), true
 
 	case "Mutation.iot_updateDeviceBlueprint":
 		if e.complexity.Mutation.IotUpdateDeviceBlueprint == nil {
@@ -2528,18 +2488,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.IotGetDeployment(childComplexity, args["projectName"].(string), args["name"].(string)), true
 
-	case "Query.iot_getDeploymentDevice":
-		if e.complexity.Query.IotGetDeploymentDevice == nil {
-			break
-		}
-
-		args, err := ec.field_Query_iot_getDeploymentDevice_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.IotGetDeploymentDevice(childComplexity, args["projectName"].(string), args["deploymentName"].(string), args["name"].(string)), true
-
 	case "Query.iot_getDevice":
 		if e.complexity.Query.IotGetDevice == nil {
 			break
@@ -2550,7 +2498,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.IotGetDevice(childComplexity, args["projectName"].(string), args["deviceBlueprintName"].(string), args["name"].(string)), true
+		return e.complexity.Query.IotGetDevice(childComplexity, args["projectName"].(string), args["deploymentName"].(string), args["name"].(string)), true
 
 	case "Query.iot_getDeviceBlueprint":
 		if e.complexity.Query.IotGetDeviceBlueprint == nil {
@@ -2588,18 +2536,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.IotListApps(childComplexity, args["projectName"].(string), args["deviceBlueprintName"].(string), args["search"].(*model.SearchIOTApps), args["pq"].(*repos.CursorPagination)), true
 
-	case "Query.iot_listDeploymentDevices":
-		if e.complexity.Query.IotListDeploymentDevices == nil {
-			break
-		}
-
-		args, err := ec.field_Query_iot_listDeploymentDevices_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.IotListDeploymentDevices(childComplexity, args["projectName"].(string), args["deploymentName"].(string), args["search"].(*model.SearchIOTDevices), args["pq"].(*repos.CursorPagination)), true
-
 	case "Query.iot_listDeployments":
 		if e.complexity.Query.IotListDeployments == nil {
 			break
@@ -2634,7 +2570,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.IotListDevices(childComplexity, args["projectName"].(string), args["deviceBlueprintName"].(string), args["search"].(*model.SearchIOTDevices), args["pq"].(*repos.CursorPagination)), true
+		return e.complexity.Query.IotListDevices(childComplexity, args["projectName"].(string), args["deploymentName"].(string), args["search"].(*model.SearchIOTDevices), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.iot_listProjects":
 		if e.complexity.Query.IotListProjects == nil {
@@ -2838,11 +2774,8 @@ type Query {
     iot_listProjects(search: SearchIOTProjects, pq: CursorPaginationIn): IOTProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
     iot_getProject(name: String!): IOTProject @isLoggedInAndVerified @hasAccount
 
-    iot_listDevices(projectName: String!, deviceBlueprintName: String!, search: SearchIOTDevices, pq: CursorPaginationIn): IOTDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    iot_getDevice(projectName: String!, deviceBlueprintName: String!,  name: String!): IOTDevice @isLoggedInAndVerified @hasAccount
-
-    iot_listDeploymentDevices(projectName: String!, deploymentName: String!, search: SearchIOTDevices, pq: CursorPaginationIn): IOTDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    iot_getDeploymentDevice(projectName: String!, deploymentName: String!,  name: String!): IOTDevice @isLoggedInAndVerified @hasAccount
+    iot_listDevices(projectName: String!, deploymentName: String!, search: SearchIOTDevices, pq: CursorPaginationIn): IOTDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    iot_getDevice(projectName: String!, deploymentName: String!,  name: String!): IOTDevice @isLoggedInAndVerified @hasAccount
 
     iot_listDeviceBlueprints(projectName: String!,search: SearchIOTDeviceBlueprints, pq: CursorPaginationIn): IOTDeviceBlueprintPaginatedRecords @isLoggedInAndVerified @hasAccount
     iot_getDeviceBlueprint(projectName: String!, name: String!): IOTDeviceBlueprint @isLoggedInAndVerified @hasAccount
@@ -2859,12 +2792,9 @@ type Mutation {
     iot_updateProject(project: IOTProjectIn!): IOTProject @isLoggedInAndVerified @hasAccount
     iot_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    iot_createDevice(projectName: String!, deviceBlueprintName: String!, device: IOTDeviceIn!): IOTDevice @isLoggedInAndVerified @hasAccount
-    iot_updateDevice(projectName: String!, deviceBlueprintName: String!, device: IOTDeviceIn!): IOTDevice @isLoggedInAndVerified @hasAccount
-    iot_deleteDevice(projectName: String!, deviceBlueprintName: String!,name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
-    iot_addDeviceToDeployment(projectName: String!,deploymentName: String!, deviceName: String!, deviceBlueprintName: String!): IOTDevice @isLoggedInAndVerified @hasAccount
-    iot_removeDeviceOfDeployment(projectName: String!,deploymentName: String!, deviceName: String!, deviceBlueprintName: String!): IOTDevice @isLoggedInAndVerified @hasAccount
+    iot_createDevice(projectName: String!, deploymentName: String!, device: IOTDeviceIn!): IOTDevice @isLoggedInAndVerified @hasAccount
+    iot_updateDevice(projectName: String!, deploymentName: String!, device: IOTDeviceIn!): IOTDevice @isLoggedInAndVerified @hasAccount
+    iot_deleteDevice(projectName: String!, deploymentName: String!,name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     iot_createDeviceBlueprint(projectName: String!, deviceBlueprint: IOTDeviceBlueprintIn!): IOTDeviceBlueprint @isLoggedInAndVerified @hasAccount
     iot_updateDeviceBlueprint(projectName: String!, deviceBlueprint: IOTDeviceBlueprintIn!): IOTDeviceBlueprint @isLoggedInAndVerified @hasAccount
@@ -3381,8 +3311,7 @@ input IOTDeploymentIn {
   accountName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  deployment: String!
-  deviceBlueprintName: String!
+  deploymentName: String!
   displayName: String!
   id: ID!
   ip: String!
@@ -3410,7 +3339,6 @@ type IOTDevicePaginatedRecords @shareable {
 }
 
 input IOTDeviceIn {
-  deployment: String!
   displayName: String!
   ip: String!
   name: String!
@@ -3603,48 +3531,6 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_iot_addDeviceToDeployment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["deploymentName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deploymentName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deploymentName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["deviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deviceName"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["deviceBlueprintName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceBlueprintName"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deviceBlueprintName"] = arg3
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_iot_createApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3739,14 +3625,14 @@ func (ec *executionContext) field_Mutation_iot_createDevice_args(ctx context.Con
 	}
 	args["projectName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["deviceBlueprintName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceBlueprintName"))
+	if tmp, ok := rawArgs["deploymentName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deploymentName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["deviceBlueprintName"] = arg1
+	args["deploymentName"] = arg1
 	var arg2 entities.IOTDevice
 	if tmp, ok := rawArgs["device"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("device"))
@@ -3868,14 +3754,14 @@ func (ec *executionContext) field_Mutation_iot_deleteDevice_args(ctx context.Con
 	}
 	args["projectName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["deviceBlueprintName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceBlueprintName"))
+	if tmp, ok := rawArgs["deploymentName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deploymentName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["deviceBlueprintName"] = arg1
+	args["deploymentName"] = arg1
 	var arg2 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
@@ -3900,48 +3786,6 @@ func (ec *executionContext) field_Mutation_iot_deleteProject_args(ctx context.Co
 		}
 	}
 	args["name"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_iot_removeDeviceOfDeployment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["deploymentName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deploymentName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deploymentName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["deviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deviceName"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["deviceBlueprintName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceBlueprintName"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deviceBlueprintName"] = arg3
 	return args, nil
 }
 
@@ -4039,14 +3883,14 @@ func (ec *executionContext) field_Mutation_iot_updateDevice_args(ctx context.Con
 	}
 	args["projectName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["deviceBlueprintName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceBlueprintName"))
+	if tmp, ok := rawArgs["deploymentName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deploymentName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["deviceBlueprintName"] = arg1
+	args["deploymentName"] = arg1
 	var arg2 entities.IOTDevice
 	if tmp, ok := rawArgs["device"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("device"))
@@ -4122,39 +3966,6 @@ func (ec *executionContext) field_Query_iot_getApp_args(ctx context.Context, raw
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_iot_getDeploymentDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["deploymentName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deploymentName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deploymentName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_iot_getDeployment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4216,14 +4027,14 @@ func (ec *executionContext) field_Query_iot_getDevice_args(ctx context.Context, 
 	}
 	args["projectName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["deviceBlueprintName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceBlueprintName"))
+	if tmp, ok := rawArgs["deploymentName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deploymentName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["deviceBlueprintName"] = arg1
+	args["deploymentName"] = arg1
 	var arg2 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
@@ -4276,48 +4087,6 @@ func (ec *executionContext) field_Query_iot_listApps_args(ctx context.Context, r
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
 		arg2, err = ec.unmarshalOSearchIOTApps2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋiotᚑconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchIOTApps(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["search"] = arg2
-	var arg3 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg3, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["pq"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_iot_listDeploymentDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["deploymentName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deploymentName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deploymentName"] = arg1
-	var arg2 *model.SearchIOTDevices
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg2, err = ec.unmarshalOSearchIOTDevices2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋiotᚑconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchIOTDevices(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4414,14 +4183,14 @@ func (ec *executionContext) field_Query_iot_listDevices_args(ctx context.Context
 	}
 	args["projectName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["deviceBlueprintName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceBlueprintName"))
+	if tmp, ok := rawArgs["deploymentName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deploymentName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["deviceBlueprintName"] = arg1
+	args["deploymentName"] = arg1
 	var arg2 *model.SearchIOTDevices
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
@@ -10891,8 +10660,8 @@ func (ec *executionContext) fieldContext_IOTDevice_creationTime(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _IOTDevice_deployment(ctx context.Context, field graphql.CollectedField, obj *entities.IOTDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_IOTDevice_deployment(ctx, field)
+func (ec *executionContext) _IOTDevice_deploymentName(ctx context.Context, field graphql.CollectedField, obj *entities.IOTDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IOTDevice_deploymentName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10905,7 +10674,7 @@ func (ec *executionContext) _IOTDevice_deployment(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Deployment, nil
+		return obj.DeploymentName, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10922,51 +10691,7 @@ func (ec *executionContext) _IOTDevice_deployment(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_IOTDevice_deployment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "IOTDevice",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _IOTDevice_deviceBlueprintName(ctx context.Context, field graphql.CollectedField, obj *entities.IOTDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_IOTDevice_deviceBlueprintName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DeviceBlueprintName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_IOTDevice_deviceBlueprintName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_IOTDevice_deploymentName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "IOTDevice",
 		Field:      field,
@@ -12494,10 +12219,8 @@ func (ec *executionContext) fieldContext_IOTDeviceEdge_node(ctx context.Context,
 				return ec.fieldContext_IOTDevice_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_IOTDevice_creationTime(ctx, field)
-			case "deployment":
-				return ec.fieldContext_IOTDevice_deployment(ctx, field)
-			case "deviceBlueprintName":
-				return ec.fieldContext_IOTDevice_deviceBlueprintName(ctx, field)
+			case "deploymentName":
+				return ec.fieldContext_IOTDevice_deploymentName(ctx, field)
 			case "displayName":
 				return ec.fieldContext_IOTDevice_displayName(ctx, field)
 			case "id":
@@ -15673,7 +15396,7 @@ func (ec *executionContext) _Mutation_iot_createDevice(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().IotCreateDevice(rctx, fc.Args["projectName"].(string), fc.Args["deviceBlueprintName"].(string), fc.Args["device"].(entities.IOTDevice))
+			return ec.resolvers.Mutation().IotCreateDevice(rctx, fc.Args["projectName"].(string), fc.Args["deploymentName"].(string), fc.Args["device"].(entities.IOTDevice))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -15726,10 +15449,8 @@ func (ec *executionContext) fieldContext_Mutation_iot_createDevice(ctx context.C
 				return ec.fieldContext_IOTDevice_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_IOTDevice_creationTime(ctx, field)
-			case "deployment":
-				return ec.fieldContext_IOTDevice_deployment(ctx, field)
-			case "deviceBlueprintName":
-				return ec.fieldContext_IOTDevice_deviceBlueprintName(ctx, field)
+			case "deploymentName":
+				return ec.fieldContext_IOTDevice_deploymentName(ctx, field)
 			case "displayName":
 				return ec.fieldContext_IOTDevice_displayName(ctx, field)
 			case "id":
@@ -15789,7 +15510,7 @@ func (ec *executionContext) _Mutation_iot_updateDevice(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().IotUpdateDevice(rctx, fc.Args["projectName"].(string), fc.Args["deviceBlueprintName"].(string), fc.Args["device"].(entities.IOTDevice))
+			return ec.resolvers.Mutation().IotUpdateDevice(rctx, fc.Args["projectName"].(string), fc.Args["deploymentName"].(string), fc.Args["device"].(entities.IOTDevice))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -15842,10 +15563,8 @@ func (ec *executionContext) fieldContext_Mutation_iot_updateDevice(ctx context.C
 				return ec.fieldContext_IOTDevice_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_IOTDevice_creationTime(ctx, field)
-			case "deployment":
-				return ec.fieldContext_IOTDevice_deployment(ctx, field)
-			case "deviceBlueprintName":
-				return ec.fieldContext_IOTDevice_deviceBlueprintName(ctx, field)
+			case "deploymentName":
+				return ec.fieldContext_IOTDevice_deploymentName(ctx, field)
 			case "displayName":
 				return ec.fieldContext_IOTDevice_displayName(ctx, field)
 			case "id":
@@ -15905,7 +15624,7 @@ func (ec *executionContext) _Mutation_iot_deleteDevice(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().IotDeleteDevice(rctx, fc.Args["projectName"].(string), fc.Args["deviceBlueprintName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Mutation().IotDeleteDevice(rctx, fc.Args["projectName"].(string), fc.Args["deploymentName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -15965,238 +15684,6 @@ func (ec *executionContext) fieldContext_Mutation_iot_deleteDevice(ctx context.C
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_iot_deleteDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_iot_addDeviceToDeployment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_iot_addDeviceToDeployment(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().IotAddDeviceToDeployment(rctx, fc.Args["projectName"].(string), fc.Args["deploymentName"].(string), fc.Args["deviceName"].(string), fc.Args["deviceBlueprintName"].(string))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
-			}
-			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
-		}
-		directive2 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
-			}
-			return ec.directives.HasAccount(ctx, nil, directive1)
-		}
-
-		tmp, err := directive2(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*entities.IOTDevice); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/iot-console/internal/entities.IOTDevice`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*entities.IOTDevice)
-	fc.Result = res
-	return ec.marshalOIOTDevice2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋiotᚑconsoleᚋinternalᚋentitiesᚐIOTDevice(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_iot_addDeviceToDeployment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_IOTDevice_accountName(ctx, field)
-			case "createdBy":
-				return ec.fieldContext_IOTDevice_createdBy(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_IOTDevice_creationTime(ctx, field)
-			case "deployment":
-				return ec.fieldContext_IOTDevice_deployment(ctx, field)
-			case "deviceBlueprintName":
-				return ec.fieldContext_IOTDevice_deviceBlueprintName(ctx, field)
-			case "displayName":
-				return ec.fieldContext_IOTDevice_displayName(ctx, field)
-			case "id":
-				return ec.fieldContext_IOTDevice_id(ctx, field)
-			case "ip":
-				return ec.fieldContext_IOTDevice_ip(ctx, field)
-			case "lastUpdatedBy":
-				return ec.fieldContext_IOTDevice_lastUpdatedBy(ctx, field)
-			case "markedForDeletion":
-				return ec.fieldContext_IOTDevice_markedForDeletion(ctx, field)
-			case "name":
-				return ec.fieldContext_IOTDevice_name(ctx, field)
-			case "podCIDR":
-				return ec.fieldContext_IOTDevice_podCIDR(ctx, field)
-			case "projectName":
-				return ec.fieldContext_IOTDevice_projectName(ctx, field)
-			case "publicKey":
-				return ec.fieldContext_IOTDevice_publicKey(ctx, field)
-			case "recordVersion":
-				return ec.fieldContext_IOTDevice_recordVersion(ctx, field)
-			case "serviceCIDR":
-				return ec.fieldContext_IOTDevice_serviceCIDR(ctx, field)
-			case "updateTime":
-				return ec.fieldContext_IOTDevice_updateTime(ctx, field)
-			case "version":
-				return ec.fieldContext_IOTDevice_version(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type IOTDevice", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_iot_addDeviceToDeployment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_iot_removeDeviceOfDeployment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_iot_removeDeviceOfDeployment(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().IotRemoveDeviceOfDeployment(rctx, fc.Args["projectName"].(string), fc.Args["deploymentName"].(string), fc.Args["deviceName"].(string), fc.Args["deviceBlueprintName"].(string))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
-			}
-			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
-		}
-		directive2 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
-			}
-			return ec.directives.HasAccount(ctx, nil, directive1)
-		}
-
-		tmp, err := directive2(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*entities.IOTDevice); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/iot-console/internal/entities.IOTDevice`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*entities.IOTDevice)
-	fc.Result = res
-	return ec.marshalOIOTDevice2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋiotᚑconsoleᚋinternalᚋentitiesᚐIOTDevice(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_iot_removeDeviceOfDeployment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_IOTDevice_accountName(ctx, field)
-			case "createdBy":
-				return ec.fieldContext_IOTDevice_createdBy(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_IOTDevice_creationTime(ctx, field)
-			case "deployment":
-				return ec.fieldContext_IOTDevice_deployment(ctx, field)
-			case "deviceBlueprintName":
-				return ec.fieldContext_IOTDevice_deviceBlueprintName(ctx, field)
-			case "displayName":
-				return ec.fieldContext_IOTDevice_displayName(ctx, field)
-			case "id":
-				return ec.fieldContext_IOTDevice_id(ctx, field)
-			case "ip":
-				return ec.fieldContext_IOTDevice_ip(ctx, field)
-			case "lastUpdatedBy":
-				return ec.fieldContext_IOTDevice_lastUpdatedBy(ctx, field)
-			case "markedForDeletion":
-				return ec.fieldContext_IOTDevice_markedForDeletion(ctx, field)
-			case "name":
-				return ec.fieldContext_IOTDevice_name(ctx, field)
-			case "podCIDR":
-				return ec.fieldContext_IOTDevice_podCIDR(ctx, field)
-			case "projectName":
-				return ec.fieldContext_IOTDevice_projectName(ctx, field)
-			case "publicKey":
-				return ec.fieldContext_IOTDevice_publicKey(ctx, field)
-			case "recordVersion":
-				return ec.fieldContext_IOTDevice_recordVersion(ctx, field)
-			case "serviceCIDR":
-				return ec.fieldContext_IOTDevice_serviceCIDR(ctx, field)
-			case "updateTime":
-				return ec.fieldContext_IOTDevice_updateTime(ctx, field)
-			case "version":
-				return ec.fieldContext_IOTDevice_version(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type IOTDevice", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_iot_removeDeviceOfDeployment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -17463,7 +16950,7 @@ func (ec *executionContext) _Query_iot_listDevices(ctx context.Context, field gr
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().IotListDevices(rctx, fc.Args["projectName"].(string), fc.Args["deviceBlueprintName"].(string), fc.Args["search"].(*model.SearchIOTDevices), fc.Args["pq"].(*repos.CursorPagination))
+			return ec.resolvers.Query().IotListDevices(rctx, fc.Args["projectName"].(string), fc.Args["deploymentName"].(string), fc.Args["search"].(*model.SearchIOTDevices), fc.Args["pq"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -17549,7 +17036,7 @@ func (ec *executionContext) _Query_iot_getDevice(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().IotGetDevice(rctx, fc.Args["projectName"].(string), fc.Args["deviceBlueprintName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().IotGetDevice(rctx, fc.Args["projectName"].(string), fc.Args["deploymentName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -17602,10 +17089,8 @@ func (ec *executionContext) fieldContext_Query_iot_getDevice(ctx context.Context
 				return ec.fieldContext_IOTDevice_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_IOTDevice_creationTime(ctx, field)
-			case "deployment":
-				return ec.fieldContext_IOTDevice_deployment(ctx, field)
-			case "deviceBlueprintName":
-				return ec.fieldContext_IOTDevice_deviceBlueprintName(ctx, field)
+			case "deploymentName":
+				return ec.fieldContext_IOTDevice_deploymentName(ctx, field)
 			case "displayName":
 				return ec.fieldContext_IOTDevice_displayName(ctx, field)
 			case "id":
@@ -17644,208 +17129,6 @@ func (ec *executionContext) fieldContext_Query_iot_getDevice(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_iot_getDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_iot_listDeploymentDevices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_iot_listDeploymentDevices(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().IotListDeploymentDevices(rctx, fc.Args["projectName"].(string), fc.Args["deploymentName"].(string), fc.Args["search"].(*model.SearchIOTDevices), fc.Args["pq"].(*repos.CursorPagination))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
-			}
-			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
-		}
-		directive2 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
-			}
-			return ec.directives.HasAccount(ctx, nil, directive1)
-		}
-
-		tmp, err := directive2(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.IOTDevicePaginatedRecords); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/iot-console/internal/app/graph/model.IOTDevicePaginatedRecords`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.IOTDevicePaginatedRecords)
-	fc.Result = res
-	return ec.marshalOIOTDevicePaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋiotᚑconsoleᚋinternalᚋappᚋgraphᚋmodelᚐIOTDevicePaginatedRecords(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_iot_listDeploymentDevices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_IOTDevicePaginatedRecords_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_IOTDevicePaginatedRecords_pageInfo(ctx, field)
-			case "totalCount":
-				return ec.fieldContext_IOTDevicePaginatedRecords_totalCount(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type IOTDevicePaginatedRecords", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_iot_listDeploymentDevices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_iot_getDeploymentDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_iot_getDeploymentDevice(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().IotGetDeploymentDevice(rctx, fc.Args["projectName"].(string), fc.Args["deploymentName"].(string), fc.Args["name"].(string))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
-			}
-			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
-		}
-		directive2 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
-			}
-			return ec.directives.HasAccount(ctx, nil, directive1)
-		}
-
-		tmp, err := directive2(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*entities.IOTDevice); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/iot-console/internal/entities.IOTDevice`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*entities.IOTDevice)
-	fc.Result = res
-	return ec.marshalOIOTDevice2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋiotᚑconsoleᚋinternalᚋentitiesᚐIOTDevice(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_iot_getDeploymentDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_IOTDevice_accountName(ctx, field)
-			case "createdBy":
-				return ec.fieldContext_IOTDevice_createdBy(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_IOTDevice_creationTime(ctx, field)
-			case "deployment":
-				return ec.fieldContext_IOTDevice_deployment(ctx, field)
-			case "deviceBlueprintName":
-				return ec.fieldContext_IOTDevice_deviceBlueprintName(ctx, field)
-			case "displayName":
-				return ec.fieldContext_IOTDevice_displayName(ctx, field)
-			case "id":
-				return ec.fieldContext_IOTDevice_id(ctx, field)
-			case "ip":
-				return ec.fieldContext_IOTDevice_ip(ctx, field)
-			case "lastUpdatedBy":
-				return ec.fieldContext_IOTDevice_lastUpdatedBy(ctx, field)
-			case "markedForDeletion":
-				return ec.fieldContext_IOTDevice_markedForDeletion(ctx, field)
-			case "name":
-				return ec.fieldContext_IOTDevice_name(ctx, field)
-			case "podCIDR":
-				return ec.fieldContext_IOTDevice_podCIDR(ctx, field)
-			case "projectName":
-				return ec.fieldContext_IOTDevice_projectName(ctx, field)
-			case "publicKey":
-				return ec.fieldContext_IOTDevice_publicKey(ctx, field)
-			case "recordVersion":
-				return ec.fieldContext_IOTDevice_recordVersion(ctx, field)
-			case "serviceCIDR":
-				return ec.fieldContext_IOTDevice_serviceCIDR(ctx, field)
-			case "updateTime":
-				return ec.fieldContext_IOTDevice_updateTime(ctx, field)
-			case "version":
-				return ec.fieldContext_IOTDevice_version(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type IOTDevice", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_iot_getDeploymentDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -21594,22 +20877,13 @@ func (ec *executionContext) unmarshalInputIOTDeviceIn(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"deployment", "displayName", "ip", "name", "podCIDR", "publicKey", "serviceCIDR", "version"}
+	fieldsInOrder := [...]string{"displayName", "ip", "name", "podCIDR", "publicKey", "serviceCIDR", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "deployment":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deployment"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Deployment = data
 		case "displayName":
 			var err error
 
@@ -24081,13 +23355,8 @@ func (ec *executionContext) _IOTDevice(ctx context.Context, sel ast.SelectionSet
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "deployment":
-			out.Values[i] = ec._IOTDevice_deployment(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deviceBlueprintName":
-			out.Values[i] = ec._IOTDevice_deviceBlueprintName(ctx, field, obj)
+		case "deploymentName":
+			out.Values[i] = ec._IOTDevice_deploymentName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -25459,14 +24728,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "iot_addDeviceToDeployment":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_iot_addDeviceToDeployment(ctx, field)
-			})
-		case "iot_removeDeviceOfDeployment":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_iot_removeDeviceOfDeployment(ctx, field)
-			})
 		case "iot_createDeviceBlueprint":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_iot_createDeviceBlueprint(ctx, field)
@@ -25663,44 +24924,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_iot_getDevice(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "iot_listDeploymentDevices":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_iot_listDeploymentDevices(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "iot_getDeploymentDevice":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_iot_getDeploymentDevice(ctx, field)
 				return res
 			}
 
