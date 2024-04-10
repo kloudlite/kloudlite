@@ -10,3 +10,7 @@ node-role.kubernetes.io/master: "true"
 {{- define "node-selector-agent" -}}
 kloudlite.io/node.has-role: agent
 {{- end -}}
+
+{{- define "gcp-credentials-secret-name" -}}
+{{$.Release.Name}}-{{$.Values.gcp.gcloudServiceAccountCreds.nameSuffix}}
+{{- end -}}
