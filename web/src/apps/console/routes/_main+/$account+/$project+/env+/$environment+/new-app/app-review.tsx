@@ -93,6 +93,20 @@ const AppReview = () => {
   const gitMode =
     app.metadata?.annotations?.[keyconstants.appImageMode] === 'git';
 
+  const tagName = getImageTag({
+    app: parseName(app),
+    environment: envName,
+    project: projectName,
+  });
+
+  const getImage = () => {
+    return existingBuildId
+      ? `${registryHost}/${accountName}/${buildData?.spec.registry.repo.name}:${
+          buildData?.spec.registry.repo.tags?.[0] || 'latest'
+        }`
+      : `${constants.defaultAppRepoName(accountName)}:${tagName}`;
+  };
+
   const { handleSubmit, isLoading } = useForm({
     initialValues: app,
     validationSchema: Yup.object({}),
@@ -103,15 +117,8 @@ const AppReview = () => {
 
       // create build first if git image is selected
       let buildId: string | null = existingBuildId;
-      let tagName = '';
 
       if (buildData && gitMode && !existingBuildId) {
-        tagName = getImageTag({
-          app: parseName(app),
-          environment: envName,
-          project: projectName,
-        });
-
         setCreateState((prev) => ({
           ...prev,
           build: {
@@ -176,16 +183,7 @@ const AppReview = () => {
                     containers: [
                       {
                         ...app.spec.containers?.[0],
-                        image: existingBuildId
-                          ? `${registryHost}/${accountName}/${
-                              buildData?.spec.registry.repo.name
-                            }:${
-                              buildData?.spec.registry.repo.tags?.[0] ||
-                              'latest'
-                            }`
-                          : `${constants.defaultAppRepoName(
-                              accountName
-                            )}:${tagName}`,
+                        image: getImage(),
                         name: 'container-0',
                       },
                     ],
@@ -267,21 +265,30 @@ const AppReview = () => {
               <div className="px-xl py-lg bg-surface-basic-subdued">
                 Container image
               </div>
-              {app.spec.containers.map((container) => {
-                return (
-                  <div
-                    key={container.name}
-                    className="p-xl flex flex-col gap-md"
-                  >
-                    <div className="bodyMd-medium text-text-default">
-                      {container.image}
+              {!gitMode &&
+                app.spec.containers.map((container) => {
+                  return (
+                    <div
+                      key={container.name}
+                      className="p-xl flex flex-col gap-md"
+                    >
+                      <div className="bodyMd-medium text-text-default">
+                        {container.image}
+                      </div>
+                      <div className="bodySm text-text-soft">
+                        {container.name}
+                      </div>
                     </div>
-                    <div className="bodySm text-text-soft">
-                      {container.name}
-                    </div>
+                  );
+                })}
+              {gitMode && (
+                <div className="p-xl flex flex-col gap-md">
+                  <div className="bodyMd-medium text-text-default">
+                    {getImage()}
                   </div>
-                );
-              })}
+                  <div className="bodySm text-text-soft">container-0</div>
+                </div>
+              )}
             </div>
             <div className="flex flex-col rounded border border-border-default flex-1 overflow-hidden">
               <div className="px-xl py-lg bg-surface-basic-subdued">

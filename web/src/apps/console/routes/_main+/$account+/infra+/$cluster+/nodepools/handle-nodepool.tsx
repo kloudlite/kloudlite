@@ -1,7 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
-import { NumberInput } from '~/components/atoms/input';
+import { NumberInput, TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -10,7 +10,10 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType as awsPoolType } from '~/root/src/generated/gql/server';
+import {
+  Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType as awsPoolType,
+  Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpPoolType as gcpPoolType,
+} from '~/root/src/generated/gql/server';
 import { useOutletContext } from '@remix-run/react';
 import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
 import { awsRegions } from '~/console/dummy/consts';
@@ -21,7 +24,12 @@ import { NameIdView } from '~/console/components/name-id-view';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import KeyValuePair from '~/console/components/key-value-pair';
 import { IClusterContext } from '../_layout';
-import { findNodePlan, nodePlans, provisionTypes } from './nodepool-utils';
+import {
+  findNodePlan,
+  nodePlans,
+  provisionTypes,
+  gcpPoolTypes,
+} from './nodepool-utils';
 
 type IDialog = IDialogBase<ExtractNodeType<INodepools>>;
 
@@ -56,6 +64,9 @@ const Root = (props: IDialog) => {
             maximum: `${props.data.spec.maxCount}`,
             minimum: `${props.data.spec.minCount}`,
             poolType: props.data.spec.aws?.poolType || 'ec2',
+            gcpMachineType: '',
+            gcpAvailablityZone: '',
+            gcpPoolType: props.data.spec.gcp?.poolType || 'STANDARD',
             awsAvailabilityZone:
               props.data.spec.aws?.availabilityZone ||
               awsRegions.find((v) => v.Name === clusterRegion)?.Zones[0] ||
@@ -79,7 +90,9 @@ const Root = (props: IDialog) => {
             displayName: '',
             minimum: '1',
             maximum: '1',
-
+            gcpMachineType: '',
+            gcpAvailablityZone: '',
+            gcpPoolType: 'STANDARD',
             poolType: 'ec2',
             awsAvailabilityZone:
               awsRegions.find((v) => v.Name === clusterRegion)?.Zones[0] || '',
@@ -154,6 +167,14 @@ const Root = (props: IDialog) => {
                   ...getAwsNodeSpecs(),
                 },
               };
+            case 'gcp':
+              return {
+                gcp: {
+                  availabilityZone: val.gcpAvailablityZone,
+                  machineType: val.gcpMachineType,
+                  poolType: val.gcpPoolType as gcpPoolType,
+                },
+              };
             default:
               return {};
           }
@@ -171,7 +192,7 @@ const Root = (props: IDialog) => {
                 spec: {
                   maxCount: Number.parseInt(val.maximum, 10),
                   minCount: Number.parseInt(val.minimum, 10),
-                  cloudProvider: 'aws',
+                  cloudProvider,
                   nodeLabels: {
                     ...val.labels,
                     [keyconstants.nodepoolStateType]: val.stateful
@@ -318,6 +339,33 @@ const Root = (props: IDialog) => {
             </>
           )}
 
+          {cloudProvider === 'gcp' && (
+            <>
+              <TextInput
+                label="Availability zone"
+                placeholder="Availability zone"
+                value={values.gcpAvailablityZone}
+                onChange={handleChange('gcpAvailablityZone')}
+              />
+
+              <TextInput
+                label="Machine type"
+                placeholder="Machine type"
+                value={values.gcpMachineType}
+                onChange={handleChange('gcpMachineType')}
+              />
+
+              <Select
+                // eslint-disable-next-line react-hooks/rules-of-hooks
+                value={values.gcpPoolType}
+                label="Pool type"
+                options={async () => gcpPoolTypes}
+                onChange={(_, value) => {
+                  handleChange('gcpPoolType')(dummyEvent(value));
+                }}
+              />
+            </>
+          )}
           <div className="flex flex-row gap-xl items-end">
             <div className="flex flex-row gap-xl items-end flex-1 ">
               <div className="flex-1">

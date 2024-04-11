@@ -46,6 +46,11 @@ export const nodepoolQueries = (executor: IExecutor) => ({
             namespace
           }
           spec {
+            gcp {
+              availabilityZone
+              machineType
+              poolType
+            }
             aws {
               availabilityZone
               ec2Pool {
@@ -171,6 +176,11 @@ export const nodepoolQueries = (executor: IExecutor) => ({
               }
               recordVersion
               spec {
+                gcp {
+                  availabilityZone
+                  machineType
+                  poolType
+                }
                 aws {
                   availabilityZone
                   ec2Pool {
