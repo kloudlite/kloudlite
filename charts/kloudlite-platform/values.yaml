@@ -455,7 +455,7 @@ apps:
 
   iotConsoleApi:
     image:
-      repository: "ghcr.io/kloudlite/kloudlite/api/iot-console-api"
+      repository: "ghcr.io/kloudlite/kloudlite/api/iot-console"
       tag: ""
     configuration:
       replicas: 1

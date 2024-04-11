@@ -21,9 +21,6 @@ spec:
           image: docker.io/nxtcoder17/k8s-utils:latest
           imagePullPolicy: Always
           env:
-            {{- /* - name: PROJECT */}}
-            {{- /*   value: {{.Values.gcp.projectName}} */}}
-
             - name: GCE_PD_SA_DIR
               value: /tmp
 

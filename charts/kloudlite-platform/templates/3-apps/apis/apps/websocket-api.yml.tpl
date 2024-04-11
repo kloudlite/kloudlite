@@ -39,6 +39,9 @@ spec:
 
         - key: IAM_GRPC_ADDR
           value: iam:3001
+        
+        - key: OBSERVABILITY_API_ADDR
+          value: observability-api:80
 
         - key: SESSION_KV_BUCKET
           value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}

@@ -135,10 +135,9 @@ spec:
       sources:
         {{- /* host_metrics: */}}
         {{- /* internal_metrics: */}}
-        kubernetes_logs:
-          type: kubernetes_logs
-          {{/* glob_minimum_cooldown_ms: 60000 */}}
-          glob_minimum_cooldown_ms: 500
+        {{- /* kubernetes_logs: */}}
+        {{- /*   type: kubernetes_logs */}}
+        {{- /*   glob_minimum_cooldown_ms: 500 */}}
         kubelet_metrics_exporter:
           type: prometheus_scrape
           endpoints:
@@ -163,7 +162,7 @@ spec:
         kloudlite_hosted_vector:
           type: vector
           inputs:
-            - kubernetes_logs
+            {{- /* - kubernetes_logs */}}
             - kubelet_metrics_exporter
             - kloudlite_metrics_exporter
           address: {{.Values.agent.name}}.{{.Release.Namespace}}.svc.cluster.local:6000
