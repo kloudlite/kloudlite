@@ -17,10 +17,13 @@ aws:
       chartVersion: ""
 
 gcp:
-  projectName: ""
   gcloudServiceAccountCreds:
+    # -- base64 encoded gcp service account json
     json: ""
     nameSuffix: "gcp-creds"
+
+  csi_driver:
+    enabled: true
 
 common:
   clusterAutoscaler:

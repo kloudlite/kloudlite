@@ -46,6 +46,9 @@ spec:
         - key: NATS_URL
           value: {{.Values.envVars.nats.url}}
 
+        - key: INFRA_GRPC_ADDR
+          value: "infra-api:3001"
+
         - key: ACCOUNT_COOKIE_NAME
           value: {{.Values.global.accountCookieName}}
 

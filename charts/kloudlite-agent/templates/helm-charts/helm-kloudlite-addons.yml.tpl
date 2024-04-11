@@ -17,12 +17,23 @@ spec:
   values:
     cloudprovider: "{{.Values.cloudProvider}}"
 
+    {{- if (eq .Values.cloudProvider "aws") }}
     aws:
       ebs_csi_driver:
         enabled: true
 
       spot_node_terminator:
         enabled: true
+    {{- end }}
+
+    {{- if (eq .Values.cloudProvider "gcp") }}
+    gcp:
+      gcloudServiceAccountCreds:
+        json: {{ .Values.gcp.gcloudServiceAccountCreds.gcp }}
+
+      csi_driver:
+        enabled: true
+    {{- end }}
 
     common:
       clusterAutoscaler:

@@ -33,6 +33,11 @@ jobsNamespace: "kloudlite-jobs"
 # -- should be one of aws|gcp|azure, check kloudlite docs for more details
 cloudProvider: ""
 
+gcp:
+  gcloudServiceAccountCreds:
+    # -- base64 encoded service account json
+    json: ""
+
 agent:
   # -- enable/disable kloudlite agent
   enabled: true
@@ -73,15 +78,15 @@ operators:
 
         # must be one of aws,azure,gcp
         cloudprovider: ""
-        aws:
-          vpc_params:
-            readFromCluster: true
-            secret:
-              name: "kloudlite-aws-settings"
-              namespace: "kube-system"
-              keys:
-                vpcId: "vpc_id"
-                vpcPublicSubnets: "vpc_public_subnets"
+        # aws:
+        #   vpc_params:
+        #     readFromCluster: true
+        #     secret:
+        #       name: "kloudlite-aws-settings"
+        #       namespace: "kube-system"
+        #       keys:
+        #         vpcId: "vpc_id"
+        #         vpcPublicSubnets: "vpc_public_subnets"
 
         iacJobImage:
           repository: ghcr.io/kloudlite/kloudlite/infrastructure-as-code/iac-job

@@ -14,3 +14,7 @@ kloudlite.io/node.has-role: agent
 {{- define "gcp-credentials-secret-name" -}}
 {{$.Release.Name}}-{{$.Values.gcp.gcloudServiceAccountCreds.nameSuffix}}
 {{- end -}}
+
+{{- define "gcp-csi-namespace" -}}
+gce-pd-csi-driver
+{{- end -}}
