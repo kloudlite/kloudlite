@@ -232,6 +232,7 @@ type Cluster {
   accountName: String!
   adminKubeconfig: EncodedValue
   apiVersion: String
+  clusterGroupName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -252,8 +253,38 @@ type ClusterEdge {
   node: Cluster!
 }
 
+type ClusterGroup {
+  accountName: String!
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  recordVersion: Int!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ClusterGroupEdge {
+  cursor: String!
+  node: ClusterGroup!
+}
+
+input ClusterGroupIn {
+  displayName: String!
+}
+
+type ClusterGroupPaginatedRecords {
+  edges: [ClusterGroupEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 input ClusterIn {
   apiVersion: String
+  clusterGroupName: String
   displayName: String!
   kind: String
   metadata: MetadataIn!
@@ -803,6 +834,21 @@ type Github__com___kloudlite___api___apps___infra___internal___entities__OutputF
   name: String!
 }
 
+enum Github__com___kloudlite___api___apps___iot____console___internal___entities__BluePrintType {
+  group_blueprint
+  singleton_blueprint
+}
+
+type Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedService {
+  ip: String!
+  name: String!
+}
+
+input Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedServiceIn {
+  ip: String!
+  name: String!
+}
+
 type Github__com___kloudlite___api___common__CreatedOrUpdatedBy {
   userEmail: String!
   userId: String!
@@ -1006,6 +1052,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig
   gcpProjectID: String!
   masterNodes: Github__com___kloudlite___operator___apis___clusters___v1__GCPMasterNodesConfig
   region: String!
+  vpc: Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfigIn {
@@ -1040,6 +1087,10 @@ input Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConf
 enum Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType {
   SPOT
   STANDARD
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams {
+  name: String!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps {
@@ -1216,6 +1267,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServi
 
 enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret {
   config
+  pvc
   secret
 }
 
@@ -1945,6 +1997,214 @@ input InvitationIn {
   userEmail: String
   userName: String
   userRole: Github__com___kloudlite___api___apps___iam___types__Role!
+}
+
+type IOTApp {
+  accountName: String!
+  apiVersion: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  deviceBlueprintName: String!
+  displayName: String!
+  enabled: Boolean
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String!
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  updateTime: Date!
+}
+
+type IOTAppEdge {
+  cursor: String!
+  node: IOTApp!
+}
+
+input IOTAppIn {
+  apiVersion: String
+  displayName: String!
+  enabled: Boolean
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn!
+}
+
+type IOTAppPaginatedRecords {
+  edges: [IOTAppEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IOTDeployment {
+  accountName: String!
+  CIDR: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  exposedServices: [Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedService!]!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  projectName: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type IOTDeploymentEdge {
+  cursor: String!
+  node: IOTDeployment!
+}
+
+input IOTDeploymentIn {
+  CIDR: String!
+  displayName: String!
+  exposedServices: [Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedServiceIn!]!
+  name: String!
+}
+
+type IOTDeploymentPaginatedRecords {
+  edges: [IOTDeploymentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IOTDevice {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  deploymentName: String!
+  displayName: String!
+  id: ID!
+  ip: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  podCIDR: String!
+  projectName: String!
+  publicKey: String!
+  recordVersion: Int!
+  serviceCIDR: String!
+  updateTime: Date!
+  version: String!
+}
+
+type IOTDeviceBlueprint {
+  accountName: String!
+  bluePrintType: Github__com___kloudlite___api___apps___iot____console___internal___entities__BluePrintType!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  projectName: String!
+  recordVersion: Int!
+  updateTime: Date!
+  version: String!
+}
+
+type IOTDeviceBlueprintEdge {
+  cursor: String!
+  node: IOTDeviceBlueprint!
+}
+
+input IOTDeviceBlueprintIn {
+  bluePrintType: Github__com___kloudlite___api___apps___iot____console___internal___entities__BluePrintType!
+  displayName: String!
+  name: String!
+  version: String!
+}
+
+type IOTDeviceBlueprintPaginatedRecords {
+  edges: [IOTDeviceBlueprintEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IOTDeviceEdge {
+  cursor: String!
+  node: IOTDevice!
+}
+
+input IOTDeviceIn {
+  displayName: String!
+  ip: String!
+  name: String!
+  podCIDR: String!
+  publicKey: String!
+  serviceCIDR: String!
+  version: String!
+}
+
+type IOTDevicePaginatedRecords {
+  edges: [IOTDeviceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IOTEnvironment {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  projectName: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type IOTEnvironmentEdge {
+  cursor: String!
+  node: IOTEnvironment!
+}
+
+input IOTEnvironmentIn {
+  displayName: String!
+  name: String!
+}
+
+type IOTEnvironmentPaginatedRecords {
+  edges: [IOTEnvironmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type IOTProject {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type IOTProjectEdge {
+  cursor: String!
+  node: IOTProject!
+}
+
+input IOTProjectIn {
+  displayName: String!
+  name: String!
+}
+
+type IOTProjectPaginatedRecords {
+  edges: [IOTProjectEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 scalar Json
@@ -3075,12 +3335,14 @@ type Mutation {
   cr_updateBuild(build: BuildIn!, id: ID!): Build
   infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
+  infra_createClusterGroup(cluster: ClusterGroupIn!): ClusterGroup
   infra_createClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
   infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
   infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease
   infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
   infra_deleteCluster(name: String!): Boolean!
+  infra_deleteClusterGroup(name: String!): Boolean!
   infra_deleteClusterManagedService(clusterName: String!, serviceName: String!): Boolean!
   infra_deleteDomainEntry(domainName: String!): Boolean!
   infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean!
@@ -3088,12 +3350,28 @@ type Mutation {
   infra_deleteProviderSecret(secretName: String!): Boolean!
   infra_deletePV(clusterName: String!, pvName: String!): Boolean!
   infra_updateCluster(cluster: ClusterIn!): Cluster
+  infra_updateClusterGroup(cluster: ClusterGroupIn!): ClusterGroup
   infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
   infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
   infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease
   infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
   infra_upgradeHelmKloudliteAgent(clusterName: String!): Boolean!
+  iot_createApp(app: IOTAppIn!, deviceBlueprintName: String!, projectName: String!): IOTApp
+  iot_createDeployment(deployment: IOTDeploymentIn!, projectName: String!): IOTDeployment
+  iot_createDevice(deploymentName: String!, device: IOTDeviceIn!, projectName: String!): IOTDevice
+  iot_createDeviceBlueprint(deviceBlueprint: IOTDeviceBlueprintIn!, projectName: String!): IOTDeviceBlueprint
+  iot_createProject(project: IOTProjectIn!): IOTProject
+  iot_deleteApp(deviceBlueprintName: String!, name: String!, projectName: String!): Boolean!
+  iot_deleteDeployment(name: String!, projectName: String!): Boolean!
+  iot_deleteDevice(deploymentName: String!, name: String!, projectName: String!): Boolean!
+  iot_deleteDeviceBlueprint(name: String!, projectName: String!): Boolean!
+  iot_deleteProject(name: String!): Boolean!
+  iot_updateApp(app: IOTAppIn!, deviceBlueprintName: String!, projectName: String!): IOTApp
+  iot_updateDeployment(deployment: IOTDeploymentIn!, projectName: String!): IOTDeployment
+  iot_updateDevice(deploymentName: String!, device: IOTDeviceIn!, projectName: String!): IOTDevice
+  iot_updateDeviceBlueprint(deviceBlueprint: IOTDeviceBlueprintIn!, projectName: String!): IOTDeviceBlueprint
+  iot_updateProject(project: IOTProjectIn!): IOTProject
   oAuth_addLogin(code: String!, provider: String!, state: String!): Boolean!
   oAuth_login(code: String!, provider: String!, state: String): Session!
 }
@@ -3459,6 +3737,7 @@ type Query {
   infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput!
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
   infra_getCluster(name: String!): Cluster
+  infra_getClusterGroup(name: String!): ClusterGroup
   infra_getClusterManagedService(clusterName: String!, name: String!): ClusterManagedService
   infra_getDomainEntry(domainName: String!): DomainEntry
   infra_getHelmRelease(clusterName: String!, name: String!): HelmRelease
@@ -3469,6 +3748,7 @@ type Query {
   infra_getPV(clusterName: String!, name: String!): PersistentVolume
   infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim
   infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment
+  infra_listClusterGroups(pagination: CursorPaginationIn, search: SearchClusterGroup): ClusterGroupPaginatedRecords
   infra_listClusterManagedServices(clusterName: String!, pagination: CursorPaginationIn, search: SearchClusterManagedService): ClusterManagedServicePaginatedRecords
   infra_listClusters(pagination: CursorPaginationIn, search: SearchCluster): ClusterPaginatedRecords
   infra_listDomainEntries(pagination: CursorPaginationIn, search: SearchDomainEntry): DomainEntryPaginatedRecords
@@ -3480,6 +3760,16 @@ type Query {
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
   infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
+  iot_getApp(deviceBlueprintName: String!, name: String!, projectName: String!): IOTApp
+  iot_getDeployment(name: String!, projectName: String!): IOTDeployment
+  iot_getDevice(deploymentName: String!, name: String!, projectName: String!): IOTDevice
+  iot_getDeviceBlueprint(name: String!, projectName: String!): IOTDeviceBlueprint
+  iot_getProject(name: String!): IOTProject
+  iot_listApps(deviceBlueprintName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchIOTApps): IOTAppPaginatedRecords
+  iot_listDeployments(pq: CursorPaginationIn, projectName: String!, search: SearchIOTDeployments): IOTDeploymentPaginatedRecords
+  iot_listDeviceBlueprints(pq: CursorPaginationIn, projectName: String!, search: SearchIOTDeviceBlueprints): IOTDeviceBlueprintPaginatedRecords
+  iot_listDevices(deploymentName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchIOTDevices): IOTDevicePaginatedRecords
+  iot_listProjects(pq: CursorPaginationIn, search: SearchIOTProjects): IOTProjectPaginatedRecords
   oAuth_requestLogin(provider: String!, state: String): URL!
 }
 
@@ -3585,6 +3875,10 @@ input SearchCluster {
   text: MatchFilterIn
 }
 
+input SearchClusterGroup {
+  text: MatchFilterIn
+}
+
 input SearchClusterManagedService {
   isReady: MatchFilterIn
   text: MatchFilterIn
@@ -3618,6 +3912,36 @@ input SearchHelmRelease {
 }
 
 input SearchImagePullSecrets {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchIOTApps {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchIOTDeployments {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchIOTDeviceBlueprints {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchIOTDevices {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchIOTProjects {
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
   text: MatchFilterIn

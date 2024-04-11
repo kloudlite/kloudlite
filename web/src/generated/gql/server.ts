@@ -73,7 +73,7 @@ export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Inter
   'error' | 'failed' | 'idle' | 'pending' | 'queued' | 'running' | 'success';
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret =
-  'config' | 'secret';
+  'config' | 'pvc' | 'secret';
 
 export type K8s__Io___Api___Core___V1__TaintEffect =
   | 'NoExecute'
@@ -297,6 +297,10 @@ export type K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase =
   | 'Lost'
   | 'Pending';
 
+export type SearchClusterGroup = {
+  text?: InputMaybe<MatchFilterIn>;
+};
+
 export type SearchClusterManagedService = {
   isReady?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
@@ -341,6 +345,39 @@ export type SearchPersistentVolumes = {
 };
 
 export type SearchVolumeAttachments = {
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type Github__Com___Kloudlite___Api___Apps___Iot____Console___Internal___Entities__BluePrintType =
+  'group_blueprint' | 'singleton_blueprint';
+
+export type SearchIotApps = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchIotDeployments = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchIotDeviceBlueprints = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchIotDevices = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchIotProjects = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -836,6 +873,7 @@ export type ByokClusterIn = {
 
 export type ClusterIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
+  clusterGroupName?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   kind?: InputMaybe<Scalars['String']['input']>;
   metadata: MetadataIn;
@@ -881,6 +919,10 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpCluste
     credentialsRef: Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn;
     region: Scalars['String']['input'];
   };
+
+export type ClusterGroupIn = {
+  displayName: Scalars['String']['input'];
+};
 
 export type ClusterManagedServiceIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
@@ -1100,6 +1142,50 @@ export type Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__
     serviceAccountJSON: Scalars['String']['input'];
   };
 
+export type IotAppIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
+  displayName: Scalars['String']['input'];
+  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
+  metadata?: InputMaybe<MetadataIn>;
+  spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSpecIn;
+};
+
+export type IotDeploymentIn = {
+  CIDR: Scalars['String']['input'];
+  displayName: Scalars['String']['input'];
+  exposedServices: Array<Github__Com___Kloudlite___Api___Apps___Iot____Console___Internal___Entities__ExposedServiceIn>;
+  name: Scalars['String']['input'];
+};
+
+export type Github__Com___Kloudlite___Api___Apps___Iot____Console___Internal___Entities__ExposedServiceIn =
+  {
+    ip: Scalars['String']['input'];
+    name: Scalars['String']['input'];
+  };
+
+export type IotDeviceIn = {
+  displayName: Scalars['String']['input'];
+  ip: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  podCIDR: Scalars['String']['input'];
+  publicKey: Scalars['String']['input'];
+  serviceCIDR: Scalars['String']['input'];
+  version: Scalars['String']['input'];
+};
+
+export type IotDeviceBlueprintIn = {
+  bluePrintType: Github__Com___Kloudlite___Api___Apps___Iot____Console___Internal___Entities__BluePrintType;
+  displayName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  version: Scalars['String']['input'];
+};
+
+export type IotProjectIn = {
+  displayName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type AccountMembershipIn = {
   accountName: Scalars['String']['input'];
   role: Github__Com___Kloudlite___Api___Apps___Iam___Types__Role;
@@ -1185,6 +1271,11 @@ export type Github__Com___Kloudlite___Operator___Pkg___Raw____Json__RawJsonIn =
   {
     RawMessage?: InputMaybe<Scalars['Any']['input']>;
   };
+
+export type IotEnvironmentIn = {
+  displayName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
 
 export type K8s__Io___Api___Core___V1__AwsElasticBlockStoreVolumeSourceIn = {
   fsType?: InputMaybe<Scalars['String']['input']>;
@@ -2163,6 +2254,11 @@ export type ConsoleGetNodePoolQuery = {
       maxCount: number;
       minCount: number;
       nodeLabels?: any;
+      gcp?: {
+        availabilityZone: string;
+        machineType: string;
+        poolType: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpPoolType;
+      };
       aws?: {
         availabilityZone: string;
         iamInstanceProfileRole?: string;
@@ -2243,6 +2339,11 @@ export type ConsoleListNodePoolsQuery = {
           maxCount: number;
           minCount: number;
           nodeLabels?: any;
+          gcp?: {
+            availabilityZone: string;
+            machineType: string;
+            poolType: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpPoolType;
+          };
           aws?: {
             availabilityZone: string;
             nvidiaGpuEnabled: boolean;
