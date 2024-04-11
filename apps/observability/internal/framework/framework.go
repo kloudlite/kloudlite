@@ -2,6 +2,7 @@ package framework
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/kloudlite/api/apps/observability/internal/app"
@@ -55,7 +56,7 @@ var Module = fx.Module("framework",
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, ev *env.Env, mux *http.ServeMux) {
-		server := &http.Server{Addr: ":8080", Handler: mux}
+		server := &http.Server{Addr: fmt.Sprintf(":%d", ev.HttpPort), Handler: mux}
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go server.ListenAndServe()

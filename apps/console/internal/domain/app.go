@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -145,10 +147,31 @@ func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.A
 		return nil, errors.Newf("app does not exist")
 	}
 
+	// FIXME: hotfix till volume mounts for PVCs are not added in UI
+
+	pvcMounts := make(map[int][]crdsv1.ContainerVolume)
 	for i := range xapp.Spec.Containers {
 		for _, volume := range xapp.Spec.Containers[i].Volumes {
 			if volume.Type == crdsv1.PVCType {
-				appIn.Spec.Containers[i].Volumes = append(appIn.Spec.Containers[i].Volumes, volume)
+				pvcMounts[i] = append(pvcMounts[i], volume)
+			}
+		}
+	}
+
+	existingMounts := make(map[int]map[string]struct{})
+	for i := range appIn.Spec.Containers {
+		for _, volume := range appIn.Spec.Containers[i].Volumes {
+			if existingMounts[i] == nil {
+				existingMounts[i] = make(map[string]struct{})
+			}
+			existingMounts[i][fmt.Sprintf("%#v", volume)] = struct{}{}
+		}
+	}
+
+	for i := range appIn.Spec.Containers {
+		for _, pvcVolume := range pvcMounts[i] {
+			if _, ok := existingMounts[i][fmt.Sprintf("%#v", pvcVolume)]; !ok {
+				appIn.Spec.Containers[i].Volumes = append(appIn.Spec.Containers[i].Volumes, pvcVolume)
 			}
 		}
 	}
