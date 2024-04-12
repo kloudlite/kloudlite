@@ -42,7 +42,6 @@ func TestCreateCluster(t *testing.T) {
 
 		k8sClient k8sMock.Client
 
-
 		iamClient                   iamMock.IAMClient
 		accountsSvc                 domainMocks.AccountsSvc
 		messageOfficeInternalClient msgOfficeInternalMock.MessageOfficeInternalClient

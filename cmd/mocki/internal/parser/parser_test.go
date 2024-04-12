@@ -22,7 +22,7 @@ func TestFindAndParseInterface(t *testing.T) {
 		{
 			name: "test 1: normal interface",
 			args: args{
-				packagePath:   "kloudlite.io/cmd/mocki/internal/parser/test_data",
+				packagePath:   "github.com/kloudlite/api/cmd/mocki/internal/parser/test_data",
 				interfaceName: "Type1",
 			},
 			want: &parser.Info{
@@ -47,18 +47,18 @@ func TestFindAndParseInterface(t *testing.T) {
 		{
 			name: "test 2: generic interface, with any constraint",
 			args: args{
-				packagePath:   "kloudlite.io/cmd/mocki/internal/parser/test_data",
+				packagePath:   "github.com/kloudlite/api/cmd/mocki/internal/parser/test_data",
 				interfaceName: "Type2",
 			},
 			want: &parser.Info{
 				Imports: map[string]parser.ImportInfo{
-					"kloudlite.io/cmd/mocki/internal/parser/test_data": {
+					"github.com/kloudlite/api/cmd/mocki/internal/parser/test_data": {
 						Alias:       "test_data",
-						PackagePath: "kloudlite.io/cmd/mocki/internal/parser/test_data",
+						PackagePath: "github.com/kloudlite/api/cmd/mocki/internal/parser/test_data",
 					},
-					"kloudlite.io/pkg/repos": {
+					"github.com/kloudlite/api/pkg/repos": {
 						Alias:       "repos",
-						PackagePath: "kloudlite.io/pkg/repos",
+						PackagePath: "github.com/kloudlite/api/pkg/repos",
 					},
 				},
 				Implementations: []string{
@@ -99,14 +99,14 @@ func TestFindAndParseInterface(t *testing.T) {
 		{
 			name: "test 3: generic interface with another interface as constraint",
 			args: args{
-				packagePath:   "kloudlite.io/cmd/mocki/internal/parser/test_data",
+				packagePath:   "github.com/kloudlite/api/cmd/mocki/internal/parser/test_data",
 				interfaceName: "Type3",
 			},
 			want: &parser.Info{
 				Imports: map[string]parser.ImportInfo{
-					"kloudlite.io/cmd/mocki/internal/parser/test_data": {
+					"github.com/kloudlite/api/cmd/mocki/internal/parser/test_data": {
 						Alias:       "test_data",
-						PackagePath: "kloudlite.io/cmd/mocki/internal/parser/test_data",
+						PackagePath: "github.com/kloudlite/api/cmd/mocki/internal/parser/test_data",
 					},
 				},
 				Implementations: []string{
@@ -129,7 +129,7 @@ func TestFindAndParseInterface(t *testing.T) {
 		{
 			name: "test 4: normal interface with methods having no named arguments",
 			args: args{
-				packagePath:   "kloudlite.io/cmd/mocki/internal/parser/test_data",
+				packagePath:   "github.com/kloudlite/api/cmd/mocki/internal/parser/test_data",
 				interfaceName: "Type4",
 			},
 			want: &parser.Info{
@@ -159,7 +159,7 @@ func TestFindAndParseInterface(t *testing.T) {
 		{
 			name: "test 5: interface with methods having no return values",
 			args: args{
-				packagePath:   "kloudlite.io/cmd/mocki/internal/parser/test_data",
+				packagePath:   "github.com/kloudlite/api/cmd/mocki/internal/parser/test_data",
 				interfaceName: "Type5",
 			},
 			want: &parser.Info{
@@ -194,7 +194,7 @@ func TestFindAndParseInterface(t *testing.T) {
 		{
 			name: "test 6: interface with methods having aliases imported types",
 			args: args{
-				packagePath:   "kloudlite.io/cmd/mocki/internal/parser/test_data",
+				packagePath:   "github.com/kloudlite/api/cmd/mocki/internal/parser/test_data",
 				interfaceName: "Type6",
 			},
 			want: &parser.Info{
@@ -225,7 +225,7 @@ func TestFindAndParseInterface(t *testing.T) {
 		{
 			name: "test 7: non existent interface, should throw error",
 			args: args{
-				packagePath:   "kloudlite.io/cmd/mocki/internal/parser/test_data",
+				packagePath:   "github.com/kloudlite/api/cmd/mocki/internal/parser/test_data",
 				interfaceName: "DoesNotExist",
 			},
 			want: &parser.Info{
