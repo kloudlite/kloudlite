@@ -75,6 +75,8 @@ const (
 	BYOKClusterGcpMasterNodesRootVolumeSize        = "gcp.masterNodes.rootVolumeSize"
 	BYOKClusterGcpMasterNodesRootVolumeType        = "gcp.masterNodes.rootVolumeType"
 	BYOKClusterGcpRegion                           = "gcp.region"
+	BYOKClusterGcpVpc                              = "gcp.vpc"
+	BYOKClusterGcpVpcName                          = "gcp.vpc.name"
 	BYOKClusterKloudliteRelease                    = "kloudliteRelease"
 	BYOKClusterMessageQueueTopicName               = "messageQueueTopicName"
 	BYOKClusterOutput                              = "output"
@@ -155,6 +157,8 @@ const (
 	ClusterSpecGcpMasterNodesRootVolumeSize        = "spec.gcp.masterNodes.rootVolumeSize"
 	ClusterSpecGcpMasterNodesRootVolumeType        = "spec.gcp.masterNodes.rootVolumeType"
 	ClusterSpecGcpRegion                           = "spec.gcp.region"
+	ClusterSpecGcpVpc                              = "spec.gcp.vpc"
+	ClusterSpecGcpVpcName                          = "spec.gcp.vpc.name"
 	ClusterSpecKloudliteRelease                    = "spec.kloudliteRelease"
 	ClusterSpecMessageQueueTopicName               = "spec.messageQueueTopicName"
 	ClusterSpecOutput                              = "spec.output"
@@ -172,7 +176,9 @@ const (
 
 // constant vars generated for struct ClusterConnection
 const (
+	ClusterConnectionCidr                         = "cidr"
 	ClusterConnectionClusterGroupName             = "clusterGroupName"
+	ClusterConnectionEndpoint                     = "endpoint"
 	ClusterConnectionSpec                         = "spec"
 	ClusterConnectionSpecAgentsResources          = "spec.agentsResources"
 	ClusterConnectionSpecAgentsResourcesClaims    = "spec.agentsResources.claims"
@@ -192,9 +198,7 @@ const (
 )
 
 // constant vars generated for struct ClusterGroup
-const (
-	ClusterGroupPeers = "peers"
-)
+const ()
 
 // constant vars generated for struct ClusterManagedService
 const (
@@ -378,12 +382,10 @@ const (
 	OutputFieldName        = "name"
 )
 
-// constant vars generated for struct Peers
+// constant vars generated for struct Peer
 const (
-	PeersAllowedIps = "allowedIps"
-	PeersName       = "name"
-	PeersNamespace  = "namespace"
-	PeersPubKey     = "pubKey"
+	PeerAllowedIps = "allowedIps"
+	PeerPubKey     = "pubKey"
 )
 
 // constant vars generated for struct PersistentVolume

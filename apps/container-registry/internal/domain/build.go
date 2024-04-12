@@ -245,7 +245,8 @@ func (d *Impl) TriggerBuild(ctx RegistryContext, buildId repos.ID) error {
 		return errors.Newf("provider %s not supported", b.Source.Provider)
 	}
 
-	at, err := d.getAccessTokenByUserId(ctx, string(b.Source.Provider), ctx.UserId)
+	// at, err := d.getAccessTokenByUserId(ctx, string(b.Source.Provider), ctx.UserId)
+	at, err := d.getAccessTokenByUserId(ctx, string(b.Source.Provider), b.CreatedBy.UserId)
 	if err != nil {
 		return errors.NewE(err)
 	}
