@@ -12,5 +12,6 @@ module "master-nodes-on-gcp" {
   tags                       = var.tags
   label_cloudprovider_region = var.gcp_region
   network                    = var.network
+  service_account            = var.service_account
 }
 

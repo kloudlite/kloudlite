@@ -110,3 +110,11 @@ variable "tags" {
   description = "map of Key => Value to be tagged along created resources"
   default     = {}
 }
+
+variable "service_account" {
+  type = object({
+    enabled = bool
+    email   = optional(string)
+    scopes  = optional(list(string))
+  })
+}

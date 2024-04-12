@@ -27,8 +27,6 @@ locals {
   k3s_worker_tags = ["${var.name_prefix}-${var.nodepool_name}-k3s-worker"]
 }
 
-data "google_compute_default_service_account" "default" {}
-
 module "worker-nodes-firewall" {
   source = "../../../modules/gcp/firewall"
 
@@ -45,11 +43,8 @@ module "worker-nodes" {
 
   for_each = {for name, cfg in var.nodes : name => cfg}
 
-  machine_type    = var.machine_type
-  service_account = {
-    email  = data.google_compute_default_service_account.default.email
-    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
-  }
+  machine_type      = var.machine_type
+  service_account   = var.service_account
   name              = "${var.name_prefix}-${var.nodepool_name}-${each.key}"
   provision_mode    = var.provision_mode
   ssh_key           = module.ssh-rsa-key.public_key
@@ -90,7 +85,8 @@ module "worker-nodes" {
   bootvolume_size = var.bootvolume_size
 
   additional_disk = {
-    for k, v in (var.additional_disk != null ? var.additional_disk : {}) :
+    for k, v in(var.additional_disk != null ? var.additional_disk : {}) :
     "${var.name_prefix}-${var.nodepool_name}-${each.key}-${k}" => v
   }
 }
+
