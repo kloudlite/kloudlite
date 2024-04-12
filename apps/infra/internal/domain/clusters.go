@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -318,31 +319,45 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, nCluster.Name, PublishAdd)
 
-	if err := d.applyHelmKloudliteAgent(ctx, nCluster.Name, string(tokenScrt.Data[keyClusterToken]), nCluster.Spec.PublicDNSHost, string(nCluster.Spec.CloudProvider)); err != nil {
+	if err := d.applyHelmKloudliteAgent(ctx, string(tokenScrt.Data[keyClusterToken]), nCluster); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	return nCluster, nil
 }
 
-func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterName string, clusterToken string, clusterPublicHost string, cloudprovider string) error {
+func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterToken string, cluster *entities.Cluster) error {
 	b, err := templates.Read(templates.HelmKloudliteAgent)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	b2, err := templates.ParseBytes(b, map[string]any{
+	values := map[string]any{
 		"account-name": ctx.AccountName,
 
-		"cluster-name":  clusterName,
+		"cluster-name":  cluster.Name,
 		"cluster-token": clusterToken,
 
 		"kloudlite-release":        d.env.KloudliteRelease,
 		"message-office-grpc-addr": d.env.MessageOfficeExternalGrpcAddr,
 
-		"public-dns-host": clusterPublicHost,
-		"cloudprovider":   cloudprovider,
-	})
+		"public-dns-host": cluster.Spec.PublicDNSHost,
+		"cloudprovider":   cluster.Spec.CloudProvider,
+	}
+
+	if cluster.Spec.CloudProvider == ct.CloudProviderGCP {
+		var credsSecret corev1.Secret
+		if err := d.k8sClient.Get(ctx, fn.NN(cluster.Spec.GCP.CredentialsRef.Namespace, cluster.Spec.GCP.CredentialsRef.Name), &credsSecret); err != nil {
+			return err
+		}
+		gcpCreds, err := fn.JsonConvert[clustersv1.GCPCredentials](credsSecret.Data)
+		if err != nil {
+			return err
+		}
+		values["gcp-service-account-json"] = base64.StdEncoding.EncodeToString([]byte(gcpCreds.ServiceAccountJSON))
+	}
+
+	b2, err := templates.ParseBytes(b, values)
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -373,18 +388,18 @@ func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterName string, c
 			},
 		},
 		AccountName: ctx.AccountName,
-		ClusterName: clusterName,
+		ClusterName: cluster.Name,
 		SyncStatus:  t.GenSyncStatus(t.SyncActionApply, 0),
 	}
 
 	hr.IncrementRecordVersion()
 
-	uhr, err := d.upsertHelmRelease(ctx, clusterName, &hr)
+	uhr, err := d.upsertHelmRelease(ctx, cluster.Name, &hr)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &uhr.HelmChart, uhr.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, cluster.Name, &uhr.HelmChart, uhr.RecordVersion); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -405,7 +420,7 @@ func (d *domain) UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string)
 		return errors.NewE(err)
 	}
 
-	if err := d.applyHelmKloudliteAgent(ctx, clusterName, out.ClusterToken, cluster.Spec.PublicDNSHost, string(cluster.Spec.CloudProvider)); err != nil {
+	if err := d.applyHelmKloudliteAgent(ctx, out.ClusterToken, cluster); err != nil {
 		return errors.NewE(err)
 	}
 

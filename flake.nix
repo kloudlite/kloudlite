@@ -1,28 +1,24 @@
 {
   description = "kloudlite api dev environment";
 
-  inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-  };
-
+  inputs = { nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable"; }; 
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
       in
       {
-        packages = {
-          mocki = pkgs.writeScriptBin "mocki" ''
-            $PROJECT_ROOT/cmd/mocki/bin/mocki "$@"
-          '';
-          nats-manager = pkgs.writeScriptBin "nats-manager" ''
-            $PROJECT_ROOT/cmd/nats-manager/bin/nats-manager --url "nats://nats.kloudlite.svc.cluster.local:4222" --stream "resource-sync" "$@"
-          '';
-        };
+        packages.mocki = pkgs.writeScriptBin "mocki" ''
+          #! /usr/bin/env bash
+          $PROJECT_ROOT/cmd/mocki/bin/mocki "$@"
+        '';
+        packages.nats-manager = pkgs.writeScriptBin "nats-manager" ''
+          $PROJECT_ROOT/cmd/nats-manager/bin/nats-manager --url "nats://nats.kloudlite.svc.cluster.local:4222" --stream "resource-sync" "$@"
+        '';
         devShells.default = pkgs.mkShell {
           packages = [
             self.packages.${system}.mocki
-            self.packages.${system}.nats-manager
+            # self.packages.${system}.nats-manager
           ];
           hardeningDisable = [ "all" ];
           buildInputs = with pkgs; [
@@ -66,6 +62,7 @@
           ];
 
           shellHook = ''
+            # export PATH="$PWD/cmd/mocki/bin:$PATH"
             export PROJECT_ROOT="$PWD"
           '';
         };

@@ -9,6 +9,12 @@
 
 {{- $cloudprovider := get . "cloudprovider" }}
 
+{{- $gcpServiceAccountJson := get . "gcp-service-account-json" | default "" }}
+
+{{- if and (eq $cloudprovider "gcp") (not $gcpServiceAccountJson) }}
+{{fail "when cloudprovider is gcp, field `gcp-service-account-json` is required"}}
+{{- end }}
+
 ---
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
@@ -25,7 +31,7 @@ spec:
       - operator: Exists
     
   preInstall: |+
-    kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/{{$kloudliteRelease}}/crds-kloudlite.yml
+    kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/{{$kloudliteRelease}}/crds-kloudlite.yml --server-side
 
   postInstall: |+
     if kubectl get ns kloudlite-tmp;
@@ -57,6 +63,13 @@ spec:
         effect: "NoSchedule"
 
     cloudProvider: "{{$cloudprovider}}"
+
+    {{- if (eq $cloudprovider "gcp") }}
+    gcp:
+      gcloudServiceAccountCreds:
+        # -- base64 encoded service account json
+        json: {{$gcpServiceAccountJson}}
+    {{- end }}
 
     agent:
       enabled: true
