@@ -25,6 +25,13 @@ gcp:
   csi_driver:
     enabled: true
 
+  spot_node_terminator:
+    enabled: true
+    configuration:
+      image:
+        repository: "ghcr.io/kloudlite/kloudlite/infrastructure-as-code/gcp-spot-node-terminator"
+        tag: ""
+
 common:
   clusterAutoscaler:
     enabled: true

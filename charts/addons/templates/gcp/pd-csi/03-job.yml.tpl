@@ -38,7 +38,7 @@ spec:
                 .spec.template.spec.volumes = (
                   .spec.template.spec.volumes | map_values(
                       if .name == "cloud-sa-volume" then 
-                        .secret.secretName = "$secret_name"
+                        .secret.secretName = $secret_name
                       else 
                         .
                       end
@@ -64,4 +64,19 @@ spec:
               allowVolumeExpansion: true
               EOF
               done
+
+              echo "making sure sc-ext4 is the default storage class"
+
+              kubectl get sc/local-path -o=jsonpath={.metadata.name}
+              exit_code=$?
+
+              if [ $exit_code -eq 0 ]; then
+                kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+              fi
+
+              kubectl get sc/sc-ext4 -o=jsonpath={.metadata.name}
+              exit_code=$?
+              if [ $exit_code -eq 0 ]; then
+                kubectl patch storageclass sc-ext4 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+              fi
 {{- end }}
