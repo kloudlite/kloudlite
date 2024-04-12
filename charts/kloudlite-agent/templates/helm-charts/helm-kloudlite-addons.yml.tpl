@@ -29,7 +29,7 @@ spec:
     {{- if (eq .Values.cloudProvider "gcp") }}
     gcp:
       gcloudServiceAccountCreds:
-        json: {{ .Values.gcp.gcloudServiceAccountCreds.gcp }}
+        json: {{ .Values.gcp.gcloudServiceAccountCreds.json }}
 
       csi_driver:
         enabled: true
