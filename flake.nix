@@ -26,6 +26,18 @@
           kubectl
           terraform
         ];
+
+        container = pkgs.buildEnv {
+          name = "container";
+          paths = with pkgs; [
+            bash
+            envsubst
+            jq 
+            zstd
+            kubectl
+            terraform
+          ];
+        };
       in
       {
         devShells.default = pkgs.mkShell {
@@ -65,21 +77,40 @@
           '';
         };
 
+        # packages.container = pkgs.stdenv.mkDerivation {
+        #   name = "hello";
+        #   buildInputs = binaries;
+        #   buildCommand = let
+        #     copyBinaries = builtins.concatStringsSep "\n" (builtins.map(input: 
+        #     ''
+        #       if [ -e "${input}/bin" ]; then
+        #         cp ${input}/bin/* $out/bin/
+        #       fi
+        #     ''
+        #     ) binaries);
+        #   in ''
+        #     mkdir -p $out/bin
+        #     ${copyBinaries}
+        #   '';
+        # };
+
         packages.container = pkgs.stdenv.mkDerivation {
-          name = "hello";
-          buildInputs = binaries;
-          buildCommand = let
-            copyBinaries = builtins.concatStringsSep "\n" (builtins.map(input: 
-            ''
-              if [ -e "${input}/bin" ]; then
-                cp ${input}/bin/* $out/bin/
-              fi
-            ''
-            ) binaries);
-          in ''
-            mkdir -p $out/bin
-            ${copyBinaries}
-          '';
+          name = "container";
+          src = container;
+          installPhase = "cp -rL $src $out/";
+          # buildInputs = binaries;
+          # buildCommand = let
+          #   copyBinaries = builtins.concatStringsSep "\n" (builtins.map(input: 
+          #   ''
+          #     if [ -e "${input}/bin" ]; then
+          #       cp ${input}/bin/* $out/bin/
+          #     fi
+          #   ''
+          #   ) binaries);
+          # in ''
+          #   mkdir -p $out/bin
+          #   ${copyBinaries}
+          # '';
         };
       }
     );

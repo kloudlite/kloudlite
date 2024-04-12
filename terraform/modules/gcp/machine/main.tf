@@ -95,7 +95,7 @@ resource "google_compute_instance" "standard" {
   }
 
   dynamic "service_account" {
-    for_each = {for k, v in (var.service_account != null? [var.service_account] : []) : k => v}
+    for_each = {for k, v in [var.service_account] : k => v if var.service_account.enabled}
     content {
       email  = service_account.value.email
       scopes = service_account.value.scopes
@@ -145,7 +145,7 @@ resource "google_compute_instance" "spot" {
   }
 
   dynamic "service_account" {
-    for_each = {for k, v in (var.service_account != null? [var.service_account] : []) : k => v}
+    for_each = {for k, v in [var.service_account] : k => v if var.service_account.enabled}
     content {
       email  = service_account.value.email
       scopes = service_account.value.scopes

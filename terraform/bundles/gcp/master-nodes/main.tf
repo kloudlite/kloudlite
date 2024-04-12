@@ -58,6 +58,7 @@ module "master-nodes" {
   })
   bootvolume_size = each.value.bootvolume_size
   bootvolume_type = each.value.bootvolume_type
+  service_account = var.service_account
 }
 
 module "kloudlite-k3s-masters" {

@@ -105,3 +105,11 @@ variable "allow_incoming_http_traffic" {
   type        = bool
   description = "allow incoming http traffic"
 }
+
+variable "service_account" {
+  type = object({
+    enabled = bool
+    email   = optional(string)
+    scopes  = optional(list(string))
+  })
+}

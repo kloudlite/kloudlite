@@ -28,10 +28,18 @@ variable "machine_type" {
 
 variable "service_account" {
   type = object({
-    email  = string
-    scopes = list(string)
+    enabled = bool
+    email   = optional(string)
+    scopes  = optional(list(string))
   })
-  default = null
+
+  validation {
+    error_message = "when service_account enabled, email and scopes must be set"
+    condition     = anytrue([
+      !var.service_account.enabled,
+      var.service_account.email != "" && var.service_account.scopes != null
+    ])
+  }
 }
 
 variable "startup_script" {

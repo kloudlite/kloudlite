@@ -9,7 +9,7 @@ if (!nodename) {
 
 const webhookURL = process.env.WEBHOOK_URL
 
-// const debug = process.env.DEBUG == true
+const alsoWatchComputeInstancesApi = process.env.WATCH_COMPUTE_INSTANCES_API == "true"
 
 function debug(msg) {
   if (process.env.DEBUG == "true") {
@@ -65,35 +65,37 @@ const urlPath = [sp[0], projectId, ...sp.slice(2)].join("/")
 let token = await getToken()
 
 while (true) {
-  const resp = await fetch(`https://compute.googleapis.com/compute/v1/${urlPath}/instances/${instanceName}`, {headers: {"Accept": "application/json", "Authorization": `Bearer ${token}`}})
-  const out = await resp.json()
+  if (alsoWatchComputeInstancesApi) {
+    const resp = await fetch(`https://compute.googleapis.com/compute/v1/${urlPath}/instances/${instanceName}`, {headers: {"Accept": "application/json", "Authorization": `Bearer ${token}`}})
+    const out = await resp.json()
 
-  if (out?.error?.code == 401) {
-    // unauthorized, need to refresh token
-    info("OAuth Token expired, refreshing token and retrying ...")
-    token = await getToken()
-    info("token refreshed")
-    if (webhookURL) {
-      await fetch(`https://${webhookURL}/push/text?message="OAuth Token Expired at (${nodename})"`)
+    if (out?.error?.code == 401) {
+      // unauthorized, need to refresh token
+      info("OAuth Token expired, refreshing token and retrying ...")
+      token = await getToken()
+      info("token refreshed")
+      if (webhookURL) {
+        await fetch(`https://${webhookURL}/push/text?message="OAuth Token Expired at (${nodename})"`)
+      }
+      continue
     }
-    continue
-  }
 
-  // debug(`out: ${JSON.stringify(out)}`)
-  debug(`current status: ${out["status"]}`)
-  if (out["status"] == "undefined") {
-    info("google cloud instance get api is showing `undefined` as status of current node, will retry")
-    await sleep(1000)
-    continue
-  }
-
-  if (!["PROVISIONING", "STAGING", "RUNNING"].some(item => item == out["status"])) {
-    if (webhookURL){
-      await fetch(`${webhookURL}/push/text?message="proceeding with deletion when instance (${nodename}) status: ${out['status']}, \nfor debugging: full output\n${JSON.stringify(out)}"`)
+    // debug(`out: ${JSON.stringify(out)}`)
+    debug(`current status: ${out["status"]}`)
+    if (out["status"] == "undefined") {
+      info("google cloud instance get api is showing `undefined` as status of current node, will retry")
+      await sleep(1000)
+      continue
     }
-    info(`instance has status (${out["status"]}), marking it for deletion`)
-    await drainAndDeleteNode()
-    process.exit(0)
+
+    if (!["PROVISIONING", "STAGING", "RUNNING"].some(item => item == out["status"])) {
+      if (webhookURL){
+        await fetch(`${webhookURL}/push/text?message="proceeding with deletion when instance (${nodename}) status: ${out['status']}, \nfor debugging: full output\n${JSON.stringify(out)}"`)
+      }
+      info(`instance has status (${out["status"]}), marking it for deletion`)
+      await drainAndDeleteNode()
+      process.exit(0)
+    }
   }
 
   // checking preempted url
