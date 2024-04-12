@@ -277,8 +277,8 @@ query: |+ #graphql
     infra_upgradeHelmKloudliteAgent(clusterName: $clusterName)
   }
 variables:
-  # clusterName: "{{.clusterName}}"
-  clusterName: "{{.gcpClusterName}}"
+  clusterName: "{{.clusterName}}"
+  # clusterName: "{{.gcpClusterName}}"
 ---
 
 label: Delete Cluster
