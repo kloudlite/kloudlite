@@ -14,4 +14,5 @@ module "worker-nodes-on-gcp" {
   nodepool_name               = var.nodepool_name
   nodes                       = var.nodes
   provision_mode              = var.provision_mode
+  service_account             = var.service_account
 }
