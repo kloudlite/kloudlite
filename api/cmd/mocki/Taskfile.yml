@@ -3,6 +3,8 @@ version: 3
 tasks:
   install:
     dir: ../..
+    env:
+      CGO_ENABLED: 0
     cmds: 
       - mkdir -p bin
       - go build -o ./bin/mocki ./cmd/mocki
