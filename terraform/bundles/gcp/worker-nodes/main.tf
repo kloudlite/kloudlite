@@ -71,10 +71,11 @@ module "worker-nodes" {
     tf_node_labels          = jsonencode(merge(var.node_labels, {
       (module.constants.node_labels.provider_az)   = var.availability_zone
       (module.constants.node_labels.node_has_role) = "agent"
-      (module.constants.node_labels.nodepool_name) : var.nodepool_name,
+      (module.constants.node_labels.nodepool_name) : var.nodepool_name
       (module.constants.node_labels.provider_aws_instance_profile_name) : ""
     },
-      #      var.nvidia_gpu_enabled == true ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
+      var.provision_mode == "SPOT" ? { (module.constants.node_labels.node_is_spot) = "true" } : {},
+      #            var.nvidia_gpu_enabled == true ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
     ))
     tf_node_name                 = "${var.nodepool_name}-${each.key}"
     tf_use_cloudflare_nameserver = true
