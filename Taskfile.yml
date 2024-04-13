@@ -67,11 +67,11 @@ tasks:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: 'var Image must have a value'
     vars:
-      Push: true
-      DockerArgs: ""
+      push: true
+      dockerArgs: "{{.DockerArgs | default ''}}"
     cmds:
-      - docker build -t {{.Image}} . {{.DockerArgs}}
+      - docker build -t {{.Image}} . {{.dockerArgs}}
       - |+
-        if [ "{{.Push}}" == "true" ]; then
+        if [ "{{.push}}" == "true" ]; then
           docker push {{.Image}}
         fi
