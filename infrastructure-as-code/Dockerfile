@@ -23,6 +23,7 @@ RUN <<'EOF'
   # tar cf - $tdir | lz4 -v -5 > tf.lz4 && rm -rf $tdir
   tar cf - $tdir | zstd --compress > tf.zst && rm -rf $tdir
 EOF
+
 # ENV DECOMPRESS_CMD="lz4 -d tf.lz4 | tar xf -"
 ENV DECOMPRESS_CMD="zstd --decompress tf.zst --stdout | tar xf -"
 ENV TEMPLATES_DIR="/app/infrastructure-templates"

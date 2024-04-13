@@ -9,3 +9,4 @@
 .terraform.d
 .dump
 .buildx-cache
+*.tar
