@@ -103,9 +103,16 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 				Region:           cluster.Spec.GCP.Region,
 				AvailabilityZone: nodepool.Spec.GCP.AvailabilityZone,
 				GCPProjectID:     cluster.Spec.GCP.GCPProjectID,
+				VPC:              &clustersv1.GcpVPCParams{Name: cluster.Spec.GCP.VPC.Name},
 				Credentials: ct.SecretRef{
 					Name:      k8sSecret.Name,
 					Namespace: k8sSecret.Namespace,
+				},
+				// FIXME: once, we allow gcp service account for nodepools via UI
+				ServiceAccount: clustersv1.GCPServiceAccount{
+					Enabled: false,
+					Email:   nil,
+					Scopes:  nil,
 				},
 				PoolType:       nodepool.Spec.GCP.PoolType,
 				MachineType:    nodepool.Spec.GCP.MachineType,
