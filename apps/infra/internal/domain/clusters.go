@@ -250,6 +250,12 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 					Name:      cps.Name,
 					Namespace: cps.Namespace,
 				},
+				// FIXME: once, we allow gcp service account for clusters via UI
+				ServiceAccount: clustersv1.GCPServiceAccount{
+					Enabled: false,
+					Email:   nil,
+					Scopes:  nil,
+				},
 				MasterNodes: clustersv1.GCPMasterNodesConfig{
 					RootVolumeType: "pd-ssd",
 					RootVolumeSize: 50,
@@ -581,6 +587,10 @@ func (d *domain) OnClusterUpdateMessage(ctx InfraContext, cluster entities.Clust
 
 	if cluster.Spec.AWS != nil && cluster.Spec.AWS.VPC != nil {
 		patchDoc[fc.ClusterSpecAwsVpc] = cluster.Spec.AWS.VPC
+	}
+
+	if cluster.Spec.GCP != nil && cluster.Spec.GCP.VPC != nil {
+		patchDoc[fc.ClusterSpecGcpVpc] = cluster.Spec.GCP.VPC
 	}
 
 	uCluster, err := d.clusterRepo.PatchById(
