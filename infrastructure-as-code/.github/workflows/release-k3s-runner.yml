@@ -73,6 +73,7 @@ jobs:
           GOARCH=amd64 task build
           GOARCH=arm64 task build
           curl -L0 "https://github.com/k3s-io/k3s/releases/download/$K3S_VERSION/k3s" > bin/k3s
+          curl -L0 "https://github.com/k3s-io/k3s/releases/download/$K3S_VERSION/k3s-arm64" > bin/k3s-arm64
 
           PRE_RELEASE=$OVERRIDE_RELEASE
 
