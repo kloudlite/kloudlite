@@ -4,6 +4,6 @@ kind: Secret
 metadata:
   name: {{ include "gcp-credentials-secret-name" . }}
   namespace: {{.Release.Namespace}}
-stringData:
+data:
   gcloud-creds.json: {{ .Values.gcp.gcloudServiceAccountCreds.json | squote }}
 {{- end }}
