@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
@@ -44,8 +45,6 @@ type ClusterReconciler struct {
 
 	templateClusterJob        []byte
 	templateRBACForClusterJob []byte
-
-	templateGcpVPCJob []byte
 
 	NotifyOnClusterUpdate func(ctx context.Context, obj *clustersv1.Cluster) error
 }
@@ -344,9 +343,17 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 					return check.StillRunning(fmt.Errorf("waiting for a kloudlite-vpc to be ready, before proceeding"))
 				}
 
-				obj.Spec.GCP.VPC = &clustersv1.GcpVPCParams{
-					Name: gcpVpc.Name,
+				vpcOutput, err := rApi.Get(ctx, r.Client, fn.NN(gcpVpc.Spec.Output.SecretRef.Namespace, gcpVpc.Spec.Output.SecretRef.Name), &corev1.Secret{})
+				if err != nil {
+					return check.Failed(err)
 				}
+
+				gvt, err := fn.ParseFromSecret[templates.GcpVpcTFOutput](vpcOutput)
+				if err != nil {
+					return check.Failed(err)
+				}
+
+				obj.Spec.GCP.VPC = &clustersv1.GcpVPCParams{Name: strings.TrimSpace(gvt.VPCName)}
 
 				if err := r.Update(ctx, obj); err != nil {
 					return check.StillRunning(err)
@@ -509,14 +516,20 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clu
 			}
 
 			values := GcpClusterTFValues{
-				GcpProjectId:              obj.Spec.GCP.GCPProjectID,
-				GcpRegion:                 obj.Spec.GCP.Region,
-				GcpCredentialsJson:        base64.StdEncoding.EncodeToString([]byte(gcpCreds.ServiceAccountJSON)),
-				NamePrefix:                fmt.Sprintf("%s-%s", obj.Spec.AccountName, obj.Name),
+				GcpProjectId:       obj.Spec.GCP.GCPProjectID,
+				GcpRegion:          obj.Spec.GCP.Region,
+				GcpCredentialsJson: base64.StdEncoding.EncodeToString([]byte(gcpCreds.ServiceAccountJSON)),
+				// NamePrefix:                fmt.Sprintf("%s-%s", obj.Spec.AccountName, obj.Name),
+				NamePrefix:                obj.Name,
 				ProvisionMode:             "STANDARD",
 				Network:                   obj.Spec.GCP.VPC.Name,
 				UseAsLonghornStorageNodes: false,
 				MachineType:               "e2-custom-2-4096",
+				ServiceAccount: GCPServiceAccount{
+					Enabled: obj.Spec.GCP.ServiceAccount.Enabled,
+					Email:   obj.Spec.GCP.ServiceAccount.Email,
+					Scopes:  obj.Spec.GCP.ServiceAccount.Scopes,
+				},
 				Nodes: func() map[string]TFGcpNode {
 					nodes := make(map[string]TFGcpNode)
 					for k, v := range obj.Spec.GCP.MasterNodes.Nodes {
@@ -551,6 +564,10 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clu
 						ClusterToken:          string(clusterTokenScrt.Data[obj.Spec.ClusterTokenRef.Key]),
 						MessageOfficeGRPCAddr: r.Env.MessageOfficeGRPCAddr,
 					},
+				},
+				Labels: map[string]string{
+					"kloudlite-account": obj.Spec.AccountName,
+					"kloudlite-cluster": obj.Name,
 				},
 			}
 
@@ -646,11 +663,6 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	}
 
 	r.templateRBACForClusterJob, err = templates.Read(templates.RBACForClusterJobTemplate)
-	if err != nil {
-		return err
-	}
-
-	r.templateGcpVPCJob, err = templates.Read(templates.GcpVPCJob)
 	if err != nil {
 		return err
 	}

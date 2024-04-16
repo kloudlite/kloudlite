@@ -65,10 +65,14 @@ type GCPNodePoolConfig struct {
 	Region       string `json:"region" graphql:"noinput"`
 	GCPProjectID string `json:"gcpProjectID" graphql:"noinput"`
 
+	VPC *GcpVPCParams `json:"vpc,omitempty" graphql:"noinput"`
+
 	AvailabilityZone string `json:"availabilityZone"`
 
 	// this secret's `.data` will be unmarshaled into type `GCPCredentials`
 	Credentials ct.SecretRef `json:"credentials" graphql:"noinput"`
+
+	ServiceAccount GCPServiceAccount `json:"serviceAccount" graphql:"noinput"`
 
 	PoolType GCPPoolType `json:"poolType"`
 
