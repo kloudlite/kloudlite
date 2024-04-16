@@ -132,6 +132,8 @@ type GCPClusterConfig struct {
 	// This secret will be unmarshalled into type GCPCredentials
 	CredentialsRef ct.SecretRef `json:"credentialsRef"`
 
+	ServiceAccount GCPServiceAccount `json:"serviceAccount" graphql:"noinput"`
+
 	MasterNodes GCPMasterNodesConfig `json:"masterNodes,omitempty" graphql:"noinput"`
 }
 

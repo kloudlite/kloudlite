@@ -12,6 +12,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+type GCPServiceAccount struct {
+	Enabled bool     `json:"enabled"`
+	Email   *string  `json:"email,omitempty"`
+	Scopes  []string `json:"scopes,omitempty"`
+}
+
 type GCPWorkerValues struct {
 	GCPProjectID       string `json:"gcp_project_id"`
 	GCPRegion          string `json:"gcp_region"`
@@ -28,6 +34,8 @@ type GCPWorkerValues struct {
 	BootVolumeType string `json:"bootvolume_type"`
 	BootVolumeSize int    `json:"bootvolume_size"`
 
+	ServiceAccount GCPServiceAccount `json:"service_account"`
+
 	Nodes map[string]any `json:"nodes"`
 
 	NodeLabels  map[string]string `json:"node_labels"`
@@ -41,7 +49,7 @@ type GCPWorkerValues struct {
 	SaveSSHKeyToPath         string            `json:"save_ssh_key_to_path"`
 	KloudliteRelease         string            `json:"kloudlite_release"`
 	LabelCloudproviderRegion string            `json:"label_cloudprovider_region"`
-	Tags                     map[string]string `json:"tags"`
+	Labels                   map[string]string `json:"labels"`
 
 	AllowIncomingHttpTraffic bool `json:"allow_incoming_http_traffic"`
 }
@@ -66,13 +74,23 @@ func (r *Reconciler) GCPJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 		GCPRegion:          obj.Spec.GCP.Region,
 		GCPCredentialsJSON: base64.StdEncoding.EncodeToString([]byte(gcpCreds.ServiceAccountJSON)),
 
-		NamePrefix:       fmt.Sprintf("%s-nodepool", r.Env.ClusterName),
+		NamePrefix:       "np",
 		NodepoolName:     obj.Name,
 		ProvisionMode:    string(obj.Spec.GCP.PoolType),
 		AvailabilityZone: obj.Spec.GCP.AvailabilityZone,
-		Network:          "default",
-		BootVolumeType:   obj.Spec.GCP.BootVolumeType,
-		BootVolumeSize:   obj.Spec.GCP.BootVolumeSize,
+		Network: func() string {
+			if obj.Spec.GCP.VPC != nil {
+				return obj.Spec.GCP.VPC.Name
+			}
+			return "default"
+		}(),
+		BootVolumeType: obj.Spec.GCP.BootVolumeType,
+		BootVolumeSize: obj.Spec.GCP.BootVolumeSize,
+		ServiceAccount: GCPServiceAccount{
+			Enabled: obj.Spec.GCP.ServiceAccount.Enabled,
+			Email:   obj.Spec.GCP.ServiceAccount.Email,
+			Scopes:  obj.Spec.GCP.ServiceAccount.Scopes,
+		},
 		Nodes: func() map[string]any {
 			m := make(map[string]any, len(nodesMap))
 			for k, v := range nodesMap {
@@ -89,7 +107,11 @@ func (r *Reconciler) GCPJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 		SaveSSHKeyToPath:         "",
 		KloudliteRelease:         r.Env.KloudliteRelease,
 		LabelCloudproviderRegion: r.Env.CloudProviderRegion,
-		Tags:                     map[string]string{"kloudlite-account": r.Env.AccountName, "kloudlite-cluster": r.Env.ClusterName},
+		Labels: map[string]string{
+			"kloudlite-account": r.Env.AccountName,
+			"nodepool-name":     obj.Name,
+			"kloudlite-cluster": r.Env.ClusterName,
+		},
 		AllowIncomingHttpTraffic: false,
 	}
 
