@@ -99,7 +99,7 @@ while (true) {
   }
 
   // checking preempted url
-  const {stdout: preemptedStatus} = await $`curl "http://169.254.169.254/computeMetadata/v1/instance/preempted" -H "Metadata-Flavor: Google"`
+  const {stdout: preemptedStatus} = await $`curl -s "http://169.254.169.254/computeMetadata/v1/instance/preempted" -H "Metadata-Flavor: Google"`
   if (preemptedStatus.trim().toLowerCase() == "true") {
     info("node is preempted, exiting")
     if (webhookURL){

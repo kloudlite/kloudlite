@@ -35,13 +35,13 @@ module "worker-nodes-firewall" {
   target_tags                 = local.k3s_worker_tags
   allow_incoming_http_traffic = var.allow_incoming_http_traffic
   allow_node_ports            = false
-  name_prefix                 = "${var.name_prefix}-${var.nodepool_name}-firewall"
+  name_prefix                 = "${var.name_prefix}-${var.nodepool_name}-fw"
 }
 
 module "worker-nodes" {
   source = "../../../modules/gcp/machine"
 
-  for_each = {for name, cfg in var.nodes : name => cfg}
+  for_each = { for name, cfg in var.nodes : name => cfg }
 
   machine_type      = var.machine_type
   service_account   = var.service_account
@@ -51,7 +51,8 @@ module "worker-nodes" {
   availability_zone = var.availability_zone
   network           = var.network
 
-  tags = concat(flatten([for k, v in var.tags : [k, v]]), local.k3s_worker_tags)
+  network_tags = local.k3s_worker_tags
+  labels       = var.labels
 
   startup_script = templatefile(module.kloudlite-k3s-templates.k3s-agent-template-path, {
     kloudlite_config_directory = module.kloudlite-k3s-templates.kloudlite_config_directory
@@ -68,12 +69,12 @@ module "worker-nodes" {
     #    var.node_taints != null ? var.node_taints : [],
     #    var.nvidia_gpu_enabled == true ? module.constants.gpu_node_taints : [],
     #  )
-    tf_node_labels          = jsonencode(merge(var.node_labels, {
+    tf_node_labels = jsonencode(merge(var.node_labels, {
       (module.constants.node_labels.provider_az)   = var.availability_zone
       (module.constants.node_labels.node_has_role) = "agent"
       (module.constants.node_labels.nodepool_name) : var.nodepool_name
       (module.constants.node_labels.provider_aws_instance_profile_name) : ""
-    },
+      },
       var.provision_mode == "SPOT" ? { (module.constants.node_labels.node_is_spot) = "true" } : {},
       #            var.nvidia_gpu_enabled == true ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
     ))

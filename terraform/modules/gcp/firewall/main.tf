@@ -71,15 +71,15 @@ locals {
   ]
 }
 
-
 resource "google_compute_firewall" "k3s_master_nodes_private" {
   count = var.for_master_nodes ? 1 : 0
 
-  name    = "${var.name_prefix}-k3s-master-nodes-private"
+  // INFO: name must be less than 63 chars
+  name    = "${var.name_prefix}-master-priv"
   network = var.network_name
 
   dynamic "allow" {
-    for_each = {for k, v in local.k3s_masters_private : k => v}
+    for_each = { for k, v in local.k3s_masters_private : k => v }
     content {
       protocol = allow.value.protocol
       ports    = allow.value.ports
@@ -87,7 +87,7 @@ resource "google_compute_firewall" "k3s_master_nodes_private" {
   }
 
   dynamic "allow" {
-    for_each = {for k, v in local.metrics_server : k => v}
+    for_each = { for k, v in local.metrics_server : k => v }
     content {
       protocol = allow.value.protocol
       ports    = allow.value.ports
@@ -103,11 +103,11 @@ resource "google_compute_firewall" "k3s_master_nodes_private" {
 resource "google_compute_firewall" "k3s_master_nodes_public" {
   count = var.for_master_nodes ? 1 : 0
 
-  name    = "${var.name_prefix}-k3s-master-nodes-public"
+  name    = "${var.name_prefix}-master-pub"
   network = var.network_name
 
   dynamic "allow" {
-    for_each = {for k, v in local.k3s_masters_public : k => v}
+    for_each = { for k, v in local.k3s_masters_public : k => v }
     content {
       protocol = allow.value.protocol
       ports    = allow.value.ports
@@ -115,7 +115,7 @@ resource "google_compute_firewall" "k3s_master_nodes_public" {
   }
 
   dynamic "allow" {
-    for_each = {for k, v in local.incoming_http_traffic : k => v if var.allow_incoming_http_traffic}
+    for_each = { for k, v in local.incoming_http_traffic : k => v if var.allow_incoming_http_traffic }
     content {
       protocol = allow.value.protocol
       ports    = allow.value.ports
@@ -123,7 +123,7 @@ resource "google_compute_firewall" "k3s_master_nodes_public" {
   }
 
   dynamic "allow" {
-    for_each = {for k, v in local.node_ports : k => v if var.allow_node_ports}
+    for_each = { for k, v in local.node_ports : k => v if var.allow_node_ports }
     content {
       protocol = allow.value.protocol
       ports    = allow.value.ports
@@ -131,7 +131,7 @@ resource "google_compute_firewall" "k3s_master_nodes_public" {
   }
 
   dynamic "allow" {
-    for_each = {for k, v in local.incoming_ssh_connection : k => v}
+    for_each = { for k, v in local.incoming_ssh_connection : k => v }
     content {
       protocol = allow.value.protocol
       ports    = allow.value.ports
@@ -149,11 +149,11 @@ resource "google_compute_firewall" "k3s_master_nodes_public" {
 resource "google_compute_firewall" "k3s_worker_nodes" {
   count = var.for_worker_nodes ? 1 : 0
 
-  name    = "${var.name_prefix}-k3s-worker-nodes"
+  name    = "${var.name_prefix}-worker-pub"
   network = var.network_name
 
   dynamic "allow" {
-    for_each = {for k, v in local.incoming_http_traffic : k => v if var.allow_incoming_http_traffic}
+    for_each = { for k, v in local.incoming_http_traffic : k => v if var.allow_incoming_http_traffic }
     content {
       protocol = allow.value.protocol
       ports    = allow.value.ports
@@ -161,7 +161,7 @@ resource "google_compute_firewall" "k3s_worker_nodes" {
   }
 
   dynamic "allow" {
-    for_each = {for k, v in local.node_ports : k => v if var.allow_node_ports}
+    for_each = { for k, v in local.node_ports : k => v if var.allow_node_ports }
     content {
       protocol = allow.value.protocol
       ports    = allow.value.ports
@@ -169,7 +169,7 @@ resource "google_compute_firewall" "k3s_worker_nodes" {
   }
 
   dynamic "deny" {
-    for_each = {for k, v in local.incoming_ssh_connection : k => v}
+    for_each = { for k, v in local.incoming_ssh_connection : k => v }
     content {
       protocol = deny.value.protocol
       ports    = deny.value.ports

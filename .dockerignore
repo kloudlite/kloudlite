@@ -11,3 +11,4 @@
 !infrastructure-templates
 infrastructure-templates/**/.terraform.d
 !context.tar
+!flake.*

@@ -46,7 +46,7 @@ variable "public_dns_host" {
 
 variable "cloudflare" {
   description = "cloudflare related parameters"
-  type        = object({
+  type = object({
     enabled   = bool
     api_token = optional(string)
     zone_id   = optional(string)
@@ -55,7 +55,7 @@ variable "cloudflare" {
 
   validation {
     error_message = "if enabled, all mandatory Cloudflare bucket details are specified"
-    condition     = var.cloudflare == null || (var.cloudflare.enabled == true && alltrue([
+    condition = var.cloudflare == null || (var.cloudflare.enabled == true && alltrue([
       var.cloudflare.api_token != "",
       var.cloudflare.zone_id != "",
       var.cloudflare.domain != "",
@@ -65,7 +65,7 @@ variable "cloudflare" {
 
 variable "kloudlite_params" {
   description = "kloudlite related parameters"
-  type        = object({
+  type = object({
     release            = string
     install_crds       = optional(bool, true)
     install_csi_driver = optional(bool, false)
@@ -73,7 +73,7 @@ variable "kloudlite_params" {
 
     install_agent       = optional(bool, false)
     install_autoscalers = optional(bool, true)
-    agent_vars          = optional(object({
+    agent_vars = optional(object({
       account_name             = string
       cluster_name             = string
       cluster_token            = string
@@ -105,7 +105,7 @@ variable "label_cloudprovider_region" {
   default     = ""
 }
 
-variable "tags" {
+variable "labels" {
   type        = map(string)
   description = "map of Key => Value to be tagged along created resources"
   default     = {}
