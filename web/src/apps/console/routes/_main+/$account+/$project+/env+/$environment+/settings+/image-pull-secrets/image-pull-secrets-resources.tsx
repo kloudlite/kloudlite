@@ -1,4 +1,4 @@
-import { Trash, PencilLine } from '@jengaicons/react';
+import { Trash, PencilLine } from '~/console/components/icons';
 import { useState } from 'react';
 import { generateKey } from '~/components/utils';
 import {

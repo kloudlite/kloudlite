@@ -2039,12 +2039,19 @@ type IOTAppPaginatedRecords {
   totalCount: Int!
 }
 
+type IOTConsoleCheckNameAvailabilityOutput {
+  result: Boolean!
+  suggestedNames: [String!]!
+}
+
 type IOTDeployment {
   accountName: String!
   CIDR: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
+  exposedDomains: [String!]!
+  exposedIps: [String!]!
   exposedServices: [Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedService!]!
   id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -2063,6 +2070,8 @@ type IOTDeploymentEdge {
 input IOTDeploymentIn {
   CIDR: String!
   displayName: String!
+  exposedDomains: [String!]!
+  exposedIps: [String!]!
   exposedServices: [Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedServiceIn!]!
   name: String!
 }
@@ -3760,6 +3769,7 @@ type Query {
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
   infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
+  iot_checkNameAvailability(deploymentName: String, deviceBlueprintName: String, name: String!, projectName: String!, resType: ResourceType!): IOTConsoleCheckNameAvailabilityOutput!
   iot_getApp(deviceBlueprintName: String!, name: String!, projectName: String!): IOTApp
   iot_getDeployment(name: String!, projectName: String!): IOTDeployment
   iot_getDevice(deploymentName: String!, name: String!, projectName: String!): IOTDevice
@@ -3803,6 +3813,14 @@ type RepositoryPaginatedRecords {
   edges: [RepositoryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+}
+
+enum ResourceType {
+  iot_app
+  iot_deployment
+  iot_device
+  iot_device_blueprint
+  iot_project
 }
 
 enum ResType {

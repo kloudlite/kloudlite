@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData, useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
@@ -184,7 +184,7 @@ const Projects = () => {
                 <Button
                   variant="primary"
                   content="Create Project"
-                  prefix={<PlusFill />}
+                  prefix={<Plus />}
                   to={`/${account}/new-project`}
                   LinkComponent={Link}
                 />

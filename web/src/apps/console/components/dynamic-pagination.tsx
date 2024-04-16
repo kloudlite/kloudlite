@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, SmileySad } from '@jengaicons/react';
+import { ChevronLeft, ChevronRight, SmileySad } from '~/console/components/icons';
 import { ReactNode } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import { cn } from '~/components/utils';

@@ -12,7 +12,7 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { IPvs } from '~/console/server/gql/queries/pv-queries';
-import { CircleFill, Database, Trash } from '@jengaicons/react';
+import { CircleFill, Database, Trash } from '~/console/components/icons';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useState } from 'react';
 import DeleteDialog from '~/console/components/delete-dialog';

@@ -8,7 +8,7 @@ import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { Plus } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { Button } from '~/components/atoms/button';
 import fake from '~/root/fake-data-generator/fake';
 import BuildResources from './build-resources';

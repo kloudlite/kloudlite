@@ -19,7 +19,7 @@ import axios from 'axios';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Select from '~/components/atoms/select';
-import { CircleWavyCheckFill } from '@jengaicons/react';
+import { CircleWavyCheckFill } from '~/console/components/icons';
 import { cn, useMapper } from '~/components/utils';
 import Pulsable from 'react-pulsable';
 import { NameIdView } from '~/console/components/name-id-view';

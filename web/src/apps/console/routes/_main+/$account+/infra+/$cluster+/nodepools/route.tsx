@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
@@ -68,7 +68,7 @@ const Nodepools = () => {
                   <Button
                     variant="primary"
                     content="Create Nodepool"
-                    prefix={<PlusFill />}
+                    prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
                     }}

@@ -1,4 +1,4 @@
-import { List, SquaresFour } from '@jengaicons/react';
+import { List, SquaresFour } from '~/console/components/icons';
 import {
   ReactNode,
   createContext,

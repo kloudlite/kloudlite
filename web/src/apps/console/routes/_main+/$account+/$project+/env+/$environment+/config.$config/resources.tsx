@@ -1,4 +1,4 @@
-import { DotsThreeVerticalFill, SmileySad, Trash } from '@jengaicons/react';
+import { DotsThreeVerticalFill, SmileySad, Trash } from '~/console/components/icons';
 import { useEffect, useState } from 'react';
 import AnimateHide from '~/components/atoms/animate-hide';
 import { IconButton } from '~/components/atoms/button';

@@ -1,4 +1,4 @@
-import { DotsThreeVerticalFill } from '@jengaicons/react';
+import { DotsThreeVerticalFill } from '~/console/components/icons';
 import { Avatar } from '~/components/atoms/avatar';
 import { IconButton } from '~/components/atoms/button';
 import List from '~/console/components/list';

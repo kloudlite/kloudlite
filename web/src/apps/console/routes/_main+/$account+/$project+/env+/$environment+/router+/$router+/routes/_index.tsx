@@ -1,4 +1,4 @@
-import { Plus } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { useOutletContext } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
 import Wrapper from '~/console/components/wrapper';

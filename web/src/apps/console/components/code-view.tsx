@@ -1,4 +1,4 @@
-import { CopySimple } from '@jengaicons/react';
+import { CopySimple } from '~/console/components/icons';
 import hljs from 'highlight.js';
 import { useEffect, useRef } from 'react';
 import { toast } from '~/components/molecule/toast';

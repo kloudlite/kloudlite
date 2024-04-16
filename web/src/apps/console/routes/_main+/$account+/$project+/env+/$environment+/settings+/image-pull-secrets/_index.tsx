@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
@@ -60,7 +60,7 @@ const Routers = () => {
                   <Button
                     variant="primary"
                     content="Create image pull secret"
-                    prefix={<PlusFill />}
+                    prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
                     }}

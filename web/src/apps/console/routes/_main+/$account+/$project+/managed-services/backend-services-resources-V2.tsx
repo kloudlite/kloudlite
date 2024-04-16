@@ -1,4 +1,4 @@
-import { GearSix, PencilSimple, Trash } from '@jengaicons/react';
+import { GearSix, PencilSimple, Trash } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
