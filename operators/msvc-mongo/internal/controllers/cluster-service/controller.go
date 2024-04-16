@@ -60,7 +60,6 @@ const (
 )
 
 var ApplyCheckList = []rApi.CheckMeta{
-	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
 	{Name: AccessCredsGenerated, Title: "Access Credentials Generated"},
 	{Name: MongoDBHelmApplied, Title: "MongoDB Helm Applied"},
 	{Name: MongoDBHelmReady, Title: "MongoDB Helm Ready"},
@@ -100,10 +99,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(DefaultsPatched, AccessCredsGenerated, MongoDBHelmApplied, MongoDBHelmReady, MongoDBStatefulSetsReady); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -117,6 +112,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := r.applyHelm(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.checkHelmReady(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -265,7 +264,7 @@ func (r *Reconciler) applyHelm(req *rApi.Request[*mongodbMsvcv1.ClusterService])
 	return check.Completed()
 }
 
-func (r *Reconciler) checkHelmReady(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
+func (r *Reconciler) checkHelmReady(req *rApi.Request[*mongodbMsvcv1.ClusterService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(MongoDBHelmReady, req)
 
