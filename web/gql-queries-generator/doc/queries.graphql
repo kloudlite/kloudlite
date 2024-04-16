@@ -3926,6 +3926,898 @@ query consoleListImagePullSecrets($projectName: String!, $envName: String!, $sea
   }
 }
 
+query iotconsoleAccountCheckNameAvailability($name: String!) {
+  accounts_checkNameAvailability(name: $name) {
+    result
+    suggestedNames
+  }
+}
+
+query iotconsoleCrCheckNameAvailability($name: String!) {
+  cr_checkUserNameAvailability(name: $name) {
+    result
+    suggestedNames
+  }
+}
+
+query iotconsoleInfraCheckNameAvailability($resType: ResType!, $name: String!, $clusterName: String) {
+  infra_checkNameAvailability(
+    resType: $resType
+    name: $name
+    clusterName: $clusterName
+  ) {
+    suggestedNames
+    result
+  }
+}
+
+query iotconsoleCoreCheckNameAvailability($resType: ConsoleResType!, $name: String!, $projectName: String, $envName: String) {
+  core_checkNameAvailability(
+    resType: $resType
+    name: $name
+    projectName: $projectName
+    envName: $envName
+  ) {
+    result
+  }
+}
+
+query iotconsoleWhoAmI {
+  auth_me {
+    id
+    email
+    providerGitlab
+    providerGithub
+    providerGoogle
+  }
+}
+
+mutation iotconsoleCreateAccount($account: AccountIn!) {
+  accounts_createAccount(account: $account) {
+    displayName
+  }
+}
+
+query iotconsoleListAccounts {
+  accounts_listAccounts {
+    id
+    metadata {
+      name
+      annotations
+    }
+    updateTime
+    displayName
+  }
+}
+
+mutation iotconsoleUpdateAccount($account: AccountIn!) {
+  accounts_updateAccount(account: $account) {
+    id
+  }
+}
+
+query iotconsoleGetAccount($accountName: String!) {
+  accounts_getAccount(accountName: $accountName) {
+    metadata {
+      name
+      annotations
+    }
+    targetNamespace
+    updateTime
+    contactEmail
+    displayName
+  }
+}
+
+mutation iotconsoleDeleteAccount($accountName: String!) {
+  accounts_deleteAccount(accountName: $accountName)
+}
+
+mutation iotconsoleDeleteIotProject($name: String!) {
+  iot_deleteProject(name: $name)
+}
+
+mutation iotconsoleCreateIotProject($project: IOTProjectIn!) {
+  iot_createProject(project: $project) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateIotProject($project: IOTProjectIn!) {
+  iot_updateProject(project: $project) {
+    id
+  }
+}
+
+query iotconsoleGetIotProject($name: String!) {
+  iot_getProject(name: $name) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    name
+    recordVersion
+    updateTime
+  }
+}
+
+query iotconsoleListIotProjects($search: SearchIOTProjects, $pq: CursorPaginationIn) {
+  iot_listProjects(search: $search, pq: $pq) {
+    edges {
+      node {
+        displayName
+        name
+        creationTime
+        markedForDeletion
+        updateTime
+        createdBy {
+          userEmail
+          userName
+          userId
+        }
+        lastUpdatedBy {
+          userEmail
+          userName
+          userId
+        }
+      }
+      cursor
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleDeleteIotDeviceBlueprint($projectName: String!, $name: String!) {
+  iot_deleteDeviceBlueprint(projectName: $projectName, name: $name)
+}
+
+mutation iotconsoleCreateIotDeviceBlueprint($projectName: String!, $deviceBlueprint: IOTDeviceBlueprintIn!) {
+  iot_createDeviceBlueprint(
+    projectName: $projectName
+    deviceBlueprint: $deviceBlueprint
+  ) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateIotDeviceBlueprint($projectName: String!, $deviceBlueprint: IOTDeviceBlueprintIn!) {
+  iot_updateDeviceBlueprint(
+    projectName: $projectName
+    deviceBlueprint: $deviceBlueprint
+  ) {
+    id
+  }
+}
+
+query iotconsoleGetIotDeviceBlueprint($projectName: String!, $name: String!) {
+  iot_getDeviceBlueprint(projectName: $projectName, name: $name) {
+    accountName
+    bluePrintType
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    name
+    projectName
+    recordVersion
+    updateTime
+    version
+  }
+}
+
+query iotconsoleListIotDeviceBlueprints($projectName: String!, $search: SearchIOTDeviceBlueprints, $pq: CursorPaginationIn) {
+  iot_listDeviceBlueprints(projectName: $projectName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        bluePrintType
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        projectName
+        recordVersion
+        updateTime
+        version
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleDeleteIotDeployment($projectName: String!, $name: String!) {
+  iot_deleteDeployment(projectName: $projectName, name: $name)
+}
+
+mutation iotconsoleCreateIotDeployment($projectName: String!, $deployment: IOTDeploymentIn!) {
+  iot_createDeployment(projectName: $projectName, deployment: $deployment) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateIotDeployment($projectName: String!, $deployment: IOTDeploymentIn!) {
+  iot_updateDeployment(projectName: $projectName, deployment: $deployment) {
+    id
+  }
+}
+
+query iotconsoleGetIotDeployment($projectName: String!, $name: String!) {
+  iot_getDeployment(projectName: $projectName, name: $name) {
+    accountName
+    CIDR
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    exposedServices {
+      ip
+      name
+    }
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    exposedDomains
+    exposedIps
+    markedForDeletion
+    name
+    projectName
+    recordVersion
+    updateTime
+  }
+}
+
+query iotconsoleListIotDeployments($projectName: String!, $search: SearchIOTDeployments, $pq: CursorPaginationIn) {
+  iot_listDeployments(projectName: $projectName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        CIDR
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        exposedServices {
+          ip
+          name
+        }
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        exposedDomains
+        exposedIps
+        markedForDeletion
+        name
+        projectName
+        recordVersion
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleDeleteIotApp($projectName: String!, $deviceBlueprintName: String!, $name: String!) {
+  iot_deleteApp(
+    projectName: $projectName
+    deviceBlueprintName: $deviceBlueprintName
+    name: $name
+  )
+}
+
+mutation iotconsoleCreateIotApp($projectName: String!, $deviceBlueprintName: String!, $app: IOTAppIn!) {
+  iot_createApp(
+    projectName: $projectName
+    deviceBlueprintName: $deviceBlueprintName
+    app: $app
+  ) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateIotApp($projectName: String!, $deviceBlueprintName: String!, $app: IOTAppIn!) {
+  iot_updateApp(
+    projectName: $projectName
+    deviceBlueprintName: $deviceBlueprintName
+    app: $app
+  ) {
+    id
+  }
+}
+
+query iotconsoleGetIotApp($projectName: String!, $deviceBlueprintName: String!, $name: String!) {
+  iot_getApp(
+    projectName: $projectName
+    deviceBlueprintName: $deviceBlueprintName
+    name: $name
+  ) {
+    accountName
+    apiVersion
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    deviceBlueprintName
+    displayName
+    enabled
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    projectName
+    recordVersion
+    spec {
+      containers {
+        args
+        command
+        env {
+          key
+          optional
+          refKey
+          refName
+          type
+          value
+        }
+        envFrom {
+          refName
+          type
+        }
+        image
+        imagePullPolicy
+        livenessProbe {
+          failureThreshold
+          httpGet {
+            httpHeaders
+            path
+            port
+          }
+          initialDelay
+          interval
+          shell {
+            command
+          }
+          tcp {
+            port
+          }
+          type
+        }
+        name
+        readinessProbe {
+          failureThreshold
+          initialDelay
+          interval
+          type
+        }
+        resourceCpu {
+          max
+          min
+        }
+        resourceMemory {
+          max
+          min
+        }
+        volumes {
+          items {
+            fileName
+            key
+          }
+          mountPath
+          refName
+          type
+        }
+      }
+      displayName
+      freeze
+      hpa {
+        enabled
+        maxReplicas
+        minReplicas
+        thresholdCpu
+        thresholdMemory
+      }
+      intercept {
+        enabled
+        toDevice
+      }
+      nodeSelector
+      region
+      replicas
+      serviceAccount
+      services {
+        name
+        port
+        targetPort
+        type
+      }
+      tolerations {
+        effect
+        key
+        operator
+        tolerationSeconds
+        value
+      }
+      topologySpreadConstraints {
+        labelSelector {
+          matchExpressions {
+            key
+            operator
+            values
+          }
+          matchLabels
+        }
+        matchLabelKeys
+        maxSkew
+        minDomains
+        nodeAffinityPolicy
+        nodeTaintsPolicy
+        topologyKey
+        whenUnsatisfiable
+      }
+    }
+    status {
+      checkList {
+        debug
+        description
+        name
+        title
+      }
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    updateTime
+  }
+}
+
+query iotconsoleListIotApps($projectName: String!, $deviceBlueprintName: String!, $search: SearchIOTApps, $pq: CursorPaginationIn) {
+  iot_listApps(
+    projectName: $projectName
+    deviceBlueprintName: $deviceBlueprintName
+    search: $search
+    pq: $pq
+  ) {
+    edges {
+      cursor
+      node {
+        accountName
+        apiVersion
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        deviceBlueprintName
+        displayName
+        enabled
+        id
+        kind
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        projectName
+        recordVersion
+        spec {
+          containers {
+            args
+            command
+            env {
+              key
+              optional
+              refKey
+              refName
+              type
+              value
+            }
+            envFrom {
+              refName
+              type
+            }
+            image
+            imagePullPolicy
+            livenessProbe {
+              failureThreshold
+              httpGet {
+                httpHeaders
+                path
+                port
+              }
+              initialDelay
+              interval
+              shell {
+                command
+              }
+              tcp {
+                port
+              }
+              type
+            }
+            name
+            readinessProbe {
+              failureThreshold
+              initialDelay
+              interval
+              type
+            }
+            resourceCpu {
+              max
+              min
+            }
+            resourceMemory {
+              max
+              min
+            }
+            volumes {
+              items {
+                fileName
+                key
+              }
+              mountPath
+              refName
+              type
+            }
+          }
+          displayName
+          freeze
+          hpa {
+            enabled
+            maxReplicas
+            minReplicas
+            thresholdCpu
+            thresholdMemory
+          }
+          intercept {
+            enabled
+            toDevice
+          }
+          nodeSelector
+          region
+          replicas
+          serviceAccount
+          services {
+            name
+            port
+            targetPort
+            type
+          }
+          tolerations {
+            effect
+            key
+            operator
+            tolerationSeconds
+            value
+          }
+          topologySpreadConstraints {
+            labelSelector {
+              matchExpressions {
+                key
+                operator
+                values
+              }
+              matchLabels
+            }
+            matchLabelKeys
+            maxSkew
+            minDomains
+            nodeAffinityPolicy
+            nodeTaintsPolicy
+            topologyKey
+            whenUnsatisfiable
+          }
+        }
+        status {
+          checkList {
+            debug
+            description
+            name
+            title
+          }
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleDeleteIotDevice($projectName: String!, $deploymentName: String!, $name: String!) {
+  iot_deleteDevice(
+    projectName: $projectName
+    deploymentName: $deploymentName
+    name: $name
+  )
+}
+
+mutation iotconsoleCreateIotDevice($projectName: String!, $deploymentName: String!, $device: IOTDeviceIn!) {
+  iot_createDevice(
+    projectName: $projectName
+    deploymentName: $deploymentName
+    device: $device
+  ) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateIotDevice($projectName: String!, $deploymentName: String!, $device: IOTDeviceIn!) {
+  iot_updateDevice(
+    projectName: $projectName
+    deploymentName: $deploymentName
+    device: $device
+  ) {
+    id
+  }
+}
+
+query iotconsoleGetIotDevice($projectName: String!, $deploymentName: String!, $name: String!) {
+  iot_getDevice(
+    projectName: $projectName
+    deploymentName: $deploymentName
+    name: $name
+  ) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    deploymentName
+    displayName
+    id
+    ip
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    name
+    podCIDR
+    projectName
+    publicKey
+    recordVersion
+    serviceCIDR
+    updateTime
+    version
+  }
+}
+
+query iotconsoleListIotDevices($projectName: String!, $deploymentName: String!, $search: SearchIOTDevices, $pq: CursorPaginationIn) {
+  iot_listDevices(
+    projectName: $projectName
+    deploymentName: $deploymentName
+    search: $search
+    pq: $pq
+  ) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        deploymentName
+        displayName
+        id
+        ip
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        podCIDR
+        projectName
+        publicKey
+        recordVersion
+        serviceCIDR
+        updateTime
+        version
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+query iotconsoleListInvitationsForAccount($accountName: String!) {
+  accounts_listInvitations(accountName: $accountName) {
+    accepted
+    accountName
+    creationTime
+    id
+    inviteToken
+    invitedBy
+    markedForDeletion
+    recordVersion
+    rejected
+    updateTime
+    userEmail
+    userName
+    userRole
+  }
+}
+
+query iotconsoleListMembershipsForAccount($accountName: String!) {
+  accounts_listMembershipsForAccount(accountName: $accountName) {
+    user {
+      verified
+      name
+      joined
+      email
+    }
+    role
+  }
+}
+
+mutation iotconsoleDeleteAccountInvitation($accountName: String!, $invitationId: String!) {
+  accounts_deleteInvitation(
+    accountName: $accountName
+    invitationId: $invitationId
+  )
+}
+
+mutation iotconsoleInviteMembersForAccount($accountName: String!, $invitations: [InvitationIn!]!) {
+  accounts_inviteMembers(accountName: $accountName, invitations: $invitations) {
+    id
+  }
+}
+
+query iotconsoleListInvitationsForUser($onlyPending: Boolean!) {
+  accounts_listInvitationsForUser(onlyPending: $onlyPending) {
+    accountName
+    id
+    updateTime
+    inviteToken
+  }
+}
+
+mutation iotconsoleAcceptInvitation($accountName: String!, $inviteToken: String!) {
+  accounts_acceptInvitation(accountName: $accountName, inviteToken: $inviteToken)
+}
+
+mutation iotconsoleRejectInvitation($accountName: String!, $inviteToken: String!) {
+  accounts_rejectInvitation(accountName: $accountName, inviteToken: $inviteToken)
+}
+
+mutation iotconsoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: Github__com___kloudlite___api___apps___iam___types__Role!) {
+  accounts_updateAccountMembership(
+    accountName: $accountName
+    memberId: $memberId
+    role: $role
+  )
+}
+
+mutation iotconsoleDeleteAccountMembership($accountName: String!, $memberId: ID!) {
+  accounts_removeAccountMembership(accountName: $accountName, memberId: $memberId)
+}
+
 mutation authCli_updateDeviceCluster($deviceName: String!, $clusterName: String!) {
   core_updateVpnClusterName(deviceName: $deviceName, clusterName: $clusterName)
 }
