@@ -15,7 +15,7 @@ func (r *Reconciler) getCorednsConfig(req *rApi.Request[*wgv1.ClusterConnection]
 	updatedContent := string(current)
 
 	for _, p := range obj.Spec.Peers {
-		ip, err := wg.GetRemoteDeviceIp(int64(p.Id))
+		ip, err := wg.GetRemoteDeviceIp(int64(p.Id), r.Env.WgIpBase)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get remote device ip: %w", err)
 		}

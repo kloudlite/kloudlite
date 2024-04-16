@@ -79,7 +79,7 @@ func (s Config) getAllAllowedIPs() []string {
 	return ips
 }
 
-func getIp(publicKey string) (string, *int, error) {
+func getIp(publicKey string, ipBase string) (string, *int, error) {
 	if s, ok := peerMap[publicKey]; ok {
 		return s.IpAddress, s.IpId, nil
 	}
@@ -87,7 +87,7 @@ func getIp(publicKey string) (string, *int, error) {
 	for i := constants.AgentIpRangeMin; i < constants.AgentIpRangeMax; i++ {
 		if ipMap[i] == "" {
 			ipMap[i] = publicKey
-			b, err := wg.GetRemoteDeviceIp(int64(i))
+			b, err := wg.GetRemoteDeviceIp(int64(i), ipBase)
 			if err != nil {
 				return "", nil, err
 			}
@@ -99,9 +99,9 @@ func getIp(publicKey string) (string, *int, error) {
 	return "", nil, fmt.Errorf("no available ip")
 }
 
-func (s *Config) upsertPeer(logger logging.Logger, p common.Peer) (*common.Peer, error) {
+func (s *Config) upsertPeer(logger logging.Logger, p common.Peer, ipBase string) (*common.Peer, error) {
 
-	ip, ipId, err := getIp(p.PublicKey)
+	ip, ipId, err := getIp(p.PublicKey, ipBase)
 	if err != nil {
 		return nil, err
 	}

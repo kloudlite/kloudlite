@@ -26,6 +26,8 @@ type Env struct {
 
 	WgGatewayImage string `env:"WG_GATEWAY_IMAGE"`
 	WgAgentImage   string `env:"WG_AGENT_IMAGE"`
+
+	WgIpBase string `env:"WG_IP_BASE" default:"10.13.0.0"`
 }
 
 func GetEnvOrDie() *Env {

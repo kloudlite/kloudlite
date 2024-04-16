@@ -1,7 +1,7 @@
 package constants
 
 const (
-	WgIpBase      = "10.13.0.0"
+	// WgIpBase      = "10.13.0.0"
 	ReconDuration = 15
 	ExpiresIn     = 60
 
