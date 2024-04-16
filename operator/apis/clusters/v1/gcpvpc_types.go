@@ -13,6 +13,15 @@ type GcpVPCSpec struct {
 
 	// This secret will be unmarshalled into type GCPCredentials
 	CredentialsRef ct.SecretRef `json:"credentialsRef"`
+
+	Output GcpVPCOutput `json:"output,omitempty" graphql:"noinput"`
+}
+
+type GcpVPCOutput struct {
+	// this secret will be unmarshalled into type github.com/kloudlite/operator/operators/clusters/internal/templates/types.GcpVpcTFOutput
+	SecretRef ct.SecretRef `json:"secretRef"`
+
+	TFWorkspaceName string `json:"tfWorkspaceName"`
 }
 
 //+kubebuilder:object:root=true

@@ -43,3 +43,8 @@ type AwsVPCJobVars struct {
 	VPCOutputSecretName      string
 	VPCOutputSecretNamespace string
 }
+
+type GcpVpcTFOutput struct {
+	VPCId   string `json:"vpc_id"`
+	VPCName string `json:"vpc_name"`
+}
