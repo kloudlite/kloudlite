@@ -81,28 +81,10 @@ snippet kubebuilder-printcolumns-default
 
 snippet robj "creates template for recocilation step function"
   ctx, obj := req.Context(), req.Object
-  check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-  checkName := "${1:checkName}"
-
-  req.LogPreCheck(checkName)
-  defer req.LogPostCheck(checkName)
-
-  fail := func(err error) stepResult.Result {
-    return req.CheckFailed(checkName, check, err.Error())
-  }
+  check := rApi.NewRunningCheck(${1:checkName}, req)
 
   ${2://function-body}
-
-  check.Status = true
-  if check != obj.Status.Checks[checkName] {
-    fn.MapSet(&obj.Status.Checks, checkName, check)
-    if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-      return sr
-    }
-  }
-
-  return req.Next()
+  return check.Completed()
 
 snippet init-checklist "initializes controller check list"
 	const (
