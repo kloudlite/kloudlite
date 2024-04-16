@@ -41,11 +41,13 @@ func (r *GcpVPCReconciler) GetName() string {
 }
 
 const (
-	createVPC string = "create-vpc"
-	deleteVPC string = "delete-vpc"
+	createVPC     string = "create-vpc"
+	deleteVPC     string = "delete-vpc"
+	patchDefaults string = "patch-defaults"
 )
 
 var ApplyChecklist = []rApi.CheckMeta{
+	{Name: patchDefaults, Title: "Patch Defaults", Debug: true},
 	{Name: createVPC, Title: "Create VPC"},
 }
 
@@ -80,6 +82,10 @@ func (r *GcpVPCReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -102,6 +108,35 @@ func (r *GcpVPCReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
+}
+
+func (r *GcpVPCReconciler) patchDefaults(req *rApi.Request[*clustersv1.GcpVPC]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(patchDefaults, req)
+
+	hasUpdate := false
+	if obj.Spec.Output.SecretRef.Name == "" {
+		hasUpdate = true
+		obj.Spec.Output.SecretRef.Name = fmt.Sprintf("gcp-vpc-%s", obj.Name)
+	}
+
+	if obj.Spec.Output.SecretRef.Namespace == "" {
+		hasUpdate = true
+		obj.Spec.Output.SecretRef.Namespace = obj.Namespace
+	}
+
+	if obj.Spec.Output.TFWorkspaceName == "" {
+		hasUpdate = true
+		obj.Spec.Output.TFWorkspaceName = fmt.Sprintf("gcp-vpc-%s", obj.Name)
+	}
+
+	if hasUpdate {
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+	}
+
+	return check.Completed()
 }
 
 func (r *GcpVPCReconciler) finalize(req *rApi.Request[*clustersv1.GcpVPC]) stepResult.Result {
@@ -145,11 +180,11 @@ func (r *GcpVPCReconciler) applyVPCJob(req *rApi.Request[*clustersv1.GcpVPC]) st
 		JobImage:                 r.Env.IACJobImage,
 		JobImagePullPolicy:       "Always",
 		TFStateSecretNamespace:   obj.Namespace,
-		TFStateSecretName:        fmt.Sprintf("gcp-vpc-%s", obj.Name),
+		TFStateSecretName:        obj.Spec.Output.TFWorkspaceName,
 		ValuesJSON:               string(valuesB),
 		CloudProvider:            ct.CloudProviderGCP,
-		VPCOutputSecretName:      fmt.Sprintf("gcp-vpc-%s", obj.Name),
-		VPCOutputSecretNamespace: obj.Namespace,
+		VPCOutputSecretName:      obj.Spec.Output.SecretRef.Name,
+		VPCOutputSecretNamespace: obj.Spec.Output.SecretRef.Namespace,
 	})
 	if err != nil {
 		return check.Failed(err)
