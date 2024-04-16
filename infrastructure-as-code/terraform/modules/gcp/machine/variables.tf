@@ -35,7 +35,7 @@ variable "service_account" {
 
   validation {
     error_message = "when service_account enabled, email and scopes must be set"
-    condition     = anytrue([
+    condition = anytrue([
       !var.service_account.enabled,
       var.service_account.email != "" && var.service_account.scopes != null
     ])
@@ -57,6 +57,12 @@ variable "bootvolume_size" {
   description = "bootvolume size in GBs"
 }
 
+variable "bootvolume_autodelete" {
+  type        = bool
+  description = "auto delete bootvolume on instance deletion"
+  default     = false
+}
+
 variable "additional_disk" {
   type = map(object({
     size = number
@@ -70,9 +76,14 @@ variable "network" {
   description = "network name"
 }
 
-variable "tags" {
+variable "network_tags" {
   type        = list(string)
-  description = "tags that should be present on resources"
+  description = "network_tags on compute instance"
   default     = []
 }
 
+variable "labels" {
+  type        = map(string)
+  description = "labels on compute instance"
+  default     = {}
+}

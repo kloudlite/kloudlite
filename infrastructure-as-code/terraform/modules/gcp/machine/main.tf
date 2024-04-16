@@ -3,16 +3,11 @@ locals {
   PROVISION_STANDARD = "STANDARD"
 
   STORAGE_TYPE = "pd-ssd"
-
-  tags = concat(var.tags != null ? var.tags : [], [
-    "vm-type-${lower(local.PROVISION_STANDARD)}",
-  ])
-
 }
 
 locals {
   additional_disks = {
-    for name, storage_cfg in (var.additional_disk != null ? var.additional_disk : {}) : name => storage_cfg
+    for name, storage_cfg in(var.additional_disk != null ? var.additional_disk : {}) : name => storage_cfg
   }
 }
 
@@ -23,8 +18,8 @@ data "google_compute_image" "ubuntu_2204_image" {
 }
 
 resource "google_compute_disk" "boot_disk" {
-  name  = "${var.name}-boot-disk"
-  zone  = var.availability_zone
+  name = "${var.name}-boot-disk"
+  zone = var.availability_zone
   // only use an image data source if you're ok with the disk recreating itself with a new image periodically
   image = data.google_compute_image.ubuntu_2204_image.self_link
   size  = var.bootvolume_size
@@ -47,11 +42,13 @@ resource "google_compute_instance" "standard" {
   count = var.provision_mode == local.PROVISION_STANDARD ? 1 : 0
 
   name = var.name
-  zone = var.availability_zone  // e.g., us-central1-a
+  zone = var.availability_zone // e.g., us-central1-a
 
   machine_type = var.machine_type
 
-  tags = local.tags
+  tags = var.network_tags
+
+  labels = var.labels
 
   metadata_startup_script = var.startup_script
   #  metadata_startup_script = <<EMSS
@@ -70,7 +67,8 @@ resource "google_compute_instance" "standard" {
   }
 
   boot_disk {
-    source = google_compute_disk.boot_disk.name
+    auto_delete = var.bootvolume_autodelete
+    source      = google_compute_disk.boot_disk.name
   }
 
   dynamic "attached_disk" {
@@ -95,7 +93,7 @@ resource "google_compute_instance" "standard" {
   }
 
   dynamic "service_account" {
-    for_each = {for k, v in [var.service_account] : k => v if var.service_account.enabled}
+    for_each = { for k, v in [var.service_account] : k => v if var.service_account.enabled }
     content {
       email  = service_account.value.email
       scopes = service_account.value.scopes
@@ -106,11 +104,13 @@ resource "google_compute_instance" "standard" {
 resource "google_compute_instance" "spot" {
   count = var.provision_mode == local.PROVISION_SPOT ? 1 : 0
   name  = var.name
-  zone  = var.availability_zone  // e.g., us-central1-a
+  zone  = var.availability_zone // e.g., us-central1-a
 
   machine_type = var.machine_type
 
-  tags = local.tags
+  tags = var.network_tags
+
+  labels = var.labels
 
   metadata_startup_script = <<EOMSS
   mkdir -p /tmp/preemption # needed for preemption handlers to work
@@ -124,7 +124,8 @@ resource "google_compute_instance" "spot" {
   }
 
   boot_disk {
-    source = google_compute_disk.boot_disk.name
+    auto_delete = var.bootvolume_autodelete
+    source      = google_compute_disk.boot_disk.name
   }
 
   network_interface {
@@ -145,7 +146,7 @@ resource "google_compute_instance" "spot" {
   }
 
   dynamic "service_account" {
-    for_each = {for k, v in [var.service_account] : k => v if var.service_account.enabled}
+    for_each = { for k, v in [var.service_account] : k => v if var.service_account.enabled }
     content {
       email  = service_account.value.email
       scopes = service_account.value.scopes

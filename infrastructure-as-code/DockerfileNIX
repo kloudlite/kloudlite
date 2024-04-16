@@ -1,18 +1,34 @@
+# FROM alpine:latest AS base
+
 # vim: set ft=dockerfile:
 FROM nixos/nix:latest AS builder
-
+# FROM ghcr.io/nxtcoder17/nix:latest AS builder
 WORKDIR /app
 
 # COPY flake.nix flake.lock ./
-ENV NIX_STORE_DIR=/nix/store2
+# RUN mkdir x && \
+#   cp -rL $(which bash) ./x/bash && \
+#   cp -rL $(which sh) ./x/sh && \
+#   cp -rL $(which ln) ./x/ln
+
+# COPY --from=base /bin/sh /bin/sh
+# COPY --from=base /bin/ln /bin/ln
+
+# RUN ls -al ./x && exit 1
+
+# SHELL ["/app/bash", "-c"]
+# RUN nix-env -iv util-linux
+RUN cat > /etc/nix/nix.conf <<EOF
+build-users-group = nixbld
+sandbox = false
+trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= local:2V5FDaWeruKxCtCBMS9FsCSueXMQwdz+cVLNlG3GWiY= 
+EOF
 
 RUN --mount=type=bind,source=flake.nix,target=flake.nix \
   --mount=type=bind,source=flake.lock,target=flake.lock \
-  --mount=type=cache,target=/nix/store2 \
-  cp -R /nix/store /nix/store2 && nix \
-  --extra-experimental-features "nix-command flakes" \
+  nix --extra-experimental-features "nix-command flakes" \
   --option filter-syscalls false \
-  build .#container
+  build .#container --substituters http://192.168.0.113:5000/
 
 # Copy the Nix store closure into a directory. The Nix store closure is the
 # entire set of Nix store values that we need for our build.
@@ -45,9 +61,8 @@ ENV TF_PLUGIN_CACHE_DIR="/app/.terraform.d/plugin-cache"
 # COPY .terraform.d.zip /app/terraform.zip
 RUN mkdir -p $TF_PLUGIN_CACHE_DIR
 SHELL ["bash", "-c"]
-RUN <<'EOF'
-  # for dir in $(ls -d ./infrastructure-templates/{gcp,aws}/*); do
-  for dir in $(ls -d ./infrastructure-templates/${CLOUD_PROVIDER}/*); do
+RUN --mount=type=cache,id=sample,target=$TF_PLUGIN_CACHE_DIR <<EOF
+  for dir in $(ls -d ./infrastructure-templates/{aws,gcp}/*); do
     pushd $dir
     terraform init -backend=false &
     popd
@@ -56,8 +71,7 @@ RUN <<'EOF'
   wait
 
   tdir=$(basename $(dirname $TF_PLUGIN_CACHE_DIR))
-  # tar cf - $tdir | lz4 -v -5 > tf.lz4 && rm -rf $tdir
-  tar cf - $tdir | zstd -12 --compress > tf.zst && rm -rf $tdir
+  tar cf - $tdir | zstd --compress > tf.zst && rm -rf $tdir
 EOF
 # ENV DECOMPRESS_CMD="lz4 -d tf.lz4 | tar xf -"
 ENV DECOMPRESS_CMD="zstd --decompress tf.zst --stdout | tar xf -"
