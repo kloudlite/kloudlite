@@ -128,8 +128,9 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(JobCompleted, req)
 
-	if obj.Status.Checks[JobCompleted].Status || obj.Status.Checks[JobFailed].Status {
-		return req.Next()
+	// if obj.Status.Checks[JobCompleted].Status || obj.Status.Checks[JobFailed].Status {
+	if obj.Status.Checks[JobCompleted].Status {
+		return check.Completed()
 	}
 
 	j, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.BuildNamespace, fmt.Sprint("build-", obj.Name)), &batchv1.Job{})

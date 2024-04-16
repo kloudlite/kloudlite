@@ -97,7 +97,7 @@ spec:
           name: gateway-dns-config
           readOnly: true
       dnsPolicy: Default
-      priorityClassName: system-cluster-critical
+      {{- /* priorityClassName: system-cluster-critical */}}
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
