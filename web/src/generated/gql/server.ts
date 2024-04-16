@@ -6142,6 +6142,49 @@ export type IotconsoleListIotDevicesQuery = {
   };
 };
 
+export type IotconsoleListRepoQueryVariables = Exact<{
+  search?: InputMaybe<SearchRepos>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type IotconsoleListRepoQuery = {
+  cr_listRepos?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        creationTime: any;
+        id: string;
+        markedForDeletion?: boolean;
+        name: string;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type IotconsoleCreateRepoMutationVariables = Exact<{
+  repository: RepositoryIn;
+}>;
+
+export type IotconsoleCreateRepoMutation = { cr_createRepo?: { id: string } };
+
+export type IotconsoleDeleteRepoMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type IotconsoleDeleteRepoMutation = { cr_deleteRepo: boolean };
+
 export type IotconsoleListInvitationsForAccountQueryVariables = Exact<{
   accountName: Scalars['String']['input'];
 }>;

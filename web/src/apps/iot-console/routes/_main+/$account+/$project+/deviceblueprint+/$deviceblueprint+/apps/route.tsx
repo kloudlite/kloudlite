@@ -1,6 +1,6 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
 import {
   LoadingComp,
   pWrapper,
@@ -68,8 +68,8 @@ const Apps = () => {
                     variant="primary"
                     content="Create new app"
                     prefix={<PlusFill />}
-                    // to="../new-app"
-                    // LinkComponent={Link}
+                    to="../new-app"
+                    LinkComponent={Link}
                   />
                 ),
               }}
@@ -82,8 +82,8 @@ const Apps = () => {
                 action: {
                   content: 'Create new app',
                   prefix: <Plus />,
-                  //   LinkComponent: Link,
-                  //   to: '../new-app',
+                  LinkComponent: Link,
+                  to: '../new-app',
                 },
               }}
               tools={<Tools />}

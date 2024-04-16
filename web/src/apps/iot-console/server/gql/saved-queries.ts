@@ -8,6 +8,7 @@ import { iotDeviceBlueprintQueries } from './queries/iot-device-blueprint-querie
 import { iotDeploymentQueries } from './queries/iot-deployment-queries';
 import { iotAppQueries } from './queries/iot-app-queries';
 import { iotDeviceQueries } from './queries/iot-device-queries';
+import { iotRepoQueries } from './queries/iot-repo-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -19,6 +20,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...iotDeploymentQueries(executor),
     ...iotAppQueries(executor),
     ...iotDeviceQueries(executor),
+    ...iotRepoQueries(executor),
     ...accessQueries(executor),
   };
 };

@@ -4746,6 +4746,50 @@ query iotconsoleListIotDevices($projectName: String!, $deploymentName: String!, 
   }
 }
 
+query iotconsoleListRepo($search: SearchRepos, $pagination: CursorPaginationIn) {
+  cr_listRepos(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        recordVersion
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleCreateRepo($repository: RepositoryIn!) {
+  cr_createRepo(repository: $repository) {
+    id
+  }
+}
+
+mutation iotconsoleDeleteRepo($name: String!) {
+  cr_deleteRepo(name: $name)
+}
+
 query iotconsoleListInvitationsForAccount($accountName: String!) {
   accounts_listInvitations(accountName: $accountName) {
     accepted

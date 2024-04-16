@@ -9,7 +9,7 @@ import {
 } from '~/root/src/generated/gql/server';
 import { mapper } from '~/components/utils';
 import { parseNodes } from '~/console/server/r-utils/common';
-import { IApp } from '../server/gql/queries/app-queries';
+import { IApp } from '../server/gql/queries/iot-app-queries';
 
 const defaultApp: AppIn & { build?: BuildIn } = {
   metadata: {
