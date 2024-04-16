@@ -9,14 +9,12 @@ import (
 	"net/http"
 	"time"
 
-	// iamT "github.com/kloudlite/api/apps/iam/types"
+	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/websocket-server/internal/domain/logs"
 	"github.com/kloudlite/api/apps/websocket-server/internal/domain/types"
 	"github.com/kloudlite/api/apps/websocket-server/internal/domain/utils"
 	"github.com/kloudlite/api/constants"
 )
-
-// {"type":"response","for":"logs","data":{"message":"2024/03/26 10:17:01 [notice] 30#30: exit","timestamp":"2024-03-26T10:17:01.019879803Z","podName":"test-app-85c4759979-q2g8b","containerName":"container-0"},"message":"","id":"world.dev-team-cluster.app-fkimv6rui7osxtwenjfo8vf4ruumz"}
 
 type LogSubscriptionCtx struct {
 	Context    context.Context
@@ -46,9 +44,9 @@ func (d *domain) handleObservabilityLogsMsg(ctx types.Context, subscriptions map
 	switch msg.Event {
 	case logs.EventSubscribe:
 		{
-			// if err := d.checkAccountAccess(ctx.Context, msg.Spec.Account, ctx.Session.UserId, iamT.ReadLogs); err != nil {
-			// 	return err
-			// }
+			if err := d.checkAccountAccess(ctx.Context, msg.Spec.Account, ctx.Session.UserId, iamT.ReadLogs); err != nil {
+				return err
+			}
 
 			tpk := logs.LogSubsId(msg.Spec, d.env.LogsStreamName)
 			d.logger.Debugf("tpk: %s", tpk)
@@ -74,15 +72,27 @@ func (d *domain) handleObservabilityLogsMsg(ctx types.Context, subscriptions map
 			qp.Add("cluster_name", msg.Spec.Cluster)
 			req.URL.RawQuery = qp.Encode()
 
-			resp, err := http.DefaultClient.Do(req)
-			if err != nil {
-				utils.WriteError(ctx, err, msg.Id, types.ForLogs)
-				defer cf()
-				return err
+			// resp := &http
+			var resp *http.Response = nil
+
+			// max 20 retries for fetching logs
+			for i := 1; i < 20; i++ {
+				resp, err = http.DefaultClient.Do(req)
+				if err != nil {
+					utils.WriteError(ctx, err, msg.Id, types.ForLogs)
+					defer cf()
+					return err
+				}
+
+				if resp.StatusCode == http.StatusTooEarly {
+					<-time.After(2 * time.Second)
+					d.logger.Infof("[%d] retrying fetching logs", i)
+					continue
+				}
+				break
 			}
 
 			resp.Close = true
-
 			subscriptions[hash] = LogSubscriptionCtx{
 				Context:    nctx,
 				CancelFunc: cf,

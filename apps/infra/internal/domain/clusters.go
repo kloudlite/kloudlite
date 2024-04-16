@@ -356,10 +356,17 @@ func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterToken string, 
 		if err := d.k8sClient.Get(ctx, fn.NN(cluster.Spec.GCP.CredentialsRef.Namespace, cluster.Spec.GCP.CredentialsRef.Name), &credsSecret); err != nil {
 			return err
 		}
-		gcpCreds, err := fn.JsonConvert[clustersv1.GCPCredentials](credsSecret.Data)
+
+		m := make(map[string]string)
+		for k, v := range credsSecret.Data {
+			m[k] = string(v)
+		}
+
+		gcpCreds, err := fn.JsonConvert[clustersv1.GCPCredentials](m)
 		if err != nil {
 			return err
 		}
+
 		values["gcp-service-account-json"] = base64.StdEncoding.EncodeToString([]byte(gcpCreds.ServiceAccountJSON))
 	}
 
