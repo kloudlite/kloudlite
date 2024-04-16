@@ -51,11 +51,9 @@ var Module = fx.Module(
 	fx.Invoke(func(infraCli infra.InfraClient, kcli k8s.Client, iamCli iam.IAMClient, mux *http.ServeMux, sessStore SessionStore, ev *env.Env, logger logging.Logger) {
 		sessionMiddleware := httpServer.NewReadSessionMiddlewareHandler(sessStore, constants.CookieName, constants.CacheSessionPrefix)
 
-		mux.HandleFunc("/observability/metrics/", sessionMiddleware(func(w http.ResponseWriter, r *http.Request) {
-			timestart := time.Now()
-			defer func() {
-				logger.Infof("%s %s took %.2fs", r.Method, r.URL.Path, time.Since(timestart).Seconds())
-			}()
+		loggingMiddleware := httpServer.NewLoggingMiddleware(logger)
+
+		mux.HandleFunc("/observability/metrics/", loggingMiddleware(sessionMiddleware(func(w http.ResponseWriter, r *http.Request) {
 			metricsType := strings.TrimPrefix(r.URL.Path, "/observability/metrics/")
 
 			sess := httpServer.GetHttpSession[*common.AuthSession](r.Context())
@@ -126,15 +124,9 @@ var Module = fx.Module(
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-		}))
+		})))
 
-		mux.HandleFunc("/observability/logs", sessionMiddleware(func(w http.ResponseWriter, r *http.Request) {
-			timestart := time.Now()
-			logger.Infof("%s %s", r.Method, r.URL.Path)
-			defer func() {
-				logger.Infof("%s %s took %.2fs", r.Method, r.URL.Path, time.Since(timestart).Seconds())
-			}()
-
+		mux.HandleFunc("/observability/logs", loggingMiddleware(sessionMiddleware(func(w http.ResponseWriter, r *http.Request) {
 			sess := httpServer.GetHttpSession[*common.AuthSession](r.Context())
 			if sess == nil {
 				http.Error(w, "not logged in", http.StatusUnauthorized)
@@ -181,6 +173,19 @@ var Module = fx.Module(
 				}
 			}
 
+			pods, err := ListPods(r.Context(), kcli, map[string]string{constants.ObservabilityTrackingKey: trackingId})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			if len(pods) == 0 {
+				// it sends http.StatusTooEarly, for the client to retry request after some time
+				logger.Infof("no pods found")
+				http.Error(w, "no pods found", http.StatusTooEarly)
+				return
+			}
+
 			closed := false
 			go func() {
 				for {
@@ -209,9 +214,9 @@ var Module = fx.Module(
 				}
 			}()
 
-			if err := StreamLogs(r.Context(), kcli, pw, LogParams{TrackingId: trackingId}, logger); err != nil {
+			if err := StreamLogs(r.Context(), kcli, pods, pw, logger); err != nil {
 				http.Error(w, err.Error(), 500)
 			}
-		}))
+		})))
 	}),
 )
