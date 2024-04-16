@@ -54,17 +54,6 @@ func (s *server) Start() error {
 		return err
 	}
 
-	// go func() {
-	// 	defer s.client.Stop()
-	//
-	// 	for {
-	// 		if err := s.sync(); err != nil {
-	// 			s.logger.Error(err)
-	// 		}
-	// 		common.ReconWait()
-	// 	}
-	// }()
-
 	notFound := func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusNotFound)
 	}
@@ -78,9 +67,10 @@ func (s *server) Start() error {
 			return c.SendStatus(fiber.StatusBadRequest)
 		}
 
-		pr, err := config.upsertPeer(s.logger, common.Peer{
-			PublicKey: p.PublicKey,
-		})
+		pr, err := config.upsertPeer(s.logger,
+			common.Peer{PublicKey: p.PublicKey},
+			s.env.WgIpBase,
+		)
 
 		if err != nil {
 			s.logger.Error(err)
