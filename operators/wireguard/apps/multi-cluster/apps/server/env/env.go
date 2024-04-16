@@ -11,6 +11,8 @@ type Env struct {
 	ConfigPath string `env:"CONFIG_PATH" required:"true"`
 	Endpoint   string `env:"ENDPOINT" required:"true"`
 	Interface  string `env:"INTERFACE" default:"wg0"`
+
+	WgIpBase string `env:"WG_IP_BASE" default:"10.13.0.0"`
 }
 
 func GetEnvOrDie() *Env {

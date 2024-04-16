@@ -180,7 +180,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*wgv1.ClusterConnection]) s
 		updated = true
 	}
 
-	ip, err := wg.GetRemoteDeviceIp(int64(obj.Spec.Id))
+	ip, err := wg.GetRemoteDeviceIp(int64(obj.Spec.Id), r.Env.WgIpBase)
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -342,7 +342,7 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) st
 			continue
 		}
 
-		ip, err := wg.GetRemoteDeviceIp(int64(peer.Id))
+		ip, err := wg.GetRemoteDeviceIp(int64(peer.Id), r.Env.WgIpBase)
 		if err != nil {
 			return check.Failed(err)
 		}
