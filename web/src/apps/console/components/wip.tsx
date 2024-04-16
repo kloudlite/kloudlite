@@ -1,4 +1,4 @@
-import { Smiley } from '@jengaicons/react';
+import { Smiley } from '~/console/components/icons';
 import { EmptyState } from '~/console/components/empty-state';
 
 const Wip = () => {

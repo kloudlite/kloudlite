@@ -1,4 +1,4 @@
-import { CodeSimpleFill, Tag, TerminalWindow } from '@jengaicons/react';
+import { CodeSimpleFill, Tag, TerminalWindow } from '~/console/components/icons';
 import { useParams } from '@remix-run/react';
 import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';

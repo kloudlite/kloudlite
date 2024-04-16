@@ -1,4 +1,4 @@
-import { Buildings, CopySimple } from '@jengaicons/react';
+import { Buildings, CopySimple } from '~/console/components/icons';
 import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Avatar } from '~/components/atoms/avatar';

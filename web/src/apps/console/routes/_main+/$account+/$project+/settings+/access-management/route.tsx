@@ -1,4 +1,4 @@
-import { Plus, SmileySad } from '@jengaicons/react';
+import { Plus, SmileySad } from '~/console/components/icons';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import Tabs from '~/components/atoms/tabs';

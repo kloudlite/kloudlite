@@ -1,4 +1,4 @@
-import { ArrowRight, Plus, X } from '@jengaicons/react';
+import { ArrowRight, Plus, X } from '~/console/components/icons';
 import { useNavigate, useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';

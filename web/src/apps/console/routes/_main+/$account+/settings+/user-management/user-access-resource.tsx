@@ -1,4 +1,4 @@
-import { PencilSimple, Trash } from '@jengaicons/react';
+import { PencilSimple, Trash } from '~/console/components/icons';
 import { useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import { Avatar } from '~/components/atoms/avatar';

@@ -1,4 +1,4 @@
-import { SmileySad } from '@jengaicons/react';
+import { SmileySad } from '~/console/components/icons';
 import { Link, useSearchParams } from '@remix-run/react';
 import { ReactNode } from 'react';
 import { IButton } from '~/components/atoms/button';

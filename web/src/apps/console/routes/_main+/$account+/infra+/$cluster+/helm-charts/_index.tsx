@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
@@ -55,7 +55,7 @@ const HelmCharts = () => {
                   <Button
                     variant="primary"
                     content="Install helm chart"
-                    prefix={<PlusFill />}
+                    prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
                     }}

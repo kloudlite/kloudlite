@@ -1,4 +1,4 @@
-import { Trash } from '@jengaicons/react';
+import { Trash } from '~/console/components/icons';
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';

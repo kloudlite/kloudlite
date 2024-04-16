@@ -7,7 +7,7 @@ import {
   LockSimpleOpen,
   Plus,
   Search,
-} from '@jengaicons/react';
+} from '~/console/components/icons';
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { dayjs } from '~/components/molecule/dayjs';

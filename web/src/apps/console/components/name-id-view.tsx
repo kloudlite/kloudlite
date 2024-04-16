@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import { CircleNotch } from '@jengaicons/react';
+import { CircleNotch } from '~/console/components/icons';
 import { ReactNode, forwardRef, useEffect, useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';

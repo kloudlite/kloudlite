@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import { Spinner } from '@jengaicons/react';
+import { Spinner } from '~/console/components/icons';
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { IconButton } from '~/components/atoms/button';

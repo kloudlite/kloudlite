@@ -1,4 +1,4 @@
-import { CopySimple } from '@jengaicons/react';
+import { CopySimple } from '~/console/components/icons';
 import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import { TextInput } from '~/components/atoms/input';
 import { toast } from '~/components/molecule/toast';

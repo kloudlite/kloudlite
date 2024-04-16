@@ -1,4 +1,4 @@
-import { PencilLine, Trash, Cpu } from '@jengaicons/react';
+import { PencilLine, Trash, Cpu } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
