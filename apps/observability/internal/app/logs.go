@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 
-	"github.com/kloudlite/api/constants"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/logging"
@@ -15,36 +14,30 @@ import (
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type LogParams struct {
-	TrackingId string
-}
-
-func StreamLogs(ctx context.Context, kcli k8s.Client, writer io.WriteCloser, params LogParams, logger logging.Logger) error {
+func ListPods(ctx context.Context, kcli k8s.Client, labels map[string]string) ([]corev1.Pod, error) {
 	var pods corev1.PodList
 
 	if err := kcli.List(ctx, &pods, &client.ListOptions{
-		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-			constants.ObservabilityTrackingKey: params.TrackingId,
-		}),
+		LabelSelector: apiLabels.SelectorFromValidatedSet(labels),
 	}); err != nil {
-		return err
+		return nil, err
 	}
 
+	return pods.Items, nil
+}
+
+func StreamLogs(ctx context.Context, kcli k8s.Client, podsList []corev1.Pod, writer io.WriteCloser, logger logging.Logger) error {
 	g, ctx := errgroup.WithContext(ctx)
 
-	if len(pods.Items) == 0 {
-		return nil
-	}
-
-	for i := range pods.Items {
-		pod := pods.Items[i]
+	for i := range podsList {
+		pod := podsList[i]
 		for j := range pod.Spec.Containers {
 			container := pod.Spec.Containers[j]
 			g.Go(func() error {
 				defer func() {
-					logger.Infof("disconnected for (%s/%s)", pod.Namespace, pod.Name)
+					logger.Infof("disconnected for (%s/%s/%s)", pod.Namespace, pod.Name, container.Name)
 				}()
-				logger.Infof("streaming logs for (%s/%s)", pod.Namespace, pod.Name)
+				logger.Infof("streaming logs for (%s/%s/%s)", pod.Namespace, pod.Name, container.Name)
 				if err := kcli.ReadLogs(ctx, pod.Namespace, pod.Name, writer, &k8s.ReadLogsOptions{
 					ContainerName: container.Name,
 					SinceSeconds:  nil,
