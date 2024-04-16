@@ -161,7 +161,7 @@ spec:
 
       # for coredns
       dnsPolicy: Default
-      priorityClassName: system-cluster-critical
+      {{- /* priorityClassName: system-cluster-critical */}}
       restartPolicy: Always
       schedulerName: default-scheduler
       terminationGracePeriodSeconds: 30
