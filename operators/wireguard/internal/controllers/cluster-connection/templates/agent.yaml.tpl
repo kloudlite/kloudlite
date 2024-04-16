@@ -54,7 +54,7 @@ spec:
         - mountPath: /etc/sysctl.conf
           name: sysctl
           subPath: sysctl.conf
-      priorityClassName: system-cluster-critical
+      {{- /* priorityClassName: system-cluster-critical */}}
       restartPolicy: Always
       schedulerName: default-scheduler
       hostNetwork: true

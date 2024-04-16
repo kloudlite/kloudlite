@@ -194,6 +194,26 @@ spec:
                     type: string
                   region:
                     type: string
+                  serviceAccount:
+                    properties:
+                      email:
+                        type: string
+                      enabled:
+                        type: boolean
+                      scopes:
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - enabled
+                    type: object
+                  vpc:
+                    properties:
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
                 required:
                 - availabilityZone
                 - bootVolumeSize
@@ -203,6 +223,7 @@ spec:
                 - machineType
                 - poolType
                 - region
+                - serviceAccount
                 type: object
               maxCount:
                 minimum: 0
