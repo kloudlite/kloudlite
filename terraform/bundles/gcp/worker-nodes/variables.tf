@@ -89,7 +89,7 @@ variable "label_cloudprovider_region" {
   default     = ""
 }
 
-variable "tags" {
+variable "labels" {
   type        = map(string)
   description = "map of Key => Value to be tagged along created resources"
   default     = {}
@@ -107,3 +107,4 @@ variable "service_account" {
     scopes  = optional(list(string))
   })
 }
+

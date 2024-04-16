@@ -24,17 +24,18 @@ tasks:
         fi
 
   local:build:iac-job:
-    preconditions:
-      - sh: '[[ -n "{{.cloudprovider}}" ]]'
-        msg: 'var cloudprovider must have a value'
     vars:
+      # output_dir: 
+      #   sh: mktemp -d --suffix '.nix'
+      output_dir: ./result
       nix_store_closure: /tmp/nix-store-closure
     cmds:
-      - sudo rm -rf result
-      - nix build .#container
+      - echo OUTPUT DIR is "{{.output_dir}}"
+      - sudo rm -rf {{.output_dir}}
+      - nix build .#container -o {{.output_dir}}
       - sudo rm -rf {{.nix_store_closure}}
       - mkdir {{.nix_store_closure}}
-      - cp -R $(nix-store -qR result/) {{.nix_store_closure}}
+      - cp -R $(nix-store -qR {{.output_dir}}/) {{.nix_store_closure}}
       - |+
         export TF_PLUGIN_CACHE_DIR="$PWD/.terraform.d/plugin-cache"
         # for dir in $(ls -d ./infrastructure-templates/{{.cloudprovider}}/*); do
@@ -53,14 +54,16 @@ tasks:
       - |+
         dir=$(mktemp -d)
         rm -rf context.tar
-        mv tf.zst result $dir
-        mv /tmp/nix-store-closure $dir/nixstore
+        mv tf.zst  $dir
+        mv {{.nix_store_closure}} $dir/nixstore
+        mv {{.output_dir}} $dir/result
         pushd $dir
         tar cf context.tar .
         popd
         mv $dir/context.tar .
-      - nerdctl build -f DockerfileNIX2 --build-arg CLOUD_PROVIDER={{.cloudprovider}} -t {{.Image}} . --no-cache
-      # - rm ./context.tar
+      # - docker buildx build -f DockerfileNIX2 --build-arg CLOUD_PROVIDER={{.cloudprovider}} --output=type=image,compression=zstd,force-compression=true,compression-level=22,push=true,oci-mediatypes=true -t {{.Image}} .
+      - nerdctl build -f DockerfileNIX2 -o type=oci,push=true,name={{.Image}},compression=zstd,compression-level=22,force-compression=true,oci-mediatype=true -t {{.Image}} .
+      - rm ./context.tar
 
   container:build-and-push:
     preconditions:
@@ -68,10 +71,10 @@ tasks:
         msg: 'var Image must have a value'
     vars:
       push: true
-      dockerArgs: "{{.DockerArgs | default ''}}"
     cmds:
-      - docker build -t {{.Image}} . {{.dockerArgs}}
-      - |+
-        if [ "{{.push}}" == "true" ]; then
-          docker push {{.Image}}
-        fi
+      - docker buildx build -f DockerfileNIX --output=type=image,compression=zstd,force-compression=true,compression-level=22,push=true,oci-mediatypes=true -t {{.Image}} .
+      # - docker build -f ./DockerfileNIX -t {{.Image}} . {{.dockerArgs}}
+      # - |+
+      #   if [ "{{.push}}" == "true" ]; then
+      #     docker push {{.Image}}
+      #   fi

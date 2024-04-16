@@ -14,6 +14,7 @@
             allowUnfree = true;
           };
         };
+
         binaries = with pkgs; [
           bash
           # coreutils
@@ -28,7 +29,7 @@
         ];
 
         container = pkgs.buildEnv {
-          name = "container";
+          name = "container2";
           paths = with pkgs; [
             bash
             envsubst
@@ -36,6 +37,16 @@
             zstd
             kubectl
             terraform
+          ];
+        };
+
+        gcp-spot-node-terminator = pkgs.buildEnv {
+          name = "gcp-spot-node-terminator";
+          paths = with pkgs; [
+            bash
+            curl
+            zx
+            kubectl
           ];
         };
       in
@@ -59,7 +70,7 @@
             # programming tools
 
             # build tools
-            podman
+            # podman
             upx
 
             nmap
@@ -97,7 +108,7 @@
         packages.container = pkgs.stdenv.mkDerivation {
           name = "container";
           src = container;
-          installPhase = "cp -rL $src $out/";
+          installPhase = "cp -r $src $out/";
           # buildInputs = binaries;
           # buildCommand = let
           #   copyBinaries = builtins.concatStringsSep "\n" (builtins.map(input: 
