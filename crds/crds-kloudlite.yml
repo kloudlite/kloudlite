@@ -381,7 +381,7 @@ spec:
       name: Job
       type: string
     - jsonPath: .status.lastReconcileTime
-      name: Last_Reconciled_At
+      name: Seen
       type: date
     - jsonPath: .metadata.annotations.kloudlite\.io\/checks
       name: Checks
@@ -601,6 +601,8 @@ spec:
               cloudflareEnabled:
                 type: boolean
               clusterInternalDnsHost:
+                type: string
+              clusterServiceCIDR:
                 type: string
               clusterTokenRef:
                 properties:
@@ -1489,6 +1491,288 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
+  name: virtualmachines.clusters.kloudlite.io
+spec:
+  group: clusters.kloudlite.io
+  names:
+    kind: VirtualMachine
+    listKind: VirtualMachineList
+    plural: virtualmachines
+    singular: virtualmachine
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .spec.machineState
+      name: Machine_State
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: VirtualMachine is the Schema for the virtualmachines API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: VirtualMachineSpec defines the desired state of VirtualMachine
+            properties:
+              aws:
+                properties:
+                  allowIncomingHttpTraffic:
+                    type: boolean
+                  allowSSH:
+                    type: boolean
+                  availabilityZone:
+                    description: AvailabilityZone AwsAZ `json:"availabilityZone"`
+                    type: string
+                  iamInstanceProfileRole:
+                    type: string
+                  instanceType:
+                    type: string
+                  nvidiaGpuEnabled:
+                    type: boolean
+                  rootVolumeSize:
+                    type: integer
+                  rootVolumeType:
+                    type: string
+                  vpc:
+                    properties:
+                      VPCSubnetID:
+                        type: string
+                      vpcId:
+                        type: string
+                    required:
+                    - VPCSubnetID
+                    - vpcId
+                    type: object
+                required:
+                - allowIncomingHttpTraffic
+                - allowSSH
+                - availabilityZone
+                - instanceType
+                - nvidiaGpuEnabled
+                - rootVolumeSize
+                - rootVolumeType
+                type: object
+              cloudProvider:
+                enum:
+                - aws
+                - do
+                - azure
+                - gcp
+                type: string
+              controllerParams:
+                properties:
+                  jobRef:
+                    properties:
+                      name:
+                        description: .metadata.name of the resource
+                        type: string
+                      namespace:
+                        description: .metadata.namespace of the resource
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  tfWorkspaceName:
+                    type: string
+                  tfWorkspaceNamespace:
+                    type: string
+                required:
+                - jobRef
+                - tfWorkspaceName
+                - tfWorkspaceNamespace
+                type: object
+              gcp:
+                properties:
+                  allowIncomingHttpTraffic:
+                    type: boolean
+                  allowSSH:
+                    type: boolean
+                  availabilityZone:
+                    type: string
+                  bootVolumeSize:
+                    type: integer
+                  credentialsRef:
+                    description: This secret will be unmarshalled into type GCPCredentials
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  gcpProjectID:
+                    type: string
+                  machineType:
+                    type: string
+                  poolType:
+                    enum:
+                    - STANDARD
+                    - SPOT
+                    type: string
+                  region:
+                    type: string
+                  serviceAccount:
+                    properties:
+                      email:
+                        type: string
+                      enabled:
+                        type: boolean
+                      scopes:
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - enabled
+                    type: object
+                  startupScript:
+                    type: string
+                  vpc:
+                    properties:
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - allowIncomingHttpTraffic
+                - allowSSH
+                - bootVolumeSize
+                - credentialsRef
+                - gcpProjectID
+                - machineType
+                - poolType
+                - region
+                - serviceAccount
+                - startupScript
+                type: object
+              kloudliteAccount:
+                type: string
+              machineState:
+                enum:
+                - "on"
+                - "off"
+                type: string
+            required:
+            - cloudProvider
+            - kloudliteAccount
+            - machineState
+            type: object
+          status:
+            properties:
+              checkList:
+                items:
+                  properties:
+                    debug:
+                      type: boolean
+                    description:
+                      type: string
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    debug:
+                      type: string
+                    error:
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    info:
+                      type: string
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
   name: accounts.crds.kloudlite.io
 spec:
   group: crds.kloudlite.io
@@ -2227,6 +2511,820 @@ spec:
             type: object
         required:
         - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
+  name: blueprints.crds.kloudlite.io
+spec:
+  group: crds.kloudlite.io
+  names:
+    kind: Blueprint
+    listKind: BlueprintList
+    plural: blueprints
+    singular: blueprint
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Blueprint is the Schema for the blueprints API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BlueprintSpec defines the desired state of Blueprint
+            properties:
+              apps:
+                items:
+                  description: App is the Schema for the apps API
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    enabled:
+                      default: true
+                      type: boolean
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    metadata:
+                      type: object
+                    spec:
+                      description: AppSpec defines the desired state of App
+                      properties:
+                        containers:
+                          items:
+                            properties:
+                              args:
+                                items:
+                                  type: string
+                                type: array
+                              command:
+                                items:
+                                  type: string
+                                type: array
+                              env:
+                                items:
+                                  properties:
+                                    key:
+                                      type: string
+                                    optional:
+                                      type: boolean
+                                    refKey:
+                                      type: string
+                                    refName:
+                                      type: string
+                                    type:
+                                      enum:
+                                      - config
+                                      - secret
+                                      - pvc
+                                      type: string
+                                    value:
+                                      type: string
+                                  required:
+                                  - key
+                                  type: object
+                                type: array
+                              envFrom:
+                                items:
+                                  properties:
+                                    refName:
+                                      type: string
+                                    type:
+                                      enum:
+                                      - config
+                                      - secret
+                                      - pvc
+                                      type: string
+                                  required:
+                                  - refName
+                                  - type
+                                  type: object
+                                type: array
+                              image:
+                                type: string
+                              imagePullPolicy:
+                                default: IfNotPresent
+                                type: string
+                              livenessProbe:
+                                properties:
+                                  failureThreshold:
+                                    type: integer
+                                  httpGet:
+                                    properties:
+                                      httpHeaders:
+                                        additionalProperties:
+                                          type: string
+                                        type: object
+                                      path:
+                                        type: string
+                                      port:
+                                        type: integer
+                                    required:
+                                    - path
+                                    - port
+                                    type: object
+                                  initialDelay:
+                                    type: integer
+                                  interval:
+                                    type: integer
+                                  shell:
+                                    properties:
+                                      command:
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  tcp:
+                                    properties:
+                                      port:
+                                        type: integer
+                                    required:
+                                    - port
+                                    type: object
+                                  type:
+                                    enum:
+                                    - shell
+                                    - httpGet
+                                    - tcp
+                                    type: string
+                                required:
+                                - type
+                                type: object
+                              name:
+                                type: string
+                              readinessProbe:
+                                properties:
+                                  failureThreshold:
+                                    type: integer
+                                  httpGet:
+                                    properties:
+                                      httpHeaders:
+                                        additionalProperties:
+                                          type: string
+                                        type: object
+                                      path:
+                                        type: string
+                                      port:
+                                        type: integer
+                                    required:
+                                    - path
+                                    - port
+                                    type: object
+                                  initialDelay:
+                                    type: integer
+                                  interval:
+                                    type: integer
+                                  shell:
+                                    properties:
+                                      command:
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  tcp:
+                                    properties:
+                                      port:
+                                        type: integer
+                                    required:
+                                    - port
+                                    type: object
+                                  type:
+                                    enum:
+                                    - shell
+                                    - httpGet
+                                    - tcp
+                                    type: string
+                                required:
+                                - type
+                                type: object
+                              resourceCpu:
+                                properties:
+                                  max:
+                                    type: string
+                                  min:
+                                    type: string
+                                type: object
+                              resourceMemory:
+                                properties:
+                                  max:
+                                    type: string
+                                  min:
+                                    type: string
+                                type: object
+                              volumes:
+                                items:
+                                  properties:
+                                    items:
+                                      items:
+                                        properties:
+                                          fileName:
+                                            type: string
+                                          key:
+                                            type: string
+                                        required:
+                                        - key
+                                        type: object
+                                      type: array
+                                    mountPath:
+                                      type: string
+                                    refName:
+                                      type: string
+                                    type:
+                                      enum:
+                                      - config
+                                      - secret
+                                      - pvc
+                                      type: string
+                                  required:
+                                  - mountPath
+                                  - refName
+                                  - type
+                                  type: object
+                                type: array
+                            required:
+                            - image
+                            - name
+                            type: object
+                          type: array
+                        displayName:
+                          type: string
+                        freeze:
+                          type: boolean
+                        hpa:
+                          properties:
+                            enabled:
+                              type: boolean
+                            maxReplicas:
+                              default: 5
+                              type: integer
+                            minReplicas:
+                              default: 1
+                              type: integer
+                            thresholdCpu:
+                              default: 90
+                              type: integer
+                            thresholdMemory:
+                              default: 75
+                              type: integer
+                          required:
+                          - enabled
+                          type: object
+                        intercept:
+                          properties:
+                            enabled:
+                              type: boolean
+                            toDevice:
+                              minLength: 1
+                              type: string
+                          required:
+                          - enabled
+                          - toDevice
+                          type: object
+                        nodeSelector:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        region:
+                          type: string
+                        replicas:
+                          default: 1
+                          type: integer
+                        serviceAccount:
+                          default: kloudlite-svc-account
+                          type: string
+                        services:
+                          items:
+                            properties:
+                              name:
+                                type: string
+                              port:
+                                type: integer
+                              targetPort:
+                                type: integer
+                              type:
+                                type: string
+                            required:
+                            - port
+                            type: object
+                          type: array
+                        tolerations:
+                          items:
+                            description: The pod this Toleration is attached to tolerates
+                              any taint that matches the triple <key,value,effect>
+                              using the matching operator <operator>.
+                            properties:
+                              effect:
+                                description: Effect indicates the taint effect to
+                                  match. Empty means match all taint effects. When
+                                  specified, allowed values are NoSchedule, PreferNoSchedule
+                                  and NoExecute.
+                                type: string
+                              key:
+                                description: Key is the taint key that the toleration
+                                  applies to. Empty means match all taint keys. If
+                                  the key is empty, operator must be Exists; this
+                                  combination means to match all values and all keys.
+                                type: string
+                              operator:
+                                description: Operator represents a key's relationship
+                                  to the value. Valid operators are Exists and Equal.
+                                  Defaults to Equal. Exists is equivalent to wildcard
+                                  for value, so that a pod can tolerate all taints
+                                  of a particular category.
+                                type: string
+                              tolerationSeconds:
+                                description: TolerationSeconds represents the period
+                                  of time the toleration (which must be of effect
+                                  NoExecute, otherwise this field is ignored) tolerates
+                                  the taint. By default, it is not set, which means
+                                  tolerate the taint forever (do not evict). Zero
+                                  and negative values will be treated as 0 (evict
+                                  immediately) by the system.
+                                format: int64
+                                type: integer
+                              value:
+                                description: Value is the taint value the toleration
+                                  matches to. If the operator is Exists, the value
+                                  should be empty, otherwise just a regular string.
+                                type: string
+                            type: object
+                          type: array
+                        topologySpreadConstraints:
+                          items:
+                            description: TopologySpreadConstraint specifies how to
+                              spread matching pods among the given topology.
+                            properties:
+                              labelSelector:
+                                description: LabelSelector is used to find matching
+                                  pods. Pods that match this label selector are counted
+                                  to determine the number of pods in their corresponding
+                                  topology domain.
+                                properties:
+                                  matchExpressions:
+                                    description: matchExpressions is a list of label
+                                      selector requirements. The requirements are
+                                      ANDed.
+                                    items:
+                                      description: A label selector requirement is
+                                        a selector that contains values, a key, and
+                                        an operator that relates the key and values.
+                                      properties:
+                                        key:
+                                          description: key is the label key that the
+                                            selector applies to.
+                                          type: string
+                                        operator:
+                                          description: operator represents a key's
+                                            relationship to a set of values. Valid
+                                            operators are In, NotIn, Exists and DoesNotExist.
+                                          type: string
+                                        values:
+                                          description: values is an array of string
+                                            values. If the operator is In or NotIn,
+                                            the values array must be non-empty. If
+                                            the operator is Exists or DoesNotExist,
+                                            the values array must be empty. This array
+                                            is replaced during a strategic merge patch.
+                                          items:
+                                            type: string
+                                          type: array
+                                      required:
+                                      - key
+                                      - operator
+                                      type: object
+                                    type: array
+                                  matchLabels:
+                                    additionalProperties:
+                                      type: string
+                                    description: matchLabels is a map of {key,value}
+                                      pairs. A single {key,value} in the matchLabels
+                                      map is equivalent to an element of matchExpressions,
+                                      whose key field is "key", the operator is "In",
+                                      and the values array contains only "value".
+                                      The requirements are ANDed.
+                                    type: object
+                                type: object
+                                x-kubernetes-map-type: atomic
+                              matchLabelKeys:
+                                description: "MatchLabelKeys is a set of pod label
+                                  keys to select the pods over which spreading will
+                                  be calculated. The keys are used to lookup values
+                                  from the incoming pod labels, those key-value labels
+                                  are ANDed with labelSelector to select the group
+                                  of existing pods over which spreading will be calculated
+                                  for the incoming pod. The same key is forbidden
+                                  to exist in both MatchLabelKeys and LabelSelector.
+                                  MatchLabelKeys cannot be set when LabelSelector
+                                  isn't set. Keys that don't exist in the incoming
+                                  pod labels will be ignored. A null or empty list
+                                  means only match against labelSelector. \n This
+                                  is a beta field and requires the MatchLabelKeysInPodTopologySpread
+                                  feature gate to be enabled (enabled by default)."
+                                items:
+                                  type: string
+                                type: array
+                                x-kubernetes-list-type: atomic
+                              maxSkew:
+                                description: 'MaxSkew describes the degree to which
+                                  pods may be unevenly distributed. When `whenUnsatisfiable=DoNotSchedule`,
+                                  it is the maximum permitted difference between the
+                                  number of matching pods in the target topology and
+                                  the global minimum. The global minimum is the minimum
+                                  number of matching pods in an eligible domain or
+                                  zero if the number of eligible domains is less than
+                                  MinDomains. For example, in a 3-zone cluster, MaxSkew
+                                  is set to 1, and pods with the same labelSelector
+                                  spread as 2/2/1: In this case, the global minimum
+                                  is 1. | zone1 | zone2 | zone3 | |  P P  |  P P  |   P   |
+                                  - if MaxSkew is 1, incoming pod can only be scheduled
+                                  to zone3 to become 2/2/2; scheduling it onto zone1(zone2)
+                                  would make the ActualSkew(3-1) on zone1(zone2) violate
+                                  MaxSkew(1). - if MaxSkew is 2, incoming pod can
+                                  be scheduled onto any zone. When `whenUnsatisfiable=ScheduleAnyway`,
+                                  it is used to give higher precedence to topologies
+                                  that satisfy it. It''s a required field. Default
+                                  value is 1 and 0 is not allowed.'
+                                format: int32
+                                type: integer
+                              minDomains:
+                                description: "MinDomains indicates a minimum number
+                                  of eligible domains. When the number of eligible
+                                  domains with matching topology keys is less than
+                                  minDomains, Pod Topology Spread treats \"global
+                                  minimum\" as 0, and then the calculation of Skew
+                                  is performed. And when the number of eligible domains
+                                  with matching topology keys equals or greater than
+                                  minDomains, this value has no effect on scheduling.
+                                  As a result, when the number of eligible domains
+                                  is less than minDomains, scheduler won't schedule
+                                  more than maxSkew Pods to those domains. If value
+                                  is nil, the constraint behaves as if MinDomains
+                                  is equal to 1. Valid values are integers greater
+                                  than 0. When value is not nil, WhenUnsatisfiable
+                                  must be DoNotSchedule. \n For example, in a 3-zone
+                                  cluster, MaxSkew is set to 2, MinDomains is set
+                                  to 5 and pods with the same labelSelector spread
+                                  as 2/2/2: | zone1 | zone2 | zone3 | |  P P  |  P
+                                  P  |  P P  | The number of domains is less than
+                                  5(MinDomains), so \"global minimum\" is treated
+                                  as 0. In this situation, new pod with the same labelSelector
+                                  cannot be scheduled, because computed skew will
+                                  be 3(3 - 0) if new Pod is scheduled to any of the
+                                  three zones, it will violate MaxSkew. \n This is
+                                  a beta field and requires the MinDomainsInPodTopologySpread
+                                  feature gate to be enabled (enabled by default)."
+                                format: int32
+                                type: integer
+                              nodeAffinityPolicy:
+                                description: "NodeAffinityPolicy indicates how we
+                                  will treat Pod's nodeAffinity/nodeSelector when
+                                  calculating pod topology spread skew. Options are:
+                                  - Honor: only nodes matching nodeAffinity/nodeSelector
+                                  are included in the calculations. - Ignore: nodeAffinity/nodeSelector
+                                  are ignored. All nodes are included in the calculations.
+                                  \n If this value is nil, the behavior is equivalent
+                                  to the Honor policy. This is a beta-level feature
+                                  default enabled by the NodeInclusionPolicyInPodTopologySpread
+                                  feature flag."
+                                type: string
+                              nodeTaintsPolicy:
+                                description: "NodeTaintsPolicy indicates how we will
+                                  treat node taints when calculating pod topology
+                                  spread skew. Options are: - Honor: nodes without
+                                  taints, along with tainted nodes for which the incoming
+                                  pod has a toleration, are included. - Ignore: node
+                                  taints are ignored. All nodes are included. \n If
+                                  this value is nil, the behavior is equivalent to
+                                  the Ignore policy. This is a beta-level feature
+                                  default enabled by the NodeInclusionPolicyInPodTopologySpread
+                                  feature flag."
+                                type: string
+                              topologyKey:
+                                description: TopologyKey is the key of node labels.
+                                  Nodes that have a label with this key and identical
+                                  values are considered to be in the same topology.
+                                  We consider each <key, value> as a "bucket", and
+                                  try to put balanced number of pods into each bucket.
+                                  We define a domain as a particular instance of a
+                                  topology. Also, we define an eligible domain as
+                                  a domain whose nodes meet the requirements of nodeAffinityPolicy
+                                  and nodeTaintsPolicy. e.g. If TopologyKey is "kubernetes.io/hostname",
+                                  each Node is a domain of that topology. And, if
+                                  TopologyKey is "topology.kubernetes.io/zone", each
+                                  zone is a domain of that topology. It's a required
+                                  field.
+                                type: string
+                              whenUnsatisfiable:
+                                description: 'WhenUnsatisfiable indicates how to deal
+                                  with a pod if it doesn''t satisfy the spread constraint.
+                                  - DoNotSchedule (default) tells the scheduler not
+                                  to schedule it. - ScheduleAnyway tells the scheduler
+                                  to schedule the pod in any location, but giving
+                                  higher precedence to topologies that would help
+                                  reduce the skew. A constraint is considered "Unsatisfiable"
+                                  for an incoming pod if and only if every possible
+                                  node assignment for that pod would violate "MaxSkew"
+                                  on some topology. For example, in a 3-zone cluster,
+                                  MaxSkew is set to 1, and pods with the same labelSelector
+                                  spread as 3/1/1: | zone1 | zone2 | zone3 | | P P
+                                  P |   P   |   P   | If WhenUnsatisfiable is set
+                                  to DoNotSchedule, incoming pod can only be scheduled
+                                  to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1)
+                                  on zone2(zone3) satisfies MaxSkew(1). In other words,
+                                  the cluster can still be imbalanced, but scheduler
+                                  won''t make it *more* imbalanced. It''s a required
+                                  field.'
+                                type: string
+                            required:
+                            - maxSkew
+                            - topologyKey
+                            - whenUnsatisfiable
+                            type: object
+                          type: array
+                      required:
+                      - containers
+                      type: object
+                    status:
+                      properties:
+                        checkList:
+                          items:
+                            properties:
+                              debug:
+                                type: boolean
+                              description:
+                                type: string
+                              name:
+                                type: string
+                              title:
+                                type: string
+                            required:
+                            - name
+                            - title
+                            type: object
+                          type: array
+                        checks:
+                          additionalProperties:
+                            properties:
+                              debug:
+                                type: string
+                              error:
+                                type: string
+                              generation:
+                                format: int64
+                                type: integer
+                              info:
+                                type: string
+                              message:
+                                type: string
+                              startedAt:
+                                format: date-time
+                                type: string
+                              state:
+                                type: string
+                              status:
+                                type: boolean
+                            required:
+                            - status
+                            type: object
+                          type: object
+                        isReady:
+                          type: boolean
+                        lastReadyGeneration:
+                          format: int64
+                          type: integer
+                        lastReconcileTime:
+                          format: date-time
+                          type: string
+                        message:
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        resources:
+                          items:
+                            properties:
+                              apiVersion:
+                                description: 'APIVersion defines the versioned schema
+                                  of this representation of an object. Servers should
+                                  convert recognized schemas to the latest internal
+                                  value, and may reject unrecognized values. More
+                                  info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                                type: string
+                              kind:
+                                description: 'Kind is a string value representing
+                                  the REST resource this object represents. Servers
+                                  may infer this from the endpoint the client submits
+                                  requests to. Cannot be updated. In CamelCase. More
+                                  info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                                type: string
+                              name:
+                                type: string
+                              namespace:
+                                type: string
+                            required:
+                            - name
+                            - namespace
+                            type: object
+                          type: array
+                      type: object
+                  required:
+                  - spec
+                  type: object
+                type: array
+              version:
+                type: string
+            required:
+            - version
+            type: object
+          status:
+            properties:
+              apps:
+                items:
+                  properties:
+                    checkList:
+                      items:
+                        properties:
+                          debug:
+                            type: boolean
+                          description:
+                            type: string
+                          name:
+                            type: string
+                          title:
+                            type: string
+                        required:
+                        - name
+                        - title
+                        type: object
+                      type: array
+                    checks:
+                      additionalProperties:
+                        properties:
+                          debug:
+                            type: string
+                          error:
+                            type: string
+                          generation:
+                            format: int64
+                            type: integer
+                          info:
+                            type: string
+                          message:
+                            type: string
+                          startedAt:
+                            format: date-time
+                            type: string
+                          state:
+                            type: string
+                          status:
+                            type: boolean
+                        required:
+                        - status
+                        type: object
+                      type: object
+                    isReady:
+                      type: boolean
+                    lastReadyGeneration:
+                      format: int64
+                      type: integer
+                    lastReconcileTime:
+                      format: date-time
+                      type: string
+                    message:
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    name:
+                      type: string
+                    resources:
+                      items:
+                        properties:
+                          apiVersion:
+                            description: 'APIVersion defines the versioned schema
+                              of this representation of an object. Servers should
+                              convert recognized schemas to the latest internal value,
+                              and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                            type: string
+                          kind:
+                            description: 'Kind is a string value representing the
+                              REST resource this object represents. Servers may infer
+                              this from the endpoint the client submits requests to.
+                              Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                            type: string
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        required:
+                        - name
+                        - namespace
+                        type: object
+                      type: array
+                  required:
+                  - name
+                  type: object
+                type: array
+              checkList:
+                items:
+                  properties:
+                    debug:
+                      type: boolean
+                    description:
+                      type: string
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
+              checks:
+                additionalProperties:
+                  properties:
+                    debug:
+                      type: string
+                    error:
+                      type: string
+                    generation:
+                      format: int64
+                      type: integer
+                    info:
+                      type: string
+                    message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
         type: object
     served: true
     storage: true
@@ -3728,12 +4826,12 @@ spec:
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime
-      name: seen
+      name: Seen
       type: date
     - jsonPath: .metadata.annotations.kloudlite\.io\/checks
       name: Checks
       type: string
-    - jsonPath: .metadata.annotations.kloudlite\.io\/job\.phase
+    - jsonPath: .status.phase
       name: phase
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -18860,8 +19958,6 @@ spec:
                   - status
                   type: object
                 type: object
-              failed:
-                type: boolean
               isReady:
                 type: boolean
               lastReadyGeneration:
@@ -18873,6 +19969,8 @@ spec:
               message:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              phase:
+                type: string
               resources:
                 items:
                   properties:
@@ -18897,10 +19995,8 @@ spec:
                   - namespace
                   type: object
                 type: array
-              running:
-                type: boolean
-              succeeded:
-                type: boolean
+            required:
+            - phase
             type: object
         type: object
     served: true
@@ -25471,15 +26567,15 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: clusterconnections.wireguard.kloudlite.io
+  name: devices.wireguard.kloudlite.io
 spec:
   group: wireguard.kloudlite.io
   names:
-    kind: ClusterConnection
-    listKind: ClusterConnectionList
-    plural: clusterconnections
-    singular: clusterconnection
-  scope: Cluster
+    kind: Device
+    listKind: DeviceList
+    plural: devices
+    singular: device
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime
@@ -25491,13 +26587,16 @@ spec:
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
       type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/active\.namespace
+      name: Active_Ns
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
     name: v1
     schema:
       openAPIV3Schema:
-        description: ClusterConnection is the Schema for the connects API
+        description: Device is the Schema for the devices API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -25512,138 +26611,38 @@ spec:
           metadata:
             type: object
           spec:
-            description: ConnectionSpec defines the desired state of Connect
+            description: DeviceSpec defines the desired state of Device
             properties:
-              agentsResources:
-                description: ResourceRequirements describes the compute resource requirements.
-                properties:
-                  claims:
-                    description: "Claims lists the names of resources, defined in
-                      spec.resourceClaims, that are used by this container. \n This
-                      is an alpha field and requires enabling the DynamicResourceAllocation
-                      feature gate. \n This field is immutable. It can only be set
-                      for containers."
-                    items:
-                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                      properties:
-                        name:
-                          description: Name must match the name of one entry in pod.spec.resourceClaims
-                            of the Pod where this field is used. It makes that resource
-                            available inside a container.
-                          type: string
-                      required:
-                      - name
-                      type: object
-                    type: array
-                    x-kubernetes-list-map-keys:
-                    - name
-                    x-kubernetes-list-type: map
-                  limits:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: 'Limits describes the maximum amount of compute resources
-                      allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                    type: object
-                  requests:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: 'Requests describes the minimum amount of compute
-                      resources required. If Requests is omitted for a container,
-                      it defaults to Limits if that is explicitly specified, otherwise
-                      to an implementation-defined value. Requests cannot exceed Limits.
-                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                    type: object
-                type: object
-              dnsServer:
+              activeNamespace:
                 type: string
-              gatewayResources:
-                description: ResourceRequirements describes the compute resource requirements.
-                properties:
-                  claims:
-                    description: "Claims lists the names of resources, defined in
-                      spec.resourceClaims, that are used by this container. \n This
-                      is an alpha field and requires enabling the DynamicResourceAllocation
-                      feature gate. \n This field is immutable. It can only be set
-                      for containers."
-                    items:
-                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                      properties:
-                        name:
-                          description: Name must match the name of one entry in pod.spec.resourceClaims
-                            of the Pod where this field is used. It makes that resource
-                            available inside a container.
-                          type: string
-                      required:
-                      - name
-                      type: object
-                    type: array
-                    x-kubernetes-list-map-keys:
-                    - name
-                    x-kubernetes-list-type: map
-                  limits:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: 'Limits describes the maximum amount of compute resources
-                      allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                    type: object
-                  requests:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: 'Requests describes the minimum amount of compute
-                      resources required. If Requests is omitted for a container,
-                      it defaults to Limits if that is explicitly specified, otherwise
-                      to an implementation-defined value. Requests cannot exceed Limits.
-                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                    type: object
-                type: object
-              id:
-                type: integer
-              interface:
-                description: PrivateKey *string `json:"privateKey,omitempty"`
-                type: string
-              ipAddress:
-                type: string
-              nodeport:
-                type: integer
-              peers:
+              cnameRecords:
                 items:
                   properties:
-                    allowedIPs:
-                      items:
-                        type: string
-                      type: array
-                    endpoint:
+                    host:
                       type: string
-                    id:
-                      type: integer
-                    publicKey:
+                    target:
                       type: string
-                  required:
-                  - endpoint
-                  - id
-                  - publicKey
                   type: object
                 type: array
-              publicKey:
-                type: string
-            required:
-            - id
+              disabled:
+                type: boolean
+              noExternalService:
+                type: boolean
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
+              ports:
+                items:
+                  properties:
+                    port:
+                      format: int32
+                      type: integer
+                    targetPort:
+                      format: int32
+                      type: integer
+                  type: object
+                type: array
             type: object
           status:
             properties:
@@ -25736,19 +26735,19 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: devices.wireguard.kloudlite.io
+  name: globalvpns.wireguard.kloudlite.io
 spec:
   group: wireguard.kloudlite.io
   names:
-    kind: Device
-    listKind: DeviceList
-    plural: devices
-    singular: device
-  scope: Namespaced
+    kind: GlobalVPN
+    listKind: GlobalVPNList
+    plural: globalvpns
+    singular: globalvpn
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime
-      name: Last_Reconciled_At
+      name: Seen
       type: date
     - jsonPath: .metadata.annotations.kloudlite\.io\/checks
       name: Checks
@@ -25756,16 +26755,13 @@ spec:
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
       type: string
-    - jsonPath: .metadata.annotations.kloudlite\.io\/active\.namespace
-      name: Active_Ns
-      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
     name: v1
     schema:
       openAPIV3Schema:
-        description: Device is the Schema for the devices API
+        description: GlobalVPN is the Schema for the connects API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -25780,38 +26776,142 @@ spec:
           metadata:
             type: object
           spec:
-            description: DeviceSpec defines the desired state of Device
+            description: ConnectionSpec defines the desired state of Connect
             properties:
-              activeNamespace:
-                type: string
-              cnameRecords:
-                items:
-                  properties:
-                    host:
-                      type: string
-                    target:
-                      type: string
-                  type: object
-                type: array
-              disabled:
-                type: boolean
-              noExternalService:
-                type: boolean
-              nodeSelector:
-                additionalProperties:
-                  type: string
+              agentsResources:
+                description: ResourceRequirements describes the compute resource requirements.
+                properties:
+                  claims:
+                    description: "Claims lists the names of resources, defined in
+                      spec.resourceClaims, that are used by this container. \n This
+                      is an alpha field and requires enabling the DynamicResourceAllocation
+                      feature gate. \n This field is immutable. It can only be set
+                      for containers."
+                    items:
+                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                      properties:
+                        name:
+                          description: Name must match the name of one entry in pod.spec.resourceClaims
+                            of the Pod where this field is used. It makes that resource
+                            available inside a container.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: 'Limits describes the maximum amount of compute resources
+                      allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    type: object
+                  requests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: 'Requests describes the minimum amount of compute
+                      resources required. If Requests is omitted for a container,
+                      it defaults to Limits if that is explicitly specified, otherwise
+                      to an implementation-defined value. Requests cannot exceed Limits.
+                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    type: object
                 type: object
-              ports:
+              gatewayResources:
+                description: ResourceRequirements describes the compute resource requirements.
+                properties:
+                  claims:
+                    description: "Claims lists the names of resources, defined in
+                      spec.resourceClaims, that are used by this container. \n This
+                      is an alpha field and requires enabling the DynamicResourceAllocation
+                      feature gate. \n This field is immutable. It can only be set
+                      for containers."
+                    items:
+                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                      properties:
+                        name:
+                          description: Name must match the name of one entry in pod.spec.resourceClaims
+                            of the Pod where this field is used. It makes that resource
+                            available inside a container.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: 'Limits describes the maximum amount of compute resources
+                      allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    type: object
+                  requests:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: 'Requests describes the minimum amount of compute
+                      resources required. If Requests is omitted for a container,
+                      it defaults to Limits if that is explicitly specified, otherwise
+                      to an implementation-defined value. Requests cannot exceed Limits.
+                      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                    type: object
+                type: object
+              peers:
                 items:
                   properties:
+                    allowedIPs:
+                      items:
+                        type: string
+                      type: array
+                    endpoint:
+                      type: string
+                    ip:
+                      description: Id        int    `json:"id"`
+                      type: string
                     port:
-                      format: int32
                       type: integer
-                    targetPort:
-                      format: int32
-                      type: integer
+                    publicKey:
+                      type: string
+                  required:
+                  - endpoint
+                  - ip
+                  - port
+                  - publicKey
                   type: object
                 type: array
+              wg:
+                description: This secret is unmarshalled into WgParams
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
+              wgInterface:
+                type: string
+            required:
+            - wg
+            - wgInterface
             type: object
           status:
             properties:

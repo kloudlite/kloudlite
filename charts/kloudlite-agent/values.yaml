@@ -98,6 +98,7 @@ operators:
           tag: ""
 
       wireguard:
+        enabled: true
         podCIDR: 10.42.0.0/16
         svcCIDR: 10.43.0.0/16
 

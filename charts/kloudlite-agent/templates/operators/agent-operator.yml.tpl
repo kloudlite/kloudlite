@@ -20,7 +20,8 @@ data: {{ $k3sParams.data | toYaml | nindent 2 }}
 
 {{- end }}
 ---
-{{- /* {{- $certDomain := printf "%s.%s" $vpnDeviceTLSPrefix (index $k3sParams.data "k3s_masters_public_dns_host" | b64dec) }} */}}
+
+{{- if .Values.operators.agentOperator.configuration.wireguard.enabled }}
 {{- $certDomain := printf "%s.%s" $vpnDeviceTLSPrefix .Values.operators.agentOperator.configuration.wireguard.publicDNSHost}}
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -35,6 +36,7 @@ spec:
     name: {{.Values.helmCharts.certManager.configuration.defaultClusterIssuer}}
     kind: ClusterIssuer
 ---
+{{- end}}
 
 apiVersion: apps/v1
 kind: Deployment
