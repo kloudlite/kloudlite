@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -222,6 +221,13 @@ func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(MongoDBHelmApplied, req)
 
+	if _, ok := obj.GetAnnotations()[AnnotationCurrentStorageSize]; !ok {
+		fn.MapSet(&obj.Annotations, AnnotationCurrentStorageSize, string(obj.Spec.Resources.Storage.Size))
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+	}
+
 	hc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.HelmChart{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -230,12 +236,79 @@ func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1
 		hc = nil
 	}
 
-	if hc == nil {
-		fn.MapSet(&obj.Annotations, AnnotationCurrentStorageSize, string(obj.Spec.Resources.Storage.Size))
-		if err := r.Update(ctx, obj); err != nil {
-			return check.Failed(err)
+	req.AddToOwnedResources(rApi.ParseResourceRef(hc))
+
+	hasPVCUpdates := false
+
+	if hc != nil {
+		oldSize, ok := obj.GetAnnotations()[AnnotationCurrentStorageSize]
+		if ok {
+			oldSizeNum, err := ct.StorageSize(oldSize).ToInt()
+			if err != nil {
+				return check.Failed(err).Err(nil)
+			}
+
+			newSizeNum, err := ct.StorageSize(obj.Spec.Resources.Storage.Size).ToInt()
+			if err != nil {
+				return check.Failed(err).Err(nil)
+			}
+
+			if oldSizeNum > newSizeNum {
+				return check.Failed(fmt.Errorf("new storage size (%s), must be higher than or equal to old size (%s)", obj.Spec.Resources.Storage.Size, oldSize)).Err(nil)
+			}
+
+			hasPVCUpdates = newSizeNum > oldSizeNum
 		}
 
+		if !ok {
+			hasPVCUpdates = true
+		}
+
+		if hasPVCUpdates {
+			// need to do something
+			// 1. Patch the PVC directly
+			// 2. Rollout the Statefulsets
+
+			ss, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.StatefulSet{})
+			if err != nil {
+				if !apiErrors.IsNotFound(err) {
+					return check.Failed(err).Err(nil)
+				}
+				ss = nil
+			}
+
+			if ss != nil {
+				m := types.ExtractPVCLabelsFromStatefulSetLabels(ss.GetLabels())
+
+				var pvclist corev1.PersistentVolumeClaimList
+				if err := r.List(ctx, &pvclist, &client.ListOptions{
+					LabelSelector: apiLabels.SelectorFromValidatedSet(m),
+					Namespace:     obj.Namespace,
+				}); err != nil {
+					return check.Failed(err)
+				}
+
+				for i := range pvclist.Items {
+					pvclist.Items[i].Spec.Resources.Requests[corev1.ResourceStorage] = resource.MustParse(string(obj.Spec.Resources.Storage.Size))
+					if err := r.Update(ctx, &pvclist.Items[i]); err != nil {
+						return check.Failed(err)
+					}
+				}
+
+				// STEP 2: rollout statefulset
+				if err := fn.RolloutRestart(r.Client, fn.StatefulSet, obj.Namespace, ss.GetLabels()); err != nil {
+					return check.Failed(err)
+				}
+
+				fn.MapSet(&obj.Annotations, AnnotationCurrentStorageSize, string(obj.Spec.Resources.Storage.Size))
+				if err := r.Update(ctx, obj); err != nil {
+					return check.Failed(err)
+				}
+			}
+		}
+	}
+
+	if !hasPVCUpdates {
 		b, err := templates.ParseBytes(r.templateHelmMongoDB, map[string]any{
 			"name":          obj.Name,
 			"namespace":     obj.Namespace,
@@ -264,78 +337,6 @@ func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1
 
 		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return check.Failed(err)
-		}
-
-		return req.Done().RequeueAfter(500 * time.Millisecond)
-	}
-
-	req.AddToOwnedResources(rApi.ParseResourceRef(hc))
-
-	shouldUpdatePVCs := false
-
-	oldSize, ok := obj.GetAnnotations()[AnnotationCurrentStorageSize]
-	if ok {
-		oldSizeNum, err := ct.StorageSize(oldSize).ToInt()
-		if err != nil {
-			return check.Failed(err).Err(nil)
-		}
-
-		newSizeNum, err := ct.StorageSize(obj.Spec.Resources.Storage.Size).ToInt()
-		if err != nil {
-			return check.Failed(err).Err(nil)
-		}
-
-		if oldSizeNum > newSizeNum {
-			return check.Failed(fmt.Errorf("new storage size (%s), must be higher than or equal to old size (%s)", obj.Spec.Resources.Storage.Size, oldSize)).Err(nil)
-		}
-
-		shouldUpdatePVCs = newSizeNum > oldSizeNum
-	}
-
-	if !ok {
-		shouldUpdatePVCs = true
-	}
-
-	if shouldUpdatePVCs {
-		// need to do something
-		// 1. Patch the PVC directly
-		// 2. Rollout the Statefulsets
-
-		ss, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.StatefulSet{})
-		if err != nil {
-			if !apiErrors.IsNotFound(err) {
-				return check.Failed(err).Err(nil)
-			}
-			ss = nil
-		}
-
-		if ss != nil {
-			m := types.ExtractPVCLabelsFromStatefulSetLabels(ss.GetLabels())
-
-			var pvclist corev1.PersistentVolumeClaimList
-			if err := r.List(ctx, &pvclist, &client.ListOptions{
-				LabelSelector: apiLabels.SelectorFromValidatedSet(m),
-				Namespace:     obj.Namespace,
-			}); err != nil {
-				return check.Failed(err)
-			}
-
-			for i := range pvclist.Items {
-				pvclist.Items[i].Spec.Resources.Requests[corev1.ResourceStorage] = resource.MustParse(string(obj.Spec.Resources.Storage.Size))
-				if err := r.Update(ctx, &pvclist.Items[i]); err != nil {
-					return check.Failed(err)
-				}
-			}
-
-			// STEP 2: rollout statefulset
-			if err := fn.RolloutRestart(r.Client, fn.StatefulSet, obj.Namespace, ss.GetLabels()); err != nil {
-				return check.Failed(err)
-			}
-
-			fn.MapSet(&obj.Annotations, AnnotationCurrentStorageSize, string(obj.Spec.Resources.Storage.Size))
-			if err := r.Update(ctx, obj); err != nil {
-				return check.Failed(err)
-			}
 		}
 	}
 

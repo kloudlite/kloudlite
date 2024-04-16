@@ -78,6 +78,12 @@ type TFGcpNode struct {
 	BootvolumeSize   int    `json:"bootvolume_size"`
 }
 
+type GCPServiceAccount struct {
+	Enabled bool     `json:"enabled"`
+	Email   *string  `json:"email,omitempty"`
+	Scopes  []string `json:"scopes,omitempty"`
+}
+
 type GcpClusterTFValues struct {
 	GcpProjectId              string               `json:"gcp_project_id"`
 	GcpRegion                 string               `json:"gcp_region"`
@@ -87,10 +93,12 @@ type GcpClusterTFValues struct {
 	Network                   string               `json:"network"`
 	UseAsLonghornStorageNodes bool                 `json:"use_as_longhorn_storage_nodes"`
 	MachineType               string               `json:"machine_type"`
+	ServiceAccount            GCPServiceAccount    `json:"service_account"`
 	Nodes                     map[string]TFGcpNode `json:"nodes"`
 	SaveSshKeyToPath          string               `json:"save_ssh_key_to_path,omitempty"`
 	SaveKubeconfigToPath      string               `json:"save_kubeconfig_to_path,omitempty"`
 	PublicDnsHost             string               `json:"public_dns_host"`
 	Cloudflare                TFCloudflareParams   `json:"cloudflare"`
 	KloudliteParams           TFKloudliteParams    `json:"kloudlite_params"`
+	Labels                    map[string]string    `json:"labels"`
 }

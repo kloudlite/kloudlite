@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
@@ -117,87 +116,68 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ProjectManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+	check := rApi.NewRunningCheck(DefaultsPatched, req)
 
-	checkName := DefaultsPatched
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	hasPatched := false
+	hasUpdate := false
 	if obj.Output.CredentialsRef.Name == "" {
-		hasPatched = true
+		hasUpdate = true
 		obj.Output.CredentialsRef.Name = fmt.Sprintf("msvc-%s-creds", obj.Name)
 	}
 
 	if obj.Spec.TargetNamespace == "" {
-		hasPatched = true
+		hasUpdate = true
 		obj.Spec.TargetNamespace = fmt.Sprintf("pmsvc-%s", obj.Name)
 	}
 
-	if hasPatched {
+	if hasUpdate {
 		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
-		return req.Done().RequeueAfter(500 * time.Millisecond)
+		return check.StillRunning(fmt.Errorf("waiting for defaults to be applied"))
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ProjectManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(Cleanup, req)
 
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := "finalizing"
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+	if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
+		return step
 	}
 
-	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
-		return result
+	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+		return step
 	}
 
 	req.Logger.Infof("proceeding forward to delete msvc %s/%s", obj.Spec.TargetNamespace, obj.Name)
 	msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.TargetNamespace, obj.Name), &crdsv1.ManagedService{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return failed(err)
+			return check.Failed(err)
 		}
 		msvc = nil
 	}
 
 	if msvc != nil {
 		if err := fn.DeleteAndWait(ctx, r.logger, r.Client, msvc); err != nil {
-			return failed(err)
+			return check.Failed(err)
 		}
 	}
 
 	req.Logger.Infof("proceeding forward to delete namespace %s", obj.Spec.TargetNamespace)
 	ns, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.TargetNamespace), &corev1.Namespace{})
 	if err != nil {
-		return req.CheckFailed(checkName, check, err.Error())
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
+		}
+		return req.Finalize()
 	}
 
 	if v, ok := ns.GetAnnotations()[NamespaceCreatedByLabel]; ok && v == "true" {
 		if err := r.Delete(ctx, ns); err != nil {
-			return req.CheckFailed(checkName, check, err.Error())
+			return check.Failed(err)
 		}
 	}
 
@@ -206,63 +186,45 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ProjectManagedService]) 
 
 func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.ProjectManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+	check := rApi.NewRunningCheck(MsvcNamespaceCreated, req)
 
-	checkName := MsvcNamespaceCreated
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
-		if ns.Generation == 0 {
-			fn.MapSet(&ns.Annotations, NamespaceCreatedByLabel, "true")
-			ns.SetAnnotations(ns.Annotations)
-		}
-		return nil
-	}); err != nil {
-		return fail(err)
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
+	if _, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.TargetNamespace), &corev1.Namespace{}); err != nil {
+		if apiErrors.IsNotFound(err) {
+			if err := r.Create(ctx, &corev1.Namespace{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Namespace",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: obj.Spec.TargetNamespace,
+					Annotations: map[string]string{
+						NamespaceCreatedByLabel: "true",
+					},
+				},
+			}); err != nil {
+				return check.Failed(err)
+			}
 		}
 	}
 
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ProjectManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := MsvcReady
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(MsvcReady, req)
 
 	msvc := &crdsv1.ManagedService{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Spec.TargetNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, msvc, func() error {
-		m := fn.FilterObservabilityAnnotations(obj.GetAnnotations())
-		for k, v := range m {
-			fn.MapSet(&msvc.Annotations, k, v)
-		}
-		fn.MapSet(&msvc.Labels, constants.ProjectManagedServiceRefKey, fmt.Sprintf("%s_%s", obj.Namespace, obj.Name))
+		msvc.Annotations = obj.GetAnnotations()
+		msvc.Labels = fn.MapMerge(obj.GetLabels(), map[string]string{
+			constants.ProjectManagedServiceRefKey: fmt.Sprintf("%s_%s", obj.Namespace, obj.Name),
+		})
 		msvc.Spec = obj.Spec.MSVCSpec
 		msvc.Output = obj.Output
 		return nil
 	}); err != nil {
-		return fail(err).RequeueAfter(1 * time.Second)
+		return check.Failed(err)
 	}
 
 	req.AddToOwnedResources(rApi.ParseResourceRef(msvc))
@@ -270,20 +232,12 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ProjectMa
 	if !msvc.Status.IsReady {
 		obj.Status.Message = msvc.Status.Message
 		if step := req.UpdateStatus(); !step.ShouldProceed() {
-			_, err := step.ReconcilerResponse()
-			return fail(err)
+			return step
 		}
+		return check.StillRunning(fmt.Errorf("waiting for managed service to get ready"))
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

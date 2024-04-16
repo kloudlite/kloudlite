@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"slices"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -49,9 +48,6 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	// RealMsvcCreated string = "real-msvc-created"
-	// RealMsvcReady   string = "real-msvc-ready"
-
 	ManagedServiceApplied string = "managed-service-applied"
 	ManagedServiceReady   string = "managed-service-ready"
 
@@ -60,7 +56,7 @@ const (
 )
 
 var ApplyCheckList = []rApi.CheckMeta{
-	{Name: DefaultsPatched, Title: "Defaults Patched"},
+	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
 	{Name: ManagedServiceApplied, Title: "Managed Service Applied"},
 	{Name: ManagedServiceReady, Title: "Managed Service Ready"},
 }
@@ -123,50 +119,31 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+	check := rApi.NewRunningCheck(DefaultsPatched, req)
 
-	checkName := DefaultsPatched
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	hasPatched := false
+	hasUpdate := false
 
 	if obj.Output.CredentialsRef.Name == "" {
-		hasPatched = true
+		hasUpdate = true
 		obj.Output.CredentialsRef.Name = fmt.Sprintf("msvc-%s-creds", obj.Name)
 	}
 
-	if hasPatched {
+	if hasUpdate {
 		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
-		return req.Done().RequeueAfter(500 * time.Millisecond)
+		return req.Done().RequeueAfter(200 * time.Millisecond)
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
 	req.LogPreCheck("finalizing")
 	defer req.LogPostCheck("finalizing")
 
-	if !slices.Equal(req.Object.Status.CheckList, DeleteCheckList) {
-		if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
-			return step
-		}
+	if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
+		return step
 	}
 
 	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
@@ -178,16 +155,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepRes
 
 func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := ManagedServiceApplied
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(ManagedServiceApplied, req)
 
 	b, err := templates.ParseBytes(r.templateCommonMsvc, map[string]any{
 		"api-version": obj.Spec.ServiceTemplate.APIVersion,
@@ -207,78 +175,53 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 		"output": obj.Output,
 	})
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).NoRequeue()
 	}
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 	req.AddToOwnedResources(rr...)
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := ManagedServiceReady
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(ManagedServiceReady, req)
 
 	uobj := fn.NewUnstructured(metav1.TypeMeta{APIVersion: obj.Spec.ServiceTemplate.APIVersion, Kind: obj.Spec.ServiceTemplate.Kind})
 
 	realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), uobj)
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).NoRequeue()
 	}
 
 	b, err := json.Marshal(realMsvc)
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).NoRequeue()
 	}
 
 	var realMsvcObj struct {
 		Status rApi.Status `json:"status"`
 	}
 	if err := json.Unmarshal(b, &realMsvcObj); err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).NoRequeue()
 	}
 
 	if !realMsvcObj.Status.IsReady {
 		if realMsvcObj.Status.Message == nil {
-			return req.CheckFailed(checkName, check, "waiting for real managed service to reconcile ...").Err(nil)
+			return check.Failed(fmt.Errorf("waiting for real managed service to reconcile")).NoRequeue()
 		}
 		b, err := realMsvcObj.Status.Message.MarshalJSON()
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err).NoRequeue()
 		}
-		return fail(fmt.Errorf("%s", b)).Err(nil)
+		return check.Failed(fmt.Errorf("%s", b)).NoRequeue()
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

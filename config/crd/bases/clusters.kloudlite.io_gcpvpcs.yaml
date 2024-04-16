@@ -60,6 +60,24 @@ spec:
                 type: object
               gcpProjectID:
                 type: string
+              output:
+                properties:
+                  secretRef:
+                    description: this secret will be unmarshalled into type github.com/kloudlite/operator/operators/clusters/internal/templates/types.GcpVpcTFOutput
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  tfWorkspaceName:
+                    type: string
+                required:
+                - secretRef
+                - tfWorkspaceName
+                type: object
               region:
                 type: string
             required:
