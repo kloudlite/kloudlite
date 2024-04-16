@@ -64,8 +64,8 @@ const Root = (props: IDialog) => {
             maximum: `${props.data.spec.maxCount}`,
             minimum: `${props.data.spec.minCount}`,
             poolType: props.data.spec.aws?.poolType || 'ec2',
-            gcpMachineType: '',
-            gcpAvailablityZone: '',
+            gcpMachineType: props.data.spec.gcp?.machineType || '',
+            gcpAvailablityZone: props.data.spec.gcp?.availabilityZone || '',
             gcpPoolType: props.data.spec.gcp?.poolType || 'STANDARD',
             awsAvailabilityZone:
               props.data.spec.aws?.availabilityZone ||
@@ -343,16 +343,20 @@ const Root = (props: IDialog) => {
             <>
               <TextInput
                 label="Availability zone"
+                size="lg"
                 placeholder="Availability zone"
                 value={values.gcpAvailablityZone}
                 onChange={handleChange('gcpAvailablityZone')}
+                disabled={isUpdate}
               />
 
               <TextInput
                 label="Machine type"
+                size="lg"
                 placeholder="Machine type"
                 value={values.gcpMachineType}
                 onChange={handleChange('gcpMachineType')}
+                disabled={isUpdate}
               />
 
               <Select
@@ -363,6 +367,7 @@ const Root = (props: IDialog) => {
                 onChange={(_, value) => {
                   handleChange('gcpPoolType')(dummyEvent(value));
                 }}
+                disabled={isUpdate}
               />
             </>
           )}

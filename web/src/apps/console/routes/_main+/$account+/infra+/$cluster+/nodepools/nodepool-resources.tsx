@@ -120,7 +120,7 @@ const ListDetail = (
 ) => {
   const { item, onDelete, onEdit, open, setOpen } = props;
   const { name, id } = parseItem(item);
-  const { minCount, maxCount, cloudProvider, aws } = item.spec;
+  const { minCount, maxCount, cloudProvider, aws, gcp } = item.spec;
   const keyPrefix = `${RESOURCE_NAME}-${id}`;
   const lR = listRender({ keyPrefix, resource: item });
 
@@ -191,6 +191,12 @@ const ListDetail = (
         );
       case 'azure':
       case 'gcp':
+        return (
+          <div className="flex flex-col gap-sm w-[150px] min-w-[150px] truncate">
+            <span className="bodySm text-text-soft pulsable">Machine type</span>
+            <span className="bodyMd-medium pulsable">{gcp?.machineType}</span>
+          </div>
+        );
       default:
         return null;
     }

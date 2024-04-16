@@ -348,6 +348,13 @@ export type SearchVolumeAttachments = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
+export type ResourceType =
+  | 'iot_app'
+  | 'iot_deployment'
+  | 'iot_device'
+  | 'iot_device_blueprint'
+  | 'iot_project';
+
 export type Github__Com___Kloudlite___Api___Apps___Iot____Console___Internal___Entities__BluePrintType =
   'group_blueprint' | 'singleton_blueprint';
 
@@ -1154,6 +1161,8 @@ export type IotAppIn = {
 export type IotDeploymentIn = {
   CIDR: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
+  exposedDomains: Array<Scalars['String']['input']>;
+  exposedIps: Array<Scalars['String']['input']>;
   exposedServices: Array<Github__Com___Kloudlite___Api___Apps___Iot____Console___Internal___Entities__ExposedServiceIn>;
   name: Scalars['String']['input'];
 };
