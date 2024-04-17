@@ -19,6 +19,19 @@ variable "for_worker_nodes" {
   default     = false
 }
 
+variable "for_vm_group" {
+  type        = bool
+  description = "firewall for vm group ?"
+  default     = false
+}
+
+variable "target_tags" {
+  type        = list(string)
+  description = "tags of VMs over which this firewall rule should apply"
+}
+
+// firewall rules
+
 variable "allow_incoming_http_traffic" {
   type        = bool
   description = "allow incoming http traffic"
@@ -29,7 +42,7 @@ variable "allow_node_ports" {
   description = "should allow node ports ?"
 }
 
-variable "target_tags" {
-  type        = list(string)
-  description = "tags of VMs over which this firewall rule should apply"
+variable "allow_ssh" {
+  type        = bool
+  description = "should allow node ports ?"
 }

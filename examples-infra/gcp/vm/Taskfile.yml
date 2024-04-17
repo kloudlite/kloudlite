@@ -1,25 +1,3 @@
-#! /usr/bin/env bash
-
-destination_path=$(realpath "$1")
-
-SCRIPT_DIR=$(realpath $(dirname $0))
-
-infra_template=$INFRA_TEMPLATE
-if [ -z "$infra_template" ]; then
-	templates_dir="$SCRIPT_DIR/../infrastructure-templates"
-	infra_template=$(fd '' "$templates_dir" | fzf --prompt "Choose An Infrastructure template")
-fi
-
-[ -d "$destination_path" ] && echo "Directory $destination_path already exists" && exit 1
-
-mkdir -p "$destination_path"
-
-pushd "$destination_path" >/dev/null 2>&1 || exit
-mkdir -p .secrets
-
-touch .secrets/env
-
-cat >Taskfile.yml <<EOF
 version: 3
 
 dotenv:
@@ -28,13 +6,13 @@ dotenv:
 vars:
   Varsfile: ".secrets/varfile.json"
 
-  ApplyPlan: "./secrets/apply.plan"
-  DestroyPlan: "./secrets/destroy.plan"
+  ApplyPlan: ".secrets/apply.plan"
+  DestroyPlan: ".secrets/destroy.plan"
 
 tasks:
   sync-from-template:
     vars:
-      InfrastructureTemplate: $(realpath "${infra_template}" --relative-to="$destination_path")
+      InfrastructureTemplate: ../../../infrastructure-templates/gcp/vm
     env:
       SHELL: bash
     silent: true
@@ -81,6 +59,3 @@ tasks:
       - .secrets/env
     cmds:
       - terraform apply "{{.DestroyPlan}}"
-EOF
-
-popd

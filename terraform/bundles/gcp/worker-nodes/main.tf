@@ -36,6 +36,7 @@ module "worker-nodes-firewall" {
   allow_incoming_http_traffic = var.allow_incoming_http_traffic
   allow_node_ports            = false
   name_prefix                 = "${var.name_prefix}-${var.nodepool_name}-fw"
+  allow_ssh                   = false
 }
 
 module "worker-nodes" {
@@ -90,5 +91,7 @@ module "worker-nodes" {
     for k, v in(var.additional_disk != null ? var.additional_disk : {}) :
     "${var.name_prefix}-${var.nodepool_name}-${each.key}-${k}" => v
   }
+
+  machine_state = var.machine_state
 }
 
