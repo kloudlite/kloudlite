@@ -131,7 +131,7 @@ resource "google_compute_firewall" "k3s_master_nodes_public" {
   }
 
   dynamic "allow" {
-    for_each = { for k, v in local.incoming_ssh_connection : k => v }
+    for_each = { for k, v in local.incoming_ssh_connection : k => v if var.allow_ssh }
     content {
       protocol = allow.value.protocol
       ports    = allow.value.ports
@@ -170,6 +170,46 @@ resource "google_compute_firewall" "k3s_worker_nodes" {
 
   dynamic "deny" {
     for_each = { for k, v in local.incoming_ssh_connection : k => v }
+    content {
+      protocol = deny.value.protocol
+      ports    = deny.value.ports
+    }
+  }
+
+  // Target tags can be used to apply this rule to specific instances
+  target_tags = var.target_tags
+
+  // This specifies the source ranges that are allowed to access the instances
+  // 0.0.0.0/0 allows access from any IP address. Adjust as necessary for your security requirements.
+  source_ranges = ["0.0.0.0/0"]
+}
+
+resource "google_compute_firewall" "vm_group" {
+  count = var.for_vm_group ? 1 : 0
+
+  name    = "${var.name_prefix}-vm"
+  network = var.network_name
+
+  dynamic "allow" {
+    for_each = { for k, v in local.incoming_http_traffic : k => v if var.allow_incoming_http_traffic }
+    content {
+      protocol = allow.value.protocol
+      ports    = allow.value.ports
+    }
+  }
+
+  // this allow/deny pair is done to ensure at least one pair is always there
+
+  dynamic "allow" {
+    for_each = { for k, v in local.incoming_ssh_connection : k => v if var.allow_ssh }
+    content {
+      protocol = allow.value.protocol
+      ports    = allow.value.ports
+    }
+  }
+
+  dynamic "deny" {
+    for_each = { for k, v in local.incoming_ssh_connection : k => v if !var.allow_ssh }
     content {
       protocol = deny.value.protocol
       ports    = deny.value.ports

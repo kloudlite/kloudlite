@@ -114,3 +114,6 @@ variable "service_account" {
   })
 }
 
+variable "machine_state" {
+  type = string
+}

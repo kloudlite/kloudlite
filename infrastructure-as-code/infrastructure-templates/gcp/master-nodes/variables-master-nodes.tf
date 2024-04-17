@@ -124,3 +124,7 @@ variable "service_account" {
     scopes  = optional(list(string))
   })
 }
+
+variable "machine_state" {
+  type = string
+}

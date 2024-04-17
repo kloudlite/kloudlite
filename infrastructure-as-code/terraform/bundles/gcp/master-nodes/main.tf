@@ -32,6 +32,7 @@ module "master-nodes-firewall" {
   allow_node_ports            = true
   network_name                = var.network
   target_tags                 = local.k3s_masters_tags
+  allow_ssh                   = true
 }
 
 module "master-nodes" {
@@ -56,6 +57,8 @@ module "master-nodes" {
   bootvolume_size = each.value.bootvolume_size
   bootvolume_type = each.value.bootvolume_type
   service_account = var.service_account
+
+  machine_state = var.machine_state
 }
 
 module "kloudlite-k3s-masters" {
