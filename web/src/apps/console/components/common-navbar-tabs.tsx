@@ -1,4 +1,4 @@
-import { ChevronLeft } from '@jengaicons/react';
+import { ChevronLeft } from '~/console/components/icons';
 import { Link } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ReactNode, useContext, useState } from 'react';

@@ -1,4 +1,4 @@
-import { Check } from '@jengaicons/react';
+import { Check } from '~/console/components/icons';
 import React, { Children, ReactElement, ReactNode, useState } from 'react';
 import { cn } from '~/components/utils';
 

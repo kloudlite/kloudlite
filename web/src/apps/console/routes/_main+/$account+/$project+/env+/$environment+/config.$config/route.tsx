@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData, useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
@@ -108,7 +108,7 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
               <Button
                 variant="outline"
                 content="Add new entry"
-                prefix={<PlusFill />}
+                prefix={<Plus />}
                 onClick={() =>
                   setShowHandleConfig({
                     type: 'Add',

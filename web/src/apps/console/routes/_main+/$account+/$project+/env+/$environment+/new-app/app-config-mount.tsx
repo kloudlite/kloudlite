@@ -26,7 +26,7 @@ import { listFlex } from '~/console/components/console-list-components';
 import AppDialog from './app-dialogs';
 
 interface IConfigMount {
-  type: 'config' | 'secret';
+  type: 'config' | 'secret' | 'pvc';
   refName: string;
   mountPath: string;
 }
@@ -39,7 +39,7 @@ interface IConfigMountList {
 export interface IValue {
   refKey: string;
   refName: string;
-  type: 'config' | 'secret' | NonNullableString;
+  type: 'config' | 'secret' | 'pvc' | NonNullableString;
 }
 
 const ConfigMountList = ({

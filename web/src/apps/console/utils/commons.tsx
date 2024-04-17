@@ -1,5 +1,9 @@
 /* eslint-disable guard-for-in */
-import { AWSlogoFill, ChevronRight, GoogleCloudlogo } from '@jengaicons/react';
+import {
+  AWSlogoFill,
+  ChevronRight,
+  GoogleCloudlogo,
+} from '~/console/components/icons';
 import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
 import { cn } from '~/components/utils';
 import yup from '~/root/lib/server/helpers/yup';

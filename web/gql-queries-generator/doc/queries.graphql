@@ -615,6 +615,11 @@ query consoleGetNodePool($clusterName: String!, $poolName: String!) {
       namespace
     }
     spec {
+      gcp {
+        availabilityZone
+        machineType
+        poolType
+      }
       aws {
         availabilityZone
         ec2Pool {
@@ -711,6 +716,11 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
         }
         recordVersion
         spec {
+          gcp {
+            availabilityZone
+            machineType
+            poolType
+          }
           aws {
             availabilityZone
             ec2Pool {

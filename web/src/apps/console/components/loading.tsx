@@ -1,4 +1,4 @@
-import { CircleFill, CircleNotch, Spinner } from '@jengaicons/react';
+import { CircleFill, CircleNotch, Spinner } from '~/console/components/icons';
 import { ReactNode } from 'react';
 import { cn } from '~/components/utils';
 

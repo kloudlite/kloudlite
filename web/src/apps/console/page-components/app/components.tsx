@@ -9,7 +9,7 @@ import {
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
-import { ArrowLeft, Spinner, XCircleFill } from '~/console/components/icons';
+import { ArrowLeft, Spinner, X } from '~/console/components/icons';
 import ListV2 from '~/console/components/listV2';
 import MultiStep, { useMultiStep } from '~/console/components/multi-step';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -280,7 +280,7 @@ const RepoSelector = ({
               className="outline-none p-lg text-text-default rounded-full"
               onClick={onClear}
             >
-              <XCircleFill size={16} color="currentColor" />
+              <X size={16} color="currentColor" />
             </button>
           </div>
         </div>

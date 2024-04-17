@@ -1,4 +1,4 @@
-import { PencilLine } from '@jengaicons/react';
+import { PencilLine } from '~/console/components/icons';
 import Tooltip from '~/components/atoms/tooltip';
 import { cn } from '~/components/utils';
 import {

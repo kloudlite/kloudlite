@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
@@ -63,7 +63,7 @@ const CloudProvidersIndex = () => {
                   <Button
                     variant="primary"
                     content="Add Cloud Provider"
-                    prefix={<PlusFill />}
+                    prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
                     }}

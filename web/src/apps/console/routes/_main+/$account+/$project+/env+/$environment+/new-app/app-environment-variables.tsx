@@ -27,7 +27,7 @@ import AppDialog from './app-dialogs';
 
 interface IEnvVariable {
   key: string;
-  type?: 'config' | 'secret' | NonNullableString;
+  type?: 'config' | 'secret' | 'pvc' | NonNullableString;
   value?: string;
   refName?: string;
   refKey?: string;
@@ -41,7 +41,7 @@ interface IEnvVariablesList {
 export interface IValue {
   refKey: string;
   refName: string;
-  type: 'config' | 'secret' | NonNullableString;
+  type: 'config' | 'secret' | 'pvc' | NonNullableString;
 }
 
 const EnvironmentVariablesList = ({

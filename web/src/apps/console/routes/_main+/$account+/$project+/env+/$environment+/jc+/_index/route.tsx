@@ -1,4 +1,4 @@
-import { Plus } from '@jengaicons/react';
+import { Plus } from '~/console/components/icons';
 import { Outlet, useOutletContext } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
 import SidebarLayout from '~/console/components/sidebar-layout';

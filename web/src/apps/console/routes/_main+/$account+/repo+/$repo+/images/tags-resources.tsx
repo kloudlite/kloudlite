@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-import { DotsThreeOutlineFill, Tag, Trash } from '@jengaicons/react';
+import { DotsThreeOutlineFill, Tag, Trash } from '~/console/components/icons';
 import { useState } from 'react';
 import AnimateHide from '~/components/atoms/animate-hide';
 import { Badge } from '~/components/atoms/badge';

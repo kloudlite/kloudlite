@@ -1,4 +1,9 @@
-import { ArrowDown, ArrowUp, PencilLine, Trash } from '@jengaicons/react';
+import {
+  ArrowDown,
+  ArrowUp,
+  PencilLine,
+  Trash,
+} from '~/console/components/icons';
 import { useEffect, useState } from 'react';
 import { generateKey, titleCase } from '~/components/utils';
 import {

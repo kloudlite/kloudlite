@@ -13,7 +13,7 @@ import { keyconstants } from '~/console/server/r-utils/key-constants';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { constants } from '~/console/server/utils/constants';
 import { Button } from '~/components/atoms/button';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import {
@@ -221,6 +221,9 @@ const AppDetail = () => {
       },
     });
 
+  useEffect(() => {
+    setExistingBuildID(null);
+  }, [values.source]);
   return (
     <FadeIn
       onSubmit={(e) => {
@@ -301,7 +304,9 @@ const AppDetail = () => {
                 <div className="flex-1 flex justify-end">
                   <ExtraButton
                     onNew={() => {
-                      resetBuildData();
+                      // @ts-ignore
+                      setBuildData(null);
+                      setExistingBuildID(null);
                     }}
                     onExisting={() => {
                       setOpenBuildSelection(true);

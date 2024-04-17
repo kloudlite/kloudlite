@@ -1,4 +1,4 @@
-import { PencilLine } from '@jengaicons/react';
+import { PencilLine } from '~/console/components/icons';
 import { useOutletContext, useParams } from '@remix-run/react';
 import { ChangeEvent, useEffect, useState } from 'react';
 import AnimateHide from '~/components/atoms/animate-hide';

@@ -17,7 +17,7 @@ import { useOutletContext, useParams } from '@remix-run/react';
 import { IBuildRuns } from '~/console/server/gql/queries/build-run-queries';
 import AnimateHide from '~/components/atoms/animate-hide';
 import { Button } from '~/components/atoms/button';
-import { GitBranch, Tag } from '@jengaicons/react';
+import { GitBranch, Tag } from '~/console/components/icons';
 import dayjs from 'dayjs';
 import LogComp from '~/lib/client/components/logger';
 import LogAction from '~/console/page-components/log-action';

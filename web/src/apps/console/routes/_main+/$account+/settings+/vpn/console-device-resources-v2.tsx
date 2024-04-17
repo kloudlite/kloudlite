@@ -1,4 +1,9 @@
-import { PencilLine, QrCode, Trash, WireGuardlogo } from '@jengaicons/react';
+import {
+  PencilLine,
+  QrCode,
+  Trash,
+  WireGuardlogo,
+} from '~/console/components/icons';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';

@@ -1,4 +1,9 @@
-import { ArrowDown, ArrowUp, ArrowsDownUp, Plus } from '@jengaicons/react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowsDownUp,
+  Plus,
+} from '~/console/components/icons';
 import { useSearchParams } from '@remix-run/react';
 import { useState } from 'react';
 import OptionList from '~/components/atoms/option-list';

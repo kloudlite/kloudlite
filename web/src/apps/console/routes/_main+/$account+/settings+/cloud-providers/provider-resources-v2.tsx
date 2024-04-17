@@ -3,7 +3,7 @@ import {
   PencilSimple,
   Trash,
   Check,
-} from '@jengaicons/react';
+} from '~/console/components/icons';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';

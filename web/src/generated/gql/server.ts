@@ -2263,6 +2263,11 @@ export type ConsoleGetNodePoolQuery = {
       maxCount: number;
       minCount: number;
       nodeLabels?: any;
+      gcp?: {
+        availabilityZone: string;
+        machineType: string;
+        poolType: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpPoolType;
+      };
       aws?: {
         availabilityZone: string;
         iamInstanceProfileRole?: string;
@@ -2343,6 +2348,11 @@ export type ConsoleListNodePoolsQuery = {
           maxCount: number;
           minCount: number;
           nodeLabels?: any;
+          gcp?: {
+            availabilityZone: string;
+            machineType: string;
+            poolType: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpPoolType;
+          };
           aws?: {
             availabilityZone: string;
             nvidiaGpuEnabled: boolean;

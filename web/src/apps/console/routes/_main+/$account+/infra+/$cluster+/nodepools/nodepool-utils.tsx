@@ -1,6 +1,6 @@
 import { parseValue } from '~/console/page-components/util';
 
-const { nodePlans, provisionTypes, taintsData } = {
+const { nodePlans, provisionTypes, taintsData, gcpPoolTypes } = {
   nodePlans: [
     {
       label: 'CPU Optimised',
@@ -288,6 +288,10 @@ const { nodePlans, provisionTypes, taintsData } = {
     { label: 'on-demand', value: 'ec2' },
     { label: 'spot', value: 'spot' },
   ],
+  gcpPoolTypes: [
+    { label: 'Standard', value: 'STANDARD' },
+    { label: 'Spot', value: 'SPOT' },
+  ],
   taintsData: [
     { id: 't1', label: 'No execute', value: 'No execute' },
     { id: 't2', label: 'No schedule', value: 'No schedule' },
@@ -367,4 +371,5 @@ export {
   taintsData,
   findNodePlan,
   findNodePlanWithCategory,
+  gcpPoolTypes,
 };

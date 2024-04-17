@@ -1,4 +1,4 @@
-import { CaretDownFill, Search } from '@jengaicons/react';
+import { CaretDownFill, Search } from '~/console/components/icons';
 import { useSearchParams } from '@remix-run/react';
 import { useState, Key } from 'react';
 import OptionList from '~/components/atoms/option-list';
