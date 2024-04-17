@@ -1,8 +1,8 @@
-import { DotsThreeVerticalFill } from '@jengaicons/react';
 import { Link } from '@remix-run/react';
 import { Key, useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
+import { DotsThreeVerticalFill } from '~/iotconsole/components/icons';
 
 export type IResourceExtraItem =
   | {

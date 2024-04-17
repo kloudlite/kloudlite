@@ -5,20 +5,15 @@ import { useAppState } from '~/iotconsole/page-components/app-states';
 import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
 import useForm from '~/lib/client/hooks/use-form';
 import Yup from '~/lib/server/helpers/yup';
-import { handleError, sleep } from '~/lib/utils/common';
+import { handleError } from '~/lib/utils/common';
 import { validateType } from '~/root/src/generated/gql/validator';
 import { parseName } from '~/iotconsole/server/r-utils/common';
 import { FadeIn } from '~/iotconsole/page-components/util';
 import {
   BottomNavigation,
-  GitDetailRaw,
   ReviewComponent,
 } from '~/iotconsole/components/commons';
 import { keyconstants } from '~/iotconsole/server/r-utils/key-constants';
-import { CheckCircleFill, CircleFill, CircleNotch } from '@jengaicons/react';
-import { constants } from '~/iotconsole/server/utils/constants';
-import { registryHost } from '~/root/lib/configs/base-url.cjs';
-import appFun from './app-pre-submit';
 import { IDeviceBlueprintContext } from '../_layout';
 
 const AppReview = () => {
@@ -26,12 +21,12 @@ const AppReview = () => {
 
   const api = useIotConsoleApi();
   const navigate = useNavigate();
-  const { project, deviceblueprint, account } =
+  const { project, deviceblueprint } =
     useOutletContext<IDeviceBlueprintContext>();
-  const [projectName, deviceBlueprintName, accountName] = [
+  const [projectName, deviceblueprintName] = [
     project.name,
     deviceblueprint.name,
-    parseName(account),
+    // parseName(account),
   ];
 
   const { handleSubmit, isLoading } = useForm({
@@ -43,9 +38,9 @@ const AppReview = () => {
       }
 
       try {
-        const { errors } = await api.createApp({
-          envName,
+        const { errors } = await api.createIotApp({
           projectName,
+          deviceBlueprintName: deviceblueprintName,
           app: {
             ...app,
           },

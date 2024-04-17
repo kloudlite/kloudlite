@@ -1,4 +1,4 @@
-import { GearSix } from '@jengaicons/react';
+import { GearSix } from '~/iotconsole/components/icons';
 import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/iotconsole/components/console-avatar';
@@ -17,7 +17,6 @@ import {
 } from '~/iotconsole/server/r-utils/common';
 import ListV2 from '~/iotconsole/components/listV2';
 import { IApps } from '~/iotconsole/server/gql/queries/iot-app-queries';
-// import { IAccountContext } from '../_layout';
 
 type BaseType = ExtractNodeType<IApps>;
 const RESOURCE_NAME = 'project';
@@ -26,7 +25,6 @@ const parseItem = (item: ExtractNodeType<IApps>) => {
   return {
     name: item.displayName,
     id: parseName(item),
-    // path: `/projects/${item.name}`,
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
@@ -34,8 +32,8 @@ const parseItem = (item: ExtractNodeType<IApps>) => {
   };
 };
 
-const ExtraButton = ({ project }: { project: BaseType }) => {
-  const { account } = useParams();
+const ExtraButton = ({ app }: { app: BaseType }) => {
+  const { account, deviceblueprint, project } = useParams();
   return (
     <ResourceExtraAction
       options={[
@@ -44,7 +42,9 @@ const ExtraButton = ({ project }: { project: BaseType }) => {
           icon: <GearSix size={16} />,
           type: 'item',
 
-          to: `/${account}/${project}/settings`,
+          to: `/${account}/${project}/deviceblueprint/${deviceblueprint}/app/${parseName(
+            app
+          )}/settings/general`,
           key: 'settings',
         },
       ]}
@@ -70,7 +70,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    action={<ExtraButton project={item} />}
+                    action={<ExtraButton app={item} />}
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
@@ -109,16 +109,6 @@ const ListView = ({ items }: { items: BaseType[] }) => {
             name: 'name',
             className: 'w-[180px] flex-1',
           },
-          // {
-          //   render: () => 'Status',
-          //   name: 'status',
-          //   className: 'flex-1 min-w-[30px] flex items-center justify-center',
-          // },
-          // {
-          //   render: () => 'Cluster',
-          //   name: 'cluster',
-          //   className: 'w-[180px]',
-          // },
           {
             render: () => 'Updated',
             name: 'updated',
@@ -144,10 +134,6 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   />
                 ),
               },
-              // status: {
-              //   render: () => <SyncStatusV2 item={i} />,
-              // },
-              // cluster: { render: () => <ListItem data={i.clusterName} /> },
               updated: {
                 render: () => (
                   <ListItem
@@ -157,7 +143,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                 ),
               },
               action: {
-                render: () => <ExtraButton project={i} />,
+                render: () => <ExtraButton app={i} />,
               },
             },
             to: `/${account}/${project}/deviceblueprint/${deviceblueprint}/app/${id}`,
@@ -169,8 +155,6 @@ const ListView = ({ items }: { items: BaseType[] }) => {
 };
 
 const AppResource = ({ items = [] }: { items: BaseType[] }) => {
-  //   const { account } = useOutletContext<IAccountContext>();
-  //   useWatchReload(`account:${parseName(account)}`);
   return (
     <ListGridView
       listView={<ListView items={items} />}

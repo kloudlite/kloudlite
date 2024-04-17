@@ -112,8 +112,6 @@ export const iotAppQueries = (executor: IExecutor) => ({
           markedForDeletion
           metadata {
             annotations
-            creationTimestamp
-            generation
             labels
             name
             namespace
@@ -297,7 +295,6 @@ export const iotAppQueries = (executor: IExecutor) => ({
               metadata {
                 annotations
                 creationTimestamp
-                generation
                 labels
                 name
                 namespace

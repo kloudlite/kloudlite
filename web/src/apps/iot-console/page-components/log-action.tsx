@@ -1,5 +1,5 @@
 import { cn } from '~/components/utils';
-import { Clock, ListNumbers } from '@jengaicons/react';
+import { Clock, ListNumbers } from '~/iotconsole/components/icons';
 import { useDataState } from './common-state';
 
 const LogAction = () => {

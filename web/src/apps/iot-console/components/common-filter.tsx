@@ -1,4 +1,3 @@
-import { CaretDownFill, Search } from '@jengaicons/react';
 import { useSearchParams } from '@remix-run/react';
 import { useState, Key } from 'react';
 import OptionList from '~/components/atoms/option-list';
@@ -10,6 +9,7 @@ import {
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
 import { handleError } from '~/root/lib/utils/common';
+import { CaretDownFill, Search } from '~/iotconsole/components/icons';
 import { FilterType, IdataFetcher } from './filters';
 
 interface IOnCheckHandler {

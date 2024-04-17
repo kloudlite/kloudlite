@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import List from '~/console/components/list';
+import List from '~/iotconsole/components/list';
 
 export interface ICSComponent {
   items: { [key: string]: string };

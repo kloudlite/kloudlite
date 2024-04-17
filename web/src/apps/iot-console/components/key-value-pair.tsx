@@ -3,7 +3,7 @@ import AnimateHide from '~/components/atoms/animate-hide';
 import { Button, IconButton } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { cn, uuid } from '~/components/utils';
-import { MinusCircle, Plus } from '~/console/components/icons';
+import { MinusCircle, Plus } from '~/iotconsole/components/icons';
 
 interface IKeyValuePair {
   onChange?(

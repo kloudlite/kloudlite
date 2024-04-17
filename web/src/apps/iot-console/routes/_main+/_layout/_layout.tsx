@@ -13,13 +13,13 @@ import { BrandLogo } from '~/components/branding/brand-logo';
 import Profile from '~/components/molecule/profile';
 import { TopBar } from '~/components/organisms/top-bar';
 import { generateKey, titleCase } from '~/components/utils';
-import Breadcrum from '~/console/components/breadcrum';
-import { CommonTabs } from '~/console/components/common-navbar-tabs';
-import LogoWrapper from '~/console/components/logo-wrapper';
-import { ViewModeProvider } from '~/console/components/view-mode';
-import { IAccounts } from '~/console/server/gql/queries/account-queries';
-import { setupAccountContext } from '~/console/server/utils/auth-utils';
-import { constants } from '~/console/server/utils/constants';
+import Breadcrum from '~/iotconsole/components/breadcrum';
+import { CommonTabs } from '~/iotconsole/components/common-navbar-tabs';
+import LogoWrapper from '~/iotconsole/components/logo-wrapper';
+import { ViewModeProvider } from '~/iotconsole/components/view-mode';
+import { IAccounts } from '~/iotconsole/server/gql/queries/account-queries';
+import { setupAccountContext } from '~/iotconsole/server/utils/auth-utils';
+import { constants } from '~/iotconsole/server/utils/constants';
 import { LightTitlebarColor } from '~/design-system/tailwind-base';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
@@ -37,7 +37,7 @@ import {
   Container as ContainerIcon,
   GearSix,
   Project,
-} from '~/console/components/icons';
+} from '~/iotconsole/components/icons';
 
 const restActions = (ctx: IExtRemixCtx) => {
   return withContext(ctx, {});

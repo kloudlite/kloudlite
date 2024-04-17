@@ -1,4 +1,4 @@
-import { ArrowRight, Plus, X } from '@jengaicons/react';
+import { ArrowRight, Plus, X } from '~/iotconsole/components/icons';
 import { useNavigate, useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
@@ -10,12 +10,12 @@ import { titleCase } from '~/components/utils';
 import {
   ListBody,
   ListItem,
-} from '~/console/components/console-list-components';
-import DynamicPagination from '~/console/components/dynamic-pagination';
-import List from '~/console/components/list';
-import ProgressWrapper from '~/console/components/progress-wrapper';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { ACCOUNT_ROLES } from '~/console/utils/commons';
+} from '~/iotconsole/components/console-list-components';
+import DynamicPagination from '~/iotconsole/components/dynamic-pagination';
+import List from '~/iotconsole/components/list';
+import ProgressWrapper from '~/iotconsole/components/progress-wrapper';
+import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
+import { ACCOUNT_ROLES } from '~/iotconsole/utils/commons';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -24,7 +24,7 @@ import { Github__Com___Kloudlite___Api___Apps___Iam___Types__Role as Role } from
 const InviteTeam = () => {
   const { a: accountName } = useParams();
 
-  const api = useConsoleApi();
+  const api = useIotConsoleApi();
 
   const navigate = useNavigate();
 

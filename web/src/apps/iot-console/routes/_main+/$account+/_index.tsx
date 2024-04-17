@@ -1,5 +1,5 @@
 import { redirect } from '@remix-run/node';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { GQLServerHandler } from '~/iotconsole/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
 
 export const loader = async (ctx: IRemixCtx) => {

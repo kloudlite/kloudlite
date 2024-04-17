@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
-import Wrapper from '~/console/components/wrapper';
+import Wrapper from '~/iotconsole/components/wrapper';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 
 const AppWrapper = ({

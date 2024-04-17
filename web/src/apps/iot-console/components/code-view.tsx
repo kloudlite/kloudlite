@@ -1,8 +1,8 @@
-import { CopySimple } from '@jengaicons/react';
 import hljs from 'highlight.js';
 import { useEffect, useRef } from 'react';
 import { toast } from '~/components/molecule/toast';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
+import { CopySimple } from '~/iotconsole/components/icons';
 
 interface ICodeView {
   data: string;

@@ -1,4 +1,4 @@
-import { PencilLine, Trash } from '@jengaicons/react';
+import { PencilLine, Trash } from '~/iotconsole/components/icons';
 import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/iotconsole/components/console-avatar';
@@ -13,7 +13,7 @@ import {
   ExtractNodeType,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
-} from '~/console/server/r-utils/common';
+} from '~/iotconsole/server/r-utils/common';
 import ListV2 from '~/iotconsole/components/listV2';
 import { IDeployments } from '~/iotconsole/server/gql/queries/iot-deployment-queries';
 import { useState } from 'react';

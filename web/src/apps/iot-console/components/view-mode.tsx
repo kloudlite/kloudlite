@@ -1,4 +1,3 @@
-import { List, SquaresFour } from '@jengaicons/react';
 import {
   ReactNode,
   createContext,
@@ -9,6 +8,7 @@ import {
 } from 'react';
 import Toolbar from '~/components/atoms/toolbar';
 import { isBrowser } from '~/root/lib/client/helpers/is-browser';
+import { List, SquaresFour } from '~/iotconsole/components/icons';
 import { IListOrGrid } from '../server/r-utils/common';
 
 const ViewModeContext = createContext<{

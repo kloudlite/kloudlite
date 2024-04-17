@@ -1,4 +1,4 @@
-import { Trash } from '@jengaicons/react';
+import { Trash } from '~/iotconsole/components/icons';
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
@@ -8,7 +8,7 @@ import {
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
-} from '~/console/server/r-utils/common';
+} from '~/iotconsole/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
@@ -21,8 +21,8 @@ import DeleteDialog from '../components/delete-dialog';
 import Grid from '../components/grid';
 import ListGridView from '../components/list-grid-view';
 import ResourceExtraAction from '../components/resource-extra-action';
-import { useConsoleApi } from '../server/gql/api-provider';
-import { ISecrets } from '../server/gql/queries/secret-queries';
+import { useIotConsoleApi } from '../server/gql/api-provider';
+import { ISecrets } from '../server/gql/queries/iot-secret-queries';
 import ListV2 from '../components/listV2';
 
 const RESOURCE_NAME = 'secret';
@@ -233,7 +233,7 @@ const SecretResourcesV2 = ({
     null
   );
 
-  const api = useConsoleApi();
+  const api = useIotConsoleApi();
   const reloadPage = useReload();
   const { project, environment, account } = useParams();
 

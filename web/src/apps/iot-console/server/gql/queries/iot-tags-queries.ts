@@ -10,7 +10,7 @@ import {
 
 export type IDigests = NN<ConsoleListDigestQuery['cr_listDigests']>;
 
-export const tagsQueries = (executor: IExecutor) => ({
+export const iotTagsQueries = (executor: IExecutor) => ({
   listDigest: executor(
     gql`
       query Cr_listDigests(

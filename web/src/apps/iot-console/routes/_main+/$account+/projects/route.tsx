@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/iotconsole/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData, useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
@@ -12,7 +12,7 @@ import logger from '~/root/lib/client/helpers/log';
 import { ensureAccountSet } from '~/iotconsole/server/utils/auth-utils';
 import { GQLServerHandler } from '~/iotconsole/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
-// import useActiveDevice from '~/console/hooks/use-device';
+// import useActiveDevice from '~/iotconsole/hooks/use-device';
 // import { useEffect } from 'react';
 import Tools from './tools';
 import ProjectResourcesV2 from './project-resources-v2';
@@ -47,12 +47,6 @@ const Projects = () => {
   const { account } = useParams();
   const { promise } = useLoaderData<typeof loader>();
 
-  // const p = useActiveDevice();
-  //
-  // useEffect(() => {
-  //   console.log(p);
-  // }, [p]);
-
   return (
     <LoadingComp
       data={promise}
@@ -71,7 +65,7 @@ const Projects = () => {
                 <Button
                   variant="primary"
                   content="Create Project"
-                  prefix={<PlusFill />}
+                  prefix={<Plus />}
                   to={`/${account}/new-project`}
                   LinkComponent={Link}
                 />

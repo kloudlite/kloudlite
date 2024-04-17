@@ -2,7 +2,7 @@ import Pulsable from 'react-pulsable';
 import { Button, IconButton } from '~/components/atoms/button';
 import { ReactNode } from 'react';
 import { generateKey } from '~/components/utils';
-import { DotsSix } from '@jengaicons/react';
+import { DotsSix } from '~/iotconsole/components/icons';
 import Wrapper from '../components/wrapper';
 import CommonTools from '../components/common-tools';
 import ListGridView from '../components/list-grid-view';

@@ -4,10 +4,10 @@ import { Chip, ChipGroup } from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
 import { usePagination } from '~/components/molecule/pagination';
 import { cn } from '~/components/utils';
-import List from '~/console/components/list';
-import NoResultsFound from '~/console/components/no-results-found';
-import { IShowDialog } from '~/console/components/types.d';
-import { useAppState } from '~/console/page-components/app-states';
+import List from '~/iotconsole/components/list';
+import NoResultsFound from '~/iotconsole/components/no-results-found';
+import { IShowDialog } from '~/iotconsole/components/types.d';
+import { useAppState } from '~/iotconsole/page-components/app-states';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';
@@ -20,13 +20,14 @@ import {
   SmileySad,
   X,
   XCircleFill,
-} from '~/console/components/icons';
+} from '~/iotconsole/components/icons';
 import Tooltip from '~/components/atoms/tooltip';
-import { listFlex } from '~/console/components/console-list-components';
+import { listFlex } from '~/iotconsole/components/console-list-components';
+import { Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret as ConfigOrSecretType } from '~/root/src/generated/gql/server';
 import AppDialog from './app-dialogs';
 
 interface IConfigMount {
-  type: 'config' | 'secret';
+  type: ConfigOrSecretType;
   refName: string;
   mountPath: string;
 }
@@ -39,7 +40,7 @@ interface IConfigMountList {
 export interface IValue {
   refKey: string;
   refName: string;
-  type: 'config' | 'secret' | NonNullableString;
+  type: ConfigOrSecretType | NonNullableString;
 }
 
 const ConfigMountList = ({

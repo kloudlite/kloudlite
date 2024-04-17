@@ -1,4 +1,8 @@
-import { ArrowDown, ArrowUp, ArrowsDownUp } from '@jengaicons/react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowsDownUp,
+} from '~/iotconsole/components/icons';
 import { useState } from 'react';
 import OptionList from '~/components/atoms/option-list';
 import Toolbar from '~/components/atoms/toolbar';

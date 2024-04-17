@@ -1,4 +1,4 @@
-import { Trash } from '@jengaicons/react';
+import { Trash } from '~/iotconsole/components/icons';
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
@@ -15,8 +15,8 @@ import DeleteDialog from '../components/delete-dialog';
 import Grid from '../components/grid';
 import ListGridView from '../components/list-grid-view';
 import ResourceExtraAction from '../components/resource-extra-action';
-import { useConsoleApi } from '../server/gql/api-provider';
-import { IConfigs } from '../server/gql/queries/config-queries';
+import { useIotConsoleApi } from '../server/gql/api-provider';
+import { IConfigs } from '../server/gql/queries/iot-config-queries';
 import {
   ExtractNodeType,
   parseName,
@@ -233,7 +233,7 @@ const ConfigResourcesV2 = ({
     null
   );
 
-  const api = useConsoleApi();
+  const api = useIotConsoleApi();
   const reloadPage = useReload();
   const { project, environment, account } = useParams();
 

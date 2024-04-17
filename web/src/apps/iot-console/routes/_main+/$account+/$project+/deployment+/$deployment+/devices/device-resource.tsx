@@ -1,4 +1,4 @@
-import { PencilLine, Trash } from '@jengaicons/react';
+import { PencilLine, Trash } from '~/iotconsole/components/icons';
 import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/iotconsole/components/console-avatar';
@@ -23,7 +23,6 @@ import { toast } from '~/components/molecule/toast';
 import DeleteDialog from '~/iotconsole/components/delete-dialog';
 import { handleError } from '~/root/lib/utils/common';
 import HandleDevice from './handle-device';
-// import { IAccountContext } from '../_layout';
 
 type BaseType = ExtractNodeType<IDevices>;
 const RESOURCE_NAME = 'device';
@@ -32,7 +31,6 @@ const parseItem = (item: ExtractNodeType<IDevices>) => {
   return {
     name: item.displayName,
     id: item.name,
-    // path: `/projects/${item.name}`,
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
@@ -100,7 +98,6 @@ const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
                         onEdit={() => onEdit(item)}
                       />
                     }
-                    // action={<ExtraButton project={item} />}
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
@@ -123,7 +120,6 @@ const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
 };
 
 const ListView = ({ items, onEdit, onDelete }: IResource) => {
-  // const { account, project, deployment } = useParams();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -139,16 +135,6 @@ const ListView = ({ items, onEdit, onDelete }: IResource) => {
             name: 'name',
             className: 'w-[180px] flex-1',
           },
-          // {
-          //   render: () => 'Status',
-          //   name: 'status',
-          //   className: 'flex-1 min-w-[30px] flex items-center justify-center',
-          // },
-          // {
-          //   render: () => 'Cluster',
-          //   name: 'cluster',
-          //   className: 'w-[180px]',
-          // },
           {
             render: () => 'Updated',
             name: 'updated',
@@ -174,10 +160,6 @@ const ListView = ({ items, onEdit, onDelete }: IResource) => {
                   />
                 ),
               },
-              // status: {
-              //   render: () => <SyncStatusV2 item={i} />,
-              // },
-              // cluster: { render: () => <ListItem data={i.clusterName} /> },
               updated: {
                 render: () => (
                   <ListItem
@@ -194,11 +176,7 @@ const ListView = ({ items, onEdit, onDelete }: IResource) => {
                   />
                 ),
               },
-              // action: {
-              //   render: () => <ExtraButton project={i} />,
-              // },
             },
-            // to: `/${account}/${project}/deploymenmt/${deployment}/${id}`,
           };
         }),
       }}
@@ -207,8 +185,6 @@ const ListView = ({ items, onEdit, onDelete }: IResource) => {
 };
 
 const DeviceResource = ({ items = [] }: { items: BaseType[] }) => {
-  //   const { account } = useOutletContext<IAccountContext>();
-  //   useWatchReload(`account:${parseName(account)}`);
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );

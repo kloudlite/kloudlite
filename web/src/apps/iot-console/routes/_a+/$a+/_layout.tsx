@@ -1,6 +1,6 @@
 import { redirect } from '@remix-run/node';
 import { Outlet, useLoaderData, useOutletContext } from '@remix-run/react';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { GQLServerHandler } from '~/iotconsole/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
 
 const Account = () => {

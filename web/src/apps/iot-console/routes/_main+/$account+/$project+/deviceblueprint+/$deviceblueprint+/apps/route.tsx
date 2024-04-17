@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/iotconsole/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import {
@@ -67,7 +67,7 @@ const Apps = () => {
                   <Button
                     variant="primary"
                     content="Create new app"
-                    prefix={<PlusFill />}
+                    prefix={<Plus />}
                     to="../new-app"
                     LinkComponent={Link}
                   />

@@ -5,22 +5,22 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { NameIdView } from '~/console/components/name-id-view';
-import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
+import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
+import { NameIdView } from '~/iotconsole/components/name-id-view';
+import MultiStepProgressWrapper from '~/iotconsole/components/multi-step-progress-wrapper';
 import MultiStepProgress, {
   useMultiStepProgress,
-} from '~/console/components/multi-step-progress';
-import { BottomNavigation } from '~/console/components/commons';
-import FillerCreateTeam from '~/console/assets/filler-create-team';
-import { SignOut } from '@jengaicons/react';
+} from '~/iotconsole/components/multi-step-progress';
+import { BottomNavigation } from '~/iotconsole/components/commons';
+import FillerCreateTeam from '~/iotconsole/assets/filler-create-team';
+import { SignOut } from '~/iotconsole/components/icons';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import { Button } from '~/components/atoms/button';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 
 const NewAccount = () => {
-  const api = useConsoleApi();
+  const api = useIotConsoleApi();
   const navigate = useNavigate();
   const user = useDataFromMatches<UserMe>('user', {});
 

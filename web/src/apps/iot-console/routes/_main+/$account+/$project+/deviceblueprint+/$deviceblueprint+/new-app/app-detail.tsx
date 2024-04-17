@@ -7,61 +7,23 @@ import { BottomNavigation } from '~/iotconsole/components/commons';
 import { registryHost } from '~/lib/configs/base-url.cjs';
 import { useOutletContext } from '@remix-run/react';
 import RepoSelector from '~/iotconsole/page-components/app/components';
-import { keyconstants } from '~/iotconsole/server/r-utils/key-constants';
-import { useState } from 'react';
-import ResourceExtraAction from '~/iotconsole/components/resource-extra-action';
-import { ArrowClockwise, PencilSimple } from '~/iotconsole/components/icons';
 import { NameIdView } from '~/iotconsole/components/name-id-view';
 import { IDeviceBlueprintContext } from '../_layout';
 
-const ExtraButton = ({
-  onNew,
-  onExisting,
-}: {
-  onNew: () => void;
-  onExisting: () => void;
-}) => {
-  return (
-    <ResourceExtraAction
-      options={[
-        {
-          label: 'Connect new',
-          icon: <PencilSimple size={16} />,
-          type: 'item',
-          key: 'new',
-          onClick: onNew,
-        },
-        {
-          label: 'Choose from existing',
-          icon: <ArrowClockwise size={16} />,
-          type: 'item',
-          key: 'existing',
-          onClick: onExisting,
-        },
-      ]}
-    />
-  );
-};
-
 const AppDetail = () => {
-  const {
-    app,
-    setApp,
-    setPage,
-    buildData,
-    markPageAsCompleted,
-    activeContIndex,
-  } = useAppState();
+  console.log('use', useAppState());
+  const { app, setApp, setPage, markPageAsCompleted, activeContIndex } =
+    useAppState();
 
   const { project, deviceblueprint, account } =
     useOutletContext<IDeviceBlueprintContext>();
-  const [projectName, envName, accountName] = [
+  const [accountName] = [
     project.name,
     deviceblueprint.name,
     parseName(account),
   ];
 
-  const [openBuildSelection, setOpenBuildSelection] = useState(false);
+  // const [openBuildSelection, setOpenBuildSelection] = useState(false);
 
   const { values, errors, handleChange, handleSubmit, isLoading, setValues } =
     useForm({
@@ -69,22 +31,8 @@ const AppDetail = () => {
         name: parseName(app),
         displayName: app.displayName,
         isNameError: false,
-        imageMode:
-          app.metadata?.annotations?.[keyconstants.appImageMode] || 'default',
         imageUrl: app.spec.containers[activeContIndex]?.image || '',
         manualRepo: '',
-        source: {
-          branch: buildData?.source.branch,
-          repository: buildData?.source.repository,
-          provider: buildData?.source.provider,
-        },
-        advanceOptions: false,
-        buildArgs: {},
-        buildContexts: {},
-        contextDir: '',
-        dockerfilePath: '',
-        dockerfileContent: '',
-        isGitLoading: false,
       },
       validationSchema: Yup.object({
         name: Yup.string().required(),
@@ -103,16 +51,6 @@ const AppDetail = () => {
             return schema;
           }
         ),
-        imageMode: Yup.string().required(),
-        source: Yup.object()
-          .shape({})
-          .test('is-empty', 'Branch is required.', (v, c) => {
-            // @ts-ignoredfgdfg
-            if (!v?.branch && c.parent.imageMode === 'git') {
-              return false;
-            }
-            return true;
-          }),
       }),
 
       onSubmit: async (val) => {

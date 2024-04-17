@@ -1,7 +1,7 @@
 import { Link } from '@remix-run/react';
 import { ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
-import { ArrowLeft } from '~/console/components/icons';
+import { ArrowLeft } from '~/iotconsole/components/icons';
 import { cn } from '~/components/utils';
 import SplitWrapper from './split-wrapper';
 

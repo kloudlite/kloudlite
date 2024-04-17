@@ -1,10 +1,3 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  LockSimpleOpen,
-  SmileySad,
-  X,
-} from '@jengaicons/react';
 import { useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
@@ -12,28 +5,36 @@ import { TextInput } from '~/components/atoms/input';
 import SelectPrimitive from '~/components/atoms/select-primitive';
 import { usePagination } from '~/components/molecule/pagination';
 import { cn } from '~/components/utils';
-import { InfoLabel } from '~/console/components/commons';
-import List from '~/console/components/list';
-import NoResultsFound from '~/console/components/no-results-found';
-import { useAppState } from '~/console/page-components/app-states';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IConfigs } from '~/console/server/gql/queries/config-queries';
+import { InfoLabel } from '~/iotconsole/components/commons';
+import List from '~/iotconsole/components/list';
+import NoResultsFound from '~/iotconsole/components/no-results-found';
+import { useAppState } from '~/iotconsole/page-components/app-states';
+import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
 import {
   ExtractNodeType,
   parseName,
   parseNodes,
-} from '~/console/server/r-utils/common';
+} from '~/iotconsole/server/r-utils/common';
 import useDebounce from '~/lib/client/hooks/use-debounce';
 import useForm from '~/lib/client/hooks/use-form';
 import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
 import Yup from '~/lib/server/helpers/yup';
 import { NonNullableString } from '~/lib/types/common';
 import { handleError } from '~/lib/utils/common';
+import {
+  ChevronLeft,
+  ChevronRight,
+  LockSimpleOpen,
+  SmileySad,
+  X,
+} from '~/iotconsole/components/icons';
+import { IConfigs } from '~/iotconsole/server/gql/queries/iot-config-queries';
+import { Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret as ConfigOrSecretType } from '~/root/src/generated/gql/server';
 
 export interface IValue {
   refKey: string;
   refName: string;
-  type: 'config' | 'secret' | NonNullableString;
+  type: ConfigOrSecretType | NonNullableString;
 }
 
 interface IConfigMount {
@@ -157,7 +158,7 @@ const ConfigMountsList = ({ configMounts, onDelete }: IConfigMountList) => {
 };
 
 export const ConfigMounts = () => {
-  const api = useConsoleApi();
+  const api = useIotConsoleApi();
   const [isloading, setIsloading] = useState<boolean>(true);
   const { environment, project } = useParams();
   const [configs, setConfigs] = useState<ExtractNodeType<IConfigs>[]>([]);

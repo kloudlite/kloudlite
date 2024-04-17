@@ -1,4 +1,4 @@
-import { CopySimple } from '@jengaicons/react';
+import { CopySimple } from '~/iotconsole/components/icons';
 import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';

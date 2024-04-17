@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '~/iotconsole/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
@@ -12,14 +12,11 @@ import logger from '~/root/lib/client/helpers/log';
 import { ensureAccountSet } from '~/iotconsole/server/utils/auth-utils';
 import { GQLServerHandler } from '~/iotconsole/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
-// import useActiveDevice from '~/console/hooks/use-device';
-// import { useEffect } from 'react';
-import { parseNodes } from '~/console/server/r-utils/common';
+import { parseNodes } from '~/iotconsole/server/r-utils/common';
 import { useState } from 'react';
 import Tools from './tools';
 import DeploymentResource from './deployment-resource';
 import HandleDeployment from './handle-deployment';
-// import ProjectResourcesV2 from './project-resources-v2';
 
 export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -71,7 +68,7 @@ const Deployments = () => {
                   <Button
                     variant="primary"
                     content="Create Deployment"
-                    prefix={<PlusFill />}
+                    prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
                     }}

@@ -1,5 +1,4 @@
 /* eslint-disable no-nested-ternary */
-import { CircleNotch } from '@jengaicons/react';
 import { ReactNode, forwardRef, useEffect, useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
@@ -8,6 +7,7 @@ import { handleError } from '~/root/lib/utils/common';
 import { ConsoleResType, ResType } from '~/root/src/generated/gql/server';
 import { useParams } from '@remix-run/react';
 import { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import { CircleNotch } from '~/iotconsole/components/icons';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { useIotConsoleApi } from '../server/gql/api-provider';
 

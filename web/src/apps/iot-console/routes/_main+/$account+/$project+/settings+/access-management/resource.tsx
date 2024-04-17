@@ -1,7 +1,7 @@
-import { DotsThreeVerticalFill } from '@jengaicons/react';
+import { DotsThreeVerticalFill } from '~/iotconsole/components/icons';
 import { Avatar } from '~/components/atoms/avatar';
 import { IconButton } from '~/components/atoms/button';
-import List from '~/console/components/list';
+import List from '~/iotconsole/components/list';
 
 const Resource = ({
   items = [],

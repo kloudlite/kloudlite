@@ -5786,8 +5786,6 @@ export type IotconsoleGetIotAppQuery = {
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
     metadata?: {
       annotations?: any;
-      creationTimestamp: any;
-      generation: number;
       labels?: any;
       name: string;
       namespace?: string;
@@ -5932,7 +5930,6 @@ export type IotconsoleListIotAppsQuery = {
         metadata?: {
           annotations?: any;
           creationTimestamp: any;
-          generation: number;
           labels?: any;
           name: string;
           namespace?: string;
@@ -6194,6 +6191,241 @@ export type IotconsoleDeleteRepoMutationVariables = Exact<{
 }>;
 
 export type IotconsoleDeleteRepoMutation = { cr_deleteRepo: boolean };
+
+export type IotconsoleListDigestQueryVariables = Exact<{
+  repoName: Scalars['String']['input'];
+  search?: InputMaybe<SearchRepos>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type IotconsoleListDigestQuery = {
+  cr_listDigests?: {
+    totalCount: number;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+    edges: Array<{
+      cursor: string;
+      node: {
+        url: string;
+        updateTime: any;
+        tags: Array<string>;
+        size: number;
+        repository: string;
+        digest: string;
+        creationTime: any;
+      };
+    }>;
+  };
+};
+
+export type IotconsoleDeleteDigestMutationVariables = Exact<{
+  repoName: Scalars['String']['input'];
+  digest: Scalars['String']['input'];
+}>;
+
+export type IotconsoleDeleteDigestMutation = { cr_deleteDigest: boolean };
+
+export type IotconsoleUpdateConfigMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  config: ConfigIn;
+}>;
+
+export type IotconsoleUpdateConfigMutation = {
+  core_updateConfig?: { id: string };
+};
+
+export type IotconsoleDeleteConfigMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  configName: Scalars['String']['input'];
+}>;
+
+export type IotconsoleDeleteConfigMutation = { core_deleteConfig: boolean };
+
+export type IotconsoleGetConfigQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type IotconsoleGetConfigQuery = {
+  core_getConfig?: {
+    binaryData?: any;
+    data?: any;
+    displayName: string;
+    environmentName: string;
+    immutable?: boolean;
+    projectName: string;
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+  };
+};
+
+export type IotconsoleListConfigsQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  search?: InputMaybe<SearchConfigs>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type IotconsoleListConfigsQuery = {
+  core_listConfigs?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        displayName: string;
+        data?: any;
+        environmentName: string;
+        immutable?: boolean;
+        markedForDeletion?: boolean;
+        projectName: string;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type IotconsoleCreateConfigMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  config: ConfigIn;
+}>;
+
+export type IotconsoleCreateConfigMutation = {
+  core_createConfig?: { id: string };
+};
+
+export type IotconsoleListSecretsQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  search?: InputMaybe<SearchSecrets>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type IotconsoleListSecretsQuery = {
+  core_listSecrets?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        displayName: string;
+        stringData?: any;
+        environmentName: string;
+        isReadyOnly: boolean;
+        immutable?: boolean;
+        markedForDeletion?: boolean;
+        projectName: string;
+        type?: K8s__Io___Api___Core___V1__SecretType;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type IotconsoleCreateSecretMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  secret: SecretIn;
+}>;
+
+export type IotconsoleCreateSecretMutation = {
+  core_createSecret?: { id: string };
+};
+
+export type IotconsoleGetSecretQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type IotconsoleGetSecretQuery = {
+  core_getSecret?: {
+    data?: any;
+    displayName: string;
+    environmentName: string;
+    immutable?: boolean;
+    markedForDeletion?: boolean;
+    projectName: string;
+    stringData?: any;
+    type?: K8s__Io___Api___Core___V1__SecretType;
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+  };
+};
+
+export type IotconsoleUpdateSecretMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  secret: SecretIn;
+}>;
+
+export type IotconsoleUpdateSecretMutation = {
+  core_updateSecret?: { id: string };
+};
+
+export type IotconsoleDeleteSecretMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  secretName: Scalars['String']['input'];
+}>;
+
+export type IotconsoleDeleteSecretMutation = { core_deleteSecret: boolean };
 
 export type IotconsoleListInvitationsForAccountQueryVariables = Exact<{
   accountName: Scalars['String']['input'];

@@ -3,7 +3,7 @@ import { Button } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { toast } from '~/components/molecule/toast';
-import { Copy, Check } from '~/console/components/icons';
+import { Copy, Check } from '~/iotconsole/components/icons';
 import { ListBody } from './console-list-components';
 
 interface IDeleteContainer {

@@ -9,6 +9,9 @@ import { iotDeploymentQueries } from './queries/iot-deployment-queries';
 import { iotAppQueries } from './queries/iot-app-queries';
 import { iotDeviceQueries } from './queries/iot-device-queries';
 import { iotRepoQueries } from './queries/iot-repo-queries';
+import { iotTagsQueries } from './queries/iot-tags-queries';
+import { iotConfigQueries } from './queries/iot-config-queries';
+import { iotSecretQueries } from './queries/iot-secret-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -21,6 +24,9 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...iotAppQueries(executor),
     ...iotDeviceQueries(executor),
     ...iotRepoQueries(executor),
+    ...iotTagsQueries(executor),
+    ...iotConfigQueries(executor),
+    ...iotSecretQueries(executor),
     ...accessQueries(executor),
   };
 };

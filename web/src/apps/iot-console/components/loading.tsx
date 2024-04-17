@@ -1,6 +1,10 @@
-import { CircleFill, CircleNotch, Spinner } from '@jengaicons/react';
 import { ReactNode } from 'react';
 import { cn } from '~/components/utils';
+import {
+  CircleFill,
+  CircleNotch,
+  Spinner,
+} from '~/iotconsole/components/icons';
 
 export const LoadingPlaceHolder = ({
   height = 100,

@@ -1,4 +1,3 @@
-import { Spinner } from '@jengaicons/react';
 import { SerializeFrom } from '@remix-run/node';
 import { useNavigate } from '@remix-run/react';
 import { motion } from 'framer-motion';
@@ -7,6 +6,7 @@ import { getCookie } from '~/root/lib/app-setup/cookies';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { FlatMapType, NN } from '~/root/lib/types/common';
 import { parseError, sleep } from '~/root/lib/utils/common';
+import { Spinner } from '~/iotconsole/components/icons';
 import Pulsable from './pulsable';
 
 interface SetCookieProps {

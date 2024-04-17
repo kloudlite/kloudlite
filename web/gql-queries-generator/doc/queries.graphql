@@ -4325,8 +4325,6 @@ query iotconsoleGetIotApp($projectName: String!, $deviceBlueprintName: String!, 
     markedForDeletion
     metadata {
       annotations
-      creationTimestamp
-      generation
       labels
       name
       namespace
@@ -4498,7 +4496,6 @@ query iotconsoleListIotApps($projectName: String!, $deviceBlueprintName: String!
         metadata {
           annotations
           creationTimestamp
-          generation
           labels
           name
           namespace
@@ -4798,6 +4795,216 @@ mutation iotconsoleCreateRepo($repository: RepositoryIn!) {
 
 mutation iotconsoleDeleteRepo($name: String!) {
   cr_deleteRepo(name: $name)
+}
+
+query iotconsoleListDigest($repoName: String!, $search: SearchRepos, $pagination: CursorPaginationIn) {
+  cr_listDigests(repoName: $repoName, search: $search, pagination: $pagination) {
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+    edges {
+      cursor
+      node {
+        url
+        updateTime
+        tags
+        size
+        repository
+        digest
+        creationTime
+      }
+    }
+  }
+}
+
+mutation iotconsoleDeleteDigest($repoName: String!, $digest: String!) {
+  cr_deleteDigest(repoName: $repoName, digest: $digest)
+}
+
+mutation iotconsoleUpdateConfig($projectName: String!, $envName: String!, $config: ConfigIn!) {
+  core_updateConfig(projectName: $projectName, envName: $envName, config: $config) {
+    id
+  }
+}
+
+mutation iotconsoleDeleteConfig($projectName: String!, $envName: String!, $configName: String!) {
+  core_deleteConfig(
+    projectName: $projectName
+    envName: $envName
+    configName: $configName
+  )
+}
+
+query iotconsoleGetConfig($projectName: String!, $envName: String!, $name: String!) {
+  core_getConfig(projectName: $projectName, envName: $envName, name: $name) {
+    binaryData
+    data
+    displayName
+    environmentName
+    immutable
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    projectName
+  }
+}
+
+query iotconsoleListConfigs($projectName: String!, $envName: String!, $search: SearchConfigs, $pq: CursorPaginationIn) {
+  core_listConfigs(
+    projectName: $projectName
+    envName: $envName
+    search: $search
+    pq: $pq
+  ) {
+    edges {
+      cursor
+      node {
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        data
+        environmentName
+        immutable
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        projectName
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleCreateConfig($projectName: String!, $envName: String!, $config: ConfigIn!) {
+  core_createConfig(projectName: $projectName, envName: $envName, config: $config) {
+    id
+  }
+}
+
+query iotconsoleListSecrets($projectName: String!, $envName: String!, $search: SearchSecrets, $pq: CursorPaginationIn) {
+  core_listSecrets(
+    projectName: $projectName
+    envName: $envName
+    search: $search
+    pq: $pq
+  ) {
+    edges {
+      cursor
+      node {
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        stringData
+        environmentName
+        isReadyOnly
+        immutable
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        projectName
+        type
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleCreateSecret($projectName: String!, $envName: String!, $secret: SecretIn!) {
+  core_createSecret(projectName: $projectName, envName: $envName, secret: $secret) {
+    id
+  }
+}
+
+query iotconsoleGetSecret($projectName: String!, $envName: String!, $name: String!) {
+  core_getSecret(projectName: $projectName, envName: $envName, name: $name) {
+    data
+    displayName
+    environmentName
+    immutable
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    projectName
+    stringData
+    type
+  }
+}
+
+mutation iotconsoleUpdateSecret($projectName: String!, $envName: String!, $secret: SecretIn!) {
+  core_updateSecret(projectName: $projectName, envName: $envName, secret: $secret) {
+    id
+  }
+}
+
+mutation iotconsoleDeleteSecret($projectName: String!, $envName: String!, $secretName: String!) {
+  core_deleteSecret(
+    projectName: $projectName
+    envName: $envName
+    secretName: $secretName
+  )
 }
 
 query iotconsoleListInvitationsForAccount($accountName: String!) {

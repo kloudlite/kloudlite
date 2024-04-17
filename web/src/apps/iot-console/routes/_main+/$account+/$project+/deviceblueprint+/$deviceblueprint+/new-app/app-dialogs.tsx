@@ -1,25 +1,24 @@
 /* eslint-disable no-nested-ternary */
-import { Spinner } from '@jengaicons/react';
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import Popup from '~/components/molecule/popup';
-import MultiStep, { useMultiStep } from '~/console/components/multi-step';
-import NoResultsFound from '~/console/components/no-results-found';
-import { IDialog } from '~/console/components/types.d';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IConfigs } from '~/console/server/gql/queries/config-queries';
-import { ISecrets } from '~/console/server/gql/queries/secret-queries';
+import MultiStep, { useMultiStep } from '~/iotconsole/components/multi-step';
+import NoResultsFound from '~/iotconsole/components/no-results-found';
+import { IDialog } from '~/iotconsole/components/types.d';
+import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
 import {
   ExtractNodeType,
   parseName,
   parseNodes,
-} from '~/console/server/r-utils/common';
+} from '~/iotconsole/server/r-utils/common';
 import useDebounce from '~/lib/client/hooks/use-debounce';
 import { handleError } from '~/lib/utils/common';
-import { ArrowLeft } from '~/console/components/icons';
-import ConfigResourcesV2 from '~/console/page-components/config-resource-v2';
-import SecretResourcesV2 from '~/console/page-components/secret-resource-v2';
+import { ArrowLeft, Spinner } from '~/iotconsole/components/icons';
+import ConfigResourcesV2 from '~/iotconsole/page-components/config-resource-v2';
+import SecretResourcesV2 from '~/iotconsole/page-components/secret-resource-v2';
+import { ISecrets } from '~/iotconsole/server/gql/queries/iot-secret-queries';
+import { IConfigs } from '~/iotconsole/server/gql/queries/iot-config-queries';
 import { IAppDialogValue } from './app-environment';
 import CSComponent, { ICSComponent } from './cs-item';
 
@@ -28,7 +27,7 @@ const AppDialog = ({
   setShow,
   onSubmit,
 }: IDialog<null, IAppDialogValue>) => {
-  const api = useConsoleApi();
+  const api = useIotConsoleApi();
   const {
     currentStep,
     onNext,

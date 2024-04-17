@@ -1,27 +1,13 @@
 /* eslint-disable guard-for-in */
-import { AWSlogoFill, ChevronRight, GoogleCloudlogo } from '@jengaicons/react';
+import {
+  AWSlogoFill,
+  ChevronRight,
+  GoogleCloudlogo,
+} from '~/iotconsole/components/icons';
 import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
 import { cn } from '~/components/utils';
 import yup from '~/root/lib/server/helpers/yup';
-import {
-  IMSvTemplate,
-  IMSvTemplates,
-} from '../server/gql/queries/managed-templates-queries';
 import { parseValue } from '../page-components/util';
-
-export const getManagedTemplate = ({
-  templates,
-  kind,
-  apiVersion,
-}: {
-  templates: IMSvTemplates;
-  kind: string;
-  apiVersion: string;
-}): IMSvTemplate | undefined => {
-  return templates
-    ?.flatMap((t) => t.items.flat())
-    .find((t) => t.kind === kind && t.apiVersion === apiVersion);
-};
 
 export const DIALOG_TYPE = Object.freeze({
   ADD: 'add',

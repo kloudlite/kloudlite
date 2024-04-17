@@ -1,9 +1,9 @@
-import { SmileySad } from '@jengaicons/react';
 import { Link, useSearchParams } from '@remix-run/react';
 import { ReactNode } from 'react';
 import { IButton } from '~/components/atoms/button';
 import { SubHeader } from '~/components/organisms/sub-header';
 import { cn } from '~/components/utils';
+import { SmileySad } from '~/iotconsole/components/icons';
 import { CustomPagination } from './custom-pagination';
 import { EmptyState } from './empty-state';
 import NoResultsFound, { INoResultsFound } from './no-results-found';

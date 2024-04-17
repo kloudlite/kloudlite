@@ -1,4 +1,4 @@
-import { PencilLine, Trash } from '@jengaicons/react';
+import { PencilLine, Trash } from '~/iotconsole/components/icons';
 import { Link, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { generateKey, titleCase } from '~/components/utils';

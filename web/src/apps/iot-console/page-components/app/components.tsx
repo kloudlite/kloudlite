@@ -105,11 +105,7 @@ const RepoSelectDialog = ({
 
   const api = useIotConsoleApi();
 
-  const {
-    data,
-    isLoading: repoLoading,
-    error: repoLoadingError,
-  } = useCustomSwr('/repos', async () => {
+  const { data, isLoading: repoLoading } = useCustomSwr('/repos', async () => {
     return api.listRepo({});
   });
 
@@ -122,11 +118,7 @@ const RepoSelectDialog = ({
     },
   }));
 
-  const {
-    data: digestData,
-    isLoading: digestLoading,
-    error: digestError,
-  } = useCustomSwr(
+  const { data: digestData, isLoading: digestLoading } = useCustomSwr(
     () => (repoName ? `/digests_${repoName}` : null),
     async () => {
       return api.listDigest({ repoName });

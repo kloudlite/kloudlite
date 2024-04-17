@@ -8,8 +8,7 @@ import {
   BuildIn,
 } from '~/root/src/generated/gql/server';
 import { mapper } from '~/components/utils';
-import { parseNodes } from '~/console/server/r-utils/common';
-import { IApp } from '../server/gql/queries/iot-app-queries';
+import { parseNodes } from '~/iotconsole/server/r-utils/common';
 
 const defaultApp: AppIn & { build?: BuildIn } = {
   metadata: {
@@ -26,28 +25,6 @@ const defaultApp: AppIn & { build?: BuildIn } = {
     ],
   },
   displayName: '',
-};
-
-const defaultBuild: BuildIn = {
-  name: '',
-  source: {
-    branch: '',
-    provider: 'github',
-    repository: '',
-  },
-  buildClusterName: '',
-  spec: {
-    registry: {
-      repo: {
-        name: '',
-        tags: [],
-      },
-    },
-    resource: {
-      cpu: 500,
-      memoryInMb: 1000,
-    },
-  },
 };
 
 export type ISetState<T = any> = (fn: ((val: T) => T) | T) => void;
@@ -68,24 +45,12 @@ interface IappState {
   envPage: createAppEnvPage;
   page: number;
   app: AppIn;
-  buildData?: BuildIn | null | undefined;
-  readOnlyApp: IApp;
-  existingBuildId: string | null;
 }
 
 export const useAppState = () => {
   const [state, setState] = useContext<ImmerHook<IappState>>(CreateAppContext);
 
-  const {
-    app,
-    page,
-    envPage,
-    activeContIndex,
-    completePages,
-    buildData,
-    readOnlyApp,
-    existingBuildId,
-  } = state;
+  const { app, page, envPage, activeContIndex, completePages } = state;
 
   const getContainer = (index: number = activeContIndex) => {
     if (!index) {
@@ -98,22 +63,6 @@ export const useAppState = () => {
         image: '',
       }
     );
-  };
-
-  const setExistingBuildID: ISetState<string | null> = (fn) => {
-    if (typeof fn === 'function') {
-      setState((s) => ({ ...s, existingBuildId: fn(s.existingBuildId) }));
-    } else {
-      setState((s) => ({ ...s, existingBuildId: fn }));
-    }
-  };
-
-  const setReadOnlyApp: ISetState<IApp> = (fn) => {
-    if (typeof fn === 'function') {
-      setState((s) => ({ ...s, readOnlyApp: fn(s.readOnlyApp) }));
-    } else {
-      setState((s) => ({ ...s, readOnlyApp: fn }));
-    }
   };
 
   const setApp: ISetState<typeof app> = (fn) => {
@@ -152,15 +101,6 @@ export const useAppState = () => {
       };
       return app;
     });
-  };
-
-  const setBuildData: ISetState<BuildIn> | null = (fn) => {
-    if (typeof fn === 'function') {
-      // @ts-ignore
-      setState((s) => ({ ...s, buildData: fn(s.buildData) }));
-    } else {
-      setState((s) => ({ ...s, buildData: fn }));
-    }
   };
 
   const setPage: ISetState<number> = (fn) => {
@@ -254,14 +194,7 @@ export const useAppState = () => {
       completePages: {},
       envPage: 'environment_variables',
       activeContIndex: 0,
-      buildData: defaultBuild,
-      readOnlyApp: iApp as IApp,
-      existingBuildId: null,
     });
-  };
-
-  const resetBuildData = () => {
-    setBuildData(defaultBuild);
   };
 
   type IparseNodes = {
@@ -313,13 +246,6 @@ export const useAppState = () => {
     getRepoMapper,
     getRepoName,
     getImageTag,
-    setBuildData,
-    buildData,
-    resetBuildData,
-    readOnlyApp,
-    setReadOnlyApp,
-    existingBuildId,
-    setExistingBuildID,
   };
 };
 
@@ -331,26 +257,21 @@ export const clearAppState = () => {
 export const AppContextProvider = ({
   children,
   initialAppState,
-}: ChildrenProps & { initialAppState?: AppIn & { build?: BuildIn } }) => {
+}: ChildrenProps & { initialAppState?: AppIn }) => {
   const loadSession = () => {
     if (typeof window === 'undefined')
       return {
         app: defaultApp,
-        readOnlyApp: defaultApp,
-        buildData: defaultApp?.build,
       };
     if (initialAppState) {
       return {
         app: initialAppState,
-        readOnlyApp: initialAppState,
-        buildData: initialAppState?.build,
       };
     }
     const stateString =
       sessionStorage.getItem('state') ||
       JSON.stringify({
         app: defaultApp,
-        readOnlyApp: defaultApp,
       });
 
     try {

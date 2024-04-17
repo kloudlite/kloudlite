@@ -3,10 +3,10 @@ import { Button, IconButton } from '~/components/atoms/button';
 import { NumberInput } from '~/components/atoms/input';
 import { usePagination } from '~/components/molecule/pagination';
 import { cn } from '~/components/utils';
-import List from '~/console/components/list';
-import NoResultsFound from '~/console/components/no-results-found';
-import { useAppState } from '~/console/page-components/app-states';
-import { BottomNavigation, InfoLabel } from '~/console/components/commons';
+import List from '~/iotconsole/components/list';
+import NoResultsFound from '~/iotconsole/components/no-results-found';
+import { useAppState } from '~/iotconsole/page-components/app-states';
+import { BottomNavigation, InfoLabel } from '~/iotconsole/components/commons';
 import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
 import {
   ArrowRight,
@@ -14,8 +14,8 @@ import {
   ChevronRight,
   SmileySad,
   X,
-} from '~/console/components/icons';
-import { FadeIn, parseValue } from '~/console/page-components/util';
+} from '~/iotconsole/components/icons';
+import { FadeIn, parseValue } from '~/iotconsole/page-components/util';
 
 interface IExposedPorts {
   targetPort?: number;

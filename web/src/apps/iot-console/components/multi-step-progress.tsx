@@ -1,6 +1,6 @@
-import { Check } from '@jengaicons/react';
 import React, { Children, ReactElement, ReactNode, useState } from 'react';
 import { cn } from '~/components/utils';
+import { Check } from '~/iotconsole/components/icons';
 
 interface IUseMultiStepProgress {
   defaultStep: number;

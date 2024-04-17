@@ -1,5 +1,5 @@
-import { Smiley } from '@jengaicons/react';
-import { EmptyState } from '~/console/components/empty-state';
+import { EmptyState } from '~/iotconsole/components/empty-state';
+import { Smiley } from '~/iotconsole/components/icons';
 
 const Wip = () => {
   return (

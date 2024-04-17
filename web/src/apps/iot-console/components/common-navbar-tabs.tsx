@@ -1,4 +1,3 @@
-import { ChevronLeft } from '@jengaicons/react';
 import { Link } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ReactNode, useContext, useState } from 'react';
@@ -7,6 +6,7 @@ import Tabs from '~/components/atoms/tabs';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { TopBarContext } from '~/components/organisms/top-bar';
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
+import { ChevronLeft } from '~/iotconsole/components/icons';
 
 interface CommonTabsProps {
   tabs?: {

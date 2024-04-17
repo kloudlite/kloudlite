@@ -1,7 +1,11 @@
-import { ChevronLeft, ChevronRight, SmileySad } from '@jengaicons/react';
 import { ReactNode } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
+import {
+  ChevronLeft,
+  ChevronRight,
+  SmileySad,
+} from '~/iotconsole/components/icons';
 import NoResultsFound from './no-results-found';
 
 interface IHeader {

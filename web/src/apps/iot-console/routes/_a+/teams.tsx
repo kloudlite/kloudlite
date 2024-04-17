@@ -9,17 +9,17 @@ import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { IAccounts } from '~/console/server/gql/queries/account-queries';
-import { IInvites } from '~/console/server/gql/queries/access-queries';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import DynamicPagination from '~/console/components/dynamic-pagination';
-import List from '~/console/components/list';
-import { parseName } from '~/console/server/r-utils/common';
-import ConsoleAvatar from '~/console/components/console-avatar';
-import { ArrowRight, Users } from '~/console/components/icons';
-import SplitWrapper from '~/console/components/split-wrapper';
-import FillerTeam from '~/console/assets/filler-team';
+import { GQLServerHandler } from '~/iotconsole/server/gql/saved-queries';
+import { IAccounts } from '~/iotconsole/server/gql/queries/account-queries';
+import { IInvites } from '~/iotconsole/server/gql/queries/access-queries';
+import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
+import DynamicPagination from '~/iotconsole/components/dynamic-pagination';
+import List from '~/iotconsole/components/list';
+import { parseName } from '~/iotconsole/server/r-utils/common';
+import ConsoleAvatar from '~/iotconsole/components/console-avatar';
+import { ArrowRight, Users } from '~/iotconsole/components/icons';
+import SplitWrapper from '~/iotconsole/components/split-wrapper';
+import FillerTeam from '~/iotconsole/assets/filler-team';
 import { useExtLoaderData } from '~/root/lib/client/hooks/use-custom-loader-data';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -105,7 +105,7 @@ const Accounts = () => {
     setItems(formatData());
   }, [accounts, invites]);
 
-  const api = useConsoleApi();
+  const api = useIotConsoleApi();
   const navigate = useNavigate();
   const reload = useReload();
 

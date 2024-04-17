@@ -1,6 +1,6 @@
-import { useAppState } from '~/console/page-components/app-states';
-import { parseValue } from '~/console/page-components/util';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { useAppState } from '~/iotconsole/page-components/app-states';
+import { parseValue } from '~/iotconsole/page-components/util';
+import { keyconstants } from '~/iotconsole/server/r-utils/key-constants';
 import { AppIn } from '~/root/src/generated/gql/server';
 
 export const appInitialFormValues = ({

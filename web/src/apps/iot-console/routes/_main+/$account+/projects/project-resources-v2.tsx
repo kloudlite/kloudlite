@@ -1,4 +1,4 @@
-import { GearSix } from '@jengaicons/react';
+import { GearSix } from '~/iotconsole/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/iotconsole/components/console-avatar';
@@ -14,7 +14,7 @@ import {
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
-} from '~/console/server/r-utils/common';
+} from '~/iotconsole/server/r-utils/common';
 import { useWatchReload } from '~/root/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/iotconsole/components/listV2';
 import { IProjects } from '~/iotconsole/server/gql/queries/iot-project-queries';
@@ -110,16 +110,6 @@ const ListView = ({ items }: { items: BaseType[] }) => {
             name: 'name',
             className: 'w-[180px] flex-1',
           },
-          // {
-          //   render: () => 'Status',
-          //   name: 'status',
-          //   className: 'flex-1 min-w-[30px] flex items-center justify-center',
-          // },
-          // {
-          //   render: () => 'Cluster',
-          //   name: 'cluster',
-          //   className: 'w-[180px]',
-          // },
           {
             render: () => 'Updated',
             name: 'updated',
@@ -145,10 +135,6 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   />
                 ),
               },
-              // status: {
-              //   render: () => <SyncStatusV2 item={i} />,
-              // },
-              // cluster: { render: () => <ListItem data={i.clusterName} /> },
               updated: {
                 render: () => (
                   <ListItem

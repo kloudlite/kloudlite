@@ -2,7 +2,7 @@ import React, { ReactNode, useState } from 'react';
 import * as Select from '@radix-ui/react-select';
 import { cn } from '~/components/utils';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, ChevronUp } from '@jengaicons/react';
+import { ChevronDown, ChevronUp } from '~/iotconsole/components/icons';
 
 interface ISelectItem {
   children: ReactNode;

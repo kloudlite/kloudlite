@@ -1,11 +1,11 @@
-import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import ExtendedFilledTab from '~/iotconsole/components/extended-filled-tab';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   createAppEnvPage,
   useAppState,
-} from '~/console/page-components/app-states';
-import { BottomNavigation } from '~/console/components/commons';
-import { FadeIn } from '../../../../../../../page-components/util';
+} from '~/iotconsole/page-components/app-states';
+import { BottomNavigation } from '~/iotconsole/components/commons';
+import { FadeIn } from '~/iotconsole/page-components/util';
 import { EnvironmentVariables } from './app-environment-variables';
 import { ConfigMounts } from './app-config-mount';
 
