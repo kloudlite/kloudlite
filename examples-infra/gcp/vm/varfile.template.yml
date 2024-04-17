@@ -1,0 +1,22 @@
+gcp_project_id: $GCP_PROJECT_ID
+gcp_region: $GCP_REGION
+gcp_credentials_json: $GCP_CREDENTIALS_JSON
+
+name_prefix: "test"
+vm_name: "example-vm"
+provision_mode: "SPOT"
+availability_zone: "asia-south1-a"
+network: default
+service_account: 
+  enabled: false
+machine_type: "e2-custom-medium-2048"
+bootvolume_type: pd-ssd
+bootvolume_size: 10
+labels:
+  built-for: example-testing
+allow_incoming_http_traffic: false
+allow_ssh: true
+machine_state: on
+startup_script: |+
+  sudo mkdir -p /var/nxtcoder17
+  echo "hi from nxtcoder17" > /var/nxtcoder17/README

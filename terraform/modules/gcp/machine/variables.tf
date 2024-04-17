@@ -8,10 +8,10 @@ variable "availability_zone" {
   description = "Availability Zone"
 }
 
-variable "ssh_key" {
-  type        = string
-  description = "ssh keys"
-}
+# variable "ssh_key" {
+#   type        = string
+#   description = "ssh keys"
+# }
 
 variable "provision_mode" {
   type = string
@@ -42,9 +42,28 @@ variable "service_account" {
   }
 }
 
+variable "machine_state" {
+  type        = string
+  description = "state of machine, whether on or off"
+  default     = "on"
+  validation {
+    error_message = "machine_state must be on or off"
+    condition = anytrue([
+      var.machine_state == "on",
+      var.machine_state == "off",
+    ])
+  }
+}
+
 variable "startup_script" {
   type        = string
   description = "startup script"
+}
+
+variable "ssh_key" {
+  type        = string
+  description = "additional ssh keys to attach with VM"
+  default     = ""
 }
 
 variable "bootvolume_type" {

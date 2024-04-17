@@ -51,14 +51,12 @@ resource "google_compute_instance" "standard" {
   labels = var.labels
 
   metadata_startup_script = var.startup_script
-  #  metadata_startup_script = <<EMSS
-  #  ${var.startup_script}
-  #  EMSS
 
   metadata = {
     block-project-ssh-keys = "TRUE"
     enable-oslogin         = "TRUE"
     "ssh-keys"             = "ubuntu:${var.ssh_key}"
+    # join("\n", [for user, key in var.ssh_keys : "${user}:${key}"])
   }
 
   network_interface {
@@ -79,6 +77,7 @@ resource "google_compute_instance" "standard" {
     }
   }
 
+  allow_stopping_for_update = true
   shielded_instance_config {
     enable_secure_boot = true
   }
@@ -99,6 +98,8 @@ resource "google_compute_instance" "standard" {
       scopes = service_account.value.scopes
     }
   }
+
+  desired_status = var.machine_state == "on" ? "RUNNING" : "TERMINATED"
 }
 
 resource "google_compute_instance" "spot" {
@@ -112,10 +113,7 @@ resource "google_compute_instance" "spot" {
 
   labels = var.labels
 
-  metadata_startup_script = <<EOMSS
-  mkdir -p /tmp/preemption # needed for preemption handlers to work
-  ${var.startup_script}
-  EOMSS
+  metadata_startup_script = var.startup_script
 
   metadata = {
     block-project-ssh-keys = "TRUE"
@@ -126,6 +124,12 @@ resource "google_compute_instance" "spot" {
   boot_disk {
     auto_delete = var.bootvolume_autodelete
     source      = google_compute_disk.boot_disk.name
+  }
+
+  lifecycle {
+    ignore_changes = [
+      machine_type,
+    ]
   }
 
   network_interface {
@@ -152,4 +156,6 @@ resource "google_compute_instance" "spot" {
       scopes = service_account.value.scopes
     }
   }
+
+  desired_status = var.machine_state == "on" ? "RUNNING" : "TERMINATED"
 }

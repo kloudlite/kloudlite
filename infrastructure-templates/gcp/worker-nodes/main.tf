@@ -26,5 +26,6 @@ module "worker-nodes-on-gcp" {
   provision_mode              = var.provision_mode
   service_account             = var.service_account
   labels                      = var.labels
+  machine_state               = var.machine_state
 }
 
