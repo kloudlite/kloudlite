@@ -1,4 +1,4 @@
-package cluster_connection
+package globalvpn
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	appCommon "github.com/kloudlite/operator/operators/wireguard/apps/multi-cluster/apps/common"
 	"github.com/kloudlite/operator/operators/wireguard/apps/multi-cluster/apps/server"
 	"github.com/kloudlite/operator/operators/wireguard/apps/multi-cluster/mpkg/wg"
-	"github.com/kloudlite/operator/operators/wireguard/internal/controllers/cluster-connection/templates"
+	"github.com/kloudlite/operator/operators/wireguard/internal/controllers/global-vpn/templates"
 	"github.com/kloudlite/operator/operators/wireguard/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -46,7 +46,7 @@ TODO: yet to decide on the following:
 */
 
 const (
-	ResourceNamespace = "kl-cluster-connection"
+	ResourceNamespace = "kl-global-vpn"
 )
 
 type Reconciler struct {
@@ -89,7 +89,7 @@ var (
 // +kubebuilder:rbac:groups=wireguard.kloudlite.io,resources=connections/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &wgv1.ClusterConnection{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &wgv1.GlobalVpn{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -146,7 +146,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) ensureNs(req *rApi.Request[*wgv1.ClusterConnection]) stepResult.Result {
+func (r *Reconciler) ensureNs(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.Result {
 	ctx, _ := req.Context(), req.Object
 	check := rApi.NewRunningCheck(NSReady, req)
 
@@ -160,135 +160,11 @@ func (r *Reconciler) ensureNs(req *rApi.Request[*wgv1.ClusterConnection]) stepRe
 	return check.Completed()
 }
 
-func (r *Reconciler) patchDefaults(req *rApi.Request[*wgv1.ClusterConnection]) stepResult.Result {
+func (r *Reconciler) patchDefaults(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(SpecReady, req)
 
 	updated := false
-
-	if obj.Spec.Id == 0 || obj.Spec.Id > 499 {
-		return check.Failed(fmt.Errorf("id should be between 1 and 499"))
-	}
-
-	if obj.Spec.DnsServer == nil {
-		s, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
-		if err != nil {
-			return check.Failed(err)
-		}
-
-		obj.Spec.DnsServer = fn.New(s.Spec.ClusterIP)
-		updated = true
-	}
-
-	ip, err := wg.GetRemoteDeviceIp(int64(obj.Spec.Id), r.Env.WgIpBase)
-	if err != nil {
-		return check.Failed(err)
-	}
-
-	if obj.Spec.IpAddress == nil || *obj.Spec.IpAddress != string(ip) {
-		obj.Spec.IpAddress = fn.New(string(ip))
-		updated = true
-	}
-
-	secName := fmt.Sprintf("%s-gateway-configs", obj.Name)
-
-	createSec := func() (*string, *string, error) {
-		publ, priv, err := wg.GenerateWgKeys()
-		if err != nil {
-			return nil, nil, err
-		}
-
-		se := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: secName, Namespace: ResourceNamespace}}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, se, func() error {
-			se.Data = map[string][]byte{
-				"private-key": priv,
-			}
-			return nil
-		}); err != nil {
-			return nil, nil, err
-		}
-
-		return fn.New(string(publ)), fn.New(string(priv)), nil
-	}
-
-	if err := func() error {
-		sec, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, secName), &corev1.Secret{})
-		if err != nil {
-			if apiErrors.IsNotFound(err) {
-				return nil
-			}
-
-			pub, _, err := createSec()
-			if err != nil {
-				return err
-			}
-
-			obj.Spec.PublicKey = pub
-			updated = true
-
-			return nil
-		}
-
-		pvKey, ok := sec.Data["private-key"]
-
-		if !ok {
-
-			pub, _, err := createSec()
-			if err != nil {
-				return err
-			}
-
-			obj.Spec.PublicKey = pub
-			updated = true
-
-			return nil
-		}
-
-		b, err := wg.GeneratePublicKey(string(pvKey))
-		if obj.Spec.PublicKey == nil || string(b) != *obj.Spec.PublicKey {
-			obj.Spec.PublicKey = fn.New(string(b))
-			updated = true
-			return nil
-		}
-
-		return nil
-	}(); err != nil {
-		return check.Failed(err)
-	}
-
-	if obj.Spec.PublicKey == nil {
-		s, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, secName), &corev1.Secret{})
-		if err != nil {
-			return check.Failed(err)
-		}
-
-		pvKey, ok := s.Data["private-key"]
-		if !ok {
-			return check.Failed(fmt.Errorf("private key not found"))
-		}
-
-		b, err := wg.GeneratePublicKey(string(pvKey))
-		if err != nil {
-			return check.Failed(err)
-		}
-
-		obj.Spec.PublicKey = fn.New(string(b))
-
-		updated = true
-	}
-
-	if obj.Spec.Interface == nil {
-		obj.Spec.Interface = fn.New(fmt.Sprintf("kl-%d", obj.Spec.Id))
-		updated = true
-	}
-
-	if obj.Spec.Nodeport == nil {
-		if s, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, fmt.Sprintf("%s-gateway-external", obj.Name)), &corev1.Service{}); err == nil {
-			obj.Spec.Nodeport = fn.New(int(s.Spec.Ports[0].NodePort))
-			updated = true
-		}
-	}
-
 	if obj.Spec.GatewayResources == nil {
 		obj.Spec.GatewayResources = &corev1.ResourceRequirements{
 			Limits: corev1.ResourceList{
@@ -325,12 +201,216 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*wgv1.ClusterConnection]) s
 		return check.StillRunning(fmt.Errorf("waiting for spec data to be updated"))
 	}
 
+	secUpdated := false
+
+	secName := fmt.Sprintf("%s-gateway-configs", obj.Name)
+
+	createSec := func() error {
+		publ, priv, err := wg.GenerateWgKeys()
+		if err != nil {
+			return err
+		}
+
+		ip, err := wg.GetRemoteDeviceIp(int64(1), r.Env.WgIpBase)
+		if err != nil {
+			return err
+		}
+
+		s, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
+		if err != nil {
+			return err
+		}
+
+		se := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: secName, Namespace: ResourceNamespace}}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, se, func() error {
+			se.Data = map[string][]byte{
+				"private-key": priv,
+				"public-key":  publ,
+				"id":          []byte("1"),
+				"ip":          []byte(string(ip)),
+				"dns-server":  []byte(s.Spec.ClusterIP),
+				"port":        []byte("51830"),
+				"interface":   []byte(fmt.Sprintf("kl%d", 1)),
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	var mSec = &corev1.Secret{}
+
+	if err := func() error {
+		sec, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, secName), &corev1.Secret{})
+		if err != nil {
+			if apiErrors.IsNotFound(err) {
+				return nil
+			}
+
+			err := createSec()
+			if err != nil {
+				return err
+			}
+
+			secUpdated = true
+
+			return nil
+		}
+
+		mSec = sec
+
+		return nil
+	}(); err != nil {
+		return check.Failed(err)
+	}
+
+	if err := func() error {
+		s, err := parseVpnSec(mSec)
+		if err != nil {
+			return err
+		}
+
+		if s.PrivateKey == "" {
+			publ, priv, err := wg.GenerateWgKeys()
+			if err != nil {
+				return err
+			}
+
+			mSec.Data["private-key"] = priv
+			mSec.Data["public-key"] = publ
+			secUpdated = true
+		}
+
+		if s.PublicKey == "" {
+			publ, _, err := wg.GenerateWgKeys()
+			if err != nil {
+				return err
+			}
+
+			mSec.Data["public-key"] = publ
+			secUpdated = true
+		}
+
+		if s.Id == 0 {
+			s.Id = 1
+			mSec.Data["id"] = []byte("1")
+			secUpdated = true
+		}
+
+		if s.Port == 0 {
+			s.Port = 51830
+			mSec.Data["port"] = []byte("51830")
+			secUpdated = true
+		}
+
+		if s.IpAddr == "" {
+			b, err := wg.GetRemoteDeviceIp(int64(s.Id), r.Env.WgIpBase)
+			if err != nil {
+				return err
+			}
+
+			mSec.Data["ip-addr"] = []byte(b)
+			secUpdated = true
+		}
+
+		if s.Interface == "" {
+			mSec.Data["interface"] = []byte(fmt.Sprintf("kl%d", s.Id))
+			secUpdated = true
+		}
+
+		if s.DnsServer == "" {
+			svc, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
+			if err != nil {
+				return err
+			}
+
+			mSec.Data["dns-server"] = []byte(svc.Spec.ClusterIP)
+			secUpdated = true
+		}
+
+		return nil
+	}(); err != nil {
+		return check.Failed(err)
+	}
+
+	if secUpdated {
+
+		if err := r.Client.Update(ctx, mSec); err != nil {
+			return check.Failed(err)
+		}
+
+		return check.StillRunning(fmt.Errorf("waiting for secret data to be updated"))
+	}
+
+	if err := func() error {
+
+		s, err := parseVpnSec(mSec)
+		if err != nil {
+			return err
+		}
+
+		matched := false
+		for i, p := range obj.Spec.Peers {
+			if p.PublicKey == s.PublicKey {
+				matched = true
+
+				changed := false
+
+				if p.Id != s.Id {
+					obj.Spec.Peers[i].Id = s.Id
+					changed = true
+				}
+
+				if p.Port != s.Port {
+					obj.Spec.Peers[i].Port = s.Port
+					changed = true
+				}
+
+				if p.PublicKey != s.PublicKey {
+					obj.Spec.Peers[i].PublicKey = s.PublicKey
+					changed = true
+				}
+
+				if changed {
+					if err := r.Client.Update(ctx, obj); err != nil {
+						return err
+					}
+				}
+
+				break
+			}
+		}
+
+		if !matched {
+			obj.Spec.Peers = append(obj.Spec.Peers, wgv1.Peer{
+				PublicKey: s.PublicKey,
+				Id:        s.Id,
+				Port:      s.Port,
+			})
+
+			if err := r.Client.Update(ctx, obj); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}(); err != nil {
+		return check.Failed(err)
+	}
+
 	return check.Completed()
 }
 
-func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) stepResult.Result {
+func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(GWReady, req)
+
+	msec, err := r.getVpnSec(ctx, obj)
+	if err != nil {
+		return check.Failed(err)
+	}
 
 	var peers []appCommon.Peer
 	for i, peer := range obj.Spec.Peers {
@@ -338,7 +418,7 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) st
 			return check.Failed(fmt.Errorf("peer [%d]: id should be between 1 and 499", i)).Err(nil)
 		}
 
-		if peer.Id == obj.Spec.Id {
+		if peer.PublicKey == msec.PublicKey {
 			continue
 		}
 
@@ -373,7 +453,7 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) st
 
 	sec := server.Config{
 		PrivateKey: string(pvKey),
-		IpAddress:  fmt.Sprintf("%s/32", *obj.Spec.IpAddress),
+		IpAddress:  fmt.Sprintf("%s/32", msec.IpAddr),
 		Peers:      peers,
 	}
 
@@ -394,14 +474,8 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) st
 		"resources":    *obj.Spec.GatewayResources,
 		"serverConfig": string(secBytes),
 		"ownerRefs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		"interface":    *obj.Spec.Interface,
-		"nodeport": func() int32 {
-			if obj.Spec.Nodeport == nil {
-				return 0
-			}
-
-			return int32(*obj.Spec.Nodeport)
-		}(),
+		"interface":    msec.Interface,
+		"nodeport":     msec.Port,
 	})
 	if err != nil {
 		return check.Failed(err).Err(nil)
@@ -414,8 +488,8 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) st
 	s, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, fmt.Sprintf("%s-gateway-configs", obj.Name)), &corev1.Secret{})
 	if err == nil && !slices.Equal(secBytes, s.Data["server-config"]) {
 		if err := fn.RolloutRestart(r.Client, fn.Deployment, ResourceNamespace, map[string]string{
-			constants.WGConnectionNameKey:                 fmt.Sprintf("%s-gateway", obj.Name),
-			"kloudlite.io/wg-cluster-connection.resource": "gateway",
+			constants.WGConnectionNameKey:         fmt.Sprintf("%s-gateway", obj.Name),
+			"kloudlite.io/wg-global-vpn.resource": "gateway",
 		}); err != nil {
 			return check.Failed(err)
 		}
@@ -423,15 +497,20 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.ClusterConnection]) st
 	return check.Completed()
 }
 
-func (r *Reconciler) reconAgent(req *rApi.Request[*wgv1.ClusterConnection]) stepResult.Result {
+func (r *Reconciler) reconAgent(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(AgtReady, req)
+
+	mSec, err := r.getVpnSec(ctx, obj)
+	if err != nil {
+		return check.Failed(err)
+	}
 
 	agent, err := templates.ParseTemplate(templates.Agent, map[string]interface{}{
 		"gatewayName":  fmt.Sprintf("%s-gateway", obj.Name),
 		"name":         fmt.Sprintf("%s-agent", obj.Name),
 		"namespace":    ResourceNamespace,
-		"corednsSvcIp": *obj.Spec.DnsServer,
+		"corednsSvcIp": mSec.DnsServer,
 		"resources":    *obj.Spec.AgentsResources,
 		"image": func() string {
 			if r.Env.WgAgentImage == "" {
@@ -439,7 +518,7 @@ func (r *Reconciler) reconAgent(req *rApi.Request[*wgv1.ClusterConnection]) step
 			}
 			return r.Env.WgAgentImage
 		}(),
-		"interface": *obj.Spec.Interface,
+		"interface": mSec.Interface,
 		"ownerRefs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 	})
 	if err != nil {
@@ -453,7 +532,7 @@ func (r *Reconciler) reconAgent(req *rApi.Request[*wgv1.ClusterConnection]) step
 	return check.Completed()
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*wgv1.ClusterConnection]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.Result {
 	// INFO: currently all resources will consist owner reference, so will be deleted automatically
 
 	return req.Finalize()
@@ -465,7 +544,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&wgv1.ClusterConnection{})
+	builder := ctrl.NewControllerManagedBy(mgr).For(&wgv1.GlobalVpn{})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 
 	watchList := []client.Object{

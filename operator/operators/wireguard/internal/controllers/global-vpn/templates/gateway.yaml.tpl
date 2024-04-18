@@ -12,8 +12,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels: &labels
-    kloudlite.io/wg-cluster-connection.name: {{ $name }}
-    kloudlite.io/wg-cluster-connection.resource: "gateway"
+    kloudlite.io/wg-global-vpn.name: {{ $name }}
+    kloudlite.io/wg-global-vpn.resource: "gateway"
   ownerReferences: {{ $ownerRefs | toJson }}
   name: {{ $name }}
   namespace: {{ $namespace }}
@@ -97,7 +97,6 @@ spec:
           name: gateway-dns-config
           readOnly: true
       dnsPolicy: Default
-      {{- /* priorityClassName: system-cluster-critical */}}
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
@@ -145,8 +144,8 @@ metadata:
   namespace: {{ $namespace }}
   ownerReferences: {{ $ownerRefs | toJson }}
   labels:
-    kloudlite.io/wg-cluster-connection.name: {{ $name }}
-    kloudlite.io/wg-cluster-connection.resource: "gateway"
+    kloudlite.io/wg-global-vpn.name: {{ $name }}
+    kloudlite.io/wg-global-vpn.resource: "gateway"
 type: Opaque
 ---
 
@@ -154,8 +153,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels: &labels
-    kloudlite.io/wg-cluster-connection.name: {{ $name }}
-    kloudlite.io/wg-cluster-connection.resource: "gateway"
+    kloudlite.io/wg-global-vpn.name: {{ $name }}
+    kloudlite.io/wg-global-vpn.resource: "gateway"
   ownerReferences: {{ $ownerRefs | toJson }}
   name: {{ $name }}
   namespace: {{ $namespace }}
@@ -170,8 +169,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels: &labels
-    kloudlite.io/wg-cluster-connection.name: {{ $name }}
-    kloudlite.io/wg-cluster-connection.resource: "gateway"
+    kloudlite.io/wg-global-vpn.name: {{ $name }}
+    kloudlite.io/wg-global-vpn.resource: "gateway"
   ownerReferences: {{ $ownerRefs | toJson }}
   name: {{ $name }}-external
   namespace: {{ $namespace }}

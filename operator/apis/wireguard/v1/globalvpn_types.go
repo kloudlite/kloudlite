@@ -11,20 +11,21 @@ type Peer struct {
 	PublicKey string `json:"publicKey"`
 	Endpoint  string `json:"endpoint"`
 	Id        int    `json:"id"`
+	Port      int    `json:"port"`
 
 	AllowedIPs []string `json:"allowedIPs,omitempty"`
 }
 
 // ConnectionSpec defines the desired state of Connect
-type ConnectionSpec struct {
-	Id int `json:"id"`
-
-	// PrivateKey *string `json:"privateKey,omitempty"`
-	Interface *string `json:"interface,omitempty"`
-	Nodeport  *int    `json:"nodeport,omitempty"`
-	IpAddress *string `json:"ipAddress,omitempty"`
-	DnsServer *string `json:"dnsServer,omitempty"`
-	PublicKey *string `json:"publicKey,omitempty"`
+type GlobVpnSpec struct {
+	// Id int `json:"id"`
+	//
+	// // PrivateKey *string `json:"privateKey,omitempty"`
+	// Interface *string `json:"interface,omitempty"`
+	// Nodeport  *int    `json:"nodeport,omitempty"`
+	// IpAddress *string `json:"ipAddress,omitempty"`
+	// DnsServer *string `json:"dnsServer,omitempty"`
+	// PublicKey *string `json:"publicKey,omitempty"`
 
 	Peers []Peer `json:"peers,omitempty"`
 
@@ -40,32 +41,32 @@ type ConnectionSpec struct {
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
-// ClusterConnection is the Schema for the connects API
-type ClusterConnection struct {
+// GlobalVpn is the Schema for the connects API
+type GlobalVpn struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ConnectionSpec `json:"spec,omitempty"`
-	Status rApi.Status    `json:"status,omitempty" graphql:"noinput"`
+	Spec   GlobVpnSpec `json:"spec,omitempty"`
+	Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
-func (d *ClusterConnection) EnsureGVK() {
+func (d *GlobalVpn) EnsureGVK() {
 	if d != nil {
 		d.SetGroupVersionKind(GroupVersion.WithKind("Connection"))
 	}
 }
 
-func (d *ClusterConnection) GetStatus() *rApi.Status {
+func (d *GlobalVpn) GetStatus() *rApi.Status {
 	return &d.Status
 }
 
-func (d *ClusterConnection) GetEnsuredLabels() map[string]string {
+func (d *GlobalVpn) GetEnsuredLabels() map[string]string {
 	return map[string]string{
 		constants.WGDeviceNameKey: d.Name,
 	}
 }
 
-func (d *ClusterConnection) GetEnsuredAnnotations() map[string]string {
+func (d *GlobalVpn) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.GVKKey: GroupVersion.WithKind("Connection").String(),
 	}
@@ -73,13 +74,13 @@ func (d *ClusterConnection) GetEnsuredAnnotations() map[string]string {
 
 //+kubebuilder:object:root=true
 
-// ClusterConnectionList contains a list of Connect
-type ClusterConnectionList struct {
+// GlobalVpnList contains a list of Connect
+type GlobalVpnList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ClusterConnection `json:"items"`
+	Items           []GlobalVpn `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&ClusterConnection{}, &ClusterConnectionList{})
+	SchemeBuilder.Register(&GlobalVpn{}, &GlobalVpnList{})
 }

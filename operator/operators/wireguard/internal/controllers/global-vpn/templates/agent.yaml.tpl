@@ -14,8 +14,8 @@ metadata:
   namespace: {{ $namespace }}
   ownerReferences: {{ $ownerRefs | toJson }}
   labels: &labels
-    kloudlite.io/wg-cluster-connection.name: {{ $name }}
-    kloudlite.io/wg-cluster-connection.resource: "agent"
+    kloudlite.io/wg-global-vpn.name: {{ $name }}
+    kloudlite.io/wg-global-vpn.resource: "agent"
 spec:
   revisionHistoryLimit: 10
   selector:
