@@ -16,7 +16,7 @@ import {
   Database,
   GearSix,
   HouseLine,
-} from '@jengaicons/react';
+} from '~/console/components/icons';
 import {
   ICluster,
   IClusters,

@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import { CopySimple } from '@jengaicons/react';
+import { CopySimple } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData, useNavigate, useOutletContext } from '@remix-run/react';
 import { ReactNode, useEffect, useState } from 'react';

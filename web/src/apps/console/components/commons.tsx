@@ -1,4 +1,3 @@
-import { CopySimple, Question, Check } from '@jengaicons/react';
 import { ReactNode, useState } from 'react';
 import { ProdLogo } from '~/components/branding/prod-logo';
 import { WorkspacesLogo } from '~/components/branding/workspace-logo';
@@ -11,11 +10,6 @@ import {
 import Tooltip from '~/components/atoms/tooltip';
 import { Link } from '@remix-run/react';
 import { Button, IButton } from '~/components/atoms/button';
-import { ListItem } from './console-list-components';
-import {
-  parseUpdateOrCreatedBy,
-  parseUpdateOrCreatedOn,
-} from '../server/r-utils/common';
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,7 +17,15 @@ import {
   GitBranchFill,
   GitlabLogoFill,
   GithubLogoFill,
-} from './icons';
+  CopySimple,
+  Question,
+  Check,
+} from '~/console/components/icons';
+import { ListItem } from './console-list-components';
+import {
+  parseUpdateOrCreatedBy,
+  parseUpdateOrCreatedOn,
+} from '../server/r-utils/common';
 import { IGIT_PROVIDERS } from '../hooks/use-git';
 
 export const BlackProdLogo = ({ size = 16 }) => {

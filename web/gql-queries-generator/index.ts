@@ -1,4 +1,5 @@
 import { GQLServerHandler as consoleHandler } from '~/console/server/gql/saved-queries';
+import { GQLServerHandler as iotconsoleHandler } from '~/iotconsole/server/gql/saved-queries';
 import { GQLServerHandler as authHandler } from '~/auth/server/gql/saved-queries';
 import fs from 'fs';
 import { GQLServerHandler as libHandler } from '../lib/server/gql/saved-queries';
@@ -8,6 +9,7 @@ const init = () => {
   ensureDirectoryExistence(docPath);
   const results = [
     loader(consoleHandler, 'console'),
+    loader(iotconsoleHandler, 'iotconsole'),
     loader(authHandler, 'auth'),
     loader(libHandler, 'lib'),
   ];

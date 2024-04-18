@@ -1,4 +1,4 @@
-import { GearSix } from '@jengaicons/react';
+import { GearSix } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import { IStatus, listRender } from '~/console/components/commons';

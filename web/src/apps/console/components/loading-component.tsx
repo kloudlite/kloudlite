@@ -1,4 +1,4 @@
-import { Spinner } from '@jengaicons/react';
+import { Spinner } from '~/console/components/icons';
 import { SerializeFrom } from '@remix-run/node';
 import { useNavigate } from '@remix-run/react';
 import { motion } from 'framer-motion';

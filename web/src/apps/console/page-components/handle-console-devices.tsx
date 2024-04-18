@@ -8,7 +8,7 @@ import {
   Plus,
   SmileySad,
   X,
-} from '@jengaicons/react';
+} from '~/console/components/icons';
 import { useEffect, useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import { NumberInput } from '~/components/atoms/input';
@@ -107,7 +107,7 @@ const ExposedPortList = ({
                       <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
                         <span>Exposed: </span>
                         {ep.port}
-                        <ArrowRight size={16} weight={1} />
+                        <ArrowRight size={16} />
                         <span>Target: </span>
                         {ep.targetPort}
                       </div>

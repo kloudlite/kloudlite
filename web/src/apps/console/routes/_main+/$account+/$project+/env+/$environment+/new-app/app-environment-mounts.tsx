@@ -4,7 +4,7 @@ import {
   LockSimpleOpen,
   SmileySad,
   X,
-} from '@jengaicons/react';
+} from '~/console/components/icons';
 import { useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';

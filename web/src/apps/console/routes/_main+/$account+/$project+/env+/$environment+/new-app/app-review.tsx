@@ -15,7 +15,7 @@ import {
   ReviewComponent,
 } from '~/console/components/commons';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { CheckCircleFill, CircleFill, CircleNotch } from '@jengaicons/react';
+import { CheckCircleFill, CircleFill, CircleNotch } from '~/console/components/icons';
 import { constants } from '~/console/server/utils/constants';
 import { registryHost } from '~/root/lib/configs/base-url.cjs';
 import appFun from './app-pre-submit';

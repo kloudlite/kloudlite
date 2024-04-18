@@ -3,7 +3,7 @@ import {
   LinkBreak,
   Link as LinkIcon,
   Repeat,
-} from '@jengaicons/react';
+} from '~/console/components/icons';
 import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {

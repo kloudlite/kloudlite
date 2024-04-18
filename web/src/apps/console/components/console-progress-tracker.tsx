@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { cn } from '~/components/utils';
-import { Check } from '@jengaicons/react';
+import { Check } from '~/console/components/icons';
 
 type IProgressTrackerItem = {
   active?: boolean;

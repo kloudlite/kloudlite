@@ -2,7 +2,7 @@
 import { useOutletContext } from '@remix-run/react';
 import { Box } from '~/console/components/common-console-components';
 import { parseName } from '~/console/server/r-utils/common';
-import { DownloadSimple } from '@jengaicons/react';
+import { DownloadSimple } from '~/console/components/icons';
 import { downloadFile, renderCloudProvider } from '~/console/utils/commons';
 import { Chip } from '~/components/atoms/chips';
 import {

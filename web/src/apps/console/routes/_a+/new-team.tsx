@@ -13,7 +13,7 @@ import MultiStepProgress, {
 } from '~/console/components/multi-step-progress';
 import { BottomNavigation } from '~/console/components/commons';
 import FillerCreateTeam from '~/console/assets/filler-create-team';
-import { SignOut } from '@jengaicons/react';
+import { SignOut } from '~/console/components/icons';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import { Button } from '~/components/atoms/button';
