@@ -94,4 +94,5 @@ resources:
 - wireguard_v1_connection.yaml
 - crds_v1_job.yaml
 - clusters_v1_gcpvpc.yaml
+- crds_v1_blueprint.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

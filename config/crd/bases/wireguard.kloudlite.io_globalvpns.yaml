@@ -5,14 +5,14 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: clusterconnections.wireguard.kloudlite.io
+  name: globalvpns.wireguard.kloudlite.io
 spec:
   group: wireguard.kloudlite.io
   names:
-    kind: ClusterConnection
-    listKind: ClusterConnectionList
-    plural: clusterconnections
-    singular: clusterconnection
+    kind: GlobalVpn
+    listKind: GlobalVpnList
+    plural: globalvpns
+    singular: globalvpn
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -31,7 +31,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: ClusterConnection is the Schema for the connects API
+        description: GlobalVpn is the Schema for the connects API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
