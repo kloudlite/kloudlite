@@ -17,12 +17,16 @@ import {
   ArrowLeft,
   ArrowRight,
   Pencil,
+  GithubLogoFill,
+  GitlabLogoFill,
+  GitBranchFill,
 } from '~/iotconsole/components/icons';
 import { ListItem } from './console-list-components';
 import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '../server/r-utils/common';
+import { IGIT_PROVIDERS } from '../hooks/use-git';
 
 export const BlackProdLogo = ({ size = 16 }) => {
   return <ProdLogo color="currentColor" size={size} />;
@@ -294,5 +298,74 @@ export const ReviewComponent = ({
       </div>
       {children}
     </div>
+  );
+};
+
+export const GitDetailRaw = ({
+  provider,
+  repository,
+  branch,
+  children,
+  extra,
+}: {
+  provider: IGIT_PROVIDERS;
+  repository: string;
+  branch: string;
+  extra?: ReactNode;
+  children?: ReactNode;
+}) => {
+  const gitIconSize = 16;
+  return (
+    <div className="flex flex-row p-xl items-center gap-lg rounded border border-border-default flex-1 overflow-hidden">
+      <div className="flex flex-col gap-md">
+        <div className="bodyMd-medium text-text-default">Source</div>
+        <div className="flex flex-row items-center gap-3xl bodySm">
+          <div className="flex flex-row items-center gap-xl">
+            {provider === 'github' ? (
+              <GithubLogoFill size={gitIconSize} />
+            ) : (
+              <GitlabLogoFill size={gitIconSize} />
+            )}
+            <span>
+              {repository.replace('https://', '').replace('.git', '')}
+            </span>
+          </div>
+          <div className="flex flex-row items-center gap-xl">
+            <GitBranchFill size={gitIconSize} />
+            <span>{branch}</span>
+          </div>
+        </div>
+        {children}
+      </div>
+      {extra}
+    </div>
+  );
+};
+
+export const GitDetail = ({
+  provider,
+  repository,
+  branch,
+  onEdit,
+  canEdit,
+}: {
+  provider: IGIT_PROVIDERS;
+  repository: string;
+  branch: string;
+  onEdit?: (step?: number) => void;
+  canEdit?: boolean;
+}) => {
+  return (
+    <ReviewComponent
+      title="Source details"
+      onEdit={() => onEdit?.(1)}
+      canEdit={canEdit}
+    >
+      <GitDetailRaw
+        branch={branch}
+        repository={repository}
+        provider={provider}
+      />
+    </ReviewComponent>
   );
 };

@@ -80,37 +80,7 @@ const CurrentBreadcrum = ({
 }) => {
   const params = useParams();
 
-  // const api = useIotConsoleApi();
-  // const [search, setSearch] = useState('');
-  // const [searchText, setSearchText] = useState('');
-
   const { account } = params;
-
-  // const { data: projects, isLoading } = useCustomSwr(
-  //   () => `/projects/${searchText}`,
-  //   async () =>
-  //     api.listProjects({
-  //       search: {
-  //         text: {
-  //           matchType: 'regex',
-  //           regex: searchText,
-  //         },
-  //       },
-  //     })
-  // );
-
-  // useDebounce(
-  //   async () => {
-  //     ensureAccountClientSide(params);
-  //     setSearchText(search);
-  //   },
-  //   300,
-  //   [search]
-  // );
-
-  // const [open, setOpen] = useState(false);
-  // const buttonRef = useRef<HTMLButtonElement>(null);
-  // const [isMouseOver, setIsMouseOver] = useState<boolean>(false);
 
   return (
     <>
@@ -123,96 +93,6 @@ const CurrentBreadcrum = ({
         LinkComponent={Link}
         to={`/${account}/${project.name}`}
       />
-      {/* <OptionList.Root open={open} onOpenChange={setOpen} modal={false}> */}
-      {/*   <OptionList.Trigger> */}
-      {/*     <button */}
-      {/*       ref={buttonRef} */}
-      {/*       aria-label="accounts" */}
-      {/*       className={cn( */}
-      {/*         'outline-none rounded py-lg px-md mx-md bg-surface-basic-hovered', */}
-      {/*         open || isMouseOver ? 'bg-surface-basic-pressed' : '' */}
-      {/*       )} */}
-      {/*       onMouseOver={() => { */}
-      {/*         setIsMouseOver(true); */}
-      {/*       }} */}
-      {/*       onMouseOut={() => { */}
-      {/*         setIsMouseOver(false); */}
-      {/*       }} */}
-      {/*       onFocus={() => { */}
-      {/*         // */}
-      {/*       }} */}
-      {/*       onBlur={() => { */}
-      {/*         // */}
-      {/*       }} */}
-      {/*     > */}
-      {/*       <div className="flex flex-row items-center gap-md"> */}
-      {/*         <ChevronUpDown size={16} /> */}
-      {/*       </div> */}
-      {/*     </button> */}
-      {/*   </OptionList.Trigger> */}
-      {/*   <OptionList.Content className="!pt-0 !pb-md" align="end"> */}
-      {/*     <div className="p-[3px] pb-0"> */}
-      {/*       <OptionList.TextInput */}
-      {/*         value={search} */}
-      {/*         onChange={(e) => setSearch(e.target.value)} */}
-      {/*         prefixIcon={<Search />} */}
-      {/*         focusRing={false} */}
-      {/*         placeholder="Search projects" */}
-      {/*         compact */}
-      {/*         className="border-0 rounded-none" */}
-      {/*       /> */}
-      {/*     </div> */}
-      {/*     <OptionList.Separator /> */}
-
-      {/*     {!isLoading && */}
-      {/*       (parseNodes(projects) || [])?.map((item) => { */}
-      {/*         return ( */}
-      {/*           <OptionList.Link */}
-      {/*             key={parseName(item)} */}
-      {/*             LinkComponent={Link} */}
-      {/*             to={`/${account}/${parseName(item)}/environments`} */}
-      {/*             className={cn( */}
-      {/*               'flex flex-row items-center justify-between', */}
-      {/*               parseName(item) === parseName(project) */}
-      {/*                 ? 'bg-surface-basic-pressed hover:!bg-surface-basic-pressed' */}
-      {/*                 : '' */}
-      {/*             )} */}
-      {/*           > */}
-      {/*             <span>{item.displayName}</span> */}
-      {/*             {parseName(item) === parseName(project) && ( */}
-      {/*               <span> */}
-      {/*                 <Check size={16} /> */}
-      {/*               </span> */}
-      {/*             )} */}
-      {/*           </OptionList.Link> */}
-      {/*         ); */}
-      {/*       })} */}
-
-      {/*     {parseNodes(projects).length === 0 && !isLoading && ( */}
-      {/*       <div className="flex flex-col gap-lg max-w-[198px] px-xl py-lg"> */}
-      {/*         <div className="bodyLg-medium text-text-default"> */}
-      {/*           No projects found */}
-      {/*         </div> */}
-      {/*         <div className="bodyMd text-text-soft"> */}
-      {/*           Your search for "{search}" did not match and projects. */}
-      {/*         </div> */}
-      {/*       </div> */}
-      {/*     )} */}
-
-      {/*     {isLoading && parseNodes(projects).length === 0 && ( */}
-      {/*       <div className="min-h-7xl" /> */}
-      {/*     )} */}
-
-      {/*     <OptionList.Separator /> */}
-      {/*     <OptionList.Link */}
-      {/*       LinkComponent={Link} */}
-      {/*       to={`/${account}/new-project`} */}
-      {/*       className="text-text-primary" */}
-      {/*     > */}
-      {/*       <Plus size={16} /> <span>Create project</span> */}
-      {/*     </OptionList.Link> */}
-      {/*   </OptionList.Content> */}
-      {/* </OptionList.Root> */}
     </>
   );
 };

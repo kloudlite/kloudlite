@@ -5007,6 +5007,443 @@ mutation iotconsoleDeleteSecret($projectName: String!, $envName: String!, $secre
   )
 }
 
+query iotconsoleGetCredToken($username: String!) {
+  cr_getCredToken(username: $username)
+}
+
+query iotconsoleListCred($search: SearchCreds, $pagination: CursorPaginationIn) {
+  cr_listCreds(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        access
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        expiration {
+          unit
+          value
+        }
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        recordVersion
+        updateTime
+        username
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleCreateCred($credential: CredentialIn!) {
+  cr_createCred(credential: $credential) {
+    id
+  }
+}
+
+mutation iotconsoleDeleteCred($username: String!) {
+  cr_deleteCred(username: $username)
+}
+
+query iotconsoleGetGitConnections($state: String) {
+  auth_me {
+    providerGitlab
+    providerGithub
+    providerGoogle
+  }
+  githubLoginUrl: oAuth_requestLogin(provider: "github", state: $state)
+  gitlabLoginUrl: oAuth_requestLogin(provider: "gitlab", state: $state)
+}
+
+query iotconsoleGetLogins {
+  auth_me {
+    providerGithub
+    providerGitlab
+  }
+}
+
+query iotconsoleLoginUrls {
+  githubLoginUrl: oAuth_requestLogin(
+    provider: "github"
+    state: "redirect:add-provider"
+  )
+  gitlabLoginUrl: oAuth_requestLogin(
+    provider: "gitlab"
+    state: "redirect:add-provider"
+  )
+}
+
+query iotconsoleListGithubRepos($installationId: Int!, $pagination: PaginationIn) {
+  cr_listGithubRepos(installationId: $installationId, pagination: $pagination) {
+    repositories {
+      cloneUrl
+      defaultBranch
+      fullName
+      private
+      updatedAt
+    }
+    totalCount
+  }
+}
+
+query iotconsoleListGithubInstalltions($pagination: PaginationIn) {
+  cr_listGithubInstallations(pagination: $pagination) {
+    account {
+      avatarUrl
+      id
+      login
+      nodeId
+      type
+    }
+    appId
+    id
+    nodeId
+    repositoriesUrl
+    targetId
+    targetType
+  }
+}
+
+query iotconsoleListGithubBranches($repoUrl: String!, $pagination: PaginationIn) {
+  cr_listGithubBranches(repoUrl: $repoUrl, pagination: $pagination) {
+    name
+  }
+}
+
+query iotconsoleSearchGithubRepos($organization: String!, $search: String!, $pagination: PaginationIn) {
+  cr_searchGithubRepos(
+    organization: $organization
+    search: $search
+    pagination: $pagination
+  ) {
+    repositories {
+      cloneUrl
+      defaultBranch
+      fullName
+      private
+      updatedAt
+    }
+  }
+}
+
+query iotconsoleListGitlabGroups($query: String, $pagination: PaginationIn) {
+  cr_listGitlabGroups(query: $query, pagination: $pagination) {
+    fullName
+    id
+  }
+}
+
+query iotconsoleListGitlabRepos($query: String, $pagination: PaginationIn, $groupId: String!) {
+  cr_listGitlabRepositories(
+    query: $query
+    pagination: $pagination
+    groupId: $groupId
+  ) {
+    createdAt
+    name
+    id
+    public
+    httpUrlToRepo
+  }
+}
+
+query iotconsoleListGitlabBranches($repoId: String!, $query: String, $pagination: PaginationIn) {
+  cr_listGitlabBranches(repoId: $repoId, query: $query, pagination: $pagination) {
+    name
+    protected
+  }
+}
+
+query iotconsoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: CursorPaginationIn) {
+  cr_listBuilds(repoName: $repoName, search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        buildClusterName
+        credUser {
+          userEmail
+          userId
+          userName
+        }
+        errorMessages
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        source {
+          branch
+          provider
+          repository
+          webhookId
+        }
+        spec {
+          buildOptions {
+            buildArgs
+            buildContexts
+            contextDir
+            dockerfileContent
+            dockerfilePath
+            targetPlatforms
+          }
+          registry {
+            repo {
+              name
+              tags
+            }
+          }
+          resource {
+            cpu
+            memoryInMb
+          }
+          caches {
+            name
+            path
+          }
+        }
+        status
+        updateTime
+        latestBuildRun {
+          recordVersion
+          status {
+            checkList {
+              debug
+              description
+              name
+              title
+            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
+          }
+          markedForDeletion
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation iotconsoleCreateBuild($build: BuildIn!) {
+  cr_addBuild(build: $build) {
+    id
+  }
+}
+
+mutation iotconsoleUpdateBuild($crUpdateBuildId: ID!, $build: BuildIn!) {
+  cr_updateBuild(id: $crUpdateBuildId, build: $build) {
+    id
+  }
+}
+
+mutation iotconsoleDeleteBuild($crDeleteBuildId: ID!) {
+  cr_deleteBuild(id: $crDeleteBuildId)
+}
+
+mutation iotconsoleTriggerBuild($crTriggerBuildId: ID!) {
+  cr_triggerBuild(id: $crTriggerBuildId)
+}
+
+query iotconsoleListBuildRuns($search: SearchBuildRuns, $pq: CursorPaginationIn) {
+  cr_listBuildRuns(search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        id
+        clusterName
+        creationTime
+        markedForDeletion
+        recordVersion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        spec {
+          accountName
+          buildOptions {
+            buildArgs
+            buildContexts
+            contextDir
+            dockerfileContent
+            dockerfilePath
+            targetPlatforms
+          }
+          registry {
+            repo {
+              name
+              tags
+            }
+          }
+          resource {
+            cpu
+            memoryInMb
+          }
+        }
+        status {
+          checks
+          checkList {
+            description
+            debug
+            name
+            title
+          }
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+query iotconsoleGetBuildRun($buildId: ID!, $buildRunName: String!) {
+  cr_getBuildRun(buildID: $buildId, buildRunName: $buildRunName) {
+    clusterName
+    creationTime
+    markedForDeletion
+    recordVersion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    spec {
+      accountName
+      buildOptions {
+        buildArgs
+        buildContexts
+        contextDir
+        dockerfileContent
+        dockerfilePath
+        targetPlatforms
+      }
+      registry {
+        repo {
+          name
+          tags
+        }
+      }
+      resource {
+        cpu
+        memoryInMb
+      }
+    }
+    status {
+      checks
+      checkList {
+        description
+        debug
+        name
+        title
+      }
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
+  }
+}
+
 query iotconsoleListInvitationsForAccount($accountName: String!) {
   accounts_listInvitations(accountName: $accountName) {
     accepted
