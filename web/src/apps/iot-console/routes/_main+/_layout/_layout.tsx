@@ -33,9 +33,7 @@ import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IExtRemixCtx } from '~/root/lib/types/common';
 import {
-  InfraAsCode,
   Container as ContainerIcon,
-  GearSix,
   Project,
 } from '~/iotconsole/components/icons';
 
@@ -76,26 +74,16 @@ const AccountTabs = () => {
           to: '/projects',
           value: '/projects',
         },
-        // {
-        //   label: (
-        //     <span className="flex flex-row items-center gap-lg">
-        //       <InfraAsCode size={iconSize} />
-        //       Infrastructure
-        //     </span>
-        //   ),
-        //   to: '/infra',
-        //   value: '/infra',
-        // },
-        // {
-        //   label: (
-        //     <span className="flex flex-row items-center gap-lg">
-        //       <ContainerIcon size={iconSize} />
-        //       Packages
-        //     </span>
-        //   ),
-        //   to: '/packages/repos',
-        //   value: '/packages',
-        // },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <ContainerIcon size={iconSize} />
+              Packages
+            </span>
+          ),
+          to: '/packages/repos',
+          value: '/packages',
+        },
         // {
         //   label: (
         //     <span className="flex flex-row items-center gap-lg">

@@ -1,4 +1,4 @@
-import { PencilLine, Trash } from '~/iotconsole/components/icons';
+import { GearSix } from '~/iotconsole/components/icons';
 import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/iotconsole/components/console-avatar';
@@ -16,13 +16,6 @@ import {
 } from '~/iotconsole/server/r-utils/common';
 import ListV2 from '~/iotconsole/components/listV2';
 import { IDeployments } from '~/iotconsole/server/gql/queries/iot-deployment-queries';
-import { useState } from 'react';
-import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import DeleteDialog from '~/iotconsole/components/delete-dialog';
-import { toast } from '~/components/molecule/toast';
-import { handleError } from '~/root/lib/utils/common';
-import HandleDeployment from './handle-deployment';
 // import { IAccountContext } from '../_layout';
 
 type BaseType = ExtractNodeType<IDeployments>;
@@ -40,44 +33,26 @@ const parseItem = (item: ExtractNodeType<IDeployments>) => {
   };
 };
 
-const ExtraButton = ({
-  onDelete,
-  onEdit,
-}: {
-  onDelete: () => void;
-  onEdit: () => void;
-}) => {
+const ExtraButton = ({ deployment }: { deployment: BaseType }) => {
+  const { account } = useParams();
   return (
     <ResourceExtraAction
       options={[
         {
-          key: '1',
-          label: 'Edit',
-          icon: <PencilLine size={16} />,
+          label: 'Settings',
+          icon: <GearSix size={16} />,
           type: 'item',
-          onClick: onEdit,
-        },
-        {
-          label: 'Delete',
-          icon: <Trash size={16} />,
-          type: 'item',
-          onClick: onDelete,
-          key: 'delete',
-          className: '!text-text-critical',
+
+          to: `/${account}/${deployment.projectName}/deployment/${deployment.name}/settings`,
+          key: 'settings',
         },
       ]}
     />
   );
 };
 
-interface IResource {
-  items: BaseType[];
-  onDelete: (item: BaseType) => void;
-  onEdit: (item: BaseType) => void;
-}
-
-const GridView = ({ items = [], onDelete, onEdit }: IResource) => {
-  const { account } = useParams();
+const GridView = ({ items = [] }: { items: BaseType[] }) => {
+  const { account, project } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
@@ -86,7 +61,7 @@ const GridView = ({ items = [], onDelete, onEdit }: IResource) => {
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${id}/deviceblueprints`}
+            to={`/${account}/${project}/${id}/deployment/${id}`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -94,12 +69,7 @@ const GridView = ({ items = [], onDelete, onEdit }: IResource) => {
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    action={
-                      <ExtraButton
-                        onDelete={() => onDelete(item)}
-                        onEdit={() => onEdit(item)}
-                      />
-                    }
+                    action={<ExtraButton deployment={item} />}
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
@@ -121,7 +91,7 @@ const GridView = ({ items = [], onDelete, onEdit }: IResource) => {
   );
 };
 
-const ListView = ({ items, onEdit, onDelete }: IResource) => {
+const ListView = ({ items }: { items: BaseType[] }) => {
   const { account, project } = useParams();
   return (
     <ListV2.Root
@@ -172,12 +142,7 @@ const ListView = ({ items, onEdit, onDelete }: IResource) => {
                 ),
               },
               action: {
-                render: () => (
-                  <ExtraButton
-                    onDelete={() => onDelete(i)}
-                    onEdit={() => onEdit(i)}
-                  />
-                ),
+                render: () => <ExtraButton deployment={i} />,
               },
             },
             to: `/${account}/${project}/deployment/${id}`,
@@ -189,64 +154,11 @@ const ListView = ({ items, onEdit, onDelete }: IResource) => {
 };
 
 const DeploymentResource = ({ items = [] }: { items: BaseType[] }) => {
-  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
-  );
-  const [showHandleDeployment, setShowHandleDeployment] =
-    useState<BaseType | null>(null);
-
-  const api = useIotConsoleApi();
-  const reloadPage = useReload();
-
-  const props: IResource = {
-    items,
-    onDelete: (item) => {
-      setShowDeleteDialog(item);
-    },
-    onEdit: (item) => {
-      setShowHandleDeployment(item);
-    },
-  };
   return (
-    <>
-      <ListGridView
-        listView={<ListView {...props} />}
-        gridView={<GridView {...props} />}
-      />
-      <DeleteDialog
-        resourceName={showDeleteDialog?.displayName}
-        resourceType={RESOURCE_NAME}
-        show={showDeleteDialog}
-        setShow={setShowDeleteDialog}
-        onSubmit={async () => {
-          try {
-            const { errors } = await api.deleteIotDeployment({
-              projectName: showDeleteDialog?.projectName || '',
-              name: showDeleteDialog?.name || '',
-            });
-
-            if (errors) {
-              throw errors[0];
-            }
-            reloadPage();
-            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
-            setShowDeleteDialog(null);
-          } catch (err) {
-            handleError(err);
-          }
-        }}
-      />
-      <HandleDeployment
-        {...{
-          isUpdate: true,
-          visible: !!showHandleDeployment,
-          setVisible: () => {
-            setShowHandleDeployment(null);
-          },
-          data: showHandleDeployment!,
-        }}
-      />
-    </>
+    <ListGridView
+      listView={<ListView items={items} />}
+      gridView={<GridView items={items} />}
+    />
   );
 };
 

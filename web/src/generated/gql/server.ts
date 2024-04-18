@@ -6427,6 +6427,440 @@ export type IotconsoleDeleteSecretMutationVariables = Exact<{
 
 export type IotconsoleDeleteSecretMutation = { core_deleteSecret: boolean };
 
+export type IotconsoleGetCredTokenQueryVariables = Exact<{
+  username: Scalars['String']['input'];
+}>;
+
+export type IotconsoleGetCredTokenQuery = { cr_getCredToken: string };
+
+export type IotconsoleListCredQueryVariables = Exact<{
+  search?: InputMaybe<SearchCreds>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type IotconsoleListCredQuery = {
+  cr_listCreds?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        access: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__RepoAccess;
+        accountName: string;
+        creationTime: any;
+        id: string;
+        markedForDeletion?: boolean;
+        name: string;
+        recordVersion: number;
+        updateTime: any;
+        username: string;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        expiration: {
+          unit: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__ExpirationUnit;
+          value: number;
+        };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type IotconsoleCreateCredMutationVariables = Exact<{
+  credential: CredentialIn;
+}>;
+
+export type IotconsoleCreateCredMutation = { cr_createCred?: { id: string } };
+
+export type IotconsoleDeleteCredMutationVariables = Exact<{
+  username: Scalars['String']['input'];
+}>;
+
+export type IotconsoleDeleteCredMutation = { cr_deleteCred: boolean };
+
+export type IotconsoleGetGitConnectionsQueryVariables = Exact<{
+  state?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type IotconsoleGetGitConnectionsQuery = {
+  githubLoginUrl: any;
+  gitlabLoginUrl: any;
+  auth_me?: {
+    providerGitlab?: any;
+    providerGithub?: any;
+    providerGoogle?: any;
+  };
+};
+
+export type IotconsoleGetLoginsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type IotconsoleGetLoginsQuery = {
+  auth_me?: { providerGithub?: any; providerGitlab?: any };
+};
+
+export type IotconsoleLoginUrlsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type IotconsoleLoginUrlsQuery = {
+  githubLoginUrl: any;
+  gitlabLoginUrl: any;
+};
+
+export type IotconsoleListGithubReposQueryVariables = Exact<{
+  installationId: Scalars['Int']['input'];
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type IotconsoleListGithubReposQuery = {
+  cr_listGithubRepos?: {
+    totalCount?: number;
+    repositories: Array<{
+      cloneUrl?: string;
+      defaultBranch?: string;
+      fullName?: string;
+      private?: boolean;
+      updatedAt?: any;
+    }>;
+  };
+};
+
+export type IotconsoleListGithubInstalltionsQueryVariables = Exact<{
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type IotconsoleListGithubInstalltionsQuery = {
+  cr_listGithubInstallations?: Array<{
+    appId?: number;
+    id?: number;
+    nodeId?: string;
+    repositoriesUrl?: string;
+    targetId?: number;
+    targetType?: string;
+    account?: {
+      avatarUrl?: string;
+      id?: number;
+      login?: string;
+      nodeId?: string;
+      type?: string;
+    };
+  }>;
+};
+
+export type IotconsoleListGithubBranchesQueryVariables = Exact<{
+  repoUrl: Scalars['String']['input'];
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type IotconsoleListGithubBranchesQuery = {
+  cr_listGithubBranches?: Array<{ name?: string }>;
+};
+
+export type IotconsoleSearchGithubReposQueryVariables = Exact<{
+  organization: Scalars['String']['input'];
+  search: Scalars['String']['input'];
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type IotconsoleSearchGithubReposQuery = {
+  cr_searchGithubRepos?: {
+    repositories: Array<{
+      cloneUrl?: string;
+      defaultBranch?: string;
+      fullName?: string;
+      private?: boolean;
+      updatedAt?: any;
+    }>;
+  };
+};
+
+export type IotconsoleListGitlabGroupsQueryVariables = Exact<{
+  query?: InputMaybe<Scalars['String']['input']>;
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type IotconsoleListGitlabGroupsQuery = {
+  cr_listGitlabGroups?: Array<{ fullName: string; id: string }>;
+};
+
+export type IotconsoleListGitlabReposQueryVariables = Exact<{
+  query?: InputMaybe<Scalars['String']['input']>;
+  pagination?: InputMaybe<PaginationIn>;
+  groupId: Scalars['String']['input'];
+}>;
+
+export type IotconsoleListGitlabReposQuery = {
+  cr_listGitlabRepositories?: Array<{
+    createdAt?: any;
+    name: string;
+    id: number;
+    public: boolean;
+    httpUrlToRepo: string;
+  }>;
+};
+
+export type IotconsoleListGitlabBranchesQueryVariables = Exact<{
+  repoId: Scalars['String']['input'];
+  query?: InputMaybe<Scalars['String']['input']>;
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type IotconsoleListGitlabBranchesQuery = {
+  cr_listGitlabBranches?: Array<{ name?: string; protected?: boolean }>;
+};
+
+export type IotconsoleListBuildsQueryVariables = Exact<{
+  repoName: Scalars['String']['input'];
+  search?: InputMaybe<SearchBuilds>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type IotconsoleListBuildsQuery = {
+  cr_listBuilds?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        buildClusterName: string;
+        errorMessages: any;
+        id: string;
+        markedForDeletion?: boolean;
+        name: string;
+        status: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__BuildStatus;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        credUser: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        source: {
+          branch: string;
+          provider: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GitProvider;
+          repository: string;
+          webhookId?: number;
+        };
+        spec: {
+          buildOptions?: {
+            buildArgs?: any;
+            buildContexts?: any;
+            contextDir?: string;
+            dockerfileContent?: string;
+            dockerfilePath?: string;
+            targetPlatforms?: Array<string>;
+          };
+          registry: { repo: { name: string; tags: Array<string> } };
+          resource: { cpu: number; memoryInMb: number };
+          caches?: Array<{ name: string; path: string }>;
+        };
+        latestBuildRun?: {
+          recordVersion: number;
+          markedForDeletion?: boolean;
+          status?: {
+            checks?: any;
+            isReady: boolean;
+            lastReadyGeneration?: number;
+            lastReconcileTime?: any;
+            checkList?: Array<{
+              debug?: boolean;
+              description?: string;
+              name: string;
+              title: string;
+            }>;
+            message?: { RawMessage?: any };
+            resources?: Array<{
+              apiVersion: string;
+              kind: string;
+              name: string;
+              namespace: string;
+            }>;
+          };
+          syncStatus: {
+            action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+            error?: string;
+            lastSyncedAt?: any;
+            recordVersion: number;
+            state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+            syncScheduledAt?: any;
+          };
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type IotconsoleCreateBuildMutationVariables = Exact<{
+  build: BuildIn;
+}>;
+
+export type IotconsoleCreateBuildMutation = { cr_addBuild?: { id: string } };
+
+export type IotconsoleUpdateBuildMutationVariables = Exact<{
+  crUpdateBuildId: Scalars['ID']['input'];
+  build: BuildIn;
+}>;
+
+export type IotconsoleUpdateBuildMutation = { cr_updateBuild?: { id: string } };
+
+export type IotconsoleDeleteBuildMutationVariables = Exact<{
+  crDeleteBuildId: Scalars['ID']['input'];
+}>;
+
+export type IotconsoleDeleteBuildMutation = { cr_deleteBuild: boolean };
+
+export type IotconsoleTriggerBuildMutationVariables = Exact<{
+  crTriggerBuildId: Scalars['ID']['input'];
+}>;
+
+export type IotconsoleTriggerBuildMutation = { cr_triggerBuild: boolean };
+
+export type IotconsoleListBuildRunsQueryVariables = Exact<{
+  search?: InputMaybe<SearchBuildRuns>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type IotconsoleListBuildRunsQuery = {
+  cr_listBuildRuns?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        id: string;
+        clusterName: string;
+        creationTime: any;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        updateTime: any;
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        spec?: {
+          accountName: string;
+          buildOptions?: {
+            buildArgs?: any;
+            buildContexts?: any;
+            contextDir?: string;
+            dockerfileContent?: string;
+            dockerfilePath?: string;
+            targetPlatforms?: Array<string>;
+          };
+          registry: { repo: { name: string; tags: Array<string> } };
+          resource: { cpu: number; memoryInMb: number };
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReadyGeneration?: number;
+          lastReconcileTime?: any;
+          checkList?: Array<{
+            description?: string;
+            debug?: boolean;
+            name: string;
+            title: string;
+          }>;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion: string;
+            kind: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type IotconsoleGetBuildRunQueryVariables = Exact<{
+  buildId: Scalars['ID']['input'];
+  buildRunName: Scalars['String']['input'];
+}>;
+
+export type IotconsoleGetBuildRunQuery = {
+  cr_getBuildRun?: {
+    clusterName: string;
+    creationTime: any;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    updateTime: any;
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    spec?: {
+      accountName: string;
+      buildOptions?: {
+        buildArgs?: any;
+        buildContexts?: any;
+        contextDir?: string;
+        dockerfileContent?: string;
+        dockerfilePath?: string;
+        targetPlatforms?: Array<string>;
+      };
+      registry: { repo: { name: string; tags: Array<string> } };
+      resource: { cpu: number; memoryInMb: number };
+    };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReadyGeneration?: number;
+      lastReconcileTime?: any;
+      checkList?: Array<{
+        description?: string;
+        debug?: boolean;
+        name: string;
+        title: string;
+      }>;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion: string;
+        kind: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+    syncStatus: {
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+      syncScheduledAt?: any;
+    };
+  };
+};
+
 export type IotconsoleListInvitationsForAccountQueryVariables = Exact<{
   accountName: Scalars['String']['input'];
 }>;

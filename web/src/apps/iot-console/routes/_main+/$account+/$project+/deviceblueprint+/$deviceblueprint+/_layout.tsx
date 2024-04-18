@@ -5,14 +5,16 @@ import {
   useParams,
 } from '@remix-run/react';
 import { CommonTabs } from '~/iotconsole/components/common-navbar-tabs';
-import { tabIconSize } from '~/iotconsole/utils/commons';
-import { VirtualMachine } from '~/iotconsole/components/icons';
+import { BreadcrumSlash, tabIconSize } from '~/iotconsole/utils/commons';
+import { GearSix, VirtualMachine } from '~/iotconsole/components/icons';
 import { ensureAccountSet } from '~/iotconsole/server/utils/auth-utils';
 import { GQLServerHandler } from '~/iotconsole/server/gql/saved-queries';
 import logger from '~/root/lib/client/helpers/log';
 import { redirect } from 'react-router-dom';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { IDeviceBlueprint } from '~/iotconsole/server/gql/queries/iot-device-blueprint-queries';
+import Breadcrum from '~/iotconsole/components/breadcrum';
+import { Truncate } from '~/root/lib/utils/common';
 import { IProjectContext } from '../../_layout';
 
 export interface IDeviceBlueprintContext extends IProjectContext {
@@ -31,17 +33,30 @@ const tabs = [
     to: '/apps',
     value: '/apps',
   },
-  // {
-  //   label: (
-  //     <span className="flex flex-row items-center gap-lg">
-  //       <GearSix size={iconSize} />
-  //       Settings
-  //     </span>
-  //   ),
-  //   to: '/settings/general',
-  //   value: '/settings',
-  // },
+  {
+    label: (
+      <span className="flex flex-row items-center gap-lg">
+        <GearSix size={iconSize} />
+        Settings
+      </span>
+    ),
+    to: '/settings/general',
+    value: '/settings',
+  },
 ];
+
+const LocalBreadcrum = ({ data }: { data: IDeviceBlueprint }) => {
+  const { displayName, projectName, accountName, name } = data;
+  return (
+    <div className="flex flex-row items-center">
+      <BreadcrumSlash />
+      <Breadcrum.Button
+        content={<Truncate length={15}>{displayName || ''}</Truncate>}
+        to={`/${accountName}/${projectName}/deviceblueprint/${name}/apps`}
+      />
+    </div>
+  );
+};
 
 const Tabs = () => {
   const { account, project, deviceblueprint } = useParams();
@@ -62,18 +77,12 @@ const Tabs = () => {
   //   />
   // );
 };
-export const handle = () => {
+export const handle = ({ deviceblueprint }: { deviceblueprint: any }) => {
   return {
     navbar: <Tabs />,
+    breadcrum: () => <LocalBreadcrum data={deviceblueprint} />,
   };
 };
-const DeviceBlueprint = () => {
-  const rootContext = useOutletContext<IProjectContext>();
-  const { deviceblueprint } = useLoaderData();
-  return <Outlet context={{ ...rootContext, deviceblueprint }} />;
-};
-
-export default DeviceBlueprint;
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -99,3 +108,11 @@ export const loader = async (ctx: IRemixCtx) => {
     return redirect(`/${account}/projects`);
   }
 };
+
+const DeviceBlueprint = () => {
+  const rootContext = useOutletContext<IProjectContext>();
+  const { deviceblueprint } = useLoaderData();
+  return <Outlet context={{ ...rootContext, deviceblueprint }} />;
+};
+
+export default DeviceBlueprint;
