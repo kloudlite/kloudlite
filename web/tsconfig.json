@@ -26,6 +26,9 @@
       "~/console/*": [
         "./src/apps/console/*"
       ],
+      "~/iotconsole/*": [
+        "./src/apps/iot-console/*"
+      ],
       "~/accounts/*": [
         "./src/apps/accounts/*"
       ],

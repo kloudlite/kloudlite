@@ -23,6 +23,9 @@
       "~/auth/*": [
         "./src/apps/auth/*"
       ],
+      "~/iotconsole/*": [
+        "./src/apps/iot-console/*"
+      ],
       "~/console/*": [
         "./src/apps/console/*"
       ],
