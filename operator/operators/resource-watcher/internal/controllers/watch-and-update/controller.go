@@ -85,6 +85,15 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			})
 		}
 
+	case BlueprintGVK.String():
+		{
+			return r.MsgSender.DispatchIotConsoleResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+		}
+
 	case ManagedResourceGVK.String():
 		{
 			mr, err := fn.JsonConvert[crdsv1.ManagedResource](obj.Object)
@@ -322,6 +331,7 @@ var (
 	AppGVK     = newGVK("crds.kloudlite.io/v1", "App")
 
 	// ManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ManagedService")
+	BlueprintGVK             = newGVK("crds.kloudlite.io/v1", "Blueprint")
 	ManagedResourceGVK       = newGVK("crds.kloudlite.io/v1", "ManagedResource")
 	EnvironmentGVK           = newGVK("crds.kloudlite.io/v1", "Environment")
 	RouterGVK                = newGVK("crds.kloudlite.io/v1", "Router")
