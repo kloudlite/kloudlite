@@ -96,8 +96,6 @@ spec:
                       More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                     type: object
                 type: object
-              dnsServer:
-                type: string
               gatewayResources:
                 description: ResourceRequirements describes the compute resource requirements.
                 properties:
@@ -146,15 +144,6 @@ spec:
                       More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                     type: object
                 type: object
-              id:
-                type: integer
-              interface:
-                description: PrivateKey *string `json:"privateKey,omitempty"`
-                type: string
-              ipAddress:
-                type: string
-              nodeport:
-                type: integer
               peers:
                 items:
                   properties:
@@ -166,18 +155,17 @@ spec:
                       type: string
                     id:
                       type: integer
+                    port:
+                      type: integer
                     publicKey:
                       type: string
                   required:
                   - endpoint
                   - id
+                  - port
                   - publicKey
                   type: object
                 type: array
-              publicKey:
-                type: string
-            required:
-            - id
             type: object
           status:
             properties:
