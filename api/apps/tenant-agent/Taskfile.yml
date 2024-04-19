@@ -23,11 +23,29 @@ tasks:
         vars: 
           Out: ./bin/{{.app}}
 
+  local:build:
+    vars:
+      GOARCH:
+        sh: go env GOARCH
+    cmds:
+      - task: go:build 
+        vars: 
+          Out: ./bin/{{.app}}-${GOARCH:-{{.GOARCH}}}
+
+  local:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - GOARCH=amd64 task local:build
+      - GOARCH=arm64 task local:build
+      - docker buildx build -f ./Containerfile --platform linux/amd64,linux/arm64 -t {{.Image}} . --build-arg BINARY={{.app}} --push
+
   container:build-and-push:
     preconditions:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
-      - task: build
+      - task: local:build
       - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
 

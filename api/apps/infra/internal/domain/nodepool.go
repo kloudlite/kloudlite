@@ -1,6 +1,9 @@
 package domain
 
 import (
+	"fmt"
+	"strings"
+
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -100,10 +103,15 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 			}
 
 			nodepool.Spec.GCP = &clustersv1.GCPNodePoolConfig{
-				Region:           cluster.Spec.GCP.Region,
-				AvailabilityZone: nodepool.Spec.GCP.AvailabilityZone,
-				GCPProjectID:     cluster.Spec.GCP.GCPProjectID,
-				VPC:              &clustersv1.GcpVPCParams{Name: cluster.Spec.GCP.VPC.Name},
+				Region: cluster.Spec.GCP.Region,
+				AvailabilityZone: func() string {
+					if strings.TrimSpace(nodepool.Spec.GCP.AvailabilityZone) != "" {
+						return nodepool.Spec.GCP.AvailabilityZone
+					}
+					return fmt.Sprintf("%s-a", cluster.Spec.GCP.Region)
+				}(),
+				GCPProjectID: cluster.Spec.GCP.GCPProjectID,
+				VPC:          &clustersv1.GcpVPCParams{Name: cluster.Spec.GCP.VPC.Name},
 				Credentials: ct.SecretRef{
 					Name:      k8sSecret.Name,
 					Namespace: k8sSecret.Namespace,

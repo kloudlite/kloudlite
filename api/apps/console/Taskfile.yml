@@ -81,5 +81,5 @@ tasks:
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
       - task: build
-      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
+      - docker buildx build -f ./Containerfile -t {{.Image}} --build-arg BINARY={{.app}} --output=type=image,compression=zstd,force-compression=true,compression-level=12 . --push 
 

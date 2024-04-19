@@ -19,6 +19,7 @@ deploy/
 node_modules
 .pnpm
 nohup.out
+tags
 
 .GOPATH
 .GO

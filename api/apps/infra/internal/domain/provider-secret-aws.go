@@ -153,9 +153,9 @@ func (d *domain) ValidateProviderSecretAWSAccess(ctx InfraContext, name string) 
 		return nil, errors.NewE(err)
 	}
 
-	if err := psecret.AWS.Validate(); err != nil {
-		return nil, errors.NewE(err)
-	}
+	// if err := psecret.AWS.Validate(); err != nil {
+	// 	return nil, errors.NewE(err)
+	// }
 
 	if err := checkAwsCloudformationCompletion(psecret.AWS); err != nil {
 		installationURL, err := generateAWSCloudformationTemplateUrl(*psecret.AWS, d.env)
