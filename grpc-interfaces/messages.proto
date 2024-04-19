@@ -11,6 +11,7 @@ service MessageDispatchService {
   rpc ReceiveError(ErrorData) returns (Empty) {}
 
   rpc ReceiveConsoleResourceUpdate (ResourceUpdate) returns (Empty) {}
+  rpc ReceiveIotConsoleResourceUpdate (ResourceUpdate) returns (Empty) {}
   rpc ReceiveInfraResourceUpdate (ResourceUpdate) returns (Empty) {}
   rpc ReceiveContainerRegistryUpdate(ResourceUpdate) returns (Empty) {}
 

@@ -10,4 +10,5 @@ type MessageSender interface {
 	DispatchConsoleResourceUpdates(ctx context.Context, stu t.ResourceUpdate) error
 	DispatchInfraResourceUpdates(ctx context.Context, stu t.ResourceUpdate) error
 	DispatchContainerRegistryResourceUpdates(ctx context.Context, stu t.ResourceUpdate) error
+	DispatchIotConsoleResourceUpdates(ctx context.Context, stu t.ResourceUpdate) error
 }
