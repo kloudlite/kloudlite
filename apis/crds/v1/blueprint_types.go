@@ -8,12 +8,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // BlueprintSpec defines the desired state of Blueprint
 type BlueprintSpec struct {
-	Apps []App `json:"apps"`
+	Apps    []App  `json:"apps,omitempty"`
+	Version string `json:"version"`
+}
+
+type AppStatus struct {
+	Name        string `json:"name"`
+	rApi.Status `json:",inline"`
+}
+
+type BlueprintStatus struct {
+	rApi.Status `json:",inline"`
+	Apps        []AppStatus `json:"apps,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -24,8 +32,8 @@ type Blueprint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   BlueprintSpec `json:"spec,omitempty"`
-	Status rApi.Status   `json:"status,omitempty" graphql:"noinput"`
+	Spec   BlueprintSpec   `json:"spec,omitempty"`
+	Status BlueprintStatus `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (b *Blueprint) EnsureGVK() {
@@ -35,7 +43,7 @@ func (b *Blueprint) EnsureGVK() {
 }
 
 func (b *Blueprint) GetStatus() *rApi.Status {
-	return &b.Status
+	return &b.Status.Status
 }
 
 func (b *Blueprint) GetEnsuredLabels() map[string]string {
