@@ -26,10 +26,23 @@ func ListPods(ctx context.Context, kcli k8s.Client, labels map[string]string) ([
 	return pods.Items, nil
 }
 
+func filterReadyPods(pods []corev1.Pod) []corev1.Pod {
+	result := make([]corev1.Pod, 0, len(pods))
+	for _, pod := range pods {
+		for i := range pod.Status.Conditions {
+			if pod.Status.Conditions[i].Type == "ContainersReady" {
+				result = append(result, pod)
+			}
+		}
+	}
+
+	return result
+}
+
 func StreamLogs(ctx context.Context, kcli k8s.Client, podsList []corev1.Pod, writer io.WriteCloser, logger logging.Logger) error {
 	g, ctx := errgroup.WithContext(ctx)
 
-	for i := range podsList {
+	for i := range filterReadyPods(podsList) {
 		pod := podsList[i]
 		for j := range pod.Spec.Containers {
 			container := pod.Spec.Containers[j]
