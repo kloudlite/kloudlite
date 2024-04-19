@@ -19,14 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	MessageDispatchService_ValidateAccessToken_FullMethodName            = "/MessageDispatchService/ValidateAccessToken"
-	MessageDispatchService_GetAccessToken_FullMethodName                 = "/MessageDispatchService/GetAccessToken"
-	MessageDispatchService_SendActions_FullMethodName                    = "/MessageDispatchService/SendActions"
-	MessageDispatchService_ReceiveError_FullMethodName                   = "/MessageDispatchService/ReceiveError"
-	MessageDispatchService_ReceiveConsoleResourceUpdate_FullMethodName   = "/MessageDispatchService/ReceiveConsoleResourceUpdate"
-	MessageDispatchService_ReceiveInfraResourceUpdate_FullMethodName     = "/MessageDispatchService/ReceiveInfraResourceUpdate"
-	MessageDispatchService_ReceiveContainerRegistryUpdate_FullMethodName = "/MessageDispatchService/ReceiveContainerRegistryUpdate"
-	MessageDispatchService_Ping_FullMethodName                           = "/MessageDispatchService/Ping"
+	MessageDispatchService_ValidateAccessToken_FullMethodName             = "/MessageDispatchService/ValidateAccessToken"
+	MessageDispatchService_GetAccessToken_FullMethodName                  = "/MessageDispatchService/GetAccessToken"
+	MessageDispatchService_SendActions_FullMethodName                     = "/MessageDispatchService/SendActions"
+	MessageDispatchService_ReceiveError_FullMethodName                    = "/MessageDispatchService/ReceiveError"
+	MessageDispatchService_ReceiveConsoleResourceUpdate_FullMethodName    = "/MessageDispatchService/ReceiveConsoleResourceUpdate"
+	MessageDispatchService_ReceiveIotConsoleResourceUpdate_FullMethodName = "/MessageDispatchService/ReceiveIotConsoleResourceUpdate"
+	MessageDispatchService_ReceiveInfraResourceUpdate_FullMethodName      = "/MessageDispatchService/ReceiveInfraResourceUpdate"
+	MessageDispatchService_ReceiveContainerRegistryUpdate_FullMethodName  = "/MessageDispatchService/ReceiveContainerRegistryUpdate"
+	MessageDispatchService_Ping_FullMethodName                            = "/MessageDispatchService/Ping"
 )
 
 // MessageDispatchServiceClient is the client API for MessageDispatchService service.
@@ -38,6 +39,7 @@ type MessageDispatchServiceClient interface {
 	SendActions(ctx context.Context, in *Empty, opts ...grpc.CallOption) (MessageDispatchService_SendActionsClient, error)
 	ReceiveError(ctx context.Context, in *ErrorData, opts ...grpc.CallOption) (*Empty, error)
 	ReceiveConsoleResourceUpdate(ctx context.Context, in *ResourceUpdate, opts ...grpc.CallOption) (*Empty, error)
+	ReceiveIotConsoleResourceUpdate(ctx context.Context, in *ResourceUpdate, opts ...grpc.CallOption) (*Empty, error)
 	ReceiveInfraResourceUpdate(ctx context.Context, in *ResourceUpdate, opts ...grpc.CallOption) (*Empty, error)
 	ReceiveContainerRegistryUpdate(ctx context.Context, in *ResourceUpdate, opts ...grpc.CallOption) (*Empty, error)
 	Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PingOutput, error)
@@ -119,6 +121,15 @@ func (c *messageDispatchServiceClient) ReceiveConsoleResourceUpdate(ctx context.
 	return out, nil
 }
 
+func (c *messageDispatchServiceClient) ReceiveIotConsoleResourceUpdate(ctx context.Context, in *ResourceUpdate, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, MessageDispatchService_ReceiveIotConsoleResourceUpdate_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *messageDispatchServiceClient) ReceiveInfraResourceUpdate(ctx context.Context, in *ResourceUpdate, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, MessageDispatchService_ReceiveInfraResourceUpdate_FullMethodName, in, out, opts...)
@@ -155,6 +166,7 @@ type MessageDispatchServiceServer interface {
 	SendActions(*Empty, MessageDispatchService_SendActionsServer) error
 	ReceiveError(context.Context, *ErrorData) (*Empty, error)
 	ReceiveConsoleResourceUpdate(context.Context, *ResourceUpdate) (*Empty, error)
+	ReceiveIotConsoleResourceUpdate(context.Context, *ResourceUpdate) (*Empty, error)
 	ReceiveInfraResourceUpdate(context.Context, *ResourceUpdate) (*Empty, error)
 	ReceiveContainerRegistryUpdate(context.Context, *ResourceUpdate) (*Empty, error)
 	Ping(context.Context, *Empty) (*PingOutput, error)
@@ -179,6 +191,9 @@ func (UnimplementedMessageDispatchServiceServer) ReceiveError(context.Context, *
 }
 func (UnimplementedMessageDispatchServiceServer) ReceiveConsoleResourceUpdate(context.Context, *ResourceUpdate) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReceiveConsoleResourceUpdate not implemented")
+}
+func (UnimplementedMessageDispatchServiceServer) ReceiveIotConsoleResourceUpdate(context.Context, *ResourceUpdate) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReceiveIotConsoleResourceUpdate not implemented")
 }
 func (UnimplementedMessageDispatchServiceServer) ReceiveInfraResourceUpdate(context.Context, *ResourceUpdate) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReceiveInfraResourceUpdate not implemented")
@@ -296,6 +311,24 @@ func _MessageDispatchService_ReceiveConsoleResourceUpdate_Handler(srv interface{
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MessageDispatchService_ReceiveIotConsoleResourceUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceUpdate)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageDispatchServiceServer).ReceiveIotConsoleResourceUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MessageDispatchService_ReceiveIotConsoleResourceUpdate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageDispatchServiceServer).ReceiveIotConsoleResourceUpdate(ctx, req.(*ResourceUpdate))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _MessageDispatchService_ReceiveInfraResourceUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ResourceUpdate)
 	if err := dec(in); err != nil {
@@ -372,6 +405,10 @@ var MessageDispatchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReceiveConsoleResourceUpdate",
 			Handler:    _MessageDispatchService_ReceiveConsoleResourceUpdate_Handler,
+		},
+		{
+			MethodName: "ReceiveIotConsoleResourceUpdate",
+			Handler:    _MessageDispatchService_ReceiveIotConsoleResourceUpdate_Handler,
 		},
 		{
 			MethodName: "ReceiveInfraResourceUpdate",

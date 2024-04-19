@@ -1,0 +1,8 @@
+privateKey: ""
+ip: 10.13.0.3/32
+peers:
+  - ip: 20.45.34.34/32
+    publicKey: ""
+    allowedIPs:
+      - 20.45.34.34/32
+      - 20.45.34.35/32

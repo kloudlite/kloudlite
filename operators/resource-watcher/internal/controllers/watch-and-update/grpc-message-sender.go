@@ -129,6 +129,43 @@ func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx context.Context, ru t
 	}
 }
 
+// DispatchIotConsoleResourceUpdates implements MessageSender.
+func (g *grpcMsgSender) DispatchIotConsoleResourceUpdates(ctx context.Context, ru t.ResourceUpdate) error {
+	b, err := json.Marshal(ru)
+	if err != nil {
+		return err
+	}
+
+	dctx, cf := context.WithTimeout(ctx, 1*time.Second)
+	defer cf()
+
+	errCh := make(chan error, 1)
+	execCh := make(chan struct{}, 1)
+
+	go func() {
+		if _, err = g.msgDispatchCli.ReceiveIotConsoleResourceUpdate(ctx, &messages.ResourceUpdate{
+			AccountName: g.accountName,
+			ClusterName: g.clusterName,
+			AccessToken: g.accessToken,
+			Message:     b,
+		}); err != nil {
+			errCh <- err
+			return
+		}
+		execCh <- struct{}{}
+	}()
+
+	select {
+	case <-dctx.Done():
+		return dctx.Err()
+	case <-execCh:
+		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched iot console resource update to message office api")
+		return nil
+	case err := <-errCh:
+		return err
+	}
+}
+
 func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env, logger logging.Logger) (MessageSender, error) {
 	msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
 
