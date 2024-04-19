@@ -12,6 +12,7 @@ import (
 	nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	project "github.com/kloudlite/operator/operators/project/controller"
 	routers "github.com/kloudlite/operator/operators/routers/controller"
+	virtualMachine "github.com/kloudlite/operator/operators/virtual-machine/registration"
 	wireguard "github.com/kloudlite/operator/operators/wireguard/controller"
 )
 
@@ -34,6 +35,8 @@ func main() {
 	// kloudlite cluster management
 	clusters.RegisterInto(mgr)
 	nodepool.RegisterInto(mgr)
+	virtualMachine.RegisterInto(mgr)
+
 	wireguard.RegisterInto(mgr)
 
 	mgr.Start()

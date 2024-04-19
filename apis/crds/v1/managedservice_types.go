@@ -68,8 +68,7 @@ func (m *ManagedService) GetEnsuredLabels() map[string]string {
 
 func (m *ManagedService) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ManagedService").String(),
-		"kloudlite.io/service-gvk":                m.Spec.ServiceTemplate.GroupVersionKind().String(),
+		"kloudlite.io/service-gvk": m.Spec.ServiceTemplate.GroupVersionKind().String(),
 	}
 }
 

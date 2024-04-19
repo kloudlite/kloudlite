@@ -635,19 +635,14 @@ func (r *ClusterReconciler) applyClusterJob(req *rApi.Request[*clustersv1.Cluste
 		return check.Failed(err)
 	}
 
-	if job.Status.Running != nil && *job.Status.Running {
-		return check.StillRunning(fmt.Errorf("waiting for job to finish execution"))
-	}
-
-	if job.Status.Failed != nil && *job.Status.Failed {
-		return check.Failed(fmt.Errorf("job failed"))
-	}
-
-	if job.Status.Succeeded != nil && *job.Status.Succeeded {
+	if job.HasCompleted() {
+		if job.Status.Phase == crdsv1.JobPhaseFailed {
+			return check.Failed(fmt.Errorf("job failed"))
+		}
 		return check.Completed()
 	}
 
-	return check.StillRunning(fmt.Errorf("waiting for job to start"))
+	return check.StillRunning(fmt.Errorf("waiting for job to complete"))
 }
 
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

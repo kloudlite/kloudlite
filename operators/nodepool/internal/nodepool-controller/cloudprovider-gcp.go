@@ -18,6 +18,13 @@ type GCPServiceAccount struct {
 	Scopes  []string `json:"scopes,omitempty"`
 }
 
+type GCPMachineState string
+
+const (
+	GCPMachineStateOn  = "on"
+	GCPMachineStateOff = "off"
+)
+
 type GCPWorkerValues struct {
 	GCPProjectID       string `json:"gcp_project_id"`
 	GCPRegion          string `json:"gcp_region"`
@@ -38,8 +45,9 @@ type GCPWorkerValues struct {
 
 	Nodes map[string]any `json:"nodes"`
 
-	NodeLabels  map[string]string `json:"node_labels"`
-	MachineType string            `json:"machine_type"`
+	NodeLabels   map[string]string `json:"node_labels"`
+	MachineType  string            `json:"machine_type"`
+	MachineState GCPMachineState   `json:"machine_state"`
 
 	K3sServerPublicDNSHost string   `json:"k3s_server_public_dns_host"`
 	K3sJoinToken           string   `json:"k3s_join_token"`
@@ -100,6 +108,7 @@ func (r *Reconciler) GCPJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 		}(),
 		NodeLabels:               obj.Spec.NodeLabels,
 		MachineType:              obj.Spec.GCP.MachineType,
+		MachineState:             GCPMachineStateOn,
 		K3sServerPublicDNSHost:   r.Env.K3sServerPublicHost,
 		K3sJoinToken:             r.Env.K3sJoinToken,
 		K3sExtraAgentArgs:        []string{"--snapshotter", "stargz"},

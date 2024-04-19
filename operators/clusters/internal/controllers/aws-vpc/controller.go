@@ -311,15 +311,14 @@ func (r *AwsVPCReconciler) applyVPC(req *rApi.Request[*clustersv1.AwsVPC]) stepR
 		return check.Failed(err)
 	}
 
-	if job.Status.Running != nil && *job.Status.Running {
-		return check.StillRunning(fmt.Errorf("waiting for vpc creation job to complete"))
+	if job.HasCompleted() {
+		if job.Status.Phase == crdsv1.JobPhaseFailed {
+			return check.Failed(fmt.Errorf("job failed"))
+		}
+		return check.Completed()
 	}
 
-	if job.Status.Failed != nil && *job.Status.Failed {
-		return check.Failed(fmt.Errorf("vpc creation job failed, could not proceed with vpc creation")).NoRequeue()
-	}
-
-	return check.Completed()
+	return check.StillRunning(fmt.Errorf("waiting for job to complete"))
 }
 
 func (r *AwsVPCReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

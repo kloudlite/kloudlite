@@ -1,0 +1,26 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: VirtualMachine
+metadata:
+  name: example-vm
+  namespace: kloudlite
+spec:
+  kloudliteAccount: example
+  cloudProvider: gcp
+  gcp:
+    region: asia-south1
+    gcpProjectID: "{{.gcp_project_id}}"
+    serviceAccount:
+      enabled: false
+    credentialsRef:
+      name: "gcp-creds"
+      namespace: "kube-system"
+    machineType: e2-custom-medium-4096
+    poolType: SPOT
+    startupScript: |+
+      mkdir -p /var/nxtcoder17
+      echo "hi" >> /var/nxtcoder17/hi
+    allowIncomingHttpTraffic: false
+    allowSSH: true
+    bootVolumeSize: 50
+  machineState: "on"
+
