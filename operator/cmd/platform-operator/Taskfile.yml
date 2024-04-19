@@ -33,5 +33,5 @@ tasks:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
-      - task: build
+      - GOARCH=amd64 task build upx={{.upx}}
       - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push

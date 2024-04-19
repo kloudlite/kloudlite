@@ -1,5 +1,5 @@
 # vim:set ft=dockerfile:
 FROM gcr.io/distroless/static:nonroot
-ARG BINARY
-COPY ./bin/${BINARY} /manager
+ARG BINARY TARGETARCH
+COPY ./bin/${BINARY}-${TARGETARCH} /manager
 ENTRYPOINT ["/manager"]
