@@ -19,24 +19,28 @@ tasks:
         vars:
           Out: "./bin/{{.app}}"
 
+  local:build:
+    cmds:
+      - task: go:build
+        vars:
+          GOARCH:
+            sh: echo $GOARCH
+          Out: "./bin/{{.app}}-{{.GOARCH}}"
+
   local:build-and-push:
     preconditions:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
-    vars:
-      push: "{{.push | default false}}"
     cmds:
-      - task: build
-      - nerdctl build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}}
-      - |+
-        if [ "{{.push}}" = "true" ]; then
-          nerdctl push {{.Image}}
-        fi
+      - GOARCH=arm64 task local:build upx=false
+      - GOARCH=amd64 task local:build upx=false
+      - docker buildx build -f ./Containerfile --platform linux/amd64,linux/arm64 -t {{.Image}} . --build-arg BINARY={{.app}} --push
 
   container:build-and-push:
     preconditions:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
-      - task: build
-      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
+      - GOARCH=arm64 task local:build
+      - GOARCH=amd64 task local:build
+      - docker buildx build -f ./Containerfile --platform linux/amd64,linux/arm64 -t {{.Image}} . --build-arg BINARY={{.app}} --push
