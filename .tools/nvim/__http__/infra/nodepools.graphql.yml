@@ -216,6 +216,9 @@ query: |+ #graphql
           spec {
             minCount
             maxCount
+            gcp {
+              machineType
+            }
             # targetCount
           }
           syncStatus {
@@ -234,8 +237,7 @@ query: |+ #graphql
     }
   }
 variables:
-  # clusterName: "{{.clusterName}}"
-  clusterName: "{{.gcpClusterName}}"
+  clusterName: "{{.clusterName}}"
 
 ---
 label: Get Nodepool

@@ -480,6 +480,7 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 		repos.Filter{
 			fields.AccountName:  ctx.AccountName,
 			fields.MetadataName: env.Name,
+			fields.ProjectName:  projectName,
 		},
 		patchForUpdate,
 	)
@@ -504,6 +505,7 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 		ctx,
 		repos.Filter{
 			fields.AccountName:  ctx.AccountName,
+			fields.ProjectName:  projectName,
 			fields.MetadataName: name,
 		},
 		common.PatchForMarkDeletion(),
@@ -528,8 +530,9 @@ func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, 
 	uenv, err := d.environmentRepo.Patch(
 		ctx,
 		repos.Filter{
-			fields.AccountName:  ctx.AccountName,
-			fields.MetadataName: name,
+			fields.AccountName:       ctx.AccountName,
+			fields.MetadataName:      name,
+			fields.MetadataNamespace: namespace,
 		},
 		common.PatchForErrorFromAgent(
 			errMsg,
@@ -553,6 +556,7 @@ func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Env
 		repos.Filter{
 			fields.AccountName:  ctx.AccountName,
 			fields.MetadataName: env.Name,
+			fields.ProjectName:  env.Spec.ProjectName,
 		},
 	)
 	if err != nil {
