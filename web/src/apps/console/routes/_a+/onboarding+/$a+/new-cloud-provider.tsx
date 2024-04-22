@@ -164,7 +164,6 @@ const NewCloudProvider = () => {
                       onChange={handleChange('serviceAccountJson')}
                       resize={false}
                       rows="6"
-                      // disabled={isUpdate}
                     />
                   </div>
                 )}

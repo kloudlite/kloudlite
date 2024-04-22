@@ -462,7 +462,7 @@ const NodepoolResources = ({ items = [] }: { items: BaseType[] }) => {
       />
 
       <DeleteDialog
-        resourceName={showDeleteDialog?.displayName}
+        resourceName={parseName(showDeleteDialog)}
         resourceType={RESOURCE_NAME}
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
