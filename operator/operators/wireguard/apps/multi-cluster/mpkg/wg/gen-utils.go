@@ -29,11 +29,11 @@ func GeneratePublicKey(privateKey string) ([]byte, error) {
 	return []byte(key.PublicKey().String()), nil
 }
 
-func GetRemoteDeviceIp(deviceOffcet int64, IpBase string) ([]byte, error) {
+func GetRemoteDeviceIp(deviceOffset int64, IpBase string) ([]byte, error) {
 	deviceRange := ipaddr.NewIPAddressString(fmt.Sprintf("%s/16", IpBase))
 
 	if address, addressError := deviceRange.ToAddress(); addressError == nil {
-		increment := address.Increment(deviceOffcet)
+		increment := address.Increment(deviceOffset)
 		return []byte(ipaddr.NewIPAddressString(increment.GetNetIP().String()).String()), nil
 	} else {
 		return nil, addressError

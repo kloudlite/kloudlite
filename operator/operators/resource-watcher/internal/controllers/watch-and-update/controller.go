@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/types"
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -202,7 +203,35 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			})
 		}
 
-	case GlobVpn.String(), NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String(), NamespaceGVK.String():
+	case GlobalVPNGVK.String():
+		{
+			var gvpn wgv1.GlobalVPN
+			if err := unmarshalUnstructured(obj, &gvpn); err != nil {
+				return err
+			}
+
+			s, err := rApi.Get(ctx, r.Client, fn.NN(gvpn.Spec.WgRef.Namespace, gvpn.Spec.WgRef.Name), &corev1.Secret{})
+			if err != nil {
+				return err
+			}
+
+			wp, err := fn.ParseFromSecret[wgv1.WgParams](s)
+			if err != nil {
+				return err
+			}
+
+			if wp != nil {
+				obj.Object[t.KeyGlobalVPNWgParams] = wp
+			}
+
+			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+		}
+
+	case NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String(), NamespaceGVK.String():
 		{
 			// dispatch to infra
 			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
@@ -337,7 +366,7 @@ var (
 	RouterGVK                = newGVK("crds.kloudlite.io/v1", "Router")
 	NodePoolGVK              = newGVK("clusters.kloudlite.io/v1", "NodePool")
 	DeviceGVK                = newGVK("wireguard.kloudlite.io/v1", "Device")
-	GlobVpn                  = newGVK("wireguard.kloudlite.io/v1", "GlobalVpn")
+	GlobalVPNGVK             = newGVK("wireguard.kloudlite.io/v1", "GlobalVPN")
 	BuildRunGVK              = newGVK("distribution.kloudlite.io/v1", "BuildRun")
 	ClusterManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ClusterManagedService")
 	HelmChartGVK             = newGVK("crds.kloudlite.io/v1", "HelmChart")
@@ -370,6 +399,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		EnvironmentGVK,
 		RouterGVK,
 
+		GlobalVPNGVK,
 		BuildRunGVK,
 
 		DeviceGVK,

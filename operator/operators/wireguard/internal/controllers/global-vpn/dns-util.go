@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
-	"github.com/kloudlite/operator/operators/wireguard/apps/multi-cluster/mpkg/wg"
+	// "github.com/kloudlite/operator/operators/wireguard/apps/multi-cluster/mpkg/wg"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
@@ -15,12 +15,12 @@ func (r *Reconciler) getCorednsConfig(req *rApi.Request[*wgv1.GlobalVPN], curren
 	updatedContent := string(current)
 
 	for _, p := range obj.Spec.Peers {
-		ip, err := wg.GetRemoteDeviceIp(int64(p.Id), r.Env.WgIpBase)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get remote device ip: %w", err)
-		}
+		// ip, err := wg.GetRemoteDeviceIp(int64(p.Id), r.Env.WgIpBase)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("failed to get remote device ip: %w", err)
+		// }
 
-		updatedContent = addOrUpdateSectionInString(updatedContent, fmt.Sprintf("cluster%d.local:53", p.Id), fmt.Sprintf(`
+		updatedContent = addOrUpdateSectionInString(updatedContent, fmt.Sprintf("cluster%d.local:53", 2), fmt.Sprintf(`
       errors
       forward . %s
 
@@ -28,10 +28,10 @@ func (r *Reconciler) getCorednsConfig(req *rApi.Request[*wgv1.GlobalVPN], curren
       loop
       reload
       loadbalance
-`, ip))
-		if err != nil {
-			return nil, fmt.Errorf("failed to add or update section in coredns config: %w", err)
-		}
+`, p.IP))
+		// if err != nil {
+		// 	return nil, fmt.Errorf("failed to add or update section in coredns config: %w", err)
+		// }
 	}
 
 	return []byte(updatedContent), nil

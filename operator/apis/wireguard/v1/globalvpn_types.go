@@ -1,6 +1,7 @@
 package v1
 
 import (
+	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
@@ -10,10 +11,22 @@ import (
 type Peer struct {
 	PublicKey string `json:"publicKey"`
 	Endpoint  string `json:"endpoint"`
-	Id        int    `json:"id"`
-	Port      int    `json:"port"`
+	// Id        int    `json:"id"`
+	IP string `json:"ip"`
+	Port int    `json:"port"`
 
 	AllowedIPs []string `json:"allowedIPs,omitempty"`
+}
+
+type WgParams struct {
+	WgPrivateKey string `json:"wg_private_key"`
+	WgPublicKey  string `json:"wg_public_key"`
+
+	IP string `json:"ip"`
+
+	DNSServer *string `json:"dnsServer"`
+	// must be a valid nodeport
+	NodePort *string `json:"nodeport,omitempty"`
 }
 
 // ConnectionSpec defines the desired state of Connect
@@ -26,6 +39,11 @@ type GlobVPNSpec struct {
 	// IpAddress *string `json:"ipAddress,omitempty"`
 	// DnsServer *string `json:"dnsServer,omitempty"`
 	// PublicKey *string `json:"publicKey,omitempty"`
+
+	// This secret is unmarshalled into WgParams
+	WgRef ct.SecretRef `json:"wg"`
+
+	WgInterface *string `json:"wgInterface"`
 
 	Peers []Peer `json:"peers,omitempty"`
 
