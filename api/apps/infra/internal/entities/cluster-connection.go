@@ -8,29 +8,35 @@ import (
 	"github.com/kloudlite/operator/pkg/operator"
 )
 
-type ClusterConnection struct {
+type GlobalVPN struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
-	wgv1.ClusterConnection `json:",inline"`
+	// wgv1.ClusterConnection `json:",inline"`
+	wgv1.GlobalVPN `json:",inline"`
 
 	common.ResourceMetadata `json:",inline"`
 
-	AccountName      string `json:"accountName" graphql:"noinput"`
-	ClusterName      string `json:"clusterName" graphql:"noinput"`
-	ClusterGroupName string `json:"clusterGroupName" graphql:"noinput"`
+	AccountName           string `json:"accountName" graphql:"noinput"`
+	ClusterName           string `json:"clusterName" graphql:"noinput"`
+	ClusterPublicEndpoint string `json:"clusterPublicEndpoint" graphql:"noinput"`
 
-	CIDR     string `json:"cidr" graphql:"noinput"`
-	Endpoint string `json:"endpoint" graphql:"noinput"`
+	CIDR                  string `json:"cidr" graphql:"noinput"`
+	AllocatableCIDRSuffix int    `json:"allocatableCIDRSuffix" graphql:"noinput"`
+	ClusterOffset         int    `json:"clusterOffset" graphql:"noinput"`
+
+	GatewayIPAddr string `json:"gatewayIPAddr" graphql:"ignore"`
+
+	ParsedWgParams *wgv1.WgParams `json:"parsedWgParams" graphql:"ignore"`
 
 	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
-func (c *ClusterConnection) GetDisplayName() string {
+func (c *GlobalVPN) GetDisplayName() string {
 	return c.ResourceMetadata.DisplayName
 }
 
-func (c *ClusterConnection) GetStatus() operator.Status {
-	return c.ClusterConnection.Status
+func (c *GlobalVPN) GetStatus() operator.Status {
+	return c.GlobalVPN.Status
 }
 
 var ClusterConnIndices = []repos.IndexField{
@@ -51,7 +57,6 @@ var ClusterConnIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "accountName", Value: repos.IndexAsc},
-			{Key: "spec.id", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

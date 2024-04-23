@@ -44,8 +44,13 @@ type (
 var Module = fx.Module(
 	"app",
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndices),
-	repos.NewFxMongoRepo[*entities.ClusterConnection]("cluster-connections", "clus-cn", entities.ClusterConnIndices),
-	repos.NewFxMongoRepo[*entities.ClusterGroup]("cluster-groups", "clus-grp", entities.ClusterGroupIndices),
+	repos.NewFxMongoRepo[*entities.GlobalVPN]("global_vpn", "gvpn", entities.ClusterConnIndices),
+	repos.NewFxMongoRepo[*entities.ClusterGroup]("cluster_groups", "clus-grp", entities.ClusterGroupIndices),
+
+	repos.NewFxMongoRepo[*entities.GlobalVPNDeviceAddressPool]("global_vpn_address_pool", "gvpn-addr-pool", entities.DeviceAddressPoolIndices),
+	repos.NewFxMongoRepo[*entities.IPClaim]("ip_claim", "ip-claim", entities.IPClaimIndices),
+	repos.NewFxMongoRepo[*entities.FreeIP]("free_ip", "free-ip", entities.FreeIPIndices),
+
 	// repos.NewFxMongoRepo[*entities.BYOKCluster]("byok_clusters", "byok", entities.BYOKClusterIndices),
 	repos.NewFxMongoRepo[*entities.BYOKCluster]("clusters", "byok", entities.BYOKClusterIndices),
 	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cmsvcs", "cmsvcs", entities.ClusterManagedServiceIndices),

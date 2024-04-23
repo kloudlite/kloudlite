@@ -100,6 +100,8 @@ type DbRepo[T Entity] interface {
 	UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error)
 	PatchById(ctx context.Context, id ID, patch Document, opts ...UpdateOpts) (T, error)
 
+	UpdateWithVersionCheck(ctx context.Context, id ID, updatedData T) (T, error)
+
 	Patch(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error)
 	UpdateOne(ctx context.Context, filter Filter, updatedData T, opts ...UpdateOpts) (T, error)
 	PatchOne(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error)

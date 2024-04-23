@@ -37,14 +37,20 @@ type domain struct {
 	helmReleaseRepo           repos.DbRepo[*entities.HelmRelease]
 	nodeRepo                  repos.DbRepo[*entities.Node]
 	nodePoolRepo              repos.DbRepo[*entities.NodePool]
-	clusterConnRepo           repos.DbRepo[*entities.ClusterConnection]
-	clusterGroupRepo          repos.DbRepo[*entities.ClusterGroup]
-	domainEntryRepo           repos.DbRepo[*entities.DomainEntry]
-	secretRepo                repos.DbRepo[*entities.CloudProviderSecret]
-	pvcRepo                   repos.DbRepo[*entities.PersistentVolumeClaim]
-	namespaceRepo             repos.DbRepo[*entities.Namespace]
-	pvRepo                    repos.DbRepo[*entities.PersistentVolume]
-	volumeAttachmentRepo      repos.DbRepo[*entities.VolumeAttachment]
+	globalVPNRepo             repos.DbRepo[*entities.GlobalVPN]
+
+	clusterGroupRepo repos.DbRepo[*entities.ClusterGroup]
+
+	deviceAddressPoolRepo repos.DbRepo[*entities.GlobalVPNDeviceAddressPool]
+	ipClaimRepo           repos.DbRepo[*entities.IPClaim]
+	freeIpRepo            repos.DbRepo[*entities.FreeIP]
+
+	domainEntryRepo      repos.DbRepo[*entities.DomainEntry]
+	secretRepo           repos.DbRepo[*entities.CloudProviderSecret]
+	pvcRepo              repos.DbRepo[*entities.PersistentVolumeClaim]
+	namespaceRepo        repos.DbRepo[*entities.Namespace]
+	pvRepo               repos.DbRepo[*entities.PersistentVolume]
+	volumeAttachmentRepo repos.DbRepo[*entities.VolumeAttachment]
 
 	iamClient                   iam.IAMClient
 	accountsSvc                 AccountsSvc
@@ -168,8 +174,12 @@ var Module = fx.Module("domain",
 			resourceDispatcher ResourceDispatcher,
 			helmReleaseRepo repos.DbRepo[*entities.HelmRelease],
 
-			clusterConnRepo repos.DbRepo[*entities.ClusterConnection],
+			clusterConnRepo repos.DbRepo[*entities.GlobalVPN],
 			clusterGroupRepo repos.DbRepo[*entities.ClusterGroup],
+			deviceAddressPoolRepo repos.DbRepo[*entities.GlobalVPNDeviceAddressPool],
+
+			ipClaimRepo repos.DbRepo[*entities.IPClaim],
+			freeIpRepo repos.DbRepo[*entities.FreeIP],
 
 			pvcRepo repos.DbRepo[*entities.PersistentVolumeClaim],
 			pvRepo repos.DbRepo[*entities.PersistentVolume],
@@ -212,12 +222,17 @@ var Module = fx.Module("domain",
 			}
 
 			return &domain{
-				msvcTemplatesMap:            msvcTemplatesMap,
-				msvcTemplates:               templates,
-				logger:                      logger,
-				env:                         env,
-				clusterRepo:                 clusterRepo,
-				clusterConnRepo:             clusterConnRepo,
+				msvcTemplatesMap:      msvcTemplatesMap,
+				msvcTemplates:         templates,
+				logger:                logger,
+				env:                   env,
+				clusterRepo:           clusterRepo,
+				globalVPNRepo:         clusterConnRepo,
+				deviceAddressPoolRepo: deviceAddressPoolRepo,
+
+				ipClaimRepo: ipClaimRepo,
+				freeIpRepo:  freeIpRepo,
+
 				clusterGroupRepo:            clusterGroupRepo,
 				byokClusterRepo:             byokClusterRepo,
 				clusterManagedServiceRepo:   clustermanagedserviceRepo,
