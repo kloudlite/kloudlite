@@ -61,6 +61,7 @@ const (
 	BYOKClusterCloudProvider                       = "cloudProvider"
 	BYOKClusterCloudflareEnabled                   = "cloudflareEnabled"
 	BYOKClusterClusterInternalDnsHost              = "clusterInternalDnsHost"
+	BYOKClusterClusterServiceCIDR                  = "clusterServiceCIDR"
 	BYOKClusterClusterTokenRef                     = "clusterTokenRef"
 	BYOKClusterClusterTokenRefKey                  = "clusterTokenRef.key"
 	BYOKClusterClusterTokenRefName                 = "clusterTokenRef.name"
@@ -120,6 +121,7 @@ const (
 // constant vars generated for struct Cluster
 const (
 	ClusterClusterGroupName                        = "clusterGroupName"
+	ClusterIpIndex                                 = "ipIndex"
 	ClusterSpec                                    = "spec"
 	ClusterSpecAccountId                           = "spec.accountId"
 	ClusterSpecAccountName                         = "spec.accountName"
@@ -147,6 +149,7 @@ const (
 	ClusterSpecCloudProvider                       = "spec.cloudProvider"
 	ClusterSpecCloudflareEnabled                   = "spec.cloudflareEnabled"
 	ClusterSpecClusterInternalDnsHost              = "spec.clusterInternalDnsHost"
+	ClusterSpecClusterServiceCIDR                  = "spec.clusterServiceCIDR"
 	ClusterSpecClusterTokenRef                     = "spec.clusterTokenRef"
 	ClusterSpecClusterTokenRefKey                  = "spec.clusterTokenRef.key"
 	ClusterSpecClusterTokenRefName                 = "spec.clusterTokenRef.name"
@@ -180,29 +183,6 @@ const (
 	ClusterSpecOutputSecretName                    = "spec.output.secretName"
 	ClusterSpecPublicDNSHost                       = "spec.publicDNSHost"
 	ClusterSpecTaintMasterNodes                    = "spec.taintMasterNodes"
-)
-
-// constant vars generated for struct ClusterConnection
-const (
-	ClusterConnectionCidr                         = "cidr"
-	ClusterConnectionClusterGroupName             = "clusterGroupName"
-	ClusterConnectionEndpoint                     = "endpoint"
-	ClusterConnectionSpec                         = "spec"
-	ClusterConnectionSpecAgentsResources          = "spec.agentsResources"
-	ClusterConnectionSpecAgentsResourcesClaims    = "spec.agentsResources.claims"
-	ClusterConnectionSpecAgentsResourcesLimits    = "spec.agentsResources.limits"
-	ClusterConnectionSpecAgentsResourcesRequests  = "spec.agentsResources.requests"
-	ClusterConnectionSpecDnsServer                = "spec.dnsServer"
-	ClusterConnectionSpecGatewayResources         = "spec.gatewayResources"
-	ClusterConnectionSpecGatewayResourcesClaims   = "spec.gatewayResources.claims"
-	ClusterConnectionSpecGatewayResourcesLimits   = "spec.gatewayResources.limits"
-	ClusterConnectionSpecGatewayResourcesRequests = "spec.gatewayResources.requests"
-	ClusterConnectionSpecId                       = "spec.id"
-	ClusterConnectionSpecInterface                = "spec.interface"
-	ClusterConnectionSpecIpAddress                = "spec.ipAddress"
-	ClusterConnectionSpecNodeport                 = "spec.nodeport"
-	ClusterConnectionSpecPeers                    = "spec.peers"
-	ClusterConnectionSpecPublicKey                = "spec.publicKey"
 )
 
 // constant vars generated for struct ClusterGroup
@@ -252,9 +232,53 @@ const (
 	DomainEntryDomainName = "domainName"
 )
 
+// constant vars generated for struct FreeIP
+const (
+	FreeIPGlobalVPNName = "globalVPNName"
+	FreeIPIpAddr        = "ipAddr"
+)
+
 // constant vars generated for struct GCPSecretCredentials
 const (
 	GCPSecretCredentialsServiceAccountJSON = "serviceAccountJSON"
+)
+
+// constant vars generated for struct GlobalVPN
+const (
+	GlobalVPNAllocatableCIDRSuffix        = "allocatableCIDRSuffix"
+	GlobalVPNCidr                         = "cidr"
+	GlobalVPNClusterOffset                = "clusterOffset"
+	GlobalVPNClusterPublicEndpoint        = "clusterPublicEndpoint"
+	GlobalVPNGatewayIPAddr                = "gatewayIPAddr"
+	GlobalVPNParsedWgParams               = "parsedWgParams"
+	GlobalVPNParsedWgParamsDnsServer      = "parsedWgParams.dnsServer"
+	GlobalVPNParsedWgParamsIp             = "parsedWgParams.ip"
+	GlobalVPNParsedWgParamsNodeport       = "parsedWgParams.nodeport"
+	GlobalVPNParsedWgParamsWgPrivateKey   = "parsedWgParams.wg_private_key"
+	GlobalVPNParsedWgParamsWgPublicKey    = "parsedWgParams.wg_public_key"
+	GlobalVPNSpec                         = "spec"
+	GlobalVPNSpecAgentsResources          = "spec.agentsResources"
+	GlobalVPNSpecAgentsResourcesClaims    = "spec.agentsResources.claims"
+	GlobalVPNSpecAgentsResourcesLimits    = "spec.agentsResources.limits"
+	GlobalVPNSpecAgentsResourcesRequests  = "spec.agentsResources.requests"
+	GlobalVPNSpecGatewayResources         = "spec.gatewayResources"
+	GlobalVPNSpecGatewayResourcesClaims   = "spec.gatewayResources.claims"
+	GlobalVPNSpecGatewayResourcesLimits   = "spec.gatewayResources.limits"
+	GlobalVPNSpecGatewayResourcesRequests = "spec.gatewayResources.requests"
+	GlobalVPNSpecPeers                    = "spec.peers"
+	GlobalVPNSpecWg                       = "spec.wg"
+	GlobalVPNSpecWgName                   = "spec.wg.name"
+	GlobalVPNSpecWgNamespace              = "spec.wg.namespace"
+	GlobalVPNSpecWgInterface              = "spec.wgInterface"
+)
+
+// constant vars generated for struct GlobalVPNDeviceAddressPool
+const (
+	GlobalVPNDeviceAddressPoolCidr          = "cidr"
+	GlobalVPNDeviceAddressPoolGlobalVPNName = "globalVPNName"
+	GlobalVPNDeviceAddressPoolMaxOffset     = "maxOffset"
+	GlobalVPNDeviceAddressPoolMinOffset     = "minOffset"
+	GlobalVPNDeviceAddressPoolRunningOffset = "runningOffset"
 )
 
 // constant vars generated for struct HelmRelease
@@ -284,6 +308,13 @@ const (
 	HelmReleaseSpecPreUninstall                                                                               = "spec.preUninstall"
 	HelmReleaseSpecReleaseName                                                                                = "spec.releaseName"
 	HelmReleaseSpecValues                                                                                     = "spec.values"
+)
+
+// constant vars generated for struct IPClaim
+const (
+	IPClaimGlobalVPNName  = "globalVPNName"
+	IPClaimIpAddr         = "ipAddr"
+	IPClaimReservationKey = "reservationKey"
 )
 
 // constant vars generated for struct InputField
