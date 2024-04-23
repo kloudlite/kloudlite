@@ -699,7 +699,7 @@ const LogComp = ({
     [key: string]: boolean;
   }>({});
 
-  const [selectedPod, setSelectedPod] = useState<string>('');
+  const [selectedPod, setSelectedPod] = useState<string>('all');
 
   useEffect(() => {
     if (logs.length) {
@@ -814,12 +814,12 @@ const LogComp = ({
                       }}
                       value={selectedPod}
                     >
+                      <option value="all">All</option>
                       {Object.keys(pods).map((v) => (
                         <option key={v} value={v}>
                           {v.substring(v.length - 5, v.length)}
                         </option>
                       ))}
-                      <option value="all">All</option>
                     </select>
                   )}
 
