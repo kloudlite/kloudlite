@@ -56,7 +56,7 @@ func parseVpnSec(s *corev1.Secret) (*Sec, error) {
 	}, nil
 }
 
-func (r *Reconciler) getVpnSec(ctx context.Context, obj *wgv1.GlobalVpn) (*Sec, error) {
+func (r *Reconciler) getVpnSec(ctx context.Context, obj *wgv1.GlobalVPN) (*Sec, error) {
 	secName := fmt.Sprintf("%s-gateway-configs", obj.Name)
 	sec, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, secName), &corev1.Secret{})
 

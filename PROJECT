@@ -382,7 +382,7 @@ resources:
     namespaced: true
   domain: kloudlite.io
   group: wireguard
-  kind: GlobalVpn
+  kind: GlobalVPN
   path: github.com/kloudlite/operator/apis/wireguard/v1
   version: v1
 - api:

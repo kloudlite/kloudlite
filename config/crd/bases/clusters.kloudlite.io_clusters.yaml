@@ -23,7 +23,7 @@ spec:
       name: Job
       type: string
     - jsonPath: .status.lastReconcileTime
-      name: Last_Reconciled_At
+      name: Seen
       type: date
     - jsonPath: .metadata.annotations.kloudlite\.io\/checks
       name: Checks
@@ -243,6 +243,8 @@ spec:
               cloudflareEnabled:
                 type: boolean
               clusterInternalDnsHost:
+                type: string
+              clusterServiceCIDR:
                 type: string
               clusterTokenRef:
                 properties:

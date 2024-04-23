@@ -9,7 +9,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
-func (r *Reconciler) getCorednsConfig(req *rApi.Request[*wgv1.GlobalVpn], current []byte) ([]byte, error) {
+func (r *Reconciler) getCorednsConfig(req *rApi.Request[*wgv1.GlobalVPN], current []byte) ([]byte, error) {
 	obj, _ := req.Object, req.Context()
 
 	updatedContent := string(current)
