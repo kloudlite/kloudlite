@@ -1,6 +1,7 @@
 package entities
 
 import (
+	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -18,6 +19,8 @@ type Cluster struct {
 	ClusterGroupName *string      `json:"clusterGroupName"`
 	AccountName      string       `json:"accountName" graphql:"noinput"`
 	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+
+	IPIndex int `json:"ipIndex" graphql:"ignore"`
 }
 
 func (c *Cluster) GetDisplayName() string {
@@ -46,5 +49,8 @@ var ClusterIndices = []repos.IndexField{
 		Field: []repos.IndexKey{
 			{Key: "accountName", Value: repos.IndexAsc},
 		},
+	},
+	{
+		Field: []repos.IndexKey{{Key: fc.ClusterIpIndex, Value: repos.IndexAsc}},
 	},
 }

@@ -48,9 +48,9 @@ query: |+ #graphql
   }
 variables:
   cluster:
-    displayName: "Sample Cluster 2"
+    displayName: "do not use this cluster"
     metadata:
-      name: "{{.gcpClusterName}}"
+      name: "{{.gcpClusterName}}2"
     spec:
       cloudflareEnabled: true
       availabilityMode: dev
@@ -59,7 +59,7 @@ variables:
         credentialsRef:
           name: "{{.gcpCloudproviderName}}"
         region: asia-south1
-        gcpProjectID: "rich-wavelet-412321"
+        # gcpProjectID: "rich-wavelet-412321"
 ---
 
 label: List Clusters
@@ -277,8 +277,8 @@ query: |+ #graphql
     infra_upgradeHelmKloudliteAgent(clusterName: $clusterName)
   }
 variables:
-  clusterName: "{{.clusterName}}"
-  # clusterName: "{{.gcpClusterName}}"
+  # clusterName: "{{.clusterName}}"
+  clusterName: "{{.gcpClusterName}}"
 ---
 
 label: Delete Cluster
