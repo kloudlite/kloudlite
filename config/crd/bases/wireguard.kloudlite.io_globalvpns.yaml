@@ -153,19 +153,35 @@ spec:
                       type: array
                     endpoint:
                       type: string
-                    id:
-                      type: integer
+                    ip:
+                      description: Id        int    `json:"id"`
+                      type: string
                     port:
                       type: integer
                     publicKey:
                       type: string
                   required:
                   - endpoint
-                  - id
+                  - ip
                   - port
                   - publicKey
                   type: object
                 type: array
+              wg:
+                description: This secret is unmarshalled into WgParams
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
+              wgInterface:
+                type: string
+            required:
+            - wg
+            - wgInterface
             type: object
           status:
             properties:

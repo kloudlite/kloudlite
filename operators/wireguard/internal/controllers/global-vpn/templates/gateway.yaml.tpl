@@ -3,7 +3,7 @@
 {{- $image := get . "image"}}
 {{- $resources := get . "resources"}}
 {{- $server_config := get . "serverConfig"}}
-{{- $nodeport := get . "nodeport"}}
+{{- /* {{- $nodeport := get . "nodeport"}} */}}
 {{- $ownerRefs := get . "ownerRefs" -}}
 {{- $interface := get . "interface" -}}
 {{- $corefile := get . "corefile" -}}
@@ -179,6 +179,6 @@ spec:
   - port: 51820
     protocol: UDP
     targetPort: 51820
-    nodePort: {{ $nodeport }}
+    {{- /* nodePort: {{ $nodeport }} */}}
   selector: *labels
   type: NodePort
