@@ -22,6 +22,8 @@ type ClusterJobVars struct {
 	ClusterSecretName      string
 	ClusterSecretNamespace string
 
+	ClusterServiceCIDR string
+
 	ValuesJSON string
 
 	CloudProvider string

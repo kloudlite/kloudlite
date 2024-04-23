@@ -89,7 +89,7 @@ var (
 // +kubebuilder:rbac:groups=wireguard.kloudlite.io,resources=connections/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &wgv1.GlobalVpn{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &wgv1.GlobalVPN{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -146,7 +146,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) ensureNs(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.Result {
+func (r *Reconciler) ensureNs(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Result {
 	ctx, _ := req.Context(), req.Object
 	check := rApi.NewRunningCheck(NSReady, req)
 
@@ -160,7 +160,7 @@ func (r *Reconciler) ensureNs(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.Res
 	return check.Completed()
 }
 
-func (r *Reconciler) patchDefaults(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.Result {
+func (r *Reconciler) patchDefaults(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(SpecReady, req)
 
@@ -403,7 +403,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*wgv1.GlobalVpn]) stepResul
 	return check.Completed()
 }
 
-func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.Result {
+func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(GWReady, req)
 
@@ -497,7 +497,7 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVpn]) stepResult
 	return check.Completed()
 }
 
-func (r *Reconciler) reconAgent(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.Result {
+func (r *Reconciler) reconAgent(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(AgtReady, req)
 
@@ -532,7 +532,7 @@ func (r *Reconciler) reconAgent(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.R
 	return check.Completed()
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*wgv1.GlobalVpn]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Result {
 	// INFO: currently all resources will consist owner reference, so will be deleted automatically
 
 	return req.Finalize()
@@ -544,7 +544,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&wgv1.GlobalVpn{})
+	builder := ctrl.NewControllerManagedBy(mgr).For(&wgv1.GlobalVPN{})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 
 	watchList := []client.Object{

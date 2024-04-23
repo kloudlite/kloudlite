@@ -608,6 +608,8 @@ func (r *ClusterReconciler) applyClusterJob(req *rApi.Request[*clustersv1.Cluste
 		ClusterSecretName:      obj.Spec.Output.SecretName,
 		ClusterSecretNamespace: obj.Namespace,
 
+		ClusterServiceCIDR: obj.Spec.ClusterServiceCIDR,
+
 		ValuesJSON:    valuesJson,
 		CloudProvider: string(obj.Spec.CloudProvider),
 		// AWS: func() *templates.AWSClusterJobParams {
