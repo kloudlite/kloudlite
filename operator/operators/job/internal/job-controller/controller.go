@@ -194,6 +194,10 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Resu
 		if obj.Spec.OnApply.PodSpec.RestartPolicy == "" {
 			obj.Spec.OnApply.PodSpec.RestartPolicy = corev1.RestartPolicyNever
 		}
+		if obj.Spec.OnApply.BackOffLimit == nil {
+			obj.Spec.OnApply.BackOffLimit = fn.New(int32(1))
+		}
+
 		jobTemplate := &batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            obj.Name,

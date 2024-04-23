@@ -9,15 +9,15 @@ metadata:
 spec:
   group: wireguard.kloudlite.io
   names:
-    kind: GlobalVpn
-    listKind: GlobalVpnList
+    kind: GlobalVPN
+    listKind: GlobalVPNList
     plural: globalvpns
     singular: globalvpn
   scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime
-      name: Last_Reconciled_At
+      name: Seen
       type: date
     - jsonPath: .metadata.annotations.kloudlite\.io\/checks
       name: Checks
@@ -31,7 +31,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: GlobalVpn is the Schema for the connects API
+        description: GlobalVPN is the Schema for the connects API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation

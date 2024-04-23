@@ -17,7 +17,7 @@ func main() {
 
 	mgr.RegisterControllers(
 		&device.Reconciler{Name: "Device", Env: ev},
-		&cc.Reconciler{Name: "GlobalVpn", Env: ev},
+		&cc.Reconciler{Name: "GlobalVPN", Env: ev},
 	)
 
 	mgr.Start()
