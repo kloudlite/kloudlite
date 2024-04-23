@@ -1,6 +1,7 @@
 package globalvpn
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"slices"
@@ -18,12 +19,12 @@ import (
 	"github.com/kloudlite/operator/operators/wireguard/internal/controllers/global-vpn/templates"
 	"github.com/kloudlite/operator/operators/wireguard/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -32,18 +33,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
-
-/*
-steps to be implemented:
-[x] ensure namespace is ready
-[x] ensure spec datas
-[x] ensure gateway created and up to date
-[x] ensure agent created and up to date
-[x] handle delete
-
-TODO: yet to decide on the following:
-[ ] service discovery ( service discovery is not decided yet )
-*/
 
 const (
 	ResourceNamespace = "kl-global-vpn"
@@ -63,26 +52,26 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	NSReady   string = "namespace-ready"
-	GWReady   string = "gateway-ready"
-	AgtReady  string = "agent-ready"
-	SpecReady string = "spec-ready"
+	NSReady       string = "namespace-ready"
+	GWReady       string = "gateway-ready"
+	AgtReady      string = "agent-ready"
+	SpecReady     string = "spec-ready"
+	TrackNodePort string = "track-node-port"
 
 	// ConnectDeleted string = "connect-deleted"
 )
 
-var (
-	CONN_CHECKLIST = []rApi.CheckMeta{
-		{Name: NSReady, Title: "making sure namespace is ready"},
-		{Name: SpecReady, Title: "making sure spec data is ready"},
-		{Name: GWReady, Title: "making sure gateway is ready"},
-		{Name: AgtReady, Title: "making sure agent is ready"},
-	}
+var CONN_CHECKLIST = []rApi.CheckMeta{
+	{Name: NSReady, Title: "making sure namespace is ready"},
+	{Name: SpecReady, Title: "making sure spec data is ready"},
+	{Name: GWReady, Title: "making sure gateway is ready"},
+	{Name: AgtReady, Title: "making sure agent is ready"},
+	{Name: TrackNodePort, Title: "making sure agent is ready", Debug: true},
+}
 
-	// CONN_DESTROY_CHECKLIST = []rApi.CheckMeta{
-	// 	{Name: ConnectDeleted, Title: "Cleaning up resources"},
-	// }
-)
+// CONN_DESTROY_CHECKLIST = []rApi.CheckMeta{
+// 	{Name: ConnectDeleted, Title: "Cleaning up resources"},
+// }
 
 // +kubebuilder:rbac:groups=wireguard.kloudlite.io,resources=connections,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=wireguard.kloudlite.io,resources=connections/status,verbs=get;update;patch
@@ -142,6 +131,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.trackNodePort(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
 }
@@ -166,6 +159,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*wgv1.GlobalVPN]) stepResul
 
 	updated := false
 	if obj.Spec.GatewayResources == nil {
+		updated = true
 		obj.Spec.GatewayResources = &corev1.ResourceRequirements{
 			Limits: corev1.ResourceList{
 				corev1.ResourceCPU:    resource.MustParse("50m"),
@@ -176,10 +170,10 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*wgv1.GlobalVPN]) stepResul
 				corev1.ResourceMemory: resource.MustParse("32Mi"),
 			},
 		}
-		updated = true
 	}
 
 	if obj.Spec.AgentsResources == nil {
+		updated = true
 		obj.Spec.AgentsResources = &corev1.ResourceRequirements{
 			Limits: corev1.ResourceList{
 				corev1.ResourceCPU:    resource.MustParse("20m"),
@@ -190,216 +184,65 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*wgv1.GlobalVPN]) stepResul
 				corev1.ResourceMemory: resource.MustParse("12Mi"),
 			},
 		}
+	}
+
+	if obj.Spec.WgInterface == nil {
 		updated = true
+		obj.Spec.WgInterface = fn.New("kl0")
+	}
+
+	wgCreds, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.WgRef.Namespace, obj.Spec.WgRef.Name), &corev1.Secret{})
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	wc, err := fn.ParseFromSecret[wgv1.WgParams](wgCreds)
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	if wc.IP == "" {
+		return check.Failed(fmt.Errorf("wg gateway IP must be provided"))
+	}
+
+	if wc.DNSServer == nil {
+		s, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
+		if err != nil {
+			return check.Failed(err)
+		}
+		wc.DNSServer = &s.Spec.ClusterIP
+	}
+
+	if wc.WgPrivateKey == "" {
+		publ, priv, err := wg.GenerateWgKeys()
+		if err != nil {
+			return check.Failed(err)
+		}
+
+		wc.WgPublicKey = string(publ)
+		wc.WgPrivateKey = string(priv)
+
+		m, err := fn.JsonConvert[map[string]string](wc)
+		if err != nil {
+			return check.Failed(err)
+		}
+
+		wgCreds.StringData = m
+		if err := r.Update(ctx, wgCreds); err != nil {
+			return check.StillRunning(err)
+		}
+		return check.StillRunning(fmt.Errorf("waiting for controller to patch wg private/public keys"))
 	}
 
 	if updated {
-		if err := r.Client.Update(ctx, obj); err != nil {
+		if err := r.Update(ctx, obj); err != nil {
 			return check.Failed(err)
 		}
 
 		return check.StillRunning(fmt.Errorf("waiting for spec data to be updated"))
 	}
 
-	secUpdated := false
-
-	secName := fmt.Sprintf("%s-gateway-configs", obj.Name)
-
-	createSec := func() error {
-		publ, priv, err := wg.GenerateWgKeys()
-		if err != nil {
-			return err
-		}
-
-		ip, err := wg.GetRemoteDeviceIp(int64(1), r.Env.WgIpBase)
-		if err != nil {
-			return err
-		}
-
-		s, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
-		if err != nil {
-			return err
-		}
-
-		se := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: secName, Namespace: ResourceNamespace}}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, se, func() error {
-			se.Data = map[string][]byte{
-				"private-key": priv,
-				"public-key":  publ,
-				"id":          []byte("1"),
-				"ip":          []byte(string(ip)),
-				"dns-server":  []byte(s.Spec.ClusterIP),
-				"port":        []byte("51830"),
-				"interface":   []byte(fmt.Sprintf("kl%d", 1)),
-			}
-			return nil
-		}); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	var mSec = &corev1.Secret{}
-
-	if err := func() error {
-		sec, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, secName), &corev1.Secret{})
-		if err != nil {
-			if apiErrors.IsNotFound(err) {
-				return nil
-			}
-
-			err := createSec()
-			if err != nil {
-				return err
-			}
-
-			secUpdated = true
-
-			return nil
-		}
-
-		mSec = sec
-
-		return nil
-	}(); err != nil {
-		return check.Failed(err)
-	}
-
-	if err := func() error {
-		s, err := parseVpnSec(mSec)
-		if err != nil {
-			return err
-		}
-
-		if s.PrivateKey == "" {
-			publ, priv, err := wg.GenerateWgKeys()
-			if err != nil {
-				return err
-			}
-
-			mSec.Data["private-key"] = priv
-			mSec.Data["public-key"] = publ
-			secUpdated = true
-		}
-
-		if s.PublicKey == "" {
-			publ, _, err := wg.GenerateWgKeys()
-			if err != nil {
-				return err
-			}
-
-			mSec.Data["public-key"] = publ
-			secUpdated = true
-		}
-
-		if s.Id == 0 {
-			s.Id = 1
-			mSec.Data["id"] = []byte("1")
-			secUpdated = true
-		}
-
-		if s.Port == 0 {
-			s.Port = 51830
-			mSec.Data["port"] = []byte("51830")
-			secUpdated = true
-		}
-
-		if s.IpAddr == "" {
-			b, err := wg.GetRemoteDeviceIp(int64(s.Id), r.Env.WgIpBase)
-			if err != nil {
-				return err
-			}
-
-			mSec.Data["ip-addr"] = []byte(b)
-			secUpdated = true
-		}
-
-		if s.Interface == "" {
-			mSec.Data["interface"] = []byte(fmt.Sprintf("kl%d", s.Id))
-			secUpdated = true
-		}
-
-		if s.DnsServer == "" {
-			svc, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
-			if err != nil {
-				return err
-			}
-
-			mSec.Data["dns-server"] = []byte(svc.Spec.ClusterIP)
-			secUpdated = true
-		}
-
-		return nil
-	}(); err != nil {
-		return check.Failed(err)
-	}
-
-	if secUpdated {
-
-		if err := r.Client.Update(ctx, mSec); err != nil {
-			return check.Failed(err)
-		}
-
-		return check.StillRunning(fmt.Errorf("waiting for secret data to be updated"))
-	}
-
-	if err := func() error {
-
-		s, err := parseVpnSec(mSec)
-		if err != nil {
-			return err
-		}
-
-		matched := false
-		for i, p := range obj.Spec.Peers {
-			if p.PublicKey == s.PublicKey {
-				matched = true
-
-				changed := false
-
-				if p.Id != s.Id {
-					obj.Spec.Peers[i].Id = s.Id
-					changed = true
-				}
-
-				if p.Port != s.Port {
-					obj.Spec.Peers[i].Port = s.Port
-					changed = true
-				}
-
-				if p.PublicKey != s.PublicKey {
-					obj.Spec.Peers[i].PublicKey = s.PublicKey
-					changed = true
-				}
-
-				if changed {
-					if err := r.Client.Update(ctx, obj); err != nil {
-						return err
-					}
-				}
-
-				break
-			}
-		}
-
-		if !matched {
-			obj.Spec.Peers = append(obj.Spec.Peers, wgv1.Peer{
-				PublicKey: s.PublicKey,
-				Id:        s.Id,
-				Port:      s.Port,
-			})
-
-			if err := r.Client.Update(ctx, obj); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}(); err != nil {
-		return check.Failed(err)
-	}
-
+	rApi.SetLocal(req, "wg-params", *wc)
 	return check.Completed()
 }
 
@@ -407,26 +250,18 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(GWReady, req)
 
-	msec, err := r.getVpnSec(ctx, obj)
-	if err != nil {
-		return check.Failed(err)
+	wc, ok := rApi.GetLocal[wgv1.WgParams](req, "wg-params")
+	if !ok {
+		return check.Failed(errors.NotInLocals("wg-params"))
 	}
 
-	var peers []appCommon.Peer
-	for i, peer := range obj.Spec.Peers {
-		if peer.Id == 0 || peer.Id > 499 {
-			return check.Failed(fmt.Errorf("peer [%d]: id should be between 1 and 499", i)).Err(nil)
-		}
-
-		if peer.PublicKey == msec.PublicKey {
+	peers := make([]appCommon.Peer, 0, len(obj.Spec.Peers))
+	for _, peer := range obj.Spec.Peers {
+		if peer.PublicKey == wc.WgPublicKey {
 			continue
 		}
 
-		ip, err := wg.GetRemoteDeviceIp(int64(peer.Id), r.Env.WgIpBase)
-		if err != nil {
-			return check.Failed(err)
-		}
-		ipCidr := fmt.Sprintf("%s/32", ip)
+		ipCidr := fmt.Sprintf("%s/32", peer.IP)
 
 		ai := peer.AllowedIPs
 		if !slices.Contains(ai, ipCidr) {
@@ -440,20 +275,15 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 		})
 	}
 
-	secName := fmt.Sprintf("%s-gateway-configs", obj.Name)
-	xSec, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, secName), &corev1.Secret{})
-	if err != nil {
-		return check.Failed(err)
-	}
-
-	pvKey, ok := xSec.Data["private-key"]
-	if !ok {
-		return check.Failed(fmt.Errorf("private key not found"))
-	}
+	// secName := fmt.Sprintf("%s-gateway-configs", obj.Name)
+	// xSec, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, secName), &corev1.Secret{})
+	// if err != nil {
+	// 	return check.Failed(err)
+	// }
 
 	sec := server.Config{
-		PrivateKey: string(pvKey),
-		IpAddress:  fmt.Sprintf("%s/32", msec.IpAddr),
+		PrivateKey: string(wc.WgPrivateKey),
+		IpAddress:  fmt.Sprintf("%s/32", wc.IP),
 		Peers:      peers,
 	}
 
@@ -474,19 +304,20 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 		"resources":    *obj.Spec.GatewayResources,
 		"serverConfig": string(secBytes),
 		"ownerRefs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		"interface":    msec.Interface,
-		"nodeport":     msec.Port,
+		"interface":    obj.Spec.WgInterface,
+		// "nodeport":     wc.NodePort,
 	})
 	if err != nil {
-		return check.Failed(err).Err(nil)
+		return check.Failed(err).NoRequeue()
 	}
 
 	if _, err = r.yamlClient.ApplyYAML(ctx, gw); err != nil {
-		return check.Failed(err).Err(nil)
+		return check.Failed(err)
 	}
 
 	s, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, fmt.Sprintf("%s-gateway-configs", obj.Name)), &corev1.Secret{})
-	if err == nil && !slices.Equal(secBytes, s.Data["server-config"]) {
+
+	if err == nil && !slices.Equal(bytes.TrimSpace(secBytes), bytes.TrimSpace(s.Data["server-config"])) {
 		if err := fn.RolloutRestart(r.Client, fn.Deployment, ResourceNamespace, map[string]string{
 			constants.WGConnectionNameKey:         fmt.Sprintf("%s-gateway", obj.Name),
 			"kloudlite.io/wg-global-vpn.resource": "gateway",
@@ -501,16 +332,16 @@ func (r *Reconciler) reconAgent(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.R
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(AgtReady, req)
 
-	mSec, err := r.getVpnSec(ctx, obj)
-	if err != nil {
-		return check.Failed(err)
+	wc, ok := rApi.GetLocal[wgv1.WgParams](req, "wg-params")
+	if !ok {
+		return check.Failed(errors.NotInLocals("wg-params"))
 	}
 
 	agent, err := templates.ParseTemplate(templates.Agent, map[string]interface{}{
 		"gatewayName":  fmt.Sprintf("%s-gateway", obj.Name),
 		"name":         fmt.Sprintf("%s-agent", obj.Name),
 		"namespace":    ResourceNamespace,
-		"corednsSvcIp": mSec.DnsServer,
+		"corednsSvcIp": wc.DNSServer,
 		"resources":    *obj.Spec.AgentsResources,
 		"image": func() string {
 			if r.Env.WgAgentImage == "" {
@@ -518,7 +349,7 @@ func (r *Reconciler) reconAgent(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.R
 			}
 			return r.Env.WgAgentImage
 		}(),
-		"interface": mSec.Interface,
+		"interface": obj.Spec.WgInterface,
 		"ownerRefs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 	})
 	if err != nil {
@@ -536,6 +367,52 @@ func (r *Reconciler) finalize(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Res
 	// INFO: currently all resources will consist owner reference, so will be deleted automatically
 
 	return req.Finalize()
+}
+
+func (r *Reconciler) trackNodePort(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(TrackNodePort, req)
+
+	svc, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, fmt.Sprintf("%s-gateway-external", obj.Name)), &corev1.Service{})
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	var nodeport *int32
+
+	for i := range svc.Spec.Ports {
+		if svc.Spec.Type == corev1.ServiceTypeNodePort {
+			nodeport = &svc.Spec.Ports[i].NodePort
+		}
+	}
+
+	if nodeport == nil {
+		return check.Failed(fmt.Errorf("failed to find a nodeport for our gateway service"))
+	}
+
+	wgCreds, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.WgRef.Namespace, obj.Spec.WgRef.Name), &corev1.Secret{})
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	wc, err := fn.ParseFromSecret[wgv1.WgParams](wgCreds)
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	wc.NodePort = fn.New(fmt.Sprintf("%d", *nodeport))
+
+	m, err := fn.JsonConvert[map[string]string](wc)
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	wgCreds.StringData = m
+	if err := r.Update(ctx, wgCreds); err != nil {
+		return check.StillRunning(err)
+	}
+
+	return check.Completed()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
