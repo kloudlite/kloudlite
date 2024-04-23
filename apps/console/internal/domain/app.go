@@ -148,7 +148,6 @@ func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.A
 	}
 
 	// FIXME: hotfix till volume mounts for PVCs are not added in UI
-
 	pvcMounts := make(map[int][]crdsv1.ContainerVolume)
 	for i := range xapp.Spec.Containers {
 		for _, volume := range xapp.Spec.Containers[i].Volumes {
@@ -174,6 +173,15 @@ func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.A
 				appIn.Spec.Containers[i].Volumes = append(appIn.Spec.Containers[i].Volumes, pvcVolume)
 			}
 		}
+	}
+
+	// readiness and liveness probes
+	if xapp.Spec.Containers[0].LivenessProbe != nil && appIn.Spec.Containers[0].LivenessProbe == nil {
+		appIn.Spec.Containers[0].LivenessProbe = xapp.Spec.Containers[0].LivenessProbe
+	}
+
+	if xapp.Spec.Containers[0].ReadinessProbe != nil {
+		appIn.Spec.Containers[0].ReadinessProbe = xapp.Spec.Containers[0].ReadinessProbe
 	}
 
 	patchDoc := repos.Document{

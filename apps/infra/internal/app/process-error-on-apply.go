@@ -52,17 +52,17 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 
 		gvkstr := obj.GroupVersionKind().String()
 		switch gvkstr {
-		case clusterConnGVK.String():
+		case globalVpnGVK.String():
 			{
-				cc, err := fn.JsonConvert[entities.ClusterConnection](obj.Object)
+				cc, err := fn.JsonConvert[entities.GlobalVPN](obj.Object)
 				if err != nil {
 					return err
 				}
 
 				if errObj.Action == t.ActionApply {
-					return d.OnClusterConnApplyError(dctx, errObj.ClusterName, obj.GetName(), errObj.Error, opts)
+					return d.OnGlobalVPNApplyError(dctx, errObj.ClusterName, obj.GetName(), errObj.Error, opts)
 				}
-				return d.OnClusterConnDeleteMessage(dctx, errObj.ClusterName, cc)
+				return d.OnGlobalVPNDeleteMessage(dctx, errObj.ClusterName, cc)
 			}
 		case nodepoolGVK.String():
 			{

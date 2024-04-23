@@ -12,7 +12,6 @@ import (
 )
 
 // TODO: needs to chain cluster in cluster group
-
 func (d *domain) CreateClusterGroup(ctx InfraContext, cg entities.ClusterGroup) (*entities.ClusterGroup, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCluster); err != nil {
 		return nil, errors.NewE(err)

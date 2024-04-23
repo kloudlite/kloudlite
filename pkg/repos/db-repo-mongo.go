@@ -467,6 +467,23 @@ func (repo *dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opt
 	return bsonToStruct[T](r)
 }
 
+var ErrRecordMismatch = fmt.Errorf("update with version check failed, last updated time mismatch")
+
+func (repo *dbRepo[T]) UpdateWithVersionCheck(ctx context.Context, id ID, updatedData T) (T, error) {
+	currRecord := repo.db.Collection(repo.collectionName).FindOne(ctx, &Filter{"id": id})
+	t, err := bsonToStruct[T](currRecord)
+	if err != nil {
+		return t, err
+	}
+
+	if updatedData.GetUpdateTime().Compare(t.GetUpdateTime()) == 0 {
+		// it is the same record, so update them
+		return repo.UpdateById(ctx, id, updatedData)
+	}
+
+	return t, ErrRecordMismatch
+}
+
 func (repo *dbRepo[T]) Upsert(ctx context.Context, filter Filter, data T) (T, error) {
 	id := func() ID {
 		if data.GetId() != "" {

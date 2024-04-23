@@ -43,3 +43,9 @@ var CreatedOrUpdatedByResourceSync = CreatedOrUpdatedBy{
 	UserName:  CreatedByResourceSyncUsername,
 	UserEmail: CreatedByResourceSyncUserEmail,
 }
+
+var CreatedOrUpdatedByKloudlite = CreatedOrUpdatedBy{
+	UserId:    repos.ID(""),
+	UserName:  "kloudlite",
+	UserEmail: "support@kloudlite.io",
+}
