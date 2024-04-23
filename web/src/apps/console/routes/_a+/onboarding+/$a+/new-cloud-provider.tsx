@@ -14,12 +14,16 @@ import MultiStepProgress, {
 } from '~/console/components/multi-step-progress';
 import { BottomNavigation } from '~/console/components/commons';
 import FillerCloudProvider from '~/console/assets/filler-cloud-provider';
+import { TextArea } from '~/components/atoms/input';
 
 const NewCloudProvider = () => {
   const { a: accountName } = useParams();
   const api = useConsoleApi();
 
-  const providers = [{ label: 'Amazon Web Services', value: 'aws' }];
+  const providers = [
+    { label: 'Amazon Web Services', value: 'aws' },
+    { label: 'Google Cloud Provider', value: 'gcp' },
+  ];
 
   const navigate = useNavigate();
   const [isNameLoading, _setIsNameLoading] = useState(false);
@@ -28,6 +32,7 @@ const NewCloudProvider = () => {
       displayName: '',
       name: '',
       provider: providers[0].value,
+      serviceAccountJson: '',
       isNameError: false,
     },
     validationSchema: Yup.object({
@@ -52,6 +57,20 @@ const NewCloudProvider = () => {
               },
             });
 
+          case 'gcp':
+            return api.createProviderSecret({
+              secret: {
+                displayName: val.displayName,
+                metadata: {
+                  name: val.name,
+                },
+                cloudProviderName: validateCloudProvider(val.provider),
+                gcp: {
+                  serviceAccountJSON: val.serviceAccountJson,
+                },
+              },
+            });
+
           default:
             throw new Error('invalid provider');
         }
@@ -70,7 +89,11 @@ const NewCloudProvider = () => {
 
         toast.success('provider secret created successfully');
 
-        navigate(`/onboarding/${accountName}/${values.name}/validate-cp`);
+        navigate(
+          `/onboarding/${accountName}/${values.name}/${
+            val.provider === 'aws' ? 'validate-cp' : 'new-cluster'
+          }`
+        );
       } catch (err) {
         handleError(err);
       }
@@ -132,6 +155,18 @@ const NewCloudProvider = () => {
                     options={async () => providers}
                   />
                 </div>
+                {values?.provider === 'gcp' && (
+                  <div className="gap-3xl pt-3xl">
+                    <TextArea
+                      placeholder="Enter service account json"
+                      label="Service Account JSON"
+                      value={values.serviceAccountJson}
+                      onChange={handleChange('serviceAccountJson')}
+                      resize={false}
+                      rows="6"
+                    />
+                  </div>
+                )}
               </div>
               <BottomNavigation
                 primaryButton={{
