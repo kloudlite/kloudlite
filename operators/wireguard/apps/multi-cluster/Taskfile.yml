@@ -38,15 +38,18 @@ tasks:
 
 
   container:build:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
     cmds:
       - rm -rf ./bin/*
       - task: server:build
       - task: client:build
-      - podman build -t {{.ImageRegistry}}-agent:v1.0.5-nightly . --build-arg APP=client
-      - podman push {{.ImageRegistry}}-agent:v1.0.5-nightly
+      - nerdctl build -t {{.ImageRegistry}}-agent:{{.tag}} . --build-arg APP=client
+      - nerdctl push {{.ImageRegistry}}-agent:{{.tag}}
 
-      - podman build -t {{.ImageRegistry}}-gateway:v1.0.5-nightly . --build-arg APP=server
-      - podman push {{.ImageRegistry}}-gateway:v1.0.5-nightly
+      - nerdctl build -t {{.ImageRegistry}}-gateway:{{.tag}} . --build-arg APP=server
+      - nerdctl push {{.ImageRegistry}}-gateway:{{.tag}}
 
   dev:
     cmds:

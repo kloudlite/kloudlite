@@ -151,6 +151,8 @@ spec:
                       items:
                         type: string
                       type: array
+                    clusterName:
+                      type: string
                     endpoint:
                       type: string
                     ip:
@@ -161,6 +163,7 @@ spec:
                     publicKey:
                       type: string
                   required:
+                  - clusterName
                   - endpoint
                   - ip
                   - port

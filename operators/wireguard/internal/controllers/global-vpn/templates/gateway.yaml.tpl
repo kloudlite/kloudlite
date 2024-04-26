@@ -6,7 +6,7 @@
 {{- /* {{- $nodeport := get . "nodeport"}} */}}
 {{- $ownerRefs := get . "ownerRefs" -}}
 {{- $interface := get . "interface" -}}
-{{- $corefile := get . "corefile" -}}
+{{- $corednsSvcIp := get . "coredns-svc-ip" }}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -27,6 +27,8 @@ spec:
   template:
     metadata:
       labels: *labels
+      annotations:
+        kloudlite.io/server-config-hash: {{printf "%s.%s" $server_config $corednsSvcIp | sha256sum}}
     spec:
       containers:
       - name: coredns
@@ -62,6 +64,9 @@ spec:
         env:
         - name: WG_INTERFACE
           value: {{ $interface }}
+        {{- /* FIXME: might need to change it to something else */}}
+        - name: AGENT_CIDR
+          value: "10.43.0.0/21"
         - name: ADDR
           value: :3000
         - name: CONFIG_PATH
@@ -137,7 +142,17 @@ stringData:
     {{ $server_config | nindent 4 }}
   sysctl: net.ipv4.ip_forward=1
   Corefile: |+
-    {{ $corefile | nindent 4 }}
+    .:53 {
+      errors
+      health
+      ready
+
+      forward . {{$corednsSvcIp}}
+      cache 30
+      loop
+      reload
+      loadbalance
+    }
 kind: Secret
 metadata:
   name: {{ $name }}-configs
