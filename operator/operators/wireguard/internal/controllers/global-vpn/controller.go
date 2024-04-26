@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -52,11 +53,12 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	NSReady       string = "namespace-ready"
-	GWReady       string = "gateway-ready"
-	AgtReady      string = "agent-ready"
-	SpecReady     string = "spec-ready"
-	TrackNodePort string = "track-node-port"
+	NSReady                   string = "namespace-ready"
+	GWReady                   string = "gateway-ready"
+	AgtReady                  string = "agent-ready"
+	SpecReady                 string = "spec-ready"
+	TrackNodePort             string = "track-node-port"
+	UpdateCustomCoreDNSConfig string = "update-custom-coredns-config"
 
 	// ConnectDeleted string = "connect-deleted"
 )
@@ -67,6 +69,7 @@ var CONN_CHECKLIST = []rApi.CheckMeta{
 	{Name: GWReady, Title: "making sure gateway is ready"},
 	{Name: AgtReady, Title: "making sure agent is ready"},
 	{Name: TrackNodePort, Title: "making sure agent is ready", Debug: true},
+	{Name: UpdateCustomCoreDNSConfig, Title: "updates coredns config to acknowledge gateway"},
 }
 
 // CONN_DESTROY_CHECKLIST = []rApi.CheckMeta{
@@ -132,6 +135,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := r.trackNodePort(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.updateCoreDNSConfig(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -301,10 +308,11 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 			}
 			return r.Env.WgGatewayImage
 		}(),
-		"resources":    *obj.Spec.GatewayResources,
-		"serverConfig": string(secBytes),
-		"ownerRefs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		"interface":    obj.Spec.WgInterface,
+		"resources":      *obj.Spec.GatewayResources,
+		"serverConfig":   string(secBytes),
+		"ownerRefs":      []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		"interface":      obj.Spec.WgInterface,
+		"coredns-svc-ip": wc.DNSServer,
 		// "nodeport":     wc.NodePort,
 	})
 	if err != nil {
@@ -410,6 +418,47 @@ func (r *Reconciler) trackNodePort(req *rApi.Request[*wgv1.GlobalVPN]) stepResul
 	wgCreds.StringData = m
 	if err := r.Update(ctx, wgCreds); err != nil {
 		return check.StillRunning(err)
+	}
+
+	return check.Completed()
+}
+
+func (r *Reconciler) updateCoreDNSConfig(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Result {
+	ctx := req.Context()
+	check := rApi.NewRunningCheck(UpdateCustomCoreDNSConfig, req)
+
+	wc, ok := rApi.GetLocal[wgv1.WgParams](req, "wg-params")
+	if !ok {
+		return check.Failed(errors.NotInLocals("wg-params"))
+	}
+
+	configName := "coredns-custom"
+	configmap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: configName, Namespace: "kube-system"}}
+
+	hasCorednsConfigUpdated := false
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, configmap, func() error {
+		key := "kl-globalvpn.server"
+		current := configmap.Data[key]
+		updated, err := r.getCorednsConfig(req, current, *wc.DNSServer)
+		if err != nil {
+			return err
+		}
+		r.logger.Infof("\ncurrent: %s\nupdated: %s\n", current, updated)
+		hasCorednsConfigUpdated = strings.TrimSpace(current) == updated
+		if configmap.Data == nil {
+			configmap.Data = make(map[string]string, 1)
+		}
+		configmap.Data[key] = updated
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	if hasCorednsConfigUpdated {
+		if err := fn.RolloutRestart(r.Client, fn.Deployment, "kube-system", map[string]string{"k8s-app": "kube-dns"}); err != nil {
+			return check.StillRunning(err)
+		}
 	}
 
 	return check.Completed()

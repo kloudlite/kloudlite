@@ -9,32 +9,31 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
-func (r *Reconciler) getCorednsConfig(req *rApi.Request[*wgv1.GlobalVPN], current []byte) ([]byte, error) {
+func (r *Reconciler) getCorednsConfig(req *rApi.Request[*wgv1.GlobalVPN], current string, corednsSvcIP string) (string, error) {
 	obj, _ := req.Object, req.Context()
 
-	updatedContent := string(current)
+	updatedContent := current
 
 	for _, p := range obj.Spec.Peers {
-		// ip, err := wg.GetRemoteDeviceIp(int64(p.Id), r.Env.WgIpBase)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("failed to get remote device ip: %w", err)
-		// }
+		if p.ClusterName == "" || p.ClusterName == r.Env.ClusterName {
+			continue
+		}
 
-		updatedContent = addOrUpdateSectionInString(updatedContent, fmt.Sprintf("cluster%d.local:53", 2), fmt.Sprintf(`
+		updatedContent = addOrUpdateSectionInString(updatedContent, fmt.Sprintf("%s.local:53", p.ClusterName), fmt.Sprintf(`
       errors
+
+      rewrite name regex (.*)\.svc\.%s\.local {1}.svc.cluster.local
+
       forward . %s
 
       cache 30
       loop
       reload
       loadbalance
-`, p.IP))
-		// if err != nil {
-		// 	return nil, fmt.Errorf("failed to add or update section in coredns config: %w", err)
-		// }
+`, p.ClusterName, p.IP))
 	}
 
-	return []byte(updatedContent), nil
+	return strings.TrimSpace(updatedContent), nil
 }
 
 func addOrUpdateSectionInString(content, sectionName, newSectionContent string) string {
