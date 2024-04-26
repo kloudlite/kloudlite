@@ -62,7 +62,9 @@ spec:
 
             terraform state pull | jq '.outputs' -r > outputs.json
 
-            kubectl apply -f - <<EOF
+            cat outputs.json | jq
+
+            cat > secret.yml <<EOF
             apiVersion: v1
             kind: Secret
             metadata:
@@ -73,6 +75,9 @@ spec:
               k3s_params: $(cat outputs.json | jq -r '."kloudlite-k3s-params".value' | base64 | tr -d '\n')
               k3s_agent_token: $(cat outputs.json | jq -r '.k3s_agent_token.value' | base64 | tr -d '\n')
             EOF
+            
+            cat secret.yml
+            kubectl apply -f secret.yml
             exit 0
 
   onDelete:

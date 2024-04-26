@@ -85,20 +85,27 @@ type GCPServiceAccount struct {
 }
 
 type GcpClusterTFValues struct {
-	GcpProjectId              string               `json:"gcp_project_id"`
-	GcpRegion                 string               `json:"gcp_region"`
-	GcpCredentialsJson        string               `json:"gcp_credentials_json"`
-	NamePrefix                string               `json:"name_prefix"`
-	ProvisionMode             string               `json:"provision_mode"`
-	Network                   string               `json:"network"`
-	UseAsLonghornStorageNodes bool                 `json:"use_as_longhorn_storage_nodes"`
-	MachineType               string               `json:"machine_type"`
-	ServiceAccount            GCPServiceAccount    `json:"service_account"`
-	Nodes                     map[string]TFGcpNode `json:"nodes"`
-	SaveSshKeyToPath          string               `json:"save_ssh_key_to_path,omitempty"`
-	SaveKubeconfigToPath      string               `json:"save_kubeconfig_to_path,omitempty"`
-	PublicDnsHost             string               `json:"public_dns_host"`
-	Cloudflare                TFCloudflareParams   `json:"cloudflare"`
-	KloudliteParams           TFKloudliteParams    `json:"kloudlite_params"`
-	Labels                    map[string]string    `json:"labels"`
+	GcpProjectId               string `json:"gcp_project_id"`
+	GcpRegion                  string `json:"gcp_region"`
+	GcpCredentialsJson         string `json:"gcp_credentials_json"`
+	K3sSerivceCIDR             string `json:"k3s_service_cidr,omitempty"`
+	NamePrefix                 string `json:"name_prefix"`
+	ProvisionMode              string `json:"provision_mode"`
+	Network                    string `json:"network"`
+	UseAsLonghornStorageNodes  bool   `json:"use_as_longhorn_storage_nodes"`
+	MachineType                string `json:"machine_type"`
+	MachineState               string `json:"machine_state"`
+	K3sDownloadURL             string `json:"k3s_download_url"`
+	KloudliteRunnerDownloadURL string `json:"kloudlite_runner_download_url"`
+	// "k3s_download_url": "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/k3s",
+	// "kloudlite_runner_download_url": "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/runner-amd64",
+
+	ServiceAccount       GCPServiceAccount    `json:"service_account"`
+	Nodes                map[string]TFGcpNode `json:"nodes"`
+	SaveSshKeyToPath     string               `json:"save_ssh_key_to_path,omitempty"`
+	SaveKubeconfigToPath string               `json:"save_kubeconfig_to_path,omitempty"`
+	PublicDnsHost        string               `json:"public_dns_host"`
+	Cloudflare           TFCloudflareParams   `json:"cloudflare"`
+	KloudliteParams      TFKloudliteParams    `json:"kloudlite_params"`
+	Labels               map[string]string    `json:"labels"`
 }

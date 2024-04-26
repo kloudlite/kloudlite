@@ -53,6 +53,9 @@ type GCPWorkerValues struct {
 	K3sJoinToken           string   `json:"k3s_join_token"`
 	K3sExtraAgentArgs      []string `json:"k3s_extra_agent_args"`
 
+	K3sDownloadURL             string `json:"k3s_download_url"`
+	KloudliteRunnerDownloadURL string `json:"kloudlite_runner_download_url"`
+
 	ClusterInternalDNSHost   string            `json:"cluster_internal_dns_host"`
 	SaveSSHKeyToPath         string            `json:"save_ssh_key_to_path"`
 	KloudliteRelease         string            `json:"kloudlite_release"`
@@ -60,6 +63,7 @@ type GCPWorkerValues struct {
 	Labels                   map[string]string `json:"labels"`
 
 	AllowIncomingHttpTraffic bool `json:"allow_incoming_http_traffic"`
+	AllowSSH                 bool `json:"allow_ssh"`
 }
 
 func (r *Reconciler) GCPJobValuesJson(obj *clustersv1.NodePool, nodesMap map[string]clustersv1.NodeProps) (string, error) {
@@ -106,12 +110,15 @@ func (r *Reconciler) GCPJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 			}
 			return m
 		}(),
-		NodeLabels:               obj.Spec.NodeLabels,
-		MachineType:              obj.Spec.GCP.MachineType,
-		MachineState:             GCPMachineStateOn,
-		K3sServerPublicDNSHost:   r.Env.K3sServerPublicHost,
-		K3sJoinToken:             r.Env.K3sJoinToken,
-		K3sExtraAgentArgs:        []string{"--snapshotter", "stargz"},
+		NodeLabels:                 obj.Spec.NodeLabels,
+		MachineType:                obj.Spec.GCP.MachineType,
+		MachineState:               GCPMachineStateOn,
+		K3sServerPublicDNSHost:     r.Env.K3sServerPublicHost,
+		K3sJoinToken:               r.Env.K3sJoinToken,
+		K3sExtraAgentArgs:          []string{"--snapshotter", "stargz"},
+		K3sDownloadURL:             "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/k3s",
+		KloudliteRunnerDownloadURL: "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/runner-amd64",
+
 		ClusterInternalDNSHost:   "cluster.local",
 		SaveSSHKeyToPath:         "",
 		KloudliteRelease:         r.Env.KloudliteRelease,
@@ -122,6 +129,7 @@ func (r *Reconciler) GCPJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 			"kloudlite-cluster": r.Env.ClusterName,
 		},
 		AllowIncomingHttpTraffic: false,
+		AllowSSH:                 obj.Spec.AllowSSH,
 	}
 
 	b, err := json.Marshal(values)
