@@ -35,18 +35,18 @@ func (r *Reconciler) getCorednsConfig(req *rApi.Request[*wgv1.GlobalVPN], curren
 
 		// as we are just modifying only one file, we can just upsert the section
 		updatedContent += fmt.Sprintf(`
-      %s.local:53 {
-        errors
+%s.local:53 {
+  errors
 
-        rewrite name regex (.*)\.svc\.%s\.local {1}.svc.cluster.local
+  rewrite name regex (.*)\.svc\.%s\.local {1}.svc.cluster.local
 
-        forward . %s
+  forward . %s
 
-        cache 30
-        loop
-        reload
-        loadbalance
-      }
+  cache 30
+  loop
+  reload
+  loadbalance
+}
 `, p.ClusterName, p.ClusterName, p.IP)
 	}
 

@@ -69,7 +69,7 @@ func (s *server) Start() error {
 
 		pr, err := config.upsertPeer(s.logger,
 			common.Peer{PublicKey: p.PublicKey},
-			s.env.WgIpBase,
+			s.env.AgentCIDR,
 		)
 
 		if err != nil {
