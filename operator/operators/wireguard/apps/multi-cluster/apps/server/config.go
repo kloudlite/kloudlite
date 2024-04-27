@@ -29,6 +29,12 @@ var ipMap = make(IpMap)
 var peerMap = make(PeerMap)
 var config Config
 
+type SvcInfo struct {
+	Ip        string
+	Namespace string
+	Name      string
+}
+
 type Config struct {
 	Endpoint   string `json:"endpoint,omitempty"`
 	PrivateKey string `json:"privateKey"`
@@ -38,8 +44,8 @@ type Config struct {
 	Peers         []common.Peer `json:"peers,omitempty"`
 	InternalPeers []common.Peer `json:"internal_peers,omitempty"`
 
-	IpForwardingMap map[string]string `json:"ip_forwarding_map,omitempty"`
-	DnsServer       string            `json:"dnsServer,omitempty"`
+	IpForwardingMap map[string]SvcInfo `json:"ip_forwarding_map,omitempty"`
+	DnsServer       string             `json:"dnsServer,omitempty"`
 }
 
 func (s *Config) String() string {
@@ -77,7 +83,7 @@ func (s Config) getAllAllowedIPs() []string {
 		ips = append(ips, p.AllowedIPs...)
 	}
 
-	ips = append(ips, s.IpAddress)
+	ips = append(ips, fmt.Sprintf("%s/32", s.IpAddress))
 
 	return ips
 }
