@@ -326,7 +326,7 @@ const (
 	DefaultWgGatewayImage = "ghcr.io/kloudlite/operator/components/multi-cluster-gateway:v1.0.5-nightly"
 	DefaultWgAgentImage   = "ghcr.io/kloudlite/operator/components/multi-cluster-agent:v1.0.5-nightly"
 
-	GVPNExposedNamespaceKey = "kloudlite.io/global-vpn.exposed"
+	GVPNExposeNamespaceKey = "kloudlite.io/global-vpn.expose"
 )
 
 const KloudliteLabelPrefix = "kloudlite.io"

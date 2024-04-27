@@ -137,33 +137,21 @@ spec:
         name: host-volumes
 ---
 
-{{/* apiVersion: v1 */}}
-{{/* stringData: */}}
-{{/*   server-config: |+ */}}
-{{/*     {{ $server_config | nindent 4 }} */}}
-{{/*   sysctl: net.ipv4.ip_forward=1 */}}
-{{/*   Corefile: |+ */}}
-{{/*     .:53 { */}}
-{{/*       errors */}}
-{{/*       health */}}
-{{/*       ready */}}
-{{/**/}}
-{{/*       forward . {{$corednsSvcIp}} */}}
-{{/*       cache 30 */}}
-{{/*       loop */}}
-{{/*       reload */}}
-{{/*       loadbalance */}}
-{{/*     } */}}
-{{/* kind: Secret */}}
-{{/* metadata: */}}
-{{/*   name: {{ $name }}-configs */}}
-{{/*   namespace: {{ $namespace }} */}}
-{{/*   ownerReferences: {{ $ownerRefs | toJson }} */}}
-{{/*   labels: */}}
-{{/*     kloudlite.io/wg-global-vpn.name: {{ $name }} */}}
-{{/*     kloudlite.io/wg-global-vpn.resource: "gateway" */}}
-{{/* type: Opaque */}}
-{{/* --- */}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}-configs
+  namespace: {{ $namespace }}
+  ownerReferences: {{ $ownerRefs | toJson }}
+  labels:
+    kloudlite.io/wg-global-vpn.name: {{ $name }}
+    kloudlite.io/wg-global-vpn.resource: "gateway"
+type: Opaque
+stringData:
+  sysctl: "net.ipv4.ip_forward=1"
+  server-config: |+
+    {{ $server_config | nindent 4 }}
+---
 
 apiVersion: v1
 kind: Service
