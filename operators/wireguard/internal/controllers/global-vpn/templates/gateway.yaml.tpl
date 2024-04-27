@@ -6,7 +6,7 @@
 {{- /* {{- $nodeport := get . "nodeport"}} */}}
 {{- $ownerRefs := get . "ownerRefs" -}}
 {{- $interface := get . "interface" -}}
-{{- $corednsSvcIp := get . "coredns-svc-ip" }}
+{{/* {{- $corednsSvcIp := get . "coredns-svc-ip" }} */}}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -28,36 +28,37 @@ spec:
     metadata:
       labels: *labels
       annotations:
-        kloudlite.io/server-config-hash: {{printf "%s.%s" $server_config $corednsSvcIp | sha256sum}}
+        {{/* kloudlite.io/server-config-hash: {{printf "%s.%s" $server_config $corednsSvcIp | sha256sum}} */}}
+        kloudlite.io/server-config-hash: {{ $server_config | sha256sum }}
     spec:
       containers:
-      - name: coredns
-        image: ghcr.io/kloudlite/operator/components/coredns:v1.0.5-nightly
-        args:
-        - --addr
-        - 0.0.0.0:17171
-        - --corefile
-        - /etc/coredns/Corefile
-        - --debug
-        imagePullPolicy: IfNotPresent
-        resources:
-          limits:
-            # cpu: 100m
-            memory: 20Mi
-          requests:
-            # cpu: 100m
-            memory: 20Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            add:
-            - NET_BIND_SERVICE
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        volumeMounts:
-        - mountPath: /etc/coredns
-          name: gateway-dns-config
-          readOnly: true
+      {{/* - name: coredns */}}
+      {{/*   image: ghcr.io/kloudlite/operator/components/coredns:v1.0.5-nightly */}}
+      {{/*   args: */}}
+      {{/*   - --addr */}}
+      {{/*   - 0.0.0.0:17171 */}}
+      {{/*   - --corefile */}}
+      {{/*   - /etc/coredns/Corefile */}}
+      {{/*   - --debug */}}
+      {{/*   imagePullPolicy: IfNotPresent */}}
+      {{/*   resources: */}}
+      {{/*     limits: */}}
+      {{/*       # cpu: 100m */}}
+      {{/*       memory: 20Mi */}}
+      {{/*     requests: */}}
+      {{/*       # cpu: 100m */}}
+      {{/*       memory: 20Mi */}}
+      {{/*   securityContext: */}}
+      {{/*     allowPrivilegeEscalation: false */}}
+      {{/*     capabilities: */}}
+      {{/*       add: */}}
+      {{/*       - NET_BIND_SERVICE */}}
+      {{/*   terminationMessagePath: /dev/termination-log */}}
+      {{/*   terminationMessagePolicy: File */}}
+      {{/*   volumeMounts: */}}
+      {{/*   - mountPath: /etc/coredns */}}
+      {{/*     name: gateway-dns-config */}}
+      {{/*     readOnly: true */}}
 
       - image: {{ $image }}
         imagePullPolicy: Always
@@ -98,9 +99,9 @@ spec:
         - mountPath: /etc/sysctl.conf
           name: sysctl
           subPath: sysctl.conf
-        - mountPath: /etc/coredns
-          name: gateway-dns-config
-          readOnly: true
+        {{/* - mountPath: /etc/coredns */}}
+        {{/*   name: gateway-dns-config */}}
+        {{/*   readOnly: true */}}
       dnsPolicy: Default
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -109,13 +110,13 @@ spec:
       tolerations:
       - operator: Exists
       volumes:
-      - name: gateway-dns-config
-        secret:
-          defaultMode: 420
-          items:
-          - key: Corefile
-            path: Corefile
-          secretName: {{ $name }}-configs
+      {{/* - name: gateway-dns-config */}}
+      {{/*   secret: */}}
+      {{/*     defaultMode: 420 */}}
+      {{/*     items: */}}
+      {{/*     - key: Corefile */}}
+      {{/*       path: Corefile */}}
+      {{/*     secretName: {{ $name }}-configs */}}
       - name: sysctl
         secret:
           defaultMode: 420
@@ -136,33 +137,33 @@ spec:
         name: host-volumes
 ---
 
-apiVersion: v1
-stringData:
-  server-config: |+
-    {{ $server_config | nindent 4 }}
-  sysctl: net.ipv4.ip_forward=1
-  Corefile: |+
-    .:53 {
-      errors
-      health
-      ready
-
-      forward . {{$corednsSvcIp}}
-      cache 30
-      loop
-      reload
-      loadbalance
-    }
-kind: Secret
-metadata:
-  name: {{ $name }}-configs
-  namespace: {{ $namespace }}
-  ownerReferences: {{ $ownerRefs | toJson }}
-  labels:
-    kloudlite.io/wg-global-vpn.name: {{ $name }}
-    kloudlite.io/wg-global-vpn.resource: "gateway"
-type: Opaque
----
+{{/* apiVersion: v1 */}}
+{{/* stringData: */}}
+{{/*   server-config: |+ */}}
+{{/*     {{ $server_config | nindent 4 }} */}}
+{{/*   sysctl: net.ipv4.ip_forward=1 */}}
+{{/*   Corefile: |+ */}}
+{{/*     .:53 { */}}
+{{/*       errors */}}
+{{/*       health */}}
+{{/*       ready */}}
+{{/**/}}
+{{/*       forward . {{$corednsSvcIp}} */}}
+{{/*       cache 30 */}}
+{{/*       loop */}}
+{{/*       reload */}}
+{{/*       loadbalance */}}
+{{/*     } */}}
+{{/* kind: Secret */}}
+{{/* metadata: */}}
+{{/*   name: {{ $name }}-configs */}}
+{{/*   namespace: {{ $namespace }} */}}
+{{/*   ownerReferences: {{ $ownerRefs | toJson }} */}}
+{{/*   labels: */}}
+{{/*     kloudlite.io/wg-global-vpn.name: {{ $name }} */}}
+{{/*     kloudlite.io/wg-global-vpn.resource: "gateway" */}}
+{{/* type: Opaque */}}
+{{/* --- */}}
 
 apiVersion: v1
 kind: Service

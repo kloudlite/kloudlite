@@ -45,14 +45,13 @@ tasks:
       - rm -rf ./bin/*
       - task: server:build
       - task: client:build
-      - nerdctl build -t {{.ImageRegistry}}-agent:{{.tag}} . --build-arg APP=client
-      - nerdctl push {{.ImageRegistry}}-agent:{{.tag}}
+      - podman build -t {{.ImageRegistry}}-agent:{{.tag}} . --build-arg APP=client
+      - podman push {{.ImageRegistry}}-agent:{{.tag}}
 
-      - nerdctl build -t {{.ImageRegistry}}-gateway:{{.tag}} . --build-arg APP=server
-      - nerdctl push {{.ImageRegistry}}-gateway:{{.tag}}
+      - podman build -t {{.ImageRegistry}}-gateway:{{.tag}} . --build-arg APP=server
+      - podman push {{.ImageRegistry}}-gateway:{{.tag}}
 
   dev:
     cmds:
       - podman build -t sample:latest .
       - podman run -p 5959:53/udp -p 22220:22222 --rm -it sample:latest
-

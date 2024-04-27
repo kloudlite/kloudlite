@@ -37,6 +37,9 @@ type Config struct {
 
 	Peers         []common.Peer `json:"peers,omitempty"`
 	InternalPeers []common.Peer `json:"internal_peers,omitempty"`
+
+	IpForwardingMap map[string]string `json:"ip_forwarding_map,omitempty"`
+	DnsServer       string            `json:"dnsServer,omitempty"`
 }
 
 func (s *Config) String() string {
