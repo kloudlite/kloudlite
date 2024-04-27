@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -291,7 +292,7 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 		var namespaces corev1.NamespaceList
 		if err := r.List(
 			ctx, &namespaces, &client.ListOptions{
-				LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.GVPNExposedNamespaceKey: "true"}),
+				LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.GVPNExposeNamespaceKey: "true"}),
 			},
 		); err != nil {
 			return check.Failed(err)
@@ -306,15 +307,13 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 			}
 
 			for j := range svcList.Items {
-				if svcList.Items[j].Spec.Type == corev1.ServiceTypeNodePort {
-					ip, err := wg.GenIPAddr(ipIndex, wc.VirtualCidr)
-					if err != nil {
-						r.logger.Error(err)
-					}
-
-					ipMap[ip] = svcList.Items[j].Spec.ClusterIP
-					ipIndex++
+				ip, err := wg.GenIPAddr(ipIndex, wc.VirtualCidr)
+				if err != nil {
+					r.logger.Error(err)
 				}
+
+				ipMap[ip] = svcList.Items[j].Spec.ClusterIP
+				ipIndex++
 			}
 		}
 	}
@@ -485,7 +484,10 @@ func (r *Reconciler) updateCoreDNSConfig(req *rApi.Request[*wgv1.GlobalVPN]) ste
 		if configmap.Data == nil {
 			configmap.Data = make(map[string]string, 1)
 		}
-		configmap.Data[key] = updated
+		if hasCorednsConfigUpdated {
+			configmap.Data[key] = updated
+			fn.MapSet(&configmap.Annotations, "kloudlite.io/last-updated-at", time.Now().Format(time.RFC3339))
+		}
 		return nil
 	}); err != nil {
 		return check.Failed(err)
@@ -529,6 +531,23 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 				}),
 		)
 	}
+
+	builder.Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, o client.Object) []reconcile.Request {
+		if v, ok := o.GetLabels()[constants.GVPNExposeNamespaceKey]; ok && v == "true" {
+
+			var gvpnList wgv1.GlobalVPNList
+			if err := r.List(ctx, &gvpnList, &client.ListOptions{}); err != nil {
+				return nil
+			}
+
+			if len(gvpnList.Items) != 1 {
+				return nil
+			}
+
+			return []reconcile.Request{{NamespacedName: fn.NN(gvpnList.Items[0].GetNamespace(), gvpnList.Items[0].GetName())}}
+		}
+		return nil
+	}))
 
 	return builder.Complete(r)
 }
