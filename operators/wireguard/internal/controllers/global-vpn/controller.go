@@ -9,6 +9,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -282,16 +283,52 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 		})
 	}
 
-	// secName := fmt.Sprintf("%s-gateway-configs", obj.Name)
-	// xSec, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, secName), &corev1.Secret{})
-	// if err != nil {
-	// 	return check.Failed(err)
-	// }
+	// ipCidr := fmt.Sprintf("%s/32", wc.IP)
+
+	ipMap := map[string]string{}
+
+	if wc.VirtualCidr != "" {
+		var namespaces corev1.NamespaceList
+		if err := r.List(
+			ctx, &namespaces, &client.ListOptions{
+				LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.GVPNExposedNamespaceKey: "true"}),
+			},
+		); err != nil {
+			return check.Failed(err)
+		}
+
+		ipIndex := 0
+		for i := range namespaces.Items {
+			var svcList corev1.ServiceList
+			if err := r.List(ctx, &svcList, &client.ListOptions{Namespace: namespaces.Items[i].Name}); err != nil {
+				r.logger.Error(err)
+				continue
+			}
+
+			for j := range svcList.Items {
+				if svcList.Items[j].Spec.Type == corev1.ServiceTypeNodePort {
+					ip, err := wg.GenIPAddr(ipIndex, wc.VirtualCidr)
+					if err != nil {
+						r.logger.Error(err)
+					}
+
+					ipMap[ip] = svcList.Items[j].Spec.ClusterIP
+					ipIndex++
+				}
+			}
+		}
+	}
+
+	if wc.DNSServer == nil {
+		return check.Failed(fmt.Errorf("dns server must be provided"))
+	}
 
 	sec := server.Config{
-		PrivateKey: string(wc.WgPrivateKey),
-		IpAddress:  fmt.Sprintf("%s/32", wc.IP),
-		Peers:      peers,
+		PrivateKey:      string(wc.WgPrivateKey),
+		IpAddress:       fmt.Sprintf("%s/32", wc.IP),
+		Peers:           peers,
+		IpForwardingMap: ipMap,
+		DnsServer:       *wc.DNSServer,
 	}
 
 	secBytes, err := sec.ToYaml()
@@ -308,11 +345,11 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 			}
 			return r.Env.WgGatewayImage
 		}(),
-		"resources":      *obj.Spec.GatewayResources,
-		"serverConfig":   string(secBytes),
-		"ownerRefs":      []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		"interface":      obj.Spec.WgInterface,
-		"coredns-svc-ip": wc.DNSServer,
+		"resources":    *obj.Spec.GatewayResources,
+		"serverConfig": string(secBytes),
+		"ownerRefs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		"interface":    obj.Spec.WgInterface,
+		// "coredns-svc-ip": wc.DNSServer,
 		// "nodeport":     wc.NodePort,
 	})
 	if err != nil {
@@ -444,7 +481,6 @@ func (r *Reconciler) updateCoreDNSConfig(req *rApi.Request[*wgv1.GlobalVPN]) ste
 		if err != nil {
 			return err
 		}
-		r.logger.Infof("\ncurrent: %s\nupdated: %s\n", current, updated)
 		hasCorednsConfigUpdated = strings.TrimSpace(current) == updated
 		if configmap.Data == nil {
 			configmap.Data = make(map[string]string, 1)

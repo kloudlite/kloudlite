@@ -26,8 +26,15 @@ spec:
     spec:
       containers:
       - image: {{ $image }}
-        imagePullPolicy: Always
         name: agent
+        lifecycle:
+          preStop:
+            exec:
+              command:
+                - "/bin/sh"
+                - "-c"
+                - "ip link del $WG_INTERFACE"
+        imagePullPolicy: Always
         env:
         - name: WG_INTERFACE
           value: {{ $interface }}
