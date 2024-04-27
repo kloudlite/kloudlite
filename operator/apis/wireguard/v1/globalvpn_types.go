@@ -29,6 +29,8 @@ type WgParams struct {
 	DNSServer *string `json:"dnsServer"`
 	// must be a valid nodeport
 	NodePort *string `json:"nodeport,omitempty"`
+
+	VirtualCidr string `json:"virtualCidr"`
 }
 
 // ConnectionSpec defines the desired state of Connect
