@@ -43,4 +43,5 @@ tasks:
     cmds:
       - GOARCH=arm64 task local:build
       - GOARCH=amd64 task local:build
-      - docker buildx build -f ./Containerfile --platform linux/amd64,linux/arm64 -t {{.Image}} . --build-arg BINARY={{.app}} --push
+      # - docker buildx build -f ./Containerfile --platform linux/amd64,linux/arm64 -t {{.Image}} . --build-arg BINARY={{.app}} --push
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
