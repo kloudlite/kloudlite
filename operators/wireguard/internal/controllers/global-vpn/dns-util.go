@@ -12,7 +12,8 @@ import (
 func (r *Reconciler) getCorednsConfig(req *rApi.Request[*wgv1.GlobalVPN], current string, corednsSvcIP string) (string, error) {
 	obj, _ := req.Object, req.Context()
 
-	updatedContent := current
+	// updatedContent := current
+	updatedContent := ""
 
 	for _, p := range obj.Spec.Peers {
 		if p.ClusterName == "" || p.ClusterName == r.Env.ClusterName {
