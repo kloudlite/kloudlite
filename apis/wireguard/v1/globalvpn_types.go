@@ -11,11 +11,11 @@ import (
 type Peer struct {
 	PublicKey string `json:"publicKey"`
 	Endpoint  string `json:"endpoint"`
-	// Id        int    `json:"id"`
-	IP   string `json:"ip"`
-	Port int    `json:"port"`
+	IP        string `json:"ip"`
+	Port      int    `json:"port"`
 
 	ClusterName string `json:"clusterName"`
+	DeviceName  string `json:"deviceName"`
 
 	AllowedIPs []string `json:"allowedIPs,omitempty"`
 }

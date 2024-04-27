@@ -286,7 +286,7 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 
 	// ipCidr := fmt.Sprintf("%s/32", wc.IP)
 
-	ipMap := map[string]string{}
+	ipMap := map[string]server.SvcInfo{}
 
 	if wc.VirtualCidr != "" {
 		var namespaces corev1.NamespaceList
@@ -312,7 +312,11 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 					r.logger.Error(err)
 				}
 
-				ipMap[ip] = svcList.Items[j].Spec.ClusterIP
+				ipMap[ip] = server.SvcInfo{
+					Ip:        svcList.Items[j].Spec.ClusterIP,
+					Namespace: svcList.Items[j].Namespace,
+					Name:      svcList.Items[j].Name,
+				}
 				ipIndex++
 			}
 		}
@@ -324,13 +328,20 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 
 	sec := server.Config{
 		PrivateKey:      string(wc.WgPrivateKey),
-		IpAddress:       fmt.Sprintf("%s/32", wc.IP),
+		IpAddress:       wc.IP,
 		Peers:           peers,
 		IpForwardingMap: ipMap,
 		DnsServer:       *wc.DNSServer,
 	}
 
+	rApi.SetLocal(req, "expose-services", ipMap)
+
 	secBytes, err := sec.ToYaml()
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	sidecarCorefile, err := r.getSidecarCoreDnsConfig(req, *wc.DNSServer)
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -344,11 +355,12 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 			}
 			return r.Env.WgGatewayImage
 		}(),
-		"resources":    *obj.Spec.GatewayResources,
-		"serverConfig": string(secBytes),
-		"ownerRefs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		"interface":    obj.Spec.WgInterface,
-		// "coredns-svc-ip": wc.DNSServer,
+		"corefile":       sidecarCorefile,
+		"resources":      *obj.Spec.GatewayResources,
+		"serverConfig":   string(secBytes),
+		"ownerRefs":      []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		"interface":      obj.Spec.WgInterface,
+		"coredns-svc-ip": wc.DNSServer,
 		// "nodeport":     wc.NodePort,
 	})
 	if err != nil {
@@ -476,11 +488,11 @@ func (r *Reconciler) updateCoreDNSConfig(req *rApi.Request[*wgv1.GlobalVPN]) ste
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, configmap, func() error {
 		key := "kl-globalvpn.server"
 		current := configmap.Data[key]
-		updated, err := r.getCorednsConfig(req, current, *wc.DNSServer)
+		updated, err := r.getCustomCoreDnsConfig(req, *wc.DNSServer)
 		if err != nil {
 			return err
 		}
-		hasCorednsConfigUpdated = strings.TrimSpace(current) == updated
+		hasCorednsConfigUpdated = strings.TrimSpace(current) != strings.TrimSpace(updated)
 		if configmap.Data == nil {
 			configmap.Data = make(map[string]string, 1)
 		}
