@@ -74,7 +74,7 @@ func (d *domain) GetSecretEntries(ctx ResourceContext, keyrefs []SecretKeyRef) (
 		}
 
 		for k, v := range secrets[i].StringData {
-			m[k] = string(v)
+			m[k] = v
 		}
 
 		data[secrets[i].Name] = m
@@ -96,7 +96,7 @@ func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	targetNamespace, err := d.envTargetNamespace(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	targetNamespace, err := d.envTargetNamespace(ctx.ConsoleContext, ctx.EnvironmentName)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -114,7 +114,6 @@ func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 	secret.LastUpdatedBy = secret.CreatedBy
 
 	secret.AccountName = ctx.AccountName
-	secret.ProjectName = ctx.ProjectName
 	secret.EnvironmentName = ctx.EnvironmentName
 	secret.SyncStatus = t.GenSyncStatus(t.SyncActionApply, secret.RecordVersion)
 
@@ -142,7 +141,7 @@ func (d *domain) createAndApplySecret(ctx ResourceContext, secret *entities.Secr
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, nsecret.ProjectName, &nsecret.Secret, nsecret.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, nsecret.EnvironmentName, &nsecret.Secret, nsecret.RecordVersion); err != nil {
 		return nsecret, errors.NewE(err)
 	}
 
@@ -191,7 +190,7 @@ func (d *domain) UpdateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, upSecret.Name, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, upSecret.ProjectName, &upSecret.Secret, upSecret.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, upSecret.EnvironmentName, &upSecret.Secret, upSecret.RecordVersion); err != nil {
 		return upSecret, errors.NewE(err)
 	}
 
@@ -214,7 +213,7 @@ func (d *domain) DeleteSecret(ctx ResourceContext, name string) error {
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, usecret.Name, PublishUpdate)
 
-	if err := d.deleteK8sResource(ctx, usecret.ProjectName, &usecret.Secret); err != nil {
+	if err := d.deleteK8sResource(ctx, "", &usecret.Secret); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.secretRepo.DeleteById(ctx, usecret.Id)
 		}
@@ -245,7 +244,7 @@ func (d *domain) OnSecretUpdateMessage(ctx ResourceContext, secretIn entities.Se
 
 	recordVersion, err := d.MatchRecordVersion(secretIn.Annotations, xSecret.RecordVersion)
 	if err != nil {
-		return d.resyncK8sResource(ctx, xSecret.ProjectName, xSecret.SyncStatus.Action, &xSecret.Secret, xSecret.RecordVersion)
+		return d.resyncK8sResource(ctx, xSecret.EnvironmentName, xSecret.SyncStatus.Action, &xSecret.Secret, xSecret.RecordVersion)
 	}
 
 	usecret, err := d.secretRepo.PatchById(
@@ -290,5 +289,5 @@ func (d *domain) ResyncSecret(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	return d.resyncK8sResource(ctx, secret.ProjectName, secret.SyncStatus.Action, &secret.Secret, secret.RecordVersion)
+	return d.resyncK8sResource(ctx, secret.EnvironmentName, secret.SyncStatus.Action, &secret.Secret, secret.RecordVersion)
 }

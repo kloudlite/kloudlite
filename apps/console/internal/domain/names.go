@@ -27,13 +27,9 @@ func checkResourceName[T repos.Entity](ctx context.Context, filters repos.Filter
 	}, nil
 }
 
-func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, projectName *string, environmentName *string, resType entities.ResourceType, name string) (*CheckNameAvailabilityOutput, error) {
+func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, environmentName *string, resType entities.ResourceType, name string) (*CheckNameAvailabilityOutput, error) {
 	errEnvironmentRequired := func() error {
 		return errors.Newf("param environmentName is required for resource type %q", resType)
-	}
-
-	errProjectRequired := func() error {
-		return errors.Newf("param projectName is required for resource type %q", resType)
 	}
 
 	if !fn.IsValidK8sResourceName(name) {
@@ -50,39 +46,31 @@ func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, 
 			return checkResourceName(ctx, repos.Filter{fields.AccountName: accountName, fields.MetadataName: name}, d.vpnDeviceRepo)
 		}
 
-	case entities.ResourceTypeProject:
-		{
-			return checkResourceName(ctx, repos.Filter{fields.AccountName: accountName, fields.MetadataName: name}, d.projectRepo)
-		}
+	//case entities.ResourceTypeProject:
+	//	{
+	//		return checkResourceName(ctx, repos.Filter{fields.AccountName: accountName, fields.MetadataName: name}, d.projectRepo)
+	//	}
 
-	case entities.ResourceTypeProjectManagedService:
-		{
-			if projectName == nil {
-				return nil, errProjectRequired()
-			}
-			return checkResourceName(ctx, repos.Filter{fields.AccountName: accountName, fields.ProjectName: projectName, fields.MetadataName: name}, d.pmsRepo)
-		}
-
+	//case entities.ResourceTypeProjectManagedService:
+	//	{
+	//		if projectName == nil {
+	//			return nil, errProjectRequired()
+	//		}
+	//		return checkResourceName(ctx, repos.Filter{fields.AccountName: accountName, fields.ProjectName: projectName, fields.MetadataName: name}, d.pmsRepo)
+	//	}
+	//
 	case entities.ResourceTypeEnvironment:
 		{
-			if projectName == nil {
-				return nil, errProjectRequired()
-			}
-			return checkResourceName(ctx, repos.Filter{fields.AccountName: accountName, fields.ProjectName: projectName, fields.MetadataName: name}, d.environmentRepo)
+			return checkResourceName(ctx, repos.Filter{fields.AccountName: accountName, fields.MetadataName: name}, d.environmentRepo)
 		}
 	default:
 		{
-			if projectName == nil {
-				return nil, errProjectRequired()
-			}
-
 			if environmentName == nil {
 				return nil, errEnvironmentRequired()
 			}
 
 			filter := repos.Filter{
 				fields.AccountName:     accountName,
-				fields.ProjectName:     projectName,
 				fields.EnvironmentName: environmentName,
 				fields.MetadataName:    name,
 			}

@@ -130,7 +130,7 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 		return nil, errors.New(".spec.resourceTemplate.apiVersion, and .spec.resourceTemplate.kind must be set")
 	}
 
-	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.EnvironmentName)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -152,7 +152,6 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 	mres.LastUpdatedBy = mres.CreatedBy
 
 	mres.AccountName = ctx.AccountName
-	mres.ProjectName = ctx.ProjectName
 	mres.EnvironmentName = ctx.EnvironmentName
 
 	return d.createAndApplyManagedResource(ctx, &mres)
@@ -185,7 +184,7 @@ func (d *domain) createAndApplyManagedResource(ctx ResourceContext, mres *entiti
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeManagedResource, m.Name, PublishAdd)
 
-	if err := d.applyK8sResource(ctx, ctx.ProjectName, &m.ManagedResource, m.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, ctx.EnvironmentName, &m.ManagedResource, m.RecordVersion); err != nil {
 		return m, errors.NewE(err)
 	}
 
@@ -222,7 +221,7 @@ func (d *domain) UpdateManagedResource(ctx ResourceContext, mres entities.Manage
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeManagedResource, upMres.Name, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, ctx.ProjectName, &upMres.ManagedResource, upMres.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, ctx.EnvironmentName, &upMres.ManagedResource, upMres.RecordVersion); err != nil {
 		return upMres, errors.NewE(err)
 	}
 
@@ -243,7 +242,7 @@ func (d *domain) DeleteManagedResource(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeManagedResource, umres.Name, PublishUpdate)
-	if err := d.deleteK8sResource(ctx, umres.ProjectName, &umres.ManagedResource); err != nil {
+	if err := d.deleteK8sResource(ctx, "", &umres.ManagedResource); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.mresRepo.DeleteById(ctx, umres.Id)
 		}
@@ -276,7 +275,7 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ResourceContext, mres entiti
 
 	recordVersion, err := d.MatchRecordVersion(mres.Annotations, xmres.RecordVersion)
 	if err != nil {
-		return d.resyncK8sResource(ctx, xmres.ProjectName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
+		return d.resyncK8sResource(ctx, xmres.EnvironmentName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
 	}
 
 	umres, err := d.mresRepo.PatchById(
@@ -311,14 +310,12 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ResourceContext, mres entiti
 
 		if _, err = d.secretRepo.Upsert(ctx, repos.Filter{
 			fc.AccountName:       ctx.AccountName,
-			fc.ProjectName:       ctx.ProjectName,
 			fc.EnvironmentName:   ctx.EnvironmentName,
 			fc.MetadataName:      mres.SyncedOutputSecretRef.GetName(),
 			fc.MetadataNamespace: mres.SyncedOutputSecretRef.GetNamespace(),
 		}, &entities.Secret{
 			Secret:          *mres.SyncedOutputSecretRef,
 			AccountName:     ctx.AccountName,
-			ProjectName:     ctx.ProjectName,
 			EnvironmentName: ctx.EnvironmentName,
 			ResourceMetadata: common.ResourceMetadata{
 				DisplayName:   umres.GetName(),
@@ -368,5 +365,5 @@ func (d *domain) ResyncManagedResource(ctx ResourceContext, name string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	return d.resyncK8sResource(ctx, mres.ProjectName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
+	return d.resyncK8sResource(ctx, mres.EnvironmentName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
 }

@@ -1,6 +1,7 @@
 type Environment @shareable {
   accountName: String!
   apiVersion: String
+  clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -9,7 +10,6 @@ type Environment @shareable {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
-  projectName: String!
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -30,6 +30,7 @@ type EnvironmentPaginatedRecords @shareable {
 
 input EnvironmentIn {
   apiVersion: String
+  clusterName: String!
   displayName: String!
   kind: String
   metadata: MetadataIn
