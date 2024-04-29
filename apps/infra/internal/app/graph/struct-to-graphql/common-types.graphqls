@@ -168,6 +168,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec @sha
   cloudflareEnabled: Boolean
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   clusterInternalDnsHost: String
+  clusterServiceCIDR: String
   clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
   gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig
   kloudliteRelease: String!
@@ -182,6 +183,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig
   gcpProjectID: String!
   masterNodes: Github__com___kloudlite___operator___apis___clusters___v1__GCPMasterNodesConfig
   region: String!
+  serviceAccount: Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount!
   vpc: Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams
 }
 
@@ -201,6 +203,14 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfi
   nodes: Map
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
   region: String!
+  serviceAccount: Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount!
+  vpc: Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount @shareable {
+  email: String
+  enabled: Boolean!
+  scopes: [String!]
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams @shareable {

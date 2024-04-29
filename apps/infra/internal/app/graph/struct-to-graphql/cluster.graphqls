@@ -1,10 +1,10 @@
 type Cluster @shareable {
   accountName: String!
   apiVersion: String
-  clusterGroupName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
+  globalVPN: String
   id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -30,8 +30,8 @@ type ClusterPaginatedRecords @shareable {
 
 input ClusterIn {
   apiVersion: String
-  clusterGroupName: String
   displayName: String!
+  globalVPN: String
   kind: String
   metadata: MetadataIn!
   spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn!
