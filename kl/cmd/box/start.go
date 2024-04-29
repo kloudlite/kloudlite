@@ -56,7 +56,7 @@ var imageName string
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "start docker container",
+	Short: "start the container",
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := startBox(cmd, args); err != nil {
 			fn.PrintError(err)

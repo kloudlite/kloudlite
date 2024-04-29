@@ -6,8 +6,8 @@ import (
 
 var BoxCmd = &cobra.Command{
 	Use:   "box",
-	Short: "box [start | stop | ssh]",
-	Long: ` Use this command to start and stop docker image with loaded envs
+	Short: "box [start | stop | ssh | restart]",
+	Long: ` Use this command to start, stop, restart and open an ssh connection to the container with loaded envs
 kl box start
 kl box stop
 kl box ssh
