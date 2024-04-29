@@ -139,6 +139,20 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+	var found bool
+	for i, envVar := range klFile.EnvVars {
+		if envVar.Key == selectedSecretKey.Key {
+			klFile.EnvVars[i].Value = selectedSecretKey.Value
+			found = true
+			break
+		}
+	}
+	if !found {
+		klFile.EnvVars = append(klFile.EnvVars, client.EnvType{
+			Key:   selectedSecretKey.Key,
+			Value: selectedSecretKey.Value,
+		})
+	}
 
 	matchedGroupIndex := -1
 	for i, rt := range klFile.Secrets {

@@ -51,16 +51,9 @@ Examples:
 				return
 			}
 
-			// prj, err := server.EnsureProject(
-			// 	[]fn.Option{
-			// 		fn.MakeOption("accountName", aName),
-			// 		fn.MakeOption("projectName", pName),
-			// 	}...,
-			// )
-			// if err != nil {
-			// 	fn.PrintError(err)
-			// 	return
-			// }
+			//packages := []string{"vim", "git", "nodejs_21", "go"}
+			packages := []string{"vim", "git", "go"}
+
 			defEnv := ""
 			if len(envs) != 0 {
 				defEnv = envs[0].Metadata.Name
@@ -69,10 +62,12 @@ Examples:
 				Version:    "v1",
 				Project:    fmt.Sprintf("%s/%s", acc, p.Metadata.Name),
 				DefaultEnv: defEnv,
+				Packages:   packages,
 				Mres:       make([]client.ResType, 0),
 				Configs:    make([]client.ResType, 0),
 				Secrets:    make([]client.ResType, 0),
-				Env:        []client.EnvType{{Key: "SAMPLE_ENV", Value: "sample_value"}},
+				Env:        []client.EnvType{{Key: "SAMPLE", Value: "sampleValue"}},
+				EnvVars:    make([]client.EnvType, 0),
 				FileMount: client.MountType{
 					MountBasePath: "./.mounts",
 					Mounts:        make([]client.FileEntry, 0),

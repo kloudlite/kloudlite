@@ -21,8 +21,8 @@ type ResEnvType struct {
 }
 
 type EnvType struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Key   string `json:"key" yaml:"key"`
+	Value string `json:"value" yaml:"value"`
 }
 
 type ResType struct {
@@ -46,10 +46,12 @@ type KLFileType struct {
 	Version    string    `json:"version"`
 	DefaultEnv string    `json:"defaultEnv"`
 	Project    string    `json:"project"`
+	Packages   []string  `json:"packages"`
 	Mres       []ResType `json:"mres"`
 	Configs    []ResType `json:"configs"`
 	Secrets    []ResType `json:"secrets"`
 	Env        []EnvType `json:"env"`
+	EnvVars    []EnvType `json:"envVars" yaml:"envVars"`
 	FileMount  MountType `json:"fileMount"`
 }
 

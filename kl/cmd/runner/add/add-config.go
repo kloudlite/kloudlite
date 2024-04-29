@@ -144,7 +144,6 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 						Value: v,
 					})
 				}
-
 				return kvs
 			}(),
 			func(val KV) string {
@@ -155,6 +154,20 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+	}
+	var found bool
+	for i, envVar := range klFile.EnvVars {
+		if envVar.Key == selectedConfigKey.Key {
+			klFile.EnvVars[i].Value = selectedConfigKey.Value
+			found = true
+			break
+		}
+	}
+	if !found {
+		klFile.EnvVars = append(klFile.EnvVars, client.EnvType{
+			Key:   selectedConfigKey.Key,
+			Value: selectedConfigKey.Value,
+		})
 	}
 
 	matchedGroupIndex := -1
