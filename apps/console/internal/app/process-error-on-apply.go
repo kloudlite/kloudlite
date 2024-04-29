@@ -30,7 +30,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 		if mapping == nil {
 			return domain.ResourceContext{}, fmt.Errorf("resource mapping could not be found")
 		}
-		return newResourceContext(ctx, mapping.ProjectName, mapping.EnvironmentName), nil
+		return newResourceContext(ctx, mapping.EnvironmentName), nil
 	}
 
 	msgReader := func(msg *msgTypes.ConsumeMsg) error {
@@ -74,19 +74,20 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 
 				return d.OnVPNDeviceDeleteMessage(dctx, p)
 			}
-		case projectGVK.String():
-			{
-				if errObj.Action == t.ActionApply {
-					return d.OnProjectApplyError(dctx, errObj.Error, obj.GetName(), opts)
-				}
+		//case projectGVK.String():
+		//	{
+		//		if errObj.Action == t.ActionApply {
+		//			return d.OnProjectApplyError(dctx, errObj.Error, obj.GetName(), opts)
+		//		}
+		//
+		//		p, err := fn.JsonConvert[entities.Project](obj.Object)
+		//		if err != nil {
+		//			return err
+		//		}
+		//
+		//		return d.OnProjectDeleteMessage(dctx, p)
+		//	}
 
-				p, err := fn.JsonConvert[entities.Project](obj.Object)
-				if err != nil {
-					return err
-				}
-
-				return d.OnProjectDeleteMessage(dctx, p)
-			}
 		case environmentGVK.String():
 			{
 				if errObj.Action == t.ActionApply {
@@ -100,27 +101,27 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 
 				return d.OnEnvironmentDeleteMessage(dctx, p)
 			}
-		case projectManagedServiceGVK.String():
-			{
-				mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, errObj.ClusterName, obj.GetNamespace(), obj.GetName())
-				if err != nil {
-					return err
-				}
-				if mapping == nil {
-					return err
-				}
-
-				if errObj.Action == t.ActionApply {
-					return d.OnProjectManagedServiceApplyError(dctx, mapping.ProjectName, obj.GetName(), errObj.Error, opts)
-				}
-
-				pmsvc, err := fn.JsonConvert[entities.ProjectManagedService](obj.Object)
-				if err != nil {
-					return err
-				}
-
-				return d.OnProjectManagedServiceDeleteMessage(dctx, mapping.ProjectName, pmsvc)
-			}
+		//case projectManagedServiceGVK.String():
+		//	{
+		//		mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, errObj.ClusterName, obj.GetNamespace(), obj.GetName())
+		//		if err != nil {
+		//			return err
+		//		}
+		//		if mapping == nil {
+		//			return err
+		//		}
+		//
+		//		if errObj.Action == t.ActionApply {
+		//			return d.OnProjectManagedServiceApplyError(dctx, mapping.ProjectName, obj.GetName(), errObj.Error, opts)
+		//		}
+		//
+		//		pmsvc, err := fn.JsonConvert[entities.ProjectManagedService](obj.Object)
+		//		if err != nil {
+		//			return err
+		//		}
+		//
+		//		return d.OnProjectManagedServiceDeleteMessage(dctx, mapping.ProjectName, pmsvc)
+		//	}
 
 		case appsGVK.String():
 			{
