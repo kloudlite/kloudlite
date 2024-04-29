@@ -1,12 +1,15 @@
 {{- $name := get . "name"}}
 {{- $namespace := get . "namespace"}}
 {{- $image := get . "image"}}
+{{- $keepaliveImage := get . "keep-alive-image"}}
+{{- $corednsImage := get . "coredns-image"}}
 {{- $resources := get . "resources"}}
 {{- $server_config := get . "serverConfig"}}
 {{- /* {{- $nodeport := get . "nodeport"}} */}}
 {{- $ownerRefs := get . "ownerRefs" -}}
 {{- $interface := get . "interface" -}}
 {{- $corefile := get . "corefile" }}
+{{- $keepaliveConfig := get . "keep-alive-config" }}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -28,7 +31,7 @@ spec:
     metadata:
       labels: *labels
       annotations:
-        kloudlite.io/server-config-hash: {{printf "%s.%s" $server_config $corefile | sha256sum}}
+        kloudlite.io/server-config-hash: {{printf "%s.%s.%s" $server_config $corefile $keepaliveConfig | sha256sum}}
     spec:
       containers:
       - name: coredns
@@ -58,6 +61,22 @@ spec:
         - mountPath: /etc/coredns
           name: gateway-dns-config
           readOnly: true
+
+      - name: keep-alive
+        image: {{ $keepaliveImage }}
+        env:
+        - name: CONFIG_PATH
+          value: /tmp/keep-alive-config.yml
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: 40Mi
+          requests:
+            memory: 40Mi
+        volumeMounts:
+        - mountPath: /tmp/keep-alive-config.yml
+          name: gateway-kp-configs
+          subPath: keep-alive-config.yml
 
       - image: {{ $image }}
         imagePullPolicy: Always
@@ -130,6 +149,13 @@ spec:
           - key: server-config
             path: server-config.yml
           secretName: {{ $name }}-configs
+      - name: gateway-kp-configs
+        secret:
+          defaultMode: 420
+          items:
+          - key: keep-alive-config
+            path: keep-alive-config.yml
+          secretName: {{ $name }}-configs
       - hostPath:
           path: /lib/modules
           type: Directory
@@ -141,6 +167,8 @@ stringData:
   server-config: |+
     {{ $server_config | nindent 4 }}
   sysctl: net.ipv4.ip_forward=1
+  keep-alive-config: |+
+    {{ $keepaliveConfig | nindent 4 }}
   Corefile: |+
     {{ $corefile | nindent 4 }}
 kind: Secret
