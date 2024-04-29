@@ -37,13 +37,17 @@ type domain struct {
 	helmReleaseRepo           repos.DbRepo[*entities.HelmRelease]
 	nodeRepo                  repos.DbRepo[*entities.Node]
 	nodePoolRepo              repos.DbRepo[*entities.NodePool]
-	globalVPNRepo             repos.DbRepo[*entities.GlobalVPN]
 
-	clusterGroupRepo repos.DbRepo[*entities.ClusterGroup]
+	gvpnConnRepo            repos.DbRepo[*entities.GlobalVPNConnection]
+	freeClusterSvcCIDRRepo  repos.DbRepo[*entities.FreeClusterSvcCIDR]
+	claimClusterSvcCIDRRepo repos.DbRepo[*entities.ClaimClusterSvcCIDR]
 
-	deviceAddressPoolRepo repos.DbRepo[*entities.GlobalVPNDeviceAddressPool]
-	ipClaimRepo           repos.DbRepo[*entities.IPClaim]
-	freeIpRepo            repos.DbRepo[*entities.FreeIP]
+	gvpnRepo        repos.DbRepo[*entities.GlobalVPN]
+	gvpnDevicesRepo repos.DbRepo[*entities.GlobalVPNDevice]
+
+	//deviceAddressPoolRepo repos.DbRepo[*entities.GlobalVPNDeviceAddressPool]
+	freeDeviceIpRepo  repos.DbRepo[*entities.FreeDeviceIP]
+	claimDeviceIPRepo repos.DbRepo[*entities.ClaimDeviceIP]
 
 	domainEntryRepo      repos.DbRepo[*entities.DomainEntry]
 	secretRepo           repos.DbRepo[*entities.CloudProviderSecret]
@@ -174,12 +178,15 @@ var Module = fx.Module("domain",
 			resourceDispatcher ResourceDispatcher,
 			helmReleaseRepo repos.DbRepo[*entities.HelmRelease],
 
-			clusterConnRepo repos.DbRepo[*entities.GlobalVPN],
-			clusterGroupRepo repos.DbRepo[*entities.ClusterGroup],
-			deviceAddressPoolRepo repos.DbRepo[*entities.GlobalVPNDeviceAddressPool],
+			gvpnConnRepo repos.DbRepo[*entities.GlobalVPNConnection],
+			gvpnRepo repos.DbRepo[*entities.GlobalVPN],
+			gvpnDevicesRepo repos.DbRepo[*entities.GlobalVPNDevice],
 
-			ipClaimRepo repos.DbRepo[*entities.IPClaim],
-			freeIpRepo repos.DbRepo[*entities.FreeIP],
+			freeDeviceIpRepo repos.DbRepo[*entities.FreeDeviceIP],
+			claimDeviceIPRepo repos.DbRepo[*entities.ClaimDeviceIP],
+
+			freeClusterSvcCIDRRepo repos.DbRepo[*entities.FreeClusterSvcCIDR],
+			claimClusterSvcCIDRRepo repos.DbRepo[*entities.ClaimClusterSvcCIDR],
 
 			pvcRepo repos.DbRepo[*entities.PersistentVolumeClaim],
 			pvRepo repos.DbRepo[*entities.PersistentVolume],
@@ -222,18 +229,22 @@ var Module = fx.Module("domain",
 			}
 
 			return &domain{
-				msvcTemplatesMap:      msvcTemplatesMap,
-				msvcTemplates:         templates,
-				logger:                logger,
-				env:                   env,
-				clusterRepo:           clusterRepo,
-				globalVPNRepo:         clusterConnRepo,
-				deviceAddressPoolRepo: deviceAddressPoolRepo,
+				msvcTemplatesMap: msvcTemplatesMap,
+				msvcTemplates:    templates,
+				logger:           logger,
+				env:              env,
+				clusterRepo:      clusterRepo,
+				gvpnConnRepo:     gvpnConnRepo,
+				//deviceAddressPoolRepo:   deviceAddressPoolRepo,
 
-				ipClaimRepo: ipClaimRepo,
-				freeIpRepo:  freeIpRepo,
+				claimDeviceIPRepo:       claimDeviceIPRepo,
+				freeDeviceIpRepo:        freeDeviceIpRepo,
+				freeClusterSvcCIDRRepo:  freeClusterSvcCIDRRepo,
+				claimClusterSvcCIDRRepo: claimClusterSvcCIDRRepo,
 
-				clusterGroupRepo:            clusterGroupRepo,
+				gvpnRepo:        gvpnRepo,
+				gvpnDevicesRepo: gvpnDevicesRepo,
+
 				byokClusterRepo:             byokClusterRepo,
 				clusterManagedServiceRepo:   clustermanagedserviceRepo,
 				nodeRepo:                    nodeRepo,
