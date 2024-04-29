@@ -90,6 +90,7 @@ type DbRepo[T Entity] interface {
 	FindPaginated(ctx context.Context, filter Filter, pagination CursorPagination) (*PaginatedRecord[T], error)
 	FindById(ctx context.Context, id ID) (T, error)
 	Create(ctx context.Context, data T) (T, error)
+	CreateMany(ctx context.Context, data []T) error
 	Exists(ctx context.Context, filter Filter) (bool, error)
 
 	Count(ctx context.Context, filter Filter) (int64, error)

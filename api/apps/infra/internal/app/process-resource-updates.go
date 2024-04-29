@@ -35,6 +35,7 @@ func gvk(obj client.Object) string {
 var (
 	clusterGVK = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
 	// clusterConnGVK      = fn.GVK("wireguard.kloudlite.io/v1", "ClusterConnection")
+	// globalVpnGVK        = fn.GVK("wireguard.kloudlite.io/v1", "GlobalVPNConnection")
 	globalVpnGVK        = fn.GVK("wireguard.kloudlite.io/v1", "GlobalVPN")
 	nodepoolGVK         = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
 	helmreleaseGVK      = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
@@ -114,7 +115,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 			}
 		case globalVpnGVK.String():
 			{
-				var gvpn entities.GlobalVPN
+				var gvpn entities.GlobalVPNConnection
 				if err := fn.JsonConversion(su.Object, &gvpn); err != nil {
 					return errors.NewE(err)
 				}
@@ -128,9 +129,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnGlobalVPNDeleteMessage(dctx, su.ClusterName, gvpn)
+					return d.OnGlobalVPNConnectionDeleteMessage(dctx, su.ClusterName, gvpn)
 				}
-				return d.OnGlobalVPNUpdateMessage(dctx, su.ClusterName, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnGlobalVPNConnectionUpdateMessage(dctx, su.ClusterName, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case nodepoolGVK.String():
 			{

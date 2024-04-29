@@ -14,13 +14,13 @@ type Cluster struct {
 
 	clustersv1.Cluster `json:",inline"`
 
+	// if not specified, a default will be used, each cluster must be part of one global VPN
+	GlobalVPN *string `json:"globalVPN"`
+
 	common.ResourceMetadata `json:",inline"`
 
-	ClusterGroupName *string      `json:"clusterGroupName"`
-	AccountName      string       `json:"accountName" graphql:"noinput"`
-	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
-
-	IPIndex int `json:"ipIndex" graphql:"ignore"`
+	AccountName string       `json:"accountName" graphql:"noinput"`
+	SyncStatus  t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 func (c *Cluster) GetDisplayName() string {
@@ -33,24 +33,24 @@ func (c *Cluster) GetStatus() operator.Status {
 
 var ClusterIndices = []repos.IndexField{
 	{
+		Field:  []repos.IndexKey{{Key: fc.Id, Value: repos.IndexAsc}},
+		Unique: true,
+	},
+	{
 		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
+			{Key: fc.MetadataName, Value: repos.IndexAsc},
+			{Key: fc.MetadataNamespace, Value: repos.IndexAsc},
+			{Key: fc.AccountName, Value: repos.IndexAsc},
+			{Key: fc.ClusterGlobalVPN, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "metadata.name", Value: repos.IndexAsc},
-			{Key: "metadata.namespace", Value: repos.IndexAsc},
+			{Key: fc.ClusterSpecClusterServiceCIDR, Value: repos.IndexAsc},
+			{Key: fc.ClusterGlobalVPN, Value: repos.IndexAsc},
+			{Key: fc.AccountName, Value: repos.IndexAsc},
 		},
 		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "accountName", Value: repos.IndexAsc},
-		},
-	},
-	{
-		Field: []repos.IndexKey{{Key: fc.ClusterIpIndex, Value: repos.IndexAsc}},
 	},
 }

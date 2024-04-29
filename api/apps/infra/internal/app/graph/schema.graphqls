@@ -23,7 +23,11 @@ input SearchCluster {
     text: MatchFilterIn
 }
 
-input SearchClusterGroup {
+input SearchGlobalVPNs {
+    text: MatchFilterIn
+}
+
+input SearchGlobalVPNDevices {
     text: MatchFilterIn
 }
 
@@ -80,9 +84,13 @@ type Query {
     infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getCluster(name: String!): Cluster @isLoggedInAndVerified @hasAccount
 
-    # cluster groups
-    infra_listClusterGroups(search: SearchClusterGroup, pagination: CursorPaginationIn): ClusterGroupPaginatedRecords @isLoggedInAndVerified @hasAccount
-    infra_getClusterGroup(name: String!): ClusterGroup @isLoggedInAndVerified @hasAccount
+    # global VPN
+    infra_listGlobalVPNs(search: SearchGlobalVPNs, pagination: CursorPaginationIn): GlobalVPNPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getGlobalVPN(name: String!): GlobalVPN @isLoggedInAndVerified @hasAccount
+
+    # global VPN Devices
+    infra_listGlobalVPNDevices(gvpn: String!, search: SearchGlobalVPNDevices, pagination: CursorPaginationIn): GlobalVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getGlobalVPNDevice(gvpn: String!, deviceName: String!): GlobalVPNDevice @isLoggedInAndVerified @hasAccount
 
     # get node pools
     infra_listNodePools(clusterName: String!, search: SearchNodepool, pagination: CursorPaginationIn): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -128,9 +136,13 @@ type Mutation {
     infra_deleteCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
     # infra_resyncCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    infra_createClusterGroup(cluster: ClusterGroupIn!): ClusterGroup @isLoggedInAndVerified @hasAccount
-    infra_updateClusterGroup(cluster: ClusterGroupIn!): ClusterGroup @isLoggedInAndVerified @hasAccount
-    infra_deleteClusterGroup(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    infra_createGlobalVPN(gvpn: GlobalVPNIn!): GlobalVPN @isLoggedInAndVerified @hasAccount
+    infra_updateGlobalVPN(gvpn: GlobalVPNIn!): GlobalVPN @isLoggedInAndVerified @hasAccount
+    infra_deleteGlobalVPN(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_createGlobalVPNDevice(gvpnDevice: GlobalVPNDeviceIn!): GlobalVPNDevice @isLoggedInAndVerified @hasAccount
+    infra_updateGlobalVPNDevice(gvpnDevice: GlobalVPNDeviceIn!): GlobalVPNDevice @isLoggedInAndVerified @hasAccount
+    infra_deleteGlobalVPNDevice(gvpn: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
       
     infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster @isLoggedInAndVerified @hasAccount
 
@@ -166,4 +178,8 @@ type EncodedValue {
 
 extend type Cluster {
   adminKubeconfig: EncodedValue
+}
+
+extend type GlobalVPNDevice {
+  wireguardConfig: EncodedValue
 }

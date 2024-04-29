@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"math"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/domain/templates"
@@ -21,7 +20,6 @@ import (
 
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/iputils"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -46,7 +44,7 @@ func (e ErrClusterAlreadyExists) Error() string {
 }
 
 const (
-	DefaultClusterGroup = "default"
+	DefaultGlobalVPNName = "default"
 )
 
 func (d *domain) createTokenSecret(ctx InfraContext, clusterName string, clusterNamespace string) (*corev1.Secret, error) {
@@ -110,42 +108,6 @@ func (d *domain) applyCluster(ctx InfraContext, cluster *entities.Cluster) error
 	// TODO: create cluster connection and apply to target cluster
 }
 
-func (d *domain) findNextAvailableIPRange(ctx InfraContext, gvpn *entities.GlobalVPN) (string, error) {
-	accNs, err := d.getAccNamespace(ctx)
-	if err != nil {
-		return "", errors.NewE(err)
-	}
-
-	clusters, err := d.clusterRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			fields.AccountName:         ctx.AccountName,
-			fields.MetadataNamespace:   accNs,
-			fc.ClusterClusterGroupName: gvpn.Name,
-			fc.ClusterIpIndex:          map[string]any{"$exists": true},
-		},
-		Sort: map[string]any{fc.ClusterIpIndex: 1},
-	})
-	if err != nil {
-		return "", errors.NewE(err)
-	}
-
-	offset := gvpn.ClusterOffset + len(clusters)
-
-	for i := 1; i < len(clusters); i += 1 {
-		if clusters[i-1].IPIndex+1 != clusters[i].IPIndex {
-			offset = clusters[i-1].IPIndex + 1
-			break
-		}
-	}
-
-	ipv4StartingAddr, err := iputils.GenIPAddr(gvpn.CIDR, offset*int(math.Pow(2, float64(32-gvpn.AllocatableCIDRSuffix))))
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s/%d", ipv4StartingAddr, gvpn.AllocatableCIDRSuffix), nil
-}
-
 func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCluster); err != nil {
 		return nil, errors.NewE(err)
@@ -156,11 +118,11 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	if cluster.ClusterGroupName == nil {
-		cluster.ClusterGroupName = fn.New(DefaultClusterGroup)
+	if cluster.GlobalVPN == nil {
+		cluster.GlobalVPN = fn.New(DefaultGlobalVPNName)
 	}
 
-	gvpn, err := d.ensureGlobalVPN(ctx, cluster.Name, DefaultClusterGroup)
+	gvpn, err := d.ensureGlobalVPN(ctx, *cluster.GlobalVPN)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -346,15 +308,6 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		Output:                nil,
 	}
 
-	cidr, err := d.findNextAvailableIPRange(ctx, gvpn)
-	if err != nil {
-		if errors.Is(err, iputils.ErrIPsMaxedOut) {
-			return nil, errors.NewEf(err, "maximum allocatable IPs in this global VPN reached, can't create any more resources")
-		}
-	}
-
-	cluster.Spec.ClusterServiceCIDR = cidr
-
 	cluster.IncrementRecordVersion()
 	cluster.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
@@ -366,6 +319,17 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	cluster.Spec.AccountId = out.AccountId
 	cluster.Spec.AccountName = ctx.AccountName
 	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
+
+	clusterSvcCIDR, err := d.claimNextClusterSvcCIDR(ctx, cluster.Name, gvpn.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, clusterSvcCIDR, *cluster.GlobalVPN); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	cluster.Spec.ClusterServiceCIDR = clusterSvcCIDR
 
 	if err := d.k8sClient.ValidateObject(ctx, &cluster.Cluster); err != nil {
 		return nil, errors.NewE(err)
@@ -497,9 +461,13 @@ func (d *domain) UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string)
 		return errors.NewE(err)
 	}
 
-	if cluster.ClusterGroupName != nil {
-		if _, err := d.ensureGlobalVPN(ctx, clusterName, *cluster.ClusterGroupName); err != nil {
-			return err
+	if cluster.GlobalVPN != nil {
+		gvpn, err := d.findGlobalVPNConnection(ctx, cluster.Name, *cluster.GlobalVPN)
+		if err != nil {
+			return errors.NewE(err)
+		}
+		if err := d.applyGlobalVPNConnection(ctx, gvpn); err != nil {
+			return errors.NewE(err)
 		}
 	}
 
