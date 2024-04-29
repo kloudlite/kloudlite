@@ -18,18 +18,25 @@ type JobSpec struct {
 	OnDelete *JobAction `json:"onDelete,omitempty"`
 }
 
+type JobPhase string
+
+const (
+	JobPhasePending   JobPhase = "PENDING"
+	JobPhaseRunning   JobPhase = "RUNNING"
+	JobPhaseFailed    JobPhase = "FAILED"
+	JobPhaseSucceeded JobPhase = "SUCCEEDED"
+)
+
 type JobStatus struct {
 	rApi.Status `json:",inline"`
-	Succeeded   *bool `json:"succeeded,omitempty"`
-	Running     *bool `json:"running,omitempty"`
-	Failed      *bool `json:"failed,omitempty"`
+	Phase       JobPhase `json:"phase"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=seen,type=date
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/job\\.phase",name=phase,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.phase",name=phase,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
@@ -59,20 +66,11 @@ func (p *Job) GetEnsuredLabels() map[string]string {
 }
 
 func (p *Job) GetEnsuredAnnotations() map[string]string {
-	phase := "PENDING"
-	if p.Status.Running != nil && *p.Status.Running {
-		phase = "RUNNING"
-	}
-	if p.Status.Failed != nil && *p.Status.Failed {
-		phase = "FAILED"
-	}
-	if p.Status.Succeeded != nil && *p.Status.Succeeded {
-		phase = "SUCCEEDED"
-	}
+	return map[string]string{}
+}
 
-	return map[string]string{
-		"kloudlite.io/job.phase": phase,
-	}
+func (p *Job) HasCompleted() bool {
+	return p.Status.Phase == JobPhaseFailed || p.Status.Phase == JobPhaseSucceeded
 }
 
 //+kubebuilder:object:root=true

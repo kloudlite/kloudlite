@@ -30,6 +30,7 @@ testbin/*
 .secrets
 .kube
 *.auto.env
+tags
 
 # intellij workspace files
 *.iml

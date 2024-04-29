@@ -382,7 +382,7 @@ resources:
     namespaced: true
   domain: kloudlite.io
   group: wireguard
-  kind: GlobalVpn
+  kind: GlobalVPN
   path: github.com/kloudlite/operator/apis/wireguard/v1
   version: v1
 - api:
@@ -408,5 +408,13 @@ resources:
   group: crds
   kind: Blueprint
   path: github.com/kloudlite/operator/apis/crds/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: clusters
+  kind: VirtualMachine
+  path: github.com/kloudlite/operator/apis/clusters/v1
   version: v1
 version: "3"

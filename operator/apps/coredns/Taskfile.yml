@@ -21,5 +21,6 @@ tasks:
 
   dev:
     cmds:
-      - podman build -t sample:latest .
+      - task: build
+      - podman build -t sample:latest . -f Containerfile
       - podman run -p 5959:53/udp -p 22220:22222 --rm -it sample:latest

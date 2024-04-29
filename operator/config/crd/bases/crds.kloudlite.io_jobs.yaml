@@ -17,12 +17,12 @@ spec:
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime
-      name: seen
+      name: Seen
       type: date
     - jsonPath: .metadata.annotations.kloudlite\.io\/checks
       name: Checks
       type: string
-    - jsonPath: .metadata.annotations.kloudlite\.io\/job\.phase
+    - jsonPath: .status.phase
       name: phase
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
@@ -15149,8 +15149,6 @@ spec:
                   - status
                   type: object
                 type: object
-              failed:
-                type: boolean
               isReady:
                 type: boolean
               lastReadyGeneration:
@@ -15162,6 +15160,8 @@ spec:
               message:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              phase:
+                type: string
               resources:
                 items:
                   properties:
@@ -15186,10 +15186,8 @@ spec:
                   - namespace
                   type: object
                 type: array
-              running:
-                type: boolean
-              succeeded:
-                type: boolean
+            required:
+            - phase
             type: object
         type: object
     served: true
