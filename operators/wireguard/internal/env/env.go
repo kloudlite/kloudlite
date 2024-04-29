@@ -27,6 +27,9 @@ type Env struct {
 	WgGatewayImage string `env:"WG_GATEWAY_IMAGE"`
 	WgAgentImage   string `env:"WG_AGENT_IMAGE"`
 
+	KeepAliveImage string `env:"KEEP_ALIVE_IMAGE"`
+	CoreDNSImage   string `env:"COREDNS_IMAGE"`
+
 	WgIpBase string `env:"WG_IP_BASE" default:"10.13.0.0"`
 }
 
