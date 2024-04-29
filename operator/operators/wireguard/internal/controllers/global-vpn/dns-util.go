@@ -49,7 +49,7 @@ func (r *Reconciler) getCustomCoreDnsConfig(req *rApi.Request[*wgv1.GlobalVPN], 
 %s.local:53 {
   errors
 
-  rewrite name regex (.*)\.svc\.%s\.local {1}.svc.cluster.local
+  rewrite name regex (.*)\.svc\.%s\.local {1}.svc.cluster.local answer auto
 
   forward . %s
 
@@ -87,18 +87,17 @@ func (r *Reconciler) getSidecarCoreDnsConfig(req *rApi.Request[*wgv1.GlobalVPN],
 	}
 
 	if len(exposeServices) == 0 {
-		return strings.TrimSpace(`
+		return strings.TrimSpace(fmt.Sprintf(`
 .:53 {
   log
   errors
 
-  forward . {{$corednsSvcIp}}
+  forward . %s
   cache 30
   loop
   reload
   any
-}
-`), nil
+}`, corednsSvcIP)), nil
 	}
 
 	fr := []string{}
