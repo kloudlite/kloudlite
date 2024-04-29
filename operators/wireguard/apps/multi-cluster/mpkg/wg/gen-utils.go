@@ -29,13 +29,20 @@ func GeneratePublicKey(privateKey string) ([]byte, error) {
 	return []byte(key.PublicKey().String()), nil
 }
 
-func GetRemoteDeviceIp(deviceOffcet int64, IpBase string) ([]byte, error) {
-	deviceRange := ipaddr.NewIPAddressString(fmt.Sprintf("%s/16", IpBase))
+var ErrIPsMaxedOut error = fmt.Errorf("maximum IPs limit reached")
 
-	if address, addressError := deviceRange.ToAddress(); addressError == nil {
-		increment := address.Increment(deviceOffcet)
-		return []byte(ipaddr.NewIPAddressString(increment.GetNetIP().String()).String()), nil
-	} else {
-		return nil, addressError
+func GenIPAddr(offset int, cidr string) (string, error) {
+	deviceRange := ipaddr.NewIPAddressString(cidr)
+
+	address, err := deviceRange.ToAddress()
+	if err != nil {
+		return "", err
 	}
+
+	increment := address.Increment(int64(offset))
+	if ok := deviceRange.Contains(increment.ToAddressString()); !ok {
+		return "", ErrIPsMaxedOut
+	}
+
+	return ipaddr.NewIPAddressString(increment.GetNetIP().String()).String(), nil
 }

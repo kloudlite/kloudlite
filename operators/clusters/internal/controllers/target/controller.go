@@ -402,6 +402,8 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clu
 				"tracker_id":                fmt.Sprintf("cluster-%s", obj.Name),
 				"enable_nvidia_gpu_support": obj.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
 
+				"k3s_service_cidr": obj.Spec.ClusterServiceCIDR,
+
 				"vpc_id": obj.Spec.AWS.VPC.ID,
 
 				"k3s_masters": map[string]any{
@@ -520,11 +522,16 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clu
 				GcpRegion:          obj.Spec.GCP.Region,
 				GcpCredentialsJson: base64.StdEncoding.EncodeToString([]byte(gcpCreds.ServiceAccountJSON)),
 				// NamePrefix:                fmt.Sprintf("%s-%s", obj.Spec.AccountName, obj.Name),
+				K3sSerivceCIDR:             obj.Spec.ClusterServiceCIDR,
+				K3sDownloadURL:             "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/k3s",
+				KloudliteRunnerDownloadURL: "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/runner-amd64",
+
 				NamePrefix:                obj.Name,
 				ProvisionMode:             "STANDARD",
 				Network:                   obj.Spec.GCP.VPC.Name,
 				UseAsLonghornStorageNodes: false,
 				MachineType:               "e2-custom-2-4096",
+				MachineState:              "on",
 				ServiceAccount: GCPServiceAccount{
 					Enabled: obj.Spec.GCP.ServiceAccount.Enabled,
 					Email:   obj.Spec.GCP.ServiceAccount.Email,
@@ -608,6 +615,8 @@ func (r *ClusterReconciler) applyClusterJob(req *rApi.Request[*clustersv1.Cluste
 		ClusterSecretName:      obj.Spec.Output.SecretName,
 		ClusterSecretNamespace: obj.Namespace,
 
+		ClusterServiceCIDR: obj.Spec.ClusterServiceCIDR,
+
 		ValuesJSON:    valuesJson,
 		CloudProvider: string(obj.Spec.CloudProvider),
 		// AWS: func() *templates.AWSClusterJobParams {
@@ -635,19 +644,14 @@ func (r *ClusterReconciler) applyClusterJob(req *rApi.Request[*clustersv1.Cluste
 		return check.Failed(err)
 	}
 
-	if job.Status.Running != nil && *job.Status.Running {
-		return check.StillRunning(fmt.Errorf("waiting for job to finish execution"))
-	}
-
-	if job.Status.Failed != nil && *job.Status.Failed {
-		return check.Failed(fmt.Errorf("job failed"))
-	}
-
-	if job.Status.Succeeded != nil && *job.Status.Succeeded {
+	if job.HasCompleted() {
+		if job.Status.Phase == crdsv1.JobPhaseFailed {
+			return check.Failed(fmt.Errorf("job failed"))
+		}
 		return check.Completed()
 	}
 
-	return check.StillRunning(fmt.Errorf("waiting for job to start"))
+	return check.StillRunning(fmt.Errorf("waiting for job to complete"))
 }
 
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

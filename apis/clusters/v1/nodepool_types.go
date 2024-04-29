@@ -106,6 +106,8 @@ type NodePoolSpec struct {
 
 	AWS *AWSNodePoolConfig `json:"aws,omitempty"`
 	GCP *GCPNodePoolConfig `json:"gcp,omitempty"`
+
+	AllowSSH bool `json:"allowSSH,omitempty" graphql:"ignore"`
 	// Azure *AzureNodePoolConfig `json:"azure,omitempty"`
 	// DigitalOcean *DigitalOceanNodePoolConfig `json:"digitalocean,omitempty"`
 }

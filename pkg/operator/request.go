@@ -105,26 +105,6 @@ func (r *Request[T]) EnsureLabelsAndAnnotations() stepResult.Result {
 	labels := r.Object.GetEnsuredLabels()
 	annotations := r.Object.GetEnsuredAnnotations()
 
-	// if r.Object.GetNamespace() != "" {
-	// 	var ns corev1.Namespace
-	// 	if err := r.client.Get(r.Context(), fn.NN("", r.Object.GetNamespace()), &ns); err != nil {
-	// 		return stepResult.New().Err(errors.NewEf(err, "could not get namespace %q", r.Object.GetNamespace()))
-	// 	}
-	//
-	// 	for k, v := range ns.GetLabels() {
-	// 		if strings.HasPrefix(k, "kloudlite.io/") {
-	// 			labels[k] = v
-	// 		}
-	// 	}
-	// 	for k, v := range ns.GetAnnotations() {
-	// 		if strings.HasPrefix(k, "kloudlite.io/") {
-	// 			annotations[k] = v
-	// 		}
-	// 	}
-	// }
-
-	annotations[constants.GVKKey] = r.Object.GetObjectKind().GroupVersionKind().String()
-
 	hasAllLabels := fn.MapContains(r.Object.GetLabels(), labels)
 	hasAllAnnotations := fn.MapContains(r.Object.GetAnnotations(), annotations)
 

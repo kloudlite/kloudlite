@@ -12,6 +12,8 @@ import (
 	"os/exec"
 	"path"
 
+	// "github.com/coredns/coredns/core/dnsserver"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	devinfo "github.com/kloudlite/operator/apps/coredns/dev-info"
@@ -39,6 +41,7 @@ func runCoreDNS(ctx context.Context, corefile string) {
 	}
 
 	cmd := exec.CommandContext(ctx, "/coredns", "-conf", corefile)
+	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 
@@ -58,6 +61,8 @@ func main() {
 	flag.StringVar(&devi, "dev-info", "", "--dev-info <device-info>")
 	flag.BoolVar(&debug, "debug", false, "--debug")
 	flag.Parse()
+
+	// dnsserver.Directives = []string{"records", "log", "dns"}
 
 	newCorefilePath := "./Corefile"
 	f, err := os.Open(corefile)
@@ -155,3 +160,6 @@ func main() {
 		log.Printf("err occurred while starting http server: %v\n", err)
 	}
 }
+
+// func Sample() {
+// }

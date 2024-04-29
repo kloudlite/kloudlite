@@ -151,6 +151,14 @@ type LocalObjectReference struct {
 	Name string `json:"name"`
 }
 
+type NamespacedResourceRef struct {
+	// .metadata.name of the resource
+  Name string `json:"name"`
+
+	// .metadata.namespace of the resource
+  Namespace string `json:"namespace"`
+}
+
 type ManagedResourceOutput struct {
 	// refers to a k8s secret that exists in the same namespace as managed resource
 	CredentialsRef LocalObjectReference `json:"credentialsRef"`

@@ -3,10 +3,10 @@
 {{- $image := get . "image"}}
 {{- $resources := get . "resources"}}
 {{- $server_config := get . "serverConfig"}}
-{{- $nodeport := get . "nodeport"}}
+{{- /* {{- $nodeport := get . "nodeport"}} */}}
 {{- $ownerRefs := get . "ownerRefs" -}}
 {{- $interface := get . "interface" -}}
-{{- $corefile := get . "corefile" -}}
+{{- $corefile := get . "corefile" }}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -27,6 +27,8 @@ spec:
   template:
     metadata:
       labels: *labels
+      annotations:
+        kloudlite.io/server-config-hash: {{printf "%s.%s" $server_config $corefile | sha256sum}}
     spec:
       containers:
       - name: coredns
@@ -62,6 +64,9 @@ spec:
         env:
         - name: WG_INTERFACE
           value: {{ $interface }}
+        {{- /* FIXME: might need to change it to something else */}}
+        - name: AGENT_CIDR
+          value: "10.43.0.0/21"
         - name: ADDR
           value: :3000
         - name: CONFIG_PATH
@@ -179,6 +184,6 @@ spec:
   - port: 51820
     protocol: UDP
     targetPort: 51820
-    nodePort: {{ $nodeport }}
+    {{- /* nodePort: {{ $nodeport }} */}}
   selector: *labels
   type: NodePort

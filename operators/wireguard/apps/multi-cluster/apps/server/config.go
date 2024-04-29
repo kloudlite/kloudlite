@@ -29,6 +29,12 @@ var ipMap = make(IpMap)
 var peerMap = make(PeerMap)
 var config Config
 
+type SvcInfo struct {
+	Ip        string
+	Namespace string
+	Name      string
+}
+
 type Config struct {
 	Endpoint   string `json:"endpoint,omitempty"`
 	PrivateKey string `json:"privateKey"`
@@ -37,6 +43,9 @@ type Config struct {
 
 	Peers         []common.Peer `json:"peers,omitempty"`
 	InternalPeers []common.Peer `json:"internal_peers,omitempty"`
+
+	IpForwardingMap map[string]SvcInfo `json:"ip_forwarding_map,omitempty"`
+	DnsServer       string             `json:"dnsServer,omitempty"`
 }
 
 func (s *Config) String() string {
@@ -74,12 +83,12 @@ func (s Config) getAllAllowedIPs() []string {
 		ips = append(ips, p.AllowedIPs...)
 	}
 
-	ips = append(ips, s.IpAddress)
+	ips = append(ips, fmt.Sprintf("%s/32", s.IpAddress))
 
 	return ips
 }
 
-func getIp(publicKey string, ipBase string) (string, *int, error) {
+func getIp(publicKey string, cidr string) (string, *int, error) {
 	if s, ok := peerMap[publicKey]; ok {
 		return s.IpAddress, s.IpId, nil
 	}
@@ -87,7 +96,7 @@ func getIp(publicKey string, ipBase string) (string, *int, error) {
 	for i := constants.AgentIpRangeMin; i < constants.AgentIpRangeMax; i++ {
 		if ipMap[i] == "" {
 			ipMap[i] = publicKey
-			b, err := wg.GetRemoteDeviceIp(int64(i), ipBase)
+			b, err := wg.GenIPAddr(i, cidr)
 			if err != nil {
 				return "", nil, err
 			}
@@ -99,9 +108,9 @@ func getIp(publicKey string, ipBase string) (string, *int, error) {
 	return "", nil, fmt.Errorf("no available ip")
 }
 
-func (s *Config) upsertPeer(logger logging.Logger, p common.Peer, ipBase string) (*common.Peer, error) {
+func (s *Config) upsertPeer(logger logging.Logger, p common.Peer, cidr string) (*common.Peer, error) {
 
-	ip, ipId, err := getIp(p.PublicKey, ipBase)
+	ip, ipId, err := getIp(p.PublicKey, cidr)
 	if err != nil {
 		return nil, err
 	}

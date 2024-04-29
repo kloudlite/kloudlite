@@ -169,6 +169,7 @@ type ClusterSpec struct {
 	TaintMasterNodes       bool    `json:"taintMasterNodes" graphql:"noinput"`
 	BackupToS3Enabled      bool    `json:"backupToS3Enabled" graphql:"noinput"`
 	PublicDNSHost          string  `json:"publicDNSHost" graphql:"noinput"`
+	ClusterServiceCIDR     string  `json:"clusterServiceCIDR,omitempty" graphql:"noinput"`
 	ClusterInternalDnsHost *string `json:"clusterInternalDnsHost,omitempty" graphql:"noinput"`
 	CloudflareEnabled      *bool   `json:"cloudflareEnabled,omitempty"`
 
@@ -188,7 +189,7 @@ type ClusterSpec struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".spec.accountName",name=AccountName,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/cluster\\.job-ref",name=Job,type=string
-// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date

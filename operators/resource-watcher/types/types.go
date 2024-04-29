@@ -57,5 +57,8 @@ const (
 	KeyClusterManagedSvcSecret = "resource-watcher-cmsvc-secret"
 	KeyProjectManagedSvcSecret = "resource-watcher-pmsvc-secret"
 	KeyManagedResSecret        = "resource-watcher-mres-secret"
-	KeyVPNDeviceConfig         = "resource-watcher-wireguard-config"
+
+	KeyVPNDeviceConfig = "resource-watcher-wireguard-config"
+
+	KeyGlobalVPNWgParams = "resource-watcher-gvpn-wg-params"
 )
