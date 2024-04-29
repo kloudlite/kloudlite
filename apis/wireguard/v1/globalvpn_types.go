@@ -14,8 +14,8 @@ type Peer struct {
 	IP        string `json:"ip"`
 	Port      int    `json:"port"`
 
-	ClusterName string `json:"clusterName"`
-	DeviceName  string `json:"deviceName"`
+	ClusterName string `json:"clusterName,omitempty"`
+	DeviceName  string `json:"deviceName,omitempty"`
 
 	AllowedIPs []string `json:"allowedIPs,omitempty"`
 }

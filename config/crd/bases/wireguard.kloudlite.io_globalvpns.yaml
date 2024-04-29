@@ -153,17 +153,17 @@ spec:
                       type: array
                     clusterName:
                       type: string
+                    deviceName:
+                      type: string
                     endpoint:
                       type: string
                     ip:
-                      description: Id        int    `json:"id"`
                       type: string
                     port:
                       type: integer
                     publicKey:
                       type: string
                   required:
-                  - clusterName
                   - endpoint
                   - ip
                   - port
