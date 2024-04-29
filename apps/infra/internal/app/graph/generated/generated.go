@@ -49,7 +49,6 @@ type ResolverRoot interface {
 	BYOKCluster() BYOKClusterResolver
 	CloudProviderSecret() CloudProviderSecretResolver
 	Cluster() ClusterResolver
-	ClusterGroup() ClusterGroupResolver
 	ClusterManagedService() ClusterManagedServiceResolver
 	DomainEntry() DomainEntryResolver
 	Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry() Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver
@@ -57,6 +56,8 @@ type ResolverRoot interface {
 	Github__com___kloudlite___api___pkg___types__SyncStatus() Github__com___kloudlite___api___pkg___types__SyncStatusResolver
 	Github__com___kloudlite___operator___pkg___operator__Check() Github__com___kloudlite___operator___pkg___operator__CheckResolver
 	Github__com___kloudlite___operator___pkg___operator__Status() Github__com___kloudlite___operator___pkg___operator__StatusResolver
+	GlobalVPN() GlobalVPNResolver
+	GlobalVPNDevice() GlobalVPNDeviceResolver
 	HelmRelease() HelmReleaseResolver
 	Metadata() MetadataResolver
 	Mutation() MutationResolver
@@ -71,6 +72,8 @@ type ResolverRoot interface {
 	CloudProviderSecretIn() CloudProviderSecretInResolver
 	ClusterIn() ClusterInResolver
 	ClusterManagedServiceIn() ClusterManagedServiceInResolver
+	GlobalVPNDeviceIn() GlobalVPNDeviceInResolver
+	GlobalVPNIn() GlobalVPNInResolver
 	HelmReleaseIn() HelmReleaseInResolver
 	MetadataIn() MetadataInResolver
 	NamespaceIn() NamespaceInResolver
@@ -142,10 +145,10 @@ type ComplexityRoot struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
 		AdminKubeconfig   func(childComplexity int) int
-		ClusterGroupName  func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
+		GlobalVPN         func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Kind              func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
@@ -161,31 +164,6 @@ type ComplexityRoot struct {
 	ClusterEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
-	}
-
-	ClusterGroup struct {
-		AccountName       func(childComplexity int) int
-		ClusterName       func(childComplexity int) int
-		CreatedBy         func(childComplexity int) int
-		CreationTime      func(childComplexity int) int
-		DisplayName       func(childComplexity int) int
-		ID                func(childComplexity int) int
-		LastUpdatedBy     func(childComplexity int) int
-		MarkedForDeletion func(childComplexity int) int
-		RecordVersion     func(childComplexity int) int
-		SyncStatus        func(childComplexity int) int
-		UpdateTime        func(childComplexity int) int
-	}
-
-	ClusterGroupEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
-	ClusterGroupPaginatedRecords struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
 	}
 
 	ClusterManagedService struct {
@@ -433,6 +411,7 @@ type ComplexityRoot struct {
 		CloudProvider          func(childComplexity int) int
 		CloudflareEnabled      func(childComplexity int) int
 		ClusterInternalDNSHost func(childComplexity int) int
+		ClusterServiceCidr     func(childComplexity int) int
 		ClusterTokenRef        func(childComplexity int) int
 		Gcp                    func(childComplexity int) int
 		KloudliteRelease       func(childComplexity int) int
@@ -447,6 +426,7 @@ type ComplexityRoot struct {
 		GcpProjectID   func(childComplexity int) int
 		MasterNodes    func(childComplexity int) int
 		Region         func(childComplexity int) int
+		ServiceAccount func(childComplexity int) int
 		Vpc            func(childComplexity int) int
 	}
 
@@ -466,6 +446,14 @@ type ComplexityRoot struct {
 		Nodes            func(childComplexity int) int
 		PoolType         func(childComplexity int) int
 		Region           func(childComplexity int) int
+		ServiceAccount   func(childComplexity int) int
+		Vpc              func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount struct {
+		Email   func(childComplexity int) int
+		Enabled func(childComplexity int) int
+		Scopes  func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams struct {
@@ -599,6 +587,65 @@ type ComplexityRoot struct {
 
 	Github__com___kloudlite___operator___pkg___raw____json__RawJson struct {
 		RawMessage func(childComplexity int) int
+	}
+
+	GlobalVPN struct {
+		AccountName                    func(childComplexity int) int
+		AllocatableCIDRSuffix          func(childComplexity int) int
+		CIDR                           func(childComplexity int) int
+		CreatedBy                      func(childComplexity int) int
+		CreationTime                   func(childComplexity int) int
+		DisplayName                    func(childComplexity int) int
+		ID                             func(childComplexity int) int
+		LastUpdatedBy                  func(childComplexity int) int
+		MarkedForDeletion              func(childComplexity int) int
+		NumAllocatedClusterCIDRs       func(childComplexity int) int
+		NumAllocatedDevices            func(childComplexity int) int
+		NumReservedIPsForNonClusterUse func(childComplexity int) int
+		ObjectMeta                     func(childComplexity int) int
+		RecordVersion                  func(childComplexity int) int
+		UpdateTime                     func(childComplexity int) int
+		WgInterface                    func(childComplexity int) int
+	}
+
+	GlobalVPNDevice struct {
+		AccountName       func(childComplexity int) int
+		CreatedBy         func(childComplexity int) int
+		CreationTime      func(childComplexity int) int
+		DisplayName       func(childComplexity int) int
+		GlobalVPNName     func(childComplexity int) int
+		ID                func(childComplexity int) int
+		IPAddr            func(childComplexity int) int
+		LastUpdatedBy     func(childComplexity int) int
+		MarkedForDeletion func(childComplexity int) int
+		ObjectMeta        func(childComplexity int) int
+		PrivateKey        func(childComplexity int) int
+		PublicKey         func(childComplexity int) int
+		RecordVersion     func(childComplexity int) int
+		UpdateTime        func(childComplexity int) int
+		WireguardConfig   func(childComplexity int) int
+	}
+
+	GlobalVPNDeviceEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	GlobalVPNDevicePaginatedRecords struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	GlobalVPNEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	GlobalVPNPaginatedRecords struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	HelmRelease struct {
@@ -1067,24 +1114,27 @@ type ComplexityRoot struct {
 	Mutation struct {
 		InfraCreateBYOKCluster           func(childComplexity int, cluster entities.BYOKCluster) int
 		InfraCreateCluster               func(childComplexity int, cluster entities.Cluster) int
-		InfraCreateClusterGroup          func(childComplexity int, cluster entities.ClusterGroup) int
 		InfraCreateClusterManagedService func(childComplexity int, clusterName string, service entities.ClusterManagedService) int
 		InfraCreateDomainEntry           func(childComplexity int, domainEntry entities.DomainEntry) int
+		InfraCreateGlobalVPNDevice       func(childComplexity int, gvpnDevice entities.GlobalVPNDevice) int
+		InfraCreateGlobalVpn             func(childComplexity int, gvpn entities.GlobalVPN) int
 		InfraCreateHelmRelease           func(childComplexity int, clusterName string, release entities.HelmRelease) int
 		InfraCreateNodePool              func(childComplexity int, clusterName string, pool entities.NodePool) int
 		InfraCreateProviderSecret        func(childComplexity int, secret entities.CloudProviderSecret) int
 		InfraDeleteCluster               func(childComplexity int, name string) int
-		InfraDeleteClusterGroup          func(childComplexity int, name string) int
 		InfraDeleteClusterManagedService func(childComplexity int, clusterName string, serviceName string) int
 		InfraDeleteDomainEntry           func(childComplexity int, domainName string) int
+		InfraDeleteGlobalVPNDevice       func(childComplexity int, gvpn string, deviceName string) int
+		InfraDeleteGlobalVpn             func(childComplexity int, name string) int
 		InfraDeleteHelmRelease           func(childComplexity int, clusterName string, releaseName string) int
 		InfraDeleteNodePool              func(childComplexity int, clusterName string, poolName string) int
 		InfraDeleteProviderSecret        func(childComplexity int, secretName string) int
 		InfraDeletePv                    func(childComplexity int, clusterName string, pvName string) int
 		InfraUpdateCluster               func(childComplexity int, cluster entities.Cluster) int
-		InfraUpdateClusterGroup          func(childComplexity int, cluster entities.ClusterGroup) int
 		InfraUpdateClusterManagedService func(childComplexity int, clusterName string, service entities.ClusterManagedService) int
 		InfraUpdateDomainEntry           func(childComplexity int, domainEntry entities.DomainEntry) int
+		InfraUpdateGlobalVPNDevice       func(childComplexity int, gvpnDevice entities.GlobalVPNDevice) int
+		InfraUpdateGlobalVpn             func(childComplexity int, gvpn entities.GlobalVPN) int
 		InfraUpdateHelmRelease           func(childComplexity int, clusterName string, release entities.HelmRelease) int
 		InfraUpdateNodePool              func(childComplexity int, clusterName string, pool entities.NodePool) int
 		InfraUpdateProviderSecret        func(childComplexity int, secret entities.CloudProviderSecret) int
@@ -1249,9 +1299,10 @@ type ComplexityRoot struct {
 		InfraCheckAwsAccess              func(childComplexity int, cloudproviderName string) int
 		InfraCheckNameAvailability       func(childComplexity int, resType domain.ResType, clusterName *string, name string) int
 		InfraGetCluster                  func(childComplexity int, name string) int
-		InfraGetClusterGroup             func(childComplexity int, name string) int
 		InfraGetClusterManagedService    func(childComplexity int, clusterName string, name string) int
 		InfraGetDomainEntry              func(childComplexity int, domainName string) int
+		InfraGetGlobalVPNDevice          func(childComplexity int, gvpn string, deviceName string) int
+		InfraGetGlobalVpn                func(childComplexity int, name string) int
 		InfraGetHelmRelease              func(childComplexity int, clusterName string, name string) int
 		InfraGetManagedServiceTemplate   func(childComplexity int, category string, name string) int
 		InfraGetNamespace                func(childComplexity int, clusterName string, name string) int
@@ -1260,10 +1311,11 @@ type ComplexityRoot struct {
 		InfraGetPv                       func(childComplexity int, clusterName string, name string) int
 		InfraGetPvc                      func(childComplexity int, clusterName string, name string) int
 		InfraGetVolumeAttachment         func(childComplexity int, clusterName string, name string) int
-		InfraListClusterGroups           func(childComplexity int, search *model.SearchClusterGroup, pagination *repos.CursorPagination) int
 		InfraListClusterManagedServices  func(childComplexity int, clusterName string, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) int
 		InfraListClusters                func(childComplexity int, search *model.SearchCluster, pagination *repos.CursorPagination) int
 		InfraListDomainEntries           func(childComplexity int, search *model.SearchDomainEntry, pagination *repos.CursorPagination) int
+		InfraListGlobalVPNDevices        func(childComplexity int, gvpn string, search *model.SearchGlobalVPNDevices, pagination *repos.CursorPagination) int
+		InfraListGlobalVPNs              func(childComplexity int, search *model.SearchGlobalVPNs, pagination *repos.CursorPagination) int
 		InfraListHelmReleases            func(childComplexity int, clusterName string, search *model.SearchHelmRelease, pagination *repos.CursorPagination) int
 		InfraListManagedServiceTemplates func(childComplexity int) int
 		InfraListNamespaces              func(childComplexity int, clusterName string, search *model.SearchNamespaces, pq *repos.CursorPagination) int
@@ -1340,13 +1392,6 @@ type ClusterResolver interface {
 	UpdateTime(ctx context.Context, obj *entities.Cluster) (string, error)
 	AdminKubeconfig(ctx context.Context, obj *entities.Cluster) (*model.EncodedValue, error)
 }
-type ClusterGroupResolver interface {
-	CreationTime(ctx context.Context, obj *entities.ClusterGroup) (string, error)
-
-	ID(ctx context.Context, obj *entities.ClusterGroup) (repos.ID, error)
-
-	UpdateTime(ctx context.Context, obj *entities.ClusterGroup) (string, error)
-}
 type ClusterManagedServiceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.ClusterManagedService) (string, error)
 
@@ -1388,6 +1433,21 @@ type Github__com___kloudlite___operator___pkg___operator__StatusResolver interfa
 	LastReconcileTime(ctx context.Context, obj *operator.Status) (*string, error)
 	Message(ctx context.Context, obj *operator.Status) (*model.GithubComKloudliteOperatorPkgRawJSONRawJSON, error)
 }
+type GlobalVPNResolver interface {
+	CreationTime(ctx context.Context, obj *entities.GlobalVPN) (string, error)
+
+	ID(ctx context.Context, obj *entities.GlobalVPN) (repos.ID, error)
+
+	UpdateTime(ctx context.Context, obj *entities.GlobalVPN) (string, error)
+}
+type GlobalVPNDeviceResolver interface {
+	CreationTime(ctx context.Context, obj *entities.GlobalVPNDevice) (string, error)
+
+	ID(ctx context.Context, obj *entities.GlobalVPNDevice) (repos.ID, error)
+
+	UpdateTime(ctx context.Context, obj *entities.GlobalVPNDevice) (string, error)
+	WireguardConfig(ctx context.Context, obj *entities.GlobalVPNDevice) (*model.EncodedValue, error)
+}
 type HelmReleaseResolver interface {
 	CreationTime(ctx context.Context, obj *entities.HelmRelease) (string, error)
 
@@ -1409,9 +1469,12 @@ type MutationResolver interface {
 	InfraCreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error)
 	InfraUpdateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error)
 	InfraDeleteCluster(ctx context.Context, name string) (bool, error)
-	InfraCreateClusterGroup(ctx context.Context, cluster entities.ClusterGroup) (*entities.ClusterGroup, error)
-	InfraUpdateClusterGroup(ctx context.Context, cluster entities.ClusterGroup) (*entities.ClusterGroup, error)
-	InfraDeleteClusterGroup(ctx context.Context, name string) (bool, error)
+	InfraCreateGlobalVpn(ctx context.Context, gvpn entities.GlobalVPN) (*entities.GlobalVPN, error)
+	InfraUpdateGlobalVpn(ctx context.Context, gvpn entities.GlobalVPN) (*entities.GlobalVPN, error)
+	InfraDeleteGlobalVpn(ctx context.Context, name string) (bool, error)
+	InfraCreateGlobalVPNDevice(ctx context.Context, gvpnDevice entities.GlobalVPNDevice) (*entities.GlobalVPNDevice, error)
+	InfraUpdateGlobalVPNDevice(ctx context.Context, gvpnDevice entities.GlobalVPNDevice) (*entities.GlobalVPNDevice, error)
+	InfraDeleteGlobalVPNDevice(ctx context.Context, gvpn string, deviceName string) (bool, error)
 	InfraCreateBYOKCluster(ctx context.Context, cluster entities.BYOKCluster) (*entities.BYOKCluster, error)
 	InfraUpgradeHelmKloudliteAgent(ctx context.Context, clusterName string) (bool, error)
 	InfraCreateProviderSecret(ctx context.Context, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
@@ -1482,8 +1545,10 @@ type QueryResolver interface {
 	InfraCheckNameAvailability(ctx context.Context, resType domain.ResType, clusterName *string, name string) (*domain.CheckNameAvailabilityOutput, error)
 	InfraListClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.ClusterPaginatedRecords, error)
 	InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error)
-	InfraListClusterGroups(ctx context.Context, search *model.SearchClusterGroup, pagination *repos.CursorPagination) (*model.ClusterGroupPaginatedRecords, error)
-	InfraGetClusterGroup(ctx context.Context, name string) (*entities.ClusterGroup, error)
+	InfraListGlobalVPNs(ctx context.Context, search *model.SearchGlobalVPNs, pagination *repos.CursorPagination) (*model.GlobalVPNPaginatedRecords, error)
+	InfraGetGlobalVpn(ctx context.Context, name string) (*entities.GlobalVPN, error)
+	InfraListGlobalVPNDevices(ctx context.Context, gvpn string, search *model.SearchGlobalVPNDevices, pagination *repos.CursorPagination) (*model.GlobalVPNDevicePaginatedRecords, error)
+	InfraGetGlobalVPNDevice(ctx context.Context, gvpn string, deviceName string) (*entities.GlobalVPNDevice, error)
 	InfraListNodePools(ctx context.Context, clusterName string, search *model.SearchNodepool, pagination *repos.CursorPagination) (*model.NodePoolPaginatedRecords, error)
 	InfraGetNodePool(ctx context.Context, clusterName string, poolName string) (*entities.NodePool, error)
 	InfraListProviderSecrets(ctx context.Context, search *model.SearchProviderSecret, pagination *repos.CursorPagination) (*model.CloudProviderSecretPaginatedRecords, error)
@@ -1534,6 +1599,12 @@ type ClusterInResolver interface {
 type ClusterManagedServiceInResolver interface {
 	Metadata(ctx context.Context, obj *entities.ClusterManagedService, data *v1.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.ClusterManagedService, data *model.GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn) error
+}
+type GlobalVPNDeviceInResolver interface {
+	Metadata(ctx context.Context, obj *entities.GlobalVPNDevice, data *v1.ObjectMeta) error
+}
+type GlobalVPNInResolver interface {
+	Metadata(ctx context.Context, obj *entities.GlobalVPN, data *v1.ObjectMeta) error
 }
 type HelmReleaseInResolver interface {
 	Metadata(ctx context.Context, obj *entities.HelmRelease, data *v1.ObjectMeta) error
@@ -1841,13 +1912,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Cluster.AdminKubeconfig(childComplexity), true
 
-	case "Cluster.clusterGroupName":
-		if e.complexity.Cluster.ClusterGroupName == nil {
-			break
-		}
-
-		return e.complexity.Cluster.ClusterGroupName(childComplexity), true
-
 	case "Cluster.createdBy":
 		if e.complexity.Cluster.CreatedBy == nil {
 			break
@@ -1868,6 +1932,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Cluster.DisplayName(childComplexity), true
+
+	case "Cluster.globalVPN":
+		if e.complexity.Cluster.GlobalVPN == nil {
+			break
+		}
+
+		return e.complexity.Cluster.GlobalVPN(childComplexity), true
 
 	case "Cluster.id":
 		if e.complexity.Cluster.ID == nil {
@@ -1952,118 +2023,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ClusterEdge.Node(childComplexity), true
-
-	case "ClusterGroup.accountName":
-		if e.complexity.ClusterGroup.AccountName == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroup.AccountName(childComplexity), true
-
-	case "ClusterGroup.clusterName":
-		if e.complexity.ClusterGroup.ClusterName == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroup.ClusterName(childComplexity), true
-
-	case "ClusterGroup.createdBy":
-		if e.complexity.ClusterGroup.CreatedBy == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroup.CreatedBy(childComplexity), true
-
-	case "ClusterGroup.creationTime":
-		if e.complexity.ClusterGroup.CreationTime == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroup.CreationTime(childComplexity), true
-
-	case "ClusterGroup.displayName":
-		if e.complexity.ClusterGroup.DisplayName == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroup.DisplayName(childComplexity), true
-
-	case "ClusterGroup.id":
-		if e.complexity.ClusterGroup.ID == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroup.ID(childComplexity), true
-
-	case "ClusterGroup.lastUpdatedBy":
-		if e.complexity.ClusterGroup.LastUpdatedBy == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroup.LastUpdatedBy(childComplexity), true
-
-	case "ClusterGroup.markedForDeletion":
-		if e.complexity.ClusterGroup.MarkedForDeletion == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroup.MarkedForDeletion(childComplexity), true
-
-	case "ClusterGroup.recordVersion":
-		if e.complexity.ClusterGroup.RecordVersion == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroup.RecordVersion(childComplexity), true
-
-	case "ClusterGroup.syncStatus":
-		if e.complexity.ClusterGroup.SyncStatus == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroup.SyncStatus(childComplexity), true
-
-	case "ClusterGroup.updateTime":
-		if e.complexity.ClusterGroup.UpdateTime == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroup.UpdateTime(childComplexity), true
-
-	case "ClusterGroupEdge.cursor":
-		if e.complexity.ClusterGroupEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroupEdge.Cursor(childComplexity), true
-
-	case "ClusterGroupEdge.node":
-		if e.complexity.ClusterGroupEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroupEdge.Node(childComplexity), true
-
-	case "ClusterGroupPaginatedRecords.edges":
-		if e.complexity.ClusterGroupPaginatedRecords.Edges == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroupPaginatedRecords.Edges(childComplexity), true
-
-	case "ClusterGroupPaginatedRecords.pageInfo":
-		if e.complexity.ClusterGroupPaginatedRecords.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroupPaginatedRecords.PageInfo(childComplexity), true
-
-	case "ClusterGroupPaginatedRecords.totalCount":
-		if e.complexity.ClusterGroupPaginatedRecords.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.ClusterGroupPaginatedRecords.TotalCount(childComplexity), true
 
 	case "ClusterManagedService.apiVersion":
 		if e.complexity.ClusterManagedService.APIVersion == nil {
@@ -3143,6 +3102,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.ClusterInternalDNSHost(childComplexity), true
 
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.clusterServiceCIDR":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.ClusterServiceCidr == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.ClusterServiceCidr(childComplexity), true
+
 	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.clusterTokenRef":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.ClusterTokenRef == nil {
 			break
@@ -3219,6 +3185,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.Region(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.serviceAccount":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.ServiceAccount == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.ServiceAccount(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.vpc":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig.Vpc == nil {
@@ -3310,6 +3283,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.Region(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.serviceAccount":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.ServiceAccount == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.ServiceAccount(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.vpc":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.Vpc == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig.Vpc(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount.email":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount.Email == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount.Email(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount.enabled":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount.Enabled == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount.Enabled(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount.scopes":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount.Scopes == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount.Scopes(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams.name":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams.Name == nil {
@@ -3842,6 +3850,293 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___pkg___raw____json__RawJson.RawMessage(childComplexity), true
+
+	case "GlobalVPN.accountName":
+		if e.complexity.GlobalVPN.AccountName == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.AccountName(childComplexity), true
+
+	case "GlobalVPN.allocatableCIDRSuffix":
+		if e.complexity.GlobalVPN.AllocatableCIDRSuffix == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.AllocatableCIDRSuffix(childComplexity), true
+
+	case "GlobalVPN.CIDR":
+		if e.complexity.GlobalVPN.CIDR == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.CIDR(childComplexity), true
+
+	case "GlobalVPN.createdBy":
+		if e.complexity.GlobalVPN.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.CreatedBy(childComplexity), true
+
+	case "GlobalVPN.creationTime":
+		if e.complexity.GlobalVPN.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.CreationTime(childComplexity), true
+
+	case "GlobalVPN.displayName":
+		if e.complexity.GlobalVPN.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.DisplayName(childComplexity), true
+
+	case "GlobalVPN.id":
+		if e.complexity.GlobalVPN.ID == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.ID(childComplexity), true
+
+	case "GlobalVPN.lastUpdatedBy":
+		if e.complexity.GlobalVPN.LastUpdatedBy == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.LastUpdatedBy(childComplexity), true
+
+	case "GlobalVPN.markedForDeletion":
+		if e.complexity.GlobalVPN.MarkedForDeletion == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.MarkedForDeletion(childComplexity), true
+
+	case "GlobalVPN.numAllocatedClusterCIDRs":
+		if e.complexity.GlobalVPN.NumAllocatedClusterCIDRs == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.NumAllocatedClusterCIDRs(childComplexity), true
+
+	case "GlobalVPN.numAllocatedDevices":
+		if e.complexity.GlobalVPN.NumAllocatedDevices == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.NumAllocatedDevices(childComplexity), true
+
+	case "GlobalVPN.numReservedIPsForNonClusterUse":
+		if e.complexity.GlobalVPN.NumReservedIPsForNonClusterUse == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.NumReservedIPsForNonClusterUse(childComplexity), true
+
+	case "GlobalVPN.metadata":
+		if e.complexity.GlobalVPN.ObjectMeta == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.ObjectMeta(childComplexity), true
+
+	case "GlobalVPN.recordVersion":
+		if e.complexity.GlobalVPN.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.RecordVersion(childComplexity), true
+
+	case "GlobalVPN.updateTime":
+		if e.complexity.GlobalVPN.UpdateTime == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.UpdateTime(childComplexity), true
+
+	case "GlobalVPN.wgInterface":
+		if e.complexity.GlobalVPN.WgInterface == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.WgInterface(childComplexity), true
+
+	case "GlobalVPNDevice.accountName":
+		if e.complexity.GlobalVPNDevice.AccountName == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.AccountName(childComplexity), true
+
+	case "GlobalVPNDevice.createdBy":
+		if e.complexity.GlobalVPNDevice.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.CreatedBy(childComplexity), true
+
+	case "GlobalVPNDevice.creationTime":
+		if e.complexity.GlobalVPNDevice.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.CreationTime(childComplexity), true
+
+	case "GlobalVPNDevice.displayName":
+		if e.complexity.GlobalVPNDevice.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.DisplayName(childComplexity), true
+
+	case "GlobalVPNDevice.globalVPNName":
+		if e.complexity.GlobalVPNDevice.GlobalVPNName == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.GlobalVPNName(childComplexity), true
+
+	case "GlobalVPNDevice.id":
+		if e.complexity.GlobalVPNDevice.ID == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.ID(childComplexity), true
+
+	case "GlobalVPNDevice.ipAddr":
+		if e.complexity.GlobalVPNDevice.IPAddr == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.IPAddr(childComplexity), true
+
+	case "GlobalVPNDevice.lastUpdatedBy":
+		if e.complexity.GlobalVPNDevice.LastUpdatedBy == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.LastUpdatedBy(childComplexity), true
+
+	case "GlobalVPNDevice.markedForDeletion":
+		if e.complexity.GlobalVPNDevice.MarkedForDeletion == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.MarkedForDeletion(childComplexity), true
+
+	case "GlobalVPNDevice.metadata":
+		if e.complexity.GlobalVPNDevice.ObjectMeta == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.ObjectMeta(childComplexity), true
+
+	case "GlobalVPNDevice.privateKey":
+		if e.complexity.GlobalVPNDevice.PrivateKey == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.PrivateKey(childComplexity), true
+
+	case "GlobalVPNDevice.publicKey":
+		if e.complexity.GlobalVPNDevice.PublicKey == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.PublicKey(childComplexity), true
+
+	case "GlobalVPNDevice.recordVersion":
+		if e.complexity.GlobalVPNDevice.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.RecordVersion(childComplexity), true
+
+	case "GlobalVPNDevice.updateTime":
+		if e.complexity.GlobalVPNDevice.UpdateTime == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.UpdateTime(childComplexity), true
+
+	case "GlobalVPNDevice.wireguardConfig":
+		if e.complexity.GlobalVPNDevice.WireguardConfig == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.WireguardConfig(childComplexity), true
+
+	case "GlobalVPNDeviceEdge.cursor":
+		if e.complexity.GlobalVPNDeviceEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDeviceEdge.Cursor(childComplexity), true
+
+	case "GlobalVPNDeviceEdge.node":
+		if e.complexity.GlobalVPNDeviceEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDeviceEdge.Node(childComplexity), true
+
+	case "GlobalVPNDevicePaginatedRecords.edges":
+		if e.complexity.GlobalVPNDevicePaginatedRecords.Edges == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevicePaginatedRecords.Edges(childComplexity), true
+
+	case "GlobalVPNDevicePaginatedRecords.pageInfo":
+		if e.complexity.GlobalVPNDevicePaginatedRecords.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevicePaginatedRecords.PageInfo(childComplexity), true
+
+	case "GlobalVPNDevicePaginatedRecords.totalCount":
+		if e.complexity.GlobalVPNDevicePaginatedRecords.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevicePaginatedRecords.TotalCount(childComplexity), true
+
+	case "GlobalVPNEdge.cursor":
+		if e.complexity.GlobalVPNEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNEdge.Cursor(childComplexity), true
+
+	case "GlobalVPNEdge.node":
+		if e.complexity.GlobalVPNEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNEdge.Node(childComplexity), true
+
+	case "GlobalVPNPaginatedRecords.edges":
+		if e.complexity.GlobalVPNPaginatedRecords.Edges == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNPaginatedRecords.Edges(childComplexity), true
+
+	case "GlobalVPNPaginatedRecords.pageInfo":
+		if e.complexity.GlobalVPNPaginatedRecords.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNPaginatedRecords.PageInfo(childComplexity), true
+
+	case "GlobalVPNPaginatedRecords.totalCount":
+		if e.complexity.GlobalVPNPaginatedRecords.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNPaginatedRecords.TotalCount(childComplexity), true
 
 	case "HelmRelease.apiVersion":
 		if e.complexity.HelmRelease.APIVersion == nil {
@@ -5806,18 +6101,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.InfraCreateCluster(childComplexity, args["cluster"].(entities.Cluster)), true
 
-	case "Mutation.infra_createClusterGroup":
-		if e.complexity.Mutation.InfraCreateClusterGroup == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_infra_createClusterGroup_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.InfraCreateClusterGroup(childComplexity, args["cluster"].(entities.ClusterGroup)), true
-
 	case "Mutation.infra_createClusterManagedService":
 		if e.complexity.Mutation.InfraCreateClusterManagedService == nil {
 			break
@@ -5841,6 +6124,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.InfraCreateDomainEntry(childComplexity, args["domainEntry"].(entities.DomainEntry)), true
+
+	case "Mutation.infra_createGlobalVPNDevice":
+		if e.complexity.Mutation.InfraCreateGlobalVPNDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_createGlobalVPNDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraCreateGlobalVPNDevice(childComplexity, args["gvpnDevice"].(entities.GlobalVPNDevice)), true
+
+	case "Mutation.infra_createGlobalVPN":
+		if e.complexity.Mutation.InfraCreateGlobalVpn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_createGlobalVPN_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraCreateGlobalVpn(childComplexity, args["gvpn"].(entities.GlobalVPN)), true
 
 	case "Mutation.infra_createHelmRelease":
 		if e.complexity.Mutation.InfraCreateHelmRelease == nil {
@@ -5890,18 +6197,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.InfraDeleteCluster(childComplexity, args["name"].(string)), true
 
-	case "Mutation.infra_deleteClusterGroup":
-		if e.complexity.Mutation.InfraDeleteClusterGroup == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_infra_deleteClusterGroup_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.InfraDeleteClusterGroup(childComplexity, args["name"].(string)), true
-
 	case "Mutation.infra_deleteClusterManagedService":
 		if e.complexity.Mutation.InfraDeleteClusterManagedService == nil {
 			break
@@ -5925,6 +6220,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.InfraDeleteDomainEntry(childComplexity, args["domainName"].(string)), true
+
+	case "Mutation.infra_deleteGlobalVPNDevice":
+		if e.complexity.Mutation.InfraDeleteGlobalVPNDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_deleteGlobalVPNDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraDeleteGlobalVPNDevice(childComplexity, args["gvpn"].(string), args["deviceName"].(string)), true
+
+	case "Mutation.infra_deleteGlobalVPN":
+		if e.complexity.Mutation.InfraDeleteGlobalVpn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_deleteGlobalVPN_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraDeleteGlobalVpn(childComplexity, args["name"].(string)), true
 
 	case "Mutation.infra_deleteHelmRelease":
 		if e.complexity.Mutation.InfraDeleteHelmRelease == nil {
@@ -5986,18 +6305,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.InfraUpdateCluster(childComplexity, args["cluster"].(entities.Cluster)), true
 
-	case "Mutation.infra_updateClusterGroup":
-		if e.complexity.Mutation.InfraUpdateClusterGroup == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_infra_updateClusterGroup_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.InfraUpdateClusterGroup(childComplexity, args["cluster"].(entities.ClusterGroup)), true
-
 	case "Mutation.infra_updateClusterManagedService":
 		if e.complexity.Mutation.InfraUpdateClusterManagedService == nil {
 			break
@@ -6021,6 +6328,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.InfraUpdateDomainEntry(childComplexity, args["domainEntry"].(entities.DomainEntry)), true
+
+	case "Mutation.infra_updateGlobalVPNDevice":
+		if e.complexity.Mutation.InfraUpdateGlobalVPNDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_updateGlobalVPNDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraUpdateGlobalVPNDevice(childComplexity, args["gvpnDevice"].(entities.GlobalVPNDevice)), true
+
+	case "Mutation.infra_updateGlobalVPN":
+		if e.complexity.Mutation.InfraUpdateGlobalVpn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_updateGlobalVPN_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraUpdateGlobalVpn(childComplexity, args["gvpn"].(entities.GlobalVPN)), true
 
 	case "Mutation.infra_updateHelmRelease":
 		if e.complexity.Mutation.InfraUpdateHelmRelease == nil {
@@ -6848,18 +7179,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraGetCluster(childComplexity, args["name"].(string)), true
 
-	case "Query.infra_getClusterGroup":
-		if e.complexity.Query.InfraGetClusterGroup == nil {
-			break
-		}
-
-		args, err := ec.field_Query_infra_getClusterGroup_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.InfraGetClusterGroup(childComplexity, args["name"].(string)), true
-
 	case "Query.infra_getClusterManagedService":
 		if e.complexity.Query.InfraGetClusterManagedService == nil {
 			break
@@ -6883,6 +7202,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.InfraGetDomainEntry(childComplexity, args["domainName"].(string)), true
+
+	case "Query.infra_getGlobalVPNDevice":
+		if e.complexity.Query.InfraGetGlobalVPNDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getGlobalVPNDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetGlobalVPNDevice(childComplexity, args["gvpn"].(string), args["deviceName"].(string)), true
+
+	case "Query.infra_getGlobalVPN":
+		if e.complexity.Query.InfraGetGlobalVpn == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getGlobalVPN_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetGlobalVpn(childComplexity, args["name"].(string)), true
 
 	case "Query.infra_getHelmRelease":
 		if e.complexity.Query.InfraGetHelmRelease == nil {
@@ -6980,18 +7323,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraGetVolumeAttachment(childComplexity, args["clusterName"].(string), args["name"].(string)), true
 
-	case "Query.infra_listClusterGroups":
-		if e.complexity.Query.InfraListClusterGroups == nil {
-			break
-		}
-
-		args, err := ec.field_Query_infra_listClusterGroups_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.InfraListClusterGroups(childComplexity, args["search"].(*model.SearchClusterGroup), args["pagination"].(*repos.CursorPagination)), true
-
 	case "Query.infra_listClusterManagedServices":
 		if e.complexity.Query.InfraListClusterManagedServices == nil {
 			break
@@ -7027,6 +7358,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.InfraListDomainEntries(childComplexity, args["search"].(*model.SearchDomainEntry), args["pagination"].(*repos.CursorPagination)), true
+
+	case "Query.infra_listGlobalVPNDevices":
+		if e.complexity.Query.InfraListGlobalVPNDevices == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_listGlobalVPNDevices_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraListGlobalVPNDevices(childComplexity, args["gvpn"].(string), args["search"].(*model.SearchGlobalVPNDevices), args["pagination"].(*repos.CursorPagination)), true
+
+	case "Query.infra_listGlobalVPNs":
+		if e.complexity.Query.InfraListGlobalVPNs == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_listGlobalVPNs_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraListGlobalVPNs(childComplexity, args["search"].(*model.SearchGlobalVPNs), args["pagination"].(*repos.CursorPagination)), true
 
 	case "Query.infra_listHelmReleases":
 		if e.complexity.Query.InfraListHelmReleases == nil {
@@ -7290,7 +7645,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputBYOKClusterIn,
 		ec.unmarshalInputCloudProviderSecretIn,
-		ec.unmarshalInputClusterGroupIn,
 		ec.unmarshalInputClusterIn,
 		ec.unmarshalInputClusterManagedServiceIn,
 		ec.unmarshalInputCursorPaginationIn,
@@ -7320,6 +7674,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn,
+		ec.unmarshalInputGlobalVPNDeviceIn,
+		ec.unmarshalInputGlobalVPNIn,
 		ec.unmarshalInputHelmReleaseIn,
 		ec.unmarshalInputK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn,
 		ec.unmarshalInputK8s__io___api___core___v1__AffinityIn,
@@ -7384,9 +7740,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNodePoolIn,
 		ec.unmarshalInputPersistentVolumeIn,
 		ec.unmarshalInputSearchCluster,
-		ec.unmarshalInputSearchClusterGroup,
 		ec.unmarshalInputSearchClusterManagedService,
 		ec.unmarshalInputSearchDomainEntry,
+		ec.unmarshalInputSearchGlobalVPNDevices,
+		ec.unmarshalInputSearchGlobalVPNs,
 		ec.unmarshalInputSearchHelmRelease,
 		ec.unmarshalInputSearchNamespaces,
 		ec.unmarshalInputSearchNodepool,
@@ -7517,7 +7874,11 @@ input SearchCluster {
     text: MatchFilterIn
 }
 
-input SearchClusterGroup {
+input SearchGlobalVPNs {
+    text: MatchFilterIn
+}
+
+input SearchGlobalVPNDevices {
     text: MatchFilterIn
 }
 
@@ -7574,9 +7935,13 @@ type Query {
     infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getCluster(name: String!): Cluster @isLoggedInAndVerified @hasAccount
 
-    # cluster groups
-    infra_listClusterGroups(search: SearchClusterGroup, pagination: CursorPaginationIn): ClusterGroupPaginatedRecords @isLoggedInAndVerified @hasAccount
-    infra_getClusterGroup(name: String!): ClusterGroup @isLoggedInAndVerified @hasAccount
+    # global VPN
+    infra_listGlobalVPNs(search: SearchGlobalVPNs, pagination: CursorPaginationIn): GlobalVPNPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getGlobalVPN(name: String!): GlobalVPN @isLoggedInAndVerified @hasAccount
+
+    # global VPN Devices
+    infra_listGlobalVPNDevices(gvpn: String!, search: SearchGlobalVPNDevices, pagination: CursorPaginationIn): GlobalVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getGlobalVPNDevice(gvpn: String!, deviceName: String!): GlobalVPNDevice @isLoggedInAndVerified @hasAccount
 
     # get node pools
     infra_listNodePools(clusterName: String!, search: SearchNodepool, pagination: CursorPaginationIn): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -7622,9 +7987,13 @@ type Mutation {
     infra_deleteCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
     # infra_resyncCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    infra_createClusterGroup(cluster: ClusterGroupIn!): ClusterGroup @isLoggedInAndVerified @hasAccount
-    infra_updateClusterGroup(cluster: ClusterGroupIn!): ClusterGroup @isLoggedInAndVerified @hasAccount
-    infra_deleteClusterGroup(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    infra_createGlobalVPN(gvpn: GlobalVPNIn!): GlobalVPN @isLoggedInAndVerified @hasAccount
+    infra_updateGlobalVPN(gvpn: GlobalVPNIn!): GlobalVPN @isLoggedInAndVerified @hasAccount
+    infra_deleteGlobalVPN(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_createGlobalVPNDevice(gvpnDevice: GlobalVPNDeviceIn!): GlobalVPNDevice @isLoggedInAndVerified @hasAccount
+    infra_updateGlobalVPNDevice(gvpnDevice: GlobalVPNDeviceIn!): GlobalVPNDevice @isLoggedInAndVerified @hasAccount
+    infra_deleteGlobalVPNDevice(gvpn: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
       
     infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster @isLoggedInAndVerified @hasAccount
 
@@ -7660,6 +8029,10 @@ type EncodedValue {
 
 extend type Cluster {
   adminKubeconfig: EncodedValue
+}
+
+extend type GlobalVPNDevice {
+  wireguardConfig: EncodedValue
 }
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/byokcluster.graphqls", Input: `type BYOKCluster @shareable {
@@ -7722,10 +8095,10 @@ input CloudProviderSecretIn {
 	{Name: "../struct-to-graphql/cluster.graphqls", Input: `type Cluster @shareable {
   accountName: String!
   apiVersion: String
-  clusterGroupName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
+  globalVPN: String
   id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -7751,41 +8124,11 @@ type ClusterPaginatedRecords @shareable {
 
 input ClusterIn {
   apiVersion: String
-  clusterGroupName: String
   displayName: String!
+  globalVPN: String
   kind: String
   metadata: MetadataIn!
   spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn!
-}
-
-`, BuiltIn: false},
-	{Name: "../struct-to-graphql/clustergroup.graphqls", Input: `type ClusterGroup @shareable {
-  accountName: String!
-  clusterName: String!
-  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  creationTime: Date!
-  displayName: String!
-  id: ID!
-  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  markedForDeletion: Boolean
-  recordVersion: Int!
-  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
-  updateTime: Date!
-}
-
-type ClusterGroupEdge @shareable {
-  cursor: String!
-  node: ClusterGroup!
-}
-
-type ClusterGroupPaginatedRecords @shareable {
-  edges: [ClusterGroupEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-input ClusterGroupIn {
-  displayName: String!
 }
 
 `, BuiltIn: false},
@@ -7998,6 +8341,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec @sha
   cloudflareEnabled: Boolean
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   clusterInternalDnsHost: String
+  clusterServiceCIDR: String
   clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
   gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig
   kloudliteRelease: String!
@@ -8012,6 +8356,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig
   gcpProjectID: String!
   masterNodes: Github__com___kloudlite___operator___apis___clusters___v1__GCPMasterNodesConfig
   region: String!
+  serviceAccount: Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount!
   vpc: Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams
 }
 
@@ -8031,6 +8376,14 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfi
   nodes: Map
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
   region: String!
+  serviceAccount: Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount!
+  vpc: Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount @shareable {
+  email: String
+  enabled: Boolean!
+  scopes: [String!]
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams @shareable {
@@ -9346,6 +9699,82 @@ input DomainEntryIn {
 }
 
 `, BuiltIn: false},
+	{Name: "../struct-to-graphql/globalvpn.graphqls", Input: `type GlobalVPN @shareable {
+  accountName: String!
+  allocatableCIDRSuffix: Int!
+  CIDR: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata! @goField(name: "objectMeta")
+  numAllocatedClusterCIDRs: Int!
+  numAllocatedDevices: Int!
+  numReservedIPsForNonClusterUse: Int!
+  recordVersion: Int!
+  updateTime: Date!
+  wgInterface: String!
+}
+
+type GlobalVPNEdge @shareable {
+  cursor: String!
+  node: GlobalVPN!
+}
+
+type GlobalVPNPaginatedRecords @shareable {
+  edges: [GlobalVPNEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input GlobalVPNIn {
+  allocatableCIDRSuffix: Int!
+  CIDR: String!
+  displayName: String!
+  metadata: MetadataIn!
+  numAllocatedClusterCIDRs: Int!
+  numAllocatedDevices: Int!
+  numReservedIPsForNonClusterUse: Int!
+  wgInterface: String!
+}
+
+`, BuiltIn: false},
+	{Name: "../struct-to-graphql/globalvpndevice.graphqls", Input: `type GlobalVPNDevice @shareable {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  globalVPNName: String!
+  id: ID!
+  ipAddr: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata! @goField(name: "objectMeta")
+  privateKey: String!
+  publicKey: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type GlobalVPNDeviceEdge @shareable {
+  cursor: String!
+  node: GlobalVPNDevice!
+}
+
+type GlobalVPNDevicePaginatedRecords @shareable {
+  edges: [GlobalVPNDeviceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input GlobalVPNDeviceIn {
+  globalVPNName: String!
+  metadata: MetadataIn!
+}
+
+`, BuiltIn: false},
 	{Name: "../struct-to-graphql/helmrelease.graphqls", Input: `type HelmRelease @shareable {
   accountName: String!
   apiVersion: String
@@ -9715,21 +10144,6 @@ func (ec *executionContext) field_Mutation_infra_createBYOKCluster_args(ctx cont
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_infra_createClusterGroup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 entities.ClusterGroup
-	if tmp, ok := rawArgs["cluster"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
-		arg0, err = ec.unmarshalNClusterGroupIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterGroup(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["cluster"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_infra_createClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -9781,6 +10195,36 @@ func (ec *executionContext) field_Mutation_infra_createDomainEntry_args(ctx cont
 		}
 	}
 	args["domainEntry"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_createGlobalVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 entities.GlobalVPNDevice
+	if tmp, ok := rawArgs["gvpnDevice"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpnDevice"))
+		arg0, err = ec.unmarshalNGlobalVPNDeviceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["gvpnDevice"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_createGlobalVPN_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 entities.GlobalVPN
+	if tmp, ok := rawArgs["gvpn"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
+		arg0, err = ec.unmarshalNGlobalVPNIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["gvpn"] = arg0
 	return args, nil
 }
 
@@ -9847,21 +10291,6 @@ func (ec *executionContext) field_Mutation_infra_createProviderSecret_args(ctx c
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_infra_deleteClusterGroup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_infra_deleteClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -9913,6 +10342,45 @@ func (ec *executionContext) field_Mutation_infra_deleteDomainEntry_args(ctx cont
 		}
 	}
 	args["domainName"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_deleteGlobalVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["gvpn"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["gvpn"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deviceName"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_deleteGlobalVPN_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -10003,21 +10471,6 @@ func (ec *executionContext) field_Mutation_infra_deleteProviderSecret_args(ctx c
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_infra_updateClusterGroup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 entities.ClusterGroup
-	if tmp, ok := rawArgs["cluster"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cluster"))
-		arg0, err = ec.unmarshalNClusterGroupIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterGroup(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["cluster"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_infra_updateClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -10069,6 +10522,36 @@ func (ec *executionContext) field_Mutation_infra_updateDomainEntry_args(ctx cont
 		}
 	}
 	args["domainEntry"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_updateGlobalVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 entities.GlobalVPNDevice
+	if tmp, ok := rawArgs["gvpnDevice"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpnDevice"))
+		arg0, err = ec.unmarshalNGlobalVPNDeviceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["gvpnDevice"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_updateGlobalVPN_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 entities.GlobalVPN
+	if tmp, ok := rawArgs["gvpn"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
+		arg0, err = ec.unmarshalNGlobalVPNIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["gvpn"] = arg0
 	return args, nil
 }
 
@@ -10213,21 +10696,6 @@ func (ec *executionContext) field_Query_infra_checkNameAvailability_args(ctx con
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_infra_getClusterGroup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_infra_getClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -10279,6 +10747,45 @@ func (ec *executionContext) field_Query_infra_getDomainEntry_args(ctx context.Co
 		}
 	}
 	args["domainName"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_getGlobalVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["gvpn"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["gvpn"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deviceName"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_getGlobalVPN_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -10465,30 +10972,6 @@ func (ec *executionContext) field_Query_infra_getVolumeAttachment_args(ctx conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_infra_listClusterGroups_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *model.SearchClusterGroup
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg0, err = ec.unmarshalOSearchClusterGroup2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchClusterGroup(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["search"] = arg0
-	var arg1 *repos.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["pagination"] = arg1
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_infra_listClusterManagedServices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -10553,6 +11036,63 @@ func (ec *executionContext) field_Query_infra_listDomainEntries_args(ctx context
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
 		arg0, err = ec.unmarshalOSearchDomainEntry2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchDomainEntry(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["search"] = arg0
+	var arg1 *repos.CursorPagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pagination"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_listGlobalVPNDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["gvpn"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gvpn"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["gvpn"] = arg0
+	var arg1 *model.SearchGlobalVPNDevices
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg1, err = ec.unmarshalOSearchGlobalVPNDevices2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchGlobalVPNDevices(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["search"] = arg1
+	var arg2 *repos.CursorPagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pagination"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_listGlobalVPNs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.SearchGlobalVPNs
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg0, err = ec.unmarshalOSearchGlobalVPNs2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchGlobalVPNs(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -10926,6 +11466,8 @@ func (ec *executionContext) fieldContext_BYOKCluster_ClusterSpec(ctx context.Con
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudProvider(ctx, field)
 			case "clusterInternalDnsHost":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterInternalDnsHost(ctx, field)
+			case "clusterServiceCIDR":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterServiceCIDR(ctx, field)
 			case "clusterTokenRef":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx, field)
 			case "gcp":
@@ -12565,47 +13107,6 @@ func (ec *executionContext) fieldContext_Cluster_apiVersion(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Cluster_clusterGroupName(ctx context.Context, field graphql.CollectedField, obj *entities.Cluster) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Cluster_clusterGroupName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ClusterGroupName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Cluster_clusterGroupName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Cluster",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Cluster_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.Cluster) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Cluster_createdBy(ctx, field)
 	if err != nil {
@@ -12734,6 +13235,47 @@ func (ec *executionContext) _Cluster_displayName(ctx context.Context, field grap
 }
 
 func (ec *executionContext) fieldContext_Cluster_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cluster",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Cluster_globalVPN(ctx context.Context, field graphql.CollectedField, obj *entities.Cluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Cluster_globalVPN(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GlobalVPN, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Cluster_globalVPN(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Cluster",
 		Field:      field,
@@ -13083,6 +13625,8 @@ func (ec *executionContext) fieldContext_Cluster_spec(ctx context.Context, field
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudProvider(ctx, field)
 			case "clusterInternalDnsHost":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterInternalDnsHost(ctx, field)
+			case "clusterServiceCIDR":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterServiceCIDR(ctx, field)
 			case "clusterTokenRef":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx, field)
 			case "gcp":
@@ -13397,14 +13941,14 @@ func (ec *executionContext) fieldContext_ClusterEdge_node(ctx context.Context, f
 				return ec.fieldContext_Cluster_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_Cluster_apiVersion(ctx, field)
-			case "clusterGroupName":
-				return ec.fieldContext_Cluster_clusterGroupName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Cluster_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Cluster_creationTime(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Cluster_displayName(ctx, field)
+			case "globalVPN":
+				return ec.fieldContext_Cluster_globalVPN(ctx, field)
 			case "id":
 				return ec.fieldContext_Cluster_id(ctx, field)
 			case "kind":
@@ -13429,777 +13973,6 @@ func (ec *executionContext) fieldContext_ClusterEdge_node(ctx context.Context, f
 				return ec.fieldContext_Cluster_adminKubeconfig(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Cluster", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroup_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterGroup) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroup_accountName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AccountName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroup_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroup",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroup_clusterName(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterGroup) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroup_clusterName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ClusterName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroup_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroup",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroup_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterGroup) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroup_createdBy(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedBy, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(common.CreatedOrUpdatedBy)
-	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroup_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroup",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "userEmail":
-				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
-			case "userId":
-				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
-			case "userName":
-				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroup_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterGroup) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroup_creationTime(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ClusterGroup().CreationTime(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNDate2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroup_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroup",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Date does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroup_displayName(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterGroup) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroup_displayName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DisplayName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroup_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroup",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroup_id(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterGroup) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroup_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ClusterGroup().ID(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(repos.ID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroup_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroup",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroup_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterGroup) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroup_lastUpdatedBy(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LastUpdatedBy, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(common.CreatedOrUpdatedBy)
-	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroup_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroup",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "userEmail":
-				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
-			case "userId":
-				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
-			case "userName":
-				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroup_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterGroup) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroup_markedForDeletion(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MarkedForDeletion, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroup_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroup",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroup_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterGroup) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroup_recordVersion(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.RecordVersion, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroup_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroup",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroup_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterGroup) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroup_syncStatus(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SyncStatus, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(types.SyncStatus)
-	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroup_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroup",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "action":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx, field)
-			case "error":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_error(ctx, field)
-			case "lastSyncedAt":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
-			case "recordVersion":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_recordVersion(ctx, field)
-			case "state":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx, field)
-			case "syncScheduledAt":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___pkg___types__SyncStatus", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroup_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterGroup) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroup_updateTime(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ClusterGroup().UpdateTime(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNDate2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroup_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroup",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Date does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroupEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.ClusterGroupEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroupEdge_cursor(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroupEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroupEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroupEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.ClusterGroupEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroupEdge_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*entities.ClusterGroup)
-	fc.Result = res
-	return ec.marshalNClusterGroup2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterGroup(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroupEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroupEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_ClusterGroup_accountName(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_ClusterGroup_clusterName(ctx, field)
-			case "createdBy":
-				return ec.fieldContext_ClusterGroup_createdBy(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_ClusterGroup_creationTime(ctx, field)
-			case "displayName":
-				return ec.fieldContext_ClusterGroup_displayName(ctx, field)
-			case "id":
-				return ec.fieldContext_ClusterGroup_id(ctx, field)
-			case "lastUpdatedBy":
-				return ec.fieldContext_ClusterGroup_lastUpdatedBy(ctx, field)
-			case "markedForDeletion":
-				return ec.fieldContext_ClusterGroup_markedForDeletion(ctx, field)
-			case "recordVersion":
-				return ec.fieldContext_ClusterGroup_recordVersion(ctx, field)
-			case "syncStatus":
-				return ec.fieldContext_ClusterGroup_syncStatus(ctx, field)
-			case "updateTime":
-				return ec.fieldContext_ClusterGroup_updateTime(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ClusterGroup", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroupPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField, obj *model.ClusterGroupPaginatedRecords) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroupPaginatedRecords_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*model.ClusterGroupEdge)
-	fc.Result = res
-	return ec.marshalNClusterGroupEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐClusterGroupEdgeᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroupPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroupPaginatedRecords",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_ClusterGroupEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_ClusterGroupEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ClusterGroupEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroupPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.ClusterGroupPaginatedRecords) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroupPaginatedRecords_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.PageInfo)
-	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroupPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroupPaginatedRecords",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterGroupPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.ClusterGroupPaginatedRecords) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterGroupPaginatedRecords_totalCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterGroupPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterGroupPaginatedRecords",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -21202,6 +20975,47 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterServiceCIDR(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterServiceCIDR(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClusterServiceCidr, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterServiceCIDR(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx, field)
 	if err != nil {
@@ -21295,6 +21109,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig_masterNodes(ctx, field)
 			case "region":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig_region(ctx, field)
+			case "serviceAccount":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig_serviceAccount(ctx, field)
 			case "vpc":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig_vpc(ctx, field)
 			}
@@ -21721,6 +21537,58 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig_serviceAccount(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1GCPClusterConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig_serviceAccount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServiceAccount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1GCPServiceAccount)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPServiceAccount(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig_serviceAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "email":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_email(ctx, field)
+			case "enabled":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_enabled(ctx, field)
+			case "scopes":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_scopes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount", field.Name)
 		},
 	}
 	return fc, nil
@@ -22299,6 +22167,229 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_serviceAccount(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_serviceAccount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServiceAccount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1GCPServiceAccount)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPServiceAccount(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_serviceAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "email":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_email(ctx, field)
+			case "enabled":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_enabled(ctx, field)
+			case "scopes":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_scopes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_vpc(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_vpc(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Vpc, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1GcpVPCParams)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GcpVPCParams(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_vpc(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_email(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1GCPServiceAccount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_email(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Email, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_email(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_enabled(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1GCPServiceAccount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_enabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Enabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_scopes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1GCPServiceAccount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_scopes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Scopes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_scopes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1GcpVPCParams) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams_name(ctx, field)
 	if err != nil {
@@ -22677,6 +22768,10 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_poolType(ctx, field)
 			case "region":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_region(ctx, field)
+			case "serviceAccount":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_serviceAccount(ctx, field)
+			case "vpc":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_vpc(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig", field.Name)
 		},
@@ -25670,6 +25765,1969 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pk
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Any does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_allocatableCIDRSuffix(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_allocatableCIDRSuffix(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AllocatableCIDRSuffix, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_allocatableCIDRSuffix(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_CIDR(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_CIDR(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CIDR, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_CIDR(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.GlobalVPN().CreationTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_displayName(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_displayName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_id(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.GlobalVPN().ID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_lastUpdatedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_markedForDeletion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarkedForDeletion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_metadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ObjectMeta, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(v1.ObjectMeta)
+	fc.Result = res
+	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "annotations":
+				return ec.fieldContext_Metadata_annotations(ctx, field)
+			case "creationTimestamp":
+				return ec.fieldContext_Metadata_creationTimestamp(ctx, field)
+			case "deletionTimestamp":
+				return ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
+			case "generation":
+				return ec.fieldContext_Metadata_generation(ctx, field)
+			case "labels":
+				return ec.fieldContext_Metadata_labels(ctx, field)
+			case "name":
+				return ec.fieldContext_Metadata_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Metadata_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_numAllocatedClusterCIDRs(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_numAllocatedClusterCIDRs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumAllocatedClusterCIDRs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_numAllocatedClusterCIDRs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_numAllocatedDevices(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_numAllocatedDevices(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumAllocatedDevices, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_numAllocatedDevices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_numReservedIPsForNonClusterUse(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_numReservedIPsForNonClusterUse(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumReservedIPsForNonClusterUse, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_numReservedIPsForNonClusterUse(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_recordVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecordVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_updateTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.GlobalVPN().UpdateTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPN_wgInterface(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_wgInterface(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WgInterface, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_wgInterface(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.GlobalVPNDevice().CreationTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_displayName(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_displayName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_globalVPNName(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_globalVPNName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GlobalVPNName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_globalVPNName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_id(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.GlobalVPNDevice().ID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_ipAddr(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_ipAddr(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IPAddr, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_ipAddr(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_lastUpdatedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_markedForDeletion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarkedForDeletion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_metadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ObjectMeta, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(v1.ObjectMeta)
+	fc.Result = res
+	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "annotations":
+				return ec.fieldContext_Metadata_annotations(ctx, field)
+			case "creationTimestamp":
+				return ec.fieldContext_Metadata_creationTimestamp(ctx, field)
+			case "deletionTimestamp":
+				return ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
+			case "generation":
+				return ec.fieldContext_Metadata_generation(ctx, field)
+			case "labels":
+				return ec.fieldContext_Metadata_labels(ctx, field)
+			case "name":
+				return ec.fieldContext_Metadata_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Metadata_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_privateKey(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PrivateKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_privateKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_publicKey(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PublicKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_publicKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecordVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_updateTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.GlobalVPNDevice().UpdateTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevice_wireguardConfig(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_wireguardConfig(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.GlobalVPNDevice().WireguardConfig(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.EncodedValue)
+	fc.Result = res
+	return ec.marshalOEncodedValue2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐEncodedValue(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_wireguardConfig(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "value":
+				return ec.fieldContext_EncodedValue_value(ctx, field)
+			case "encoding":
+				return ec.fieldContext_EncodedValue_encoding(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EncodedValue", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDeviceEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNDeviceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDeviceEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDeviceEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDeviceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDeviceEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNDeviceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDeviceEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entities.GlobalVPNDevice)
+	fc.Result = res
+	return ec.marshalNGlobalVPNDevice2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDeviceEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDeviceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_GlobalVPNDevice_accountName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_GlobalVPNDevice_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_GlobalVPNDevice_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_GlobalVPNDevice_displayName(ctx, field)
+			case "globalVPNName":
+				return ec.fieldContext_GlobalVPNDevice_globalVPNName(ctx, field)
+			case "id":
+				return ec.fieldContext_GlobalVPNDevice_id(ctx, field)
+			case "ipAddr":
+				return ec.fieldContext_GlobalVPNDevice_ipAddr(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_GlobalVPNDevice_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_GlobalVPNDevice_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_GlobalVPNDevice_metadata(ctx, field)
+			case "privateKey":
+				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
+			case "publicKey":
+				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_GlobalVPNDevice_updateTime(ctx, field)
+			case "wireguardConfig":
+				return ec.fieldContext_GlobalVPNDevice_wireguardConfig(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPNDevice", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevicePaginatedRecords_edges(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNDevicePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevicePaginatedRecords_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.GlobalVPNDeviceEdge)
+	fc.Result = res
+	return ec.marshalNGlobalVPNDeviceEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNDeviceEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevicePaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevicePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_GlobalVPNDeviceEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_GlobalVPNDeviceEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPNDeviceEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevicePaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNDevicePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevicePaginatedRecords_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevicePaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevicePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNDevicePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNDevicePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevicePaginatedRecords_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevicePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevicePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entities.GlobalVPN)
+	fc.Result = res
+	return ec.marshalNGlobalVPN2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_GlobalVPN_accountName(ctx, field)
+			case "allocatableCIDRSuffix":
+				return ec.fieldContext_GlobalVPN_allocatableCIDRSuffix(ctx, field)
+			case "CIDR":
+				return ec.fieldContext_GlobalVPN_CIDR(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_GlobalVPN_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_GlobalVPN_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_GlobalVPN_displayName(ctx, field)
+			case "id":
+				return ec.fieldContext_GlobalVPN_id(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_GlobalVPN_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_GlobalVPN_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_GlobalVPN_metadata(ctx, field)
+			case "numAllocatedClusterCIDRs":
+				return ec.fieldContext_GlobalVPN_numAllocatedClusterCIDRs(ctx, field)
+			case "numAllocatedDevices":
+				return ec.fieldContext_GlobalVPN_numAllocatedDevices(ctx, field)
+			case "numReservedIPsForNonClusterUse":
+				return ec.fieldContext_GlobalVPN_numReservedIPsForNonClusterUse(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_GlobalVPN_recordVersion(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_GlobalVPN_updateTime(ctx, field)
+			case "wgInterface":
+				return ec.fieldContext_GlobalVPN_wgInterface(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPN", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNPaginatedRecords_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.GlobalVPNEdge)
+	fc.Result = res
+	return ec.marshalNGlobalVPNEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_GlobalVPNEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_GlobalVPNEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPNEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNPaginatedRecords_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNPaginatedRecords_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -38119,14 +40177,14 @@ func (ec *executionContext) fieldContext_Mutation_infra_createCluster(ctx contex
 				return ec.fieldContext_Cluster_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_Cluster_apiVersion(ctx, field)
-			case "clusterGroupName":
-				return ec.fieldContext_Cluster_clusterGroupName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Cluster_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Cluster_creationTime(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Cluster_displayName(ctx, field)
+			case "globalVPN":
+				return ec.fieldContext_Cluster_globalVPN(ctx, field)
 			case "id":
 				return ec.fieldContext_Cluster_id(ctx, field)
 			case "kind":
@@ -38233,14 +40291,14 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateCluster(ctx contex
 				return ec.fieldContext_Cluster_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_Cluster_apiVersion(ctx, field)
-			case "clusterGroupName":
-				return ec.fieldContext_Cluster_clusterGroupName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Cluster_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Cluster_creationTime(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Cluster_displayName(ctx, field)
+			case "globalVPN":
+				return ec.fieldContext_Cluster_globalVPN(ctx, field)
 			case "id":
 				return ec.fieldContext_Cluster_id(ctx, field)
 			case "kind":
@@ -38362,8 +40420,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteCluster(ctx contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_infra_createClusterGroup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_infra_createClusterGroup(ctx, field)
+func (ec *executionContext) _Mutation_infra_createGlobalVPN(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_createGlobalVPN(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -38377,7 +40435,7 @@ func (ec *executionContext) _Mutation_infra_createClusterGroup(ctx context.Conte
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().InfraCreateClusterGroup(rctx, fc.Args["cluster"].(entities.ClusterGroup))
+			return ec.resolvers.Mutation().InfraCreateGlobalVpn(rctx, fc.Args["gvpn"].(entities.GlobalVPN))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -38399,10 +40457,10 @@ func (ec *executionContext) _Mutation_infra_createClusterGroup(ctx context.Conte
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*entities.ClusterGroup); ok {
+		if data, ok := tmp.(*entities.GlobalVPN); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.ClusterGroup`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.GlobalVPN`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -38411,12 +40469,12 @@ func (ec *executionContext) _Mutation_infra_createClusterGroup(ctx context.Conte
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*entities.ClusterGroup)
+	res := resTmp.(*entities.GlobalVPN)
 	fc.Result = res
-	return ec.marshalOClusterGroup2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterGroup(ctx, field.Selections, res)
+	return ec.marshalOGlobalVPN2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_infra_createClusterGroup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_infra_createGlobalVPN(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -38425,29 +40483,39 @@ func (ec *executionContext) fieldContext_Mutation_infra_createClusterGroup(ctx c
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "accountName":
-				return ec.fieldContext_ClusterGroup_accountName(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_ClusterGroup_clusterName(ctx, field)
+				return ec.fieldContext_GlobalVPN_accountName(ctx, field)
+			case "allocatableCIDRSuffix":
+				return ec.fieldContext_GlobalVPN_allocatableCIDRSuffix(ctx, field)
+			case "CIDR":
+				return ec.fieldContext_GlobalVPN_CIDR(ctx, field)
 			case "createdBy":
-				return ec.fieldContext_ClusterGroup_createdBy(ctx, field)
+				return ec.fieldContext_GlobalVPN_createdBy(ctx, field)
 			case "creationTime":
-				return ec.fieldContext_ClusterGroup_creationTime(ctx, field)
+				return ec.fieldContext_GlobalVPN_creationTime(ctx, field)
 			case "displayName":
-				return ec.fieldContext_ClusterGroup_displayName(ctx, field)
+				return ec.fieldContext_GlobalVPN_displayName(ctx, field)
 			case "id":
-				return ec.fieldContext_ClusterGroup_id(ctx, field)
+				return ec.fieldContext_GlobalVPN_id(ctx, field)
 			case "lastUpdatedBy":
-				return ec.fieldContext_ClusterGroup_lastUpdatedBy(ctx, field)
+				return ec.fieldContext_GlobalVPN_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
-				return ec.fieldContext_ClusterGroup_markedForDeletion(ctx, field)
+				return ec.fieldContext_GlobalVPN_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_GlobalVPN_metadata(ctx, field)
+			case "numAllocatedClusterCIDRs":
+				return ec.fieldContext_GlobalVPN_numAllocatedClusterCIDRs(ctx, field)
+			case "numAllocatedDevices":
+				return ec.fieldContext_GlobalVPN_numAllocatedDevices(ctx, field)
+			case "numReservedIPsForNonClusterUse":
+				return ec.fieldContext_GlobalVPN_numReservedIPsForNonClusterUse(ctx, field)
 			case "recordVersion":
-				return ec.fieldContext_ClusterGroup_recordVersion(ctx, field)
-			case "syncStatus":
-				return ec.fieldContext_ClusterGroup_syncStatus(ctx, field)
+				return ec.fieldContext_GlobalVPN_recordVersion(ctx, field)
 			case "updateTime":
-				return ec.fieldContext_ClusterGroup_updateTime(ctx, field)
+				return ec.fieldContext_GlobalVPN_updateTime(ctx, field)
+			case "wgInterface":
+				return ec.fieldContext_GlobalVPN_wgInterface(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ClusterGroup", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPN", field.Name)
 		},
 	}
 	defer func() {
@@ -38457,15 +40525,15 @@ func (ec *executionContext) fieldContext_Mutation_infra_createClusterGroup(ctx c
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_infra_createClusterGroup_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_infra_createGlobalVPN_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_infra_updateClusterGroup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_infra_updateClusterGroup(ctx, field)
+func (ec *executionContext) _Mutation_infra_updateGlobalVPN(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_updateGlobalVPN(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -38479,7 +40547,7 @@ func (ec *executionContext) _Mutation_infra_updateClusterGroup(ctx context.Conte
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().InfraUpdateClusterGroup(rctx, fc.Args["cluster"].(entities.ClusterGroup))
+			return ec.resolvers.Mutation().InfraUpdateGlobalVpn(rctx, fc.Args["gvpn"].(entities.GlobalVPN))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -38501,10 +40569,10 @@ func (ec *executionContext) _Mutation_infra_updateClusterGroup(ctx context.Conte
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*entities.ClusterGroup); ok {
+		if data, ok := tmp.(*entities.GlobalVPN); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.ClusterGroup`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.GlobalVPN`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -38513,12 +40581,12 @@ func (ec *executionContext) _Mutation_infra_updateClusterGroup(ctx context.Conte
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*entities.ClusterGroup)
+	res := resTmp.(*entities.GlobalVPN)
 	fc.Result = res
-	return ec.marshalOClusterGroup2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterGroup(ctx, field.Selections, res)
+	return ec.marshalOGlobalVPN2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_infra_updateClusterGroup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_infra_updateGlobalVPN(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -38527,29 +40595,39 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateClusterGroup(ctx c
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "accountName":
-				return ec.fieldContext_ClusterGroup_accountName(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_ClusterGroup_clusterName(ctx, field)
+				return ec.fieldContext_GlobalVPN_accountName(ctx, field)
+			case "allocatableCIDRSuffix":
+				return ec.fieldContext_GlobalVPN_allocatableCIDRSuffix(ctx, field)
+			case "CIDR":
+				return ec.fieldContext_GlobalVPN_CIDR(ctx, field)
 			case "createdBy":
-				return ec.fieldContext_ClusterGroup_createdBy(ctx, field)
+				return ec.fieldContext_GlobalVPN_createdBy(ctx, field)
 			case "creationTime":
-				return ec.fieldContext_ClusterGroup_creationTime(ctx, field)
+				return ec.fieldContext_GlobalVPN_creationTime(ctx, field)
 			case "displayName":
-				return ec.fieldContext_ClusterGroup_displayName(ctx, field)
+				return ec.fieldContext_GlobalVPN_displayName(ctx, field)
 			case "id":
-				return ec.fieldContext_ClusterGroup_id(ctx, field)
+				return ec.fieldContext_GlobalVPN_id(ctx, field)
 			case "lastUpdatedBy":
-				return ec.fieldContext_ClusterGroup_lastUpdatedBy(ctx, field)
+				return ec.fieldContext_GlobalVPN_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
-				return ec.fieldContext_ClusterGroup_markedForDeletion(ctx, field)
+				return ec.fieldContext_GlobalVPN_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_GlobalVPN_metadata(ctx, field)
+			case "numAllocatedClusterCIDRs":
+				return ec.fieldContext_GlobalVPN_numAllocatedClusterCIDRs(ctx, field)
+			case "numAllocatedDevices":
+				return ec.fieldContext_GlobalVPN_numAllocatedDevices(ctx, field)
+			case "numReservedIPsForNonClusterUse":
+				return ec.fieldContext_GlobalVPN_numReservedIPsForNonClusterUse(ctx, field)
 			case "recordVersion":
-				return ec.fieldContext_ClusterGroup_recordVersion(ctx, field)
-			case "syncStatus":
-				return ec.fieldContext_ClusterGroup_syncStatus(ctx, field)
+				return ec.fieldContext_GlobalVPN_recordVersion(ctx, field)
 			case "updateTime":
-				return ec.fieldContext_ClusterGroup_updateTime(ctx, field)
+				return ec.fieldContext_GlobalVPN_updateTime(ctx, field)
+			case "wgInterface":
+				return ec.fieldContext_GlobalVPN_wgInterface(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ClusterGroup", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPN", field.Name)
 		},
 	}
 	defer func() {
@@ -38559,15 +40637,15 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateClusterGroup(ctx c
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_infra_updateClusterGroup_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_infra_updateGlobalVPN_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_infra_deleteClusterGroup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_infra_deleteClusterGroup(ctx, field)
+func (ec *executionContext) _Mutation_infra_deleteGlobalVPN(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_deleteGlobalVPN(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -38581,7 +40659,7 @@ func (ec *executionContext) _Mutation_infra_deleteClusterGroup(ctx context.Conte
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().InfraDeleteClusterGroup(rctx, fc.Args["name"].(string))
+			return ec.resolvers.Mutation().InfraDeleteGlobalVpn(rctx, fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -38623,7 +40701,7 @@ func (ec *executionContext) _Mutation_infra_deleteClusterGroup(ctx context.Conte
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_infra_deleteClusterGroup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_infra_deleteGlobalVPN(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -38640,7 +40718,308 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteClusterGroup(ctx c
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_infra_deleteClusterGroup_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_infra_deleteGlobalVPN_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_infra_createGlobalVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_createGlobalVPNDevice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraCreateGlobalVPNDevice(rctx, fc.Args["gvpnDevice"].(entities.GlobalVPNDevice))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.GlobalVPNDevice); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.GlobalVPNDevice`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.GlobalVPNDevice)
+	fc.Result = res
+	return ec.marshalOGlobalVPNDevice2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_infra_createGlobalVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_GlobalVPNDevice_accountName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_GlobalVPNDevice_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_GlobalVPNDevice_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_GlobalVPNDevice_displayName(ctx, field)
+			case "globalVPNName":
+				return ec.fieldContext_GlobalVPNDevice_globalVPNName(ctx, field)
+			case "id":
+				return ec.fieldContext_GlobalVPNDevice_id(ctx, field)
+			case "ipAddr":
+				return ec.fieldContext_GlobalVPNDevice_ipAddr(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_GlobalVPNDevice_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_GlobalVPNDevice_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_GlobalVPNDevice_metadata(ctx, field)
+			case "privateKey":
+				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
+			case "publicKey":
+				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_GlobalVPNDevice_updateTime(ctx, field)
+			case "wireguardConfig":
+				return ec.fieldContext_GlobalVPNDevice_wireguardConfig(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPNDevice", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_infra_createGlobalVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_infra_updateGlobalVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_updateGlobalVPNDevice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraUpdateGlobalVPNDevice(rctx, fc.Args["gvpnDevice"].(entities.GlobalVPNDevice))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.GlobalVPNDevice); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.GlobalVPNDevice`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.GlobalVPNDevice)
+	fc.Result = res
+	return ec.marshalOGlobalVPNDevice2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_infra_updateGlobalVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_GlobalVPNDevice_accountName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_GlobalVPNDevice_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_GlobalVPNDevice_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_GlobalVPNDevice_displayName(ctx, field)
+			case "globalVPNName":
+				return ec.fieldContext_GlobalVPNDevice_globalVPNName(ctx, field)
+			case "id":
+				return ec.fieldContext_GlobalVPNDevice_id(ctx, field)
+			case "ipAddr":
+				return ec.fieldContext_GlobalVPNDevice_ipAddr(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_GlobalVPNDevice_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_GlobalVPNDevice_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_GlobalVPNDevice_metadata(ctx, field)
+			case "privateKey":
+				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
+			case "publicKey":
+				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_GlobalVPNDevice_updateTime(ctx, field)
+			case "wireguardConfig":
+				return ec.fieldContext_GlobalVPNDevice_wireguardConfig(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPNDevice", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_infra_updateGlobalVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_infra_deleteGlobalVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_deleteGlobalVPNDevice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraDeleteGlobalVPNDevice(rctx, fc.Args["gvpn"].(string), fc.Args["deviceName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_infra_deleteGlobalVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_infra_deleteGlobalVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -45837,14 +48216,14 @@ func (ec *executionContext) fieldContext_Query_infra_getCluster(ctx context.Cont
 				return ec.fieldContext_Cluster_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_Cluster_apiVersion(ctx, field)
-			case "clusterGroupName":
-				return ec.fieldContext_Cluster_clusterGroupName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Cluster_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Cluster_creationTime(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Cluster_displayName(ctx, field)
+			case "globalVPN":
+				return ec.fieldContext_Cluster_globalVPN(ctx, field)
 			case "id":
 				return ec.fieldContext_Cluster_id(ctx, field)
 			case "kind":
@@ -45885,8 +48264,8 @@ func (ec *executionContext) fieldContext_Query_infra_getCluster(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_infra_listClusterGroups(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_infra_listClusterGroups(ctx, field)
+func (ec *executionContext) _Query_infra_listGlobalVPNs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_listGlobalVPNs(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -45900,7 +48279,7 @@ func (ec *executionContext) _Query_infra_listClusterGroups(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraListClusterGroups(rctx, fc.Args["search"].(*model.SearchClusterGroup), fc.Args["pagination"].(*repos.CursorPagination))
+			return ec.resolvers.Query().InfraListGlobalVPNs(rctx, fc.Args["search"].(*model.SearchGlobalVPNs), fc.Args["pagination"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -45922,10 +48301,10 @@ func (ec *executionContext) _Query_infra_listClusterGroups(ctx context.Context, 
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*model.ClusterGroupPaginatedRecords); ok {
+		if data, ok := tmp.(*model.GlobalVPNPaginatedRecords); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/app/graph/model.ClusterGroupPaginatedRecords`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/app/graph/model.GlobalVPNPaginatedRecords`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -45934,12 +48313,12 @@ func (ec *executionContext) _Query_infra_listClusterGroups(ctx context.Context, 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.ClusterGroupPaginatedRecords)
+	res := resTmp.(*model.GlobalVPNPaginatedRecords)
 	fc.Result = res
-	return ec.marshalOClusterGroupPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐClusterGroupPaginatedRecords(ctx, field.Selections, res)
+	return ec.marshalOGlobalVPNPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNPaginatedRecords(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_infra_listClusterGroups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_infra_listGlobalVPNs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -45948,13 +48327,13 @@ func (ec *executionContext) fieldContext_Query_infra_listClusterGroups(ctx conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_ClusterGroupPaginatedRecords_edges(ctx, field)
+				return ec.fieldContext_GlobalVPNPaginatedRecords_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_ClusterGroupPaginatedRecords_pageInfo(ctx, field)
+				return ec.fieldContext_GlobalVPNPaginatedRecords_pageInfo(ctx, field)
 			case "totalCount":
-				return ec.fieldContext_ClusterGroupPaginatedRecords_totalCount(ctx, field)
+				return ec.fieldContext_GlobalVPNPaginatedRecords_totalCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ClusterGroupPaginatedRecords", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPNPaginatedRecords", field.Name)
 		},
 	}
 	defer func() {
@@ -45964,15 +48343,15 @@ func (ec *executionContext) fieldContext_Query_infra_listClusterGroups(ctx conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_infra_listClusterGroups_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_infra_listGlobalVPNs_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_infra_getClusterGroup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_infra_getClusterGroup(ctx, field)
+func (ec *executionContext) _Query_infra_getGlobalVPN(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_getGlobalVPN(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -45986,7 +48365,7 @@ func (ec *executionContext) _Query_infra_getClusterGroup(ctx context.Context, fi
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraGetClusterGroup(rctx, fc.Args["name"].(string))
+			return ec.resolvers.Query().InfraGetGlobalVpn(rctx, fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -46008,10 +48387,10 @@ func (ec *executionContext) _Query_infra_getClusterGroup(ctx context.Context, fi
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*entities.ClusterGroup); ok {
+		if data, ok := tmp.(*entities.GlobalVPN); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.ClusterGroup`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.GlobalVPN`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -46020,12 +48399,12 @@ func (ec *executionContext) _Query_infra_getClusterGroup(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*entities.ClusterGroup)
+	res := resTmp.(*entities.GlobalVPN)
 	fc.Result = res
-	return ec.marshalOClusterGroup2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterGroup(ctx, field.Selections, res)
+	return ec.marshalOGlobalVPN2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_infra_getClusterGroup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_infra_getGlobalVPN(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -46034,29 +48413,39 @@ func (ec *executionContext) fieldContext_Query_infra_getClusterGroup(ctx context
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "accountName":
-				return ec.fieldContext_ClusterGroup_accountName(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_ClusterGroup_clusterName(ctx, field)
+				return ec.fieldContext_GlobalVPN_accountName(ctx, field)
+			case "allocatableCIDRSuffix":
+				return ec.fieldContext_GlobalVPN_allocatableCIDRSuffix(ctx, field)
+			case "CIDR":
+				return ec.fieldContext_GlobalVPN_CIDR(ctx, field)
 			case "createdBy":
-				return ec.fieldContext_ClusterGroup_createdBy(ctx, field)
+				return ec.fieldContext_GlobalVPN_createdBy(ctx, field)
 			case "creationTime":
-				return ec.fieldContext_ClusterGroup_creationTime(ctx, field)
+				return ec.fieldContext_GlobalVPN_creationTime(ctx, field)
 			case "displayName":
-				return ec.fieldContext_ClusterGroup_displayName(ctx, field)
+				return ec.fieldContext_GlobalVPN_displayName(ctx, field)
 			case "id":
-				return ec.fieldContext_ClusterGroup_id(ctx, field)
+				return ec.fieldContext_GlobalVPN_id(ctx, field)
 			case "lastUpdatedBy":
-				return ec.fieldContext_ClusterGroup_lastUpdatedBy(ctx, field)
+				return ec.fieldContext_GlobalVPN_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
-				return ec.fieldContext_ClusterGroup_markedForDeletion(ctx, field)
+				return ec.fieldContext_GlobalVPN_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_GlobalVPN_metadata(ctx, field)
+			case "numAllocatedClusterCIDRs":
+				return ec.fieldContext_GlobalVPN_numAllocatedClusterCIDRs(ctx, field)
+			case "numAllocatedDevices":
+				return ec.fieldContext_GlobalVPN_numAllocatedDevices(ctx, field)
+			case "numReservedIPsForNonClusterUse":
+				return ec.fieldContext_GlobalVPN_numReservedIPsForNonClusterUse(ctx, field)
 			case "recordVersion":
-				return ec.fieldContext_ClusterGroup_recordVersion(ctx, field)
-			case "syncStatus":
-				return ec.fieldContext_ClusterGroup_syncStatus(ctx, field)
+				return ec.fieldContext_GlobalVPN_recordVersion(ctx, field)
 			case "updateTime":
-				return ec.fieldContext_ClusterGroup_updateTime(ctx, field)
+				return ec.fieldContext_GlobalVPN_updateTime(ctx, field)
+			case "wgInterface":
+				return ec.fieldContext_GlobalVPN_wgInterface(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ClusterGroup", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPN", field.Name)
 		},
 	}
 	defer func() {
@@ -46066,7 +48455,203 @@ func (ec *executionContext) fieldContext_Query_infra_getClusterGroup(ctx context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_infra_getClusterGroup_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_infra_getGlobalVPN_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_listGlobalVPNDevices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_listGlobalVPNDevices(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraListGlobalVPNDevices(rctx, fc.Args["gvpn"].(string), fc.Args["search"].(*model.SearchGlobalVPNDevices), fc.Args["pagination"].(*repos.CursorPagination))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.GlobalVPNDevicePaginatedRecords); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/app/graph/model.GlobalVPNDevicePaginatedRecords`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GlobalVPNDevicePaginatedRecords)
+	fc.Result = res
+	return ec.marshalOGlobalVPNDevicePaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNDevicePaginatedRecords(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_listGlobalVPNDevices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_GlobalVPNDevicePaginatedRecords_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_GlobalVPNDevicePaginatedRecords_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_GlobalVPNDevicePaginatedRecords_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPNDevicePaginatedRecords", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_listGlobalVPNDevices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_getGlobalVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_getGlobalVPNDevice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraGetGlobalVPNDevice(rctx, fc.Args["gvpn"].(string), fc.Args["deviceName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.GlobalVPNDevice); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.GlobalVPNDevice`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.GlobalVPNDevice)
+	fc.Result = res
+	return ec.marshalOGlobalVPNDevice2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_getGlobalVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_GlobalVPNDevice_accountName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_GlobalVPNDevice_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_GlobalVPNDevice_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_GlobalVPNDevice_displayName(ctx, field)
+			case "globalVPNName":
+				return ec.fieldContext_GlobalVPNDevice_globalVPNName(ctx, field)
+			case "id":
+				return ec.fieldContext_GlobalVPNDevice_id(ctx, field)
+			case "ipAddr":
+				return ec.fieldContext_GlobalVPNDevice_ipAddr(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_GlobalVPNDevice_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_GlobalVPNDevice_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_GlobalVPNDevice_metadata(ctx, field)
+			case "privateKey":
+				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
+			case "publicKey":
+				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_GlobalVPNDevice_updateTime(ctx, field)
+			case "wireguardConfig":
+				return ec.fieldContext_GlobalVPNDevice_wireguardConfig(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPNDevice", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_getGlobalVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -51176,35 +53761,6 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputClusterGroupIn(ctx context.Context, obj interface{}) (entities.ClusterGroup, error) {
-	var it entities.ClusterGroup
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"displayName"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "displayName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DisplayName = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj interface{}) (entities.Cluster, error) {
 	var it entities.Cluster
 	asMap := map[string]interface{}{}
@@ -51212,7 +53768,7 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "clusterGroupName", "displayName", "kind", "metadata", "spec"}
+	fieldsInOrder := [...]string{"apiVersion", "displayName", "globalVPN", "kind", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -51228,15 +53784,6 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 				return it, err
 			}
 			it.APIVersion = data
-		case "clusterGroupName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterGroupName"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClusterGroupName = data
 		case "displayName":
 			var err error
 
@@ -51246,6 +53793,15 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 				return it, err
 			}
 			it.DisplayName = data
+		case "globalVPN":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("globalVPN"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GlobalVPN = data
 		case "kind":
 			var err error
 
@@ -52613,6 +55169,140 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.Spec = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGlobalVPNDeviceIn(ctx context.Context, obj interface{}) (entities.GlobalVPNDevice, error) {
+	var it entities.GlobalVPNDevice
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"globalVPNName", "metadata"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "globalVPNName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("globalVPNName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GlobalVPNName = data
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.GlobalVPNDeviceIn().Metadata(ctx, &it, data); err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj interface{}) (entities.GlobalVPN, error) {
+	var it entities.GlobalVPN
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"allocatableCIDRSuffix", "CIDR", "displayName", "metadata", "numAllocatedClusterCIDRs", "numAllocatedDevices", "numReservedIPsForNonClusterUse", "wgInterface"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "allocatableCIDRSuffix":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocatableCIDRSuffix"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AllocatableCIDRSuffix = data
+		case "CIDR":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("CIDR"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CIDR = data
+		case "displayName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DisplayName = data
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.GlobalVPNIn().Metadata(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "numAllocatedClusterCIDRs":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("numAllocatedClusterCIDRs"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NumAllocatedClusterCIDRs = data
+		case "numAllocatedDevices":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("numAllocatedDevices"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NumAllocatedDevices = data
+		case "numReservedIPsForNonClusterUse":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("numReservedIPsForNonClusterUse"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NumReservedIPsForNonClusterUse = data
+		case "wgInterface":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("wgInterface"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WgInterface = data
 		}
 	}
 
@@ -56425,35 +59115,6 @@ func (ec *executionContext) unmarshalInputSearchCluster(ctx context.Context, obj
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputSearchClusterGroup(ctx context.Context, obj interface{}) (model.SearchClusterGroup, error) {
-	var it model.SearchClusterGroup
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"text"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "text":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Text = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputSearchClusterManagedService(ctx context.Context, obj interface{}) (model.SearchClusterManagedService, error) {
 	var it model.SearchClusterManagedService
 	asMap := map[string]interface{}{}
@@ -56515,6 +59176,64 @@ func (ec *executionContext) unmarshalInputSearchDomainEntry(ctx context.Context,
 				return it, err
 			}
 			it.ClusterName = data
+		case "text":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Text = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSearchGlobalVPNDevices(ctx context.Context, obj interface{}) (model.SearchGlobalVPNDevices, error) {
+	var it model.SearchGlobalVPNDevices
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"text"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "text":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Text = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSearchGlobalVPNs(ctx context.Context, obj interface{}) (model.SearchGlobalVPNs, error) {
+	var it model.SearchGlobalVPNs
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"text"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
 		case "text":
 			var err error
 
@@ -57514,8 +60233,6 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "apiVersion":
 			out.Values[i] = ec._Cluster_apiVersion(ctx, field, obj)
-		case "clusterGroupName":
-			out.Values[i] = ec._Cluster_clusterGroupName(ctx, field, obj)
 		case "createdBy":
 			out.Values[i] = ec._Cluster_createdBy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -57562,6 +60279,8 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "globalVPN":
+			out.Values[i] = ec._Cluster_globalVPN(ctx, field, obj)
 		case "id":
 			field := field
 
@@ -57770,278 +60489,6 @@ func (ec *executionContext) _ClusterEdge(ctx context.Context, sel ast.SelectionS
 			}
 		case "node":
 			out.Values[i] = ec._ClusterEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var clusterGroupImplementors = []string{"ClusterGroup"}
-
-func (ec *executionContext) _ClusterGroup(ctx context.Context, sel ast.SelectionSet, obj *entities.ClusterGroup) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, clusterGroupImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ClusterGroup")
-		case "accountName":
-			out.Values[i] = ec._ClusterGroup_accountName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "clusterName":
-			out.Values[i] = ec._ClusterGroup_clusterName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "createdBy":
-			out.Values[i] = ec._ClusterGroup_createdBy(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "creationTime":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ClusterGroup_creationTime(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "displayName":
-			out.Values[i] = ec._ClusterGroup_displayName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "id":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ClusterGroup_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "lastUpdatedBy":
-			out.Values[i] = ec._ClusterGroup_lastUpdatedBy(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "markedForDeletion":
-			out.Values[i] = ec._ClusterGroup_markedForDeletion(ctx, field, obj)
-		case "recordVersion":
-			out.Values[i] = ec._ClusterGroup_recordVersion(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "syncStatus":
-			out.Values[i] = ec._ClusterGroup_syncStatus(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updateTime":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ClusterGroup_updateTime(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var clusterGroupEdgeImplementors = []string{"ClusterGroupEdge"}
-
-func (ec *executionContext) _ClusterGroupEdge(ctx context.Context, sel ast.SelectionSet, obj *model.ClusterGroupEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, clusterGroupEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ClusterGroupEdge")
-		case "cursor":
-			out.Values[i] = ec._ClusterGroupEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._ClusterGroupEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var clusterGroupPaginatedRecordsImplementors = []string{"ClusterGroupPaginatedRecords"}
-
-func (ec *executionContext) _ClusterGroupPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.ClusterGroupPaginatedRecords) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, clusterGroupPaginatedRecordsImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ClusterGroupPaginatedRecords")
-		case "edges":
-			out.Values[i] = ec._ClusterGroupPaginatedRecords_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "pageInfo":
-			out.Values[i] = ec._ClusterGroupPaginatedRecords_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "totalCount":
-			out.Values[i] = ec._ClusterGroupPaginatedRecords_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -60119,6 +62566,8 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 			}
 		case "clusterInternalDnsHost":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterInternalDnsHost(ctx, field, obj)
+		case "clusterServiceCIDR":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterServiceCIDR(ctx, field, obj)
 		case "clusterTokenRef":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx, field, obj)
 		case "gcp":
@@ -60193,6 +62642,11 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig_masterNodes(ctx, field, obj)
 		case "region":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig_region(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "serviceAccount":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig_serviceAccount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -60320,6 +62774,56 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "serviceAccount":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_serviceAccount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "vpc":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig_vpc(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccountImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1GCPServiceAccount) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccountImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount")
+		case "email":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_email(ctx, field, obj)
+		case "enabled":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_enabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "scopes":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount_scopes(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -61406,6 +63910,623 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___raw____j
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___pkg___raw____json__RawJson")
 		case "RawMessage":
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___raw____json__RawJson_RawMessage(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var globalVPNImplementors = []string{"GlobalVPN"}
+
+func (ec *executionContext) _GlobalVPN(ctx context.Context, sel ast.SelectionSet, obj *entities.GlobalVPN) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, globalVPNImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GlobalVPN")
+		case "accountName":
+			out.Values[i] = ec._GlobalVPN_accountName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "allocatableCIDRSuffix":
+			out.Values[i] = ec._GlobalVPN_allocatableCIDRSuffix(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "CIDR":
+			out.Values[i] = ec._GlobalVPN_CIDR(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdBy":
+			out.Values[i] = ec._GlobalVPN_createdBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "creationTime":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._GlobalVPN_creationTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "displayName":
+			out.Values[i] = ec._GlobalVPN_displayName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "id":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._GlobalVPN_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "lastUpdatedBy":
+			out.Values[i] = ec._GlobalVPN_lastUpdatedBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "markedForDeletion":
+			out.Values[i] = ec._GlobalVPN_markedForDeletion(ctx, field, obj)
+		case "metadata":
+			out.Values[i] = ec._GlobalVPN_metadata(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "numAllocatedClusterCIDRs":
+			out.Values[i] = ec._GlobalVPN_numAllocatedClusterCIDRs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "numAllocatedDevices":
+			out.Values[i] = ec._GlobalVPN_numAllocatedDevices(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "numReservedIPsForNonClusterUse":
+			out.Values[i] = ec._GlobalVPN_numReservedIPsForNonClusterUse(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "recordVersion":
+			out.Values[i] = ec._GlobalVPN_recordVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updateTime":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._GlobalVPN_updateTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "wgInterface":
+			out.Values[i] = ec._GlobalVPN_wgInterface(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var globalVPNDeviceImplementors = []string{"GlobalVPNDevice"}
+
+func (ec *executionContext) _GlobalVPNDevice(ctx context.Context, sel ast.SelectionSet, obj *entities.GlobalVPNDevice) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, globalVPNDeviceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GlobalVPNDevice")
+		case "accountName":
+			out.Values[i] = ec._GlobalVPNDevice_accountName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdBy":
+			out.Values[i] = ec._GlobalVPNDevice_createdBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "creationTime":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._GlobalVPNDevice_creationTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "displayName":
+			out.Values[i] = ec._GlobalVPNDevice_displayName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "globalVPNName":
+			out.Values[i] = ec._GlobalVPNDevice_globalVPNName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "id":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._GlobalVPNDevice_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "ipAddr":
+			out.Values[i] = ec._GlobalVPNDevice_ipAddr(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lastUpdatedBy":
+			out.Values[i] = ec._GlobalVPNDevice_lastUpdatedBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "markedForDeletion":
+			out.Values[i] = ec._GlobalVPNDevice_markedForDeletion(ctx, field, obj)
+		case "metadata":
+			out.Values[i] = ec._GlobalVPNDevice_metadata(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "privateKey":
+			out.Values[i] = ec._GlobalVPNDevice_privateKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "publicKey":
+			out.Values[i] = ec._GlobalVPNDevice_publicKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "recordVersion":
+			out.Values[i] = ec._GlobalVPNDevice_recordVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updateTime":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._GlobalVPNDevice_updateTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "wireguardConfig":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._GlobalVPNDevice_wireguardConfig(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var globalVPNDeviceEdgeImplementors = []string{"GlobalVPNDeviceEdge"}
+
+func (ec *executionContext) _GlobalVPNDeviceEdge(ctx context.Context, sel ast.SelectionSet, obj *model.GlobalVPNDeviceEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, globalVPNDeviceEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GlobalVPNDeviceEdge")
+		case "cursor":
+			out.Values[i] = ec._GlobalVPNDeviceEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._GlobalVPNDeviceEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var globalVPNDevicePaginatedRecordsImplementors = []string{"GlobalVPNDevicePaginatedRecords"}
+
+func (ec *executionContext) _GlobalVPNDevicePaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.GlobalVPNDevicePaginatedRecords) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, globalVPNDevicePaginatedRecordsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GlobalVPNDevicePaginatedRecords")
+		case "edges":
+			out.Values[i] = ec._GlobalVPNDevicePaginatedRecords_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._GlobalVPNDevicePaginatedRecords_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._GlobalVPNDevicePaginatedRecords_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var globalVPNEdgeImplementors = []string{"GlobalVPNEdge"}
+
+func (ec *executionContext) _GlobalVPNEdge(ctx context.Context, sel ast.SelectionSet, obj *model.GlobalVPNEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, globalVPNEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GlobalVPNEdge")
+		case "cursor":
+			out.Values[i] = ec._GlobalVPNEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._GlobalVPNEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var globalVPNPaginatedRecordsImplementors = []string{"GlobalVPNPaginatedRecords"}
+
+func (ec *executionContext) _GlobalVPNPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.GlobalVPNPaginatedRecords) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, globalVPNPaginatedRecordsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GlobalVPNPaginatedRecords")
+		case "edges":
+			out.Values[i] = ec._GlobalVPNPaginatedRecords_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._GlobalVPNPaginatedRecords_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._GlobalVPNPaginatedRecords_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -64635,17 +67756,32 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "infra_createClusterGroup":
+		case "infra_createGlobalVPN":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_infra_createClusterGroup(ctx, field)
+				return ec._Mutation_infra_createGlobalVPN(ctx, field)
 			})
-		case "infra_updateClusterGroup":
+		case "infra_updateGlobalVPN":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_infra_updateClusterGroup(ctx, field)
+				return ec._Mutation_infra_updateGlobalVPN(ctx, field)
 			})
-		case "infra_deleteClusterGroup":
+		case "infra_deleteGlobalVPN":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_infra_deleteClusterGroup(ctx, field)
+				return ec._Mutation_infra_deleteGlobalVPN(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "infra_createGlobalVPNDevice":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_createGlobalVPNDevice(ctx, field)
+			})
+		case "infra_updateGlobalVPNDevice":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_updateGlobalVPNDevice(ctx, field)
+			})
+		case "infra_deleteGlobalVPNDevice":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_deleteGlobalVPNDevice(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -66536,7 +69672,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "infra_listClusterGroups":
+		case "infra_listGlobalVPNs":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -66545,7 +69681,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_infra_listClusterGroups(ctx, field)
+				res = ec._Query_infra_listGlobalVPNs(ctx, field)
 				return res
 			}
 
@@ -66555,7 +69691,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "infra_getClusterGroup":
+		case "infra_getGlobalVPN":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -66564,7 +69700,45 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_infra_getClusterGroup(ctx, field)
+				res = ec._Query_infra_getGlobalVPN(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "infra_listGlobalVPNDevices":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_listGlobalVPNDevices(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "infra_getGlobalVPNDevice":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getGlobalVPNDevice(ctx, field)
 				return res
 			}
 
@@ -67940,75 +71114,6 @@ func (ec *executionContext) marshalNClusterEdge2ᚖgithubᚗcomᚋkloudliteᚋap
 	return ec._ClusterEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNClusterGroup2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterGroup(ctx context.Context, sel ast.SelectionSet, v *entities.ClusterGroup) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ClusterGroup(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNClusterGroupEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐClusterGroupEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ClusterGroupEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNClusterGroupEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐClusterGroupEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNClusterGroupEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐClusterGroupEdge(ctx context.Context, sel ast.SelectionSet, v *model.ClusterGroupEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ClusterGroupEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNClusterGroupIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterGroup(ctx context.Context, v interface{}) (entities.ClusterGroup, error) {
-	res, err := ec.unmarshalInputClusterGroupIn(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNClusterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐCluster(ctx context.Context, v interface{}) (entities.Cluster, error) {
 	res, err := ec.unmarshalInputClusterIn(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -68565,6 +71670,16 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___
 	return v
 }
 
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPServiceAccount(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1GCPServiceAccount) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) graphql.Marshaler {
 	return ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec(ctx, sel, &v)
 }
@@ -68700,6 +71815,144 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___operator___pkg___o
 		return graphql.Null
 	}
 	return ec._Github__com___kloudlite___operator___pkg___operator__ResourceRef(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGlobalVPN2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx context.Context, sel ast.SelectionSet, v *entities.GlobalVPN) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GlobalVPN(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGlobalVPNDevice2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx context.Context, sel ast.SelectionSet, v *entities.GlobalVPNDevice) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GlobalVPNDevice(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNGlobalVPNDeviceEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNDeviceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GlobalVPNDeviceEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNGlobalVPNDeviceEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNDeviceEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGlobalVPNDeviceEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNDeviceEdge(ctx context.Context, sel ast.SelectionSet, v *model.GlobalVPNDeviceEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GlobalVPNDeviceEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGlobalVPNDeviceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx context.Context, v interface{}) (entities.GlobalVPNDevice, error) {
+	res, err := ec.unmarshalInputGlobalVPNDeviceIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGlobalVPNEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GlobalVPNEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNGlobalVPNEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNGlobalVPNEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNEdge(ctx context.Context, sel ast.SelectionSet, v *model.GlobalVPNEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GlobalVPNEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGlobalVPNIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx context.Context, v interface{}) (entities.GlobalVPN, error) {
+	res, err := ec.unmarshalInputGlobalVPNIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNHelmRelease2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐHelmRelease(ctx context.Context, sel ast.SelectionSet, v *entities.HelmRelease) graphql.Marshaler {
@@ -70119,20 +73372,6 @@ func (ec *executionContext) marshalOCluster2ᚖgithubᚗcomᚋkloudliteᚋapiᚋ
 	return ec._Cluster(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOClusterGroup2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterGroup(ctx context.Context, sel ast.SelectionSet, v *entities.ClusterGroup) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._ClusterGroup(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOClusterGroupPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐClusterGroupPaginatedRecords(ctx context.Context, sel ast.SelectionSet, v *model.ClusterGroupPaginatedRecords) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._ClusterGroupPaginatedRecords(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOClusterManagedService2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterManagedService(ctx context.Context, sel ast.SelectionSet, v *entities.ClusterManagedService) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -70703,6 +73942,34 @@ func (ec *executionContext) marshalOGithub__com___kloudlite___operator___pkg___r
 		return graphql.Null
 	}
 	return ec._Github__com___kloudlite___operator___pkg___raw____json__RawJson(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOGlobalVPN2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx context.Context, sel ast.SelectionSet, v *entities.GlobalVPN) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._GlobalVPN(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOGlobalVPNDevice2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPNDevice(ctx context.Context, sel ast.SelectionSet, v *entities.GlobalVPNDevice) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._GlobalVPNDevice(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOGlobalVPNDevicePaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNDevicePaginatedRecords(ctx context.Context, sel ast.SelectionSet, v *model.GlobalVPNDevicePaginatedRecords) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._GlobalVPNDevicePaginatedRecords(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOGlobalVPNPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNPaginatedRecords(ctx context.Context, sel ast.SelectionSet, v *model.GlobalVPNPaginatedRecords) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._GlobalVPNPaginatedRecords(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOHelmRelease2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐHelmRelease(ctx context.Context, sel ast.SelectionSet, v *entities.HelmRelease) graphql.Marshaler {
@@ -72288,14 +75555,6 @@ func (ec *executionContext) unmarshalOSearchCluster2ᚖgithubᚗcomᚋkloudlite�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOSearchClusterGroup2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchClusterGroup(ctx context.Context, v interface{}) (*model.SearchClusterGroup, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputSearchClusterGroup(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalOSearchClusterManagedService2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchClusterManagedService(ctx context.Context, v interface{}) (*model.SearchClusterManagedService, error) {
 	if v == nil {
 		return nil, nil
@@ -72309,6 +75568,22 @@ func (ec *executionContext) unmarshalOSearchDomainEntry2ᚖgithubᚗcomᚋkloudl
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputSearchDomainEntry(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOSearchGlobalVPNDevices2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchGlobalVPNDevices(ctx context.Context, v interface{}) (*model.SearchGlobalVPNDevices, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSearchGlobalVPNDevices(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOSearchGlobalVPNs2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchGlobalVPNs(ctx context.Context, v interface{}) (*model.SearchGlobalVPNs, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSearchGlobalVPNs(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

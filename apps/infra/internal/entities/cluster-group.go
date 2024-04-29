@@ -1,33 +1,12 @@
 package entities
 
 import (
-	"fmt"
+	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 
 	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
-	t "github.com/kloudlite/api/pkg/types"
-	"github.com/kloudlite/operator/pkg/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-const (
-	wgIpIndex       = 16
-	clusterPodIndex = 13
-)
-
-func GetCidrRanges(index int) (*string, error) {
-	switch index {
-	case wgIpIndex, clusterPodIndex:
-		return nil, fmt.Errorf("it can't be %d or %d", wgIpIndex, clusterPodIndex)
-	}
-
-	if index < 0 || index > 255 {
-		return nil, fmt.Errorf("ip range can only be between 0 and 255")
-	}
-
-	return functions.New(fmt.Sprintf("10.%d.0.0/16", index)), nil
-}
 
 type Peer struct {
 	Id         int      `json:"id" graphql:"noinput"`
@@ -35,55 +14,49 @@ type Peer struct {
 	AllowedIps []string `json:"allowedIps" graphql:"noinput"`
 }
 
-type ClusterGroup struct {
+type GlobalVPN struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
 	common.ResourceMetadata `json:",inline"`
 	metav1.ObjectMeta       `json:"metadata"`
 
+	// like 10.0.0.0/8
+	CIDR string `json:"CIDR"`
+	// to allocate 8K IPs for each GlobalVPNConnection
+	// i.e. pow(2, 13) Ips, it means 13 Host bits,
+	// which leaves us with (32 - 13) 19 Network Bits. It is our AllocatableCIDRSuffix
+	AllocatableCIDRSuffix int    `json:"allocatableCIDRSuffix"`
+	WgInterface           string `json:"wgInterface"`
+
+	NumReservedIPsForNonClusterUse int `json:"numReservedIPsForNonClusterUse"`
+
+	// Running Count of allocated Cluster CIDRs for clusters, under this GlobalVPN
+	NumAllocatedClusterCIDRs int `json:"numAllocatedClusterCIDRs"`
+
+	// Running Count for allocated Devices under this GlobalVPN
+	// It will always be <= NumReservedIPsForNonClusterUse
+	NumAllocatedDevices int `json:"numAllocatedDevices"`
+
 	// Peers []Peer `json:"peers" graphql:"noinput"`
-
 	AccountName string `json:"accountName" graphql:"noinput"`
-	ClusterName string `json:"clusterName" graphql:"noinput"`
-
-	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
-func (c *ClusterGroup) GetDisplayName() string {
+func (c *GlobalVPN) GetDisplayName() string {
 	return c.ResourceMetadata.DisplayName
 }
 
-func (c *ClusterGroup) GetStatus() operator.Status {
-	return operator.Status{
-		IsReady: true,
-	}
-}
-
-var ClusterGroupIndices = []repos.IndexField{
+var GlobalVPNIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
+			{Key: fc.Id, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "metadata.name", Value: repos.IndexAsc},
-			{Key: "accountName", Value: repos.IndexAsc},
-			{Key: "clusterName", Value: repos.IndexAsc},
+			{Key: fc.MetadataName, Value: repos.IndexAsc},
+			{Key: fc.AccountName, Value: repos.IndexAsc},
 		},
 		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "accountName", Value: repos.IndexAsc},
-			{Key: "spec.id", Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "accountName", Value: repos.IndexAsc},
-		},
 	},
 }

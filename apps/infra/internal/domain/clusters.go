@@ -43,6 +43,10 @@ func (e ErrClusterAlreadyExists) Error() string {
 	return fmt.Sprintf("cluster with name %q already exists for account: %s", e.ClusterName, e.AccountName)
 }
 
+const (
+	DefaultGlobalVPNName = "default"
+)
+
 func (d *domain) createTokenSecret(ctx InfraContext, clusterName string, clusterNamespace string) (*corev1.Secret, error) {
 	secret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
@@ -110,6 +114,15 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	accNs, err := d.getAccNamespace(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if cluster.GlobalVPN == nil {
+		cluster.GlobalVPN = fn.New(DefaultGlobalVPNName)
+	}
+
+	gvpn, err := d.ensureGlobalVPN(ctx, *cluster.GlobalVPN)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -307,6 +320,17 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	cluster.Spec.AccountName = ctx.AccountName
 	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
+	clusterSvcCIDR, err := d.claimNextClusterSvcCIDR(ctx, cluster.Name, gvpn.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, clusterSvcCIDR, *cluster.GlobalVPN); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	cluster.Spec.ClusterServiceCIDR = clusterSvcCIDR
+
 	if err := d.k8sClient.ValidateObject(ctx, &cluster.Cluster); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -435,6 +459,16 @@ func (d *domain) UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string)
 
 	if err := d.applyHelmKloudliteAgent(ctx, out.ClusterToken, cluster); err != nil {
 		return errors.NewE(err)
+	}
+
+	if cluster.GlobalVPN != nil {
+		gvpn, err := d.findGlobalVPNConnection(ctx, cluster.Name, *cluster.GlobalVPN)
+		if err != nil {
+			return errors.NewE(err)
+		}
+		if err := d.applyGlobalVPNConnection(ctx, gvpn); err != nil {
+			return errors.NewE(err)
+		}
 	}
 
 	return nil

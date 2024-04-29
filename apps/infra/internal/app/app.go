@@ -44,11 +44,18 @@ type (
 var Module = fx.Module(
 	"app",
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndices),
-	repos.NewFxMongoRepo[*entities.ClusterConnection]("cluster-connections", "clus-cn", entities.ClusterConnIndices),
-	repos.NewFxMongoRepo[*entities.ClusterGroup]("cluster-groups", "clus-grp", entities.ClusterGroupIndices),
+	repos.NewFxMongoRepo[*entities.GlobalVPNConnection]("global_vpn_connections", "gvpn-conn", entities.GlobalVPNConnectionIndices),
+	repos.NewFxMongoRepo[*entities.GlobalVPN]("global_vpn", "gvpn", entities.GlobalVPNIndices),
+	repos.NewFxMongoRepo[*entities.GlobalVPNDevice]("global_vpn_device", "gvpn-dev", entities.GlobalVPNDeviceIndices),
+
+	repos.NewFxMongoRepo[*entities.ClaimDeviceIP]("claim_device_ip", "claim-ip", entities.ClaimDeviceIPIndices),
+	repos.NewFxMongoRepo[*entities.FreeDeviceIP]("free_device_ip", "free-ip", entities.FreeDeviceIPIndices),
+	repos.NewFxMongoRepo[*entities.FreeClusterSvcCIDR]("free_cluster_svc_cidr", "free-clus-cidr", entities.FreeClusterSvcCIDRIndices),
+	repos.NewFxMongoRepo[*entities.ClaimClusterSvcCIDR]("claim_cluster_svc_cidr", "claim-clus-cidr", entities.ClaimClusterSvcCIDRIndices),
+
 	// repos.NewFxMongoRepo[*entities.BYOKCluster]("byok_clusters", "byok", entities.BYOKClusterIndices),
 	repos.NewFxMongoRepo[*entities.BYOKCluster]("clusters", "byok", entities.BYOKClusterIndices),
-	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cmsvcs", "cmsvcs", entities.ClusterManagedServiceIndices),
+	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cmsvcs", "cmsvc", entities.ClusterManagedServiceIndices),
 	repos.NewFxMongoRepo[*entities.DomainEntry]("domain_entries", "de", entities.DomainEntryIndices),
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.Node]("node", "node", entities.NodePoolIndices),
