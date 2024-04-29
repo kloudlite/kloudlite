@@ -18,6 +18,7 @@ import (
 
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
+	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -32,8 +33,10 @@ func gvk(obj client.Object) string {
 }
 
 var (
-	clusterGVK          = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
-	clusterConnGVK      = fn.GVK("wireguard.kloudlite.io/v1", "ClusterConnection")
+	clusterGVK = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
+	// clusterConnGVK      = fn.GVK("wireguard.kloudlite.io/v1", "ClusterConnection")
+	// globalVpnGVK        = fn.GVK("wireguard.kloudlite.io/v1", "GlobalVPNConnection")
+	globalVpnGVK        = fn.GVK("wireguard.kloudlite.io/v1", "GlobalVPN")
 	nodepoolGVK         = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
 	helmreleaseGVK      = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
 	pvcGVK              = fn.GVK("v1", "PersistentVolumeClaim")
@@ -110,17 +113,25 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 				return d.OnClusterUpdateMessage(dctx, clus, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
-		case clusterConnGVK.String():
+		case globalVpnGVK.String():
 			{
-				var np entities.ClusterConnection
-				if err := fn.JsonConversion(su.Object, &np); err != nil {
+				var gvpn entities.GlobalVPNConnection
+				if err := fn.JsonConversion(su.Object, &gvpn); err != nil {
 					return errors.NewE(err)
 				}
 
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnClusterConnDeleteMessage(dctx, su.ClusterName, np)
+				if v, ok := su.Object[types.KeyGlobalVPNWgParams]; ok {
+					wp, err := fn.JsonConvertP[wgv1.WgParams](v)
+					if err != nil {
+						return errors.NewE(err)
+					}
+					gvpn.ParsedWgParams = wp
 				}
-				return d.OnClusterConnUpdateMessage(dctx, su.ClusterName, np, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnGlobalVPNConnectionDeleteMessage(dctx, su.ClusterName, gvpn)
+				}
+				return d.OnGlobalVPNConnectionUpdateMessage(dctx, su.ClusterName, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case nodepoolGVK.String():
 			{

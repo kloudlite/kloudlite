@@ -34,17 +34,6 @@ type ClusterEdge struct {
 	Node   *entities.Cluster `json:"node"`
 }
 
-type ClusterGroupEdge struct {
-	Cursor string                 `json:"cursor"`
-	Node   *entities.ClusterGroup `json:"node"`
-}
-
-type ClusterGroupPaginatedRecords struct {
-	Edges      []*ClusterGroupEdge `json:"edges"`
-	PageInfo   *PageInfo           `json:"pageInfo"`
-	TotalCount int                 `json:"totalCount"`
-}
-
 type ClusterManagedServiceEdge struct {
 	Cursor string                          `json:"cursor"`
 	Node   *entities.ClusterManagedService `json:"node"`
@@ -283,6 +272,7 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpec struct {
 	CloudflareEnabled      *bool                                                               `json:"cloudflareEnabled,omitempty"`
 	CloudProvider          GithubComKloudliteOperatorApisCommonTypesCloudProvider              `json:"cloudProvider"`
 	ClusterInternalDNSHost *string                                                             `json:"clusterInternalDnsHost,omitempty"`
+	ClusterServiceCidr     *string                                                             `json:"clusterServiceCIDR,omitempty"`
 	ClusterTokenRef        *GithubComKloudliteOperatorApisCommonTypesSecretKeyRef              `json:"clusterTokenRef,omitempty"`
 	Gcp                    *GithubComKloudliteOperatorApisClustersV1GCPClusterConfig           `json:"gcp,omitempty"`
 	KloudliteRelease       string                                                              `json:"kloudliteRelease"`
@@ -305,6 +295,7 @@ type GithubComKloudliteOperatorApisClustersV1GCPClusterConfig struct {
 	GcpProjectID   string                                                        `json:"gcpProjectID"`
 	MasterNodes    *GithubComKloudliteOperatorApisClustersV1GCPMasterNodesConfig `json:"masterNodes,omitempty"`
 	Region         string                                                        `json:"region"`
+	ServiceAccount *GithubComKloudliteOperatorApisClustersV1GCPServiceAccount    `json:"serviceAccount"`
 	Vpc            *GithubComKloudliteOperatorApisClustersV1GcpVPCParams         `json:"vpc,omitempty"`
 }
 
@@ -320,21 +311,29 @@ type GithubComKloudliteOperatorApisClustersV1GCPMasterNodesConfig struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfig struct {
-	AvailabilityZone string                                              `json:"availabilityZone"`
-	BootVolumeSize   int                                                 `json:"bootVolumeSize"`
-	BootVolumeType   string                                              `json:"bootVolumeType"`
-	Credentials      *GithubComKloudliteOperatorApisCommonTypesSecretRef `json:"credentials"`
-	GcpProjectID     string                                              `json:"gcpProjectID"`
-	MachineType      string                                              `json:"machineType"`
-	Nodes            map[string]interface{}                              `json:"nodes,omitempty"`
-	PoolType         GithubComKloudliteOperatorApisClustersV1GCPPoolType `json:"poolType"`
-	Region           string                                              `json:"region"`
+	AvailabilityZone string                                                     `json:"availabilityZone"`
+	BootVolumeSize   int                                                        `json:"bootVolumeSize"`
+	BootVolumeType   string                                                     `json:"bootVolumeType"`
+	Credentials      *GithubComKloudliteOperatorApisCommonTypesSecretRef        `json:"credentials"`
+	GcpProjectID     string                                                     `json:"gcpProjectID"`
+	MachineType      string                                                     `json:"machineType"`
+	Nodes            map[string]interface{}                                     `json:"nodes,omitempty"`
+	PoolType         GithubComKloudliteOperatorApisClustersV1GCPPoolType        `json:"poolType"`
+	Region           string                                                     `json:"region"`
+	ServiceAccount   *GithubComKloudliteOperatorApisClustersV1GCPServiceAccount `json:"serviceAccount"`
+	Vpc              *GithubComKloudliteOperatorApisClustersV1GcpVPCParams      `json:"vpc,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1GCPNodePoolConfigIn struct {
 	AvailabilityZone string                                              `json:"availabilityZone"`
 	MachineType      string                                              `json:"machineType"`
 	PoolType         GithubComKloudliteOperatorApisClustersV1GCPPoolType `json:"poolType"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1GCPServiceAccount struct {
+	Email   *string  `json:"email,omitempty"`
+	Enabled bool     `json:"enabled"`
+	Scopes  []string `json:"scopes,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1GcpVPCParams struct {
@@ -504,6 +503,28 @@ type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
 	RawMessage interface{} `json:"RawMessage,omitempty"`
+}
+
+type GlobalVPNDeviceEdge struct {
+	Cursor string                    `json:"cursor"`
+	Node   *entities.GlobalVPNDevice `json:"node"`
+}
+
+type GlobalVPNDevicePaginatedRecords struct {
+	Edges      []*GlobalVPNDeviceEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount int                    `json:"totalCount"`
+}
+
+type GlobalVPNEdge struct {
+	Cursor string              `json:"cursor"`
+	Node   *entities.GlobalVPN `json:"node"`
+}
+
+type GlobalVPNPaginatedRecords struct {
+	Edges      []*GlobalVPNEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount int              `json:"totalCount"`
 }
 
 type HelmReleaseEdge struct {
@@ -1413,10 +1434,6 @@ type SearchCluster struct {
 	Text              *repos.MatchFilter `json:"text,omitempty"`
 }
 
-type SearchClusterGroup struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
-}
-
 type SearchClusterManagedService struct {
 	IsReady *repos.MatchFilter `json:"isReady,omitempty"`
 	Text    *repos.MatchFilter `json:"text,omitempty"`
@@ -1425,6 +1442,14 @@ type SearchClusterManagedService struct {
 type SearchDomainEntry struct {
 	ClusterName *repos.MatchFilter `json:"clusterName,omitempty"`
 	Text        *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchGlobalVPNDevices struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchGlobalVPNs struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type SearchHelmRelease struct {
