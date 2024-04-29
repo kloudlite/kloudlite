@@ -21,16 +21,15 @@ import (
 
 type ResourceUpdateConsumer messaging.Consumer
 
-func newResourceContext(ctx domain.ConsoleContext, projectName string, environmentName string) domain.ResourceContext {
+func newResourceContext(ctx domain.ConsoleContext, environmentName string) domain.ResourceContext {
 	return domain.ResourceContext{
 		ConsoleContext:  ctx,
-		ProjectName:     projectName,
 		EnvironmentName: environmentName,
 	}
 }
 
 var (
-	projectGVK               = fn.GVK("crds.kloudlite.io/v1", "Project")
+	//projectGVK               = fn.GVK("crds.kloudlite.io/v1", "Project")
 	appsGVK                  = fn.GVK("crds.kloudlite.io/v1", "App")
 	environmentGVK           = fn.GVK("crds.kloudlite.io/v1", "Environment")
 	deviceGVK                = fn.GVK("wireguard.kloudlite.io/v1", "Device")
@@ -53,7 +52,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			return domain.ResourceContext{}, errors.Newf("mapping not found for %s %s/%s", rt, obj.GetNamespace(), obj.GetName())
 		}
 
-		return newResourceContext(ctx, mapping.ProjectName, mapping.EnvironmentName), nil
+		return newResourceContext(ctx, mapping.EnvironmentName), nil
 	}
 
 	msgReader := func(msg *msgTypes.ConsumeMsg) error {
@@ -146,48 +145,48 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 
 				return d.OnVPNDeviceUpdateMessage(dctx, dev, resStatus, opts, ru.ClusterName)
 			}
-		case projectGVK.String():
-			{
-				var p entities.Project
-				if err := fn.JsonConversion(ru.Object, &p); err != nil {
-					return errors.NewE(err)
-				}
+		//case projectGVK.String():
+		//	{
+		//		var p entities.Project
+		//		if err := fn.JsonConversion(ru.Object, &p); err != nil {
+		//			return errors.NewE(err)
+		//		}
+		//
+		//		if resStatus == types.ResourceStatusDeleted {
+		//			return d.OnProjectDeleteMessage(dctx, p)
+		//		}
+		//		return d.OnProjectUpdateMessage(dctx, p, resStatus, opts)
+		//	}
 
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnProjectDeleteMessage(dctx, p)
-				}
-				return d.OnProjectUpdateMessage(dctx, p, resStatus, opts)
-			}
-
-		case projectManagedServiceGVK.String():
-			{
-				var pmsvc entities.ProjectManagedService
-				if err := fn.JsonConversion(ru.Object, &pmsvc); err != nil {
-					return errors.NewE(err)
-				}
-
-				mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, ru.ClusterName, obj.GetNamespace(), obj.GetName())
-				if err != nil {
-					return err
-				}
-				if mapping == nil {
-					return err
-				}
-
-				if v, ok := ru.Object[types.KeyProjectManagedSvcSecret]; ok {
-					s, err := fn.JsonConvertP[corev1.Secret](v)
-					s.SetManagedFields(nil)
-					if err != nil {
-						return err
-					}
-					pmsvc.SyncedOutputSecretRef = s
-				}
-
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnProjectManagedServiceDeleteMessage(dctx, mapping.ProjectName, pmsvc)
-				}
-				return d.OnProjectManagedServiceUpdateMessage(dctx, mapping.ProjectName, pmsvc, resStatus, opts)
-			}
+		//case projectManagedServiceGVK.String():
+		//	{
+		//		var pmsvc entities.ProjectManagedService
+		//		if err := fn.JsonConversion(ru.Object, &pmsvc); err != nil {
+		//			return errors.NewE(err)
+		//		}
+		//
+		//		mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, ru.ClusterName, obj.GetNamespace(), obj.GetName())
+		//		if err != nil {
+		//			return err
+		//		}
+		//		if mapping == nil {
+		//			return err
+		//		}
+		//
+		//		if v, ok := ru.Object[types.KeyProjectManagedSvcSecret]; ok {
+		//			s, err := fn.JsonConvertP[corev1.Secret](v)
+		//			s.SetManagedFields(nil)
+		//			if err != nil {
+		//				return err
+		//			}
+		//			pmsvc.SyncedOutputSecretRef = s
+		//		}
+		//
+		//		if resStatus == types.ResourceStatusDeleted {
+		//			return d.OnProjectManagedServiceDeleteMessage(dctx, mapping.ProjectName, pmsvc)
+		//		}
+		//		return d.OnProjectManagedServiceUpdateMessage(dctx, mapping.ProjectName, pmsvc, resStatus, opts)
+		//	}
 
 		case environmentGVK.String():
 			{
