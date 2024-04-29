@@ -54,15 +54,15 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 		switch gvkstr {
 		case globalVpnGVK.String():
 			{
-				cc, err := fn.JsonConvert[entities.GlobalVPN](obj.Object)
+				cc, err := fn.JsonConvert[entities.GlobalVPNConnection](obj.Object)
 				if err != nil {
 					return err
 				}
 
 				if errObj.Action == t.ActionApply {
-					return d.OnGlobalVPNApplyError(dctx, errObj.ClusterName, obj.GetName(), errObj.Error, opts)
+					return d.OnGlobalVPNConnectionApplyError(dctx, errObj.ClusterName, obj.GetName(), errObj.Error, opts)
 				}
-				return d.OnGlobalVPNDeleteMessage(dctx, errObj.ClusterName, cc)
+				return d.OnGlobalVPNConnectionDeleteMessage(dctx, errObj.ClusterName, cc)
 			}
 		case nodepoolGVK.String():
 			{

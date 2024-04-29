@@ -50,7 +50,7 @@ variables:
   cluster:
     displayName: "do not use this cluster"
     metadata:
-      name: "{{.gcpClusterName}}2"
+      name: "{{.gcpClusterName}}3"
     spec:
       cloudflareEnabled: true
       availabilityMode: dev

@@ -39,6 +39,19 @@ func toMap(v any) (map[string]any, error) {
 	return m, nil
 }
 
+func toArray(v any) ([]any, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	var m []any
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return m, nil
+}
+
 func fromMap[T Entity](v map[string]any) (T, error) {
 	var emptyResult T
 	b, err := json.Marshal(v)
@@ -305,6 +318,26 @@ func (repo *dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 
 	r2 := repo.db.Collection(repo.collectionName).FindOne(ctx, Filter{"_id": r.InsertedID})
 	return bsonToStruct[T](r2)
+}
+
+func (repo *dbRepo[T]) CreateMany(ctx context.Context, entries []T) error {
+	for i := range entries {
+		repo.withId(entries[i])
+		entries[i].SetCreationTime(time.Now())
+		entries[i].SetUpdateTime(time.Now())
+	}
+
+	inputM, err := toArray(entries)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	bulkData := make([]mongo.WriteModel, 0, len(inputM))
+	for i := range inputM {
+		bulkData = append(bulkData, mongo.NewInsertOneModel().SetDocument(inputM[i]))
+	}
+	_, err = repo.db.Collection(repo.collectionName).BulkWrite(ctx, bulkData)
+	return err
 }
 
 func (repo *dbRepo[T]) Exists(ctx context.Context, filter Filter) (bool, error) {

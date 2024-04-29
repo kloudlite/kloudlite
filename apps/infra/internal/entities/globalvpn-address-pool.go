@@ -6,72 +6,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 )
 
-type GlobalVPNDeviceAddressPool struct {
-	repos.BaseEntity `json:",inline"`
-
-	AccountName   string `json:"accountName"`
-	GlobalVPNName string `json:"globalVPNName"`
-
-	CIDR      string `json:"cidr"`
-	MinOffset int    `json:"minOffset"`
-	MaxOffset int    `json:"maxOffset"`
-
-	RunningOffset int `json:"runningOffset"`
-	// ReservedIPs     map[string]string   `json:"reservedIPs"`
-	// FreeAddressPool map[string]struct{} `json:"freeAddressPool"`
-}
-
-var DeviceAddressPoolIndices = []repos.IndexField{
-	{
-		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "accountName", Value: repos.IndexAsc},
-			{Key: "globalVPNName", Value: repos.IndexAsc},
-		},
-	},
-}
-
-type IPClaim struct {
-	repos.BaseEntity `json:",inline"`
-
-	AccountName   string `json:"accountName"`
-	GlobalVPNName string `json:"globalVPNName"`
-
-	IPAddr         string `json:"ipAddr"`
-	ReservationKey string `json:"reservationKey"`
-}
-
-var IPClaimIndices = []repos.IndexField{
-	{
-		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: fc.IPClaimIpAddr, Value: repos.IndexAsc},
-			{Key: fields.AccountName, Value: repos.IndexAsc},
-			{Key: fc.FreeIPGlobalVPNName, Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: fc.IPClaimReservationKey, Value: repos.IndexAsc},
-			{Key: fields.AccountName, Value: repos.IndexAsc},
-			{Key: fc.FreeIPGlobalVPNName, Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
-}
-
-type FreeIP struct {
+type FreeDeviceIP struct {
 	repos.BaseEntity `json:",inline"`
 
 	AccountName   string `json:"accountName"`
@@ -80,7 +15,7 @@ type FreeIP struct {
 	IPAddr string `json:"ipAddr"`
 }
 
-var FreeIPIndices = []repos.IndexField{
+var FreeDeviceIPIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
@@ -89,9 +24,44 @@ var FreeIPIndices = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: fc.FreeIPIpAddr, Value: repos.IndexAsc},
+			{Key: fc.FreeDeviceIPIpAddr, Value: repos.IndexAsc},
 			{Key: fields.AccountName, Value: repos.IndexAsc},
-			{Key: fc.FreeIPGlobalVPNName, Value: repos.IndexAsc},
+			{Key: fc.FreeDeviceIPGlobalVPNName, Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}
+
+type ClaimDeviceIP struct {
+	repos.BaseEntity `json:",inline"`
+
+	AccountName   string `json:"accountName"`
+	GlobalVPNName string `json:"globalVPNName"`
+
+	IPAddr    string `json:"ipAddr"`
+	ClaimedBy string `json:"claimedBy"`
+}
+
+var ClaimDeviceIPIndices = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: fc.ClaimDeviceIPIpAddr, Value: repos.IndexAsc},
+			{Key: fields.AccountName, Value: repos.IndexAsc},
+			{Key: fc.ClaimDeviceIPGlobalVPNName, Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: fc.ClaimDeviceIPClaimedBy, Value: repos.IndexAsc},
+			{Key: fields.AccountName, Value: repos.IndexAsc},
+			{Key: fc.ClaimDeviceIPGlobalVPNName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
