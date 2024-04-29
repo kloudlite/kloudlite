@@ -32,7 +32,6 @@ type ImagePullSecret struct {
 	GeneratedK8sSecret corev1.Secret `json:"generatedK8sSecret,omitempty" graphql:"ignore" struct-json-path:",ignore-nesting"`
 
 	AccountName     string `json:"accountName" graphql:"noinput"`
-	ProjectName     string `json:"projectName" graphql:"noinput"`
 	EnvironmentName string `json:"environmentName" graphql:"noinput"`
 
 	common.ResourceMetadata `json:",inline"`
@@ -81,7 +80,6 @@ var ImagePullSecretIndexes = []repos.IndexField{
 			{Key: fields.MetadataName, Value: repos.IndexAsc},
 			{Key: fields.MetadataNamespace, Value: repos.IndexAsc},
 			{Key: fields.AccountName, Value: repos.IndexAsc},
-			{Key: fields.ProjectName, Value: repos.IndexAsc},
 			{Key: fields.EnvironmentName, Value: repos.IndexAsc},
 		},
 		Unique: true,

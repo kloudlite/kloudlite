@@ -9,7 +9,6 @@ import (
 type ResourceType string
 
 const (
-	ResourceTypeProject               ResourceType = "project"
 	ResourceTypeEnvironment           ResourceType = "environment"
 	ResourceTypeApp                   ResourceType = "app"
 	ResourceTypeConfig                ResourceType = "config"
@@ -24,7 +23,6 @@ const (
 type ResourceHeirarchy string
 
 const (
-	ResourceHeirarchyProject     ResourceHeirarchy = "project"
 	ResourceHeirarchyEnvironment ResourceHeirarchy = "environment"
 )
 
@@ -40,7 +38,7 @@ type ResourceMapping struct {
 	AccountName string `json:"accountName"`
 	ClusterName string `json:"clusterName"`
 
-	ProjectName     string `json:"projectName"`
+	// ProjectName     string `json:"projectName"`
 	EnvironmentName string `json:"environmentName"`
 }
 

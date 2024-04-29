@@ -3,7 +3,7 @@ directive @isLoggedInAndVerified on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
 enum ConsoleResType {
-  project
+  # project
   app
   config
   secret
@@ -86,9 +86,9 @@ input CoreSearchVPNDevices {
 type Query {
     core_checkNameAvailability(projectName: String, envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
-    core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
-    core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
+    # core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
+    # core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     core_listEnvironments(projectName: String!, search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
     core_getEnvironment(projectName: String!, name: String!): Environment @isLoggedInAndVerified @hasAccount
@@ -124,10 +124,10 @@ type Query {
     core_getManagedResource(projectName: String!, envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
     core_resyncManagedResource(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listProjectManagedServices(projectName: String!, search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getProjectManagedService(projectName: String!,  name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    core_resyncProjectManagedService(projectName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_restartProjectManagedService(projectName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # core_listProjectManagedServices(projectName: String!, search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    # core_getProjectManagedService(projectName: String!,  name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+    # core_resyncProjectManagedService(projectName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # core_restartProjectManagedService(projectName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
     core_listVPNDevicesForUser: [ConsoleVPNDevice!] @isLoggedInAndVerified @hasAccount
@@ -135,9 +135,9 @@ type Query {
 }
 
 type Mutation {
-    core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
-    core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
-    core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
+    # core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
+    # core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     core_createEnvironment(projectName: String!, env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
     core_updateEnvironment(projectName: String!, env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
@@ -169,9 +169,10 @@ type Mutation {
     core_updateManagedResource(projectName: String!, envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
     core_deleteManagedResource(projectName: String!, envName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    core_updateProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    core_deleteProjectManagedService(projectName: String!, pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # core_createProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+    # core_updateProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+    # core_deleteProjectManagedService(projectName: String!, pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
 
     core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
     core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount

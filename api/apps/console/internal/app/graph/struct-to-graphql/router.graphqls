@@ -11,7 +11,6 @@ type Router @shareable {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
-  projectName: String!
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__RouterSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
