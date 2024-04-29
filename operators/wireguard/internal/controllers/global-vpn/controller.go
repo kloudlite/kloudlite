@@ -16,6 +16,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
+	"github.com/kloudlite/operator/operators/wireguard/apps/keep-alive/types"
 	appCommon "github.com/kloudlite/operator/operators/wireguard/apps/multi-cluster/apps/common"
 	"github.com/kloudlite/operator/operators/wireguard/apps/multi-cluster/apps/server"
 	"github.com/kloudlite/operator/operators/wireguard/apps/multi-cluster/mpkg/wg"
@@ -346,6 +347,23 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 		return check.Failed(err)
 	}
 
+	devs := []string{}
+	for _, p := range obj.Spec.Peers {
+		if p.DeviceName != "" {
+			devs = append(devs, fmt.Sprintf("%s/32", p.IP))
+		}
+	}
+
+	cf := types.Conf{
+		Cidrs:    devs,
+		Interval: 5,
+	}
+
+	b, err := cf.ToYaml()
+	if err != nil {
+		return check.Failed(err)
+	}
+
 	gw, err := templates.ParseTemplate(templates.Gateway, map[string]interface{}{
 		"name":      fmt.Sprintf("%s-gateway", obj.Name),
 		"namespace": ResourceNamespace,
@@ -355,12 +373,26 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 			}
 			return r.Env.WgGatewayImage
 		}(),
-		"corefile":       sidecarCorefile,
-		"resources":      *obj.Spec.GatewayResources,
-		"serverConfig":   string(secBytes),
-		"ownerRefs":      []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		"interface":      obj.Spec.WgInterface,
-		"coredns-svc-ip": wc.DNSServer,
+		"coredns-image": func() string {
+			if r.Env.CoreDNSImage == "" {
+				return constants.DefaultCoreDNSImage
+			}
+
+			return r.Env.CoreDNSImage
+		}(),
+		"keep-alive-image": func() string {
+			if r.Env.KeepAliveImage == "" {
+				return constants.DefaultKeepAliveImage
+			}
+			return r.Env.KeepAliveImage
+		}(),
+		"keep-alive-config": string(b),
+		"corefile":          sidecarCorefile,
+		"resources":         *obj.Spec.GatewayResources,
+		"serverConfig":      string(secBytes),
+		"ownerRefs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		"interface":         obj.Spec.WgInterface,
+		"coredns-svc-ip":    wc.DNSServer,
 		// "nodeport":     wc.NodePort,
 	})
 	if err != nil {
