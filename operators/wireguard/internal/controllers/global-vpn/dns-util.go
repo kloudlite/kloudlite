@@ -2,74 +2,126 @@ package globalvpn
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
-	"github.com/kloudlite/operator/operators/wireguard/apps/multi-cluster/mpkg/wg"
+	"github.com/kloudlite/operator/operators/wireguard/apps/multi-cluster/apps/server"
+
 	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
-func (r *Reconciler) getCorednsConfig(req *rApi.Request[*wgv1.GlobalVpn], current []byte) ([]byte, error) {
+func (r *Reconciler) getCustomCoreDnsConfig(req *rApi.Request[*wgv1.GlobalVPN], corednsSvcIP string) (string, error) {
 	obj, _ := req.Object, req.Context()
 
-	updatedContent := string(current)
+	updatedContent := ""
+
+	devices := []string{}
 
 	for _, p := range obj.Spec.Peers {
-		ip, err := wg.GetRemoteDeviceIp(int64(p.Id), r.Env.WgIpBase)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get remote device ip: %w", err)
+		if p.ClusterName == "" && p.DeviceName == "" {
+			continue
 		}
 
-		updatedContent = addOrUpdateSectionInString(updatedContent, fmt.Sprintf("cluster%d.local:53", p.Id), fmt.Sprintf(`
-      errors
-      forward . %s
-
-      cache 30
-      loop
-      reload
-      loadbalance
-`, ip))
-		if err != nil {
-			return nil, fmt.Errorf("failed to add or update section in coredns config: %w", err)
+		if p.DeviceName != "" {
+			devices = append(devices, fmt.Sprintf("      %s %s.device.local", p.IP, p.DeviceName))
+			continue
 		}
+
+		if p.ClusterName == r.Env.ClusterName {
+			updatedContent += fmt.Sprintf(`
+%s.local:53 {
+        errors
+        kubernetes %s.local in-addr.arpa ip6.arpa {
+          pods insecure
+          fallthrough in-addr.arpa ip6.arpa
+        }
+        cache 30
+        loop
+        reload
+        loadbalance
+}
+`, p.ClusterName, p.ClusterName)
+			continue
+		}
+
+		updatedContent += fmt.Sprintf(`
+%s.local:53 {
+  errors
+
+  rewrite name regex (.*)\.svc\.%s\.local {1}.svc.cluster.local answer auto
+
+  forward . %s
+
+  cache 30
+  loop
+  reload
+  loadbalance
+}
+`, p.ClusterName, p.ClusterName, p.IP)
+
 	}
 
-	return []byte(updatedContent), nil
+	devRecords := strings.Join(devices, "\n")
+	updatedContent += strings.TrimSpace(fmt.Sprintf(`
+device.local {
+  log
+  errors
+  cache 30
+  loop
+  reload
+  hosts {
+%s
+  }
+  any
+}
+`, devRecords))
+
+	return strings.TrimSpace(updatedContent), nil
 }
 
-func addOrUpdateSectionInString(content, sectionName, newSectionContent string) string {
-	// Split the content by lines
-	lines := strings.Split(content, "\n")
-
-	// Look for the section, and if found, remember its position
-	var startIndex int = -1
-	var endIndex int = -1
-	for i, line := range lines {
-		trimmedLine := strings.TrimSpace(line)
-		if trimmedLine == sectionName+" {" {
-			startIndex = i
-		}
-		if startIndex != -1 && trimmedLine == "}" {
-			endIndex = i
-			break
-		}
+func (r *Reconciler) getSidecarCoreDnsConfig(req *rApi.Request[*wgv1.GlobalVPN], corednsSvcIP string) (string, error) {
+	exposeServices, ok := rApi.GetLocal[map[string]server.SvcInfo](req, "expose-services")
+	if !ok {
+		return "", fmt.Errorf("expose-services not found")
 	}
 
-	// If the section exists, remove it
-	if startIndex != -1 && endIndex != -1 {
-		lines = append(lines[:startIndex], lines[endIndex+1:]...)
+	if len(exposeServices) == 0 {
+		return strings.TrimSpace(fmt.Sprintf(`
+.:53 {
+  log
+  errors
+
+  forward . %s
+  cache 30
+  loop
+  reload
+  any
+}`, corednsSvcIP)), nil
 	}
 
-	// Add or re-add the section at the end
-	oldLines := lines
-	lines = []string{}
-	lines = append(lines, sectionName+" {")
-	for _, line := range strings.Split(newSectionContent, "\n") {
-		lines = append(lines, "    "+line) // Indent the content to match the style
+	fr := []string{}
+	for vip, svc := range exposeServices {
+		fr = append(fr, fmt.Sprintf("      %s %s.%s.svc.cluster.local", vip, svc.Name, svc.Namespace))
 	}
-	lines = append(lines, "}")
 
-	lines = append(lines, oldLines...)
+	sort.Slice(fr, func(i, j int) bool {
+		return fr[i] < fr[j]
+	})
 
-	return strings.Join(lines, "\n")
+	records := strings.Join(fr, "\n")
+
+	return strings.TrimSpace(fmt.Sprintf(`
+local {
+  log
+  errors
+  cache 30
+  loop
+  reload
+  hosts {
+%s
+  }
+  any
+}
+`, records)), nil
 }

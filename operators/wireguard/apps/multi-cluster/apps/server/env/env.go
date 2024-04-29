@@ -10,9 +10,9 @@ type Env struct {
 	// example: "./examples/server.yml"
 	ConfigPath string `env:"CONFIG_PATH" required:"true"`
 	Endpoint   string `env:"ENDPOINT" required:"true"`
-	Interface  string `env:"INTERFACE" default:"wg0"`
+	Interface  string `env:"WG_INTERFACE" default:"wg0"`
 
-	WgIpBase string `env:"WG_IP_BASE" default:"10.13.0.0"`
+	AgentCIDR string `env:"AGENT_CIDR" default:"10.13.0.0/22"`
 }
 
 func GetEnvOrDie() *Env {

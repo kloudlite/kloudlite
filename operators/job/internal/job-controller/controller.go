@@ -194,6 +194,10 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Resu
 		if obj.Spec.OnApply.PodSpec.RestartPolicy == "" {
 			obj.Spec.OnApply.PodSpec.RestartPolicy = corev1.RestartPolicyNever
 		}
+		if obj.Spec.OnApply.BackOffLimit == nil {
+			obj.Spec.OnApply.BackOffLimit = fn.New(int32(1))
+		}
+
 		jobTemplate := &batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            obj.Name,
@@ -252,30 +256,23 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Resu
 	// }
 
 	if job.Status.Active > 0 {
-		obj.Status.Succeeded = nil
-		obj.Status.Failed = nil
-		obj.Status.Running = fn.New(true)
+		obj.Status.Phase = crdsv1.JobPhaseRunning
 		return check.StillRunning(fmt.Errorf("waiting for job to finish execution"))
 	}
 
 	if job.Status.Succeeded > 0 {
-		obj.Status.Succeeded = fn.New(true)
-		obj.Status.Failed = nil
-		obj.Status.Running = nil
-
+		obj.Status.Phase = crdsv1.JobPhaseSucceeded
 		return check.Completed()
 	}
 
 	// check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
 	if job.Status.Failed > 0 {
-		obj.Status.Succeeded = nil
-		obj.Status.Failed = fn.New(true)
-		obj.Status.Running = nil
-
+		obj.Status.Phase = crdsv1.JobPhaseFailed
 		return check.Failed(fmt.Errorf("job failed"))
 	}
 
-	return check.StillRunning(fmt.Errorf("waiting for k8s job to start"))
+	obj.Status.Phase = crdsv1.JobPhasePending
+	return check.StillRunning(fmt.Errorf("job is pending, waiting for job to start"))
 }
 
 func (r *Reconciler) deleteK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Result {
@@ -359,30 +356,23 @@ func (r *Reconciler) deleteK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Res
 	// }
 
 	if job.Status.Active > 0 {
-		obj.Status.Succeeded = nil
-		obj.Status.Failed = nil
-		obj.Status.Running = fn.New(true)
-		return check.StillRunning(fmt.Errorf("waiting for deletion job to finish execution"))
+		obj.Status.Phase = crdsv1.JobPhaseRunning
+		return check.StillRunning(fmt.Errorf("waiting for job to finish execution"))
 	}
 
 	if job.Status.Succeeded > 0 {
-		obj.Status.Succeeded = fn.New(true)
-		obj.Status.Failed = nil
-		obj.Status.Running = nil
-
+		obj.Status.Phase = crdsv1.JobPhaseSucceeded
 		return check.Completed()
 	}
 
 	// check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
 	if job.Status.Failed > 0 {
-		obj.Status.Succeeded = nil
-		obj.Status.Failed = fn.New(true)
-		obj.Status.Running = nil
-
-		return check.Failed(fmt.Errorf("deletion job failed"))
+		obj.Status.Phase = crdsv1.JobPhaseFailed
+		return check.Failed(fmt.Errorf("job failed"))
 	}
 
-	return check.StillRunning(fmt.Errorf("waiting for k8s job to start"))
+	obj.Status.Phase = crdsv1.JobPhasePending
+	return check.StillRunning(fmt.Errorf("job is pending, waiting for job to start"))
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

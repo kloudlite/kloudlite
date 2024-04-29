@@ -202,15 +202,14 @@ func (r *GcpVPCReconciler) applyVPCJob(req *rApi.Request[*clustersv1.GcpVPC]) st
 		return check.Failed(err)
 	}
 
-	if job.Status.Running != nil && *job.Status.Running {
-		return check.StillRunning(fmt.Errorf("waiting for job to finish"))
+	if job.HasCompleted() {
+		if job.Status.Phase == crdsv1.JobPhaseFailed {
+			return check.Failed(fmt.Errorf("job failed"))
+		}
+		return check.Completed()
 	}
 
-	if job.Status.Failed != nil && *job.Status.Failed {
-		return check.Failed(fmt.Errorf("job failed"))
-	}
-
-	return check.Completed()
+	return check.StillRunning(fmt.Errorf("waiting for job to complete"))
 }
 
 func (r *GcpVPCReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

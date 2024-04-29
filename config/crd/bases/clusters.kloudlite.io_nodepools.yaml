@@ -50,6 +50,8 @@ spec:
             type: object
           spec:
             properties:
+              allowSSH:
+                type: boolean
               aws:
                 properties:
                   availabilityZone:

@@ -216,8 +216,9 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ProjectMa
 
 	msvc := &crdsv1.ManagedService{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Spec.TargetNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, msvc, func() error {
-		msvc.Annotations = obj.GetAnnotations()
-		msvc.Labels = fn.MapMerge(obj.GetLabels(), map[string]string{
+		msvc.Annotations = fn.MapMerge(msvc.GetAnnotations(), fn.FilterObservabilityAnnotations(obj.GetAnnotations()))
+
+		msvc.Labels = fn.MapMerge(msvc.GetLabels(), obj.GetLabels(), map[string]string{
 			constants.ProjectManagedServiceRefKey: fmt.Sprintf("%s_%s", obj.Namespace, obj.Name),
 		})
 		msvc.Spec = obj.Spec.MSVCSpec

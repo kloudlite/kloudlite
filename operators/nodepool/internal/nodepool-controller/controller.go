@@ -357,17 +357,13 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 		return check.Failed(err)
 	}
 
-	if job.Status.Running != nil && *job.Status.Running {
-		return check.StillRunning(fmt.Errorf("waiting for job to finish execution"))
+	if !job.HasCompleted() {
+		return check.StillRunning(fmt.Errorf("waiting for job to complete"))
 	}
 
-	if job.Status.Failed != nil && *job.Status.Failed {
-		return check.StillRunning(fmt.Errorf("job failed"))
+	if job.Status.Phase == crdsv1.JobPhaseFailed {
+		return check.Failed(fmt.Errorf("job failed"))
 	}
-
-	// if job.Status.Failed > 0 {
-	// 	return check.Failed(fmt.Errorf("job failed with error: %s", job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)))
-	// }
 
 	if markedForDeletion != nil {
 		if err := deleteFinalizersOnNodes(ctx, r.Client, fn.MapValues(markedForDeletion), nodeFinalizer); err != nil {

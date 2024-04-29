@@ -14,5 +14,9 @@ tasks:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
+      - echo "building for GOARCH=$GOARCH"
       - go build -v -ldflags="-s -w -X github.com/kloudlite/operator/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}} {{.Dir}}
-      - upx {{.Out}}
+      - |+
+        if [ "{{.upx}}" == "true" ]; then
+          upx {{.Out}}
+        fi
