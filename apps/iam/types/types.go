@@ -120,6 +120,7 @@ const (
 	RemoveProjectMembership   Action = "remove-project-membership"
 
 	CreateEnvironment Action = "create-environment"
+	CloneEnvironment  Action = "clone-environment"
 	UpdateEnvironment Action = "update-environment"
 	DeleteEnvironment Action = "delete-environment"
 	GetEnvironment    Action = "get-environment"
