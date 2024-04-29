@@ -65,4 +65,3 @@ tasks:
       # - mkdir -p mocks/pkg/kafka
       # - mocki --package github.com/kloudlite/api/pkg/kafka --interface Producer > mocks/pkg/kafka/producer.go
       # - mocki --package github.com/kloudlite/api/pkg/kafka --interface Consumer > mocks/pkg/kafka/consumer.go
-      #
