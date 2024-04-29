@@ -74,12 +74,16 @@ models:
         resolver: true
   ClusterIn: *cluster-model
 
-  ClusterGroup: &cluster-group-model
-    model: github.com/kloudlite/api/apps/infra/internal/entities.ClusterGroup
+  GlobalVPN: &cluster-group-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.GlobalVPN
+  GlobalVPNIn: *cluster-group-model
+
+  GlobalVPNDevice: &gvpn-device-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.GlobalVPNDevice
     fields:
-      adminKubeconfig:
+      wireguardConfig:
         resolver: true
-  ClusterGroupIn: *cluster-group-model
+  GlobalVPNDeviceIn: *gvpn-device-model
 
   BYOKCluster: &byok-cluster-model
     model: github.com/kloudlite/api/apps/infra/internal/entities.BYOKCluster

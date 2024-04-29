@@ -53,12 +53,20 @@ const (
 type Domain interface {
 	CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error)
 
-	CreateClusterGroup(ctx InfraContext, cluster entities.ClusterGroup) (*entities.ClusterGroup, error)
-	UpdateClusterGroup(ctx InfraContext, cluster entities.ClusterGroup) (*entities.ClusterGroup, error)
-	DeleteClusterGroup(ctx InfraContext, name string) error
+	CreateGlobalVPN(ctx InfraContext, cluster entities.GlobalVPN) (*entities.GlobalVPN, error)
+	UpdateGlobalVPN(ctx InfraContext, cluster entities.GlobalVPN) (*entities.GlobalVPN, error)
+	DeleteGlobalVPN(ctx InfraContext, name string) error
 
-	ListClustersGroup(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterGroup], error)
-	GetClusterGroup(ctx InfraContext, name string) (*entities.ClusterGroup, error)
+	ListGlobalVPN(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.GlobalVPN], error)
+	GetGlobalVPN(ctx InfraContext, name string) (*entities.GlobalVPN, error)
+
+	CreateGlobalVPNDevice(ctx InfraContext, device entities.GlobalVPNDevice) (*entities.GlobalVPNDevice, error)
+	UpdateGlobalVPNDevice(ctx InfraContext, device entities.GlobalVPNDevice) (*entities.GlobalVPNDevice, error)
+	DeleteGlobalVPNDevice(ctx InfraContext, gvpn string, device string) error
+
+	ListGlobalVPNDevice(ctx InfraContext, gvpn string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.GlobalVPNDevice], error)
+	GetGlobalVPNDevice(ctx InfraContext, gvpn string, device string) (*entities.GlobalVPNDevice, error)
+	GetGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, device string) (string, error)
 
 	CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
 	UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
@@ -103,9 +111,11 @@ type Domain interface {
 	OnNodePoolUpdateMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
 
-	OnClusterConnDeleteMessage(ctx InfraContext, clusterName string, clusterConn entities.ClusterConnection) error
-	OnClusterConnUpdateMessage(ctx InfraContext, clusterName string, clusterConn entities.ClusterConnection, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
-	OnClusterConnApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
+	// ListGlobalVPNs(ctx InfraContext, clusterName string) (*entities.GlobalVPNConnection, error)
+
+	OnGlobalVPNConnectionDeleteMessage(ctx InfraContext, clusterName string, clusterConn entities.GlobalVPNConnection) error
+	OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterName string, clusterConn entities.GlobalVPNConnection, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnGlobalVPNConnectionApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
 
 	ListNodes(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Node], error)
 	GetNode(ctx InfraContext, clusterName string, nodeName string) (*entities.Node, error)
