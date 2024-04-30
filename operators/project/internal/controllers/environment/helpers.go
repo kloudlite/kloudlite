@@ -15,4 +15,3 @@ func findResourceBelongingToEnvironment(ctx context.Context, kclient client.Clie
 
 	return nil
 }
-

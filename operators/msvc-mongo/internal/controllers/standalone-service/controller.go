@@ -236,7 +236,9 @@ func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1
 		hc = nil
 	}
 
-	req.AddToOwnedResources(rApi.ParseResourceRef(hc))
+	if hc != nil {
+		req.AddToOwnedResources(rApi.ParseResourceRef(hc))
+	}
 
 	hasPVCUpdates := false
 

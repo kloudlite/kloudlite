@@ -145,7 +145,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	// ensure deletion of other kloudlite resources, that belong to this environment
 	var mresList crdsv1.ManagedResourceList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &mresList, obj.Spec.TargetNamespace); err != nil {
-		return check.StillRunning(err)
+		return check.Failed(err)
 	}
 
 	mres := make([]client.Object, len(mresList.Items))
@@ -154,13 +154,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, mres...); err != nil {
-		return check.StillRunning(err)
+		return check.StillRunning(err).NoRequeue()
 	}
 
 	// routers
 	var routersList crdsv1.RouterList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &routersList, obj.Spec.TargetNamespace); err != nil {
-		return check.StillRunning(err)
+		return check.StillRunning(err).NoRequeue()
 	}
 
 	routers := make([]client.Object, len(routersList.Items))
@@ -169,13 +169,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, routers...); err != nil {
-		return check.StillRunning(err)
+		return check.StillRunning(err).NoRequeue()
 	}
 
 	// apps
 	var appsList crdsv1.AppList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &appsList, obj.Spec.TargetNamespace); err != nil {
-		return check.StillRunning(err)
+		return check.Failed(err)
 	}
 
 	apps := make([]client.Object, len(appsList.Items))
@@ -184,13 +184,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, apps...); err != nil {
-		return check.StillRunning(err)
+		return check.StillRunning(err).NoRequeue()
 	}
 
 	// configs
 	var configsList corev1.ConfigMapList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &configsList, obj.Spec.TargetNamespace); err != nil {
-		return check.StillRunning(err)
+		return check.Failed(err)
 	}
 
 	configs := make([]client.Object, 0, len(configsList.Items))
@@ -202,13 +202,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, configs...); err != nil {
-		return check.StillRunning(err)
+		return check.StillRunning(err).NoRequeue()
 	}
 
 	// secrets
 	var secretsList corev1.SecretList
 	if err := findResourceBelongingToEnvironment(ctx, r.Client, &secretsList, obj.Spec.TargetNamespace); err != nil {
-		return check.StillRunning(err)
+		return check.StillRunning(err).NoRequeue()
 	}
 
 	secrets := make([]client.Object, len(secretsList.Items))
@@ -217,7 +217,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, secrets...); err != nil {
-		return check.StillRunning(err)
+		return check.StillRunning(err).NoRequeue()
 	}
 
 	return req.Finalize()
@@ -252,7 +252,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepR
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
-			return check.StillRunning(err)
+			return check.Failed(err)
 		}
 		return req.Done()
 	}
@@ -264,11 +264,6 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(ensureNamespace, req)
 
-	var project crdsv1.Project
-	if err := r.Get(ctx, fn.NN("", obj.Spec.ProjectName), &project); err != nil {
-		return check.StillRunning(err)
-	}
-
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
 		if ns.Labels == nil {
@@ -276,13 +271,14 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 		}
 
 		ns.Labels[constants.EnvironmentNameKey] = obj.Name
-		ns.Labels[constants.ProjectNameKey] = obj.Spec.ProjectName
 
 		if ns.Annotations == nil {
 			ns.Annotations = make(map[string]string, 1)
 		}
 
 		ns.Annotations[constants.DescriptionKey] = fmt.Sprintf("this namespace is now being managed by kloudlite environment (%s)", obj.Name)
+
+		ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 		return nil
 	}); err != nil {
@@ -320,7 +316,7 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return check.StillRunning(err)
+		return check.Failed(err)
 	}
 
 	req.AddToOwnedResources(rr...)
@@ -341,7 +337,6 @@ func (r *Reconciler) setupEnvIngressController(req *rApi.Request[*crdsv1.Environ
 		"release-namespace": releaseNamespace,
 
 		"labels": map[string]string{
-			constants.ProjectNameKey:     obj.Spec.ProjectName,
 			constants.EnvironmentNameKey: obj.Name,
 		},
 
@@ -368,7 +363,7 @@ func (r *Reconciler) setupEnvIngressController(req *rApi.Request[*crdsv1.Environ
 		if hc.Status.Message != nil {
 			check.Message = hc.Status.Message.ToString()
 		}
-		return check.StillRunning(fmt.Errorf("waiting for helm chart to be ready"))
+		return check.StillRunning(fmt.Errorf("waiting for helm chart to be ready")).NoRequeue()
 	}
 
 	return check.Completed()
