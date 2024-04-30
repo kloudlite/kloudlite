@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -468,9 +466,10 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 }
 
 func (d *domain) getEnvironmentTargetNamespace(envName string) string {
-	envNamespace := fmt.Sprintf("env-%s", envName)
-	hash := md5.Sum([]byte(envNamespace))
-	return fmt.Sprintf("env-%s", hex.EncodeToString(hash[:]))
+	return fmt.Sprintf("env-%s", envName)
+	// envNamespace := fmt.Sprintf("env-%s", envName)
+	// hash := md5.Sum([]byte(envNamespace))
+	// return fmt.Sprintf("env-%s", hex.EncodeToString(hash[:]))
 }
 
 func (d *domain) UpdateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error) {

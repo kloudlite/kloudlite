@@ -17,7 +17,6 @@ type ManagedResource struct {
 	AccountName     string `json:"accountName" graphql:"noinput"`
 	EnvironmentName string `json:"environmentName" graphql:"noinput"`
 
-	// SyncedOutputSecretRef *corev1.Secret `json:"syncedOutputSecretRef" graphql:"noinput" struct-json-path:",ignore-nesting"`
 	SyncedOutputSecretRef *corev1.Secret `json:"syncedOutputSecretRef" graphql:"noinput"`
 
 	common.ResourceMetadata `json:",inline"`

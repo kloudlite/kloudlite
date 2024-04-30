@@ -197,7 +197,6 @@ const (
 	MetadataResourceVersion            = "metadata.resourceVersion"
 	MetadataSelfLink                   = "metadata.selfLink"
 	MetadataUid                        = "metadata.uid"
-	ProjectName                        = "projectName"
 	RecordVersion                      = "recordVersion"
 	Status                             = "status"
 	StatusCheckList                    = "status.checkList"
