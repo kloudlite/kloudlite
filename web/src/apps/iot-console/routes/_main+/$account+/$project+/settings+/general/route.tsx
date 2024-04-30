@@ -52,7 +52,7 @@ export const updateProject = async ({
 };
 
 const ProjectSettingGeneral = () => {
-  const { project, account } = useOutletContext<IProjectContext>();
+  const {  account } = useOutletContext<IProjectContext>();
 
   const { setHasChanges, resetAndReload } = useUnsavedChanges();
 
@@ -78,7 +78,7 @@ const ProjectSettingGeneral = () => {
     onSubmit: async (val) => {
       await updateProject({
         api,
-        data: { ...project, displayName: val.displayName },
+        data: { ... displayName: val.displayName },
       });
       resetAndReload();
     },
@@ -209,7 +209,7 @@ const ProjectSettingGeneral = () => {
               reload();
               toast.success(`Project deleted successfully`);
               setDeleteProject(false);
-              navigate(`/${parseName(account)}/projects`);
+              navigate(`/${parseName(account)}/environments`);
             } catch (err) {
               handleError(err);
             }

@@ -41,8 +41,8 @@ const Layout = () => {
   } = useUnsavedChanges();
   const { app, setApp } = useAppState();
 
-  const { project, deviceblueprint, account } = useOutletContext<IAppContext>();
-  const [projectName, deviceBlueprintName, appName] = [
+  const {  deviceblueprint, account } = useOutletContext<IAppContext>();
+  const [ deviceBlueprintName, appName] = [
     project.name,
     deviceblueprint.name,
     parseName(app),
@@ -52,7 +52,7 @@ const Layout = () => {
     setIgnorePaths(
       navItems.map(
         (ni) =>
-          `/${account}/${project}/deviceblueprint/${deviceBlueprintName}/app/${appName}/settings/${ni.value}`
+          `/${account}/deviceblueprint/${deviceBlueprintName}/app/${appName}/settings/${ni.value}`
       )
     );
   }, []);
@@ -64,7 +64,7 @@ const Layout = () => {
     initialValues: {},
     validationSchema: Yup.object({}),
     onSubmit: async () => {
-      if (!projectName || !deviceBlueprintName) {
+      if (!deviceBlueprintName) {
         throw new Error('Project and deviceblueprint is required!.');
       }
 
@@ -74,7 +74,7 @@ const Layout = () => {
             ...getAppIn(app),
           },
           deviceBlueprintName,
-          projectName,
+          
         });
         if (errors) {
           throw errors[0];

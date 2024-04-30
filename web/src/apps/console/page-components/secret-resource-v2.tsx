@@ -72,7 +72,7 @@ const GridView = ({
   onDelete = (_) => _,
   linkComponent = null,
 }: IResource) => {
-  const { account, project, environment } = useParams();
+  const { account, environment } = useParams();
   const [selected, setSelected] = useState('');
   let props = {};
   if (linkComponent) {
@@ -93,7 +93,7 @@ const GridView = ({
             key={id}
             to={
               linkComponent !== null
-                ? `/${account}/${project}/env/${environment}/secret/${id}`
+                ? `/${account}/env/${environment}/secret/${id}`
                 : undefined
             }
             rows={[
@@ -146,7 +146,7 @@ const ListView = ({
   onDelete = (_) => _,
   linkComponent = null,
 }: IResource) => {
-  const { account, project, environment } = useParams();
+  const { account, environment } = useParams();
   const [selected, setSelected] = useState('');
   let props = {};
   if (linkComponent) {
@@ -214,7 +214,7 @@ const ListView = ({
             },
             to:
               linkComponent !== null
-                ? `/${account}/${project}/env/${environment}/secret/${id}`
+                ? `/${account}/env/${environment}/secret/${id}`
                 : undefined,
           };
         }),
@@ -235,13 +235,13 @@ const SecretResourcesV2 = ({
 
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const { project, environment, account } = useParams();
+  const { environment, account } = useParams();
 
   const filteredItems = items.filter((item) => !item.isReadyOnly);
 
   useWatchReload(
     filteredItems.map((i) => {
-      return `account:${account}.project:${project}.environment:${environment}.secret:${parseName(
+      return `account:${account}.environment:${environment}.secret:${parseName(
         i
       )}`;
     })
@@ -268,13 +268,13 @@ const SecretResourcesV2 = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!environment || !project) {
+          if (!environment ) {
             throw new Error('Project and Environment is required!.');
           }
           try {
             const { errors } = await api.deleteSecret({
               envName: environment,
-              projectName: project,
+              
               secretName: parseName(showDeleteDialog),
             });
 

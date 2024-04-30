@@ -40,8 +40,8 @@ export const iotDeviceBlueprintQueries = (executor: IExecutor) => ({
   createIotDeviceBlueprint: executor(
     gql`
       mutation Iot_createDeviceBlueprint(
-        $projectName: String!
         $deviceBlueprint: IOTDeviceBlueprintIn!
+        $projectName: String!
       ) {
         iot_createDeviceBlueprint(
           projectName: $projectName
@@ -60,8 +60,8 @@ export const iotDeviceBlueprintQueries = (executor: IExecutor) => ({
   updateIotDeviceBlueprint: executor(
     gql`
       mutation Iot_updateDeviceBlueprint(
-        $projectName: String!
         $deviceBlueprint: IOTDeviceBlueprintIn!
+        $projectName: String!
       ) {
         iot_updateDeviceBlueprint(
           projectName: $projectName
@@ -98,7 +98,6 @@ export const iotDeviceBlueprintQueries = (executor: IExecutor) => ({
           }
           markedForDeletion
           name
-          projectName
           recordVersion
           updateTime
           version
@@ -114,9 +113,9 @@ export const iotDeviceBlueprintQueries = (executor: IExecutor) => ({
   listIotDeviceBlueprints: executor(
     gql`
       query Iot_listDeviceBlueprints(
-        $projectName: String!
         $search: SearchIOTDeviceBlueprints
         $pq: CursorPaginationIn
+        $projectName: String!
       ) {
         iot_listDeviceBlueprints(
           projectName: $projectName
@@ -143,7 +142,6 @@ export const iotDeviceBlueprintQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               name
-              projectName
               recordVersion
               updateTime
               version

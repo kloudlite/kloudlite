@@ -48,12 +48,10 @@ export const vpnQueries = (executor: IExecutor) => ({
     gql`
       mutation Core_updateVPNDeviceEnv(
         $deviceName: String!
-        $projectName: String!
         $envName: String!
       ) {
         core_updateVPNDeviceEnv(
           deviceName: $deviceName
-          projectName: $projectName
           envName: $envName
         )
       }
@@ -73,7 +71,6 @@ export const vpnQueries = (executor: IExecutor) => ({
           metadata {
             name
           }
-          projectName
           clusterName
           status {
             isReady
@@ -110,7 +107,6 @@ export const vpnQueries = (executor: IExecutor) => ({
             name
           }
           clusterName
-          projectName
           environmentName
           spec {
             activeNamespace

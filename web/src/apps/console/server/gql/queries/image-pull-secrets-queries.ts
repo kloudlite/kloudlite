@@ -16,12 +16,10 @@ export const imagePullSecretsQueries = (executor: IExecutor) => ({
     createImagePullSecret: executor(
         gql`
       mutation Core_createImagePullSecret(
-        $projectName: String!
         $envName: String!
         $imagePullSecretIn: ImagePullSecretIn!
       ) {
         core_createImagePullSecret(
-          projectName: $projectName
           envName: $envName
           imagePullSecretIn: $imagePullSecretIn
         ) {
@@ -38,13 +36,11 @@ export const imagePullSecretsQueries = (executor: IExecutor) => ({
     listImagePullSecrets: executor(
         gql`
       query Core_listImagePullSecrets(
-        $projectName: String!
         $envName: String!
         $search: SearchImagePullSecrets
         $pq: CursorPaginationIn
       ) {
         core_listImagePullSecrets(
-          projectName: $projectName
           envName: $envName
           search: $search
           pq: $pq
@@ -73,7 +69,6 @@ export const imagePullSecretsQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              projectName
               recordVersion
               registryPassword
               registryURL

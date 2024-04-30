@@ -24,9 +24,8 @@ export type IApps = NN<ConsoleListAppsQuery['core_listApps']>;
 export const appQueries = (executor: IExecutor) => ({
   restartApp: executor(
     gql`
-      query Query($projectName: String!, $envName: String!, $appName: String!) {
+      query Query($envName: String!, $appName: String!) {
         core_restartApp(
-          projectName: $projectName
           envName: $envName
           appName: $appName
         )
@@ -40,12 +39,10 @@ export const appQueries = (executor: IExecutor) => ({
   createApp: executor(
     gql`
       mutation Core_createApp(
-        $projectName: String!
         $envName: String!
         $app: AppIn!
       ) {
         core_createApp(
-          projectName: $projectName
           envName: $envName
           app: $app
         ) {
@@ -62,12 +59,10 @@ export const appQueries = (executor: IExecutor) => ({
   updateApp: executor(
     gql`
       mutation Core_updateApp(
-        $projectName: String!
         $envName: String!
         $app: AppIn!
       ) {
         core_updateApp(
-          projectName: $projectName
           envName: $envName
           app: $app
         ) {
@@ -85,14 +80,12 @@ export const appQueries = (executor: IExecutor) => ({
   interceptApp: executor(
     gql`
       mutation Core_interceptApp(
-        $projectName: String!
         $envName: String!
         $appname: String!
         $deviceName: String!
         $intercept: Boolean!
       ) {
         core_interceptApp(
-          projectName: $projectName
           envName: $envName
           appname: $appname
           deviceName: $deviceName
@@ -109,12 +102,10 @@ export const appQueries = (executor: IExecutor) => ({
   deleteApp: executor(
     gql`
       mutation Core_deleteApp(
-        $projectName: String!
         $envName: String!
         $appName: String!
       ) {
         core_deleteApp(
-          projectName: $projectName
           envName: $envName
           appName: $appName
         )
@@ -128,11 +119,10 @@ export const appQueries = (executor: IExecutor) => ({
   getApp: executor(
     gql`
       query Core_getApp(
-        $projectName: String!
         $envName: String!
         $name: String!
       ) {
-        core_getApp(projectName: $projectName, envName: $envName, name: $name) {
+        core_getApp(envName: $envName, name: $name) {
           id
           recordVersion
           createdBy {
@@ -155,7 +145,6 @@ export const appQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          projectName
           spec {
             containers {
               args
@@ -313,13 +302,11 @@ export const appQueries = (executor: IExecutor) => ({
   listApps: executor(
     gql`
       query Core_listApps(
-        $projectName: String!
         $envName: String!
         $search: SearchApps
         $pq: CursorPaginationIn
       ) {
         core_listApps(
-          projectName: $projectName
           envName: $envName
           search: $search
           pq: $pq
@@ -347,7 +334,6 @@ export const appQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              projectName
               recordVersion
               spec {
                 containers {

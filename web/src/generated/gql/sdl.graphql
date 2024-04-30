@@ -63,7 +63,6 @@ type App {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
-  projectName: String!
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -232,10 +231,10 @@ type Cluster {
   accountName: String!
   adminKubeconfig: EncodedValue
   apiVersion: String
-  clusterGroupName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
+  globalVPN: String
   id: ID!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -253,39 +252,10 @@ type ClusterEdge {
   node: Cluster!
 }
 
-type ClusterGroup {
-  accountName: String!
-  clusterName: String!
-  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  creationTime: Date!
-  displayName: String!
-  id: ID!
-  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  markedForDeletion: Boolean
-  recordVersion: Int!
-  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
-  updateTime: Date!
-}
-
-type ClusterGroupEdge {
-  cursor: String!
-  node: ClusterGroup!
-}
-
-input ClusterGroupIn {
-  displayName: String!
-}
-
-type ClusterGroupPaginatedRecords {
-  edges: [ClusterGroupEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
 input ClusterIn {
   apiVersion: String
-  clusterGroupName: String
   displayName: String!
+  globalVPN: String
   kind: String
   metadata: MetadataIn!
   spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn!
@@ -350,7 +320,6 @@ type Config {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
-  projectName: String!
   recordVersion: Int!
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
@@ -410,8 +379,6 @@ enum ConsoleResType {
   environment
   managed_resource
   managed_service
-  project
-  project_managed_service
   router
   secret
   vpn_device
@@ -431,7 +398,6 @@ type ConsoleVPNDevice {
   linkedClusters: [String!]
   markedForDeletion: Boolean
   metadata: Metadata
-  projectName: String
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -452,7 +418,6 @@ input ConsoleVPNDeviceIn {
   environmentName: String
   kind: String
   metadata: MetadataIn
-  projectName: String
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
 }
 
@@ -599,6 +564,7 @@ type EncodedValue {
 type Environment {
   accountName: String!
   apiVersion: String
+  clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -607,7 +573,6 @@ type Environment {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
-  projectName: String!
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -622,6 +587,7 @@ type EnvironmentEdge {
 
 input EnvironmentIn {
   apiVersion: String
+  clusterName: String!
   displayName: String!
   kind: String
   metadata: MetadataIn
@@ -1025,6 +991,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec {
   cloudflareEnabled: Boolean
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   clusterInternalDnsHost: String
+  clusterServiceCIDR: String
   clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
   gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig
   kloudliteRelease: String!
@@ -1052,6 +1019,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig
   gcpProjectID: String!
   masterNodes: Github__com___kloudlite___operator___apis___clusters___v1__GCPMasterNodesConfig
   region: String!
+  serviceAccount: Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount!
   vpc: Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams
 }
 
@@ -1076,6 +1044,8 @@ type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfi
   nodes: Map
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
   region: String!
+  serviceAccount: Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount!
+  vpc: Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn {
@@ -1087,6 +1057,12 @@ input Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConf
 enum Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType {
   SPOT
   STANDARD
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPServiceAccount {
+  email: String
+  enabled: Boolean!
+  scopes: [String!]
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__GcpVPCParams {
@@ -1361,13 +1337,11 @@ enum Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMo
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec {
-  projectName: String!
   routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting
   targetNamespace: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
-  projectName: String!
   routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn
   targetNamespace: String
 }
@@ -1541,24 +1515,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn {
   shell: Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn
   tcp: Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn
   type: String!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpec {
-  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
-  targetNamespace: String!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpecIn {
-  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
-  targetNamespace: String!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec {
-  targetNamespace: String!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn {
-  targetNamespace: String!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__RateLimit {
@@ -1897,6 +1853,81 @@ type GitlabProject {
   webUrl: String!
 }
 
+type GlobalVPN {
+  accountName: String!
+  allocatableCIDRSuffix: Int!
+  CIDR: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata!
+  numAllocatedClusterCIDRs: Int!
+  numAllocatedDevices: Int!
+  numReservedIPsForNonClusterUse: Int!
+  recordVersion: Int!
+  updateTime: Date!
+  wgInterface: String!
+}
+
+type GlobalVPNDevice {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  globalVPNName: String!
+  id: ID!
+  ipAddr: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata!
+  privateKey: String!
+  publicKey: String!
+  recordVersion: Int!
+  updateTime: Date!
+  wireguardConfig: EncodedValue
+}
+
+type GlobalVPNDeviceEdge {
+  cursor: String!
+  node: GlobalVPNDevice!
+}
+
+input GlobalVPNDeviceIn {
+  globalVPNName: String!
+  metadata: MetadataIn!
+}
+
+type GlobalVPNDevicePaginatedRecords {
+  edges: [GlobalVPNDeviceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type GlobalVPNEdge {
+  cursor: String!
+  node: GlobalVPN!
+}
+
+input GlobalVPNIn {
+  allocatableCIDRSuffix: Int!
+  CIDR: String!
+  displayName: String!
+  metadata: MetadataIn!
+  numAllocatedClusterCIDRs: Int!
+  numAllocatedDevices: Int!
+  numReservedIPsForNonClusterUse: Int!
+  wgInterface: String!
+}
+
+type GlobalVPNPaginatedRecords {
+  edges: [GlobalVPNEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type HelmRelease {
   accountName: String!
   apiVersion: String
@@ -1947,7 +1978,6 @@ type ImagePullSecret {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
-  projectName: String!
   recordVersion: Int!
   registryPassword: String
   registryURL: String
@@ -2039,19 +2069,12 @@ type IOTAppPaginatedRecords {
   totalCount: Int!
 }
 
-type IOTConsoleCheckNameAvailabilityOutput {
-  result: Boolean!
-  suggestedNames: [String!]!
-}
-
 type IOTDeployment {
   accountName: String!
   CIDR: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  exposedDomains: [String!]!
-  exposedIps: [String!]!
   exposedServices: [Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedService!]!
   id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -2070,8 +2093,6 @@ type IOTDeploymentEdge {
 input IOTDeploymentIn {
   CIDR: String!
   displayName: String!
-  exposedDomains: [String!]!
-  exposedIps: [String!]!
   exposedServices: [Github__com___kloudlite___api___apps___iot____console___internal___entities__ExposedServiceIn!]!
   name: String!
 }
@@ -3176,7 +3197,6 @@ type ManagedResource {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
-  projectName: String!
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -3298,39 +3318,33 @@ type Mutation {
   auth_setRemoteAuthHeader(authHeader: String, loginId: String!): Boolean!
   auth_signup(email: String!, name: String!, password: String!): Session
   auth_verifyEmail(token: String!): Session!
-  core_cloneEnvironment(destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!, projectName: String!, sourceEnvName: String!): Environment
-  core_createApp(app: AppIn!, envName: String!, projectName: String!): App
-  core_createConfig(config: ConfigIn!, envName: String!, projectName: String!): Config
-  core_createEnvironment(env: EnvironmentIn!, projectName: String!): Environment
-  core_createImagePullSecret(envName: String!, imagePullSecretIn: ImagePullSecretIn!, projectName: String!): ImagePullSecret
-  core_createManagedResource(envName: String!, mres: ManagedResourceIn!, projectName: String!): ManagedResource
-  core_createProject(project: ProjectIn!): Project
-  core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!, projectName: String!): ProjectManagedService
-  core_createRouter(envName: String!, projectName: String!, router: RouterIn!): Router
-  core_createSecret(envName: String!, projectName: String!, secret: SecretIn!): Secret
+  core_cloneEnvironment(destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!, sourceEnvName: String!): Environment
+  core_createApp(app: AppIn!, envName: String!): App
+  core_createConfig(config: ConfigIn!, envName: String!): Config
+  core_createEnvironment(env: EnvironmentIn!): Environment
+  core_createImagePullSecret(envName: String!, imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret
+  core_createManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource
+  core_createRouter(envName: String!, router: RouterIn!): Router
+  core_createSecret(envName: String!, secret: SecretIn!): Secret
   core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice
-  core_deleteApp(appName: String!, envName: String!, projectName: String!): Boolean!
-  core_deleteConfig(configName: String!, envName: String!, projectName: String!): Boolean!
-  core_deleteEnvironment(envName: String!, projectName: String!): Boolean!
-  core_deleteImagePullSecret(envName: String!, projectName: String!, secretName: String!): Boolean!
-  core_deleteManagedResource(envName: String!, mresName: String!, projectName: String!): Boolean!
-  core_deleteProject(name: String!): Boolean!
-  core_deleteProjectManagedService(pmsvcName: String!, projectName: String!): Boolean!
-  core_deleteRouter(envName: String!, projectName: String!, routerName: String!): Boolean!
-  core_deleteSecret(envName: String!, projectName: String!, secretName: String!): Boolean!
+  core_deleteApp(appName: String!, envName: String!): Boolean!
+  core_deleteConfig(configName: String!, envName: String!): Boolean!
+  core_deleteEnvironment(envName: String!): Boolean!
+  core_deleteImagePullSecret(envName: String!, secretName: String!): Boolean!
+  core_deleteManagedResource(envName: String!, mresName: String!): Boolean!
+  core_deleteRouter(envName: String!, routerName: String!): Boolean!
+  core_deleteSecret(envName: String!, secretName: String!): Boolean!
   core_deleteVPNDevice(deviceName: String!): Boolean!
-  core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!, projectName: String!): Boolean!
-  core_updateApp(app: AppIn!, envName: String!, projectName: String!): App
-  core_updateConfig(config: ConfigIn!, envName: String!, projectName: String!): Config
-  core_updateEnvironment(env: EnvironmentIn!, projectName: String!): Environment
-  core_updateManagedResource(envName: String!, mres: ManagedResourceIn!, projectName: String!): ManagedResource
-  core_updateProject(project: ProjectIn!): Project
-  core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!, projectName: String!): ProjectManagedService
-  core_updateRouter(envName: String!, projectName: String!, router: RouterIn!): Router
-  core_updateSecret(envName: String!, projectName: String!, secret: SecretIn!): Secret
+  core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!): Boolean!
+  core_updateApp(app: AppIn!, envName: String!): App
+  core_updateConfig(config: ConfigIn!, envName: String!): Config
+  core_updateEnvironment(env: EnvironmentIn!): Environment
+  core_updateManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource
+  core_updateRouter(envName: String!, router: RouterIn!): Router
+  core_updateSecret(envName: String!, secret: SecretIn!): Secret
   core_updateVpnClusterName(clusterName: String!, deviceName: String!): Boolean!
   core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice
-  core_updateVPNDeviceEnv(deviceName: String!, envName: String!, projectName: String!): Boolean!
+  core_updateVPNDeviceEnv(deviceName: String!, envName: String!): Boolean!
   core_updateVpnDeviceNs(deviceName: String!, ns: String!): Boolean!
   core_updateVPNDevicePorts(deviceName: String!, ports: [PortIn!]!): Boolean!
   cr_addBuild(build: BuildIn!): Build
@@ -3344,24 +3358,27 @@ type Mutation {
   cr_updateBuild(build: BuildIn!, id: ID!): Build
   infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
-  infra_createClusterGroup(cluster: ClusterGroupIn!): ClusterGroup
   infra_createClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
   infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
+  infra_createGlobalVPN(gvpn: GlobalVPNIn!): GlobalVPN
+  infra_createGlobalVPNDevice(gvpnDevice: GlobalVPNDeviceIn!): GlobalVPNDevice
   infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease
   infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
   infra_deleteCluster(name: String!): Boolean!
-  infra_deleteClusterGroup(name: String!): Boolean!
   infra_deleteClusterManagedService(clusterName: String!, serviceName: String!): Boolean!
   infra_deleteDomainEntry(domainName: String!): Boolean!
+  infra_deleteGlobalVPN(name: String!): Boolean!
+  infra_deleteGlobalVPNDevice(deviceName: String!, gvpn: String!): Boolean!
   infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean!
   infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean!
   infra_deleteProviderSecret(secretName: String!): Boolean!
   infra_deletePV(clusterName: String!, pvName: String!): Boolean!
   infra_updateCluster(cluster: ClusterIn!): Cluster
-  infra_updateClusterGroup(cluster: ClusterGroupIn!): ClusterGroup
   infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
   infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
+  infra_updateGlobalVPN(gvpn: GlobalVPNIn!): GlobalVPN
+  infra_updateGlobalVPNDevice(gvpnDevice: GlobalVPNDeviceIn!): GlobalVPNDevice
   infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease
   infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
@@ -3595,83 +3612,6 @@ input PortIn {
   targetPort: Int
 }
 
-type Project {
-  accountName: String!
-  apiVersion: String
-  clusterName: String
-  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  creationTime: Date!
-  displayName: String!
-  id: ID!
-  kind: String
-  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  markedForDeletion: Boolean
-  metadata: Metadata
-  recordVersion: Int!
-  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec!
-  status: Github__com___kloudlite___operator___pkg___operator__Status
-  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
-  updateTime: Date!
-}
-
-type ProjectEdge {
-  cursor: String!
-  node: Project!
-}
-
-input ProjectIn {
-  apiVersion: String
-  clusterName: String
-  displayName: String!
-  kind: String
-  metadata: MetadataIn
-  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn!
-}
-
-type ProjectManagedService {
-  accountName: String!
-  apiVersion: String
-  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  creationTime: Date!
-  displayName: String!
-  id: ID!
-  kind: String
-  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  markedForDeletion: Boolean
-  metadata: Metadata
-  projectName: String!
-  recordVersion: Int!
-  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpec
-  status: Github__com___kloudlite___operator___pkg___operator__Status
-  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
-  updateTime: Date!
-}
-
-type ProjectManagedServiceEdge {
-  cursor: String!
-  node: ProjectManagedService!
-}
-
-input ProjectManagedServiceIn {
-  apiVersion: String
-  displayName: String!
-  kind: String
-  metadata: MetadataIn
-  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpecIn
-}
-
-type ProjectManagedServicePaginatedRecords {
-  edges: [ProjectManagedServiceEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type ProjectPaginatedRecords {
-  edges: [ProjectEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
 scalar ProviderDetail
 
 type Query {
@@ -3690,43 +3630,36 @@ type Query {
   auth_getRemoteLogin(loginId: String!, secret: String!): RemoteLogin
   auth_listOAuthProviders: [OAuthProviderStatus!]
   auth_me: User
-  core_checkNameAvailability(envName: String, name: String!, projectName: String, resType: ConsoleResType!): ConsoleCheckNameAvailabilityOutput!
-  core_getApp(envName: String!, name: String!, projectName: String!): App
-  core_getConfig(envName: String!, name: String!, projectName: String!): Config
-  core_getConfigValues(envName: String!, projectName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!]
-  core_getEnvironment(name: String!, projectName: String!): Environment
-  core_getImagePullSecret(envName: String!, name: String!, projectName: String!): ImagePullSecret
-  core_getManagedResouceOutputKeys(envName: String!, name: String!, projectName: String!): [String!]!
-  core_getManagedResouceOutputKeyValues(envName: String!, keyrefs: [ManagedResourceKeyRefIn], projectName: String!): [ManagedResourceKeyValueRef!]!
-  core_getManagedResource(envName: String!, name: String!, projectName: String!): ManagedResource
-  core_getProject(name: String!): Project
-  core_getProjectManagedService(name: String!, projectName: String!): ProjectManagedService
-  core_getRouter(envName: String!, name: String!, projectName: String!): Router
-  core_getSecret(envName: String!, name: String!, projectName: String!): Secret
-  core_getSecretValues(envName: String!, projectName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!]
+  core_checkNameAvailability(envName: String, name: String!, resType: ConsoleResType!): ConsoleCheckNameAvailabilityOutput!
+  core_getApp(envName: String!, name: String!): App
+  core_getConfig(envName: String!, name: String!): Config
+  core_getConfigValues(envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!]
+  core_getEnvironment(name: String!): Environment
+  core_getImagePullSecret(envName: String!, name: String!): ImagePullSecret
+  core_getManagedResouceOutputKeys(envName: String!, name: String!): [String!]!
+  core_getManagedResouceOutputKeyValues(envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]!
+  core_getManagedResource(envName: String!, name: String!): ManagedResource
+  core_getRouter(envName: String!, name: String!): Router
+  core_getSecret(envName: String!, name: String!): Secret
+  core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!]
   core_getVPNDevice(name: String!): ConsoleVPNDevice
-  core_listApps(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchApps): AppPaginatedRecords
-  core_listConfigs(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchConfigs): ConfigPaginatedRecords
-  core_listEnvironments(pq: CursorPaginationIn, projectName: String!, search: SearchEnvironments): EnvironmentPaginatedRecords
-  core_listImagePullSecrets(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
-  core_listManagedResources(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchManagedResources): ManagedResourcePaginatedRecords
-  core_listProjectManagedServices(pq: CursorPaginationIn, projectName: String!, search: SearchProjectManagedService): ProjectManagedServicePaginatedRecords
-  core_listProjects(pq: CursorPaginationIn, search: SearchProjects): ProjectPaginatedRecords
-  core_listRouters(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchRouters): RouterPaginatedRecords
-  core_listSecrets(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchSecrets): SecretPaginatedRecords
+  core_listApps(envName: String!, pq: CursorPaginationIn, search: SearchApps): AppPaginatedRecords
+  core_listConfigs(envName: String!, pq: CursorPaginationIn, search: SearchConfigs): ConfigPaginatedRecords
+  core_listEnvironments(pq: CursorPaginationIn, search: SearchEnvironments): EnvironmentPaginatedRecords
+  core_listImagePullSecrets(envName: String!, pq: CursorPaginationIn, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
+  core_listManagedResources(envName: String!, pq: CursorPaginationIn, search: SearchManagedResources): ManagedResourcePaginatedRecords
+  core_listRouters(envName: String!, pq: CursorPaginationIn, search: SearchRouters): RouterPaginatedRecords
+  core_listSecrets(envName: String!, pq: CursorPaginationIn, search: SearchSecrets): SecretPaginatedRecords
   core_listVPNDevices(pq: CursorPaginationIn, search: CoreSearchVPNDevices): ConsoleVPNDevicePaginatedRecords
   core_listVPNDevicesForUser: [ConsoleVPNDevice!]
-  core_restartApp(appName: String!, envName: String!, projectName: String!): Boolean!
-  core_restartProjectManagedService(name: String!, projectName: String!): Boolean!
-  core_resyncApp(envName: String!, name: String!, projectName: String!): Boolean!
-  core_resyncConfig(envName: String!, name: String!, projectName: String!): Boolean!
-  core_resyncEnvironment(name: String!, projectName: String!): Boolean!
-  core_resyncImagePullSecret(envName: String!, name: String!, projectName: String!): Boolean!
-  core_resyncManagedResource(envName: String!, name: String!, projectName: String!): Boolean!
-  core_resyncProject(name: String!): Boolean!
-  core_resyncProjectManagedService(name: String!, projectName: String!): Boolean!
-  core_resyncRouter(envName: String!, name: String!, projectName: String!): Boolean!
-  core_resyncSecret(envName: String!, name: String!, projectName: String!): Boolean!
+  core_restartApp(appName: String!, envName: String!): Boolean!
+  core_resyncApp(envName: String!, name: String!): Boolean!
+  core_resyncConfig(envName: String!, name: String!): Boolean!
+  core_resyncEnvironment(name: String!): Boolean!
+  core_resyncImagePullSecret(envName: String!, name: String!): Boolean!
+  core_resyncManagedResource(envName: String!, name: String!): Boolean!
+  core_resyncRouter(envName: String!, name: String!): Boolean!
+  core_resyncSecret(envName: String!, name: String!): Boolean!
   cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput!
   cr_getBuild(id: ID!): Build
   cr_getBuildRun(buildID: ID!, buildRunName: String!): BuildRun
@@ -3746,9 +3679,10 @@ type Query {
   infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput!
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
   infra_getCluster(name: String!): Cluster
-  infra_getClusterGroup(name: String!): ClusterGroup
   infra_getClusterManagedService(clusterName: String!, name: String!): ClusterManagedService
   infra_getDomainEntry(domainName: String!): DomainEntry
+  infra_getGlobalVPN(name: String!): GlobalVPN
+  infra_getGlobalVPNDevice(deviceName: String!, gvpn: String!): GlobalVPNDevice
   infra_getHelmRelease(clusterName: String!, name: String!): HelmRelease
   infra_getManagedServiceTemplate(category: String!, name: String!): Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry
   infra_getNamespace(clusterName: String!, name: String!): Namespace
@@ -3757,10 +3691,11 @@ type Query {
   infra_getPV(clusterName: String!, name: String!): PersistentVolume
   infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim
   infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment
-  infra_listClusterGroups(pagination: CursorPaginationIn, search: SearchClusterGroup): ClusterGroupPaginatedRecords
   infra_listClusterManagedServices(clusterName: String!, pagination: CursorPaginationIn, search: SearchClusterManagedService): ClusterManagedServicePaginatedRecords
   infra_listClusters(pagination: CursorPaginationIn, search: SearchCluster): ClusterPaginatedRecords
   infra_listDomainEntries(pagination: CursorPaginationIn, search: SearchDomainEntry): DomainEntryPaginatedRecords
+  infra_listGlobalVPNDevices(gvpn: String!, pagination: CursorPaginationIn, search: SearchGlobalVPNDevices): GlobalVPNDevicePaginatedRecords
+  infra_listGlobalVPNs(pagination: CursorPaginationIn, search: SearchGlobalVPNs): GlobalVPNPaginatedRecords
   infra_listHelmReleases(clusterName: String!, pagination: CursorPaginationIn, search: SearchHelmRelease): HelmReleasePaginatedRecords
   infra_listManagedServiceTemplates: [MsvcTemplate!]
   infra_listNamespaces(clusterName: String!, pq: CursorPaginationIn, search: SearchNamespaces): NamespacePaginatedRecords
@@ -3769,7 +3704,6 @@ type Query {
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
   infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
-  iot_checkNameAvailability(deploymentName: String, deviceBlueprintName: String, name: String!, projectName: String!, resType: ResourceType!): IOTConsoleCheckNameAvailabilityOutput!
   iot_getApp(deviceBlueprintName: String!, name: String!, projectName: String!): IOTApp
   iot_getDeployment(name: String!, projectName: String!): IOTDeployment
   iot_getDevice(deploymentName: String!, name: String!, projectName: String!): IOTDevice
@@ -3815,14 +3749,6 @@ type RepositoryPaginatedRecords {
   totalCount: Int!
 }
 
-enum ResourceType {
-  iot_app
-  iot_deployment
-  iot_device
-  iot_device_blueprint
-  iot_project
-}
-
 enum ResType {
   cluster
   helm_release
@@ -3843,7 +3769,6 @@ type Router {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
-  projectName: String!
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__RouterSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -3893,10 +3818,6 @@ input SearchCluster {
   text: MatchFilterIn
 }
 
-input SearchClusterGroup {
-  text: MatchFilterIn
-}
-
 input SearchClusterManagedService {
   isReady: MatchFilterIn
   text: MatchFilterIn
@@ -3920,7 +3841,14 @@ input SearchDomainEntry {
 input SearchEnvironments {
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
-  projectName: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchGlobalVPNDevices {
+  text: MatchFilterIn
+}
+
+input SearchGlobalVPNs {
   text: MatchFilterIn
 }
 
@@ -4041,7 +3969,6 @@ type Secret {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
-  projectName: String!
   recordVersion: Int!
   stringData: Map
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!

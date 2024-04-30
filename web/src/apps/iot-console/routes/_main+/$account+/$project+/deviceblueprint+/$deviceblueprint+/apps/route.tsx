@@ -19,11 +19,11 @@ import AppResource from './app-resource';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
-  const { deviceblueprint, project } = ctx.params;
+  const { deviceblueprint } = ctx.params;
 
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listIotApps({
-      projectName: project,
+      
       deviceBlueprintName: deviceblueprint,
       pq: getPagination(ctx),
       search: getSearch(ctx),

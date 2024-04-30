@@ -4,11 +4,11 @@ import { keyconstants } from '~/iotconsole/server/r-utils/key-constants';
 import { AppIn } from '~/root/src/generated/gql/server';
 
 export const getImageTag = ({
-  project,
+  
   app,
   environment,
 }: {
-  project: string;
+  
   app: string;
   environment: string;
 }) => {

@@ -103,7 +103,7 @@ const _AccountMenu = ({ account }: { account: IAccount }) => {
           navigate('/new-team');
           return;
         }
-        navigate(`/${value}/projects`);
+        navigate(`/${value}/environments`);
       }}
       trigger={
         <span className="flex flex-row items-center gap-md bodyMd text-text-default px-md py-sm">
@@ -201,7 +201,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
         size="sm"
         variant="plain"
         LinkComponent={Link}
-        to={`/${account.metadata?.name}/projects`}
+        to={`/${account.metadata?.name}/environments`}
       />
       <OptionList.Root open={open} onOpenChange={setOpen} modal={false}>
         <OptionList.Trigger>
@@ -253,7 +253,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
               <OptionList.Link
                 key={parseName(item)}
                 LinkComponent={Link}
-                to={`/${parseName(item)}/projects`}
+                to={`/${parseName(item)}/environments`}
                 className={cn(
                   'flex flex-row items-center justify-between',
                   parseName(item) === parseName(account)

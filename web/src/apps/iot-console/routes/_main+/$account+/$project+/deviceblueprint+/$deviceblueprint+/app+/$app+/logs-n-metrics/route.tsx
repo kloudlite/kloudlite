@@ -15,7 +15,7 @@
 // import { IAppContext } from '../_layout';
 
 // const LogsAndMetrics = () => {
-//   const { app, project, account } = useOutletContext<IAppContext>();
+//   const { app,  account } = useOutletContext<IAppContext>();
 
 //   type tData = {
 //     metric: {

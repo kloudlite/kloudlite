@@ -102,7 +102,7 @@ const Root = (props: IDialog) => {
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
           <NameIdView
-            resType="project"
+            resType="environment"
             displayName={values.displayName}
             name={values.name}
             label="Blueprint name"

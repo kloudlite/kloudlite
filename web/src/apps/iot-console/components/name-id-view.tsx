@@ -143,7 +143,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
       return error;
     };
 
-    const { cluster, environment, project } = params;
+    const { cluster, environment } = params;
     useDebounce(
       async () => {
         let tempResType = resType;
@@ -171,7 +171,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
                   'router',
                 ].includes(tempResType)
                   ? {
-                      projectName: project,
+                      
                       envName: environment,
                     }
                   : {}),

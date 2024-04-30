@@ -21,9 +21,9 @@ const AppReview = () => {
 
   const api = useIotConsoleApi();
   const navigate = useNavigate();
-  const { project, deviceblueprint } =
+  const {  deviceblueprint } =
     useOutletContext<IDeviceBlueprintContext>();
-  const [projectName, deviceblueprintName] = [
+  const [ deviceblueprintName] = [
     project.name,
     deviceblueprint.name,
     // parseName(account),
@@ -33,13 +33,13 @@ const AppReview = () => {
     initialValues: app,
     validationSchema: Yup.object({}),
     onSubmit: async () => {
-      if (!project || !deviceblueprint) {
+      if ( !deviceblueprint) {
         throw new Error('Project and deviceblueprint is required!.');
       }
 
       try {
         const { errors } = await api.createIotApp({
-          projectName,
+          
           deviceBlueprintName: deviceblueprintName,
           app: {
             ...app,

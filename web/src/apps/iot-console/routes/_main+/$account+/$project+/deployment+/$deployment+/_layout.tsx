@@ -58,11 +58,11 @@ const LocalBreadcrum = ({ data }: { data: IDeployment }) => {
 };
 
 const Tabs = () => {
-  const { account, project, deployment } = useParams();
+  const { account,  deployment } = useParams();
 
   return (
     <CommonTabs
-      baseurl={`/${account}/${project}/deployment/${deployment}`}
+      baseurl={`/${account}/deployment/${deployment}`}
       tabs={tabs}
     />
   );
@@ -70,7 +70,7 @@ const Tabs = () => {
   // return (
   //   <CommonTabs
   //     backButton={{
-  //       to: `/${account}/${project}/deployments`,
+  //       to: `/${account}/deployments`,
   //       label: 'Back to Deployment',
   //     }}
   //   />
@@ -85,13 +85,13 @@ export const handle = ({ deployment }: { deployment: any }) => {
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
-  const { project, deployment, account } = ctx.params;
+  const {  deployment, account } = ctx.params;
 
   try {
     const { data, errors } = await GQLServerHandler(
       ctx.request
     ).getIotDeployment({
-      projectName: project,
+      
       name: deployment,
     });
     if (errors) {
@@ -104,7 +104,7 @@ export const loader = async (ctx: IRemixCtx) => {
     };
   } catch (e) {
     logger.error(e);
-    return redirect(`/${account}/projects`);
+    return redirect(`/${account}/environments`);
   }
 };
 

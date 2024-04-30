@@ -28,7 +28,7 @@ import { deviceBlueprintTypes } from '../../../../deviceblueprints/blueprint-uti
 export const updateDeviceBlueprint = async ({
   api,
   data,
-  projectName,
+  
 }: {
   api: ConsoleApiType;
   data: ExtractNodeType<IDeviceBlueprints>;
@@ -36,7 +36,7 @@ export const updateDeviceBlueprint = async ({
 }) => {
   try {
     const { errors: e } = await api.updateIotDeviceBlueprint({
-      projectName,
+      
       deviceBlueprint: {
         name: data.name,
         displayName: data.displayName,
@@ -54,7 +54,7 @@ export const updateDeviceBlueprint = async ({
 };
 
 const ProjectSettingGeneral = () => {
-  const { project, account, deviceblueprint } =
+  const {  account, deviceblueprint } =
     useOutletContext<IDeviceBlueprintContext>();
 
   const { setHasChanges, resetAndReload } = useUnsavedChanges();

@@ -122,6 +122,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
               markedForDeletion
               metadata {
                 name
+                namespace
               }
               spec {
                 msvcSpec {

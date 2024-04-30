@@ -21,12 +21,10 @@ export const configQueries = (executor: IExecutor) => ({
   updateConfig: executor(
     gql`
       mutation Core_updateConfig(
-        $projectName: String!
         $envName: String!
         $config: ConfigIn!
       ) {
         core_updateConfig(
-          projectName: $projectName
           envName: $envName
           config: $config
         ) {
@@ -42,12 +40,10 @@ export const configQueries = (executor: IExecutor) => ({
   deleteConfig: executor(
     gql`
       mutation Core_deleteConfig(
-        $projectName: String!
         $envName: String!
         $configName: String!
       ) {
         core_deleteConfig(
-          projectName: $projectName
           envName: $envName
           configName: $configName
         )
@@ -61,12 +57,10 @@ export const configQueries = (executor: IExecutor) => ({
   getConfig: executor(
     gql`
       query Core_getConfig(
-        $projectName: String!
         $envName: String!
         $name: String!
       ) {
         core_getConfig(
-          projectName: $projectName
           envName: $envName
           name: $name
         ) {
@@ -84,7 +78,6 @@ export const configQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          projectName
         }
       }
     `,
@@ -96,13 +89,11 @@ export const configQueries = (executor: IExecutor) => ({
   listConfigs: executor(
     gql`
       query Core_listConfigs(
-        $projectName: String!
         $envName: String!
         $search: SearchConfigs
         $pq: CursorPaginationIn
       ) {
         core_listConfigs(
-          projectName: $projectName
           envName: $envName
           search: $search
           pq: $pq
@@ -135,7 +126,6 @@ export const configQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              projectName
               updateTime
             }
           }
@@ -157,12 +147,10 @@ export const configQueries = (executor: IExecutor) => ({
   createConfig: executor(
     gql`
       mutation Core_createConfig(
-        $projectName: String!
         $envName: String!
         $config: ConfigIn!
       ) {
         core_createConfig(
-          projectName: $projectName
           envName: $envName
           config: $config
         ) {

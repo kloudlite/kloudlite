@@ -118,7 +118,7 @@ const _AccountMenu = ({ account }: { account: IAccount }) => {
           navigate('/new-team');
           return;
         }
-        navigate(`/${value}/projects`);
+        navigate(`/${value}/environments`);
       }}
       trigger={
         <span className="flex flex-row items-center gap-md bodyMd text-text-default px-md py-sm">
@@ -181,7 +181,7 @@ const DevicesMenu = () => {
   const api = useConsoleApi();
   const reload = useReload();
 
-  const { environment, project } = useParams();
+  const { environment } = useParams();
 
   const { device, reloadDevice } = useActiveDevice();
 
@@ -210,7 +210,7 @@ const DevicesMenu = () => {
           <IconButton variant="outline" icon={<WireGuardlogo />} />
         </OptionList.Trigger>
         <OptionList.Content>
-          {device.environmentName && device.projectName && (
+          {device.environmentName && (
             <>
               <OptionList.Item>
                 <div className="flex flex-row items-center gap-lg">
@@ -231,7 +231,7 @@ const DevicesMenu = () => {
                     Connected
                   </span>
                   <span className="bodySm text-text-soft">
-                    {device.projectName}/{device.environmentName}
+                    {device.environmentName}
                   </span>
                 </div>
               </OptionList.Item>
@@ -260,29 +260,26 @@ const DevicesMenu = () => {
                 </div>
                 <OptionList.Separator />
               </OptionList.Item>
-              {environment &&
-                project &&
-                environment !== device.environmentName && (
-                  <OptionList.Item
-                    onClick={async () => {
-                      await switchEnvironment({
-                        api,
-                        device,
-                        environment,
-                        project,
-                      });
-                      reload();
-                      reloadDevice();
-                    }}
-                  >
-                    <div className="flex flex-row items-center gap-lg">
-                      <div>
-                        <ArrowsCounterClockwise size={16} />
-                      </div>
-                      <div>Switch to {environment}</div>
+              {environment && environment !== device.environmentName && (
+                <OptionList.Item
+                  onClick={async () => {
+                    await switchEnvironment({
+                      api,
+                      device,
+                      environment,
+                    });
+                    reload();
+                    reloadDevice();
+                  }}
+                >
+                  <div className="flex flex-row items-center gap-lg">
+                    <div>
+                      <ArrowsCounterClockwise size={16} />
                     </div>
-                  </OptionList.Item>
-                )}
+                    <div>Switch to {environment}</div>
+                  </div>
+                </OptionList.Item>
+              )}
             </>
           )}
           <OptionList.Separator />
@@ -367,7 +364,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
         size="sm"
         variant="plain"
         LinkComponent={Link}
-        to={`/${account.metadata?.name}/projects`}
+        to={`/${account.metadata?.name}/environments`}
       />
       <OptionList.Root open={open} onOpenChange={setOpen} modal={false}>
         <OptionList.Trigger>
@@ -419,7 +416,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
               <OptionList.Link
                 key={parseName(item)}
                 LinkComponent={Link}
-                to={`/${parseName(item)}/projects`}
+                to={`/${parseName(item)}/environments`}
                 className={cn(
                   'flex flex-row items-center justify-between',
                   parseName(item) === parseName(account)

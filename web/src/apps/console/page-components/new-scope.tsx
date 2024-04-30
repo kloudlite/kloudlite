@@ -1,13 +1,10 @@
-import { useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
-import { parseName } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { Switch } from '~/components/atoms/switch';
 import { Checkbox } from '~/components/atoms/checkbox';
 import Banner from '~/components/molecule/banner';
 import { IDialog } from '../components/types.d';
@@ -15,12 +12,11 @@ import { useConsoleApi } from '../server/gql/api-provider';
 import { DIALOG_TYPE } from '../utils/commons';
 import { IEnvironment } from '../server/gql/queries/environment-queries';
 import { NameIdView } from '../components/name-id-view';
+import { parseName } from '../server/r-utils/common';
 
 const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
-
-  const { project: projectName } = useParams();
 
   const [validationSchema, setValidationSchema] = useState<any>(
     Yup.object({
@@ -47,20 +43,16 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
     validationSchema,
 
     onSubmit: async (val) => {
-      if (!projectName) {
-        throw new Error('Project name is required!.');
-      }
       try {
         if (show?.type === DIALOG_TYPE.ADD) {
           const { errors: e } = await api.createEnvironment({
-            projectName,
             env: {
               metadata: {
                 name: val.name,
               },
+              clusterName: show?.data?.clusterName || '',
               displayName: val.displayName,
               spec: {
-                projectName: projectName || '',
                 routing: {
                   mode: val.environmentRoutingMode ? 'public' : 'private',
                 },
@@ -73,17 +65,13 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
           toast.success('Environment created successfully');
         } else {
           const { errors: e } = await api.updateEnvironment({
-            projectName,
             env: {
               metadata: {
-                namespace: projectName,
                 name: parseName(show?.data),
               },
+              clusterName: show?.data?.clusterName || '',
               displayName: val.displayName,
-              spec: {
-                targetNamespace: `${projectName}=${val.name}`,
-                projectName: projectName || '',
-              },
+              spec: {},
             },
           });
           if (e) {

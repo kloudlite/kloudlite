@@ -9,13 +9,11 @@ import { registryHost } from '~/lib/configs/base-url.cjs';
 import { useOutletContext } from '@remix-run/react';
 import RepoSelector from '~/console/page-components/app/components';
 import AppBuildIntegration from '~/console/page-components/app/app-build-integration';
-import { IEnvironmentContext } from '~/console/routes/_main+/$account+/$project+/env+/$environment+/_layout';
 import { TextInput } from '~/components/atoms/input';
 import { useEffect, useState } from 'react';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import { getImageTag } from '~/console/routes/_main+/$account+/$project+/env+/$environment+/new-app/app-utils';
 import { constants } from '~/console/server/utils/constants';
 import HandleBuild from '~/console/routes/_main+/$account+/repo+/$repo+/builds/handle-builds';
 import {
@@ -26,12 +24,14 @@ import {
 import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
-import appFun from '~/console/routes/_main+/$account+/$project+/env+/$environment+/new-app/app-pre-submit';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { toast } from '~/components/molecule/toast';
 import { Button } from '~/components/atoms/button';
-import BuildSelectionDialog from '~/console/routes/_main+/$account+/$project+/env+/$environment+/new-app/app-build-selection-dialog';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$environment+/_layout';
+import { getImageTag } from '~/console/routes/_main+/$account+/env+/$environment+/new-app/app-utils';
+import appFun from '~/console/routes/_main+/$account+/env+/$environment+/new-app/app-pre-submit';
+import BuildSelectionDialog from '~/console/routes/_main+/$account+/env+/$environment+/new-app/app-build-selection-dialog';
 
 const ExtraButton = ({
   onNew,
@@ -93,15 +93,10 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     existingBuildId,
   } = useAppState();
 
-  const { project, account, environment } =
-    useOutletContext<IEnvironmentContext>();
+  const { account, environment } = useOutletContext<IEnvironmentContext>();
   const { performAction } = useUnsavedChanges();
 
-  const [projectName, envName, accountName] = [
-    parseName(project),
-    parseName(environment),
-    parseName(account),
-  ];
+  const [envName, accountName] = [parseName(environment), parseName(account)];
 
   const [openBuildSelection, setOpenBuildSelection] = useState(false);
 
@@ -175,13 +170,12 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     onSubmit: async (val) => {
       const imageTag = getImageTag({
         environment: envName,
-        project: projectName,
         app: val.name,
       });
 
       const formBuildData = () => {
         return {
-          buildClusterName: project.clusterName || '',
+          buildClusterName: environment.clusterName || '',
           name: imageTag,
           source: {
             branch: val.source.branch!,
@@ -249,7 +243,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       });
 
       if (val.imageMode === 'git') {
-        if (!project.clusterName) {
+        if (!environment.clusterName) {
           throw new Error('Cluster name is required');
         }
         if (

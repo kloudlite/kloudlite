@@ -102,7 +102,7 @@ const AccountTabs = () => {
 const Logo = () => {
   const { account } = useParams();
   return (
-    <LogoWrapper to={`/${account}/projects`}>
+    <LogoWrapper to={`/${account}/environments`}>
       <BrandLogo />
     </LogoWrapper>
   );

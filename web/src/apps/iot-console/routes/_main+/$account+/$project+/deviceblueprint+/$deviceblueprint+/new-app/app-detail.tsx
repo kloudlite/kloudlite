@@ -15,7 +15,7 @@ const AppDetail = () => {
   const { app, setApp, setPage, markPageAsCompleted, activeContIndex } =
     useAppState();
 
-  const { project, deviceblueprint, account } =
+  const {  deviceblueprint, account } =
     useOutletContext<IDeviceBlueprintContext>();
   const [accountName] = [
     project.name,

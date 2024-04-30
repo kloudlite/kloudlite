@@ -39,7 +39,7 @@ const AppDialog = ({
   });
 
   const [isloading, setIsloading] = useState<boolean>(true);
-  const { environment, project } = useParams();
+  const { environment } = useParams();
 
   const [configs, setConfigs] = useState<ExtractNodeType<IConfigs>[]>([]);
   const [secrets, setSecrets] = useState<ExtractNodeType<ISecrets>[]>([]);
@@ -79,7 +79,7 @@ const AppDialog = ({
 
         if (show?.type === 'config') {
           const { data, errors } = await api.listConfigs({
-            projectName: project,
+            
             envName: environment,
           });
           if (errors) {
@@ -88,7 +88,7 @@ const AppDialog = ({
           setConfigs(parseNodes(data));
         } else {
           const { data, errors } = await api.listSecrets({
-            projectName: project,
+            
             envName: environment,
           });
           if (errors) {

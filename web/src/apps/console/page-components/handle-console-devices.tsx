@@ -394,12 +394,10 @@ export const switchEnvironment = async ({
   api,
   device,
   environment,
-  project,
 }: {
   api: ConsoleApiType;
   device: IConsoleDevice;
   environment: string;
-  project: string;
 }) => {
   try {
     const { errors } = await api.updateConsoleVpnDevice({
@@ -409,7 +407,7 @@ export const switchEnvironment = async ({
           name: parseName(device),
         },
         environmentName: environment,
-        projectName: project,
+
         spec: {
           ports: device.spec?.ports,
         },
@@ -439,7 +437,6 @@ const Root = (props: IDialog) => {
             name: parseName(props.data),
             ports: props.data.spec?.ports || [],
             isNameError: false,
-            projectName: props.data.projectName,
             environmentName: props.data.environmentName,
           }
         : {
@@ -487,7 +484,6 @@ const Root = (props: IDialog) => {
                   name: parseName(props.data),
                 },
                 environmentName: val.environmentName,
-                projectName: val.projectName,
                 spec: {
                   ports: val.ports,
                 },
@@ -512,36 +508,15 @@ const Root = (props: IDialog) => {
     }
   }, []);
 
-  const { data: projectData, isLoading: projectIsLoading } = useCustomSwr(
-    '/projects',
-    async () => {
-      return api.listProjects({});
-    }
-  );
-
   const { data: envData, isLoading: envLoading } = useCustomSwr(
     () => (values.projectName ? `/environments-${values.projectName}` : null),
     async () => {
       if (!values.projectName) {
         throw new Error('Project name is required!.');
       }
-      return api.listEnvironments({
-        projectName: values.projectName,
-      });
+      return api.listEnvironments({});
     }
   );
-
-  const projects = useMapper(parseNodes(projectData), (val) => ({
-    label: val.displayName,
-    value: parseName(val),
-    project: val,
-    render: () => (
-      <div className="flex flex-col">
-        <div>{val.displayName}</div>
-        <div className="bodySm text-text-soft">{parseName(val)}</div>
-      </div>
-    ),
-  }));
 
   const environments = useMapper(parseNodes(envData), (val) => ({
     label: val.displayName,
@@ -589,21 +564,6 @@ const Root = (props: IDialog) => {
               <div className="flex flex-row items-start gap-3xl">
                 <div className="basis-full">
                   <Select
-                    label="Project"
-                    size="lg"
-                    placeholder="Select a project"
-                    error={!!errors.projectName}
-                    message={errors.projectName}
-                    disableWhileLoading
-                    options={async () => [...projects]}
-                    value={values.projectName}
-                    onChange={(val) => {
-                      handleChange('projectName')(dummyEvent(val.value));
-                    }}
-                  />
-                </div>
-                <div className="basis-full">
-                  <Select
                     label="Environment"
                     size="lg"
                     placeholder="Select a environment"
@@ -611,7 +571,7 @@ const Root = (props: IDialog) => {
                     message={values.projectName ? errors.environmentName : ''}
                     disabled={!values.projectName}
                     disableWhileLoading
-                    loading={projectIsLoading || envLoading}
+                    loading={envLoading}
                     options={async () => [...environments]}
                     value={values.environmentName}
                     onChange={(val) => {

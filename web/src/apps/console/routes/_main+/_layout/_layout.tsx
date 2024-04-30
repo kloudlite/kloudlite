@@ -70,11 +70,11 @@ const AccountTabs = () => {
           label: (
             <span className="flex flex-row items-center gap-lg">
               <Project size={iconSize} />
-              Projects
+              Environments
             </span>
           ),
-          to: '/projects',
-          value: '/projects',
+          to: '/environments',
+          value: '/environments',
         },
         {
           label: (
@@ -114,7 +114,7 @@ const AccountTabs = () => {
 const Logo = () => {
   const { account } = useParams();
   return (
-    <LogoWrapper to={`/${account}/projects`}>
+    <LogoWrapper to={`/${account}/environments`}>
       <BrandLogo />
     </LogoWrapper>
   );

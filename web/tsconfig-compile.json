@@ -57,6 +57,7 @@
     "public",
     "src/apps/devdoc",
     "./src/design-system/node_modules/**/*",
-    "./src/design-system/dist/**/*"
+    "./src/design-system/dist/**/*",
+    "./src/apps/iot-console/**/*"
   ]
 }

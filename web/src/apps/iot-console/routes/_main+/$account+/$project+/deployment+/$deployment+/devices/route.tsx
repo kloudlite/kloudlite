@@ -20,12 +20,12 @@ import HandleDevice from './handle-device';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
-  const { deployment, project } = ctx.params;
+  const { deployment } = ctx.params;
 
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listIotDevices(
       {
-        projectName: project,
+        
         deploymentName: deployment,
         pq: getPagination(ctx),
         search: getSearch(ctx),

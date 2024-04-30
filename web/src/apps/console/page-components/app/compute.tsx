@@ -15,9 +15,9 @@ import { useOutletContext } from '@remix-run/react';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
 import { plans } from './datas';
 import appInitialFormValues, { mapFormValuesToApp } from './app-utils';
+import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$environment+/_layout';
 
 const valueRender = ({
   label,
@@ -44,7 +44,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
   const { app, setApp, setPage, markPageAsCompleted, getContainer } =
     useAppState();
   const api = useConsoleApi();
-  const { cluster } = useOutletContext<IProjectContext>();
+  const { cluster } = useOutletContext<IEnvironmentContext>();
   const [advancedOptions, setAdvancedOptions] = useState(false);
 
   const {

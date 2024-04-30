@@ -160,21 +160,21 @@ const ConfigMountsList = ({ configMounts, onDelete }: IConfigMountList) => {
 export const ConfigMounts = () => {
   const api = useIotConsoleApi();
   const [isloading, setIsloading] = useState<boolean>(true);
-  const { environment, project } = useParams();
+  const { environment } = useParams();
   const [configs, setConfigs] = useState<ExtractNodeType<IConfigs>[]>([]);
 
   const [refName, setRefName] = useState<string>('');
 
   useDebounce(
     async () => {
-      if (!project || !environment) {
+      if ( !environment) {
         throw new Error('Project and Environment is requireed!.');
       }
       try {
         setIsloading(true);
         const { data, errors } = await api.listConfigs({
           envName: environment,
-          projectName: project,
+          
         });
         if (errors) {
           throw errors[0];

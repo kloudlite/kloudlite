@@ -77,7 +77,6 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
               creationTime
               displayName
               environmentName
-              projectName
               lastUpdatedBy {
                 userEmail
                 userId
@@ -89,7 +88,6 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              projectName
               recordVersion
               status {
                 checkList {
@@ -163,7 +161,6 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          projectName
           recordVersion
           spec {
             cnameRecords {
@@ -204,7 +201,6 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
           creationTime
           displayName
           environmentName
-          projectName
           lastUpdatedBy {
             userEmail
             userId
@@ -216,7 +212,6 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          projectName
           recordVersion
           status {
             checkList {

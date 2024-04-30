@@ -25,12 +25,10 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   getManagedResource: executor(
     gql`
       query Core_getManagedResource(
-        $projectName: String!
         $envName: String!
         $name: String!
       ) {
         core_getManagedResource(
-          projectName: $projectName
           envName: $envName
           name: $name
         ) {
@@ -42,7 +40,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          projectName
           spec {
             resourceTemplate {
               apiVersion
@@ -70,12 +67,10 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   createManagedResource: executor(
     gql`
       mutation Core_createManagedResource(
-        $projectName: String!
         $envName: String!
         $mres: ManagedResourceIn!
       ) {
         core_createManagedResource(
-          projectName: $projectName
           envName: $envName
           mres: $mres
         ) {
@@ -92,12 +87,10 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   updateManagedResource: executor(
     gql`
       mutation Core_updateManagedResource(
-        $projectName: String!
         $envName: String!
         $mres: ManagedResourceIn!
       ) {
         core_updateManagedResource(
-          projectName: $projectName
           envName: $envName
           mres: $mres
         ) {
@@ -114,13 +107,11 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   listManagedResources: executor(
     gql`
       query Core_listManagedResources(
-        $projectName: String!
         $envName: String!
         $search: SearchManagedResources
         $pq: CursorPaginationIn
       ) {
         core_listManagedResources(
-          projectName: $projectName
           envName: $envName
           search: $search
           pq: $pq
@@ -221,12 +212,10 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   deleteManagedResource: executor(
     gql`
       mutation Core_deleteManagedResource(
-        $projectName: String!
         $envName: String!
         $mresName: String!
       ) {
         core_deleteManagedResource(
-          projectName: $projectName
           envName: $envName
           mresName: $mresName
         )

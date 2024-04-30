@@ -26,7 +26,7 @@ export const loader = (ctx: IRemixCtx) => {
     const { data, errors } = await GQLServerHandler(
       ctx.request
     ).listIotDeployments({
-      projectName: project,
+      
       pq: getPagination(ctx),
       search: getSearch(ctx),
     });
