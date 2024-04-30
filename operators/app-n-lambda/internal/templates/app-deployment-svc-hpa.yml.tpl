@@ -94,7 +94,8 @@ metadata:
 spec:
   type: ExternalName
   {{- if $isIntercepted }}
-  externalName: {{.Spec.Intercept.ToDevice}}.{{.Namespace}}.svc.{{$clusterDnsSuffix}}
+  {{- /* externalName: {{.Spec.Intercept.ToDevice}}.{{.Namespace}}.svc.{{$clusterDnsSuffix}} */}}
+  externalName: {{.Spec.Intercept.ToDevice}}.device.local
   {{- else}}
   externalName: {{.Name}}-internal.{{.Namespace}}.svc.{{$clusterDnsSuffix}}
   {{- end }}
