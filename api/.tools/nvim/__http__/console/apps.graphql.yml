@@ -5,8 +5,8 @@ global:
 
 label: List Apps
 query: |+ #graphql
-  query Core_listApps($projectName: String!, $envName: String!) {
-    core_listApps(projectName: $projectName, envName: $envName) {
+  query Core_listApps($envName: String!) {
+    core_listApps(envName: $envName) {
       edges {
         node {
           id
@@ -20,13 +20,6 @@ query: |+ #graphql
             name
             annotations
           }
-          build {
-            id
-            source {
-              repository
-              branch
-            }
-          }
           syncStatus {
             state
             action
@@ -34,7 +27,6 @@ query: |+ #graphql
             syncScheduledAt
             recordVersion
           }
-          projectName
           recordVersion
           kind
           displayName
@@ -44,14 +36,13 @@ query: |+ #graphql
     }
   }
 variables:
-  projectName: "{{.projectName}}"
-  envName: "{{.environmentName}}"
+  envName: "{{.envName}}"
 ---
 
 label: Get App
 query: |+ #graphql
-  query Core_getApp($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: String!) {
-    core_getApp(project: $project, scope: $scope, name: $name) {
+  query Core_getApp($scope: WorkspaceOrEnvId!, $name: String!) {
+    core_getApp(scope: $scope, name: $name) {
       metadata {
         name
         deletionTimestamp
@@ -79,8 +70,8 @@ variables:
 
 label: Create App
 query: |+ #graphql
-  mutation Core_createApp($projectName: String!, $envName: String!, $app: AppIn!) {
-    core_createApp(projectName: $projectName, envName: $envName, app: $app) {
+  mutation Core_createApp($envName: String!, $app: AppIn!) {
+    core_createApp(envName: $envName, app: $app) {
       metadata {
         name
       }
@@ -99,13 +90,11 @@ query: |+ #graphql
     }
   }
 variables:
-  projectName: "{{.projectName}}"
   envName: "{{.envName}}"
   app:
     displayName: "sample app"
     metadata:
       name: "{{.name}}"
-      # name: "SAMPLE2"
     spec:
       services:
         - type: tcp
@@ -119,8 +108,8 @@ variables:
 
 label: Update App
 query: |+ #graphql
-  mutation Core_updateApp($projectName: String!, $envName: String!, $app: AppIn!) {
-    core_updateApp(projectName: $projectName, envName: $envName, app: $app) {
+  mutation Core_updateApp($envName: String!, $app: AppIn!) {
+    core_updateApp(envName: $envName, app: $app) {
       metadata {
         name
         generation
@@ -133,7 +122,6 @@ query: |+ #graphql
     }
   }
 variables:
-  projectName: "{{.projectName}}"
   envName: "{{.envName}}"
   app:
     displayName: "sample app"
@@ -153,23 +141,20 @@ variables:
 
 label: Delete App
 query: |+ #graphql
-  mutation Core_deleteApp($projectName: String!, $envName: String!, $appName: String!) {
-    core_deleteApp(projectName: $projectName, envName: $envName, appName: $appName)
+  mutation Core_deleteApp($envName: String!, $appName: String!) {
+    core_deleteApp(envName: $envName, appName: $appName)
   }
 variables:
-  projectName: "{{.projectName}}"
   envName: "{{.envName}}"
   appName: "{{.name}}"
----
 
 ---
 label: restart app
-query: |+
-  query Query($projectName: String!, $envName: String!, $appName: String!) {
-    core_restartApp(projectName: $projectName, envName: $envName, appName: $appName)
+query: |+ #graphql
+  query Query($envName: String!, $appName: String!) {
+    core_restartApp(envName: $envName, appName: $appName)
   }
 variables:
-  projectName: "{{.projectName}}"
   envName: "{{.envName}}"
-  appName: "nginx"
+  appName: "{{.name}}"
 ---

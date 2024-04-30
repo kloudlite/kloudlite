@@ -181,7 +181,6 @@ type ComplexityRoot struct {
 		LinkedClusters    func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
-		ProjectName       func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
 		Spec              func(childComplexity int) int
 		Status            func(childComplexity int) int
@@ -633,32 +632,32 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CoreCloneEnvironment      func(childComplexity int, projectName string, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) int
-		CoreCreateApp             func(childComplexity int, projectName string, envName string, app entities.App) int
-		CoreCreateConfig          func(childComplexity int, projectName string, envName string, config entities.Config) int
-		CoreCreateEnvironment     func(childComplexity int, projectName string, env entities.Environment) int
-		CoreCreateImagePullSecret func(childComplexity int, projectName string, envName string, imagePullSecretIn entities.ImagePullSecret) int
-		CoreCreateManagedResource func(childComplexity int, projectName string, envName string, mres entities.ManagedResource) int
-		CoreCreateRouter          func(childComplexity int, projectName string, envName string, router entities.Router) int
-		CoreCreateSecret          func(childComplexity int, projectName string, envName string, secret entities.Secret) int
+		CoreCloneEnvironment      func(childComplexity int, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) int
+		CoreCreateApp             func(childComplexity int, envName string, app entities.App) int
+		CoreCreateConfig          func(childComplexity int, envName string, config entities.Config) int
+		CoreCreateEnvironment     func(childComplexity int, env entities.Environment) int
+		CoreCreateImagePullSecret func(childComplexity int, envName string, imagePullSecretIn entities.ImagePullSecret) int
+		CoreCreateManagedResource func(childComplexity int, envName string, mres entities.ManagedResource) int
+		CoreCreateRouter          func(childComplexity int, envName string, router entities.Router) int
+		CoreCreateSecret          func(childComplexity int, envName string, secret entities.Secret) int
 		CoreCreateVPNDevice       func(childComplexity int, vpnDevice entities.ConsoleVPNDevice) int
-		CoreDeleteApp             func(childComplexity int, projectName string, envName string, appName string) int
-		CoreDeleteConfig          func(childComplexity int, projectName string, envName string, configName string) int
-		CoreDeleteEnvironment     func(childComplexity int, projectName string, envName string) int
-		CoreDeleteImagePullSecret func(childComplexity int, projectName string, envName string, secretName string) int
-		CoreDeleteManagedResource func(childComplexity int, projectName string, envName string, mresName string) int
-		CoreDeleteRouter          func(childComplexity int, projectName string, envName string, routerName string) int
-		CoreDeleteSecret          func(childComplexity int, projectName string, envName string, secretName string) int
+		CoreDeleteApp             func(childComplexity int, envName string, appName string) int
+		CoreDeleteConfig          func(childComplexity int, envName string, configName string) int
+		CoreDeleteEnvironment     func(childComplexity int, envName string) int
+		CoreDeleteImagePullSecret func(childComplexity int, envName string, secretName string) int
+		CoreDeleteManagedResource func(childComplexity int, envName string, mresName string) int
+		CoreDeleteRouter          func(childComplexity int, envName string, routerName string) int
+		CoreDeleteSecret          func(childComplexity int, envName string, secretName string) int
 		CoreDeleteVPNDevice       func(childComplexity int, deviceName string) int
-		CoreInterceptApp          func(childComplexity int, projectName string, envName string, appname string, deviceName string, intercept bool) int
-		CoreUpdateApp             func(childComplexity int, projectName string, envName string, app entities.App) int
-		CoreUpdateConfig          func(childComplexity int, projectName string, envName string, config entities.Config) int
-		CoreUpdateEnvironment     func(childComplexity int, projectName string, env entities.Environment) int
-		CoreUpdateManagedResource func(childComplexity int, projectName string, envName string, mres entities.ManagedResource) int
-		CoreUpdateRouter          func(childComplexity int, projectName string, envName string, router entities.Router) int
-		CoreUpdateSecret          func(childComplexity int, projectName string, envName string, secret entities.Secret) int
+		CoreInterceptApp          func(childComplexity int, envName string, appname string, deviceName string, intercept bool) int
+		CoreUpdateApp             func(childComplexity int, envName string, app entities.App) int
+		CoreUpdateConfig          func(childComplexity int, envName string, config entities.Config) int
+		CoreUpdateEnvironment     func(childComplexity int, env entities.Environment) int
+		CoreUpdateManagedResource func(childComplexity int, envName string, mres entities.ManagedResource) int
+		CoreUpdateRouter          func(childComplexity int, envName string, router entities.Router) int
+		CoreUpdateSecret          func(childComplexity int, envName string, secret entities.Secret) int
 		CoreUpdateVPNDevice       func(childComplexity int, vpnDevice entities.ConsoleVPNDevice) int
-		CoreUpdateVPNDeviceEnv    func(childComplexity int, deviceName string, projectName string, envName string) int
+		CoreUpdateVPNDeviceEnv    func(childComplexity int, deviceName string, envName string) int
 		CoreUpdateVPNDevicePorts  func(childComplexity int, deviceName string, ports []*v11.Port) int
 		CoreUpdateVpnClusterName  func(childComplexity int, deviceName string, clusterName string) int
 		CoreUpdateVpnDeviceNs     func(childComplexity int, deviceName string, ns string) int
@@ -677,36 +676,36 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CoreCheckNameAvailability            func(childComplexity int, projectName *string, envName *string, resType entities.ResourceType, name string) int
-		CoreGetApp                           func(childComplexity int, projectName string, envName string, name string) int
-		CoreGetConfig                        func(childComplexity int, projectName string, envName string, name string) int
-		CoreGetConfigValues                  func(childComplexity int, projectName string, envName string, queries []*domain.ConfigKeyRef) int
-		CoreGetEnvironment                   func(childComplexity int, projectName string, name string) int
-		CoreGetImagePullSecret               func(childComplexity int, projectName string, envName string, name string) int
-		CoreGetManagedResouceOutputKeyValues func(childComplexity int, projectName string, envName string, keyrefs []*domain.ManagedResourceKeyRef) int
-		CoreGetManagedResouceOutputKeys      func(childComplexity int, projectName string, envName string, name string) int
-		CoreGetManagedResource               func(childComplexity int, projectName string, envName string, name string) int
-		CoreGetRouter                        func(childComplexity int, projectName string, envName string, name string) int
-		CoreGetSecret                        func(childComplexity int, projectName string, envName string, name string) int
-		CoreGetSecretValues                  func(childComplexity int, projectName string, envName string, queries []*domain.SecretKeyRef) int
+		CoreCheckNameAvailability            func(childComplexity int, envName *string, resType entities.ResourceType, name string) int
+		CoreGetApp                           func(childComplexity int, envName string, name string) int
+		CoreGetConfig                        func(childComplexity int, envName string, name string) int
+		CoreGetConfigValues                  func(childComplexity int, envName string, queries []*domain.ConfigKeyRef) int
+		CoreGetEnvironment                   func(childComplexity int, name string) int
+		CoreGetImagePullSecret               func(childComplexity int, envName string, name string) int
+		CoreGetManagedResouceOutputKeyValues func(childComplexity int, envName string, keyrefs []*domain.ManagedResourceKeyRef) int
+		CoreGetManagedResouceOutputKeys      func(childComplexity int, envName string, name string) int
+		CoreGetManagedResource               func(childComplexity int, envName string, name string) int
+		CoreGetRouter                        func(childComplexity int, envName string, name string) int
+		CoreGetSecret                        func(childComplexity int, envName string, name string) int
+		CoreGetSecretValues                  func(childComplexity int, envName string, queries []*domain.SecretKeyRef) int
 		CoreGetVPNDevice                     func(childComplexity int, name string) int
-		CoreListApps                         func(childComplexity int, projectName string, envName string, search *model.SearchApps, pq *repos.CursorPagination) int
-		CoreListConfigs                      func(childComplexity int, projectName string, envName string, search *model.SearchConfigs, pq *repos.CursorPagination) int
-		CoreListEnvironments                 func(childComplexity int, projectName string, search *model.SearchEnvironments, pq *repos.CursorPagination) int
-		CoreListImagePullSecrets             func(childComplexity int, projectName string, envName string, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) int
-		CoreListManagedResources             func(childComplexity int, projectName string, envName string, search *model.SearchManagedResources, pq *repos.CursorPagination) int
-		CoreListRouters                      func(childComplexity int, projectName string, envName string, search *model.SearchRouters, pq *repos.CursorPagination) int
-		CoreListSecrets                      func(childComplexity int, projectName string, envName string, search *model.SearchSecrets, pq *repos.CursorPagination) int
+		CoreListApps                         func(childComplexity int, envName string, search *model.SearchApps, pq *repos.CursorPagination) int
+		CoreListConfigs                      func(childComplexity int, envName string, search *model.SearchConfigs, pq *repos.CursorPagination) int
+		CoreListEnvironments                 func(childComplexity int, search *model.SearchEnvironments, pq *repos.CursorPagination) int
+		CoreListImagePullSecrets             func(childComplexity int, envName string, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) int
+		CoreListManagedResources             func(childComplexity int, envName string, search *model.SearchManagedResources, pq *repos.CursorPagination) int
+		CoreListRouters                      func(childComplexity int, envName string, search *model.SearchRouters, pq *repos.CursorPagination) int
+		CoreListSecrets                      func(childComplexity int, envName string, search *model.SearchSecrets, pq *repos.CursorPagination) int
 		CoreListVPNDevices                   func(childComplexity int, search *model.CoreSearchVPNDevices, pq *repos.CursorPagination) int
 		CoreListVPNDevicesForUser            func(childComplexity int) int
-		CoreRestartApp                       func(childComplexity int, projectName string, envName string, appName string) int
-		CoreResyncApp                        func(childComplexity int, projectName string, envName string, name string) int
-		CoreResyncConfig                     func(childComplexity int, projectName string, envName string, name string) int
-		CoreResyncEnvironment                func(childComplexity int, projectName string, name string) int
-		CoreResyncImagePullSecret            func(childComplexity int, projectName string, envName string, name string) int
-		CoreResyncManagedResource            func(childComplexity int, projectName string, envName string, name string) int
-		CoreResyncRouter                     func(childComplexity int, projectName string, envName string, name string) int
-		CoreResyncSecret                     func(childComplexity int, projectName string, envName string, name string) int
+		CoreRestartApp                       func(childComplexity int, envName string, appName string) int
+		CoreResyncApp                        func(childComplexity int, envName string, name string) int
+		CoreResyncConfig                     func(childComplexity int, envName string, name string) int
+		CoreResyncEnvironment                func(childComplexity int, name string) int
+		CoreResyncImagePullSecret            func(childComplexity int, envName string, name string) int
+		CoreResyncManagedResource            func(childComplexity int, envName string, name string) int
+		CoreResyncRouter                     func(childComplexity int, envName string, name string) int
+		CoreResyncSecret                     func(childComplexity int, envName string, name string) int
 		__resolve__service                   func(childComplexity int) int
 		__resolve_entities                   func(childComplexity int, representations []map[string]interface{}) int
 	}
@@ -869,64 +868,64 @@ type MetadataResolver interface {
 	Labels(ctx context.Context, obj *v13.ObjectMeta) (map[string]interface{}, error)
 }
 type MutationResolver interface {
-	CoreCreateEnvironment(ctx context.Context, projectName string, env entities.Environment) (*entities.Environment, error)
-	CoreUpdateEnvironment(ctx context.Context, projectName string, env entities.Environment) (*entities.Environment, error)
-	CoreDeleteEnvironment(ctx context.Context, projectName string, envName string) (bool, error)
-	CoreCloneEnvironment(ctx context.Context, projectName string, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) (*entities.Environment, error)
-	CoreCreateImagePullSecret(ctx context.Context, projectName string, envName string, imagePullSecretIn entities.ImagePullSecret) (*entities.ImagePullSecret, error)
-	CoreDeleteImagePullSecret(ctx context.Context, projectName string, envName string, secretName string) (bool, error)
-	CoreCreateApp(ctx context.Context, projectName string, envName string, app entities.App) (*entities.App, error)
-	CoreUpdateApp(ctx context.Context, projectName string, envName string, app entities.App) (*entities.App, error)
-	CoreDeleteApp(ctx context.Context, projectName string, envName string, appName string) (bool, error)
-	CoreInterceptApp(ctx context.Context, projectName string, envName string, appname string, deviceName string, intercept bool) (bool, error)
-	CoreCreateConfig(ctx context.Context, projectName string, envName string, config entities.Config) (*entities.Config, error)
-	CoreUpdateConfig(ctx context.Context, projectName string, envName string, config entities.Config) (*entities.Config, error)
-	CoreDeleteConfig(ctx context.Context, projectName string, envName string, configName string) (bool, error)
-	CoreCreateSecret(ctx context.Context, projectName string, envName string, secret entities.Secret) (*entities.Secret, error)
-	CoreUpdateSecret(ctx context.Context, projectName string, envName string, secret entities.Secret) (*entities.Secret, error)
-	CoreDeleteSecret(ctx context.Context, projectName string, envName string, secretName string) (bool, error)
-	CoreCreateRouter(ctx context.Context, projectName string, envName string, router entities.Router) (*entities.Router, error)
-	CoreUpdateRouter(ctx context.Context, projectName string, envName string, router entities.Router) (*entities.Router, error)
-	CoreDeleteRouter(ctx context.Context, projectName string, envName string, routerName string) (bool, error)
-	CoreCreateManagedResource(ctx context.Context, projectName string, envName string, mres entities.ManagedResource) (*entities.ManagedResource, error)
-	CoreUpdateManagedResource(ctx context.Context, projectName string, envName string, mres entities.ManagedResource) (*entities.ManagedResource, error)
-	CoreDeleteManagedResource(ctx context.Context, projectName string, envName string, mresName string) (bool, error)
+	CoreCreateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error)
+	CoreUpdateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error)
+	CoreDeleteEnvironment(ctx context.Context, envName string) (bool, error)
+	CoreCloneEnvironment(ctx context.Context, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) (*entities.Environment, error)
+	CoreCreateImagePullSecret(ctx context.Context, envName string, imagePullSecretIn entities.ImagePullSecret) (*entities.ImagePullSecret, error)
+	CoreDeleteImagePullSecret(ctx context.Context, envName string, secretName string) (bool, error)
+	CoreCreateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
+	CoreUpdateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
+	CoreDeleteApp(ctx context.Context, envName string, appName string) (bool, error)
+	CoreInterceptApp(ctx context.Context, envName string, appname string, deviceName string, intercept bool) (bool, error)
+	CoreCreateConfig(ctx context.Context, envName string, config entities.Config) (*entities.Config, error)
+	CoreUpdateConfig(ctx context.Context, envName string, config entities.Config) (*entities.Config, error)
+	CoreDeleteConfig(ctx context.Context, envName string, configName string) (bool, error)
+	CoreCreateSecret(ctx context.Context, envName string, secret entities.Secret) (*entities.Secret, error)
+	CoreUpdateSecret(ctx context.Context, envName string, secret entities.Secret) (*entities.Secret, error)
+	CoreDeleteSecret(ctx context.Context, envName string, secretName string) (bool, error)
+	CoreCreateRouter(ctx context.Context, envName string, router entities.Router) (*entities.Router, error)
+	CoreUpdateRouter(ctx context.Context, envName string, router entities.Router) (*entities.Router, error)
+	CoreDeleteRouter(ctx context.Context, envName string, routerName string) (bool, error)
+	CoreCreateManagedResource(ctx context.Context, envName string, mres entities.ManagedResource) (*entities.ManagedResource, error)
+	CoreUpdateManagedResource(ctx context.Context, envName string, mres entities.ManagedResource) (*entities.ManagedResource, error)
+	CoreDeleteManagedResource(ctx context.Context, envName string, mresName string) (bool, error)
 	CoreCreateVPNDevice(ctx context.Context, vpnDevice entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
 	CoreUpdateVPNDevice(ctx context.Context, vpnDevice entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
 	CoreUpdateVPNDevicePorts(ctx context.Context, deviceName string, ports []*v11.Port) (bool, error)
-	CoreUpdateVPNDeviceEnv(ctx context.Context, deviceName string, projectName string, envName string) (bool, error)
+	CoreUpdateVPNDeviceEnv(ctx context.Context, deviceName string, envName string) (bool, error)
 	CoreUpdateVpnDeviceNs(ctx context.Context, deviceName string, ns string) (bool, error)
 	CoreUpdateVpnClusterName(ctx context.Context, deviceName string, clusterName string) (bool, error)
 	CoreDeleteVPNDevice(ctx context.Context, deviceName string) (bool, error)
 }
 type QueryResolver interface {
-	CoreCheckNameAvailability(ctx context.Context, projectName *string, envName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error)
-	CoreListEnvironments(ctx context.Context, projectName string, search *model.SearchEnvironments, pq *repos.CursorPagination) (*model.EnvironmentPaginatedRecords, error)
-	CoreGetEnvironment(ctx context.Context, projectName string, name string) (*entities.Environment, error)
-	CoreResyncEnvironment(ctx context.Context, projectName string, name string) (bool, error)
-	CoreListImagePullSecrets(ctx context.Context, projectName string, envName string, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error)
-	CoreGetImagePullSecret(ctx context.Context, projectName string, envName string, name string) (*entities.ImagePullSecret, error)
-	CoreResyncImagePullSecret(ctx context.Context, projectName string, envName string, name string) (bool, error)
-	CoreListApps(ctx context.Context, projectName string, envName string, search *model.SearchApps, pq *repos.CursorPagination) (*model.AppPaginatedRecords, error)
-	CoreGetApp(ctx context.Context, projectName string, envName string, name string) (*entities.App, error)
-	CoreResyncApp(ctx context.Context, projectName string, envName string, name string) (bool, error)
-	CoreRestartApp(ctx context.Context, projectName string, envName string, appName string) (bool, error)
-	CoreGetConfigValues(ctx context.Context, projectName string, envName string, queries []*domain.ConfigKeyRef) ([]*domain.ConfigKeyValueRef, error)
-	CoreListConfigs(ctx context.Context, projectName string, envName string, search *model.SearchConfigs, pq *repos.CursorPagination) (*model.ConfigPaginatedRecords, error)
-	CoreGetConfig(ctx context.Context, projectName string, envName string, name string) (*entities.Config, error)
-	CoreResyncConfig(ctx context.Context, projectName string, envName string, name string) (bool, error)
-	CoreGetSecretValues(ctx context.Context, projectName string, envName string, queries []*domain.SecretKeyRef) ([]*domain.SecretKeyValueRef, error)
-	CoreListSecrets(ctx context.Context, projectName string, envName string, search *model.SearchSecrets, pq *repos.CursorPagination) (*model.SecretPaginatedRecords, error)
-	CoreGetSecret(ctx context.Context, projectName string, envName string, name string) (*entities.Secret, error)
-	CoreResyncSecret(ctx context.Context, projectName string, envName string, name string) (bool, error)
-	CoreListRouters(ctx context.Context, projectName string, envName string, search *model.SearchRouters, pq *repos.CursorPagination) (*model.RouterPaginatedRecords, error)
-	CoreGetRouter(ctx context.Context, projectName string, envName string, name string) (*entities.Router, error)
-	CoreResyncRouter(ctx context.Context, projectName string, envName string, name string) (bool, error)
-	CoreGetManagedResouceOutputKeys(ctx context.Context, projectName string, envName string, name string) ([]string, error)
-	CoreGetManagedResouceOutputKeyValues(ctx context.Context, projectName string, envName string, keyrefs []*domain.ManagedResourceKeyRef) ([]*domain.ManagedResourceKeyValueRef, error)
-	CoreListManagedResources(ctx context.Context, projectName string, envName string, search *model.SearchManagedResources, pq *repos.CursorPagination) (*model.ManagedResourcePaginatedRecords, error)
-	CoreGetManagedResource(ctx context.Context, projectName string, envName string, name string) (*entities.ManagedResource, error)
-	CoreResyncManagedResource(ctx context.Context, projectName string, envName string, name string) (bool, error)
+	CoreCheckNameAvailability(ctx context.Context, envName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error)
+	CoreListEnvironments(ctx context.Context, search *model.SearchEnvironments, pq *repos.CursorPagination) (*model.EnvironmentPaginatedRecords, error)
+	CoreGetEnvironment(ctx context.Context, name string) (*entities.Environment, error)
+	CoreResyncEnvironment(ctx context.Context, name string) (bool, error)
+	CoreListImagePullSecrets(ctx context.Context, envName string, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error)
+	CoreGetImagePullSecret(ctx context.Context, envName string, name string) (*entities.ImagePullSecret, error)
+	CoreResyncImagePullSecret(ctx context.Context, envName string, name string) (bool, error)
+	CoreListApps(ctx context.Context, envName string, search *model.SearchApps, pq *repos.CursorPagination) (*model.AppPaginatedRecords, error)
+	CoreGetApp(ctx context.Context, envName string, name string) (*entities.App, error)
+	CoreResyncApp(ctx context.Context, envName string, name string) (bool, error)
+	CoreRestartApp(ctx context.Context, envName string, appName string) (bool, error)
+	CoreGetConfigValues(ctx context.Context, envName string, queries []*domain.ConfigKeyRef) ([]*domain.ConfigKeyValueRef, error)
+	CoreListConfigs(ctx context.Context, envName string, search *model.SearchConfigs, pq *repos.CursorPagination) (*model.ConfigPaginatedRecords, error)
+	CoreGetConfig(ctx context.Context, envName string, name string) (*entities.Config, error)
+	CoreResyncConfig(ctx context.Context, envName string, name string) (bool, error)
+	CoreGetSecretValues(ctx context.Context, envName string, queries []*domain.SecretKeyRef) ([]*domain.SecretKeyValueRef, error)
+	CoreListSecrets(ctx context.Context, envName string, search *model.SearchSecrets, pq *repos.CursorPagination) (*model.SecretPaginatedRecords, error)
+	CoreGetSecret(ctx context.Context, envName string, name string) (*entities.Secret, error)
+	CoreResyncSecret(ctx context.Context, envName string, name string) (bool, error)
+	CoreListRouters(ctx context.Context, envName string, search *model.SearchRouters, pq *repos.CursorPagination) (*model.RouterPaginatedRecords, error)
+	CoreGetRouter(ctx context.Context, envName string, name string) (*entities.Router, error)
+	CoreResyncRouter(ctx context.Context, envName string, name string) (bool, error)
+	CoreGetManagedResouceOutputKeys(ctx context.Context, envName string, name string) ([]string, error)
+	CoreGetManagedResouceOutputKeyValues(ctx context.Context, envName string, keyrefs []*domain.ManagedResourceKeyRef) ([]*domain.ManagedResourceKeyValueRef, error)
+	CoreListManagedResources(ctx context.Context, envName string, search *model.SearchManagedResources, pq *repos.CursorPagination) (*model.ManagedResourcePaginatedRecords, error)
+	CoreGetManagedResource(ctx context.Context, envName string, name string) (*entities.ManagedResource, error)
+	CoreResyncManagedResource(ctx context.Context, envName string, name string) (bool, error)
 	CoreListVPNDevices(ctx context.Context, search *model.CoreSearchVPNDevices, pq *repos.CursorPagination) (*model.ConsoleVPNDevicePaginatedRecords, error)
 	CoreListVPNDevicesForUser(ctx context.Context) ([]*entities.ConsoleVPNDevice, error)
 	CoreGetVPNDevice(ctx context.Context, name string) (*entities.ConsoleVPNDevice, error)
@@ -962,7 +961,6 @@ type ConfigInResolver interface {
 }
 type ConsoleVPNDeviceInResolver interface {
 	Metadata(ctx context.Context, obj *entities.ConsoleVPNDevice, data *v13.ObjectMeta) error
-
 	Spec(ctx context.Context, obj *entities.ConsoleVPNDevice, data *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn) error
 }
 type EnvironmentInResolver interface {
@@ -1480,13 +1478,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ConsoleVPNDevice.ObjectMeta(childComplexity), true
-
-	case "ConsoleVPNDevice.projectName":
-		if e.complexity.ConsoleVPNDevice.ProjectName == nil {
-			break
-		}
-
-		return e.complexity.ConsoleVPNDevice.ProjectName(childComplexity), true
 
 	case "ConsoleVPNDevice.recordVersion":
 		if e.complexity.ConsoleVPNDevice.RecordVersion == nil {
@@ -3421,7 +3412,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCloneEnvironment(childComplexity, args["projectName"].(string), args["sourceEnvName"].(string), args["destinationEnvName"].(string), args["displayName"].(string), args["environmentRoutingMode"].(v1.EnvironmentRoutingMode)), true
+		return e.complexity.Mutation.CoreCloneEnvironment(childComplexity, args["sourceEnvName"].(string), args["destinationEnvName"].(string), args["displayName"].(string), args["environmentRoutingMode"].(v1.EnvironmentRoutingMode)), true
 
 	case "Mutation.core_createApp":
 		if e.complexity.Mutation.CoreCreateApp == nil {
@@ -3433,7 +3424,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateApp(childComplexity, args["projectName"].(string), args["envName"].(string), args["app"].(entities.App)), true
+		return e.complexity.Mutation.CoreCreateApp(childComplexity, args["envName"].(string), args["app"].(entities.App)), true
 
 	case "Mutation.core_createConfig":
 		if e.complexity.Mutation.CoreCreateConfig == nil {
@@ -3445,7 +3436,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateConfig(childComplexity, args["projectName"].(string), args["envName"].(string), args["config"].(entities.Config)), true
+		return e.complexity.Mutation.CoreCreateConfig(childComplexity, args["envName"].(string), args["config"].(entities.Config)), true
 
 	case "Mutation.core_createEnvironment":
 		if e.complexity.Mutation.CoreCreateEnvironment == nil {
@@ -3457,7 +3448,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateEnvironment(childComplexity, args["projectName"].(string), args["env"].(entities.Environment)), true
+		return e.complexity.Mutation.CoreCreateEnvironment(childComplexity, args["env"].(entities.Environment)), true
 
 	case "Mutation.core_createImagePullSecret":
 		if e.complexity.Mutation.CoreCreateImagePullSecret == nil {
@@ -3469,7 +3460,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateImagePullSecret(childComplexity, args["projectName"].(string), args["envName"].(string), args["imagePullSecretIn"].(entities.ImagePullSecret)), true
+		return e.complexity.Mutation.CoreCreateImagePullSecret(childComplexity, args["envName"].(string), args["imagePullSecretIn"].(entities.ImagePullSecret)), true
 
 	case "Mutation.core_createManagedResource":
 		if e.complexity.Mutation.CoreCreateManagedResource == nil {
@@ -3481,7 +3472,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateManagedResource(childComplexity, args["projectName"].(string), args["envName"].(string), args["mres"].(entities.ManagedResource)), true
+		return e.complexity.Mutation.CoreCreateManagedResource(childComplexity, args["envName"].(string), args["mres"].(entities.ManagedResource)), true
 
 	case "Mutation.core_createRouter":
 		if e.complexity.Mutation.CoreCreateRouter == nil {
@@ -3493,7 +3484,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateRouter(childComplexity, args["projectName"].(string), args["envName"].(string), args["router"].(entities.Router)), true
+		return e.complexity.Mutation.CoreCreateRouter(childComplexity, args["envName"].(string), args["router"].(entities.Router)), true
 
 	case "Mutation.core_createSecret":
 		if e.complexity.Mutation.CoreCreateSecret == nil {
@@ -3505,7 +3496,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateSecret(childComplexity, args["projectName"].(string), args["envName"].(string), args["secret"].(entities.Secret)), true
+		return e.complexity.Mutation.CoreCreateSecret(childComplexity, args["envName"].(string), args["secret"].(entities.Secret)), true
 
 	case "Mutation.core_createVPNDevice":
 		if e.complexity.Mutation.CoreCreateVPNDevice == nil {
@@ -3529,7 +3520,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreDeleteApp(childComplexity, args["projectName"].(string), args["envName"].(string), args["appName"].(string)), true
+		return e.complexity.Mutation.CoreDeleteApp(childComplexity, args["envName"].(string), args["appName"].(string)), true
 
 	case "Mutation.core_deleteConfig":
 		if e.complexity.Mutation.CoreDeleteConfig == nil {
@@ -3541,7 +3532,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreDeleteConfig(childComplexity, args["projectName"].(string), args["envName"].(string), args["configName"].(string)), true
+		return e.complexity.Mutation.CoreDeleteConfig(childComplexity, args["envName"].(string), args["configName"].(string)), true
 
 	case "Mutation.core_deleteEnvironment":
 		if e.complexity.Mutation.CoreDeleteEnvironment == nil {
@@ -3553,7 +3544,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreDeleteEnvironment(childComplexity, args["projectName"].(string), args["envName"].(string)), true
+		return e.complexity.Mutation.CoreDeleteEnvironment(childComplexity, args["envName"].(string)), true
 
 	case "Mutation.core_deleteImagePullSecret":
 		if e.complexity.Mutation.CoreDeleteImagePullSecret == nil {
@@ -3565,7 +3556,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreDeleteImagePullSecret(childComplexity, args["projectName"].(string), args["envName"].(string), args["secretName"].(string)), true
+		return e.complexity.Mutation.CoreDeleteImagePullSecret(childComplexity, args["envName"].(string), args["secretName"].(string)), true
 
 	case "Mutation.core_deleteManagedResource":
 		if e.complexity.Mutation.CoreDeleteManagedResource == nil {
@@ -3577,7 +3568,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreDeleteManagedResource(childComplexity, args["projectName"].(string), args["envName"].(string), args["mresName"].(string)), true
+		return e.complexity.Mutation.CoreDeleteManagedResource(childComplexity, args["envName"].(string), args["mresName"].(string)), true
 
 	case "Mutation.core_deleteRouter":
 		if e.complexity.Mutation.CoreDeleteRouter == nil {
@@ -3589,7 +3580,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreDeleteRouter(childComplexity, args["projectName"].(string), args["envName"].(string), args["routerName"].(string)), true
+		return e.complexity.Mutation.CoreDeleteRouter(childComplexity, args["envName"].(string), args["routerName"].(string)), true
 
 	case "Mutation.core_deleteSecret":
 		if e.complexity.Mutation.CoreDeleteSecret == nil {
@@ -3601,7 +3592,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreDeleteSecret(childComplexity, args["projectName"].(string), args["envName"].(string), args["secretName"].(string)), true
+		return e.complexity.Mutation.CoreDeleteSecret(childComplexity, args["envName"].(string), args["secretName"].(string)), true
 
 	case "Mutation.core_deleteVPNDevice":
 		if e.complexity.Mutation.CoreDeleteVPNDevice == nil {
@@ -3625,7 +3616,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreInterceptApp(childComplexity, args["projectName"].(string), args["envName"].(string), args["appname"].(string), args["deviceName"].(string), args["intercept"].(bool)), true
+		return e.complexity.Mutation.CoreInterceptApp(childComplexity, args["envName"].(string), args["appname"].(string), args["deviceName"].(string), args["intercept"].(bool)), true
 
 	case "Mutation.core_updateApp":
 		if e.complexity.Mutation.CoreUpdateApp == nil {
@@ -3637,7 +3628,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreUpdateApp(childComplexity, args["projectName"].(string), args["envName"].(string), args["app"].(entities.App)), true
+		return e.complexity.Mutation.CoreUpdateApp(childComplexity, args["envName"].(string), args["app"].(entities.App)), true
 
 	case "Mutation.core_updateConfig":
 		if e.complexity.Mutation.CoreUpdateConfig == nil {
@@ -3649,7 +3640,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreUpdateConfig(childComplexity, args["projectName"].(string), args["envName"].(string), args["config"].(entities.Config)), true
+		return e.complexity.Mutation.CoreUpdateConfig(childComplexity, args["envName"].(string), args["config"].(entities.Config)), true
 
 	case "Mutation.core_updateEnvironment":
 		if e.complexity.Mutation.CoreUpdateEnvironment == nil {
@@ -3661,7 +3652,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreUpdateEnvironment(childComplexity, args["projectName"].(string), args["env"].(entities.Environment)), true
+		return e.complexity.Mutation.CoreUpdateEnvironment(childComplexity, args["env"].(entities.Environment)), true
 
 	case "Mutation.core_updateManagedResource":
 		if e.complexity.Mutation.CoreUpdateManagedResource == nil {
@@ -3673,7 +3664,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreUpdateManagedResource(childComplexity, args["projectName"].(string), args["envName"].(string), args["mres"].(entities.ManagedResource)), true
+		return e.complexity.Mutation.CoreUpdateManagedResource(childComplexity, args["envName"].(string), args["mres"].(entities.ManagedResource)), true
 
 	case "Mutation.core_updateRouter":
 		if e.complexity.Mutation.CoreUpdateRouter == nil {
@@ -3685,7 +3676,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreUpdateRouter(childComplexity, args["projectName"].(string), args["envName"].(string), args["router"].(entities.Router)), true
+		return e.complexity.Mutation.CoreUpdateRouter(childComplexity, args["envName"].(string), args["router"].(entities.Router)), true
 
 	case "Mutation.core_updateSecret":
 		if e.complexity.Mutation.CoreUpdateSecret == nil {
@@ -3697,7 +3688,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreUpdateSecret(childComplexity, args["projectName"].(string), args["envName"].(string), args["secret"].(entities.Secret)), true
+		return e.complexity.Mutation.CoreUpdateSecret(childComplexity, args["envName"].(string), args["secret"].(entities.Secret)), true
 
 	case "Mutation.core_updateVPNDevice":
 		if e.complexity.Mutation.CoreUpdateVPNDevice == nil {
@@ -3721,7 +3712,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreUpdateVPNDeviceEnv(childComplexity, args["deviceName"].(string), args["projectName"].(string), args["envName"].(string)), true
+		return e.complexity.Mutation.CoreUpdateVPNDeviceEnv(childComplexity, args["deviceName"].(string), args["envName"].(string)), true
 
 	case "Mutation.core_updateVPNDevicePorts":
 		if e.complexity.Mutation.CoreUpdateVPNDevicePorts == nil {
@@ -3811,7 +3802,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreCheckNameAvailability(childComplexity, args["projectName"].(*string), args["envName"].(*string), args["resType"].(entities.ResourceType), args["name"].(string)), true
+		return e.complexity.Query.CoreCheckNameAvailability(childComplexity, args["envName"].(*string), args["resType"].(entities.ResourceType), args["name"].(string)), true
 
 	case "Query.core_getApp":
 		if e.complexity.Query.CoreGetApp == nil {
@@ -3823,7 +3814,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetApp(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreGetApp(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_getConfig":
 		if e.complexity.Query.CoreGetConfig == nil {
@@ -3835,7 +3826,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetConfig(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreGetConfig(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_getConfigValues":
 		if e.complexity.Query.CoreGetConfigValues == nil {
@@ -3847,7 +3838,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetConfigValues(childComplexity, args["projectName"].(string), args["envName"].(string), args["queries"].([]*domain.ConfigKeyRef)), true
+		return e.complexity.Query.CoreGetConfigValues(childComplexity, args["envName"].(string), args["queries"].([]*domain.ConfigKeyRef)), true
 
 	case "Query.core_getEnvironment":
 		if e.complexity.Query.CoreGetEnvironment == nil {
@@ -3859,7 +3850,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetEnvironment(childComplexity, args["projectName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreGetEnvironment(childComplexity, args["name"].(string)), true
 
 	case "Query.core_getImagePullSecret":
 		if e.complexity.Query.CoreGetImagePullSecret == nil {
@@ -3871,7 +3862,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetImagePullSecret(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreGetImagePullSecret(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_getManagedResouceOutputKeyValues":
 		if e.complexity.Query.CoreGetManagedResouceOutputKeyValues == nil {
@@ -3883,7 +3874,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetManagedResouceOutputKeyValues(childComplexity, args["projectName"].(string), args["envName"].(string), args["keyrefs"].([]*domain.ManagedResourceKeyRef)), true
+		return e.complexity.Query.CoreGetManagedResouceOutputKeyValues(childComplexity, args["envName"].(string), args["keyrefs"].([]*domain.ManagedResourceKeyRef)), true
 
 	case "Query.core_getManagedResouceOutputKeys":
 		if e.complexity.Query.CoreGetManagedResouceOutputKeys == nil {
@@ -3895,7 +3886,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetManagedResouceOutputKeys(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreGetManagedResouceOutputKeys(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_getManagedResource":
 		if e.complexity.Query.CoreGetManagedResource == nil {
@@ -3907,7 +3898,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetManagedResource(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreGetManagedResource(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_getRouter":
 		if e.complexity.Query.CoreGetRouter == nil {
@@ -3919,7 +3910,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetRouter(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreGetRouter(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_getSecret":
 		if e.complexity.Query.CoreGetSecret == nil {
@@ -3931,7 +3922,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetSecret(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreGetSecret(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_getSecretValues":
 		if e.complexity.Query.CoreGetSecretValues == nil {
@@ -3943,7 +3934,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetSecretValues(childComplexity, args["projectName"].(string), args["envName"].(string), args["queries"].([]*domain.SecretKeyRef)), true
+		return e.complexity.Query.CoreGetSecretValues(childComplexity, args["envName"].(string), args["queries"].([]*domain.SecretKeyRef)), true
 
 	case "Query.core_getVPNDevice":
 		if e.complexity.Query.CoreGetVPNDevice == nil {
@@ -3967,7 +3958,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreListApps(childComplexity, args["projectName"].(string), args["envName"].(string), args["search"].(*model.SearchApps), args["pq"].(*repos.CursorPagination)), true
+		return e.complexity.Query.CoreListApps(childComplexity, args["envName"].(string), args["search"].(*model.SearchApps), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.core_listConfigs":
 		if e.complexity.Query.CoreListConfigs == nil {
@@ -3979,7 +3970,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreListConfigs(childComplexity, args["projectName"].(string), args["envName"].(string), args["search"].(*model.SearchConfigs), args["pq"].(*repos.CursorPagination)), true
+		return e.complexity.Query.CoreListConfigs(childComplexity, args["envName"].(string), args["search"].(*model.SearchConfigs), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.core_listEnvironments":
 		if e.complexity.Query.CoreListEnvironments == nil {
@@ -3991,7 +3982,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreListEnvironments(childComplexity, args["projectName"].(string), args["search"].(*model.SearchEnvironments), args["pq"].(*repos.CursorPagination)), true
+		return e.complexity.Query.CoreListEnvironments(childComplexity, args["search"].(*model.SearchEnvironments), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.core_listImagePullSecrets":
 		if e.complexity.Query.CoreListImagePullSecrets == nil {
@@ -4003,7 +3994,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreListImagePullSecrets(childComplexity, args["projectName"].(string), args["envName"].(string), args["search"].(*model.SearchImagePullSecrets), args["pq"].(*repos.CursorPagination)), true
+		return e.complexity.Query.CoreListImagePullSecrets(childComplexity, args["envName"].(string), args["search"].(*model.SearchImagePullSecrets), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.core_listManagedResources":
 		if e.complexity.Query.CoreListManagedResources == nil {
@@ -4015,7 +4006,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreListManagedResources(childComplexity, args["projectName"].(string), args["envName"].(string), args["search"].(*model.SearchManagedResources), args["pq"].(*repos.CursorPagination)), true
+		return e.complexity.Query.CoreListManagedResources(childComplexity, args["envName"].(string), args["search"].(*model.SearchManagedResources), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.core_listRouters":
 		if e.complexity.Query.CoreListRouters == nil {
@@ -4027,7 +4018,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreListRouters(childComplexity, args["projectName"].(string), args["envName"].(string), args["search"].(*model.SearchRouters), args["pq"].(*repos.CursorPagination)), true
+		return e.complexity.Query.CoreListRouters(childComplexity, args["envName"].(string), args["search"].(*model.SearchRouters), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.core_listSecrets":
 		if e.complexity.Query.CoreListSecrets == nil {
@@ -4039,7 +4030,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreListSecrets(childComplexity, args["projectName"].(string), args["envName"].(string), args["search"].(*model.SearchSecrets), args["pq"].(*repos.CursorPagination)), true
+		return e.complexity.Query.CoreListSecrets(childComplexity, args["envName"].(string), args["search"].(*model.SearchSecrets), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.core_listVPNDevices":
 		if e.complexity.Query.CoreListVPNDevices == nil {
@@ -4070,7 +4061,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreRestartApp(childComplexity, args["projectName"].(string), args["envName"].(string), args["appName"].(string)), true
+		return e.complexity.Query.CoreRestartApp(childComplexity, args["envName"].(string), args["appName"].(string)), true
 
 	case "Query.core_resyncApp":
 		if e.complexity.Query.CoreResyncApp == nil {
@@ -4082,7 +4073,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreResyncApp(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreResyncApp(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_resyncConfig":
 		if e.complexity.Query.CoreResyncConfig == nil {
@@ -4094,7 +4085,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreResyncConfig(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreResyncConfig(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_resyncEnvironment":
 		if e.complexity.Query.CoreResyncEnvironment == nil {
@@ -4106,7 +4097,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreResyncEnvironment(childComplexity, args["projectName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreResyncEnvironment(childComplexity, args["name"].(string)), true
 
 	case "Query.core_resyncImagePullSecret":
 		if e.complexity.Query.CoreResyncImagePullSecret == nil {
@@ -4118,7 +4109,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreResyncImagePullSecret(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreResyncImagePullSecret(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_resyncManagedResource":
 		if e.complexity.Query.CoreResyncManagedResource == nil {
@@ -4130,7 +4121,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreResyncManagedResource(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreResyncManagedResource(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_resyncRouter":
 		if e.complexity.Query.CoreResyncRouter == nil {
@@ -4142,7 +4133,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreResyncRouter(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreResyncRouter(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query.core_resyncSecret":
 		if e.complexity.Query.CoreResyncSecret == nil {
@@ -4154,7 +4145,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreResyncSecret(childComplexity, args["projectName"].(string), args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreResyncSecret(childComplexity, args["envName"].(string), args["name"].(string)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -4709,7 +4700,6 @@ directive @isLoggedInAndVerified on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
 enum ConsoleResType {
-  # project
   app
   config
   secret
@@ -4790,50 +4780,50 @@ input CoreSearchVPNDevices {
 }
 
 type Query {
-    core_checkNameAvailability(projectName: String, envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+    core_checkNameAvailability(envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
     # core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
     # core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
     # core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listEnvironments(projectName: String!, search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getEnvironment(projectName: String!, name: String!): Environment @isLoggedInAndVerified @hasAccount
-    core_resyncEnvironment(projectName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_listEnvironments(search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getEnvironment(name: String!): Environment @isLoggedInAndVerified @hasAccount
+    core_resyncEnvironment(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     # get image pull secrets
-    core_listImagePullSecrets(projectName: String!, envName: String!, search: SearchImagePullSecrets, pq: CursorPaginationIn): ImagePullSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getImagePullSecret(projectName: String!, envName: String!, name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccount
-    core_resyncImagePullSecret(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_listImagePullSecrets(envName: String!, search: SearchImagePullSecrets, pq: CursorPaginationIn): ImagePullSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getImagePullSecret(envName: String!, name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccount
+    core_resyncImagePullSecret(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listApps(projectName: String!, envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getApp(projectName: String!, envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
-    core_resyncApp(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_restartApp(projectName: String!, envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_listApps(envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
+    core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_restartApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_getConfigValues(projectName: String!, envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!] @isLoggedInAndVerified @hasAccount
-    core_listConfigs(projectName: String!, envName: String!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getConfig(projectName: String!, envName: String!, name: String!): Config @isLoggedInAndVerified @hasAccount
-    core_resyncConfig(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_getConfigValues(envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!] @isLoggedInAndVerified @hasAccount
+    core_listConfigs(envName: String!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getConfig(envName: String!, name: String!): Config @isLoggedInAndVerified @hasAccount
+    core_resyncConfig(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_getSecretValues(projectName: String!, envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!] @isLoggedInAndVerified @hasAccount
-    core_listSecrets(projectName: String!, envName: String!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getSecret(projectName: String!, envName: String!, name: String!): Secret @isLoggedInAndVerified @hasAccount
-    core_resyncSecret(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!] @isLoggedInAndVerified @hasAccount
+    core_listSecrets(envName: String!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getSecret(envName: String!, name: String!): Secret @isLoggedInAndVerified @hasAccount
+    core_resyncSecret(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listRouters(projectName: String!, envName: String!, search: SearchRouters, pq: CursorPaginationIn): RouterPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getRouter(projectName: String!, envName: String!, name: String!): Router @isLoggedInAndVerified @hasAccount
-    core_resyncRouter(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_listRouters(envName: String!, search: SearchRouters, pq: CursorPaginationIn): RouterPaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getRouter(envName: String!, name: String!): Router @isLoggedInAndVerified @hasAccount
+    core_resyncRouter(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_getManagedResouceOutputKeys(projectName: String!, envName: String!, name: String!): [String!]! @isLoggedInAndVerified @hasAccount
-    core_getManagedResouceOutputKeyValues(projectName: String!, envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
-    core_listManagedResources(projectName: String!, envName: String!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getManagedResource(projectName: String!, envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
-    core_resyncManagedResource(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_getManagedResouceOutputKeys(envName: String!, name: String!): [String!]! @isLoggedInAndVerified @hasAccount
+    core_getManagedResouceOutputKeyValues(envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
+    core_listManagedResources(envName: String!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getManagedResource(envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
+    core_resyncManagedResource(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    # core_listProjectManagedServices(projectName: String!, search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    # core_getProjectManagedService(projectName: String!,  name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    # core_resyncProjectManagedService(projectName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    # core_restartProjectManagedService(projectName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # core_listProjectManagedServices(search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    # core_getProjectManagedService( name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+    # core_resyncProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # core_restartProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
     core_listVPNDevicesForUser: [ConsoleVPNDevice!] @isLoggedInAndVerified @hasAccount
@@ -4845,46 +4835,46 @@ type Mutation {
     # core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
     # core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createEnvironment(projectName: String!, env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
-    core_updateEnvironment(projectName: String!, env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
-    core_deleteEnvironment(projectName: String!, envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_cloneEnvironment(projectName: String!, sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
+    core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
+    core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
+    core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_cloneEnvironment(sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
 
     # image pull secrets
-    core_createImagePullSecret(projectName: String!, envName: String!, imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
-    core_deleteImagePullSecret(projectName: String!, envName: String!, secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_createImagePullSecret(envName: String!, imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
+    core_deleteImagePullSecret(envName: String!, secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createApp(projectName: String!, envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
-    core_updateApp(projectName: String!, envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
-    core_deleteApp(projectName: String!, envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_interceptApp(projectName: String!, envName: String!, appname: String!, deviceName: String!, intercept: Boolean!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_createApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
+    core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
+    core_deleteApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createConfig(projectName: String!, envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
-    core_updateConfig(projectName: String!, envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
-    core_deleteConfig(projectName: String!, envName: String!, configName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_createConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
+    core_updateConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
+    core_deleteConfig(envName: String!, configName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createSecret(projectName: String!, envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
-    core_updateSecret(projectName: String!, envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
-    core_deleteSecret(projectName: String!, envName: String!, secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_createSecret(envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
+    core_updateSecret(envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
+    core_deleteSecret(envName: String!, secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createRouter(projectName: String!, envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
-    core_updateRouter(projectName: String!, envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
-    core_deleteRouter(projectName: String!, envName: String!, routerName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_createRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
+    core_updateRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
+    core_deleteRouter(envName: String!, routerName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createManagedResource(projectName: String!, envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
-    core_updateManagedResource(projectName: String!, envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
-    core_deleteManagedResource(projectName: String!, envName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_createManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
+    core_updateManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
+    core_deleteManagedResource(envName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    # core_createProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    # core_updateProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    # core_deleteProjectManagedService(projectName: String!, pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+    # core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+    # core_deleteProjectManagedService(pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 
     core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
     core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 
     core_updateVPNDevicePorts(deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_updateVPNDeviceEnv(deviceName: String!,projectName: String!, envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_updateVPNDeviceEnv(deviceName: String!,envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
     core_updateVpnDeviceNs(deviceName: String!,ns: String!): Boolean! @isLoggedInAndVerified @hasAccount
     core_updateVpnClusterName(deviceName: String!,clusterName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
@@ -5639,7 +5629,6 @@ input ConfigKeyValueRefIn {
   linkedClusters: [String!]
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
-  projectName: String
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -5666,7 +5655,6 @@ input ConsoleVPNDeviceIn {
   environmentName: String
   kind: String
   metadata: MetadataIn
-  projectName: String
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
 }
 
@@ -6086,50 +6074,41 @@ func (ec *executionContext) field_Mutation_core_cloneEnvironment_args(ctx contex
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["sourceEnvName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceEnvName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["sourceEnvName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["sourceEnvName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceEnvName"))
+	if tmp, ok := rawArgs["destinationEnvName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationEnvName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["sourceEnvName"] = arg1
+	args["destinationEnvName"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["destinationEnvName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationEnvName"))
+	if tmp, ok := rawArgs["displayName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["destinationEnvName"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["displayName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["displayName"] = arg3
-	var arg4 v1.EnvironmentRoutingMode
+	args["displayName"] = arg2
+	var arg3 v1.EnvironmentRoutingMode
 	if tmp, ok := rawArgs["environmentRoutingMode"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("environmentRoutingMode"))
-		arg4, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2githubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx, tmp)
+		arg3, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2githubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["environmentRoutingMode"] = arg4
+	args["environmentRoutingMode"] = arg3
 	return args, nil
 }
 
@@ -6137,32 +6116,23 @@ func (ec *executionContext) field_Mutation_core_createApp_args(ctx context.Conte
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.App
+	args["envName"] = arg0
+	var arg1 entities.App
 	if tmp, ok := rawArgs["app"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
-		arg2, err = ec.unmarshalNAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐApp(ctx, tmp)
+		arg1, err = ec.unmarshalNAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐApp(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["app"] = arg2
+	args["app"] = arg1
 	return args, nil
 }
 
@@ -6170,56 +6140,38 @@ func (ec *executionContext) field_Mutation_core_createConfig_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.Config
+	args["envName"] = arg0
+	var arg1 entities.Config
 	if tmp, ok := rawArgs["config"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-		arg2, err = ec.unmarshalNConfigIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐConfig(ctx, tmp)
+		arg1, err = ec.unmarshalNConfigIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐConfig(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["config"] = arg2
+	args["config"] = arg1
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_core_createEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
-	var arg1 entities.Environment
+	var arg0 entities.Environment
 	if tmp, ok := rawArgs["env"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
-		arg1, err = ec.unmarshalNEnvironmentIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐEnvironment(ctx, tmp)
+		arg0, err = ec.unmarshalNEnvironmentIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐEnvironment(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["env"] = arg1
+	args["env"] = arg0
 	return args, nil
 }
 
@@ -6227,32 +6179,23 @@ func (ec *executionContext) field_Mutation_core_createImagePullSecret_args(ctx c
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.ImagePullSecret
+	args["envName"] = arg0
+	var arg1 entities.ImagePullSecret
 	if tmp, ok := rawArgs["imagePullSecretIn"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imagePullSecretIn"))
-		arg2, err = ec.unmarshalNImagePullSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, tmp)
+		arg1, err = ec.unmarshalNImagePullSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["imagePullSecretIn"] = arg2
+	args["imagePullSecretIn"] = arg1
 	return args, nil
 }
 
@@ -6260,32 +6203,23 @@ func (ec *executionContext) field_Mutation_core_createManagedResource_args(ctx c
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.ManagedResource
+	args["envName"] = arg0
+	var arg1 entities.ManagedResource
 	if tmp, ok := rawArgs["mres"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mres"))
-		arg2, err = ec.unmarshalNManagedResourceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, tmp)
+		arg1, err = ec.unmarshalNManagedResourceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["mres"] = arg2
+	args["mres"] = arg1
 	return args, nil
 }
 
@@ -6293,32 +6227,23 @@ func (ec *executionContext) field_Mutation_core_createRouter_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.Router
+	args["envName"] = arg0
+	var arg1 entities.Router
 	if tmp, ok := rawArgs["router"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("router"))
-		arg2, err = ec.unmarshalNRouterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx, tmp)
+		arg1, err = ec.unmarshalNRouterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["router"] = arg2
+	args["router"] = arg1
 	return args, nil
 }
 
@@ -6326,32 +6251,23 @@ func (ec *executionContext) field_Mutation_core_createSecret_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.Secret
+	args["envName"] = arg0
+	var arg1 entities.Secret
 	if tmp, ok := rawArgs["secret"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
-		arg2, err = ec.unmarshalNSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐSecret(ctx, tmp)
+		arg1, err = ec.unmarshalNSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐSecret(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["secret"] = arg2
+	args["secret"] = arg1
 	return args, nil
 }
 
@@ -6374,32 +6290,23 @@ func (ec *executionContext) field_Mutation_core_deleteApp_args(ctx context.Conte
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["appName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["appName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["appName"] = arg2
+	args["appName"] = arg1
 	return args, nil
 }
 
@@ -6407,32 +6314,23 @@ func (ec *executionContext) field_Mutation_core_deleteConfig_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["configName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("configName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["configName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("configName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["configName"] = arg2
+	args["configName"] = arg1
 	return args, nil
 }
 
@@ -6440,23 +6338,14 @@ func (ec *executionContext) field_Mutation_core_deleteEnvironment_args(ctx conte
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
+	args["envName"] = arg0
 	return args, nil
 }
 
@@ -6464,32 +6353,23 @@ func (ec *executionContext) field_Mutation_core_deleteImagePullSecret_args(ctx c
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["secretName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["secretName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["secretName"] = arg2
+	args["secretName"] = arg1
 	return args, nil
 }
 
@@ -6497,32 +6377,23 @@ func (ec *executionContext) field_Mutation_core_deleteManagedResource_args(ctx c
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["mresName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mresName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["mresName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mresName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["mresName"] = arg2
+	args["mresName"] = arg1
 	return args, nil
 }
 
@@ -6530,32 +6401,23 @@ func (ec *executionContext) field_Mutation_core_deleteRouter_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["routerName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("routerName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["routerName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("routerName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["routerName"] = arg2
+	args["routerName"] = arg1
 	return args, nil
 }
 
@@ -6563,32 +6425,23 @@ func (ec *executionContext) field_Mutation_core_deleteSecret_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["secretName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["secretName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["secretName"] = arg2
+	args["secretName"] = arg1
 	return args, nil
 }
 
@@ -6611,50 +6464,41 @@ func (ec *executionContext) field_Mutation_core_interceptApp_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["appname"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appname"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
+	args["appname"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["appname"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appname"))
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["appname"] = arg2
-	var arg3 string
-	if tmp, ok := rawArgs["deviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deviceName"] = arg3
-	var arg4 bool
+	args["deviceName"] = arg2
+	var arg3 bool
 	if tmp, ok := rawArgs["intercept"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intercept"))
-		arg4, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		arg3, err = ec.unmarshalNBoolean2bool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["intercept"] = arg4
+	args["intercept"] = arg3
 	return args, nil
 }
 
@@ -6662,32 +6506,23 @@ func (ec *executionContext) field_Mutation_core_updateApp_args(ctx context.Conte
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.App
+	args["envName"] = arg0
+	var arg1 entities.App
 	if tmp, ok := rawArgs["app"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
-		arg2, err = ec.unmarshalNAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐApp(ctx, tmp)
+		arg1, err = ec.unmarshalNAppIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐApp(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["app"] = arg2
+	args["app"] = arg1
 	return args, nil
 }
 
@@ -6695,56 +6530,38 @@ func (ec *executionContext) field_Mutation_core_updateConfig_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.Config
+	args["envName"] = arg0
+	var arg1 entities.Config
 	if tmp, ok := rawArgs["config"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-		arg2, err = ec.unmarshalNConfigIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐConfig(ctx, tmp)
+		arg1, err = ec.unmarshalNConfigIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐConfig(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["config"] = arg2
+	args["config"] = arg1
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_core_updateEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
-	var arg1 entities.Environment
+	var arg0 entities.Environment
 	if tmp, ok := rawArgs["env"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
-		arg1, err = ec.unmarshalNEnvironmentIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐEnvironment(ctx, tmp)
+		arg0, err = ec.unmarshalNEnvironmentIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐEnvironment(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["env"] = arg1
+	args["env"] = arg0
 	return args, nil
 }
 
@@ -6752,32 +6569,23 @@ func (ec *executionContext) field_Mutation_core_updateManagedResource_args(ctx c
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.ManagedResource
+	args["envName"] = arg0
+	var arg1 entities.ManagedResource
 	if tmp, ok := rawArgs["mres"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mres"))
-		arg2, err = ec.unmarshalNManagedResourceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, tmp)
+		arg1, err = ec.unmarshalNManagedResourceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["mres"] = arg2
+	args["mres"] = arg1
 	return args, nil
 }
 
@@ -6785,32 +6593,23 @@ func (ec *executionContext) field_Mutation_core_updateRouter_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.Router
+	args["envName"] = arg0
+	var arg1 entities.Router
 	if tmp, ok := rawArgs["router"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("router"))
-		arg2, err = ec.unmarshalNRouterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx, tmp)
+		arg1, err = ec.unmarshalNRouterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["router"] = arg2
+	args["router"] = arg1
 	return args, nil
 }
 
@@ -6818,32 +6617,23 @@ func (ec *executionContext) field_Mutation_core_updateSecret_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.Secret
+	args["envName"] = arg0
+	var arg1 entities.Secret
 	if tmp, ok := rawArgs["secret"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secret"))
-		arg2, err = ec.unmarshalNSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐSecret(ctx, tmp)
+		arg1, err = ec.unmarshalNSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐSecret(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["secret"] = arg2
+	args["secret"] = arg1
 	return args, nil
 }
 
@@ -6860,23 +6650,14 @@ func (ec *executionContext) field_Mutation_core_updateVPNDeviceEnv_args(ctx cont
 	}
 	args["deviceName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg2
+	args["envName"] = arg1
 	return args, nil
 }
 
@@ -7001,41 +6782,32 @@ func (ec *executionContext) field_Query_core_checkNameAvailability_args(ctx cont
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 entities.ResourceType
+	args["envName"] = arg0
+	var arg1 entities.ResourceType
 	if tmp, ok := rawArgs["resType"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resType"))
-		arg2, err = ec.unmarshalNConsoleResType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐResourceType(ctx, tmp)
+		arg1, err = ec.unmarshalNConsoleResType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐResourceType(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["resType"] = arg2
-	var arg3 string
+	args["resType"] = arg1
+	var arg2 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg3
+	args["name"] = arg2
 	return args, nil
 }
 
@@ -7043,113 +6815,14 @@ func (ec *executionContext) field_Query_core_getApp_args(ctx context.Context, ra
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
-	var arg1 string
 	if tmp, ok := rawArgs["envName"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_core_getConfigValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 []*domain.ConfigKeyRef
-	if tmp, ok := rawArgs["queries"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("queries"))
-		arg2, err = ec.unmarshalOConfigKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐConfigKeyRef(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["queries"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_core_getConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_core_getEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
@@ -7162,36 +6835,90 @@ func (ec *executionContext) field_Query_core_getEnvironment_args(ctx context.Con
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_core_getImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_core_getConfigValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
+	args["envName"] = arg0
+	var arg1 []*domain.ConfigKeyRef
+	if tmp, ok := rawArgs["queries"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("queries"))
+		arg1, err = ec.unmarshalOConfigKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐConfigKeyRef(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["queries"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_getConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
 	if tmp, ok := rawArgs["envName"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["envName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
+	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_getEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg2
+	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_getImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["envName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -7199,32 +6926,23 @@ func (ec *executionContext) field_Query_core_getManagedResouceOutputKeyValues_ar
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 []*domain.ManagedResourceKeyRef
+	args["envName"] = arg0
+	var arg1 []*domain.ManagedResourceKeyRef
 	if tmp, ok := rawArgs["keyrefs"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keyrefs"))
-		arg2, err = ec.unmarshalOManagedResourceKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐManagedResourceKeyRef(ctx, tmp)
+		arg1, err = ec.unmarshalOManagedResourceKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐManagedResourceKeyRef(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["keyrefs"] = arg2
+	args["keyrefs"] = arg1
 	return args, nil
 }
 
@@ -7232,32 +6950,23 @@ func (ec *executionContext) field_Query_core_getManagedResouceOutputKeys_args(ct
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -7265,32 +6974,23 @@ func (ec *executionContext) field_Query_core_getManagedResource_args(ctx context
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -7298,32 +6998,23 @@ func (ec *executionContext) field_Query_core_getRouter_args(ctx context.Context,
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -7331,32 +7022,23 @@ func (ec *executionContext) field_Query_core_getSecretValues_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 []*domain.SecretKeyRef
+	args["envName"] = arg0
+	var arg1 []*domain.SecretKeyRef
 	if tmp, ok := rawArgs["queries"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("queries"))
-		arg2, err = ec.unmarshalOSecretKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐSecretKeyRefᚄ(ctx, tmp)
+		arg1, err = ec.unmarshalOSecretKeyRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋdomainᚐSecretKeyRefᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["queries"] = arg2
+	args["queries"] = arg1
 	return args, nil
 }
 
@@ -7364,32 +7046,23 @@ func (ec *executionContext) field_Query_core_getSecret_args(ctx context.Context,
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -7412,102 +7085,18 @@ func (ec *executionContext) field_Query_core_listApps_args(ctx context.Context, 
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
-	var arg1 string
 	if tmp, ok := rawArgs["envName"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 *model.SearchApps
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg2, err = ec.unmarshalOSearchApps2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchApps(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["search"] = arg2
-	var arg3 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg3, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["pq"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_core_listConfigs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 *model.SearchConfigs
+	args["envName"] = arg0
+	var arg1 *model.SearchApps
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg2, err = ec.unmarshalOSearchConfigs2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchConfigs(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["search"] = arg2
-	var arg3 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg3, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["pq"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_core_listEnvironments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
-	var arg1 *model.SearchEnvironments
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchEnvironments2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchEnvironments(ctx, tmp)
+		arg1, err = ec.unmarshalOSearchApps2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchApps(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7525,45 +7114,93 @@ func (ec *executionContext) field_Query_core_listEnvironments_args(ctx context.C
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_core_listImagePullSecrets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_core_listConfigs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 *model.SearchImagePullSecrets
+	args["envName"] = arg0
+	var arg1 *model.SearchConfigs
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg2, err = ec.unmarshalOSearchImagePullSecrets2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchImagePullSecrets(ctx, tmp)
+		arg1, err = ec.unmarshalOSearchConfigs2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchConfigs(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["search"] = arg2
-	var arg3 *repos.CursorPagination
+	args["search"] = arg1
+	var arg2 *repos.CursorPagination
 	if tmp, ok := rawArgs["pq"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg3, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pq"] = arg3
+	args["pq"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_listEnvironments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.SearchEnvironments
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg0, err = ec.unmarshalOSearchEnvironments2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchEnvironments(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["search"] = arg0
+	var arg1 *repos.CursorPagination
+	if tmp, ok := rawArgs["pq"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pq"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_listImagePullSecrets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["envName"] = arg0
+	var arg1 *model.SearchImagePullSecrets
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg1, err = ec.unmarshalOSearchImagePullSecrets2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchImagePullSecrets(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["search"] = arg1
+	var arg2 *repos.CursorPagination
+	if tmp, ok := rawArgs["pq"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pq"] = arg2
 	return args, nil
 }
 
@@ -7571,41 +7208,32 @@ func (ec *executionContext) field_Query_core_listManagedResources_args(ctx conte
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 *model.SearchManagedResources
+	args["envName"] = arg0
+	var arg1 *model.SearchManagedResources
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg2, err = ec.unmarshalOSearchManagedResources2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchManagedResources(ctx, tmp)
+		arg1, err = ec.unmarshalOSearchManagedResources2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchManagedResources(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["search"] = arg2
-	var arg3 *repos.CursorPagination
+	args["search"] = arg1
+	var arg2 *repos.CursorPagination
 	if tmp, ok := rawArgs["pq"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg3, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pq"] = arg3
+	args["pq"] = arg2
 	return args, nil
 }
 
@@ -7613,41 +7241,32 @@ func (ec *executionContext) field_Query_core_listRouters_args(ctx context.Contex
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 *model.SearchRouters
+	args["envName"] = arg0
+	var arg1 *model.SearchRouters
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg2, err = ec.unmarshalOSearchRouters2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchRouters(ctx, tmp)
+		arg1, err = ec.unmarshalOSearchRouters2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchRouters(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["search"] = arg2
-	var arg3 *repos.CursorPagination
+	args["search"] = arg1
+	var arg2 *repos.CursorPagination
 	if tmp, ok := rawArgs["pq"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg3, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pq"] = arg3
+	args["pq"] = arg2
 	return args, nil
 }
 
@@ -7655,41 +7274,32 @@ func (ec *executionContext) field_Query_core_listSecrets_args(ctx context.Contex
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 *model.SearchSecrets
+	args["envName"] = arg0
+	var arg1 *model.SearchSecrets
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg2, err = ec.unmarshalOSearchSecrets2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchSecrets(ctx, tmp)
+		arg1, err = ec.unmarshalOSearchSecrets2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchSecrets(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["search"] = arg2
-	var arg3 *repos.CursorPagination
+	args["search"] = arg1
+	var arg2 *repos.CursorPagination
 	if tmp, ok := rawArgs["pq"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg3, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pq"] = arg3
+	args["pq"] = arg2
 	return args, nil
 }
 
@@ -7721,32 +7331,23 @@ func (ec *executionContext) field_Query_core_restartApp_args(ctx context.Context
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["appName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["appName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appName"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["appName"] = arg2
+	args["appName"] = arg1
 	return args, nil
 }
 
@@ -7754,80 +7355,14 @@ func (ec *executionContext) field_Query_core_resyncApp_args(ctx context.Context,
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
-	var arg1 string
 	if tmp, ok := rawArgs["envName"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_core_resyncConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_core_resyncEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
@@ -7840,36 +7375,66 @@ func (ec *executionContext) field_Query_core_resyncEnvironment_args(ctx context.
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_core_resyncImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_core_resyncConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
+	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_resyncEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg2
+	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_resyncImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["envName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -7877,32 +7442,23 @@ func (ec *executionContext) field_Query_core_resyncManagedResource_args(ctx cont
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -7910,32 +7466,23 @@ func (ec *executionContext) field_Query_core_resyncRouter_args(ctx context.Conte
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -7943,32 +7490,23 @@ func (ec *executionContext) field_Query_core_resyncSecret_args(ctx context.Conte
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["projectName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["projectName"] = arg0
+	args["envName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg2
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -11193,47 +10731,6 @@ func (ec *executionContext) fieldContext_ConsoleVPNDevice_metadata(ctx context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _ConsoleVPNDevice_projectName(ctx context.Context, field graphql.CollectedField, obj *entities.ConsoleVPNDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ConsoleVPNDevice_projectName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ProjectName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ConsoleVPNDevice_projectName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ConsoleVPNDevice",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ConsoleVPNDevice_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.ConsoleVPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ConsoleVPNDevice_recordVersion(ctx, field)
 	if err != nil {
@@ -11648,8 +11145,6 @@ func (ec *executionContext) fieldContext_ConsoleVPNDeviceEdge_node(ctx context.C
 				return ec.fieldContext_ConsoleVPNDevice_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ConsoleVPNDevice_metadata(ctx, field)
-			case "projectName":
-				return ec.fieldContext_ConsoleVPNDevice_projectName(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ConsoleVPNDevice_recordVersion(ctx, field)
 			case "spec":
@@ -23638,7 +23133,7 @@ func (ec *executionContext) _Mutation_core_createEnvironment(ctx context.Context
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateEnvironment(rctx, fc.Args["projectName"].(string), fc.Args["env"].(entities.Environment))
+			return ec.resolvers.Mutation().CoreCreateEnvironment(rctx, fc.Args["env"].(entities.Environment))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -23750,7 +23245,7 @@ func (ec *executionContext) _Mutation_core_updateEnvironment(ctx context.Context
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreUpdateEnvironment(rctx, fc.Args["projectName"].(string), fc.Args["env"].(entities.Environment))
+			return ec.resolvers.Mutation().CoreUpdateEnvironment(rctx, fc.Args["env"].(entities.Environment))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -23862,7 +23357,7 @@ func (ec *executionContext) _Mutation_core_deleteEnvironment(ctx context.Context
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreDeleteEnvironment(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string))
+			return ec.resolvers.Mutation().CoreDeleteEnvironment(rctx, fc.Args["envName"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -23943,7 +23438,7 @@ func (ec *executionContext) _Mutation_core_cloneEnvironment(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCloneEnvironment(rctx, fc.Args["projectName"].(string), fc.Args["sourceEnvName"].(string), fc.Args["destinationEnvName"].(string), fc.Args["displayName"].(string), fc.Args["environmentRoutingMode"].(v1.EnvironmentRoutingMode))
+			return ec.resolvers.Mutation().CoreCloneEnvironment(rctx, fc.Args["sourceEnvName"].(string), fc.Args["destinationEnvName"].(string), fc.Args["displayName"].(string), fc.Args["environmentRoutingMode"].(v1.EnvironmentRoutingMode))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -24055,7 +23550,7 @@ func (ec *executionContext) _Mutation_core_createImagePullSecret(ctx context.Con
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateImagePullSecret(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["imagePullSecretIn"].(entities.ImagePullSecret))
+			return ec.resolvers.Mutation().CoreCreateImagePullSecret(rctx, fc.Args["envName"].(string), fc.Args["imagePullSecretIn"].(entities.ImagePullSecret))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -24169,7 +23664,7 @@ func (ec *executionContext) _Mutation_core_deleteImagePullSecret(ctx context.Con
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreDeleteImagePullSecret(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["secretName"].(string))
+			return ec.resolvers.Mutation().CoreDeleteImagePullSecret(rctx, fc.Args["envName"].(string), fc.Args["secretName"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -24250,7 +23745,7 @@ func (ec *executionContext) _Mutation_core_createApp(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateApp(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["app"].(entities.App))
+			return ec.resolvers.Mutation().CoreCreateApp(rctx, fc.Args["envName"].(string), fc.Args["app"].(entities.App))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -24368,7 +23863,7 @@ func (ec *executionContext) _Mutation_core_updateApp(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreUpdateApp(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["app"].(entities.App))
+			return ec.resolvers.Mutation().CoreUpdateApp(rctx, fc.Args["envName"].(string), fc.Args["app"].(entities.App))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -24486,7 +23981,7 @@ func (ec *executionContext) _Mutation_core_deleteApp(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreDeleteApp(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["appName"].(string))
+			return ec.resolvers.Mutation().CoreDeleteApp(rctx, fc.Args["envName"].(string), fc.Args["appName"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -24567,7 +24062,7 @@ func (ec *executionContext) _Mutation_core_interceptApp(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreInterceptApp(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["appname"].(string), fc.Args["deviceName"].(string), fc.Args["intercept"].(bool))
+			return ec.resolvers.Mutation().CoreInterceptApp(rctx, fc.Args["envName"].(string), fc.Args["appname"].(string), fc.Args["deviceName"].(string), fc.Args["intercept"].(bool))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -24648,7 +24143,7 @@ func (ec *executionContext) _Mutation_core_createConfig(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateConfig(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["config"].(entities.Config))
+			return ec.resolvers.Mutation().CoreCreateConfig(rctx, fc.Args["envName"].(string), fc.Args["config"].(entities.Config))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -24762,7 +24257,7 @@ func (ec *executionContext) _Mutation_core_updateConfig(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreUpdateConfig(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["config"].(entities.Config))
+			return ec.resolvers.Mutation().CoreUpdateConfig(rctx, fc.Args["envName"].(string), fc.Args["config"].(entities.Config))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -24876,7 +24371,7 @@ func (ec *executionContext) _Mutation_core_deleteConfig(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreDeleteConfig(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["configName"].(string))
+			return ec.resolvers.Mutation().CoreDeleteConfig(rctx, fc.Args["envName"].(string), fc.Args["configName"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -24957,7 +24452,7 @@ func (ec *executionContext) _Mutation_core_createSecret(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateSecret(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["secret"].(entities.Secret))
+			return ec.resolvers.Mutation().CoreCreateSecret(rctx, fc.Args["envName"].(string), fc.Args["secret"].(entities.Secret))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25075,7 +24570,7 @@ func (ec *executionContext) _Mutation_core_updateSecret(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreUpdateSecret(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["secret"].(entities.Secret))
+			return ec.resolvers.Mutation().CoreUpdateSecret(rctx, fc.Args["envName"].(string), fc.Args["secret"].(entities.Secret))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25193,7 +24688,7 @@ func (ec *executionContext) _Mutation_core_deleteSecret(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreDeleteSecret(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["secretName"].(string))
+			return ec.resolvers.Mutation().CoreDeleteSecret(rctx, fc.Args["envName"].(string), fc.Args["secretName"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25274,7 +24769,7 @@ func (ec *executionContext) _Mutation_core_createRouter(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateRouter(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["router"].(entities.Router))
+			return ec.resolvers.Mutation().CoreCreateRouter(rctx, fc.Args["envName"].(string), fc.Args["router"].(entities.Router))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25388,7 +24883,7 @@ func (ec *executionContext) _Mutation_core_updateRouter(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreUpdateRouter(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["router"].(entities.Router))
+			return ec.resolvers.Mutation().CoreUpdateRouter(rctx, fc.Args["envName"].(string), fc.Args["router"].(entities.Router))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25502,7 +24997,7 @@ func (ec *executionContext) _Mutation_core_deleteRouter(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreDeleteRouter(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["routerName"].(string))
+			return ec.resolvers.Mutation().CoreDeleteRouter(rctx, fc.Args["envName"].(string), fc.Args["routerName"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25583,7 +25078,7 @@ func (ec *executionContext) _Mutation_core_createManagedResource(ctx context.Con
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateManagedResource(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["mres"].(entities.ManagedResource))
+			return ec.resolvers.Mutation().CoreCreateManagedResource(rctx, fc.Args["envName"].(string), fc.Args["mres"].(entities.ManagedResource))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25699,7 +25194,7 @@ func (ec *executionContext) _Mutation_core_updateManagedResource(ctx context.Con
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreUpdateManagedResource(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["mres"].(entities.ManagedResource))
+			return ec.resolvers.Mutation().CoreUpdateManagedResource(rctx, fc.Args["envName"].(string), fc.Args["mres"].(entities.ManagedResource))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25815,7 +25310,7 @@ func (ec *executionContext) _Mutation_core_deleteManagedResource(ctx context.Con
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreDeleteManagedResource(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["mresName"].(string))
+			return ec.resolvers.Mutation().CoreDeleteManagedResource(rctx, fc.Args["envName"].(string), fc.Args["mresName"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25969,8 +25464,6 @@ func (ec *executionContext) fieldContext_Mutation_core_createVPNDevice(ctx conte
 				return ec.fieldContext_ConsoleVPNDevice_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ConsoleVPNDevice_metadata(ctx, field)
-			case "projectName":
-				return ec.fieldContext_ConsoleVPNDevice_projectName(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ConsoleVPNDevice_recordVersion(ctx, field)
 			case "spec":
@@ -26089,8 +25582,6 @@ func (ec *executionContext) fieldContext_Mutation_core_updateVPNDevice(ctx conte
 				return ec.fieldContext_ConsoleVPNDevice_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ConsoleVPNDevice_metadata(ctx, field)
-			case "projectName":
-				return ec.fieldContext_ConsoleVPNDevice_projectName(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ConsoleVPNDevice_recordVersion(ctx, field)
 			case "spec":
@@ -26217,7 +25708,7 @@ func (ec *executionContext) _Mutation_core_updateVPNDeviceEnv(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreUpdateVPNDeviceEnv(rctx, fc.Args["deviceName"].(string), fc.Args["projectName"].(string), fc.Args["envName"].(string))
+			return ec.resolvers.Mutation().CoreUpdateVPNDeviceEnv(rctx, fc.Args["deviceName"].(string), fc.Args["envName"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -26787,7 +26278,7 @@ func (ec *executionContext) _Query_core_checkNameAvailability(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreCheckNameAvailability(rctx, fc.Args["projectName"].(*string), fc.Args["envName"].(*string), fc.Args["resType"].(entities.ResourceType), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreCheckNameAvailability(rctx, fc.Args["envName"].(*string), fc.Args["resType"].(entities.ResourceType), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedIn == nil {
@@ -26874,7 +26365,7 @@ func (ec *executionContext) _Query_core_listEnvironments(ctx context.Context, fi
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreListEnvironments(rctx, fc.Args["projectName"].(string), fc.Args["search"].(*model.SearchEnvironments), fc.Args["pq"].(*repos.CursorPagination))
+			return ec.resolvers.Query().CoreListEnvironments(rctx, fc.Args["search"].(*model.SearchEnvironments), fc.Args["pq"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -26960,7 +26451,7 @@ func (ec *executionContext) _Query_core_getEnvironment(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetEnvironment(rctx, fc.Args["projectName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreGetEnvironment(rctx, fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27072,7 +26563,7 @@ func (ec *executionContext) _Query_core_resyncEnvironment(ctx context.Context, f
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreResyncEnvironment(rctx, fc.Args["projectName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreResyncEnvironment(rctx, fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27153,7 +26644,7 @@ func (ec *executionContext) _Query_core_listImagePullSecrets(ctx context.Context
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreListImagePullSecrets(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["search"].(*model.SearchImagePullSecrets), fc.Args["pq"].(*repos.CursorPagination))
+			return ec.resolvers.Query().CoreListImagePullSecrets(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchImagePullSecrets), fc.Args["pq"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27239,7 +26730,7 @@ func (ec *executionContext) _Query_core_getImagePullSecret(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetImagePullSecret(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreGetImagePullSecret(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27353,7 +26844,7 @@ func (ec *executionContext) _Query_core_resyncImagePullSecret(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreResyncImagePullSecret(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreResyncImagePullSecret(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27434,7 +26925,7 @@ func (ec *executionContext) _Query_core_listApps(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreListApps(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["search"].(*model.SearchApps), fc.Args["pq"].(*repos.CursorPagination))
+			return ec.resolvers.Query().CoreListApps(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchApps), fc.Args["pq"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27520,7 +27011,7 @@ func (ec *executionContext) _Query_core_getApp(ctx context.Context, field graphq
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetApp(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreGetApp(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27638,7 +27129,7 @@ func (ec *executionContext) _Query_core_resyncApp(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreResyncApp(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreResyncApp(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27719,7 +27210,7 @@ func (ec *executionContext) _Query_core_restartApp(ctx context.Context, field gr
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreRestartApp(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["appName"].(string))
+			return ec.resolvers.Query().CoreRestartApp(rctx, fc.Args["envName"].(string), fc.Args["appName"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27800,7 +27291,7 @@ func (ec *executionContext) _Query_core_getConfigValues(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetConfigValues(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["queries"].([]*domain.ConfigKeyRef))
+			return ec.resolvers.Query().CoreGetConfigValues(rctx, fc.Args["envName"].(string), fc.Args["queries"].([]*domain.ConfigKeyRef))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27886,7 +27377,7 @@ func (ec *executionContext) _Query_core_listConfigs(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreListConfigs(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["search"].(*model.SearchConfigs), fc.Args["pq"].(*repos.CursorPagination))
+			return ec.resolvers.Query().CoreListConfigs(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchConfigs), fc.Args["pq"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27972,7 +27463,7 @@ func (ec *executionContext) _Query_core_getConfig(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetConfig(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreGetConfig(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28086,7 +27577,7 @@ func (ec *executionContext) _Query_core_resyncConfig(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreResyncConfig(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreResyncConfig(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28167,7 +27658,7 @@ func (ec *executionContext) _Query_core_getSecretValues(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetSecretValues(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["queries"].([]*domain.SecretKeyRef))
+			return ec.resolvers.Query().CoreGetSecretValues(rctx, fc.Args["envName"].(string), fc.Args["queries"].([]*domain.SecretKeyRef))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28253,7 +27744,7 @@ func (ec *executionContext) _Query_core_listSecrets(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreListSecrets(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["search"].(*model.SearchSecrets), fc.Args["pq"].(*repos.CursorPagination))
+			return ec.resolvers.Query().CoreListSecrets(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchSecrets), fc.Args["pq"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28339,7 +27830,7 @@ func (ec *executionContext) _Query_core_getSecret(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetSecret(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreGetSecret(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28457,7 +27948,7 @@ func (ec *executionContext) _Query_core_resyncSecret(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreResyncSecret(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreResyncSecret(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28538,7 +28029,7 @@ func (ec *executionContext) _Query_core_listRouters(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreListRouters(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["search"].(*model.SearchRouters), fc.Args["pq"].(*repos.CursorPagination))
+			return ec.resolvers.Query().CoreListRouters(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchRouters), fc.Args["pq"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28624,7 +28115,7 @@ func (ec *executionContext) _Query_core_getRouter(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetRouter(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreGetRouter(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28738,7 +28229,7 @@ func (ec *executionContext) _Query_core_resyncRouter(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreResyncRouter(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreResyncRouter(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28819,7 +28310,7 @@ func (ec *executionContext) _Query_core_getManagedResouceOutputKeys(ctx context.
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetManagedResouceOutputKeys(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreGetManagedResouceOutputKeys(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28900,7 +28391,7 @@ func (ec *executionContext) _Query_core_getManagedResouceOutputKeyValues(ctx con
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetManagedResouceOutputKeyValues(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["keyrefs"].([]*domain.ManagedResourceKeyRef))
+			return ec.resolvers.Query().CoreGetManagedResouceOutputKeyValues(rctx, fc.Args["envName"].(string), fc.Args["keyrefs"].([]*domain.ManagedResourceKeyRef))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28989,7 +28480,7 @@ func (ec *executionContext) _Query_core_listManagedResources(ctx context.Context
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreListManagedResources(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["search"].(*model.SearchManagedResources), fc.Args["pq"].(*repos.CursorPagination))
+			return ec.resolvers.Query().CoreListManagedResources(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchManagedResources), fc.Args["pq"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -29075,7 +28566,7 @@ func (ec *executionContext) _Query_core_getManagedResource(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetManagedResource(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreGetManagedResource(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -29191,7 +28682,7 @@ func (ec *executionContext) _Query_core_resyncManagedResource(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreResyncManagedResource(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreResyncManagedResource(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -29431,8 +28922,6 @@ func (ec *executionContext) fieldContext_Query_core_listVPNDevicesForUser(ctx co
 				return ec.fieldContext_ConsoleVPNDevice_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ConsoleVPNDevice_metadata(ctx, field)
-			case "projectName":
-				return ec.fieldContext_ConsoleVPNDevice_projectName(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ConsoleVPNDevice_recordVersion(ctx, field)
 			case "spec":
@@ -29540,8 +29029,6 @@ func (ec *executionContext) fieldContext_Query_core_getVPNDevice(ctx context.Con
 				return ec.fieldContext_ConsoleVPNDevice_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ConsoleVPNDevice_metadata(ctx, field)
-			case "projectName":
-				return ec.fieldContext_ConsoleVPNDevice_projectName(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ConsoleVPNDevice_recordVersion(ctx, field)
 			case "spec":
@@ -34324,7 +33811,7 @@ func (ec *executionContext) unmarshalInputConsoleVPNDeviceIn(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "clusterName", "displayName", "environmentName", "kind", "metadata", "projectName", "spec"}
+	fieldsInOrder := [...]string{"apiVersion", "clusterName", "displayName", "environmentName", "kind", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -34387,15 +33874,6 @@ func (ec *executionContext) unmarshalInputConsoleVPNDeviceIn(ctx context.Context
 			if err = ec.resolvers.ConsoleVPNDeviceIn().Metadata(ctx, &it, data); err != nil {
 				return it, err
 			}
-		case "projectName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ProjectName = data
 		case "spec":
 			var err error
 
@@ -38439,8 +37917,6 @@ func (ec *executionContext) _ConsoleVPNDevice(ctx context.Context, sel ast.Selec
 			out.Values[i] = ec._ConsoleVPNDevice_markedForDeletion(ctx, field, obj)
 		case "metadata":
 			out.Values[i] = ec._ConsoleVPNDevice_metadata(ctx, field, obj)
-		case "projectName":
-			out.Values[i] = ec._ConsoleVPNDevice_projectName(ctx, field, obj)
 		case "recordVersion":
 			out.Values[i] = ec._ConsoleVPNDevice_recordVersion(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -46109,7 +45585,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46117,7 +45593,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

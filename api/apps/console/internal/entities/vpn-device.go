@@ -18,7 +18,6 @@ type ConsoleVPNDevice struct {
 	common.ResourceMetadata `json:",inline"`
 
 	AccountName     string  `json:"accountName" graphql:"noinput"`
-	ProjectName     *string `json:"projectName,omitempty"`
 	EnvironmentName *string `json:"environmentName,omitempty"`
 	ClusterName     *string `json:"clusterName,omitempty"`
 
