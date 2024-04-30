@@ -415,8 +415,7 @@ type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn struct {
-	MsvcSpec        *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn `json:"msvcSpec"`
-	TargetNamespace string                                                    `json:"targetNamespace"`
+	MsvcSpec *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn `json:"msvcSpec"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1HelmChartSpec struct {

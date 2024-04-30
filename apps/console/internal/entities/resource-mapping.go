@@ -9,15 +9,14 @@ import (
 type ResourceType string
 
 const (
-	ResourceTypeEnvironment           ResourceType = "environment"
-	ResourceTypeApp                   ResourceType = "app"
-	ResourceTypeConfig                ResourceType = "config"
-	ResourceTypeSecret                ResourceType = "secret"
-	ResourceTypeImagePullSecret       ResourceType = "image_pull_secret"
-	ResourceTypeRouter                ResourceType = "router"
-	ResourceTypeManagedResource       ResourceType = "managed_resource"
-	ResourceTypeProjectManagedService ResourceType = "project_managed_service"
-	ResourceTypeVPNDevice             ResourceType = "vpn_device"
+	ResourceTypeEnvironment     ResourceType = "environment"
+	ResourceTypeApp             ResourceType = "app"
+	ResourceTypeConfig          ResourceType = "config"
+	ResourceTypeSecret          ResourceType = "secret"
+	ResourceTypeImagePullSecret ResourceType = "image_pull_secret"
+	ResourceTypeRouter          ResourceType = "router"
+	ResourceTypeManagedResource ResourceType = "managed_resource"
+	ResourceTypeVPNDevice       ResourceType = "vpn_device"
 )
 
 type ResourceHeirarchy string
@@ -38,7 +37,6 @@ type ResourceMapping struct {
 	AccountName string `json:"accountName"`
 	ClusterName string `json:"clusterName"`
 
-	// ProjectName     string `json:"projectName"`
 	EnvironmentName string `json:"environmentName"`
 }
 

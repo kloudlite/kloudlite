@@ -106,7 +106,8 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 			}
 
 			if _, err := g.yamlClient.ApplyYAML(ctx, b); err != nil {
-				mLogger.Infof("[%d] [error-on-apply]: %s", g.inMemCounter, err.Error())
+				// mLogger.Infof("[%d] [error-on-apply]: %s", g.inMemCounter, err.Error())
+				mLogger.Errorf(err, "[%d] [error-on-apply]: yaml: \n%s\n", g.inMemCounter, b)
 				mLogger.Infof("[%d] failed to process message", g.inMemCounter)
 				return g.handleErrorOnApply(ctx, err, msg)
 			}
