@@ -11,7 +11,7 @@ const ContainerRegistry = () => {
     <SidebarLayout
       navItems={[
         { label: 'Container Repos', value: 'repos' },
-        { label: 'Helm Repos', value: 'helm-repos' },
+        // { label: 'Helm Repos', value: 'helm-repos' },
         { label: 'Access management', value: 'access-management' },
       ]}
       parentPath="/packages"

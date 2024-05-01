@@ -46,7 +46,7 @@ const tabs = [
 ];
 
 const LocalBreadcrum = ({ data }: { data: IDeviceBlueprint }) => {
-  const { displayName,  accountName, name } = data;
+  const { displayName, accountName, name } = data;
   return (
     <div className="flex flex-row items-center">
       <BreadcrumSlash />
@@ -59,7 +59,7 @@ const LocalBreadcrum = ({ data }: { data: IDeviceBlueprint }) => {
 };
 
 const Tabs = () => {
-  const { account,  deviceblueprint } = useParams();
+  const { account, deviceblueprint } = useParams();
 
   return (
     <CommonTabs
@@ -86,13 +86,12 @@ export const handle = ({ deviceblueprint }: { deviceblueprint: any }) => {
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
-  const {  deviceblueprint, account } = ctx.params;
+  const { deviceblueprint, account } = ctx.params;
 
   try {
     const { data, errors } = await GQLServerHandler(
       ctx.request
     ).getIotDeviceBlueprint({
-      
       name: deviceblueprint,
     });
     if (errors) {

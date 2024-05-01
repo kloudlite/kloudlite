@@ -11,6 +11,7 @@ import { IRemixCtx } from '~/lib/types/common';
 import { clearAppState } from '~/console/page-components/app-states';
 import { useEffect } from 'react';
 import { Button } from '~/components/atoms/button';
+import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
 import AppsResourcesV2 from './apps-resources-v2';
 
@@ -21,7 +22,6 @@ export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listApps({
       envName: environment,
-      
       pq: getPagination(ctx),
       search: getSearch(ctx),
     });
@@ -45,9 +45,9 @@ const Apps = () => {
   return (
     <LoadingComp
       data={promise}
-      // skeletonData={{
-      //   appsData: fake.ConsoleListAppsQuery.core_listApps as any,
-      // }}
+      skeletonData={{
+        appsData: fake.ConsoleListAppsQuery.core_listApps as any,
+      }}
     >
       {({ appsData }) => {
         const apps = parseNodes(appsData);

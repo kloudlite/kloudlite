@@ -5,23 +5,30 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { Checkbox } from '~/components/atoms/checkbox';
-import Banner from '~/components/molecule/banner';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import Select from '~/components/atoms/select';
 import { IDialog } from '../components/types.d';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { DIALOG_TYPE } from '../utils/commons';
 import { IEnvironment } from '../server/gql/queries/environment-queries';
 import { NameIdView } from '../components/name-id-view';
-import { parseName } from '../server/r-utils/common';
+import { parseName, parseNodes } from '../server/r-utils/common';
 
 const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
 
+  const { data: clustersData, isLoading: cIsLoading } = useCustomSwr(
+    'clusters',
+    async () => api.listClusters({}),
+    true
+  );
+
   const [validationSchema, setValidationSchema] = useState<any>(
     Yup.object({
       displayName: Yup.string().required(),
       name: Yup.string().required(),
+      clusterName: Yup.string().required(),
     })
   );
 
@@ -37,6 +44,7 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
     initialValues: {
       name: '',
       displayName: '',
+      clusterName: '',
       environmentRoutingMode: false,
       isNameError: false,
     },
@@ -50,7 +58,7 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
               metadata: {
                 name: val.name,
               },
-              clusterName: show?.data?.clusterName || '',
+              clusterName: val.clusterName || '',
               displayName: val.displayName,
               spec: {
                 routing: {
@@ -137,23 +145,49 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
               nameErrorLabel="isNameError"
               isUpdate={show?.type !== DIALOG_TYPE.ADD}
             />
-            <Checkbox
-              label="Public"
-              checked={values.environmentRoutingMode}
-              onChange={(val) => {
-                handleChange('environmentRoutingMode')(dummyEvent(val));
+
+            <Select
+              label="Select Cluster"
+              size="lg"
+              value={values.clusterName}
+              disabled={cIsLoading}
+              placeholder="Select a Cluster"
+              options={async () => [
+                ...((clustersData &&
+                  parseNodes(clustersData)
+                    .filter((d) => {
+                      return d.status?.isReady;
+                    })
+                    .map((d) => ({
+                      label: `${d.displayName} - ${parseName(d)}`,
+                      value: parseName(d),
+                    }))) ||
+                  []),
+              ]}
+              onChange={({ value }) => {
+                handleChange('clusterName')(dummyEvent(value));
               }}
+              error={!!errors.clusterName}
+              message={errors.clusterName}
             />
-            <Banner
-              type="info"
-              body={
-                <span>
-                  Public environments will expose services to the public
-                  internet. Private environments will be accessible when
-                  Kloudlite VPN is active.
-                </span>
-              }
-            />
+
+            {/* <Checkbox */}
+            {/*   label="Public" */}
+            {/*   checked={values.environmentRoutingMode} */}
+            {/*   onChange={(val) => { */}
+            {/*     handleChange('environmentRoutingMode')(dummyEvent(val)); */}
+            {/*   }} */}
+            {/* /> */}
+            {/* <Banner */}
+            {/*   type="info" */}
+            {/*   body={ */}
+            {/*     <span> */}
+            {/*       Public environments will expose services to the public */}
+            {/*       internet. Private environments will be accessible when */}
+            {/*       Kloudlite VPN is active. */}
+            {/*     </span> */}
+            {/*   } */}
+            {/* /> */}
           </div>
         </Popup.Content>
         <Popup.Footer>

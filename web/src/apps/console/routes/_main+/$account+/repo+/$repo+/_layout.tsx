@@ -19,7 +19,6 @@ import { IRemixCtx, LoaderResult } from '~/root/lib/types/common';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import logger from '~/root/lib/client/helpers/log';
 import { IPackageContext } from '~/console/routes/_main+/$account+/packages+/_layout';
-import { base64Decrypt } from '~/console/server/utils/common';
 
 const LocalBreadcrum = () => {
   const { account, repo } = useParams();
@@ -54,6 +53,10 @@ const Tabs = () => {
   const iconSize = 16;
   return (
     <CommonTabs
+      backButton={{
+        to: `/${account}/packages/repos`,
+        label: 'Repos',
+      }}
       baseurl={`/${account}/repo/${repo}`}
       tabs={[
         {

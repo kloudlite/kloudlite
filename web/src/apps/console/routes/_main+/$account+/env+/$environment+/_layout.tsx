@@ -5,7 +5,6 @@ import {
   Plus,
   Search,
   File,
-  TreeStructure,
   Check,
   ChevronDown,
   Globe,
@@ -74,16 +73,16 @@ const tabs = [
     to: '/apps',
     value: '/apps',
   },
-  {
-    label: (
-      <span className="flex flex-row items-center gap-lg">
-        <TreeStructure size={tabIconSize} />
-        Router
-      </span>
-    ),
-    to: '/routers',
-    value: '/routers',
-  },
+  // {
+  //   label: (
+  //     <span className="flex flex-row items-center gap-lg">
+  //       <TreeStructure size={tabIconSize} />
+  //       Router
+  //     </span>
+  //   ),
+  //   to: '/routers',
+  //   value: '/routers',
+  // },
   {
     label: (
       <span className="flex flex-row items-center gap-lg">
@@ -123,7 +122,16 @@ const tabs = [
 
 const EnvironmentTabs = () => {
   const { account, environment } = useParams();
-  return <CommonTabs baseurl={`/${account}/env/${environment}`} tabs={tabs} />;
+  return (
+    <CommonTabs
+      backButton={{
+        to: `/${account}/environments`,
+        label: 'Envs',
+      }}
+      baseurl={`/${account}/env/${environment}`}
+      tabs={tabs}
+    />
+  );
 };
 
 const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {

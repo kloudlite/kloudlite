@@ -1,7 +1,4 @@
 /* eslint-disable react/destructuring-assignment */
-import { useParams } from '@remix-run/react';
-import { Checkbox } from '~/components/atoms/checkbox';
-import { Switch } from '~/components/atoms/switch';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
@@ -9,13 +6,17 @@ import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IEnvironments } from '~/console/server/gql/queries/environment-queries';
-import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
+import {
+  ExtractNodeType,
+  parseName,
+  parseNodes,
+} from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { InfoLabel } from '~/console/components/commons';
-import Banner from '~/components/molecule/banner';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import Select from '~/components/atoms/select';
 
 type IDialog = IDialogBase<ExtractNodeType<IEnvironments>>;
 
@@ -24,7 +25,11 @@ const Root = (props: IDialog) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
 
-  const { project } = useParams();
+  const { data: clustersData, isLoading: cIsLoading } = useCustomSwr(
+    'clusters',
+    async () => api.listClusters({}),
+    true
+  );
 
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
@@ -33,16 +38,15 @@ const Root = (props: IDialog) => {
         displayName: '',
         environmentRoutingMode: false,
         isNameError: false,
+        clusterName: '',
       },
       validationSchema: Yup.object({
         name: Yup.string().required('Name is required.'),
         displayName: Yup.string().required(),
+        clusterName: Yup.string().required(),
       }),
       onSubmit: async (val) => {
         if (isUpdate) {
-          if (!project) {
-            throw new Error('Project is required!.');
-          }
           try {
             const { errors: e } = await api.cloneEnvironment({
               displayName: val.displayName,
@@ -50,7 +54,7 @@ const Root = (props: IDialog) => {
                 ? 'public'
                 : 'private',
               destinationEnvName: val.name,
-              
+
               sourceEnvName: parseName(props.data),
             });
             if (e) {
@@ -88,23 +92,49 @@ const Root = (props: IDialog) => {
             handleChange={handleChange}
             nameErrorLabel="isNameError"
           />
-          <Checkbox
-            label="Public"
-            checked={values.environmentRoutingMode}
-            onChange={(val) => {
-              handleChange('environmentRoutingMode')(dummyEvent(val));
+
+          <Select
+            label="Select Cluster"
+            size="lg"
+            value={values.clusterName}
+            disabled={cIsLoading}
+            placeholder="Select a Cluster"
+            options={async () => [
+              ...((clustersData &&
+                parseNodes(clustersData)
+                  .filter((d) => {
+                    return d.status?.isReady;
+                  })
+                  .map((d) => ({
+                    label: `${d.displayName} - ${parseName(d)}`,
+                    value: parseName(d),
+                  }))) ||
+                []),
+            ]}
+            onChange={({ value }) => {
+              handleChange('clusterName')(dummyEvent(value));
             }}
+            error={!!errors.clusterName}
+            message={errors.clusterName}
           />
-          <Banner
-            type="info"
-            body={
-              <span>
-                Public environments will expose services to the public internet.
-                Private environments will be accessible when Kloudlite VPN is
-                active.
-              </span>
-            }
-          />
+
+          {/* <Checkbox */}
+          {/*   label="Public" */}
+          {/*   checked={values.environmentRoutingMode} */}
+          {/*   onChange={(val) => { */}
+          {/*     handleChange('environmentRoutingMode')(dummyEvent(val)); */}
+          {/*   }} */}
+          {/* /> */}
+          {/* <Banner */}
+          {/*   type="info" */}
+          {/*   body={ */}
+          {/*     <span> */}
+          {/*       Public environments will expose services to the public internet. */}
+          {/*       Private environments will be accessible when Kloudlite VPN is */}
+          {/*       active. */}
+          {/*     </span> */}
+          {/*   } */}
+          {/* /> */}
         </div>
       </Popup.Content>
       <Popup.Footer>

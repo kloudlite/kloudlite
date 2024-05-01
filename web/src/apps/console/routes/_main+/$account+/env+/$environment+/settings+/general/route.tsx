@@ -11,7 +11,7 @@ import {
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseName } from '~/console/server/r-utils/common';
 import useClipboard from '~/lib/client/hooks/use-clipboard';
-import useForm, { dummyEvent } from '~/lib/client/hooks/use-form';
+import useForm from '~/lib/client/hooks/use-form';
 import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
 import { consoleBaseUrl } from '~/lib/configs/base-url.cjs';
 import Yup from '~/lib/server/helpers/yup';
@@ -19,8 +19,8 @@ import { handleError } from '~/lib/utils/common';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { useReload } from '~/lib/client/helpers/reloader';
 import Wrapper from '~/console/components/wrapper';
-import { Checkbox } from '~/components/atoms/checkbox';
-import Banner from '~/components/molecule/banner';
+// import { Checkbox } from '~/components/atoms/checkbox';
+// import Banner from '~/components/molecule/banner';
 import { IEnvironmentContext } from '../../_layout';
 
 const EnvironmentSettingsGeneral = () => {
@@ -98,8 +98,8 @@ const EnvironmentSettingsGeneral = () => {
   return (
     <div>
       <Wrapper
-        secondaryHeader={{
-          title: 'General',
+        header={{
+          title: 'Settings',
           action: hasChanges() && !success && (
             <div className="flex flex-row items-center gap-3xl">
               <Button
@@ -127,23 +127,23 @@ const EnvironmentSettingsGeneral = () => {
             value={values.displayName}
             onChange={handleChange('displayName')}
           />
-          <Checkbox
-            label="Public"
-            checked={values.environmentRoutingMode}
-            onChange={(checked) => {
-              handleChange('environmentRoutingMode')(dummyEvent(checked));
-            }}
-          />
-          <Banner
-            type="info"
-            body={
-              <span>
-                Public environments will expose services to the public internet.
-                Private environments will be accessible when Kloudlite VPN is
-                active.
-              </span>
-            }
-          />
+          {/* <Checkbox */}
+          {/*   label="Public" */}
+          {/*   checked={values.environmentRoutingMode} */}
+          {/*   onChange={(checked) => { */}
+          {/*     handleChange('environmentRoutingMode')(dummyEvent(checked)); */}
+          {/*   }} */}
+          {/* /> */}
+          {/* <Banner */}
+          {/*   type="info" */}
+          {/*   body={ */}
+          {/*     <span> */}
+          {/*       Public environments will expose services to the public internet. */}
+          {/*       Private environments will be accessible when Kloudlite VPN is */}
+          {/*       active. */}
+          {/*     </span> */}
+          {/*   } */}
+          {/* /> */}
           <div className="flex flex-row items-center gap-3xl">
             <div className="flex-1">
               <TextInput

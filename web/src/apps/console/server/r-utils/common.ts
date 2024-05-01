@@ -13,35 +13,6 @@ type IparseNodes<T> = {
   edges: Array<{ node: T }>;
 };
 
-// interface IParamsCtx {
-//   params: Params<string>;
-// }
-
-// export const getProjectQuery = (ctx: IParamsCtx): ProjectId => {
-//   const { project } = ctx.params;
-//   if (!project) {
-//     throw Error(
-//       'project is required to render this page, which is not provide'
-//     );
-//   }
-//   return {
-//     type: 'name',
-//     value: 
-//   };
-// };
-
-// export const getScopeAndProjectQuery = (
-//   ctx: IParamsCtx
-// ): {
-//   project: ProjectId;
-//   scope: WorkspaceOrEnvId;
-// } => {
-//   return {
-//     project: getProjectQuery(ctx),
-//     scope: getScopeQuery(ctx),
-//   };
-// };
-
 export const parseNodes = <T>(resources: IparseNodes<T> | undefined): T[] =>
   resources?.edges.map(({ node }) => node) || [];
 

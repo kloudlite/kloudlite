@@ -31,12 +31,13 @@ import useMatches, {
 import { UnsavedChangesProvider } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
-import { IExtRemixCtx } from '~/root/lib/types/common';
+import { IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
 import {
   InfraAsCode,
   Container as ContainerIcon,
   GearSix,
   Project,
+  BackingServices,
 } from '~/console/components/icons';
 
 const restActions = (ctx: IExtRemixCtx) => {
@@ -52,9 +53,9 @@ export type IConsoleRootContext = {
   accounts: IAccounts;
 };
 
-export const meta = () => {
+export const meta = (c: IRemixCtx) => {
   return [
-    { title: 'Projects' },
+    { title: `Account | ${c.params?.account || ''}` },
     { name: 'theme-color', content: LightTitlebarColor },
   ];
 };
@@ -85,6 +86,16 @@ const AccountTabs = () => {
           ),
           to: '/infra',
           value: '/infra',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <BackingServices size={iconSize} />
+              Managed Services
+            </span>
+          ),
+          to: '/managed-services',
+          value: '/managed-services',
         },
         {
           label: (
