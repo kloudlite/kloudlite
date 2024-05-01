@@ -94,6 +94,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -281,6 +283,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -744,6 +748,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -918,6 +924,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -1045,6 +1053,8 @@ spec:
             type: object
           spec:
             properties:
+              allowSSH:
+                type: boolean
               aws:
                 properties:
                   availabilityZone:
@@ -1270,6 +1280,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -1407,6 +1419,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -1691,6 +1705,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -1824,6 +1840,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -2181,8 +2199,22 @@ spec:
                 type: object
               intercept:
                 properties:
+                  deviceHostSuffix:
+                    type: string
                   enabled:
                     type: boolean
+                  portMappings:
+                    items:
+                      properties:
+                        appPort:
+                          type: integer
+                        devicePort:
+                          type: integer
+                      required:
+                      - appPort
+                      - devicePort
+                      type: object
+                    type: array
                   toDevice:
                     minLength: 1
                     type: string
@@ -2439,6 +2471,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -2798,8 +2832,22 @@ spec:
                           type: object
                         intercept:
                           properties:
+                            deviceHostSuffix:
+                              type: string
                             enabled:
                               type: boolean
+                            portMappings:
+                              items:
+                                properties:
+                                  appPort:
+                                    type: integer
+                                  devicePort:
+                                    type: integer
+                                required:
+                                - appPort
+                                - devicePort
+                                type: object
+                              type: array
                             toDevice:
                               minLength: 1
                               type: string
@@ -3080,6 +3128,8 @@ spec:
                                 type: boolean
                               description:
                                 type: string
+                              hide:
+                                type: boolean
                               name:
                                 type: string
                               title:
@@ -3173,6 +3223,8 @@ spec:
                             type: boolean
                           description:
                             type: string
+                          hide:
+                            type: boolean
                           name:
                             type: string
                           title:
@@ -3255,6 +3307,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -3476,6 +3530,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -3568,17 +3624,14 @@ spec:
     listKind: EnvironmentList
     plural: environments
     singular: environment
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.projectName
-      name: Project
-      type: string
     - jsonPath: .spec.targetNamespace
-      name: target-namespace
+      name: target-ns
       type: string
     - jsonPath: .status.lastReconcileTime
-      name: Last_Reconciled_At
+      name: Seen
       type: date
     - jsonPath: .metadata.annotations.kloudlite\.io\/checks
       name: Checks
@@ -3612,8 +3665,6 @@ spec:
           spec:
             description: EnvironmentSpec defines the desired state of Environment
             properties:
-              projectName:
-                type: string
               routing:
                 properties:
                   mode:
@@ -3625,8 +3676,6 @@ spec:
                 type: object
               targetNamespace:
                 type: string
-            required:
-            - projectName
             type: object
           status:
             properties:
@@ -3637,6 +3686,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -4725,6 +4776,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -19924,6 +19977,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -20126,6 +20181,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -20344,6 +20401,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -20570,6 +20629,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -20714,6 +20775,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -20937,6 +21000,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -21117,6 +21182,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -21341,6 +21408,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -21535,6 +21604,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -21766,6 +21837,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -22193,6 +22266,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -22429,6 +22504,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -22840,6 +22917,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -23020,6 +23099,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -23258,6 +23339,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -23481,6 +23564,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -23639,6 +23724,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -23864,6 +23951,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -24086,6 +24175,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -24211,6 +24302,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -24370,6 +24463,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -24505,6 +24600,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -24745,6 +24842,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -24985,6 +25084,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -25135,6 +25236,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -25294,6 +25397,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -25494,6 +25599,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -25632,6 +25739,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -25764,6 +25873,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -26139,6 +26250,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -26653,6 +26766,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -26881,10 +26996,13 @@ spec:
                       items:
                         type: string
                       type: array
+                    clusterName:
+                      type: string
+                    deviceName:
+                      type: string
                     endpoint:
                       type: string
                     ip:
-                      description: Id        int    `json:"id"`
                       type: string
                     port:
                       type: integer
@@ -26922,6 +27040,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -27141,6 +27261,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:

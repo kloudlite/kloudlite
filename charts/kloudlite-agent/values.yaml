@@ -74,7 +74,7 @@ operators:
 
     configuration:
       nodepools:
-        enabled: true
+        enabled: false
 
         # must be one of aws,azure,gcp
         cloudprovider: ""
@@ -107,7 +107,7 @@ operators:
 
 helmCharts:
   kloudliteAddons:
-    enabled: true
+    enabled: false
     name: "kloudlite-addons"
     configuration:
       chartVersion: ""
@@ -119,7 +119,7 @@ helmCharts:
         enabled: true
 
   ingressNginx:
-    enabled: true
+    enabled: false
     name: "ingress-nginx"
     tolerations: []
     nodeSelector: {}
@@ -128,7 +128,7 @@ helmCharts:
       ingressClassName: nginx
 
   certManager:
-    enabled: true
+    enabled: false
     name: "cert-manager"
     nodeSelector: {}
     tolerations: []
@@ -152,3 +152,6 @@ helmCharts:
         image:
           repository: "ghcr.io/kloudlite/kloudlite/kubelet-metrics-reexporter"
           tag: ""
+
+byok:
+  enabled: false
