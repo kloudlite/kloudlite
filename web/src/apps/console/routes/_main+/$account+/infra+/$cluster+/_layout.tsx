@@ -10,6 +10,7 @@ import withContext from '~/root/lib/app-setup/with-contxt';
 import { IExtRemixCtx } from '~/root/lib/types/common';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import {
+  BackingServices,
   ChevronRight,
   Cpu,
   Crosshair,
@@ -36,9 +37,28 @@ export interface IClusterContext extends IAccountContext {
   cluster: ICluster;
 }
 
+export const loader = async (ctx: IExtRemixCtx) => {
+  const { account, cluster } = ctx.params;
+  ensureAccountSet(ctx);
+  try {
+    const { data, errors } = await GQLServerHandler(ctx.request).getCluster({
+      name: cluster,
+    });
+    if (errors) {
+      throw errors[0];
+    }
+    ensureClusterSet(ctx);
+    return withContext(ctx, {
+      cluster: data,
+    });
+  } catch (err) {
+    return redirect(`/${account}/environments`);
+  }
+};
+
 const Cluster = () => {
   const rootContext = useOutletContext<IAccountContext>();
-  const { cluster } = useLoaderData();
+  const { cluster } = useLoaderData<typeof loader>();
   return <Outlet context={{ ...rootContext, cluster }} />;
 };
 
@@ -71,6 +91,16 @@ const ClusterTabs = () => {
           ),
           to: '/nodepools',
           value: '/nodepools',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <BackingServices size={iconSize} />
+              Managed Services
+            </span>
+          ),
+          to: '/managed-services',
+          value: '/managed-services',
         },
         {
           label: (
@@ -155,25 +185,6 @@ export const handle = ({
     logo: <Logo />,
     noLayout: true,
   };
-};
-
-export const loader = async (ctx: IExtRemixCtx) => {
-  const { account, cluster } = ctx.params;
-  ensureAccountSet(ctx);
-  try {
-    const { data, errors } = await GQLServerHandler(ctx.request).getCluster({
-      name: cluster,
-    });
-    if (errors) {
-      throw errors[0];
-    }
-    ensureClusterSet(ctx);
-    return withContext(ctx, {
-      cluster: data,
-    });
-  } catch (err) {
-    return redirect(`/${account}/environments`);
-  }
 };
 
 export default Cluster;
