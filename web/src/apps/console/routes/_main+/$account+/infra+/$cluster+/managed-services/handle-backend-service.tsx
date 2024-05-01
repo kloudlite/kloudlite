@@ -271,7 +271,6 @@ const Root = (props: IDialog) => {
                     },
                   },
                 },
-                targetNamespace: '',
               },
             },
           });

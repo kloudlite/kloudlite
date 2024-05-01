@@ -78,12 +78,14 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
 
         case 'cluster':
         case 'providersecret':
-        case 'managed_service':
           ensureAccountClientSide(params);
           return api.infraCheckNameAvailability;
         case 'helm_release':
+        case 'cluster_managed_service':
         case 'vpn_device':
         case 'nodepool':
+          ensureAccountClientSide(params);
+          ensureClusterClientSide(params);
           return api.infraCheckNameAvailability;
 
         case 'account':
@@ -180,6 +182,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
                   'vpn_device',
                   'helm_release',
                   'managed_service',
+                  'cluster_managed_service',
                 ].includes(tempResType)
                   ? {
                       clusterName: cluster,

@@ -148,7 +148,7 @@ const GridView = ({ items = [], templates = [], onAction: _ }: IResource) => {
 };
 
 const ListView = ({ items = [], templates = [], onAction }: IResource) => {
-  const { account, project } = useParams();
+  const { account, cluster } = useOutletContext<IClusterContext>();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -212,7 +212,9 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
                 render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
-            to: `/${account}/${project}/msvc/${id}/logs-n-metrics`,
+            to: `/${parseName(account)}/infra/${parseName(
+              cluster
+            )}/msvc/${id}/logs-n-metrics`,
           };
         }),
       }}

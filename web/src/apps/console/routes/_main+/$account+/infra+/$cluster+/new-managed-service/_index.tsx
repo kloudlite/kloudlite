@@ -272,7 +272,7 @@ const FieldView = ({
         ref={nameRef}
         placeholder="Enter managed service name"
         label="Name"
-        resType="managed_service"
+        resType="cluster_managed_service"
         name={values.name}
         displayName={values.displayName}
         errors={errors.name}
@@ -559,7 +559,6 @@ const ManagedServiceLayout = () => {
                       },
                     },
                   },
-                  targetNamespace: '',
                 },
               },
             });

@@ -19,12 +19,12 @@ import fake from '~/root/fake-data-generator/fake';
 import { IClusterContext } from '../../_layout';
 
 const ManagedServiceTabs = () => {
-  const { account, project, msv } = useParams();
+  const { account, msv, cluster } = useParams();
   return (
     <CommonTabs
-      baseurl={`/${account}/${project}/msvc/${msv}`}
+      baseurl={`/${account}/infra/${cluster}/msvc/${msv}`}
       backButton={{
-        to: `/${account}/${project}/managed-services`,
+        to: `/${account}/infra/${cluster}/managed-services`,
         label: 'Managed Services',
       }}
       tabs={[
@@ -58,6 +58,7 @@ export const handle = ({
   if (error) {
     return {};
   }
+
   return {
     navbar: <ManagedServiceTabs />,
     breadcrum: () => <LocalBreadcrum data={managedService} />,
@@ -69,29 +70,30 @@ export interface IManagedServiceContext extends IClusterContext {
 }
 
 const MSOutlet = ({
-  managedService: OProjectMSv,
+  managedService: OClustMSv,
 }: {
   managedService: IClusterMSv;
 }) => {
   const rootContext = useOutletContext<IManagedServiceContext>();
 
-  return <Outlet context={{ ...rootContext, managedService: OProjectMSv }} />;
+  return <Outlet context={{ ...rootContext, managedService: OClustMSv }} />;
 };
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { msv } = ctx.params;
+    const { msv, cluster } = ctx.params;
     try {
       const { data, errors } = await GQLServerHandler(
         ctx.request
       ).getClusterMSv({
-        clusterName: ctx.params.cluster,
+        clusterName: cluster,
         name: msv,
       });
       if (errors) {
         throw errors[0];
       }
+
       return {
         managedService: data,
       };
@@ -104,7 +106,7 @@ export const loader = async (ctx: IRemixCtx) => {
       };
     }
   });
-  return defer({ promise });
+  return defer({ promise: await promise });
 };
 
 const ManagedService = () => {

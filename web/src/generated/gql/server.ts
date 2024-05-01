@@ -216,7 +216,9 @@ export type PaginationIn = {
 };
 
 export type ResType =
+  | 'byok_cluster'
   | 'cluster'
+  | 'cluster_managed_service'
   | 'helm_release'
   | 'nodepool'
   | 'providersecret';
@@ -281,15 +283,15 @@ export type K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase =
   | 'Lost'
   | 'Pending';
 
-export type SearchClusterManagedService = {
-  isReady?: InputMaybe<MatchFilterIn>;
-  text?: InputMaybe<MatchFilterIn>;
-};
-
 export type SearchCluster = {
   cloudProviderName?: InputMaybe<MatchFilterIn>;
   isReady?: InputMaybe<MatchFilterIn>;
   region?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchClusterManagedService = {
+  isReady?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -516,7 +518,16 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HpaIn = {
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__InterceptIn =
   {
     enabled: Scalars['Boolean']['input'];
+    portMappings?: InputMaybe<
+      Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn>
+    >;
     toDevice: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn =
+  {
+    appPort: Scalars['Int']['input'];
+    devicePort: Scalars['Int']['input'];
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSvcIn = {
@@ -876,7 +887,6 @@ export type ClusterManagedServiceIn = {
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ClusterManagedServiceSpecIn =
   {
     msvcSpec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn;
-    targetNamespace: Scalars['String']['input'];
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn =
@@ -913,6 +923,7 @@ export type GlobalVpnIn = {
 export type GlobalVpnDeviceIn = {
   globalVPNName: Scalars['String']['input'];
   metadata: MetadataIn;
+  publiEndpoint?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type HelmReleaseIn = {
@@ -1212,6 +1223,7 @@ export type Github__Com___Kloudlite___Operator___Pkg___Operator__CheckIn = {
 export type Github__Com___Kloudlite___Operator___Pkg___Operator__CheckMetaIn = {
   debug?: InputMaybe<Scalars['Boolean']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  hide?: InputMaybe<Scalars['Boolean']['input']>;
   name: Scalars['String']['input'];
   title: Scalars['String']['input'];
 };
