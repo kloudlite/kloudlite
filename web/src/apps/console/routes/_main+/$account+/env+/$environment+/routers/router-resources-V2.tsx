@@ -332,7 +332,7 @@ const RouterResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const { environment,  account } = useParams();
+  const { environment, account } = useParams();
 
   useWatchReload(
     items.map((i) => {
@@ -368,13 +368,13 @@ const RouterResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!environment ) {
+          if (!environment) {
             throw new Error('Project and Environment is required!.');
           }
           try {
             const { errors } = await api.deleteRouter({
               envName: environment,
-              
+
               routerName: parseName(showDeleteDialog),
             });
 

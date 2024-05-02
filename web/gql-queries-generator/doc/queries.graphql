@@ -2867,6 +2867,118 @@ mutation consoleDeleteClusterMSv($clusterName: String!, $serviceName: String!) {
   )
 }
 
+mutation consoleDeleteByokCluster($name: String!) {
+  infra_deleteBYOKCluster(name: $name)
+}
+
+mutation consoleCreateBYOKCluster($cluster: BYOKClusterIn!) {
+  infra_createBYOKCluster(cluster: $cluster) {
+    id
+  }
+}
+
+mutation consoleUpdateByokCluster($clusterName: String!, $displayName: String!) {
+  infra_updateBYOKCluster(clusterName: $clusterName, displayName: $displayName) {
+    id
+  }
+}
+
+query consoleGetByokCluster($name: String!) {
+  infra_getBYOKCluster(name: $name) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    recordVersion
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
+    clusterPublicEndpoint
+    clusterSvcCIDR
+    globalVPN
+  }
+}
+
+query consoleListByokClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
+  infra_listBYOKClusters(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        clusterPublicEndpoint
+        clusterSvcCIDR
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        globalVPN
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
 query consoleGetMSvTemplate($category: String!, $name: String!) {
   infra_getManagedServiceTemplate(category: $category, name: $name) {
     active
