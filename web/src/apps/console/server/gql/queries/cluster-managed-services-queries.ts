@@ -29,6 +29,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
         $name: String!
       ) {
         infra_getClusterManagedService(clusterName: $clusterName, name: $name) {
+          id
           clusterName
           displayName
           metadata {
@@ -40,6 +41,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
             name
             namespace
           }
+          recordVersion
           spec {
             msvcSpec {
               serviceTemplate {
@@ -107,6 +109,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
           edges {
             cursor
             node {
+              id
               createdBy {
                 userEmail
                 userId
@@ -124,6 +127,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
+              recordVersion
               spec {
                 msvcSpec {
                   serviceTemplate {
@@ -147,6 +151,14 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
                   name
                   namespace
                 }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
               }
               updateTime
             }

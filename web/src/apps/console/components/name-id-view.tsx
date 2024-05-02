@@ -68,7 +68,6 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
         case 'app':
         case 'config':
         case 'environment':
-        case 'managed_service':
         case 'managed_resource':
         case 'router':
         case 'console_vpn_device':
@@ -82,8 +81,11 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
           ensureAccountClientSide(params);
           return api.infraCheckNameAvailability;
         case 'helm_release':
+        case 'cluster_managed_service':
         case 'vpn_device':
         case 'nodepool':
+          ensureAccountClientSide(params);
+          ensureClusterClientSide(params);
           return api.infraCheckNameAvailability;
 
         case 'account':
@@ -168,7 +170,6 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
                   'environment',
                   'config',
                   'secret',
-                  'project_managed_service',
                   'console_vpn_device',
                   'router',
                 ].includes(tempResType)
@@ -176,9 +177,13 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
                       envName: environment,
                     }
                   : {}),
-                ...(['nodepool', 'vpn_device', 'helm_release'].includes(
-                  tempResType
-                )
+                ...([
+                  'nodepool',
+                  'vpn_device',
+                  'helm_release',
+                  'managed_service',
+                  'cluster_managed_service',
+                ].includes(tempResType)
                   ? {
                       clusterName: cluster,
                     }

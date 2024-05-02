@@ -78,10 +78,8 @@ const Root = (props: IDialog) => {
             autoScale: props.data.spec.minCount !== props.data.spec.maxCount,
             isNameError: false,
             stateful:
-              cloudProvider === 'aws'
-                ? props.data.spec.nodeLabels[keyconstants.nodepoolStateType] ===
-                  'stateful'
-                : false,
+              props.data.spec.nodeLabels[keyconstants.nodepoolStateType] ===
+              'stateful',
           }
         : {
             nvidiaGpuEnabled: false,
@@ -319,22 +317,6 @@ const Root = (props: IDialog) => {
                     />
                   </div>
                 </div>
-
-                <div className="flex flex-col gap-md ">
-                  <div className="bodyMd-medium text-text-default">
-                    Stateful
-                  </div>
-                  <div className="flex items-center h-6xl">
-                    <Switch
-                      label=""
-                      disabled={isUpdate}
-                      checked={values.stateful}
-                      onChange={(val) => {
-                        handleChange('stateful')(dummyEvent(val));
-                      }}
-                    />
-                  </div>
-                </div>
               </div>
             </>
           )}
@@ -371,6 +353,21 @@ const Root = (props: IDialog) => {
               />
             </>
           )}
+
+          <div className="flex flex-col gap-md ">
+            <div className="bodyMd-medium text-text-default">Stateful</div>
+            <div className="flex items-center h-6xl">
+              <Switch
+                label=""
+                disabled={isUpdate}
+                checked={values.stateful}
+                onChange={(val) => {
+                  handleChange('stateful')(dummyEvent(val));
+                }}
+              />
+            </div>
+          </div>
+
           <div className="flex flex-row gap-xl items-end">
             <div className="flex flex-row gap-xl items-end flex-1 ">
               <div className="flex-1">

@@ -1695,7 +1695,6 @@ export type ConsoleInfraCheckNameAvailabilityQuery = {
 export type ConsoleCoreCheckNameAvailabilityQueryVariables = Exact<{
   resType: ConsoleResType;
   name: Scalars['String']['input'];
-  projectName?: InputMaybe<Scalars['String']['input']>;
   envName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
@@ -4295,8 +4294,10 @@ export type ConsoleGetClusterMSvQueryVariables = Exact<{
 
 export type ConsoleGetClusterMSvQuery = {
   infra_getClusterManagedService?: {
+    id: string;
     clusterName: string;
     displayName: string;
+    recordVersion: number;
     metadata?: {
       annotations?: any;
       creationTimestamp: any;
@@ -4343,9 +4344,11 @@ export type ConsoleListClusterMSvsQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        id: string;
         creationTime: any;
         displayName: string;
         markedForDeletion?: boolean;
+        recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
@@ -4367,6 +4370,14 @@ export type ConsoleListClusterMSvsQuery = {
             name: string;
             namespace: string;
           }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
         };
       };
     }>;

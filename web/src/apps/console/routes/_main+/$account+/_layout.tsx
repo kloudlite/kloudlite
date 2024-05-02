@@ -58,7 +58,43 @@ import { cn } from '~/components/utils';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
 import useActiveDevice from '~/console/hooks/use-device';
+import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { IConsoleRootContext } from '../_layout/_layout';
+
+export const loader = async (ctx: IRemixCtx) => {
+  const { account } = ctx.params;
+  let acccountData: IAccount;
+
+  try {
+    ensureAccountSet(ctx);
+    const { data, errors } = await GQLServerHandler(ctx.request).getAccount({
+      accountName: account,
+    });
+    if (errors) {
+      throw errors[0];
+    }
+
+    const { data: msvTemplates, errors: msvError } = await GQLServerHandler(
+      ctx.request
+    ).listMSvTemplates({});
+
+    if (msvError) {
+      throw msvError[0];
+    }
+
+    acccountData = data;
+    return {
+      msvtemplates: msvTemplates,
+      account: data,
+    };
+  } catch (err) {
+    const k = redirect('/teams') as any;
+    return k as {
+      account: typeof acccountData;
+      msvtemplates: IMSvTemplates;
+    };
+  }
+};
 
 const _ProfileIcon = ({ size = 16 }: { size?: number }) => {
   return (
@@ -133,7 +169,7 @@ const _AccountMenu = ({ account }: { account: IAccount }) => {
 };
 
 const Account = () => {
-  const { account, devicesForUser } = useLoaderData();
+  const { account, msvtemplates } = useLoaderData<typeof loader>();
   const rootContext = useOutletContext<IConsoleRootContext>();
   const { unloadState, reset, proceed } = useUnsavedChanges();
 
@@ -143,7 +179,7 @@ const Account = () => {
   }, []);
   return (
     <>
-      <Outlet context={{ ...rootContext, account, devicesForUser }} />
+      <Outlet context={{ ...rootContext, account, msvtemplates }} />
       <Popup.Root
         show={unloadState === 'blocked'}
         onOpenChange={() => {
@@ -455,33 +491,9 @@ export const handle = ({ account }: any) => {
   };
 };
 
-export const loader = async (ctx: IRemixCtx) => {
-  const { account } = ctx.params;
-  let acccountData: IAccount;
-
-  try {
-    ensureAccountSet(ctx);
-    const { data, errors } = await GQLServerHandler(ctx.request).getAccount({
-      accountName: account,
-    });
-    if (errors) {
-      throw errors[0];
-    }
-
-    acccountData = data;
-    return {
-      account: data,
-    };
-  } catch (err) {
-    const k = redirect('/teams') as any;
-    return k as {
-      account: typeof acccountData;
-    };
-  }
-};
-
 export interface IAccountContext extends IConsoleRootContext {
   account: LoaderResult<typeof loader>['account'];
+  msvtemplates: IMSvTemplates;
 }
 
 export const shouldRevalidate: ShouldRevalidateFunction = ({

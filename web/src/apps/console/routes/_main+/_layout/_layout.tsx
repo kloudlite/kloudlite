@@ -37,7 +37,6 @@ import {
   Container as ContainerIcon,
   GearSix,
   Project,
-  BackingServices,
 } from '~/console/components/icons';
 
 const restActions = (ctx: IExtRemixCtx) => {
@@ -86,16 +85,6 @@ const AccountTabs = () => {
           ),
           to: '/infra',
           value: '/infra',
-        },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
-              <BackingServices size={iconSize} />
-              Managed Services
-            </span>
-          ),
-          to: '/managed-services',
-          value: '/managed-services',
         },
         {
           label: (

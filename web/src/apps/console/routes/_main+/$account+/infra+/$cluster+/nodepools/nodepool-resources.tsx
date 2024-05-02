@@ -378,7 +378,6 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
       {items.map((item, index) => {
         const { name, id } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        console.log('item....', item);
         return (
           <List.Row
             key={id}

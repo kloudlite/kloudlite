@@ -38,7 +38,6 @@ import { Button } from '~/components/atoms/button';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { ILoginUrls, ILogins } from '~/console/server/gql/queries/git-queries';
 import logger from '~/root/lib/client/helpers/log';
-import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { IAccountContext } from '../../_layout';
 
 const Environment = () => {
@@ -340,7 +339,6 @@ export interface IEnvironmentContext extends IAccountContext {
   loginUrls: LoaderResult<typeof loader>['loginUrls'];
   environment: LoaderResult<typeof loader>['environment'];
   cluster: LoaderResult<typeof loader>['cluster'];
-  msvtemplates: IMSvTemplates;
 }
 
 export default Environment;
