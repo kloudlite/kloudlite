@@ -13,6 +13,7 @@ import { domainQueries } from './queries/domain-queries';
 import { environmentQueries } from './queries/environment-queries';
 import { gitQueries } from './queries/git-queries';
 import { nodepoolQueries } from './queries/nodepool-queries';
+import { byokClusterQueries } from './queries/byok-cluster-queries';
 import { providerSecretQueries } from './queries/provider-secret-queries';
 import { repoQueries } from './queries/repo-queries';
 import { routerQueries } from './queries/router-queries';
@@ -53,6 +54,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...pvQueries(executor),
     ...buildRunQueries(executor),
     ...clusterManagedServicesQueries(executor),
+    ...byokClusterQueries(executor),
     ...managedTemplateQueries(executor),
     ...managedResourceQueries(executor),
     ...helmChartQueries(executor),

@@ -4399,6 +4399,120 @@ export type ConsoleDeleteClusterMSvMutation = {
   infra_deleteClusterManagedService: boolean;
 };
 
+export type ConsoleDeleteByokClusterMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteByokClusterMutation = {
+  infra_deleteBYOKCluster: boolean;
+};
+
+export type ConsoleCreateByokClusterMutationVariables = Exact<{
+  cluster: ByokClusterIn;
+}>;
+
+export type ConsoleCreateByokClusterMutation = {
+  infra_createBYOKCluster?: { id: string };
+};
+
+export type ConsoleUpdateByokClusterMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  displayName: Scalars['String']['input'];
+}>;
+
+export type ConsoleUpdateByokClusterMutation = {
+  infra_updateBYOKCluster?: { id: string };
+};
+
+export type ConsoleGetByokClusterQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetByokClusterQuery = {
+  infra_getBYOKCluster?: {
+    accountName: string;
+    creationTime: any;
+    displayName: string;
+    id: string;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    updateTime: any;
+    clusterPublicEndpoint: string;
+    clusterSvcCIDR: string;
+    globalVPN?: string;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    syncStatus: {
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+      syncScheduledAt?: any;
+    };
+  };
+};
+
+export type ConsoleListByokClustersQueryVariables = Exact<{
+  search?: InputMaybe<SearchCluster>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListByokClustersQuery = {
+  infra_listBYOKClusters?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        clusterPublicEndpoint: string;
+        clusterSvcCIDR: string;
+        creationTime: any;
+        displayName: string;
+        globalVPN?: string;
+        id: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
 export type ConsoleGetMSvTemplateQueryVariables = Exact<{
   category: Scalars['String']['input'];
   name: Scalars['String']['input'];

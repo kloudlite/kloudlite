@@ -1,32 +1,29 @@
-import { Plus } from '~/iotconsole/components/icons';
+import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
-import {
-  LoadingComp,
-  pWrapper,
-} from '~/iotconsole/components/loading-component';
-import Wrapper from '~/iotconsole/components/wrapper';
-import { getPagination, getSearch } from '~/iotconsole/server/utils/common';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import Wrapper from '~/console/components/wrapper';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
-import { ensureAccountSet } from '~/iotconsole/server/utils/auth-utils';
-import { GQLServerHandler } from '~/iotconsole/server/gql/saved-queries';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { parseNodes } from '~/iotconsole/server/r-utils/common';
+import { parseNodes } from '~/console/server/r-utils/common';
 import { useState } from 'react';
+import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
-import DeploymentResource from './deployment-resource';
-import HandleDeployment from './handle-deployment';
+import HandleByokCluster from './handle-byok-cluster';
+import ByokClusterResource from './byok-cluster-resource';
 
 export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { project } = ctx.params;
 
     const { data, errors } = await GQLServerHandler(
       ctx.request
-    ).listIotDeployments({
-      pq: getPagination(ctx),
+    ).listByokClusters({
+      pagination: getPagination(ctx),
       search: getSearch(ctx),
     });
     if (errors) {
@@ -35,14 +32,14 @@ export const loader = (ctx: IRemixCtx) => {
     }
 
     return {
-      deploymentData: data || {},
+      byokClusterData: data || {},
     };
   });
 
   return defer({ promise });
 };
 
-const Deployments = () => {
+const ByocClusters = () => {
   // return <Wip />;
   const [visible, setVisible] = useState(false);
 
@@ -52,21 +49,22 @@ const Deployments = () => {
     <>
       <LoadingComp
         data={promise}
-        // skeletonData={{
-        //   projectsData: fake.ConsoleListProjectsQuery.core_listProjects as any,
-        // }}
+        skeletonData={{
+          byokClusterData: fake.ConsoleListByokClustersQuery
+            .infra_listBYOKClusters as any,
+        }}
       >
-        {({ deploymentData }) => {
-          const deployments = parseNodes(deploymentData);
+        {({ byokClusterData }) => {
+          const byocClusterData = parseNodes(byokClusterData);
 
           return (
             <Wrapper
-              header={{
-                title: 'Deployments',
-                action: deployments.length > 0 && (
+              secondaryHeader={{
+                title: 'Clusters',
+                action: byocClusterData.length > 0 && (
                   <Button
                     variant="primary"
-                    content="Create Deployment"
+                    content="Create Cluster"
                     prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
@@ -75,16 +73,16 @@ const Deployments = () => {
                 ),
               }}
               empty={{
-                is: deployments.length === 0,
-                title: 'This is where you’ll manage your deployment.',
+                is: byocClusterData.length === 0,
+                title: 'This is where you’ll manage your kuberenetes cluster.',
                 content: (
                   <p>
-                    You can create a new deployment and manage the listed
-                    deployments.
+                    You can create a new kubernetes cluster and manage the
+                    listed kubernetes clusters.
                   </p>
                 ),
                 action: {
-                  content: 'Create new deployment',
+                  content: 'Create new Cluster',
                   prefix: <Plus />,
                   onClick: () => {
                     setVisible(true);
@@ -94,15 +92,15 @@ const Deployments = () => {
               }}
               tools={<Tools />}
               // pagination={{
-              //   pageInfo: deploymentData.pageInfo,
+              //   pageInfo: byokClusterData.pageInfo,
               // }}
             >
-              <DeploymentResource items={deployments} />
+              <ByokClusterResource items={byocClusterData} />
             </Wrapper>
           );
         }}
       </LoadingComp>
-      <HandleDeployment
+      <HandleByokCluster
         {...{
           visible,
           setVisible,
@@ -113,4 +111,4 @@ const Deployments = () => {
   );
 };
 
-export default Deployments;
+export default ByocClusters;
