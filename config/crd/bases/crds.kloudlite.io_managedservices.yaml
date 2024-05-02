@@ -139,6 +139,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
