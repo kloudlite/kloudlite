@@ -27,7 +27,6 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { IDialogBase } from '~/console/components/types.d';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
-import { LoadingPlaceHolder } from '~/console/components/loading';
 import { downloadFile } from '~/console/utils/commons';
 import CodeView from '~/console/components/code-view';
 import { InfoLabel } from '~/console/components/commons';
@@ -37,6 +36,7 @@ import { IConsoleDevice } from '~/console/server/gql/queries/console-vpn-queries
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Select from '~/components/atoms/select';
 import { ConsoleApiType } from '../server/gql/saved-queries';
+import ExtendedFilledTab from '../components/extended-filled-tab';
 
 interface IExposedPorts {
   targetPort?: number;
@@ -291,50 +291,26 @@ export const ShowWireguardConfig = ({
   visible,
   setVisible,
   data,
-  mode = 'config',
 }: {
   visible: boolean;
   setVisible: (visible: boolean) => void;
-  data: { device: string };
-  mode: 'qr' | 'config';
+  data?: {
+    value: string;
+    encoding: string;
+  };
 }) => {
-  const [loading, setLoading] = useState(false);
-  const [config, setConfig] = useState<string | undefined>(undefined);
-  const api = useConsoleApi();
-
-  useEffect(() => {
-    if (visible) {
-      (async () => {
-        setLoading(true);
-        try {
-          const { errors, data: out } = await api.getConsoleVpnDevice({
-            name: data.device,
-          });
-          if (errors) {
-            throw errors[0];
-          }
-          if (out.wireguardConfig) {
-            setConfig(decodeConfig(out.wireguardConfig));
-          } else {
-            setConfig(undefined);
-          }
-        } catch (error) {
-          handleError(error);
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }
-  }, [visible]);
+  const [mode, setMode] = useState<'config' | 'qr'>('qr');
 
   const modeView = () => {
-    if (!config) {
+    if (!data) {
       return (
         <div className="h-[100px] flex items-center justify-center">
           No wireguard config found.
         </div>
       );
     }
+
+    const config = decodeConfig(data);
     switch (mode) {
       case 'qr':
         return <QRCodeView data={config} />;
@@ -358,34 +334,45 @@ export const ShowWireguardConfig = ({
         {mode === 'config' ? 'Wireguard Config' : 'Wireguard Config QR Code'}
       </Popup.Header>
       <Popup.Content>
-        {loading ? (
-          <LoadingPlaceHolder
-            height={100}
-            title={
-              mode === 'config'
-                ? 'Loading wireguard config...'
-                : 'Loading wireguard config qr code...'
-            }
-          />
-        ) : (
-          modeView()
-        )}
-      </Popup.Content>
-      {!loading && config && (
-        <Popup.Footer>
-          <Popup.Button
-            onClick={() => {
-              downloadConfig({
-                filename: `${data.device}-wireguardconfig.yaml`,
-                data: config,
-              });
+        <div>
+          <ExtendedFilledTab
+            value={mode}
+            onChange={(v) => {
+              setMode(v as any);
             }}
-            content="Export"
-            prefix={<ArrowLineDown />}
-            variant="primary"
+            items={[
+              {
+                label: 'QR Code',
+                value: 'qr',
+              },
+              {
+                label: 'Config',
+                value: 'config',
+              },
+            ]}
           />
-        </Popup.Footer>
-      )}
+
+          {modeView()}
+        </div>
+      </Popup.Content>
+      <Popup.Footer>
+        <Popup.Button
+          onClick={() => {
+            if (!data) {
+              toast.error('No wireguard config found.');
+              return;
+            }
+
+            downloadConfig({
+              filename: `wireguardconfig.yaml`,
+              data: decodeConfig(data),
+            });
+          }}
+          content="Export"
+          prefix={<ArrowLineDown />}
+          variant="primary"
+        />
+      </Popup.Footer>
     </Popup.Root>
   );
 };

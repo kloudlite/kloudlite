@@ -24,14 +24,8 @@ export type IManagedResources = NN<
 export const managedResourceQueries = (executor: IExecutor) => ({
   getManagedResource: executor(
     gql`
-      query Core_getManagedResource(
-        $envName: String!
-        $name: String!
-      ) {
-        core_getManagedResource(
-          envName: $envName
-          name: $name
-        ) {
+      query Core_getManagedResource($envName: String!, $name: String!) {
+        core_getManagedResource(envName: $envName, name: $name) {
           displayName
           enabled
           environmentName
@@ -70,10 +64,7 @@ export const managedResourceQueries = (executor: IExecutor) => ({
         $envName: String!
         $mres: ManagedResourceIn!
       ) {
-        core_createManagedResource(
-          envName: $envName
-          mres: $mres
-        ) {
+        core_createManagedResource(envName: $envName, mres: $mres) {
           id
         }
       }
@@ -90,10 +81,7 @@ export const managedResourceQueries = (executor: IExecutor) => ({
         $envName: String!
         $mres: ManagedResourceIn!
       ) {
-        core_updateManagedResource(
-          envName: $envName
-          mres: $mres
-        ) {
+        core_updateManagedResource(envName: $envName, mres: $mres) {
           id
         }
       }
@@ -111,11 +99,7 @@ export const managedResourceQueries = (executor: IExecutor) => ({
         $search: SearchManagedResources
         $pq: CursorPaginationIn
       ) {
-        core_listManagedResources(
-          envName: $envName
-          search: $search
-          pq: $pq
-        ) {
+        core_listManagedResources(envName: $envName, search: $search, pq: $pq) {
           edges {
             cursor
             node {
@@ -215,10 +199,7 @@ export const managedResourceQueries = (executor: IExecutor) => ({
         $envName: String!
         $mresName: String!
       ) {
-        core_deleteManagedResource(
-          envName: $envName
-          mresName: $mresName
-        )
+        core_deleteManagedResource(envName: $envName, mresName: $mresName)
       }
     `,
     {

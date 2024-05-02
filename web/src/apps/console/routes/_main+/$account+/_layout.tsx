@@ -45,7 +45,6 @@ import {
 import OptionList from '~/components/atoms/option-list';
 import { Button, IconButton } from '~/components/atoms/button';
 import HandleConsoleDevices, {
-  ShowWireguardConfig,
   decodeConfig,
   switchEnvironment,
 } from '~/console/page-components/handle-console-devices';
@@ -341,14 +340,14 @@ const DevicesMenu = () => {
           setVisible: () => setIsUpdate(false),
         }}
       />
-      <ShowWireguardConfig
-        {...{
-          visible: showQR,
-          setVisible: () => setShowQR(false),
-          data: { device: parseName(device) },
-          mode: 'qr',
-        }}
-      />
+      {/* <ShowWireguardConfig */}
+      {/*   {...{ */}
+      {/*     visible: showQR, */}
+      {/*     setVisible: () => setShowQR(false), */}
+      {/*     data: { device: parseName(device) }, */}
+      {/*     mode: 'qr', */}
+      {/*   }} */}
+      {/* /> */}
     </>
   );
 };
@@ -487,7 +486,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
 export const handle = ({ account }: any) => {
   return {
     breadcrum: () => <CurrentBreadcrum account={account} />,
-    devicesMenu: () => <DevicesMenu />,
+    // devicesMenu: () => <DevicesMenu />,
   };
 };
 

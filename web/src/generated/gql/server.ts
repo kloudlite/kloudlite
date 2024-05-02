@@ -823,6 +823,7 @@ export type RepositoryIn = {
 };
 
 export type ByokClusterIn = {
+  clusterPublicEndpoint: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
   metadata: MetadataIn;
 };
@@ -5028,6 +5029,53 @@ export type ConsoleListImagePullSecretsQuery = {
           state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
           syncScheduledAt?: any;
         };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleListGlobalVpnDevicesQueryVariables = Exact<{
+  gvpn: Scalars['String']['input'];
+  search?: InputMaybe<SearchGlobalVpnDevices>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListGlobalVpnDevicesQuery = {
+  infra_listGlobalVPNDevices?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        creationTime: any;
+        displayName: string;
+        globalVPNName: string;
+        id: string;
+        ipAddr: string;
+        markedForDeletion?: boolean;
+        privateKey: string;
+        publicKey: string;
+        publiEndpoint?: string;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        wireguardConfig?: { value: string; encoding: string };
       };
     }>;
     pageInfo: {

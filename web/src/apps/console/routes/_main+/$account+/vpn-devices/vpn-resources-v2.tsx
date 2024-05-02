@@ -1,32 +1,31 @@
-import { Copy, GearSix, Globe, ShieldCheck } from '~/console/components/icons';
+import { Eye, GearSix } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { useState } from 'react';
 import { generateKey, titleCase } from '~/components/utils';
+import { CopyButton, listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,
   ListTitle,
-  listClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { IEnvironments } from '~/console/server/gql/queries/environment-queries';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
-import { Badge } from '~/components/atoms/badge';
-import CloneEnvironment from './clone-environment';
+import { IGlobalVpnDevices } from '~/console/server/gql/queries/global-vpn-queries';
+import { ShowWireguardConfig } from '~/console/page-components/handle-console-devices';
+import { useState } from 'react';
+import { Button } from '~/components/atoms/button';
 
-const RESOURCE_NAME = 'environment';
-type BaseType = ExtractNodeType<IEnvironments>;
+type BaseType = ExtractNodeType<IGlobalVpnDevices>;
+const RESOURCE_NAME = 'global-vpn';
 
 const parseItem = (item: BaseType) => {
   return {
@@ -39,30 +38,16 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-type OnAction = ({ action, item }: { action: 'clone'; item: BaseType }) => void;
-
-type IExtraButton = {
-  onAction: OnAction;
-  item: BaseType;
-};
-
-const ExtraButton = ({ item, onAction }: IExtraButton) => {
+const ExtraButton = ({ cluster }: { cluster: BaseType }) => {
   const { account } = useParams();
   return (
     <ResourceExtraAction
       options={[
         {
-          label: 'Clone',
-          icon: <Copy size={16} />,
-          type: 'item',
-          key: 'clone',
-          onClick: () => onAction({ action: 'clone', item }),
-        },
-        {
           label: 'Settings',
           icon: <GearSix size={16} />,
           type: 'item',
-          to: `/${account}/env/${parseName(item)}/settings/general`,
+          to: `/${account}/infra/${cluster.metadata.name}/settings`,
           key: 'settings',
         },
       ]}
@@ -70,38 +55,36 @@ const ExtraButton = ({ item, onAction }: IExtraButton) => {
   );
 };
 
-interface IResource {
-  items: BaseType[];
-  onAction: OnAction;
-}
-
-const GridView = ({ items = [], onAction }: IResource) => {
+const GridView = ({ items }: { items: BaseType[] }) => {
   const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        const lR = listRender({ keyPrefix, resource: item });
+        const status = lR.statusRender({ className: '' });
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/env/${id}`}
+            to={`/${account}/infra/${id}/overview`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: listClass.title,
                 render: () => (
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    action={<ExtraButton item={item} onAction={onAction} />}
-                    avatar={<ConsoleAvatar name={id} />}
+                    action={
+                      // <ExtraButton status={status.status} cluster={item} />
+                      <span />
+                    }
                   />
                 ),
               },
+              status,
               {
                 key: generateKey(keyPrefix, updateInfo.author),
-                className: listClass.author,
                 render: () => (
                   <ListItem
                     data={updateInfo.author}
@@ -116,10 +99,8 @@ const GridView = ({ items = [], onAction }: IResource) => {
     </Grid.Root>
   );
 };
-
-const ListView = ({ items, onAction }: IResource) => {
-  const { account } = useParams();
-
+const ListView = ({ items }: { items: BaseType[] }) => {
+  const [visible, setVisible] = useState(false);
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -133,16 +114,21 @@ const ListView = ({ items, onAction }: IResource) => {
               </div>
             ),
             name: 'name',
-            className: 'w-[180px]',
+            className: 'flex-1',
           },
           {
-            render: () => 'Status',
-            name: 'status',
-            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+            render: () => 'Device Config',
+            name: 'config',
+            className: 'w-[250px]',
           },
           {
-            render: () => 'Environmet',
-            name: 'environment',
+            render: () => 'Host',
+            name: 'host',
+            className: 'w-[250px]',
+          },
+          {
+            render: () => 'IP',
+            name: 'ip',
             className: 'w-[180px]',
           },
           {
@@ -150,41 +136,77 @@ const ListView = ({ items, onAction }: IResource) => {
             name: 'updated',
             className: 'w-[180px]',
           },
-          {
-            render: () => '',
-            name: 'action',
-            className: 'w-[24px]',
-          },
+          // {
+          //   render: () => '',
+          //   name: 'action',
+          //   className: 'w-[24px]',
+          // },
         ],
         rows: items.map((i) => {
           const { name, id, updateInfo } = parseItem(i);
+
           return {
             columns: {
               name: {
                 render: () => (
                   <ListTitle
-                    title={name}
+                    title={name || id}
                     subtitle={id}
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
-              status: {
-                render: () => <SyncStatusV2 item={i} />,
-              },
-              environment: {
+              config: {
                 render: () => (
-                  <Badge
-                    icon={
-                      i.spec?.routing?.mode === 'private' ? (
-                        <ShieldCheck />
-                      ) : (
-                        <Globe />
-                      )
+                  <ListItem
+                    noTooltip
+                    data={
+                      <div>
+                        <Button
+                          variant="plain"
+                          onClick={() => setVisible((s) => !s)}
+                          content="View"
+                          suffix={<Eye />}
+                        />
+
+                        <ShowWireguardConfig
+                          setVisible={setVisible}
+                          visible={visible}
+                          data={i.wireguardConfig}
+                        />
+                      </div>
                     }
-                  >
-                    {i.spec?.routing?.mode}
-                  </Badge>
+                  />
+                ),
+              },
+              host: {
+                render: () => (
+                  <ListItem
+                    noTooltip
+                    data={
+                      <CopyButton
+                        title={
+                          <span className="text-sm">
+                            {parseName(i)}.device.local
+                          </span>
+                        }
+                        value={`${parseName(i)}.device.local`}
+                      />
+                    }
+                  />
+                ),
+              },
+              ip: {
+                render: () => (
+                  <ListItem
+                    noTooltip
+                    data={
+                      <CopyButton
+                        title={<span className="text-sm">{i.ipAddr}</span>}
+                        value={i.ipAddr}
+                      />
+                    }
+                  />
                 ),
               },
               updated: {
@@ -196,10 +218,10 @@ const ListView = ({ items, onAction }: IResource) => {
                 ),
               },
               action: {
-                render: () => <ExtraButton item={i} onAction={onAction} />,
+                render: () => <ExtraButton cluster={i} />,
               },
             },
-            to: `/${account}/env/${id}`,
+            hideDetailSeperator: true,
           };
         }),
       }}
@@ -207,47 +229,20 @@ const ListView = ({ items, onAction }: IResource) => {
   );
 };
 
-const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
+const ClusterResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const { account } = useOutletContext<IAccountContext>();
   useWatchReload(
     items.map((i) => {
-      return `account:${parseName(account)}.environment:${parseName(i)}`;
+      return `account:${parseName(account)}.cluster:${parseName(i)}`;
     })
   );
 
-  const [visible, setVisible] = useState<BaseType | null>(null);
-  const props: IResource = {
-    items,
-    onAction: ({ action, item }) => {
-      console.log('heeloo');
-      switch (action) {
-        case 'clone':
-          setVisible(item);
-          break;
-        default:
-          break;
-      }
-    },
-  };
-
   return (
-    <>
-      <ListGridView
-        listView={<ListView {...props} />}
-        gridView={<GridView {...props} />}
-      />
-      <CloneEnvironment
-        {...{
-          isUpdate: true,
-          visible: !!visible,
-          setVisible: () => {
-            setVisible(null);
-          },
-          data: visible!,
-        }}
-      />
-    </>
+    <ListGridView
+      gridView={<GridView {...{ items }} />}
+      listView={<ListView {...{ items }} />}
+    />
   );
 };
 
-export default EnvironmentResourcesV2;
+export default ClusterResourcesV2;

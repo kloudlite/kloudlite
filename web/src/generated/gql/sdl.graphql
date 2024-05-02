@@ -164,9 +164,12 @@ type BuildRunPaginatedRecords {
 
 type BYOKCluster {
   accountName: String!
+  clusterPublicEndpoint: String!
+  clusterSvcCIDR: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
+  globalVPN: String
   id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -182,6 +185,7 @@ type BYOKClusterEdge {
 }
 
 input BYOKClusterIn {
+  clusterPublicEndpoint: String!
   displayName: String!
   metadata: MetadataIn!
 }
@@ -3400,7 +3404,7 @@ type Mutation {
   infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean!
   infra_deleteProviderSecret(secretName: String!): Boolean!
   infra_deletePV(clusterName: String!, pvName: String!): Boolean!
-  infra_updatebYOKCluster(clusterName: String!, displayName: String!): BYOKCluster
+  infra_updateBYOKCluster(clusterName: String!, displayName: String!): BYOKCluster
   infra_updateCluster(cluster: ClusterIn!): Cluster
   infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
   infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry

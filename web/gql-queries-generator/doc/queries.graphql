@@ -3549,6 +3549,62 @@ query consoleListImagePullSecrets($envName: String!, $search: SearchImagePullSec
   }
 }
 
+query consoleListGlobalVpnDevices($gvpn: String!, $search: SearchGlobalVPNDevices, $pagination: CursorPaginationIn) {
+  infra_listGlobalVPNDevices(
+    gvpn: $gvpn
+    search: $search
+    pagination: $pagination
+  ) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        globalVPNName
+        id
+        ipAddr
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        privateKey
+        publicKey
+        publiEndpoint
+        recordVersion
+        updateTime
+        wireguardConfig {
+          value
+          encoding
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
 query iotconsoleAccountCheckNameAvailability($name: String!) {
   accounts_checkNameAvailability(name: $name) {
     result

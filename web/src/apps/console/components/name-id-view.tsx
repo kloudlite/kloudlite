@@ -150,10 +150,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
     const { cluster, environment } = params;
     useDebounce(
       async () => {
-        let tempResType = resType;
-        if (resType === 'console_vpn_device') {
-          tempResType = 'vpn_device';
-        }
+        const tempResType = resType;
         if (!isUpdate)
           if (displayName) {
             setNameLoading(true);
@@ -161,17 +158,16 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
             try {
               // @ts-ignore
               const { data, errors } = await checkApi({
-                // @ts-ignore
                 resType: tempResType,
                 name: `${name}`,
                 ...([
-                  'project',
                   'app',
                   'environment',
                   'config',
                   'secret',
                   'console_vpn_device',
                   'router',
+                  'managed_resource',
                 ].includes(tempResType)
                   ? {
                       envName: environment,
@@ -186,11 +182,6 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
                 ].includes(tempResType)
                   ? {
                       clusterName: cluster,
-                    }
-                  : {}),
-                ...(tempResType === 'managed_resource'
-                  ? {
-                      namespace: '',
                     }
                   : {}),
               });

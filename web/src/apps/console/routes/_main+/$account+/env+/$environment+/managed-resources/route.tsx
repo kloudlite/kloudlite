@@ -7,7 +7,7 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { IRemixCtx } from '~/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
-import { Button } from '~/components/atoms/button.js';
+import { Button } from '~/components/atoms/button';
 import Tools from './tools';
 import ManagedResourceResourcesV2 from './managed-resources-resource-v2';
 
@@ -17,7 +17,6 @@ export const loader = (ctx: IRemixCtx) => {
     const { data: mData, errors: mErrors } = await GQLServerHandler(
       ctx.request
     ).listManagedResources({
-      
       envName: environment,
     });
 

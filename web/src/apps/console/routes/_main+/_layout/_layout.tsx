@@ -37,6 +37,7 @@ import {
   Container as ContainerIcon,
   GearSix,
   Project,
+  WireGuardlogo,
 } from '~/console/components/icons';
 
 const restActions = (ctx: IExtRemixCtx) => {
@@ -95,6 +96,16 @@ const AccountTabs = () => {
           ),
           to: '/packages/repos',
           value: '/packages',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <WireGuardlogo size={iconSize} />
+              Vpn Devices
+            </span>
+          ),
+          to: '/vpn-devices',
+          value: '/vpn-devices',
         },
         {
           label: (

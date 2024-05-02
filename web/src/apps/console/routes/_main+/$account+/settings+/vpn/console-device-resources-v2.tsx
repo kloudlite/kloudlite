@@ -25,12 +25,10 @@ import {
 import { useReload } from '~/lib/client/helpers/reloader';
 import { handleError } from '~/lib/utils/common';
 import { IConsoleDevices } from '~/console/server/gql/queries/console-vpn-queries';
-import HandleConsoleDevices, {
-  ShowWireguardConfig,
-} from '~/console/page-components/handle-console-devices';
 import ListV2 from '~/console/components/listV2';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import { SyncStatusV2 } from '~/console/components/sync-status';
+import HandleConsoleDevices from '~/console/page-components/handle-console-devices';
 
 const RESOURCE_NAME = 'device';
 type BaseType = ExtractNodeType<IConsoleDevices>;
@@ -274,14 +272,14 @@ const ConsoleDeviceResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
           }
         }}
       />
-      <ShowWireguardConfig
-        {...{
-          visible: !!showWireguardConfig,
-          setVisible: () => setShowWireguardConfig(null),
-          data: showWireguardConfig!,
-          mode: showWireguardConfig?.mode || 'config',
-        }}
-      />
+      {/* <ShowWireguardConfig */}
+      {/*   {...{ */}
+      {/*     visible: !!showWireguardConfig, */}
+      {/*     setVisible: () => setShowWireguardConfig(null), */}
+      {/*     data: showWireguardConfig!, */}
+      {/*     mode: showWireguardConfig?.mode || 'config', */}
+      {/*   }} */}
+      {/* /> */}
       <HandleConsoleDevices
         {...{
           isUpdate: true,
