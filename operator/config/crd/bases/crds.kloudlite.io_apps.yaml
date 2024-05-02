@@ -278,8 +278,22 @@ spec:
                 type: object
               intercept:
                 properties:
+                  deviceHostSuffix:
+                    type: string
                   enabled:
                     type: boolean
+                  portMappings:
+                    items:
+                      properties:
+                        appPort:
+                          type: integer
+                        devicePort:
+                          type: integer
+                      required:
+                      - appPort
+                      - devicePort
+                      type: object
+                    type: array
                   toDevice:
                     minLength: 1
                     type: string
@@ -536,6 +550,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:

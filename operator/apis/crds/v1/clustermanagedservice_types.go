@@ -9,7 +9,7 @@ import (
 
 // ClusterManagedServiceSpec defines the desired state of ClusterManagedService
 type ClusterManagedServiceSpec struct {
-	TargetNamespace string             `json:"targetNamespace"`
+	TargetNamespace string             `json:"targetNamespace" graphql:"noinput"`
 	MSVCSpec        ManagedServiceSpec `json:"msvcSpec"`
 }
 
