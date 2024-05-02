@@ -29,6 +29,8 @@ import LogAction from '~/console/page-components/log-action';
 import { useDataState } from '~/console/page-components/common-state';
 import { useState } from 'react';
 import { SyncStatusV2 } from '~/console/components/sync-status';
+import { Button } from '~/components/atoms/button';
+import { dayjs } from '~/components/molecule/dayjs';
 
 type BaseType = ExtractNodeType<IClusters>;
 const RESOURCE_NAME = 'cluster';
@@ -164,11 +166,11 @@ const ListView = ({ items }: { items: BaseType[] }) => {
             name: 'name',
             className: 'w-[180px]',
           },
-          // {
-          //   render: () => '',
-          //   name: 'logs',
-          //   className: 'w-[180px]',
-          // },
+          {
+            render: () => '',
+            name: 'logs',
+            className: 'min-w-[180px] flex-1 flex items-center justify-center',
+          },
           {
             render: () => 'Status',
             name: 'status',
@@ -193,9 +195,9 @@ const ListView = ({ items }: { items: BaseType[] }) => {
         rows: items.map((i) => {
           const { name, id, updateInfo, provider } = parseItem(i);
 
-          // const isLatest = dayjs(i.updateTime).isAfter(
-          //   dayjs().subtract(3, 'hour')
-          // );
+          const isLatest = dayjs(i.updateTime).isAfter(
+            dayjs().subtract(3, 'hour')
+          );
 
           return {
             columns: {
@@ -208,25 +210,26 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   />
                 ),
               },
-              // logs: {
-              //   render: () => (
-              //     <Button
-              //       size="sm"
-              //       variant="basic"
-              //       content={open === i.id ? 'Hide Logs' : 'Show Logs'}
-              //       onClick={(e) => {
-              //         e.preventDefault();
+              logs: {
+                render: () =>
+                  isLatest ? (
+                    <Button
+                      size="sm"
+                      variant="basic"
+                      content={open === i.id ? 'Hide Logs' : 'Show Logs'}
+                      onClick={(e) => {
+                        e.preventDefault();
 
-              //         setOpen((s) => {
-              //           if (s === i.id) {
-              //             return '';
-              //           }
-              //           return i.id;
-              //         });
-              //       }}
-              //     />
-              //   ),
-              // },
+                        setOpen((s) => {
+                          if (s === i.id) {
+                            return '';
+                          }
+                          return i.id;
+                        });
+                      }}
+                    />
+                  ) : null,
+              },
               status: {
                 render: () => <SyncStatusV2 item={i} />,
               },

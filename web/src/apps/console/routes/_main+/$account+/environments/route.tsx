@@ -6,7 +6,7 @@ import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import HandleScope from '~/console/page-components/new-scope';
+import HandleScope from '~/console/page-components/handle-environment';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
