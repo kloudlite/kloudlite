@@ -6,13 +6,7 @@
 {{- $podLabels := get . "pod-labels" | default dict }}
 {{- $podAnnotations := get . "pod-annotations" | default dict }}
 
-{{/* for observability */}}
-{{- $workspaceName := get . "workspace-name" }} 
-{{- $workspaceTargetNs := get . "workspace-target-ns" }} 
-{{- $projectName := get . "project-name" }} 
-{{- $projectTargetNs := get . "project-target-ns" }} 
-
-{{- $clusterDnsSuffix := get . "cluster-dns-suffix" | default "cluster.local"}}
+{{- /* {{- $clusterDnsSuffix := get . "cluster-dns-suffix" | default "cluster.local"}} */}}
 
 {{- with $obj }}
 
@@ -28,7 +22,7 @@ metadata:
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
   labels: {{.Labels | toYAML | nindent 4}}
 spec:
-  {{- if not (and .Spec.Hpa .Spec.Hpa.Enabled) }}
+  {{- if not $isHpaEnabled }}
   replicas: {{if (or .Spec.Freeze $isIntercepted )}}0{{ else }}{{.Spec.Replicas}}{{end}}
   {{- end}}
   selector:
@@ -83,32 +77,15 @@ spec:
       {{- end }}
       {{- end }}
 ---
-
 {{- if .Spec.Services }}
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: {{.Namespace}}
   name: {{.Name}}
-  ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
-spec:
-  type: ExternalName
-  {{- if $isIntercepted }}
-  {{- /* externalName: {{.Spec.Intercept.ToDevice}}.{{.Namespace}}.svc.{{$clusterDnsSuffix}} */}}
-  externalName: {{.Spec.Intercept.ToDevice}}.device.local
-  {{- else}}
-  externalName: {{.Name}}-internal.{{.Namespace}}.svc.{{$clusterDnsSuffix}}
-  {{- end }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{.Name}}-internal
   namespace: {{.Namespace}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec:
-  selector:
-    app: {{.Name}}
+  selector: {{ $podLabels | toYAML | nindent 4}}
   ports:
     {{- range $svc := .Spec.Services }}
     {{- with $svc }}
@@ -118,6 +95,5 @@ spec:
       targetPort: {{.TargetPort}}
     {{- end }}
     {{- end }}
-{{- end}}
 {{- end }}
-
+{{- end }}
