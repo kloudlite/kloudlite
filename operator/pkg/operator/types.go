@@ -58,6 +58,7 @@ type CheckMeta struct {
 	Title       string  `json:"title"`
 	Description *string `json:"description,omitempty"`
 	Debug       bool    `json:"debug,omitempty"`
+	Hide        bool    `json:"hide,omitempty"`
 }
 
 // +kubebuilder:object:generate=true

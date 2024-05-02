@@ -57,6 +57,10 @@ func unmarshalUnstructured(obj *unstructured.Unstructured, resource client.Objec
 
 var ErrNoMsgSender error = fmt.Errorf("msg sender is nil")
 
+const (
+	DispatchToKloudliteInfra string = "kloudlite.io/dispatch-to-infra"
+)
+
 func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstructured) error {
 	mctx, cf := func() (context.Context, context.CancelFunc) {
 		if r.Env.IsDev {
@@ -77,8 +81,26 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 	gvk := newGVK(obj.GetAPIVersion(), obj.GetKind())
 
 	switch gvk.String() {
-	case ProjectGVK.String(), AppGVK.String(), EnvironmentGVK.String(), RouterGVK.String(), SecretGVK.String(), ConfigmapGVK.String():
+	case ProjectGVK.String(), AppGVK.String(), EnvironmentGVK.String(), RouterGVK.String(), ConfigmapGVK.String():
 		{
+			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+		}
+
+	case SecretGVK.String():
+		{
+			// we can also have BYOKCluster kubeconfig secret, which needs to be send to `kloudlite-infra`
+			if v, ok := obj.GetAnnotations()[DispatchToKloudliteInfra]; ok && v == "true" {
+				return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+					ClusterName: r.Env.ClusterName,
+					AccountName: r.Env.AccountName,
+					Object:      obj.Object,
+				})
+			}
+
 			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
