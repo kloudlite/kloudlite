@@ -7,6 +7,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Select from '~/components/atoms/select';
+import { useAppend, useMapper } from '~/components/utils';
 import { IDialog } from '../components/types.d';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { DIALOG_TYPE } from '../utils/commons';
@@ -14,7 +15,24 @@ import { IEnvironment } from '../server/gql/queries/environment-queries';
 import { NameIdView } from '../components/name-id-view';
 import { parseName, parseNodes } from '../server/r-utils/common';
 
-const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
+const ClusterSelectItem = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) => {
+  return (
+    <div>
+      <div className="flex flex-col">
+        <div>{label}</div>
+        <div className="bodySm text-text-soft">{value}</div>
+      </div>
+    </div>
+  );
+};
+
+const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
 
@@ -23,6 +41,36 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
     async () => api.listClusters({}),
     true
   );
+
+  const { data: byokClustersData, isLoading: byokCIsLoading } = useCustomSwr(
+    'byokclusters',
+    async () => api.listByokClusters({}),
+    true
+  );
+
+  const cData = useMapper(parseNodes(clustersData), (item) => {
+    return {
+      label: item.displayName,
+      value: parseName(item),
+      ready: item.status?.isReady,
+      render: () => (
+        <ClusterSelectItem label={item.displayName} value={parseName(item)} />
+      ),
+    };
+  });
+
+  const bCData = useMapper(parseNodes(byokClustersData), (item) => {
+    return {
+      label: item.displayName,
+      value: parseName(item),
+      ready: true,
+      render: () => (
+        <ClusterSelectItem label={item.displayName} value={parseName(item)} />
+      ),
+    };
+  });
+
+  const clusterList = useAppend(cData, bCData);
 
   const [validationSchema, setValidationSchema] = useState<any>(
     Yup.object({
@@ -153,15 +201,10 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
               disabled={cIsLoading}
               placeholder="Select a Cluster"
               options={async () => [
-                ...((clustersData &&
-                  parseNodes(clustersData)
-                    .filter((d) => {
-                      return d.status?.isReady;
-                    })
-                    .map((d) => ({
-                      label: `${d.displayName} - ${parseName(d)}`,
-                      value: parseName(d),
-                    }))) ||
+                ...((clusterList &&
+                  clusterList.filter((d) => {
+                    return d.ready;
+                  })) ||
                   []),
               ]}
               onChange={({ value }) => {
@@ -169,6 +212,7 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
               }}
               error={!!errors.clusterName}
               message={errors.clusterName}
+              loading={cIsLoading || byokCIsLoading}
             />
 
             {/* <Checkbox */}
@@ -204,4 +248,4 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
   );
 };
 
-export default HandleScope;
+export default HandleEnvironment;

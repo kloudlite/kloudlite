@@ -15,7 +15,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import fake from '~/root/fake-data-generator/fake';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
-import NodepoolResources from './nodepool-resources';
+import NodepoolResourcesV2 from './nodepool-resources-v2';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -99,7 +99,7 @@ const Nodepools = () => {
               }}
               tools={<Tools />}
             >
-              <NodepoolResources items={nodepools} />
+              <NodepoolResourcesV2 items={nodepools} />
             </Wrapper>
           );
         }}

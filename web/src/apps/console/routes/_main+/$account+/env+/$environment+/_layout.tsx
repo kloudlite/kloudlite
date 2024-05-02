@@ -20,7 +20,7 @@ import {
 import { useState } from 'react';
 import OptionList from '~/components/atoms/option-list';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
-import HandleScope from '~/console/page-components/new-scope';
+import HandleScope from '~/console/page-components/handle-environment';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import {
