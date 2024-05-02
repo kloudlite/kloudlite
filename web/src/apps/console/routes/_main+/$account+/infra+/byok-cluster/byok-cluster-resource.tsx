@@ -1,36 +1,43 @@
-import { PencilLine, Trash } from '~/iotconsole/components/icons';
+import { PencilLine, Trash } from '~/console/components/icons';
 import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
-import ConsoleAvatar from '~/iotconsole/components/console-avatar';
+import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,
   ListTitle,
-} from '~/iotconsole/components/console-list-components';
-import Grid from '~/iotconsole/components/grid';
-import ListGridView from '~/iotconsole/components/list-grid-view';
-import ResourceExtraAction from '~/iotconsole/components/resource-extra-action';
+} from '~/console/components/console-list-components';
+import Grid from '~/console/components/grid';
+import ListGridView from '~/console/components/list-grid-view';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
 import {
   ExtractNodeType,
+  parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
-} from '~/iotconsole/server/r-utils/common';
-import ListV2 from '~/iotconsole/components/listV2';
-import { IDevices } from '~/iotconsole/server/gql/queries/iot-device-queries';
+} from '~/console/server/r-utils/common';
+import ListV2 from '~/console/components/listV2';
+import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
+import AnimateHide from '~/components/atoms/animate-hide';
+import LogComp from '~/root/lib/client/components/logger';
+import LogAction from '~/console/page-components/log-action';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 import { useState } from 'react';
-import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { toast } from '~/components/molecule/toast';
-import DeleteDialog from '~/iotconsole/components/delete-dialog';
+import { useDataState } from '~/console/page-components/common-state';
 import { handleError } from '~/root/lib/utils/common';
-import HandleDevice from './handle-device';
+import { toast } from '~/components/molecule/toast';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import DeleteDialog from '~/console/components/delete-dialog';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import HandleByokCluster from './handle-byok-cluster';
 
-type BaseType = ExtractNodeType<IDevices>;
-const RESOURCE_NAME = 'device';
+type BaseType = ExtractNodeType<IByocClusters>;
+const RESOURCE_NAME = 'byoc clusters';
 
-const parseItem = (item: ExtractNodeType<IDevices>) => {
+const parseItem = (item: ExtractNodeType<IByocClusters>) => {
   return {
     name: item.displayName,
-    id: item.name,
+    id: parseName(item),
+    // path: `/projects/${item.name}`,
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
@@ -75,7 +82,7 @@ interface IResource {
 }
 
 const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
-  const { account, deployment } = useParams();
+  const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
@@ -84,7 +91,7 @@ const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${deployment}/${id}`}
+            to={`/${account}/${id}/deployment/${id}`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -119,7 +126,13 @@ const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
   );
 };
 
-const ListView = ({ items, onEdit, onDelete }: IResource) => {
+const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
+  const [open, setOpen] = useState<string>('');
+  const { state } = useDataState<{
+    linesVisible: boolean;
+    timestampVisible: boolean;
+  }>('logs');
+  const { account } = useParams();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -133,8 +146,23 @@ const ListView = ({ items, onEdit, onDelete }: IResource) => {
               </div>
             ),
             name: 'name',
-            className: 'w-[180px] flex-1',
+            className: 'w-[180px]',
           },
+          // {
+          //   render: () => '',
+          //   name: 'logs',
+          //   className: 'w-[180px]',
+          // },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          // {
+          //   render: () => 'Provider (Region)',
+          //   name: 'provider',
+          //   className: 'w-[180px]',
+          // },
           {
             render: () => 'Updated',
             name: 'updated',
@@ -148,7 +176,7 @@ const ListView = ({ items, onEdit, onDelete }: IResource) => {
         ],
         rows: items.map((i) => {
           const { name, id, updateInfo } = parseItem(i);
-          console.log('updateInfo', parseItem(i));
+
           return {
             columns: {
               name: {
@@ -160,6 +188,10 @@ const ListView = ({ items, onEdit, onDelete }: IResource) => {
                   />
                 ),
               },
+              status: {
+                render: () => <SyncStatusV2 item={i} />,
+              },
+              // provider: { render: () => <ListItem data={provider} /> },
               updated: {
                 render: () => (
                   <ListItem
@@ -177,6 +209,32 @@ const ListView = ({ items, onEdit, onDelete }: IResource) => {
                 ),
               },
             },
+            detail: (
+              <AnimateHide
+                onClick={(e) => e.preventDefault()}
+                show={open === i.id}
+                className="w-full flex pt-4xl pb-2xl justify-center items-center"
+              >
+                <LogComp
+                  {...{
+                    hideLineNumber: !state.linesVisible,
+                    hideTimestamp: !state.timestampVisible,
+                    className: 'flex-1',
+                    dark: true,
+                    width: '100%',
+                    height: '40rem',
+                    title: 'Logs',
+                    websocket: {
+                      account: account || '',
+                      cluster: parseName(i),
+                      trackingId: i.id,
+                    },
+                    actionComponent: <LogAction />,
+                  }}
+                />
+              </AnimateHide>
+            ),
+            hideDetailSeperator: true,
           };
         }),
       }}
@@ -184,15 +242,14 @@ const ListView = ({ items, onEdit, onDelete }: IResource) => {
   );
 };
 
-const DeviceResource = ({ items = [] }: { items: BaseType[] }) => {
+const ByokClusterResource = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
-  const [showHandleDevice, setShowHandleDevice] = useState<BaseType | null>(
-    null
-  );
+  const [showHandleByokCluster, setShowHandleByokCluster] =
+    useState<BaseType | null>(null);
 
-  const api = useIotConsoleApi();
+  const api = useConsoleApi();
   const reloadPage = useReload();
 
   const props: IResource = {
@@ -201,7 +258,7 @@ const DeviceResource = ({ items = [] }: { items: BaseType[] }) => {
       setShowDeleteDialog(item);
     },
     onEdit: (item) => {
-      setShowHandleDevice(item);
+      setShowHandleByokCluster(item);
     },
   };
 
@@ -218,10 +275,8 @@ const DeviceResource = ({ items = [] }: { items: BaseType[] }) => {
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
           try {
-            const { errors } = await api.deleteIotDevice({
-              projectName: showDeleteDialog?.projectName || '',
-              deploymentName: showDeleteDialog?.deploymentName || '',
-              name: showDeleteDialog?.name || '',
+            const { errors } = await api.deleteByokCluster({
+              name: parseName(showDeleteDialog),
             });
 
             if (errors) {
@@ -235,18 +290,18 @@ const DeviceResource = ({ items = [] }: { items: BaseType[] }) => {
           }
         }}
       />
-      <HandleDevice
+      <HandleByokCluster
         {...{
           isUpdate: true,
-          visible: !!showHandleDevice,
+          visible: !!showHandleByokCluster,
           setVisible: () => {
-            setShowHandleDevice(null);
+            setShowHandleByokCluster(null);
           },
-          data: showHandleDevice!,
+          data: showHandleByokCluster!,
         }}
       />
     </>
   );
 };
 
-export default DeviceResource;
+export default ByokClusterResource;

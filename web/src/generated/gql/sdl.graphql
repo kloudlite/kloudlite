@@ -164,10 +164,12 @@ type BuildRunPaginatedRecords {
 
 type BYOKCluster {
   accountName: String!
-  ClusterSpec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec
+  clusterPublicEndpoint: String!
+  clusterSvcCIDR: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
+  globalVPN: String
   id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -177,9 +179,21 @@ type BYOKCluster {
   updateTime: Date!
 }
 
+type BYOKClusterEdge {
+  cursor: String!
+  node: BYOKCluster!
+}
+
 input BYOKClusterIn {
+  clusterPublicEndpoint: String!
   displayName: String!
   metadata: MetadataIn!
+}
+
+type BYOKClusterPaginatedRecords {
+  edges: [BYOKClusterEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type CheckAwsAccessOutput {
@@ -1175,6 +1189,16 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn {
   volumes: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeIn!]
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings {
+  appPort: Int!
+  devicePort: Int!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn {
+  appPort: Int!
+  devicePort: Int!
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__AppSpec {
   containers: [Github__com___kloudlite___operator___apis___crds___v1__AppContainer!]!
   displayName: String
@@ -1238,7 +1262,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServic
 
 input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn {
   msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
-  targetNamespace: String!
 }
 
 enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret {
@@ -1425,11 +1448,13 @@ input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn {
 
 type Github__com___kloudlite___operator___apis___crds___v1__Intercept {
   enabled: Boolean!
+  portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings!]
   toDevice: String!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
   enabled: Boolean!
+  portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
   toDevice: String!
 }
 
@@ -1728,6 +1753,7 @@ input Github__com___kloudlite___operator___pkg___operator__CheckIn {
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta {
   debug: Boolean
   description: String
+  hide: Boolean
   name: String!
   title: String!
 }
@@ -1735,6 +1761,7 @@ type Github__com___kloudlite___operator___pkg___operator__CheckMeta {
 input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn {
   debug: Boolean
   description: String
+  hide: Boolean
   name: String!
   title: String!
 }
@@ -1885,6 +1912,7 @@ type GlobalVPNDevice {
   metadata: Metadata!
   privateKey: String!
   publicKey: String!
+  publiEndpoint: String
   recordVersion: Int!
   updateTime: Date!
   wireguardConfig: EncodedValue
@@ -1898,6 +1926,7 @@ type GlobalVPNDeviceEdge {
 input GlobalVPNDeviceIn {
   globalVPNName: String!
   metadata: MetadataIn!
+  publiEndpoint: String
 }
 
 type GlobalVPNDevicePaginatedRecords {
@@ -3365,6 +3394,7 @@ type Mutation {
   infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease
   infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
+  infra_deleteBYOKCluster(name: String!): Boolean!
   infra_deleteCluster(name: String!): Boolean!
   infra_deleteClusterManagedService(clusterName: String!, serviceName: String!): Boolean!
   infra_deleteDomainEntry(domainName: String!): Boolean!
@@ -3374,6 +3404,7 @@ type Mutation {
   infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean!
   infra_deleteProviderSecret(secretName: String!): Boolean!
   infra_deletePV(clusterName: String!, pvName: String!): Boolean!
+  infra_updateBYOKCluster(clusterName: String!, displayName: String!): BYOKCluster
   infra_updateCluster(cluster: ClusterIn!): Cluster
   infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
   infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
@@ -3678,6 +3709,7 @@ type Query {
   cr_searchGithubRepos(organization: String!, pagination: PaginationIn, search: String!): GithubSearchRepository
   infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput!
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
+  infra_getBYOKCluster(name: String!): BYOKCluster
   infra_getCluster(name: String!): Cluster
   infra_getClusterManagedService(clusterName: String!, name: String!): ClusterManagedService
   infra_getDomainEntry(domainName: String!): DomainEntry
@@ -3691,6 +3723,7 @@ type Query {
   infra_getPV(clusterName: String!, name: String!): PersistentVolume
   infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim
   infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment
+  infra_listBYOKClusters(pagination: CursorPaginationIn, search: SearchCluster): BYOKClusterPaginatedRecords
   infra_listClusterManagedServices(clusterName: String!, pagination: CursorPaginationIn, search: SearchClusterManagedService): ClusterManagedServicePaginatedRecords
   infra_listClusters(pagination: CursorPaginationIn, search: SearchCluster): ClusterPaginatedRecords
   infra_listDomainEntries(pagination: CursorPaginationIn, search: SearchDomainEntry): DomainEntryPaginatedRecords
@@ -3750,7 +3783,9 @@ type RepositoryPaginatedRecords {
 }
 
 enum ResType {
+  byok_cluster
   cluster
+  cluster_managed_service
   helm_release
   nodepool
   providersecret

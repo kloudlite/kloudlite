@@ -216,7 +216,9 @@ export type PaginationIn = {
 };
 
 export type ResType =
+  | 'byok_cluster'
   | 'cluster'
+  | 'cluster_managed_service'
   | 'helm_release'
   | 'nodepool'
   | 'providersecret';
@@ -281,15 +283,15 @@ export type K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase =
   | 'Lost'
   | 'Pending';
 
-export type SearchClusterManagedService = {
-  isReady?: InputMaybe<MatchFilterIn>;
-  text?: InputMaybe<MatchFilterIn>;
-};
-
 export type SearchCluster = {
   cloudProviderName?: InputMaybe<MatchFilterIn>;
   isReady?: InputMaybe<MatchFilterIn>;
   region?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchClusterManagedService = {
+  isReady?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -516,7 +518,16 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HpaIn = {
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__InterceptIn =
   {
     enabled: Scalars['Boolean']['input'];
+    portMappings?: InputMaybe<
+      Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn>
+    >;
     toDevice: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn =
+  {
+    appPort: Scalars['Int']['input'];
+    devicePort: Scalars['Int']['input'];
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSvcIn = {
@@ -812,6 +823,7 @@ export type RepositoryIn = {
 };
 
 export type ByokClusterIn = {
+  clusterPublicEndpoint: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
   metadata: MetadataIn;
 };
@@ -876,7 +888,6 @@ export type ClusterManagedServiceIn = {
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ClusterManagedServiceSpecIn =
   {
     msvcSpec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn;
-    targetNamespace: Scalars['String']['input'];
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn =
@@ -913,6 +924,7 @@ export type GlobalVpnIn = {
 export type GlobalVpnDeviceIn = {
   globalVPNName: Scalars['String']['input'];
   metadata: MetadataIn;
+  publiEndpoint?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type HelmReleaseIn = {
@@ -1212,6 +1224,7 @@ export type Github__Com___Kloudlite___Operator___Pkg___Operator__CheckIn = {
 export type Github__Com___Kloudlite___Operator___Pkg___Operator__CheckMetaIn = {
   debug?: InputMaybe<Scalars['Boolean']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  hide?: InputMaybe<Scalars['Boolean']['input']>;
   name: Scalars['String']['input'];
   title: Scalars['String']['input'];
 };
@@ -4373,6 +4386,120 @@ export type ConsoleDeleteClusterMSvMutationVariables = Exact<{
 
 export type ConsoleDeleteClusterMSvMutation = {
   infra_deleteClusterManagedService: boolean;
+};
+
+export type ConsoleDeleteByokClusterMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteByokClusterMutation = {
+  infra_deleteBYOKCluster: boolean;
+};
+
+export type ConsoleCreateByokClusterMutationVariables = Exact<{
+  cluster: ByokClusterIn;
+}>;
+
+export type ConsoleCreateByokClusterMutation = {
+  infra_createBYOKCluster?: { id: string };
+};
+
+export type ConsoleUpdateByokClusterMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  displayName: Scalars['String']['input'];
+}>;
+
+export type ConsoleUpdateByokClusterMutation = {
+  infra_updateBYOKCluster?: { id: string };
+};
+
+export type ConsoleGetByokClusterQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetByokClusterQuery = {
+  infra_getBYOKCluster?: {
+    accountName: string;
+    creationTime: any;
+    displayName: string;
+    id: string;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    updateTime: any;
+    clusterPublicEndpoint: string;
+    clusterSvcCIDR: string;
+    globalVPN?: string;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    syncStatus: {
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+      syncScheduledAt?: any;
+    };
+  };
+};
+
+export type ConsoleListByokClustersQueryVariables = Exact<{
+  search?: InputMaybe<SearchCluster>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListByokClustersQuery = {
+  infra_listBYOKClusters?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        clusterPublicEndpoint: string;
+        clusterSvcCIDR: string;
+        creationTime: any;
+        displayName: string;
+        globalVPN?: string;
+        id: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
 };
 
 export type ConsoleGetMSvTemplateQueryVariables = Exact<{
