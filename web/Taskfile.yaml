@@ -10,7 +10,7 @@ tasks:
       - |
         BASE_URL=dev.kloudlite.io
         COOKIE_DOMAIN=".kloudlite.io"
-        GATEWAY_URL="http://gateway.kloudlite.svc.cluster.local"
+        GATEWAY_URL="http://gateway.kloudlite.svc.cluster.local:3000"
         case {{.app}} in
           "auth")
             PORT=4000
