@@ -60,6 +60,8 @@ const (
 	DeploymentSvcCreated  string = "deployment-svc-created"
 
 	AppInterceptCreated string = "app-intercept-created"
+
+	DefaultsPatched string = "defaults-patched"
 )
 
 var DeleteChecklist = []rApi.CheckMeta{
@@ -225,6 +227,25 @@ func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResul
 				return check.Failed(err)
 			}
 		}
+		return check.Completed()
+	}
+
+	if obj.Spec.Services == nil {
+		return check.Failed(fmt.Errorf("no services configured on app, failed to intercept")).NoRequeue()
+	}
+
+	if obj.Spec.Intercept.PortMappings == nil {
+		obj.Spec.Intercept.PortMappings = make([]crdsv1.AppInterceptPortMappings, len(obj.Spec.Services))
+		for i := range obj.Spec.Services {
+			obj.Spec.Intercept.PortMappings[i] = crdsv1.AppInterceptPortMappings{
+				AppPort:    obj.Spec.Services[i].Port,
+				DevicePort: obj.Spec.Services[i].Port,
+			}
+		}
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+
 		return check.Completed()
 	}
 

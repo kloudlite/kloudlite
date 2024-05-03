@@ -13,22 +13,19 @@ metadata:
   labels: {{$labels | toYAML | nindent 4}}
   ownerReferences: {{$ownerReferences | toYAML | nindent 4}}
 spec:
-  dnsPolicy: Default
   containers:
   - name: app-intercept
-    image: alpine/socat
+    {{- /* image: alpine/socat */}}
+    image: ghcr.io/kloudlite/hub/socat:latest
     command:
       - sh
       - -c
       - |+
         {{- range $k, $v := $portMappings }}
-        {{- /* (socat -dd tcp4-listen:{{$k}},fork,reuseaddr tcp4:{{$deviceHost}}:{{$v}} 2>&1 | grep -iE 'accepting|exiting') & */}}
-        (socat -dd tcp4-listen:{{$k}},fork,reuseaddr tcp4:{{$deviceHost}}:{{$v}}) &
+        (socat -dd tcp4-listen:{{$k}},fork,reuseaddr tcp4:{{$deviceHost}}:{{$v}} 2>&1 | grep -iE --line-buffered 'listening|exiting') &
         pid="$pid $!"
         {{- end }}
-        {{- /* (socat -dd tcp4-listen:80,fork,reuseaddr tcp4:first-device.device.local:17171 2>&1 | grep -iE 'accepting|exiting') & */}}
 
-        trap "cleanup" EXIT INT TERM
         trap "eval kill -9 $pid || exit 0" EXIT SIGINT SIGTERM
         eval wait $pid
     securityContext:
