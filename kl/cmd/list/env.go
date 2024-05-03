@@ -26,18 +26,8 @@ var envCmd = &cobra.Command{
 
 func listEnvironments(cmd *cobra.Command, args []string) error {
 
-	pName := ""
-	if len(args) >= 1 {
-		pName = args[0]
-	}
 	var err error
-	if pName == "" {
-		pName, err = client.CurrentProjectName()
-		if err != nil {
-			return err
-		}
-	}
-	envs, err := server.ListEnvs(fn.MakeOption("projectName", pName))
+	envs, err := server.ListEnvs()
 	if err != nil {
 		return err
 	}

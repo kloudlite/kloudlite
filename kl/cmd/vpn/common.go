@@ -91,14 +91,6 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 					envName = en.Name
 				}
 			}
-
-			if projectName == "" {
-				pn, err := client.CurrentProjectName()
-				if err == nil && pn != "" {
-					projectName = pn
-				}
-			}
-
 			if (envName != "" && device.EnvName != envName) || (projectName != "" && device.ProjectName != projectName) {
 				if err := server.UpdateDeviceEnv([]fn.Option{
 					fn.MakeOption("envName", envName),
@@ -133,6 +125,9 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 	if len(device.Spec.Ports) == 0 {
 		fn.Log(text.Yellow(fmt.Sprintf("[#] no ports found for device %s, you can export ports using %s vpn expose\n", devName, flags.CliName)))
 	}
+
+	fmt.Println(device)
+	fmt.Println(device.WireguardConfig)
 
 	if device.WireguardConfig.Value == "" {
 		return errors.New("no wireguard config found, please try again in few seconds")

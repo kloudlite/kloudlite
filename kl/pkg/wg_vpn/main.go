@@ -197,9 +197,9 @@ func Configure(
 
 	cfg.Peers[0].AllowedIPs = append(cfg.Peers[0].AllowedIPs, dnsServers...)
 
-	for _, p := range cfg.Config.Peers {
-		fmt.Println("perrs ", p.Endpoint)
-	}
+	//for _, p := range cfg.Config.Peers {
+	//	fmt.Println("peers ", p.Endpoint)
+	//}
 
 	err = wg.ConfigureDevice(interfaceName, cfg.Config)
 	if err != nil {

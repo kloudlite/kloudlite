@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
@@ -23,8 +22,6 @@ func ListSecrets(options ...fn.Option) ([]Secret, error) {
 		return nil, err
 	}
 
-	projectName, err := client.CurrentProjectName()
-
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
@@ -36,8 +33,7 @@ func ListSecrets(options ...fn.Option) ([]Secret, error) {
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},
-		"projectName": strings.TrimSpace(projectName),
-		"envName":     strings.TrimSpace(env.Name),
+		"envName": strings.TrimSpace(env.Name),
 	}, &cookie)
 
 	if err != nil {
@@ -110,17 +106,14 @@ func GetSecret(options ...fn.Option) (*Secret, error) {
 		return nil, err
 	}
 
-	projectName, err := client.CurrentProjectName()
-
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
 	respData, err := klFetch("cli_getSecret", map[string]any{
-		"name":        secName,
-		"projectName": strings.TrimSpace(projectName),
-		"envName":     strings.TrimSpace(env.Name),
+		"name":    secName,
+		"envName": strings.TrimSpace(env.Name),
 	}, &cookie)
 
 	if err != nil {

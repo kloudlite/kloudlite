@@ -31,10 +31,6 @@ var Cmd = &cobra.Command{
 		switch flags.CliName {
 		case constants.CoreCliName:
 			{
-				if s, err := client.CurrentProjectName(); err == nil {
-					fn.Log(fmt.Sprint(text.Bold(text.Blue("Project: ")), s))
-				}
-
 				if e, err := client.CurrentEnv(); err == nil {
 					fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), e.Name))
 				}

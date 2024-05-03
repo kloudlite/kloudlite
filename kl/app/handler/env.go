@@ -113,30 +113,6 @@ func (h *handler) ReconEnv() {
 	}
 
 	go func() {
-		projects := projectMap{}
-		ps, err := server.ListProjects()
-		if err != nil {
-			fn.PrintError(err)
-			fn.Notify("error:", err)
-		}
-
-		for _, p := range ps {
-			projects[p.Metadata.Name] = map[string]string{}
-			e, err := server.ListEnvs(fn.MakeOption("projectName", p.Metadata.Name))
-			if err != nil {
-				fn.PrintError(err)
-				fn.Notify("error:", err)
-			}
-
-			for _, env := range e {
-				projects[p.Metadata.Name][env.Metadata.Name] = env.Metadata.Name
-			}
-		}
-
-		h.RedrawEnvs(projects)
-	}()
-
-	go func() {
 		d, err := server.GetDevice()
 		if err != nil {
 			fn.PrintError(err)

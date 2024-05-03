@@ -1,8 +1,6 @@
 package runner
 
 import (
-	"fmt"
-
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -24,34 +22,18 @@ Examples:
 
 	Run: func(cmd *cobra.Command, _ []string) {
 
-		pName := fn.ParseStringFlag(cmd, "project")
 		aName := fn.ParseStringFlag(cmd, "account")
 		filePath := fn.ParseKlFile(cmd)
 		initFile, err := client.GetKlFile(filePath)
 
 		if err != nil {
 
-			acc, err := server.EnsureAccount(
-				fn.MakeOption("accountName", aName),
-			)
+			envs, err := server.ListEnvs(fn.MakeOption("accountName", aName))
 			if err != nil {
 				fn.PrintError(err)
 				return
 			}
 
-			p, err := server.SelectProject(pName)
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-
-			envs, err := server.ListEnvs(fn.MakeOption("projectName", p.Metadata.Name))
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-
-			//packages := []string{"vim", "git", "nodejs_21", "go"}
 			packages := []string{"vim", "git", "go"}
 
 			defEnv := ""
@@ -60,7 +42,6 @@ Examples:
 			}
 			initFile = &client.KLFileType{
 				Version:    "v1",
-				Project:    fmt.Sprintf("%s/%s", acc, p.Metadata.Name),
 				DefaultEnv: defEnv,
 				Packages:   packages,
 				Mres:       make([]client.ResType, 0),

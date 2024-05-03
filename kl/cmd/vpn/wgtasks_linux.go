@@ -31,7 +31,7 @@ func connect(verbose bool, options ...fn.Option) error {
 	if !skipCheck {
 		switch flags.CliName {
 		case constants.CoreCliName:
-			_, err := server.EnsureProject()
+			_, err := server.EnsureEnv(nil)
 			if err != nil {
 				return err
 			}

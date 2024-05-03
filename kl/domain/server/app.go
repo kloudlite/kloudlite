@@ -2,8 +2,6 @@ package server
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -32,20 +30,14 @@ func ListApps(options ...fn.Option) ([]App, error) {
 		return nil, err
 	}
 
-	projectName, err := client.CurrentProjectName()
-	if err != nil {
-		return nil, err
-	}
-
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
 	respData, err := klFetch("cli_listApps", map[string]any{
-		"pq":          PaginationDefault,
-		"projectName": strings.TrimSpace(projectName),
-		"envName":     env.Name,
+		"pq":      PaginationDefault,
+		"envName": env.Name,
 	}, &cookie)
 
 	if err != nil {
@@ -123,11 +115,6 @@ func InterceptApp(status bool, options ...fn.Option) error {
 		}
 
 		envName = env.Name
-	}
-
-	projectName, err = EnsureProject(options...)
-	if err != nil {
-		return err
 	}
 
 	if devName == "" {

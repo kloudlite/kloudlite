@@ -62,12 +62,6 @@ func printConfigs(cmd *cobra.Command, configs []server.Config) error {
 
 	fmt.Println(table.Table(&header, rows, cmd))
 
-	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
-		pName, _ := client.CurrentProjectName()
-		if pName != "" {
-			table.KVOutput("configs of", pName, true)
-		}
-	}
 	table.TotalResults(len(configs), true)
 	return nil
 }
