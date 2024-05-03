@@ -6,6 +6,76 @@ import { vpnQueries } from './queries/device-queries';
 export const cliQueries = (executor: IExecutor) => ({
   ...vpnQueries(executor),
 
+  cli_getMresOutputKeyValues: executor(
+    gql`
+      query Core_getManagedResouceOutputKeyValues(
+        $envName: String!
+        $keyrefs: [ManagedResourceKeyRefIn]
+      ) {
+        core_getManagedResouceOutputKeyValues(
+          envName: $envName
+          keyrefs: $keyrefs
+        ) {
+          key
+          mresName
+          value
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_getManagedResouceOutputKeyValues,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_getGlobalVpnDevice: executor(
+    gql`
+      query Infra_getGlobalVPNDevice($gvpn: String!, $deviceName: String!) {
+        infra_getGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName) {
+          accountName
+          creationTime
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          displayName
+          globalVPNName
+          id
+          ipAddr
+          lastUpdatedBy {
+            userName
+            userId
+            userEmail
+          }
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          privateKey
+          publiEndpoint
+          publicKey
+          recordVersion
+          updateTime
+          wireguardConfig {
+            value
+            encoding
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_getGlobalVPNDevice,
+      vars: (_: any) => {},
+    }
+  ),
+
   cli_coreCheckNameAvailability: executor(
     gql`
       query Core_checkNameAvailability(

@@ -87,6 +87,7 @@ export const loader = async (ctx: IRemixCtx) => {
       account: data,
     };
   } catch (err) {
+    handleError(err);
     const k = redirect('/teams') as any;
     return k as {
       account: typeof acccountData;
