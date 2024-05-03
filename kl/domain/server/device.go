@@ -1,41 +1,17 @@
 package server
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 type DevicePort struct {
 	Port       int `json:"port"`
 	TargetPort int `json:"targetPort,omitempty"`
 }
-
-//type Device struct {
-//	Metadata    Metadata `json:"metadata"`
-//	DisplayName string   `json:"displayName"`
-//	Status      Status   `json:"status"`
-//	EnvName     string   `json:"environmentName"`
-//	ProjectName string   `json:"projectName"`
-//	ClusterName string   `json:"clusterName"`
-//	Spec        struct {
-//		CnameRecords []struct {
-//			Host   string `json:"host"`
-//			Target string `json:"target"`
-//		} `json:"cnameRecords"`
-//		ActiveNamespace string       `json:"activeNamespace"`
-//		Ports           []DevicePort `json:"ports"`
-//	} `json:"spec"`
-//	WireguardConfig *struct {
-//		Encoding string `json:"encoding"`
-//		Value    string `json:"value"`
-//	} `json:"wireguardConfig,omitempty"`
-//}
 
 type Device struct {
 	AccountName       string `json:"accountName"`
@@ -67,42 +43,20 @@ type Device struct {
 	} `json:"wireguardConfig,omitempty"`
 }
 
-//type CheckName struct {
-//	Result         bool     `json:"result"`
-//	SuggestedNames []string `json:"suggestedNames"`
-//}
-
 const (
-	//VPNDeviceType = "vpn_device"
 	VPNDEVICEGVPN = "default"
 )
 
-//func GetDevice(options ...fn.Option) (*Device, error) {
-//	devName := fn.GetOption(options, "deviceName")
-//	accountName := fn.GetOption(options, "accountName")
-//
-//	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	respData, err := klFetch("cli_getDevice", map[string]any{
-//		"name": devName,
-//	}, &cookie)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	if fromResp, err := GetFromResp[Device](respData); err != nil {
-//		return nil, err
-//	} else {
-//		return fromResp, nil
-//	}
-//}
+type Devices struct {
+	DisplayName string   `json:"displayName"`
+	Metadata    Metadata `json:"metadata"`
+}
 
-func GetDevice(options ...fn.Option) (*Device, error) {
+func GetVPNDeviceDetails(options ...fn.Option) (*Device, error) {
 	devName := fn.GetOption(options, "deviceName")
 	accountName := fn.GetOption(options, "accountName")
+
+	envName, err := EnsureEnv(nil, options...)
 
 	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
@@ -110,6 +64,7 @@ func GetDevice(options ...fn.Option) (*Device, error) {
 	}
 
 	respData, err := klFetch("cli_getGlobalVpnDevice", map[string]any{
+		"envName":    envName,
 		"gvpn":       VPNDEVICEGVPN,
 		"deviceName": devName,
 	}, &cookie)
@@ -124,320 +79,35 @@ func GetDevice(options ...fn.Option) (*Device, error) {
 	}
 }
 
-//// remove below
-//func GetDeviceName(devName string, accName string) (*CheckName, error) {
-//	_, err := EnsureAccount()
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	cookie, err := getCookie(fn.MakeOption("accountName", accName))
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	respData, err := klFetch("cli_coreCheckNameAvailability", map[string]any{
-//		"resType": VPNDeviceType,
-//		"name":    devName,
-//	}, &cookie)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	if fromResp, err := GetFromResp[CheckName](respData); err != nil {
-//		return nil, err
-//	} else {
-//		return fromResp, nil
-//	}
-//}
+func GetVPNDevice(options ...fn.Option) (*Devices, error) {
+	accountName := fn.GetOption(options, "accountName")
 
-//// Create device to be removed. Provide option to select device from available devices. Creation to be done from dashboard
-//func CreateDevice(selectedDeviceName string, devName string) (*Device, error) {
-//	_, err := EnsureAccount()
-//	if err != nil {
-//		return nil, err
-//	}
-//	cookie, err := getCookie()
-//	if err != nil {
-//		return nil, err
-//	}
-//	respData, err := klFetch("cli_createDevice", map[string]any{
-//		"vpnDevice": map[string]any{
-//			"displayName": devName,
-//			"metadata": map[string]any{
-//				"name": selectedDeviceName,
-//			},
-//		},
-//	}, &cookie)
-//	if err != nil {
-//		return nil, err
-//	}
-//	if fromResp, err := GetFromResp[Device](respData); err != nil {
-//		return nil, err
-//	} else {
-//		return fromResp, nil
-//	}
-//}
-
-//// remove below
-//func UpdateDevice(ports []DevicePort) error {
-//
-//	devName, err := client.CurrentDeviceName()
-//	if err != nil {
-//		return err
-//	}
-//
-//	device, err := GetDevice([]fn.Option{
-//		fn.MakeOption("deviceName", devName),
-//	}...)
-//
-//	for _, port := range ports {
-//		matched := false
-//
-//		for i, port2 := range device.Spec.Ports {
-//			if port2.Port == port.Port {
-//				matched = true
-//				device.Spec.Ports[i] = port
-//				break
-//			}
-//		}
-//
-//		if !matched {
-//			device.Spec.Ports = append(device.Spec.Ports, port)
-//		}
-//	}
-//
-//	if err != nil {
-//		return err
-//	}
-//
-//	cookie, err := getCookie()
-//	if err != nil {
-//		return err
-//	}
-//
-//	respData, err := klFetch("cli_updateDevicePorts", map[string]any{
-//		"deviceName": devName,
-//		"ports":      device.Spec.Ports,
-//	}, &cookie)
-//
-//	if err != nil {
-//		return err
-//	}
-//
-//	_, err = GetFromResp[bool](respData)
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
-//
-//// remove this
-//func DeleteDevicePort(ports []DevicePort) error {
-//	devName, err := client.CurrentDeviceName()
-//	if err != nil {
-//		return err
-//	}
-//
-//	device, err := GetDevice([]fn.Option{
-//		fn.MakeOption("deviceName", devName),
-//	}...)
-//
-//	newPorts := make([]DevicePort, 0)
-//	for _, port := range device.Spec.Ports {
-//		matched := false
-//		for _, port2 := range ports {
-//			if port.Port == port2.Port {
-//				matched = true
-//				break
-//			}
-//		}
-//
-//		if !matched {
-//			newPorts = append(newPorts, port)
-//		}
-//	}
-//
-//	device.Spec.Ports = newPorts
-//
-//	cookie, err := getCookie()
-//	if err != nil {
-//		return err
-//	}
-//
-//	respData, err := klFetch("cli_updateDevicePorts", map[string]any{
-//		"deviceName": devName,
-//		"ports":      device.Spec.Ports,
-//	}, &cookie)
-//
-//	if err != nil {
-//		return err
-//	}
-//
-//	if _, err := GetFromResp[bool](respData); err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
-
-func EnsureDevice(options ...fn.Option) (string, error) {
-	devName := fn.GetOption(options, "deviceName")
-	accName := fn.GetOption(options, "accountName")
-	if devName == "" {
-		currDevName, _ := client.CurrentDeviceName()
-		if currDevName != "" {
-			devName = currDevName
-		}
-	}
-
-	if devName != "" {
-
-		dev, err := GetDevice([]fn.Option{
-			fn.MakeOption("deviceName", devName),
-			fn.MakeOption("accountName", accName),
-		}...)
-
-		if err == nil {
-			return dev.Metadata.Name, nil
-		}
-	}
-
-	deviceDisplayName, err := os.Hostname()
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	finDev := func() string {
-		if devName != "" {
-			return devName
-		}
-		return deviceDisplayName
-	}()
-
-	devResult, err := GetDeviceName(finDev, accName)
+	respData, err := klFetch("cli_getGlobalVpnDevices", map[string]any{
+		"gvpn": VPNDEVICEGVPN,
+		"pq": map[string]any{
+			"orderBy":       "name",
+			"sortDirection": "ASC",
+			"first":         99999999,
+		},
+	}, &cookie)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	selectedDeviceName := ""
-	if devResult.Result == true {
-		selectedDeviceName = finDev
+	if fromResp, err := GetFromRespForEdge[Devices](respData); err != nil {
+		return nil, err
 	} else {
-		if len(devResult.SuggestedNames) == 0 {
-			return "", fmt.Errorf("no suggested names found")
+		if len(fromResp) < 1 {
+			return nil, errors.New("No Global VPN devices found. Please create one from dashboard.")
 		}
-
-		selectedDeviceName = devResult.SuggestedNames[0]
+		return &fromResp[0], nil
 	}
-
-	dev, err := CreateDevice(selectedDeviceName, deviceDisplayName)
-	if err != nil {
-		return "", err
-	}
-
-	fn.Logf(text.Yellow("[#] device created: %s"), dev.Metadata.Name)
-	client.WriteDeviceContext(dev.Metadata.Name)
-
-	return dev.Metadata.Name, nil
 }
-
-//// remove this
-//func UpdateDeviceEnv(options ...fn.Option) error {
-//
-//	envName := fn.GetOption(options, "envName")
-//
-//	var err error
-//
-//	env, err := EnsureEnv(&client.Env{
-//		Name: envName,
-//	}, options...)
-//	if err != nil {
-//		return err
-//	}
-//
-//	devName, err := client.CurrentDeviceName()
-//	if err != nil {
-//		return err
-//	}
-//
-//	cookie, err := getCookie()
-//	if err != nil {
-//		return err
-//	}
-//
-//	respData, err := klFetch("cli_updateDeviceEnv", map[string]any{
-//		"deviceName": devName,
-//		"envName":    env.Name,
-//	}, &cookie)
-//	if err != nil {
-//		return err
-//	}
-//
-//	if _, err := GetFromResp[bool](respData); err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
-//// remove this
-//func UpdateDeviceNS(namespace string) error {
-//	devName, err := EnsureDevice()
-//	if err != nil {
-//		return err
-//	}
-//
-//	cookie, err := getCookie()
-//	if err != nil {
-//		return err
-//	}
-//
-//	respData, err := klFetch("cli_updateDeviceNs", map[string]any{
-//		"deviceName": devName,
-//		"ns":         namespace,
-//	}, &cookie)
-//
-//	if err != nil {
-//		return err
-//	}
-//
-//	if _, err := GetFromResp[bool](respData); err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
-//// remove this
-//func UpdateDeviceClusterName(clusterName string) error {
-//
-//	devName, err := client.CurrentDeviceName()
-//	if err != nil || devName == "" {
-//		devName, err = EnsureDevice()
-//		if err != nil {
-//			return err
-//		}
-//	}
-//
-//	cookie, err := getCookie()
-//	if err != nil {
-//		return err
-//	}
-//
-//	respData, err := klFetch("cli_updateDeviceCluster", map[string]any{
-//		"clusterName": clusterName,
-//		"deviceName":  devName,
-//	}, &cookie)
-//
-//	if err != nil {
-//		return err
-//	}
-//
-//	if _, err := GetFromResp[bool](respData); err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
 
 func CheckDeviceStatus() bool {
 

@@ -21,12 +21,6 @@ var switchCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		if err := server.UpdateDeviceEnv([]fn.Option{
-			fn.MakeOption("envName", env.Metadata.Name),
-		}...); err != nil {
-			fn.PrintError(err)
-			return
-		}
 
 		klFile, err := client.GetKlFile("")
 		if err != nil {
