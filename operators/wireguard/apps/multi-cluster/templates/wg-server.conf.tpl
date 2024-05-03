@@ -25,6 +25,7 @@ PostDown = iptables -t nat -D PREROUTING -i %i -d {{ $virtual }} -j DNAT --to-de
 {{ with $peer }}
 [Peer]
 PublicKey = {{ .PublicKey }}
+PersistentKeepalive = 40
 
 {{- if .AllowedIPs }}
 AllowedIPs = {{ range $i, $ip := .AllowedIPs }}
@@ -58,3 +59,4 @@ AllowedIPs = {{ range $i, $ip := .AllowedIPs }}
 
 {{- end }}
 {{- end }}
+
