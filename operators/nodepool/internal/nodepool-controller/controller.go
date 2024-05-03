@@ -321,11 +321,6 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 	jobNamespace := jobRef[0]
 	jobName := jobRef[1]
 
-	// action := "apply"
-	// if obj.GetDeletionTimestamp() != nil {
-	// 	action = "delete"
-	// }
-
 	b, err := templates.ParseBytes(r.templateNodePoolJob, templates.NodepoolJobVars{
 		JobMetadata: metav1.ObjectMeta{
 			Name:            jobName,

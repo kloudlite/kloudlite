@@ -315,14 +315,12 @@ spec:
                 type: string
               services:
                 items:
+                  description: AppSvc creates k8s Service of type ClusterIP
                   properties:
-                    name:
-                      type: string
                     port:
                       type: integer
-                    targetPort:
-                      type: integer
-                    type:
+                    protocol:
+                      default: TCP
                       type: string
                   required:
                   - port

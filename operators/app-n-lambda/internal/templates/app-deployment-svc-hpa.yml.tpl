@@ -89,10 +89,10 @@ spec:
   ports:
     {{- range $svc := .Spec.Services }}
     {{- with $svc }}
-    - protocol: {{.Type | upper | default "TCP"}}
+    - protocol: {{.Protocol | default "TCP"}}
       port: {{.Port}}
-      name: {{.Port | squote}}
-      targetPort: {{.TargetPort}}
+      name: {{printf "p-%d" .Port | squote}}
+      targetPort: {{.Port}}
     {{- end }}
     {{- end }}
 {{- end }}
