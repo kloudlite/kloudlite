@@ -185,11 +185,19 @@ type AppContainer struct {
 // 	return b
 // }
 
+type ServiceProtocol string
+
+const (
+	ServiceProtocolTCP ServiceProtocol = "TCP"
+	ServiceProtocolUDP ServiceProtocol = "UDP"
+)
+
+// AppSvc creates k8s Service of type ClusterIP
 type AppSvc struct {
-	Port       uint16 `json:"port"`
-	TargetPort uint16 `json:"targetPort,omitempty"`
-	Type       string `json:"type,omitempty"`
-	Name       string `json:"name,omitempty"`
+	Port uint16 `json:"port"`
+
+	// +kubebuilder:default=TCP
+	Protocol *ServiceProtocol `json:"protocol,omitempty"`
 }
 
 type HPA struct {
