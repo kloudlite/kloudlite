@@ -6,15 +6,17 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/kloudlite/kl/constants"
-	domain_client "github.com/kloudlite/kl/domain/client"
-	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 	"os"
 	"os/exec"
 	"os/user"
 	"strings"
+
+	"github.com/kloudlite/kl/constants"
+	"github.com/kloudlite/kl/domain/client"
+	domain_client "github.com/kloudlite/kl/domain/client"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -32,7 +34,7 @@ type KLConfig struct {
 	EnvVars  []EnvironmentVariable `yaml:"envVars" json:"envVars"`
 }
 
-var klConfig KLConfig
+// var klConfig KLConfig
 
 type VolMount struct {
 	Path string `yaml:"path"`
@@ -93,17 +95,23 @@ func startBox(_ *cobra.Command, args []string) error {
 
 	fn.Log("starting container...")
 
-	func() {
+	{
 		// Global setup
 		ensurePublicKey()
 		ensureCacheExist()
-	}()
-	func() {
+	}
+
+	{
 		// local setup
-		loadConfig()
-		ensureBoxExist()
+		k, err := loadConfig()
+		if err != nil {
+			return err
+		}
+
+		ensureBoxExist(*k)
 		ensureBoxRunning()
-	}()
+	}
+
 	return nil
 }
 
@@ -126,25 +134,18 @@ func loadFileMount() {
 	}
 }
 
-func loadConfig() {
-	// check if kl.yml exists
-	if _, err := os.Stat("kl.yml"); os.IsNotExist(err) {
-		fn.PrintError(errors.New("kl.yml not found"))
-		return
-	} else {
-		// read kl.yml into struct
-		klConfig = KLConfig{}
-		file, err := os.ReadFile("kl.yml")
-		if err != nil {
-			fn.PrintError(errors.New("Error reading kl.yml"))
-			return
-		}
-		err = yaml.Unmarshal(file, &klConfig)
-		if err != nil {
-			return
-		}
-		loadFileMount()
+func loadConfig() (*KLConfig, error) {
+	kf, err := client.GetKlFile("")
+	if err != nil {
+		return nil, err
 	}
+
+	// read kl.yml into struct
+	klConfig := &KLConfig{
+		Packages: kf.Packages,
+	}
+	loadFileMount()
+	return klConfig, nil
 }
 
 func getCwdHash() string {
@@ -180,7 +181,7 @@ func ensureCacheExist() {
 	}
 }
 
-func ensureBoxExist() {
+func ensureBoxExist(klConfig KLConfig) {
 	currentUser, _ := user.Current()
 	containerName := "kl-box-" + getCwdHash()
 	cwd, _ := os.Getwd()
@@ -202,14 +203,14 @@ func ensureBoxExist() {
 
 		dockerArgs = append(dockerArgs, "--name", containerName,
 			"-v", fmt.Sprintf("%s/.ssh/id_rsa.pub:/home/kl/.ssh/authorized_keys:z", currentUser.HomeDir),
-			"-v", "/var/run/docker.sock:/var/run/docker.sock:z",
+			"-v", "/var/run/docker.sock:/var/run/docker.sock:ro",
 			// "-v", "kl-home-cache:/home:rw",
 			// "-v", "nix-store:/nix:rw",
-			"-v", "kl-home-cache:/home:z",
-			"-v", "nix-store:/nix:z",
+			"-v", "kl-home-cache:/home:rw",
+			"-v", "nix-store:/nix:rw",
 			"--hostname", "box",
 			// "-v", fmt.Sprintf("%s:/home/kl/workspace:rw", cwd),
-			"-v", fmt.Sprintf("%s:/home/kl/workspace:z", cwd),
+			"-v", fmt.Sprintf("%s:/home/kl/workspace:ro", cwd),
 			"-p", "1729:22",
 			imageName, "--", string(conf),
 		)
@@ -220,16 +221,16 @@ func ensureBoxExist() {
 		command.Stderr = os.Stderr
 
 		if debug {
-			fn.Log("docker container started with cmd: %s\n", command.String())
+			fn.Logf("docker container started with cmd: %s\n", command.String())
 		}
 
 		err = command.Run()
 		if err != nil {
 			fn.PrintError(err)
 			fn.PrintError(errors.New("Error running kl-box container"))
-
 		}
 	}
+
 	if err != nil {
 		startContainer()
 	} else {

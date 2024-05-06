@@ -49,11 +49,11 @@ This command will add secret entry references from current environement to your 
 			env.Name = kt.DefaultEnv
 		}
 
-		mresRespValues, err := server.GetMresConfigValue(env.Name, *mresKey, mres.Metadata.Name)
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
+		// mresRespValues, err := server.GetMresConfigValue(env.Name, *mresKey, mres.Metadata.Name)
+		// if err != nil {
+		// 	fn.PrintError(err)
+		// 	return
+		// }
 
 		if kt.Mres == nil {
 			kt.Mres = []client.ResType{
@@ -95,25 +95,25 @@ This command will add secret entry references from current environement to your 
 			}
 		}
 
-		var found bool
-		for i, envVar := range kt.EnvVars {
-			if envVar.Key == *mresKey {
-				kt.EnvVars[i].Value = mresName
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-			kt.EnvVars = append(kt.EnvVars, client.EnvType{
-				Key:   RenameKey(fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey)),
-				Value: mresRespValues,
-			})
-		}
+		// var found bool
+		// for i, envVar := range kt.EnvVars {
+		// 	if envVar.Key == *mresKey {
+		// 		kt.EnvVars[i].Value = mresName
+		// 		found = true
+		// 		break
+		// 	}
+		// }
+		//
+		// if !found {
+		// 	if err != nil {
+		// 		fn.PrintError(err)
+		// 		return
+		// 	}
+		// 	kt.EnvVars = append(kt.EnvVars, client.EnvType{
+		// 		Key:   RenameKey(fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey)),
+		// 		Value: mresRespValues,
+		// 	})
+		// }
 
 		if err := client.WriteKLFile(*kt); err != nil {
 			fn.PrintError(err)

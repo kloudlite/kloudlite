@@ -1,0 +1,54 @@
+version: 3
+
+
+vars:
+  ImageRegistry: "ghcr.io/kloudlite/operator/components/kl-box"
+
+tasks:
+  clean:
+    cmds:
+      - |+
+        item=$(docker ps | grep -i kl-run | awk '{print $1}')
+
+        if [ ! -z "$item" ]; then
+          docker stop $item
+          docker rm $item
+        fi
+
+        docker volume rm kl-home-cache || echo "kl-home-cache already removed"
+        docker volume rm nix-store || echo "nix-store already removed"
+
+  # ssh:
+  #   cmds:
+  #     - ssh kl@localhost -p 1729
+  #
+  # run:
+  #   cmds:
+  #     - go run ./main.go --debug --foreground={{.foreground | default false}}
+  #
+  # dev:
+  #   cmds:
+  #     - task: clean
+  #     - task: run
+
+  # stop:
+  #   cmds:
+  #     - go run ./main.go stop
+  # 
+  # exec:
+  #   cmds:
+  #     - go run ./main.go exec
+
+  container:build:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format '1.0.0' or '1.0.0-nightly'"
+    cmds:
+      - docker build -t {{.ImageRegistry}}:{{.tag}} .
+
+  container:push:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value, of format '1.0.0' or '1.0.0-nightly'"
+    cmds:
+      - docker push {{.ImageRegistry}}:{{.tag}}

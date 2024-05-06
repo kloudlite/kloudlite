@@ -18,7 +18,7 @@ const (
 	NetworkService              = "Wi-Fi"
 	LocalSearchDomains          = ".local"
 	NoExistingSearchDomainError = "There aren't any Search Domains set on Wi-Fi."
-	BoxDockerImage              = "ghcr.io/nxtcoder36/kl-run:latest"
+	BoxDockerImage              = "ghcr.io/kloudlite/operator/components/kl-box:v1.0.7-nightly"
 )
 
 var (

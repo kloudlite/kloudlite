@@ -50,8 +50,8 @@ type KLFileType struct {
 	Configs    []ResType `json:"configs"`
 	Secrets    []ResType `json:"secrets"`
 	Env        []EnvType `json:"env"`
-	EnvVars    []EnvType `json:"envVars" yaml:"envVars"`
-	FileMount  MountType `json:"fileMount"`
+	// EnvVars    []EnvType `json:"envVars" yaml:"envVars"`
+	FileMount MountType `json:"fileMount"`
 }
 
 const (

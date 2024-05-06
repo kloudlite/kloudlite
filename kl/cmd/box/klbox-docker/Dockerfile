@@ -44,6 +44,7 @@ echo $@ | jq -r | jq -r '.envVars | map_values(. = "export \(.key)=\(.value)") |
 chown -R kl /home/kl/.env-vars
 sudo -u kl bash -c "/home/kl/.nix-profile/bin/nix-shell -p $(cat /home/kl/.nix-shell-args) --run 'echo done' | tee /tmp/exec.log"
 chown -R kl /home/kl/.nix-shell-args
+chown -R kl /home/kl/.ssh
 /usr/sbin/sshd -D
 EOF
 RUN chmod +x /entrypoint.sh
