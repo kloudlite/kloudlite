@@ -1,37 +1,7 @@
-{{/*{{- $jobName := get . "job-name" }}*/}}
-{{/*{{- $jobNamespace := get . "job-namespace" }}*/}}
-{{/*{{- $jobImage := get . "job-image" }}*/}}
-{{/*{{- $jobTolerations := get . "job-tolerations" | default list }}*/}}
-{{/*{{- $jobNodeSelector := get . "job-node-selector"  | default dict }}*/}}
-
-{{/*{{- $labels := get . "labels" | default dict }}*/}}
-
-{{/*{{- $podAnnotations := get . "pod-annotations" | default dict }}*/}}
-
-{{/*{{- $ownerRefs := get . "owner-refs" |default list }}*/}}
-
-{{/*{{- $serviceAccountName := get . "service-account-name" }} */}}
-
-{{/*{{- $tfStateSecretName := get . "tf-state-secret-name" }}*/}}
-{{/*{{- $tfStateSecretNamespace := get . "tf-state-secret-namespace" }}*/}}
-
-{{/*{{- $awsAccessKeyId := get . "aws-access-key-id" }}*/}}
-{{/*{{- $awsSecretAccessKey := get . "aws-secret-access-key" }}*/}}
-
-{{/*{{- $action := get . "action" }}*/}}
-{{/*{{- if not (or (eq $action "apply") (eq $action "delete")) }}*/}}
-{{/*{{- fail "action should be either apply,delete" -}}*/}}
-{{/*{{- end }}*/}}
-
-{{/*{{- $valuesJson := get . "values.json" }} */}}
-
-{{/*{{- $vpcOutputSecretName := get . "vpc-output-secret-name" }}*/}}
-{{/*{{- $vpcOutputSecretNamespace := get . "vpc-output-secret-namespace" }}*/}}
-
 {{- /*gotype: github.com/kloudlite/operator/operators/clusters/internal/templates.AwsVPCJobVars*/ -}}
 {{ with .}}
 apiVersion: crds.kloudlite.io/v1
-kind: Job
+kind: Lifecycle
 metadata: {{.JobMetadata | toYAML | nindent 2}}
 spec:
   onApply:

@@ -62,9 +62,9 @@ const (
 var (
 	ApplyChecklist = []rApi.CheckMeta{
 		{Name: patchDefaults, Title: "Patch Defaults"},
-		{Name: createVPCJob, Title: "Create VPC Job"},
+		{Name: createVPCJob, Title: "Create VPC Lifecycle"},
 	}
-	DeleteChecklist = []rApi.CheckMeta{{Name: createVPCJob, Title: "Delete VPC Job"}}
+	DeleteChecklist = []rApi.CheckMeta{{Name: createVPCJob, Title: "Delete VPC Lifecycle"}}
 )
 
 // +kubebuilder:rbac:groups=clusters,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -306,7 +306,7 @@ func (r *AwsVPCReconciler) applyVPC(req *rApi.Request[*clustersv1.AwsVPC]) stepR
 
 	req.AddToOwnedResources(rr...)
 
-	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getPrefixedName(obj.Name)), &crdsv1.Job{})
+	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getPrefixedName(obj.Name)), &crdsv1.Lifecycle{})
 	if err != nil {
 		return check.Failed(err)
 	}
