@@ -7,36 +7,25 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 func setLinuxDnsServers(dnsServers []net.IP, verbose bool) error {
-	ed, err := client.ActiveDns()
-	if err != nil {
-		return err
-	}
-
 	if len(dnsServers) == 0 {
-		functions.Warn("# dns server is not configured")
+		fn.Warn("# dns server is not configured")
 		return nil
 	}
 
 	// backup ip
 	if err := func() error {
-		s, err := getCurrentDns(verbose)
-		if err != nil {
-			functions.PrintError(err)
-			return nil
-		}
+		s, _ := getCurrentDns(verbose)
 
-		if len(ed) != 0 {
-			functions.Warn("# dns server is not configured")
-			return nil
-		}
-
-		if len(s) == 0 {
-			functions.Warn("# dns server is not configured")
-			return nil
+		if len(s) == 0 || dnsServers[0].To4().String() != s[0] {
+			if err := client.SetActiveDns([]string{
+				s[0],
+			}); err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -45,7 +34,7 @@ func setLinuxDnsServers(dnsServers []net.IP, verbose bool) error {
 	}
 
 	if verbose {
-		functions.Log("# updating dns server")
+		fn.Log("# updating dns server")
 	}
 
 	ips := []string{}
@@ -55,6 +44,33 @@ func setLinuxDnsServers(dnsServers []net.IP, verbose bool) error {
 
 	if err := os.WriteFile("/etc/resolv.conf", []byte(strings.Join(ips, "\n")), 0644); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func ResetLinuxDnsServers() error {
+	s, err := client.ActiveDns()
+	if err != nil {
+		fn.PrintError(fmt.Errorf("failed to get active dns servers: %w", err))
+		return nil
+	}
+
+	if len(s) == 0 {
+		return nil
+	}
+
+	ips := []string{}
+	for _, v := range s {
+		ips = append(ips, fmt.Sprintf("nameserver %s", v))
+	}
+
+	if err := os.WriteFile("/etc/resolv.conf", []byte(strings.Join(ips, "\n")), 0644); err != nil {
+		return err
+	}
+
+	if err := client.SetActiveDns([]string{}); err != nil {
+		fn.PrintError(err)
 	}
 
 	return nil

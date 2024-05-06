@@ -2,10 +2,12 @@ package vpn
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/domain/server"
 	"os"
 	"os/exec"
+	"runtime"
+
+	"github.com/kloudlite/kl/constants"
+	"github.com/kloudlite/kl/domain/server"
 
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -23,9 +25,14 @@ func connect(verbose bool, options ...fn.Option) error {
 	defer func() {
 		if !success {
 			_ = wg_vpn.StopService(verbose)
+
+			if runtime.GOOS == constants.RuntimeLinux && !wg_vpn.IsSystemdReslov() {
+				wg_vpn.ResetLinuxDnsServers()
+			}
 		}
 
 		client.SetLoading(false)
+
 	}()
 
 	if !skipCheck {
@@ -84,6 +91,12 @@ func disconnect(verbose bool) error {
 	data.VpnConnected = false
 	if err := client.SaveExtraData(data); err != nil {
 		return err
+	}
+
+	if runtime.GOOS == constants.RuntimeLinux && !wg_vpn.IsSystemdReslov() {
+		if err := wg_vpn.ResetLinuxDnsServers(); err != nil {
+			return err
+		}
 	}
 
 	return nil

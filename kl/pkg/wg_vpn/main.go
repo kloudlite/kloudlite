@@ -183,8 +183,6 @@ func Configure(
 			return setDnsServer(cfg.DNS[0], interfaceName, verbose)
 		}
 
-		fmt.Println(cfg.DNS)
-
 		return setLinuxDnsServers(cfg.DNS, verbose)
 	}(); err != nil {
 		return err
