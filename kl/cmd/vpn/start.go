@@ -122,7 +122,6 @@ sudo {cmd} vpn start`),
 }
 
 func startConnecting(verbose bool, options ...fn.Option) error {
-
 	if err := connect(verbose, options...); err != nil {
 		if skipCheck {
 			fn.Notify("Error: ", err.Error())

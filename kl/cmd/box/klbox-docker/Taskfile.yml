@@ -52,6 +52,7 @@ tasks:
     cmds:
       - task build:mounter
       - docker build -t {{.ImageRegistry}}:{{.tag}} .
+      - task container:push tag={{.tag}}
 
   container:push:
     preconditions:

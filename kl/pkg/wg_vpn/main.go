@@ -78,10 +78,12 @@ func StartServiceInBg(devName string, configFolder string) error {
 
 func Configure(
 	configuration []byte,
-	devName string,
+	_ string,
 	interfaceName string,
 	verbose bool,
 ) error {
+
+	fmt.Println(string(configuration))
 
 	s := spinner.NewSpinner()
 	cfg := wgc.Config{}
@@ -95,6 +97,23 @@ func Configure(
 	}
 
 	s.Stop()
+
+	// ps := []wgtypes.PeerConfig{}
+	//
+	// for i := range cfg.Peers {
+	// 	// if i <= 1 {
+	// 	// 	continue
+	// 	// }
+	//
+	// 	ps = append(ps, cfg.Peers[i])
+	//
+	// 	fmt.Printf("\n\n%d-> %+v\n\n", i, cfg.Peers[i])
+	// }
+	//
+	// cfg.Peers = ps
+
+	// return fmt.Errorf("wip")
+
 	if len(cfg.Address) == 0 {
 		return errors.New("device ip not found")
 	} else if e := SetDeviceIp(cfg.Address[0], interfaceName, verbose); e != nil {
@@ -145,20 +164,30 @@ func Configure(
 			return ipNet
 		}()
 
-		if runtime.GOOS != constants.RuntimeDarwin {
-			emptydns := []net.IP{}
-			cfg.DNS = emptydns
-		}
+		// if runtime.GOOS != constants.RuntimeDarwin {
+		// 	emptydns := []net.IP{}
+		// 	cfg.DNS = emptydns
+		// }
 
 		return nil
 	}(); err != nil {
 		return err
 	}
 
-	if isSystemdReslov {
-		if err := setDnsServer(cfg.DNS[0], interfaceName, verbose); err != nil {
-			return err
+	if err := func() error {
+		if runtime.GOOS != constants.RuntimeLinux {
+			return nil
 		}
+
+		if isSystemdReslov {
+			return setDnsServer(cfg.DNS[0], interfaceName, verbose)
+		}
+
+		fmt.Println(cfg.DNS)
+
+		return setLinuxDnsServers(cfg.DNS, verbose)
+	}(); err != nil {
+		return err
 	}
 
 	if runtime.GOOS == constants.RuntimeDarwin {
@@ -195,7 +224,7 @@ func Configure(
 		}
 	}
 
-	cfg.Peers[0].AllowedIPs = append(cfg.Peers[0].AllowedIPs, dnsServers...)
+	// cfg.Peers[0].AllowedIPs = append(cfg.Peers[0].AllowedIPs, dnsServers...)
 
 	//for _, p := range cfg.Config.Peers {
 	//	fmt.Println("peers ", p.Endpoint)
@@ -206,22 +235,14 @@ func Configure(
 		return err
 	}
 
-	for _, i2 := range cfg.Peers[0].AllowedIPs {
-		err = ipRouteAdd(i2.String(), cfg.Address[0].IP.String(), interfaceName, verbose)
-		if err != nil {
-			return err
+	for _, pc := range cfg.Peers {
+		for _, i2 := range pc.AllowedIPs {
+			err = ipRouteAdd(i2.String(), cfg.Address[0].IP.String(), interfaceName, verbose)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	return err
-}
-
-func setDnsServers(dnsServers []net.IPNet, inf string, verbose bool) error {
-	return ExecCmd(fmt.Sprintf("networksetup -setdnsservers %s %s", inf, func() string {
-		var dns []string
-		for _, v := range dnsServers {
-			dns = append(dns, v.IP.String())
-		}
-		return strings.Join(dns, " ")
-	}()), verbose)
 }

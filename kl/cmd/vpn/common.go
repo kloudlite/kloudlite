@@ -4,14 +4,16 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"runtime"
+
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
 	wg_svc "github.com/kloudlite/kl/pkg/wg_vpn/wg_service"
-	"runtime"
 )
 
 const (
@@ -26,42 +28,87 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 
 	devName := selectedDevice.DeviceName
 
-	if !skipCheck {
-		switch flags.CliName {
-		case constants.CoreCliName:
-			envName := fn.GetOption(options, "envName")
-			if envName != "" {
-				en, err := client.CurrentEnv()
+	// ensure device
+	if err := func() error {
+		if devName != "" {
+			return nil
+		}
 
-				if (err == nil && en.Name != envName) || (err != nil && envName != "") {
-					_, err := server.GetVPNDevice(devName, options...)
-					if err != nil {
-						return err
-					}
-				}
-			}
+		// fetch device
+		devs, err := server.ListVPNDevice(options...)
+		if err != nil {
+			return err
+		}
 
-		case constants.InfraCliName:
-			_, err := server.GetVPNDevice(devName, options...)
-			if err != nil {
-				return err
-			}
-			//clusterName := fn.GetOption(options, "clusterName")
-			//if clusterName != "" {
-			//	cn, err := client.CurrentClusterName()
-			//	if err != nil {
-			//		return err
-			//	}
-			//	if cn != "" && cn != clusterName {
-			//		if err := server.UpdateDeviceClusterName(clusterName); err != nil {
-			//			return err
-			//		}
-			//	}
-			//
-			//	time.Sleep(2 * time.Second)
-			//}
+		if len(devs) == 0 {
+			return fmt.Errorf("no device found")
+		}
+
+		if len(devs) == 1 {
+			devName = devs[0].Metadata.Name
+			return nil
+		}
+
+		devName = devs[0].Metadata.Name
+
+		dev, err := fzf.FindOne(
+			devs,
+			func(item server.Device) string { return item.Metadata.Name },
+			fzf.WithPrompt("Select VPN device >"),
+		)
+
+		if err != nil {
+			return err
+		}
+
+		devName = dev.Metadata.Name
+		return nil
+	}(); err != nil {
+		return err
+	}
+
+	if selectedDevice.DeviceName != devName {
+		if err := client.SelectDevice(devName); err != nil {
+			return err
 		}
 	}
+
+	// if !skipCheck {
+	// 	switch flags.CliName {
+	// 	case constants.CoreCliName:
+	// 		envName := fn.GetOption(options, "envName")
+	// 		if envName != "" {
+	// 			en, err := client.CurrentEnv()
+	//
+	// 			if (err == nil && en.Name != envName) || (err != nil && envName != "") {
+	// 				_, err := server.GetVPNDevice(devName, options...)
+	// 				if err != nil {
+	// 					return err
+	// 				}
+	// 			}
+	// 		}
+	//
+	// 	case constants.InfraCliName:
+	// 		_, err := server.GetVPNDevice(devName, options...)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		//clusterName := fn.GetOption(options, "clusterName")
+	// 		//if clusterName != "" {
+	// 		//	cn, err := client.CurrentClusterName()
+	// 		//	if err != nil {
+	// 		//		return err
+	// 		//	}
+	// 		//	if cn != "" && cn != clusterName {
+	// 		//		if err := server.UpdateDeviceClusterName(clusterName); err != nil {
+	// 		//			return err
+	// 		//		}
+	// 		//	}
+	// 		//
+	// 		//	time.Sleep(2 * time.Second)
+	// 		//}
+	// 	}
+	// }
 
 	device, err := server.GetVPNDevice(devName, options...)
 	if err != nil {
@@ -128,8 +175,8 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 	//	fn.Log(text.Yellow(fmt.Sprintf("[#] no ports found for device %s, you can export ports using %s vpn expose\n", devName, flags.CliName)))
 	//}
 
-	fmt.Println(device)
-	fmt.Println(device.WireguardConfig)
+	// fmt.Println(device)
+	// fmt.Println(device.WireguardConfig)
 
 	if device.WireguardConfig.Value == "" {
 		return errors.New("no wireguard config found, please try again in few seconds")
@@ -149,18 +196,6 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 	}
 
 	if err := wg_vpn.Configure(configuration, devName, ifName, verbose); err != nil {
-		return err
-	}
-
-	if err := wg_vpn.Configure(configuration, devName, func() string {
-		if runtime.GOOS == constants.RuntimeDarwin {
-			return ifName
-		}
-
-		return "kl-device"
-
-		// return devName
-	}(), verbose); err != nil {
 		return err
 	}
 

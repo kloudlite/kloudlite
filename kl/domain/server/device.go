@@ -30,7 +30,6 @@ type Device struct {
 		Annotations       map[string]string `json:"annotations"`
 		CreationTimestamp string            `json:"creationTimestamp"`
 		DeletionTimestamp string            `json:"deletionTimestamp"`
-		Generation        string            `json:"generation"`
 		Labels            map[string]string `json:"labels"`
 		Name              string            `json:"name"`
 		Namespace         string            `json:"namespace"`
@@ -38,7 +37,6 @@ type Device struct {
 	PrivateKey      string `json:"privateKey"`
 	PublicEndpoint  string `json:"publicEndpoint"`
 	PublicKey       string `json:"publicKey"`
-	RecordVersion   string `json:"recordVersion"`
 	UpdateTime      string `json:"updateTime"`
 	WireguardConfig struct {
 		Value    string `json:"value"`
@@ -100,7 +98,7 @@ func ListVPNDevice(options ...fn.Option) ([]Device, error) {
 		return nil, err
 	}
 
-	respData, err := klFetch("cli_getGlobalVpnDevices", map[string]any{
+	respData, err := klFetch("cli_listGlobalVpnDevices", map[string]any{
 		"gvpn": VPNDEVICEGVPN,
 		"pq": map[string]any{
 			"orderBy":       "name",

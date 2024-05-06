@@ -92,9 +92,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 
 		selectedGroup, e := fzf.FindOne(
 			configs,
-			func(item server.Config) string {
-				return item.Metadata.Name
-			},
+			func(item server.Config) string { return item.Metadata.Name },
 			fzf.WithPrompt("Select Config Group >"),
 		)
 		if e != nil {

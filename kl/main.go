@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-	//fmt.Println(xdg.CacheHome)
 	if flags.CliName == "kl" {
 		kl.Execute()
 		return

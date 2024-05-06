@@ -50,7 +50,7 @@ sudo -u kl bash -c "/home/kl/.nix-profile/bin/nix-shell -p $(cat /home/kl/.nix-s
 chown -R kl /home/kl/.nix-shell-args
 chown -R kl /home/kl/.ssh
 
-sudo mounter --conf /tmp/sample.json
+sudo /mounter --conf /tmp/sample.json
 
 /usr/sbin/sshd -D
 EOF
