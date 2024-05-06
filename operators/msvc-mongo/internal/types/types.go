@@ -5,9 +5,14 @@ import "encoding/json"
 type StandaloneSvcOutput struct {
 	RootUsername string `json:"ROOT_USERNAME"`
 	RootPassword string `json:"ROOT_PASSWORD"`
-	Hosts        string `json:"HOSTS"`
-	URI          string `json:"URI"`
-	AuthSource   string `json:"AUTH_SOURCE"`
+
+	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
+	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
+
+	GlobalVPNHosts string `json:"GLOBAL_VPN_HOSTS"`
+	GlobalVpnURI   string `json:"GLOBAL_VPN_URI"`
+
+	AuthSource string `json:"AUTH_SOURCE"`
 }
 
 func (sso StandaloneSvcOutput) ToMap() (map[string]string, error) {
@@ -23,11 +28,16 @@ func (sso StandaloneSvcOutput) ToMap() (map[string]string, error) {
 }
 
 type ClusterSvcOutput struct {
-	RootUsername    string `json:"ROOT_USERNAME"`
-	RootPassword    string `json:"ROOT_PASSWORD"`
-	Hosts           string `json:"HOSTS"`
-	URI             string `json:"URI"`
-	AuthSource      string `json:"AUTH_SOURCE"`
+	RootUsername string `json:"ROOT_USERNAME"`
+	RootPassword string `json:"ROOT_PASSWORD"`
+	AuthSource   string `json:"AUTH_SOURCE"`
+
+	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
+	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
+
+	GlobalVpnHosts string `json:"GLOBAL_VPN_HOSTS"`
+	GlobalVpnURI   string `json:"GLOBAL_VPN_URI"`
+
 	ReplicasSetName string `json:"REPLICASET_NAME"`
 	ReplicaSetKey   string `json:"REPLICASET_KEY"`
 }
@@ -44,12 +54,17 @@ func (cso ClusterSvcOutput) ToMap() (map[string]string, error) {
 	return m, nil
 }
 
-type MresOutput struct {
+type DatabaseOutput struct {
 	Username string `json:"USERNAME"`
 	Password string `json:"PASSWORD"`
-	Hosts    string `json:"HOSTS"`
-	DbName   string `json:"DB_NAME"`
-	URI      string `json:"URI"`
+
+	DbName string `json:"DB_NAME"`
+
+	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
+	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
+
+	GlobalVPNHosts string `json:"GLOBAL_VPN_HOSTS"`
+	GlobalVpnURI   string `json:"GLOBAL_VPN_URI"`
 }
 
 func ExtractPVCLabelsFromStatefulSetLabels(m map[string]string) map[string]string {

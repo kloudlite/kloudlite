@@ -10,20 +10,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type MsvcNamedRef struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
-	Name       string `json:"name"`
-	Namespace  string `json:"namespace"`
-}
-
+//	type MsvcNamedRef struct {
+//		APIVersion  string `json:"apiVersion"`
+//		Kind        string `json:"kind"`
+//		Name        string `json:"name"`
+//		Namespace   string `json:"namespace"`
+//	}
 type mresKind struct {
 	Kind string `json:"kind"`
 }
 
 type MresResourceTemplate struct {
 	metav1.TypeMeta `json:",inline" graphql:"children-required"`
-	MsvcRef         MsvcNamedRef                    `json:"msvcRef"`
+	MsvcRef         ct.MsvcRef                      `json:"msvcRef"`
 	Spec            map[string]apiextensionsv1.JSON `json:"spec"`
 }
 

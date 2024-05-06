@@ -5,7 +5,7 @@ import (
 	app "github.com/kloudlite/operator/operators/app-n-lambda/controller"
 	clusters "github.com/kloudlite/operator/operators/clusters/controller"
 	helmCharts "github.com/kloudlite/operator/operators/helm-charts/controller"
-	job "github.com/kloudlite/operator/operators/job/controller"
+	lifecycle "github.com/kloudlite/operator/operators/lifecycle/controller"
 	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
 	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
 	msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
@@ -30,7 +30,7 @@ func main() {
 	msvcRedis.RegisterInto(mgr)
 	msvcAndMres.RegisterInto(mgr)
 
-	job.RegisterInto(mgr)
+	lifecycle.RegisterInto(mgr)
 
 	// kloudlite cluster management
 	clusters.RegisterInto(mgr)

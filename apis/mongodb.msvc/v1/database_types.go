@@ -31,9 +31,11 @@ type Database struct {
 	Output ct.ManagedResourceOutput `json:"output"`
 }
 
+const DatabaseKind = "Database"
+
 func (db *Database) EnsureGVK() {
 	if db != nil {
-		db.SetGroupVersionKind(GroupVersion.WithKind("Database"))
+		db.SetGroupVersionKind(GroupVersion.WithKind(DatabaseKind))
 	}
 }
 

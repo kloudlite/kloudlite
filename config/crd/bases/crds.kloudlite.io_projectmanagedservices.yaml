@@ -89,6 +89,8 @@ spec:
                     - kind
                     - spec
                     type: object
+                  sharedSecret:
+                    type: string
                   tolerations:
                     items:
                       description: The pod this Toleration is attached to tolerates

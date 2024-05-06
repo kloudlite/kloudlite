@@ -4,12 +4,11 @@ import (
 	"github.com/kloudlite/operator/operator"
 
 	app "github.com/kloudlite/operator/operators/app-n-lambda/controller"
+	distribution "github.com/kloudlite/operator/operators/distribution/controller"
 	helmCharts "github.com/kloudlite/operator/operators/helm-charts/controller"
-	jobs "github.com/kloudlite/operator/operators/job/controller"
+	lifecycle "github.com/kloudlite/operator/operators/lifecycle/controller"
 	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
 	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
-
-	distribution "github.com/kloudlite/operator/operators/distribution/controller"
 	msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
 	nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	project "github.com/kloudlite/operator/operators/project/controller"
@@ -35,7 +34,7 @@ func main() {
 	// kloudlite cluster management
 	nodepool.RegisterInto(mgr)
 
-	jobs.RegisterInto(mgr)
+	lifecycle.RegisterInto(mgr)
 
 	// kloudlite resource status updates
 	resourceWatcher.RegisterInto(mgr)

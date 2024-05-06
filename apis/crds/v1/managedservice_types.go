@@ -25,6 +25,7 @@ func (s *ServiceTemplate) GroupVersionKind() schema.GroupVersionKind {
 type ManagedServiceSpec struct {
 	ct.NodeSelectorAndTolerations `json:",inline"`
 	ServiceTemplate               ServiceTemplate `json:"serviceTemplate"`
+	SharedSecret                  *string         `json:"sharedSecret,omitempty" graphql:"ignore"`
 }
 
 // +kubebuilder:object:root=true
