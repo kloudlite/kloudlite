@@ -54,17 +54,17 @@ spec:
           - name: ACCESS_TOKEN_SECRET_NAMESPACE
             value: {{.Release.Namespace}}
 
-          - name: CLUSTER_NAME
-            valueFrom:
-              secretKeyRef:
-                key: CLUSTER_NAME
-                name: {{.Values.clusterIdentitySecretName}}
-
-          - name: ACCOUNT_NAME
-            valueFrom:
-              secretKeyRef:
-                key: ACCOUNT_NAME
-                name: {{.Values.clusterIdentitySecretName}}
+          {{- /* - name: CLUSTER_NAME */}}
+          {{- /*   valueFrom: */}}
+          {{- /*     secretKeyRef: */}}
+          {{- /*       key: CLUSTER_NAME */}}
+          {{- /*       name: {{.Values.clusterIdentitySecretName}} */}}
+          {{- /**/}}
+          {{- /* - name: ACCOUNT_NAME */}}
+          {{- /*   valueFrom: */}}
+          {{- /*     secretKeyRef: */}}
+          {{- /*       key: ACCOUNT_NAME */}}
+          {{- /*       name: {{.Values.clusterIdentitySecretName}} */}}
 
           - name: VECTOR_PROXY_GRPC_SERVER_ADDR
             value: 0.0.0.0:6000

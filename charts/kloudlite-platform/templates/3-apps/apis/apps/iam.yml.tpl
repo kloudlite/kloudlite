@@ -18,10 +18,7 @@ spec:
   replicas: {{.Values.apps.iamApi.configuration.replicas}}
 
   services:
-    - port: 3001
-      targetPort: 3001
-      name: grpc
-      type: tcp
+    - port: 3001 #grpc
   containers:
     - name: main
       image: {{.Values.apps.iamApi.image.repository}}:{{.Values.apps.iamApi.image.tag | default (include "image-tag" .) }}

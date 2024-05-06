@@ -19,10 +19,7 @@ spec:
   replicas: {{.Values.apps.consoleWeb.configuration.replicas}}
 
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
+    - port: {{.Values.apps.consoleWeb.configuration.httpPort}}
   containers:
     - name: main
       image: {{.Values.apps.consoleWeb.image.repository}}:{{.Values.apps.consoleWeb.image.tag | default (include "image-tag" .) }}
@@ -39,7 +36,7 @@ spec:
         failureThreshold: 3
         httpGet:
           path: /healthy.txt
-          port: 3000
+          port: {{.Values.apps.consoleWeb.configuration.httpPort}}
         interval: 10
       readinessProbe: *probe
       env:
@@ -48,9 +45,9 @@ spec:
         - key: COOKIE_DOMAIN
           value: "{{.Values.global.cookieDomain}}"
         - key: GATEWAY_URL
-          value: "http://gateway"
+          value: "http://gateway:{{.Values.apps.gatewayApi.configuration.httpPort}}"
         - key: PORT
-          value: "3000"
+          value: "{{.Values.apps.consoleWeb.configuration.httpPort}}"
         - key: ARTIFACTHUB_KEY_ID
           value: {{.Values.apps.consoleWeb.configuration.artifactHubKeyID}}
         - key: ARTIFACTHUB_KEY_SECRET

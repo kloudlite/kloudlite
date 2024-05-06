@@ -18,10 +18,7 @@ spec:
   replicas: {{.Values.apps.websocketApi.configuration.replicas}}
 
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
+    - port: 3000
 
   containers:
     - name: main
@@ -41,7 +38,7 @@ spec:
           value: iam:3001
         
         - key: OBSERVABILITY_API_ADDR
-          value: observability-api:80
+          value: observability-api:3000
 
         - key: SESSION_KV_BUCKET
           value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}

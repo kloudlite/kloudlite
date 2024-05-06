@@ -17,15 +17,8 @@ spec:
 
   replicas: {{.Values.apps.consoleApi.configuration.replicas }}
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
-
-    - port: 3001
-      targetPort: 3001
-      name: grpc
-      type: tcp
+    - port: {{.Values.apps.accountsApi.configuration.httpPort}}
+    - port: {{.Values.apps.accountsApi.configuration.grpcPort}}
   containers:
     - name: main
       image: {{.Values.apps.accountsApi.image.repository}}:{{.Values.apps.accountsApi.image.tag | default (include "image-tag" .) }}
@@ -42,10 +35,10 @@ spec:
         max: "100Mi"
       env:
         - key: HTTP_PORT
-          value: "3000"
+          value: "{{.Values.apps.accountsApi.configuration.httpPort}}"
 
         - key: GRPC_PORT
-          value: "3001"
+          value: "{{.Values.apps.accountsApi.configuration.grpcPort}}"
 
         - key: MONGO_URI
           type: secret
@@ -67,17 +60,17 @@ spec:
           value: "{{.Values.global.cookieDomain}}"
 
         - key: IAM_GRPC_ADDR
-          value: "iam:3001"
+          value: "iam:{{.Values.apps.iamApi.configuration.grpcPort}}"
 
         - key: COMMS_GRPC_ADDR
-          value: "comms:3001"
+          value: "comms:{{.Values.apps.commsApi.configuration.grpcPort}}"
 
         - key: CONTAINER_REGISTRY_GRPC_ADDR
-          value: "container-registry-api:3001"
+          value: "container-registry-api:{{.Values.apps.containerRegistryApi.configuration.grpcPort}}"
 
         - key: CONSOLE_GRPC_ADDR
-          value: "console-api:3001"
+          value: "console-api:{{.Values.apps.consoleApi.configuration.grpcPort}}"
 
         - key: AUTH_GRPC_ADDR
-          value: "auth-api:3001"
+          value: "auth-api:{{.Values.apps.authApi.configuration.grpcPort}}"
 

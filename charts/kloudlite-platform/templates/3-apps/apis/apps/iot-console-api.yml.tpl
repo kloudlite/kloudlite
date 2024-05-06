@@ -18,10 +18,7 @@ spec:
   replicas: {{.Values.apps.iotConsoleApi.configuration.replicas}}
 
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
+    - port: 3000
 
   containers:
     - name: main

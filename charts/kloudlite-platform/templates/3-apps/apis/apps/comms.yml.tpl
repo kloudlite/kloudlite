@@ -20,9 +20,6 @@ spec:
 
   services:
     - port: 3001
-      targetPort: 3001
-      name: grpc
-      type: tcp
 
   containers:
     - name: main

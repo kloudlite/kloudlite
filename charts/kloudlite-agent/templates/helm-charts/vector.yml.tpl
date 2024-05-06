@@ -118,6 +118,20 @@ spec:
               fieldRef:
                 fieldPath: spec.nodeName
 
+          - name: CLUSTER_NAME
+            valueFrom:
+              secretKeyRef:
+                key: CLUSTER_NAME
+                name: {{.Values.clusterIdentitySecretName}}
+                optional: true
+
+          - name: ACCOUNT_NAME
+            valueFrom:
+              secretKeyRef:
+                key: ACCOUNT_NAME
+                name: {{.Values.clusterIdentitySecretName}}
+                optional: true
+
     serviceAccount:
       create: false
       name: {{$vectorSvcAccount}}

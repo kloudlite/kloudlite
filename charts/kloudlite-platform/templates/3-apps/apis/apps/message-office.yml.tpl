@@ -16,20 +16,9 @@ spec:
     {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
-
-    - port: 3001
-      targetPort: 3001
-      name: grpc
-      type: tcp
-
-    - port: 3002
-      targetPort: 3002
-      name: internal-grpc
-      type: tcp
+    - port: 3000 # http
+    - port: 3001 #external-grpc
+    - port: 3002 #internal-grpc
 
   containers:
     - name: main

@@ -19,14 +19,8 @@ spec:
   replicas: {{.Values.apps.authWeb.configuration.replicas}}
   
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
+    - port: {{.Values.apps.authWeb.configuration.httpPort}}
     - port: 6000
-      targetPort: 6000
-      name: http
-      type: tcp
   containers:
     - name: main
       image: {{.Values.apps.authWeb.image.repository}}:{{.Values.apps.authWeb.image.tag | default (include "image-tag" .) }}
@@ -44,14 +38,14 @@ spec:
         failureThreshold: 3
         httpGet:
           path: /healthy.txt
-          port: 3000
+          port: {{.Values.apps.authWeb.configuration.httpPort}}
         interval: 10
       readinessProbe: *probe
       env:
         - key: BASE_URL
           value: {{include "router-domain" .}}
         - key: GATEWAY_URL
-          value: "http://gateway"
+          value: "http://gateway:{{.Values.apps.gatewayApi.configuration.httpPort}}"
         - key: COOKIE_DOMAIN
           value: "{{.Values.global.cookieDomain}}"
         - key: PORT

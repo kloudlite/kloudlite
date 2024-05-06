@@ -19,15 +19,8 @@ spec:
 
 
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
+    - port: 3000
     - port: 3001
-      targetPort: 3001
-      name: grpc
-      type: tcp
-
   containers:
     - name: main
       image: {{.Values.apps.infraApi.image.repository}}:{{.Values.apps.infraApi.image.tag | default (include "image-tag" .) }}

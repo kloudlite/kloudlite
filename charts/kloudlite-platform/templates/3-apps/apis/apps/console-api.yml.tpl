@@ -18,15 +18,8 @@ spec:
   replicas: {{.Values.apps.consoleApi.configuration.replicas}}
 
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
-
+    - port: 3000
     - port: {{.Values.apps.consoleApi.configuration.logsAndMetricsHttpPort | int }}
-      targetPort: {{.Values.apps.consoleApi.configuration.logsAndMetricsHttpPort | int }}
-      name: http
-      type: tcp
 
   containers:
     - name: main
