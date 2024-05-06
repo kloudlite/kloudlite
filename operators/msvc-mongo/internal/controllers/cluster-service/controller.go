@@ -162,19 +162,26 @@ func (r *Reconciler) generateAccessCredentials(req *rApi.Request[*mongodbMsvcv1.
 				hosts[i] = fmt.Sprintf("%s-%d.%s-headless.%s.svc.%s:27017", obj.Name, i, obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
 			}
 
+			gvpnHosts := make([]string, obj.Spec.Replicas)
+			for i := 0; i < obj.Spec.Replicas; i++ {
+				gvpnHosts[i] = fmt.Sprintf("%s-%d.%s-headless.%s.svc.%s:27017", obj.Name, i, obj.Name, obj.Namespace, r.Env.GlobalVpnDNS)
+			}
+
 			rootUsername := "root"
 			replicaSetName := "rs"
 
 			authSource := "admin"
 
 			output := types.ClusterSvcOutput{
-				RootUsername:    rootUsername,
-				RootPassword:    rootPassword,
-				Hosts:           strings.Join(hosts, ","),
-				URI:             fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=%s&replicaSet=%s", rootUsername, rootPassword, strings.Join(hosts, ","), "admin", authSource, replicaSetName),
-				AuthSource:      authSource,
-				ReplicasSetName: replicaSetName,
-				ReplicaSetKey:   replicasetKey,
+				RootUsername:      rootUsername,
+				RootPassword:      rootPassword,
+				ClusterLocalHosts: strings.Join(hosts, ","),
+				ClusterLocalURI:   fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=%s&replicaSet=%s", rootUsername, rootPassword, strings.Join(hosts, ","), "admin", authSource, replicaSetName),
+				GlobalVpnHosts:    strings.Join(gvpnHosts, ","),
+				GlobalVpnURI:      fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=%s&replicaSet=%s", rootUsername, rootPassword, strings.Join(gvpnHosts, ","), "admin", authSource, replicaSetName),
+				AuthSource:        authSource,
+				ReplicasSetName:   replicaSetName,
+				ReplicaSetKey:     replicasetKey,
 			}
 
 			var err error

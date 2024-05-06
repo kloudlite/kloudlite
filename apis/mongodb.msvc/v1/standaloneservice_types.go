@@ -31,9 +31,11 @@ type StandaloneService struct {
 	Output ct.ManagedServiceOutput `json:"output"`
 }
 
+const StandaloneServiceKind = "StandaloneService"
+
 func (s *StandaloneService) EnsureGVK() {
 	if s != nil {
-		s.SetGroupVersionKind(GroupVersion.WithKind("StandaloneService"))
+		s.SetGroupVersionKind(GroupVersion.WithKind(StandaloneServiceKind))
 	}
 }
 

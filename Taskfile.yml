@@ -426,6 +426,9 @@ tasks:
         rm -rf $tDir
         #popd 1> /dev/null
 
+  msvc:grpc-interfaces:
+    dir: ./operators/
+
   grpc-interfaces:
     dir: ./grpc-interfaces
     summary: |+

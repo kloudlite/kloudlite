@@ -5,7 +5,11 @@ import (
 )
 
 type Env struct {
-	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"`
+	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES"`
+
+	MsvcCredsSvcSharedSecret string `env:"MSVC_CREDS_SVC_SHARED_SECRET"`
+	MsvcCredsSvcHttpPort     uint16 `env:"MSVC_CREDS_SVC_HTTP_PORT"`
+	MsvcCredsSvcRequestPath  string `env:"MSVC_CREDS_SVC_REQUEST_PATH"`
 }
 
 func GetEnvOrDie() *Env {
