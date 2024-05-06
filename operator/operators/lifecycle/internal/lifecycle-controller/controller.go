@@ -1,4 +1,4 @@
-package job_controller
+package lifecycle_controller
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/operators/job/internal/env"
-	"github.com/kloudlite/operator/operators/job/internal/job-controller/templates"
+	"github.com/kloudlite/operator/operators/lifecycle/internal/env"
+	"github.com/kloudlite/operator/operators/lifecycle/internal/lifecycle-controller/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	job_manager "github.com/kloudlite/operator/pkg/job-helper"
@@ -53,26 +53,26 @@ const (
 )
 
 var ApplyCheckList = []rApi.CheckMeta{
-	{Name: EnsureJobRBAC, Title: "Ensures K8s Job RBACs"},
-	{Name: ApplyK8sJob, Title: "Apply Kubernetes Job"},
+	{Name: EnsureJobRBAC, Title: "Ensures K8s Lifecycle RBACs"},
+	{Name: ApplyK8sJob, Title: "Apply Kubernetes Lifecycle"},
 }
 
 // DefaultsPatched string = "defaults-patched"
 var DeleteCheckList = []rApi.CheckMeta{
-	{Name: EnsureJobRBAC, Title: "Ensures K8s Job RBACs"},
-	{Name: DeleteK8sJob, Title: "Delete Kubernetes Job"},
+	{Name: EnsureJobRBAC, Title: "Ensures K8s Lifecycle RBACs"},
+	{Name: DeleteK8sJob, Title: "Delete Kubernetes Lifecycle"},
 }
 
 func getJobSvcAccountName() string {
 	return "job-svc-account"
 }
 
-// +kubebuilder:rbac:groups=helm.kloudlite.io,resources=helmcharts,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=helm.kloudlite.io,resources=helmcharts/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=helm.kloudlite.io,resources=helmcharts/finalizers,verbs=update
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lifecycles,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lifecycles/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lifecycles/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Job{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Lifecycle{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -115,7 +115,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Job]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Lifecycle]) stepResult.Result {
 	rApi.NewRunningCheck("finalizing", req)
 
 	if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
@@ -129,7 +129,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Job]) stepResult.Result 
 	return req.Finalize()
 }
 
-func (r *Reconciler) ensureJobRBAC(req *rApi.Request[*crdsv1.Job]) stepResult.Result {
+func (r *Reconciler) ensureJobRBAC(req *rApi.Request[*crdsv1.Lifecycle]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(EnsureJobRBAC, req)
 
@@ -180,9 +180,13 @@ func (r *Reconciler) ensureJobRBAC(req *rApi.Request[*crdsv1.Job]) stepResult.Re
 	return check.Completed()
 }
 
-func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Result {
+func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Lifecycle]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(ApplyK8sJob, req)
+
+	if v, ok := obj.Status.Checks[ApplyK8sJob]; ok && v.Generation == obj.Generation && (v.State == rApi.CompletedState || v.State == rApi.ErroredState) {
+		return req.Next()
+	}
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Namespace, obj.Name), job); err != nil {
@@ -275,7 +279,7 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Resu
 	return check.StillRunning(fmt.Errorf("job is pending, waiting for job to start"))
 }
 
-func (r *Reconciler) deleteK8sJob(req *rApi.Request[*crdsv1.Job]) stepResult.Result {
+func (r *Reconciler) deleteK8sJob(req *rApi.Request[*crdsv1.Lifecycle]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(DeleteK8sJob, req)
 
@@ -387,7 +391,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		return err
 	}
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Job{}).Owns(&batchv1.Job{})
+	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Lifecycle{}).Owns(&batchv1.Job{})
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
