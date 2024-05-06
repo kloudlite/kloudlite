@@ -2,6 +2,9 @@ package server
 
 import (
 	"errors"
+	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"net/http"
 	"time"
 
@@ -47,16 +50,26 @@ const (
 	VPNDEVICEGVPN = "default"
 )
 
-type Devices struct {
-	DisplayName string   `json:"displayName"`
-	Metadata    Metadata `json:"metadata"`
+type DeviceList struct {
+	Edges Edges[Env] `json:"edges"`
 }
 
-func GetVPNDeviceDetails(options ...fn.Option) (*Device, error) {
-	devName := fn.GetOption(options, "deviceName")
+func GetVPNDevice(devName string, options ...fn.Option) (*Device, error) {
 	accountName := fn.GetOption(options, "accountName")
+	envName := fn.GetOption(options, "envName")
 
-	envName, err := EnsureEnv(nil, options...)
+	accountName, err := EnsureAccount(options...)
+	if err != nil {
+		return nil, err
+	}
+
+	if envName == "" {
+		env, err := EnsureEnv(nil, options...)
+		if err != nil {
+			return nil, err
+		}
+		envName = env.Name
+	}
 
 	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
@@ -79,7 +92,7 @@ func GetVPNDeviceDetails(options ...fn.Option) (*Device, error) {
 	}
 }
 
-func GetVPNDevice(options ...fn.Option) (*Devices, error) {
+func ListVPNDevice(options ...fn.Option) ([]Device, error) {
 	accountName := fn.GetOption(options, "accountName")
 
 	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
@@ -99,14 +112,59 @@ func GetVPNDevice(options ...fn.Option) (*Devices, error) {
 		return nil, err
 	}
 
-	if fromResp, err := GetFromRespForEdge[Devices](respData); err != nil {
+	if fromResp, err := GetFromRespForEdge[Device](respData); err != nil {
 		return nil, err
 	} else {
 		if len(fromResp) < 1 {
 			return nil, errors.New("No Global VPN devices found. Please create one from dashboard.")
 		}
-		return &fromResp[0], nil
+		return fromResp, nil
 	}
+}
+
+func SelectDevice(devName string, options ...fn.Option) (*Device, error) {
+	persistSelectedDevice := func(devName string) error {
+		err := client.SelectDevice(devName)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	devices, err := ListVPNDevice(options...)
+	if err != nil {
+		return nil, err
+	}
+
+	if devName != "" {
+		for _, d := range devices {
+			if d.Metadata.Name == devName {
+				if err := persistSelectedDevice(d.Metadata.Name); err != nil {
+					return nil, err
+				}
+				return &d, nil
+			}
+		}
+		return nil, errors.New("you don't have access to this device")
+	}
+
+	dev, err := fzf.FindOne(
+		devices,
+		func(dev Device) string {
+			return fmt.Sprintf("%s (%s)", dev.DisplayName, dev.Metadata.Name)
+		},
+		fzf.WithPrompt("Select Environment > "),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := persistSelectedDevice(dev.Metadata.Name); err != nil {
+		return nil, err
+	}
+
+	return dev, nil
 }
 
 func CheckDeviceStatus() bool {

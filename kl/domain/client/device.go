@@ -28,5 +28,20 @@ func CurrentDeviceDNS() ([]net.IP, error) {
 		return nil, err
 	}
 	return ips, nil
+}
 
+func SelectDevice(deviceName string) error {
+	file, err := GetDeviceContext()
+	if err != nil {
+		return err
+	}
+
+	file.DeviceName = deviceName
+
+	if file.DeviceName == "" {
+		return nil
+	}
+
+	err = WriteDeviceContext(deviceName)
+	return err
 }
