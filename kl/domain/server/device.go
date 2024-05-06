@@ -77,7 +77,7 @@ func GetVPNDevice(devName string, options ...fn.Option) (*Device, error) {
 	}
 
 	respData, err := klFetch("cli_getGlobalVpnDevice", map[string]any{
-		"envName":    envName,
+		//"envName":    envName,
 		"gvpn":       VPNDEVICEGVPN,
 		"deviceName": devName,
 	}, &cookie)

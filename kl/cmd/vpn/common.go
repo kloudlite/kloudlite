@@ -41,21 +41,25 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 				}
 			}
 
-			//case constants.InfraCliName:
-			//	clusterName := fn.GetOption(options, "clusterName")
-			//	if clusterName != "" {
-			//		cn, err := client.CurrentClusterName()
-			//		if err != nil {
+		case constants.InfraCliName:
+			_, err := server.GetVPNDevice(devName, options...)
+			if err != nil {
+				return err
+			}
+			//clusterName := fn.GetOption(options, "clusterName")
+			//if clusterName != "" {
+			//	cn, err := client.CurrentClusterName()
+			//	if err != nil {
+			//		return err
+			//	}
+			//	if cn != "" && cn != clusterName {
+			//		if err := server.UpdateDeviceClusterName(clusterName); err != nil {
 			//			return err
 			//		}
-			//		if cn != "" && cn != clusterName {
-			//			if err := server.UpdateDeviceClusterName(clusterName); err != nil {
-			//				return err
-			//			}
-			//		}
-			//
-			//		time.Sleep(2 * time.Second)
 			//	}
+			//
+			//	time.Sleep(2 * time.Second)
+			//}
 		}
 	}
 

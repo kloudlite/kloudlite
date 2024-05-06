@@ -48,7 +48,6 @@ Examples:
 				Configs:    make([]client.ResType, 0),
 				Secrets:    make([]client.ResType, 0),
 				Env:        []client.EnvType{{Key: "SAMPLE", Value: "sampleValue"}},
-				// EnvVars:    make([]client.EnvType, 0),
 				FileMount: client.MountType{
 					MountBasePath: "./.mounts",
 					Mounts:        make([]client.FileEntry, 0),

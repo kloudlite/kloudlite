@@ -40,6 +40,13 @@ func Logout() error {
 		}
 	}
 
+	deviceFile, _ := os.Stat(path.Join(configFolder, DeviceFileName))
+	if deviceFile != nil {
+		if err := os.Remove(path.Join(configFolder, deviceFile.Name())); err != nil {
+			return err
+		}
+	}
+
 	return os.Remove(path.Join(configFolder, sessionFile.Name()))
 	//return os.RemoveAll(configFolder)
 }

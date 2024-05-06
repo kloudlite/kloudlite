@@ -6,6 +6,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/kloudlite/kl/cmd/runner/add"
+	"github.com/kloudlite/kl/domain/server"
 	"os"
 	"os/exec"
 	"os/user"
@@ -33,8 +35,6 @@ type KLConfig struct {
 	Packages []string              `yaml:"packages" json:"packages"`
 	EnvVars  []EnvironmentVariable `yaml:"envVars" json:"envVars"`
 }
-
-// var klConfig KLConfig
 
 type VolMount struct {
 	Path string `yaml:"path"`
@@ -77,7 +77,7 @@ func startBox(_ *cobra.Command, args []string) error {
 		return nil
 	}
 
-	_, err := domain_client.GetKlFile("")
+	klFile, err := domain_client.GetKlFile("")
 	if err != nil && os.IsNotExist(err) {
 		return errors.New("please initialize kl file in current directory using 'kl init'")
 	} else if err != nil {
@@ -108,6 +108,41 @@ func startBox(_ *cobra.Command, args []string) error {
 			return err
 		}
 
+		for _, config := range klFile.Configs {
+			selectConfig, err := server.GetConfig(fn.MakeOption("configName", config.Name))
+			if err != nil {
+				return err
+			}
+			for key, value := range selectConfig.Data {
+				k.EnvVars = append(k.EnvVars, EnvironmentVariable{
+					Key:   add.RenameKey(key),
+					Value: value,
+				})
+			}
+		}
+		for _, secret := range klFile.Secrets {
+			selectSecret, err := server.GetSecret(fn.MakeOption("secretName", secret.Name))
+			if err != nil {
+				return err
+			}
+			for key, value := range selectSecret.StringData {
+				k.EnvVars = append(k.EnvVars, EnvironmentVariable{
+					Key:   add.RenameKey(key),
+					Value: value,
+				})
+			}
+		}
+		selectMres, err := server.GetMresConfigValues()
+		if err != nil {
+			return err
+		}
+		for key, value := range selectMres {
+			k.EnvVars = append(k.EnvVars, EnvironmentVariable{
+				Key:   key,
+				Value: value,
+			})
+		}
+		fmt.Println(k.EnvVars)
 		ensureBoxExist(*k)
 		ensureBoxRunning()
 	}

@@ -1,8 +1,6 @@
 package server
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/kloudlite/kl/domain/client"
@@ -147,7 +145,7 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 		return nil, err
 	}
 
-	respData, err := klFetch("cli_getMresKeys", map[string]any{
+	respData, err := klFetch("cli_getMresOutputKeyValues", map[string]any{
 		"envName": env.Name,
 		"keyrefs": func() []map[string]string {
 			var keyrefs []map[string]string
@@ -203,40 +201,4 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 	}
 
 	return result, nil
-}
-
-type MresRespData struct {
-	Data []MresResp `json:"data"`
-}
-
-func GetMresConfigValue(env string, mresKey string, mresName string) (string, error) {
-
-	cookie, err := getCookie()
-	if err != nil {
-		return "", err
-	}
-
-	respData, err := klFetch("cli_getMresOutputKeyValues", map[string]any{
-		"envName": env,
-		"keyrefs": []map[string]string{
-			{
-				"key":      mresKey,
-				"mresName": mresName,
-			},
-		},
-	}, &cookie)
-
-	if err != nil {
-		return "", err
-	}
-
-	var response MresRespData
-	err = json.Unmarshal(respData, &response)
-	if err != nil {
-		return "", err
-	}
-	if len(response.Data) > 0 {
-		return response.Data[0].Value, nil
-	}
-	return "", errors.New("no value found for selected mres key")
 }
