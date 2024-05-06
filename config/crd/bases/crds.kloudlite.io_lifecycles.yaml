@@ -5,14 +5,14 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: jobs.crds.kloudlite.io
+  name: lifecycles.crds.kloudlite.io
 spec:
   group: crds.kloudlite.io
   names:
-    kind: Job
-    listKind: JobList
-    plural: jobs
-    singular: job
+    kind: Lifecycle
+    listKind: LifecycleList
+    plural: lifecycles
+    singular: lifecycle
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -34,7 +34,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: Job is the Schema for the jobs API
+        description: Lifecycle is the Schema for the Lifecycle API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -49,7 +49,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: JobSpec defines the desired state of Job
+            description: LifecycleSpec defines the desired state of Lifecycle
             properties:
               onApply:
                 properties:
@@ -15115,6 +15115,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:

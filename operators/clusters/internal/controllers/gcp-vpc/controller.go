@@ -197,7 +197,7 @@ func (r *GcpVPCReconciler) applyVPCJob(req *rApi.Request[*clustersv1.GcpVPC]) st
 
 	req.AddToOwnedResources(rr...)
 
-	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.Job{})
+	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.Lifecycle{})
 	if err != nil {
 		return check.Failed(err)
 	}

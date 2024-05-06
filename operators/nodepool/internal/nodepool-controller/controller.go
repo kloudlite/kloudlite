@@ -46,13 +46,6 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	labelNodePoolApplyJob   string = "kloudlite.io/nodepool-apply-job"
-	labelResourceGeneration string = "kloudlite.io/resource-generation"
-
-	labelNodenameWithoutPrefix string = "kloudlite.io/node-name-without-prefix"
-
-	annotationNodesChecksum string = "kloudlite.io/nodes.checksum"
-
 	nodeFinalizer string = "kloudlite.io/nodepool-node-finalizer"
 )
 
@@ -71,7 +64,7 @@ const (
 var (
 	ApplyChecklist = []rApi.CheckMeta{
 		{Name: updateNodeTaintsAndLabels, Title: "Update Node Taints and Labels"},
-		{Name: ensureJobNamespaceRBACs, Title: "Configure Job Namespace RBACs"},
+		{Name: ensureJobNamespaceRBACs, Title: "Configure Lifecycle Namespace RBACs"},
 		{Name: syncNodepool, Title: "Syncing Nodepool"},
 	}
 	DeleteChecklist = []rApi.CheckMeta{
@@ -321,11 +314,6 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 	jobNamespace := jobRef[0]
 	jobName := jobRef[1]
 
-	// action := "apply"
-	// if obj.GetDeletionTimestamp() != nil {
-	// 	action = "delete"
-	// }
-
 	b, err := templates.ParseBytes(r.templateNodePoolJob, templates.NodepoolJobVars{
 		JobMetadata: metav1.ObjectMeta{
 			Name:            jobName,
@@ -352,7 +340,7 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 
 	req.AddToOwnedResources(rr...)
 
-	job, err := rApi.Get(ctx, r.Client, fn.NN(jobNamespace, jobName), &crdsv1.Job{})
+	job, err := rApi.Get(ctx, r.Client, fn.NN(jobNamespace, jobName), &crdsv1.Lifecycle{})
 	if err != nil {
 		return check.Failed(err)
 	}

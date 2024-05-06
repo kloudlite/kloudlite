@@ -15,7 +15,7 @@ import (
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/mres"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/msvc"
-	pmsvc "github.com/kloudlite/operator/operators/msvc-n-mres/internal/project-msvc"
+	// pmsvc "github.com/kloudlite/operator/operators/msvc-n-mres/internal/project-msvc"
 )
 
 func RegisterInto(mgr operator.Operator) {
@@ -32,7 +32,7 @@ func RegisterInto(mgr operator.Operator) {
 		neo4jMsvcv1.AddToScheme,
 	)
 	mgr.RegisterControllers(
-		&pmsvc.Reconciler{Name: "project-msvc", Env: ev},
+		// &pmsvc.Reconciler{Name: "project-msvc", Env: ev},
 		&cmsvc.Reconciler{Name: "cluster-msvc", Env: ev},
 		&msvc.Reconciler{Name: "msvc", Env: ev},
 		&mres.Reconciler{Name: "mres", Env: ev},

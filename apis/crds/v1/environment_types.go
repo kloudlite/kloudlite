@@ -23,7 +23,6 @@ const (
 
 // EnvironmentSpec defines the desired state of Environment
 type EnvironmentSpec struct {
-	ProjectName     string `json:"projectName"`
 	TargetNamespace string `json:"targetNamespace,omitempty"`
 
 	Routing *EnvironmentRouting `json:"routing,omitempty"`
@@ -31,9 +30,9 @@ type EnvironmentSpec struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:JSONPath=".spec.projectName",name=Project,type=string
-//+kubebuilder:printcolumn:JSONPath=".spec.targetNamespace",name="target-namespace",type=string
-//+kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:resource:scope=Cluster
+//+kubebuilder:printcolumn:JSONPath=".spec.targetNamespace",name="target-ns",type=string
+//+kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 //+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/environment\\.routing",name=Routing,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
@@ -72,7 +71,6 @@ func (e *Environment) GetStatus() *rApi.Status {
 
 func (e *Environment) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.ProjectNameKey:     e.Spec.ProjectName,
 		constants.TargetNamespaceKey: e.Spec.TargetNamespace,
 	}
 }

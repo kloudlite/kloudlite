@@ -42,7 +42,7 @@ resources:
 - bases/clusters.kloudlite.io_awsvpcs.yaml
 - bases/redis.msvc.kloudlite.io_prefixes.yaml
 - bases/wireguard.kloudlite.io_connections.yaml
-- bases/crds.kloudlite.io_jobs.yaml
+- bases/crds.kloudlite.io_lifecycles.yaml
 - bases/clusters.kloudlite.io_gcpvpcs.yaml
 - bases/crds.kloudlite.io_blueprints.yaml
 - bases/clusters.kloudlite.io_virtualmachines.yaml

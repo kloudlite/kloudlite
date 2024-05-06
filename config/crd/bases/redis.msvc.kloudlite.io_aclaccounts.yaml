@@ -52,6 +52,8 @@ spec:
                       schemas to the latest internal value, and may reject unrecognized
                       values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                     type: string
+                  clusterName:
+                    type: string
                   kind:
                     description: 'Kind is a string value representing the REST resource
                       this object represents. Servers may infer this from the endpoint
@@ -62,7 +64,10 @@ spec:
                     type: string
                   namespace:
                     type: string
+                  sharedSecret:
+                    type: string
                 required:
+                - clusterName
                 - name
                 - namespace
                 type: object
@@ -80,6 +85,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:

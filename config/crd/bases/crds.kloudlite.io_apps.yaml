@@ -278,8 +278,22 @@ spec:
                 type: object
               intercept:
                 properties:
+                  deviceHostSuffix:
+                    type: string
                   enabled:
                     type: boolean
+                  portMappings:
+                    items:
+                      properties:
+                        appPort:
+                          type: integer
+                        devicePort:
+                          type: integer
+                      required:
+                      - appPort
+                      - devicePort
+                      type: object
+                    type: array
                   toDevice:
                     minLength: 1
                     type: string
@@ -301,14 +315,12 @@ spec:
                 type: string
               services:
                 items:
+                  description: AppSvc creates k8s Service of type ClusterIP
                   properties:
-                    name:
-                      type: string
                     port:
                       type: integer
-                    targetPort:
-                      type: integer
-                    type:
+                    protocol:
+                      default: TCP
                       type: string
                   required:
                   - port
@@ -536,6 +548,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:

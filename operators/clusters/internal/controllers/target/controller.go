@@ -83,12 +83,12 @@ const (
 var ApplyCheckList = []rApi.CheckMeta{
 	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
 	{Name: ClusterPrerequisitesReady, Title: "Cluster Pre-Requisites Ready"},
-	{Name: ClusterJobRBACReady, Title: "Cluster Job RBAC Ready", Debug: true},
-	{Name: ClusterCreateJobAppliedAndReady, Title: "Cluster Create Job Applied"},
+	{Name: ClusterJobRBACReady, Title: "Cluster Lifecycle RBAC Ready", Debug: true},
+	{Name: ClusterCreateJobAppliedAndReady, Title: "Cluster Create Lifecycle Applied"},
 }
 
 var DeleteCheckList = []rApi.CheckMeta{
-	{Name: deleteClusterJob, Title: "Delete Cluster Job"},
+	{Name: deleteClusterJob, Title: "Delete Cluster Lifecycle"},
 }
 
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -146,7 +146,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.applyClusterJob(req); !step.ShouldProceed() {
+	if step := r.createClusterLifecycle(req); !step.ShouldProceed() {
 		return notifyAndExit(step)
 	}
 
@@ -589,7 +589,7 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clu
 	}
 }
 
-func (r *ClusterReconciler) applyClusterJob(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
+func (r *ClusterReconciler) createClusterLifecycle(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(ClusterCreateJobAppliedAndReady, req)
 
@@ -619,15 +619,6 @@ func (r *ClusterReconciler) applyClusterJob(req *rApi.Request[*clustersv1.Cluste
 
 		ValuesJSON:    valuesJson,
 		CloudProvider: string(obj.Spec.CloudProvider),
-		// AWS: func() *templates.AWSClusterJobParams {
-		// 	if obj.Spec.CloudProvider == ct.CloudProviderAWS {
-		// 		return &templates.AWSClusterJobParams{
-		// 			AccessKeyID:     r.Env.KlAwsAccessKey,
-		// 			AccessKeySecret: r.Env.KlAwsSecretKey,
-		// 		}
-		// 	}
-		// 	return nil
-		// }(),
 	})
 	if err != nil {
 		return check.Failed(err).Err(nil)
@@ -639,7 +630,7 @@ func (r *ClusterReconciler) applyClusterJob(req *rApi.Request[*clustersv1.Cluste
 	}
 	req.AddToOwnedResources(rr...)
 
-	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), &crdsv1.Job{})
+	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), &crdsv1.Lifecycle{})
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -672,7 +663,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.Cluster{})
-	builder.Owns(&crdsv1.Job{})
+	builder.Owns(&crdsv1.Lifecycle{})
 	builder.Watches(&clustersv1.AwsVPC{}, handler.EnqueueRequestsFromMapFunc(
 		func(ctx context.Context, obj client.Object) []reconcile.Request {
 			if v, ok := obj.GetLabels()[constants.RegionKey]; ok {

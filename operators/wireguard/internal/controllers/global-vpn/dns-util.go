@@ -31,34 +31,31 @@ func (r *Reconciler) getCustomCoreDnsConfig(req *rApi.Request[*wgv1.GlobalVPN], 
 		if p.ClusterName == r.Env.ClusterName {
 			updatedContent += fmt.Sprintf(`
 %s.local:53 {
+        log
         errors
-        kubernetes %s.local in-addr.arpa ip6.arpa {
+        kubernetes %s.local {
           pods insecure
-          fallthrough in-addr.arpa ip6.arpa
+          fallthrough 
         }
         cache 30
         loop
-        reload
-        loadbalance
 }
 `, p.ClusterName, p.ClusterName)
 			continue
 		}
 
+		// #rewrite name regex (.*)\.svc\.%s\.local {1}.svc.cluster.local answer auto
 		updatedContent += fmt.Sprintf(`
 %s.local:53 {
+  log
   errors
-
-  rewrite name regex (.*)\.svc\.%s\.local {1}.svc.cluster.local answer auto
 
   forward . %s
 
   cache 30
   loop
-  reload
-  loadbalance
 }
-`, p.ClusterName, p.ClusterName, p.IP)
+`, p.ClusterName, p.IP)
 
 	}
 
@@ -69,11 +66,9 @@ device.local {
   errors
   cache 30
   loop
-  reload
   hosts {
 %s
   }
-  any
 }
 `, devRecords))
 
@@ -95,8 +90,6 @@ func (r *Reconciler) getSidecarCoreDnsConfig(req *rApi.Request[*wgv1.GlobalVPN],
   forward . %s
   cache 30
   loop
-  reload
-  any
 }`, corednsSvcIP)), nil
 	}
 
@@ -117,11 +110,9 @@ local {
   errors
   cache 30
   loop
-  reload
   hosts {
 %s
   }
-  any
 }
 `, records)), nil
 }

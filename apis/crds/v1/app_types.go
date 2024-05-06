@@ -185,11 +185,19 @@ type AppContainer struct {
 // 	return b
 // }
 
+type ServiceProtocol string
+
+const (
+	ServiceProtocolTCP ServiceProtocol = "TCP"
+	ServiceProtocolUDP ServiceProtocol = "UDP"
+)
+
+// AppSvc creates k8s Service of type ClusterIP
 type AppSvc struct {
-	Port       uint16 `json:"port"`
-	TargetPort uint16 `json:"targetPort,omitempty"`
-	Type       string `json:"type,omitempty"`
-	Name       string `json:"name,omitempty"`
+	Port uint16 `json:"port"`
+
+	// +kubebuilder:default=TCP
+	Protocol *ServiceProtocol `json:"protocol,omitempty"`
 }
 
 type HPA struct {
@@ -229,10 +237,20 @@ type AppSpec struct {
 	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
 }
 
+type AppInterceptPortMappings struct {
+	AppPort    uint16 `json:"appPort"`
+	DevicePort uint16 `json:"devicePort"`
+}
+
 type Intercept struct {
 	Enabled bool `json:"enabled"`
+
 	// +kubebuilder:validation:MinLength=1
 	ToDevice string `json:"toDevice"`
+
+	DeviceHostSuffix *string `json:"deviceHostSuffix,omitempty" graphql:"ignore"`
+
+	PortMappings []AppInterceptPortMappings `json:"portMappings,omitempty"`
 }
 
 type JsonPatch struct {
@@ -293,6 +311,10 @@ func (app *App) GetEnsuredAnnotations() map[string]string {
 
 func (app *App) LogRef() string {
 	return fmt.Sprintf("%s/%s/%s", app.Namespace, "App", app.Name)
+}
+
+func (app *App) IsInterceptEnabled() bool {
+	return app.Spec.Intercept != nil && app.Spec.Intercept.Enabled
 }
 
 // +kubebuilder:object:root=true
