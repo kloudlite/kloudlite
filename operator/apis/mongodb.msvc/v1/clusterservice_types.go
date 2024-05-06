@@ -35,9 +35,11 @@ type ClusterService struct {
 	Output ct.ManagedServiceOutput `json:"output"`
 }
 
+const ClusterServiceKind = "ClusterService"
+
 func (cs *ClusterService) EnsureGVK() {
 	if cs != nil {
-		cs.SetGroupVersionKind(GroupVersion.WithKind("ClusterService"))
+		cs.SetGroupVersionKind(GroupVersion.WithKind(ClusterServiceKind))
 	}
 }
 
