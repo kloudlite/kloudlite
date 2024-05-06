@@ -26,6 +26,8 @@ EOF
 
 COPY .bashrc .profile /tmp/
 
+COPY ./bin/mounter /mounter
+
 SHELL ["/bin/bash", "-c"]
 RUN cat > /entrypoint.sh <<'EOF'
 #!/bin/bash
@@ -37,14 +39,19 @@ if [ ! -f "$entrypoint_executed" ]; then
 fi
 
 shift
+# Read the JSON file into a variable
 echo $@ | jq -r | jq -r '.packages | join(" ")'> /home/kl/.nix-shell-args
 echo "$@" | jq -r > /tmp/sample.json
 chown -R kl /tmp/sample.json
+
 echo $@ | jq -r | jq -r '.envVars | map_values(. = "export \(.key)=\(.value)") | .[]' > /home/kl/.env-vars
 chown -R kl /home/kl/.env-vars
 sudo -u kl bash -c "/home/kl/.nix-profile/bin/nix-shell -p $(cat /home/kl/.nix-shell-args) --run 'echo done' | tee /tmp/exec.log"
 chown -R kl /home/kl/.nix-shell-args
 chown -R kl /home/kl/.ssh
+
+sudo mounter --conf /tmp/sample.json
+
 /usr/sbin/sshd -D
 EOF
 RUN chmod +x /entrypoint.sh

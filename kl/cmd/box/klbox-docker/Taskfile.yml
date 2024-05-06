@@ -39,11 +39,18 @@ tasks:
   #   cmds:
   #     - go run ./main.go exec
 
+  build:mounter:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -o bin/mounter main.go
+
   container:build:
     preconditions:
       - sh: '[[ -n "{{.tag}}" ]]'
         msg: "var tag must have a value, of format '1.0.0' or '1.0.0-nightly'"
     cmds:
+      - task build:mounter
       - docker build -t {{.ImageRegistry}}:{{.tag}} .
 
   container:push:

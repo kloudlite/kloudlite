@@ -6,19 +6,17 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/kloudlite/kl/cmd/runner/add"
-	"github.com/kloudlite/kl/domain/server"
 	"os"
 	"os/exec"
 	"os/user"
 	"strings"
 
+	"github.com/kloudlite/kl/domain/server"
+
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
-	domain_client "github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -31,9 +29,10 @@ type EnvironmentVariable struct {
 	Value string `yaml:"value" json:"value"`
 }
 
-type KLConfig struct {
+type KLConfigType struct {
 	Packages []string              `yaml:"packages" json:"packages"`
 	EnvVars  []EnvironmentVariable `yaml:"envVars" json:"envVars"`
+	Mounts   map[string]string     `yaml:"mounts" json:"mounts"`
 }
 
 type VolMount struct {
@@ -43,16 +42,16 @@ type VolMount struct {
 	Key  string `yaml:"key"`
 }
 
-type FileMounts struct {
-	MountBasePath string     `yaml:"mountbasepath" json:"mountbasepath"`
-	Mounts        []VolMount `yaml:"mounts" json:"mounts"`
+// type FileMounts struct {
+// 	MountBasePath string     `yaml:"mountbasepath" json:"mountbasepath"`
+// 	Mounts        []VolMount `yaml:"mounts" json:"mounts"`
+// }
+
+type FileMountType struct {
+	FileMount client.MountType `yaml:"filemount" json:"filemount"`
 }
 
-type FM struct {
-	FileMount FileMounts `yaml:"filemount" json:"filemount"`
-}
-
-var fm FM
+// var fm FM
 
 var imageName string
 
@@ -77,19 +76,12 @@ func startBox(_ *cobra.Command, args []string) error {
 		return nil
 	}
 
-	klFile, err := domain_client.GetKlFile("")
-	if err != nil && os.IsNotExist(err) {
-		return errors.New("please initialize kl file in current directory using 'kl init'")
-	} else if err != nil {
-		return err
-	}
-
 	imageName = constants.BoxDockerImage
 	if len(args) > 0 {
 		imageName = args[0]
 	}
 
-	if err = fn.ExecCmd(fmt.Sprintf("docker pull %s", imageName), nil, false); err != nil {
+	if err := fn.ExecCmd(fmt.Sprintf("docker pull %s", imageName), nil, false); err != nil {
 		return err
 	}
 
@@ -102,84 +94,68 @@ func startBox(_ *cobra.Command, args []string) error {
 	}
 
 	{
-		// local setup
-		k, err := loadConfig()
+
+		envs, mmap, err := server.GetLoadMaps()
 		if err != nil {
 			return err
 		}
 
-		for _, config := range klFile.Configs {
-			selectConfig, err := server.GetConfig(fn.MakeOption("configName", config.Name))
-			if err != nil {
-				return err
-			}
-			for key, value := range selectConfig.Data {
-				k.EnvVars = append(k.EnvVars, EnvironmentVariable{
-					Key:   add.RenameKey(key),
-					Value: value,
-				})
-			}
-		}
-		for _, secret := range klFile.Secrets {
-			selectSecret, err := server.GetSecret(fn.MakeOption("secretName", secret.Name))
-			if err != nil {
-				return err
-			}
-			for key, value := range selectSecret.StringData {
-				k.EnvVars = append(k.EnvVars, EnvironmentVariable{
-					Key:   add.RenameKey(key),
-					Value: value,
-				})
-			}
-		}
-		selectMres, err := server.GetMresConfigValues()
+		// local setup
+		kConf, err := loadConfig()
 		if err != nil {
 			return err
 		}
-		for key, value := range selectMres {
-			k.EnvVars = append(k.EnvVars, EnvironmentVariable{
-				Key:   key,
-				Value: value,
-			})
+
+		fMounts, err := loadFileMount(mmap)
+		if err != nil {
+			return err
 		}
-		fmt.Println(k.EnvVars)
-		ensureBoxExist(*k)
+
+		var ev []EnvironmentVariable
+		for k, v := range envs {
+			ev = append(ev, EnvironmentVariable{k, v})
+		}
+
+		kConf.EnvVars = ev
+		kConf.Mounts = fMounts
+
+		ensureBoxExist(*kConf)
 		ensureBoxRunning()
 	}
 
 	return nil
 }
 
-func loadFileMount() {
-	if _, err := os.Stat("kl.yml"); os.IsNotExist(err) {
-		fn.PrintError(errors.New("kl.yml not found"))
-		return
+func loadFileMount(mm server.MountMap) (map[string]string, error) {
+	kt, err := client.GetKlFile("")
+	if err != nil {
+		return nil, err
 	}
 
-	fm = FM{}
-	file, err := os.ReadFile("kl.yml")
-	if err != nil {
-		fn.PrintError(errors.New("Error reading kl.yml"))
-		return
+	fm := map[string]string{}
+
+	for _, fe := range kt.FileMount.Mounts {
+		pth := fe.Path
+		if pth == "" {
+			pth = fe.Key
+		}
+
+		fm[pth] = mm[pth]
 	}
-	err = yaml.Unmarshal(file, &fm)
-	if err != nil {
-		fn.PrintError(errors.New(fmt.Sprintf("Error unmarshalling kl.yml: %s", err)))
-		return
-	}
+
+	return fm, nil
 }
 
-func loadConfig() (*KLConfig, error) {
+func loadConfig() (*KLConfigType, error) {
 	kf, err := client.GetKlFile("")
 	if err != nil {
 		return nil, err
 	}
 
 	// read kl.yml into struct
-	klConfig := &KLConfig{
+	klConfig := &KLConfigType{
 		Packages: kf.Packages,
 	}
-	loadFileMount()
 	return klConfig, nil
 }
 
@@ -216,7 +192,7 @@ func ensureCacheExist() {
 	}
 }
 
-func ensureBoxExist(klConfig KLConfig) {
+func ensureBoxExist(klConfig KLConfigType) {
 	currentUser, _ := user.Current()
 	containerName := "kl-box-" + getCwdHash()
 	cwd, _ := os.Getwd()
@@ -232,10 +208,6 @@ func ensureBoxExist(klConfig KLConfig) {
 			dockerArgs = append(dockerArgs, "-d")
 		}
 
-		for _, mount := range fm.FileMount.Mounts {
-			dockerArgs = append(dockerArgs, "-v", fmt.Sprintf("%s:%s", mount.Key, mount.Path))
-		}
-
 		dockerArgs = append(dockerArgs, "--name", containerName,
 			"-v", fmt.Sprintf("%s/.ssh/id_rsa.pub:/home/kl/.ssh/authorized_keys:z", currentUser.HomeDir),
 			"-v", "/var/run/docker.sock:/var/run/docker.sock:ro",
@@ -249,6 +221,8 @@ func ensureBoxExist(klConfig KLConfig) {
 			"-p", "1729:22",
 			imageName, "--", string(conf),
 		)
+
+		fmt.Printf("\n\n%+v\n\n", dockerArgs)
 
 		command := exec.Command("docker", dockerArgs...)
 

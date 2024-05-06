@@ -21,7 +21,6 @@ func MountEnv(args []string) error {
 	}
 
 	mountfiles := map[string]string{}
-
 	for _, fe := range klfile.FileMount.Mounts {
 		pth := fe.Path
 		if pth == "" {
