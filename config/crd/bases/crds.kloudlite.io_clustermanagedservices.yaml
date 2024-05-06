@@ -86,6 +86,8 @@ spec:
                     - kind
                     - spec
                     type: object
+                  sharedSecret:
+                    type: string
                   tolerations:
                     items:
                       description: The pod this Toleration is attached to tolerates
@@ -129,6 +131,8 @@ spec:
                 required:
                 - serviceTemplate
                 type: object
+              sharedSecret:
+                type: string
               targetNamespace:
                 type: string
             required:
@@ -144,6 +148,8 @@ spec:
                       type: boolean
                     description:
                       type: string
+                    hide:
+                      type: boolean
                     name:
                       type: string
                     title:
@@ -214,8 +220,6 @@ spec:
                   type: object
                 type: array
             type: object
-        required:
-        - output
         type: object
     served: true
     storage: true

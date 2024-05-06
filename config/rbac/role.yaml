@@ -216,7 +216,7 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - projects
+  - lifecycles
   verbs:
   - create
   - delete
@@ -228,13 +228,13 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - projects/finalizers
+  - lifecycles/finalizers
   verbs:
   - update
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - projects/status
+  - lifecycles/status
   verbs:
   - get
   - patch

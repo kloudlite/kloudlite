@@ -1,7 +1,7 @@
 {{- /*gotype: github.com/kloudlite/operator/operators/clusters/internal/templates.GcpVPCJobVars*/ -}}
 {{ with . }}
 apiVersion: crds.kloudlite.io/v1
-kind: Job
+kind: Lifecycle
 metadata:
   name: {{.JobMetadata.Name}}
   namespace: {{.JobMetadata.Namespace}}

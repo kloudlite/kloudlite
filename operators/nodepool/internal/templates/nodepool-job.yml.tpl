@@ -1,7 +1,7 @@
 {{- /*gotype: github.com/kloudlite/operator/operators/nodepool/internal/templates.NodepoolJobVars*/ -}}
 {{ with . }}
 apiVersion: crds.kloudlite.io/v1
-kind: Job
+kind: Lifecycle
 metadata: {{.JobMetadata | toYAML |nindent 2}}
 spec:
   onApply:
@@ -48,7 +48,7 @@ spec:
               terraform init -reconfigure -no-color 2>&1 | tee /dev/termination-log
               terraform workspace select --or-create {{.TFWorkspaceName}}
 
-              cat > values.json <<EOF
+              cat > values.json <<'EOF'
               {{.ValuesJSON}}
               EOF
 
@@ -97,7 +97,7 @@ spec:
               terraform init -reconfigure -no-color 2>&1 | tee /dev/termination-log
               terraform workspace select --or-create {{.TFWorkspaceName}}
 
-              cat > values.json <<EOF
+              cat > values.json <<'EOF'
               {{.ValuesJSON}}
               EOF
 

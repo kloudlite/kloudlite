@@ -82,10 +82,13 @@ const (
 // 	return "", errors.NewE(errors.Newf("unknown pair (provider=%s, fstype=%s)", c, fsType))
 // }
 
+// +kubebuilder:object:generate=true
 type MsvcRef struct {
 	metav1.TypeMeta `json:",inline"`
-	Name            string `json:"name"`
-	Namespace       string `json:"namespace"`
+	Name            string  `json:"name"`
+	Namespace       string  `json:"namespace"`
+	ClusterName     string  `json:"clusterName" graphql:"noinput"`
+	SharedSecret    *string `json:"sharedSecret,omitempty" graphql:"ignore"`
 }
 
 type SecretRef struct {
@@ -153,10 +156,10 @@ type LocalObjectReference struct {
 
 type NamespacedResourceRef struct {
 	// .metadata.name of the resource
-  Name string `json:"name"`
+	Name string `json:"name"`
 
 	// .metadata.namespace of the resource
-  Namespace string `json:"namespace"`
+	Namespace string `json:"namespace"`
 }
 
 type ManagedResourceOutput struct {

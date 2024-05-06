@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -16,6 +17,7 @@ import (
 	redpandamsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 	zookeeperMsvcv1 "github.com/kloudlite/operator/apis/zookeeper.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
+	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/msvc/http"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -234,6 +236,22 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.templateCommonMsvc, err = templates.Read(templates.CommonMsvcTemplate)
 	if err != nil {
 		return err
+	}
+
+	if r.Env.MsvcCredsSvcSharedSecret != "" && r.Env.MsvcCredsSvcHttpPort != 0 {
+		server, err := http.NewServer(http.ServerArgs{
+			Addr:      fmt.Sprintf(":%d", r.Env.MsvcCredsSvcHttpPort),
+			K8sClient: r.Client,
+			Route:     r.Env.MsvcCredsSvcRequestPath,
+			Logger:    logger,
+		})
+		if err != nil {
+			return err
+		}
+
+		go func() {
+			log.Fatal(server.Start())
+		}()
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedService{})

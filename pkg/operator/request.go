@@ -140,7 +140,6 @@ func (r *Request[T]) ShouldReconcile() bool {
 }
 
 func (r *Request[T]) EnsureCheckList(expected []CheckMeta) stepResult.Result {
-	// return stepResult.New().Continue(true)
 	checkNames := make([]string, len(expected))
 	for i := range expected {
 		checkNames[i] = expected[i].Name

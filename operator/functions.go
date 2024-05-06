@@ -101,7 +101,7 @@ func New(name string) Operator {
 			return &rest.Config{Host: devServerHost}, cOpts
 		}
 
-		// cOpts.MetricsBindAddress = metricsAddr
+		cOpts.Metrics.BindAddress = metricsAddr
 		cOpts.HealthProbeBindAddress = probeAddr
 		return ctrl.GetConfigOrDie(), cOpts
 	}()

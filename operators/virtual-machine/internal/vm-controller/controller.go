@@ -262,7 +262,7 @@ func (r *Reconciler) trackJobStatus(req *rApi.Request[*clustersv1.VirtualMachine
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(TrackVMStatus, req)
 
-	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.ControllerParams.JobRef.Namespace, obj.Spec.ControllerParams.JobRef.Name), &crdsv1.Job{})
+	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.ControllerParams.JobRef.Namespace, obj.Spec.ControllerParams.JobRef.Name), &crdsv1.Lifecycle{})
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -291,7 +291,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.VirtualMachine{})
-	builder.Owns(&crdsv1.Job{})
+	builder.Owns(&crdsv1.Lifecycle{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
