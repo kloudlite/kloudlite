@@ -222,8 +222,6 @@ func ensureBoxExist(klConfig KLConfigType) {
 			imageName, "--", string(conf),
 		)
 
-		fmt.Printf("\n\n%+v\n\n", dockerArgs)
-
 		command := exec.Command("docker", dockerArgs...)
 
 		command.Stdout = os.Stdout
