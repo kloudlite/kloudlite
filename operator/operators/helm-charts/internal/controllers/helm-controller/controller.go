@@ -78,14 +78,14 @@ const (
 
 var ApplyCheckList = []rApi.CheckMeta{
 	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
-	{Name: HelmJobRBACReady, Title: "Helm Job RBAC Ready"},
-	{Name: HelmInstallJobAppliedAndCompleted, Title: "Helm Install Job Applied and Completed"},
+	{Name: HelmJobRBACReady, Title: "Helm Lifecycle RBAC Ready"},
+	{Name: HelmInstallJobAppliedAndCompleted, Title: "Helm Install Lifecycle Applied and Completed"},
 }
 
 // DefaultsPatched string = "defaults-patched"
 var DeleteCheckList = []rApi.CheckMeta{
 	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
-	{Name: HelmUninstallJobAppliedAndCompleted, Title: "Helm Uninstall Job Applied And Completed"},
+	{Name: HelmUninstallJobAppliedAndCompleted, Title: "Helm Uninstall Lifecycle Applied And Completed"},
 }
 
 func getJobName(resName string) string {

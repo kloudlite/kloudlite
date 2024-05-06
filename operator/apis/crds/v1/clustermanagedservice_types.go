@@ -9,8 +9,10 @@ import (
 
 // ClusterManagedServiceSpec defines the desired state of ClusterManagedService
 type ClusterManagedServiceSpec struct {
-	TargetNamespace string             `json:"targetNamespace"`
+	TargetNamespace string             `json:"targetNamespace" graphql:"noinput"`
 	MSVCSpec        ManagedServiceSpec `json:"msvcSpec"`
+
+	SharedSecret *string `json:"sharedSecret,omitempty" graphql:"ignore"`
 }
 
 //+kubebuilder:object:root=true
@@ -29,7 +31,7 @@ type ClusterManagedService struct {
 	Spec   ClusterManagedServiceSpec `json:"spec,omitempty"`
 	Status rApi.Status               `json:"status,omitempty" graphql:"noinput"`
 
-	Output ct.ManagedServiceOutput `json:"output" graphql:"ignore"`
+	Output ct.ManagedServiceOutput `json:"output,omitempty" graphql:"ignore"`
 }
 
 func (m *ClusterManagedService) EnsureGVK() {

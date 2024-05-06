@@ -44,6 +44,7 @@ type Reconciler struct {
 
 	appDeploymentTemplate []byte
 	hpaTemplate           []byte
+	appInterceptTemplate  []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -57,19 +58,15 @@ const (
 
 	CleanedOwnedResources string = "cleaned-owned-resources"
 	DeploymentSvcCreated  string = "deployment-svc-created"
+
+	AppInterceptCreated string = "app-intercept-created"
+
+	DefaultsPatched string = "defaults-patched"
 )
 
-var (
-	ApplyChecklist = []rApi.CheckMeta{
-		{Name: DeploymentSvcCreated, Title: "Deployment And Service Created"},
-		{Name: DeploymentReady, Title: "Deployment Ready"},
-		{Name: HPAConfigured, Title: "Horizontal pod autoscaling configured"},
-	}
-
-	DeleteChecklist = []rApi.CheckMeta{
-		{Name: CleanedOwnedResources, Title: "Cleaning up resources"},
-	}
-)
+var DeleteChecklist = []rApi.CheckMeta{
+	{Name: CleanedOwnedResources, Title: "Cleaning up resources"},
+}
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=apps/status,verbs=get;update;patch
@@ -95,7 +92,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(ApplyChecklist); !step.ShouldProceed() {
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: DeploymentSvcCreated, Title: "Deployment And Service Created"},
+		{Name: DeploymentReady, Title: "Deployment Ready", Hide: req.Object.IsInterceptEnabled()},
+		{Name: HPAConfigured, Title: "Horizontal pod autoscaling configured", Hide: req.Object.IsInterceptEnabled()},
+		{Name: AppInterceptCreated, Title: "App Intercept Created", Hide: !req.Object.IsInterceptEnabled()},
+	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -124,6 +126,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := r.checkDeploymentReady(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.checkAppIntercept(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -206,9 +212,99 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 	return check.Completed()
 }
 
+func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+
+	podname := obj.Name + "-intercept"
+	podns := obj.Namespace
+	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: podname, Namespace: podns}}
+
+	check := rApi.NewRunningCheck(AppInterceptCreated, req)
+
+	if obj.Spec.Intercept == nil || !obj.Spec.Intercept.Enabled {
+		if err := r.Delete(ctx, pod); err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return check.Failed(err)
+			}
+		}
+		return check.Completed()
+	}
+
+	if obj.Spec.Services == nil {
+		return check.Failed(fmt.Errorf("no services configured on app, failed to intercept")).NoRequeue()
+	}
+
+	if obj.Spec.Intercept.PortMappings == nil {
+		obj.Spec.Intercept.PortMappings = make([]crdsv1.AppInterceptPortMappings, len(obj.Spec.Services))
+		for i := range obj.Spec.Services {
+			obj.Spec.Intercept.PortMappings[i] = crdsv1.AppInterceptPortMappings{
+				AppPort:    obj.Spec.Services[i].Port,
+				DevicePort: obj.Spec.Services[i].Port,
+			}
+		}
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+
+		return check.Completed()
+	}
+
+	appGenerationLabel := "kloudlite.io/app-generation"
+
+	if err := r.Get(ctx, client.ObjectKeyFromObject(pod), pod); err != nil {
+		if apiErrors.IsNotFound(err) {
+			portMappings := make(map[uint16]uint16, len(obj.Spec.Intercept.PortMappings))
+			for _, pm := range obj.Spec.Intercept.PortMappings {
+				portMappings[pm.AppPort] = pm.DevicePort
+			}
+
+			deviceHostSuffix := "device.local"
+			if obj.Spec.Intercept.DeviceHostSuffix != nil {
+				deviceHostSuffix = *obj.Spec.Intercept.DeviceHostSuffix
+			}
+
+			b, err := templates.ParseBytes(r.appInterceptTemplate, map[string]any{
+				"name":             podname,
+				"namespace":        podns,
+				"labels":           fn.MapMerge(fn.MapFilter(obj.Labels, "kloudlite.io/"), map[string]string{appGenerationLabel: fmt.Sprintf("%d", obj.Generation)}),
+				"owner-references": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"device-host":      fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix),
+				"port-mappings":    portMappings,
+			})
+			if err != nil {
+				return check.Failed(err).NoRequeue()
+			}
+
+			if _, err := r.YamlClient.ApplyYAML(ctx, b); err != nil {
+				return check.Failed(err).NoRequeue()
+			}
+
+			return check.StillRunning(fmt.Errorf("waiting for intercept pod to start"))
+		}
+	}
+
+	if pod.Labels[appGenerationLabel] != fmt.Sprintf("%d", obj.Generation) {
+		if err := r.Delete(ctx, pod); err != nil {
+			return check.Failed(err)
+		}
+		return check.StillRunning(fmt.Errorf("waiting for previous generation pod to be deleted"))
+	}
+
+	if pod.Status.Phase != corev1.PodRunning {
+		return check.StillRunning(fmt.Errorf("waiting for pod to start running"))
+	}
+
+	return check.Completed()
+}
+
 func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
+
 	check := rApi.NewRunningCheck(HPAConfigured, req)
+
+	if obj.IsInterceptEnabled() {
+		return check.Completed()
+	}
 
 	hpaVars := templates.HPATemplateVars{
 		Metadata: metav1.ObjectMeta{
@@ -254,6 +350,10 @@ func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result
 func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(DeploymentReady, req)
+
+	if obj.IsInterceptEnabled() {
+		return check.Completed()
+	}
 
 	deployment, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.Deployment{})
 	if err != nil {
@@ -311,8 +411,14 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		return err
 	}
 
+	r.appInterceptTemplate, err = templates.Read(templates.AppIntercept)
+	if err != nil {
+		return err
+	}
+
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})
 	builder.Owns(&appsv1.Deployment{})
+	builder.Owns(&corev1.Pod{})
 	builder.Owns(&corev1.Service{})
 	builder.Owns(&autoscalingv2.HorizontalPodAutoscaler{})
 

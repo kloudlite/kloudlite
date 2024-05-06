@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	mgr := operator.New("job-controller")
+	mgr := operator.New("lifecycle")
 	controller.RegisterInto(mgr)
 	mgr.Start()
 }

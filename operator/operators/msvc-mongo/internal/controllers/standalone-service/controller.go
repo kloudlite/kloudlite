@@ -159,24 +159,20 @@ func (r *Reconciler) generateAccessCredentials(req *rApi.Request[*mongodbMsvcv1.
 		if msvcOutput.Data == nil {
 			// secret does not already exists
 			host := fmt.Sprintf("%s-%d.%s.%s.svc.%s:27017", obj.Name, 0, obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
+			gvpnHost := fmt.Sprintf("%s-%d.%s.%s.svc.%s:27017", obj.Name, 0, obj.Name, obj.Namespace, r.Env.GlobalVpnDNS)
 
 			rootUsername := "root"
 
 			authSource := "admin"
 
 			output := types.StandaloneSvcOutput{
-				RootUsername: rootUsername,
-				RootPassword: rootPassword,
-				Hosts:        host,
-				URI: fmt.Sprintf(
-					"mongodb://%s:%s@%s/%s?authSource=%s",
-					rootUsername,
-					rootPassword,
-					host,
-					"admin",
-					authSource,
-				),
-				AuthSource: authSource,
+				RootUsername:      rootUsername,
+				RootPassword:      rootPassword,
+				ClusterLocalHosts: host,
+				GlobalVPNHosts:    gvpnHost,
+				ClusterLocalURI:   fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=%s", rootUsername, rootPassword, host, "admin", authSource),
+				GlobalVpnURI:      fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=%s", rootUsername, rootPassword, gvpnHost, "admin", authSource),
+				AuthSource:        authSource,
 			}
 
 			m, err := fn.JsonConvert[map[string]string](output)
@@ -236,7 +232,9 @@ func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1
 		hc = nil
 	}
 
-	req.AddToOwnedResources(rApi.ParseResourceRef(hc))
+	if hc != nil {
+		req.AddToOwnedResources(rApi.ParseResourceRef(hc))
+	}
 
 	hasPVCUpdates := false
 
