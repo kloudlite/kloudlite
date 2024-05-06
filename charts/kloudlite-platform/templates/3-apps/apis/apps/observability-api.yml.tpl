@@ -18,11 +18,7 @@ spec:
   replicas: {{.Values.apps.observabilityApi.configuration.replicas}}
 
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
-
+    - port: 3000
   containers:
     - name: main
       image: {{.Values.apps.observabilityApi.image.repository}}:{{.Values.apps.observabilityApi.image.tag | default (include "image-tag" .) }}

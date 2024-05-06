@@ -24,6 +24,6 @@ spec:
       {{end}}
       - app: console-web
         path: /
-        port: 80
+        port: {{.Values.apps.consoleWeb.configuration.httpPort}}
         rewrite: false
 ---

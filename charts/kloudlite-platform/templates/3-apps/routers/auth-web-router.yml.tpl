@@ -24,5 +24,5 @@ spec:
     {{end}}
     - app: auth-web
       path: /
-      port: 80
+      port: {{.Values.apps.authWeb.configuration.httpPort}}
 ---

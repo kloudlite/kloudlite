@@ -1,4 +1,4 @@
-{{- if (eq .Values.cloudprovider "gcp") }}
+{{- if (and (eq .Values.cloudprovider "gcp") .Values.gcp.csi_driver.enabled) }}
 apiVersion: v1
 kind: Secret
 metadata:

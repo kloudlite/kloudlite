@@ -21,22 +21,22 @@ data: {{ $k3sParams.data | toYaml | nindent 2 }}
 {{- end }}
 ---
 
-{{- if .Values.operators.agentOperator.configuration.wireguard.enabled }}
-{{- $certDomain := printf "%s.%s" $vpnDeviceTLSPrefix .Values.operators.agentOperator.configuration.wireguard.publicDNSHost}}
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: {{$vpnDeviceTLSPrefix}}
-  namespace: {{.Release.Namespace}}
-spec:
-  dnsNames:
-    - {{$certDomain}}
-  secretName: {{$certDomain}}-tls
-  issuerRef:
-    name: {{.Values.helmCharts.certManager.configuration.defaultClusterIssuer}}
-    kind: ClusterIssuer
----
-{{- end}}
+{{- /* {{- if .Values.operators.agentOperator.configuration.wireguard.enabled }} */}}
+{{- /* {{- $certDomain := printf "%s.%s" $vpnDeviceTLSPrefix .Values.operators.agentOperator.configuration.wireguard.publicDNSHost}} */}}
+{{- /* apiVersion: cert-manager.io/v1 */}}
+{{- /* kind: Certificate */}}
+{{- /* metadata: */}}
+{{- /*   name: {{$vpnDeviceTLSPrefix}} */}}
+{{- /*   namespace: {{.Release.Namespace}} */}}
+{{- /* spec: */}}
+{{- /*   dnsNames: */}}
+{{- /*     - {{$certDomain}} */}}
+{{- /*   secretName: {{$certDomain}}-tls */}}
+{{- /*   issuerRef: */}}
+{{- /*     name: {{.Values.helmCharts.certManager.configuration.defaultClusterIssuer}} */}}
+{{- /*     kind: ClusterIssuer */}}
+{{- /* --- */}}
+{{- /* {{- end}} */}}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -107,10 +107,6 @@ spec:
             - name: SVC_ACCOUNT_NAME
               value: "kloudlite-svc-account"
 
-            {{- /* for: environment controller */}}
-            - name: DEFAULT_INGRESS_CLASS
-              value: "{{.Values.helmCharts.ingressNginx.configuration.ingressClassName}}"
-
             {{- /* for: resource watcher */}}
             - name: OPERATORS_NAMESPACE
               value: {{.Release.Namespace}}
@@ -118,17 +114,19 @@ spec:
             - name: DEVICE_NAMESPACE
               value: {{.Values.operators.agentOperator.configuration.wireguard.deviceNamespace}}
 
-            - name: CLUSTER_NAME
-              valueFrom:
-                secretKeyRef:
-                  key: CLUSTER_NAME
-                  name: {{.Values.clusterIdentitySecretName}}
-
-            - name: ACCOUNT_NAME
-              valueFrom:
-                secretKeyRef:
-                  key: ACCOUNT_NAME
-                  name: {{.Values.clusterIdentitySecretName}}
+            {{- /* - name: CLUSTER_NAME */}}
+            {{- /*   valueFrom: */}}
+            {{- /*     secretKeyRef: */}}
+            {{- /*       key: CLUSTER_NAME */}}
+            {{- /*       name: {{.Values.clusterIdentitySecretName}} */}}
+            {{- /*       optional: true */}}
+            {{- /**/}}
+            {{- /* - name: ACCOUNT_NAME */}}
+            {{- /*   valueFrom: */}}
+            {{- /*     secretKeyRef: */}}
+            {{- /*       key: ACCOUNT_NAME */}}
+            {{- /*       name: {{.Values.clusterIdentitySecretName}} */}}
+            {{- /*       optional: true */}}
 
             - name: GRPC_ADDR
               value: {{.Values.messageOfficeGRPCAddr}}
@@ -216,9 +214,11 @@ spec:
             - name: DNS_HOSTED_ZONE
               value: {{.Values.operators.agentOperator.configuration.wireguard.publicDNSHost}}
 
-            - name: TLS_DOMAIN_PREFIX
-              value: {{$vpnDeviceTLSPrefix |squote}}
+            {{- /* - name: TLS_DOMAIN_PREFIX */}}
+            {{- /*   value: {{$vpnDeviceTLSPrefix |squote}} */}}
 
+            {{ include "msvc-n-mres-operator-env" . | nindent 12 }}
+            {{ include "msvc-mongo-operator-env" . | nindent 12 }}
             {{ include "helmchart-operator-env" . | nindent 12 }}
 
           {{- $imageTag := .Values.operators.agentOperator.image.tag | default (include "image-tag" .) }}
@@ -250,7 +250,6 @@ spec:
       terminationGracePeriodSeconds: 10
 
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -265,5 +264,22 @@ spec:
       port: 8443
       protocol: TCP
       targetPort: https
+  selector: *labels
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Values.operators.agentOperator.configuration.msvc.credsSvc.name}}
+  namespace: {{.Release.Namespace}}
+  labels: &labels
+    app: {{$name}}
+    control-plane: {{$name}}
+spec:
+  ports:
+    - name: p-80
+      port: 80
+      protocol: TCP
+      targetPort: {{.Values.operators.agentOperator.configuration.msvc.credsSvc.httPort | int}}
   selector: *labels
 {{end}}

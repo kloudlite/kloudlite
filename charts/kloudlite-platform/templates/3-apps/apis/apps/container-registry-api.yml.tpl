@@ -1,4 +1,4 @@
-{{- $appName := "accounts-api" }}
+{{- $appName := "container-registry-api" }}
 
 apiVersion: crds.kloudlite.io/v1
 kind: App
@@ -18,20 +18,9 @@ spec:
   replicas: {{.Values.apps.consoleApi.configuration.replicas}}
 
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
-
-    - port: 3001
-      targetPort: 3001
-      name: grpc
-      type: tcp
-
-    - port: 4000
-      targetPort: 4000
-      name: authorizer
-      type: tcp
+    - port: {{.Values.apps.containerRegistryApi.configuration.httpPort}}
+    - port: {{.Values.apps.containerRegistryApi.configuration.grpcPort}}
+    - port: {{.Values.apps.containerRegistryApi.configuration.authorizerPort | int}}
 
   containers:
     - name: main
@@ -50,10 +39,10 @@ spec:
         max: "80Mi"
       env:
         - key: PORT
-          value: "3000"
+          value: "{{.Values.apps.containerRegistryApi.configuration.httpPort}}"
 
         - key: GRPC_PORT
-          value: "3001"
+          value: "{{.Values.apps.containerRegistryApi.configuration.grpcPort}}"
 
         - key: COOKIE_DOMAIN
           value: {{.Values.global.cookieDomain}}

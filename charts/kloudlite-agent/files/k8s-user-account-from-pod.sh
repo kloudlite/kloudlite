@@ -10,7 +10,7 @@
 output_file=$1
 [ -z "$output_file" ] && echo "output_file must be defined as 1st argument to script, exiting ..." && exit 1
 
-username="kloudlite-admin"
+username="kloudlite-byok"
 namespace="default"
 
 echo "env-var KUBECTL is set to: $KUBECTL"
@@ -20,8 +20,10 @@ KUBECTL="${KUBECTL:-kubectl}"
 
 echo "KUBECTL is set to: $KUBECTL"
 
-curr_context_name=$($KUBECTL config view -o jsonpath='{.current-context}')
-cluster_name=$($KUBECTL config view -o jsonpath="{.contexts[?(@.name=='${curr_context_name}')].context.cluster}")
+$KUBECTL config view
+
+cluster_name="byok"
+cluster_addr=$(kubectl cluster-info | grep -i 'control plane' | awk '{print $7'})
 
 new_context_name="${username}-ctx"
 
@@ -59,7 +61,7 @@ cat >logs-reader-role.yml <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-name: ${svc_account_name}-logs-reader
+  name: ${svc_account_name}-logs-reader
   namespace: ${namespace}
 rules:
 - apiGroups: [""]
@@ -70,9 +72,10 @@ EOF
 # cluster role binding to this user
 cat >cluster-role-binding.yaml <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
   name: ${svc_account_name}-cluster-rb
+  namespace: ${namespace}
 subjects:
   - kind: ServiceAccount
     name: ${svc_account_name}
@@ -98,27 +101,13 @@ while true; do
 	if [ $exit_status -ne 0 ]; then
 		continue
 	fi
+	break
 done
 
 popd || exit 1
 
-### now generating a new kubeconfig from this generated service account token
-function generate_kubeconfig() {
-	token=$1
-	output=$2
-
-	$KUBECTL config set-credentials "${username}" --token="${token}"
-	$KUBECTL config set-context ${new_context_name} --cluster="${cluster_name}" --user="${username}" --namespace="${namespace}"
-	$KUBECTL config use-context ${new_context_name}
-
-	echo "saving generated kubeconfig to kubeconfig.yml"
-	$KUBECTL config view --raw --minify=true >"${output}"
-	$KUBECTL config use-context "${curr_context_name}"
-
-	echo "cleaning up existing kubeconfig for sanity reasons ..."
-	$KUBECTL config delete-context ${new_context_name}
-	$KUBECTL config delete-user "${username}"
-}
+# Get service account CA cert from secret
+cert=$($KUBECTL get secret "${svc_account_secret_name}" -n "${namespace}" -o jsonpath={.data."ca\.crt"})
 
 # Get service account token from secret
 user_token=""
@@ -127,27 +116,27 @@ while [ -z "$user_token" ]; do
 	user_token=$($KUBECTL get secret "${svc_account_secret_name}" -n "${namespace}" -o jsonpath={.data."token"} | base64 -d)
 done
 
-generate_kubeconfig "${user_token}" "${output_file}"
-
-cert=$($KUBECTL get secret "${svc_account_secret_name}" -n "${namespace}" -o jsonpath={.data."ca\.crt"} | base64 -d)
-
-validity_starts_at=$(echo "${cert}" | openssl x509 -noout -startdate | awk -F= '{print $2}')
-echo "${output_file} will be valid after ${validity_starts_at}"
-
-validity_start_timestamp=$(date -d "${validity_starts_at}" +%s)
-curr_timestamp="$(date +%s)"
-
-echo "validity_start_timestamp: ${validity_start_timestamp}"
-echo "curr_timestamp: ${curr_timestamp}"
-diff=$((validity_start_timestamp - curr_timestamp))
-
-echo "certificate will be valid in ${diff} seconds ..."
-while [ $((diff)) -ge 0 ]; do
-	echo "certificate will be valid in ${diff} seconds ..."
-	sleep 1
-	curr_timestamp="$(date +%s)"
-	diff=$((validity_start_timestamp - curr_timestamp))
-done
+### now generating a new kubeconfig from this generated service account token
+cat > "${output_file}" <<EOF
+apiVersion: v1
+kind: Config
+clusters:
+  - name: ${cluster_name}
+    cluster:
+      certificate-authority-data: ${cert}
+      server: ${cluster_addr}
+contexts:
+  - name: ${new_context_name}
+    context:
+      cluster: ${cluster_name}
+      namespace: ${namespace}
+      user: ${svc_account_name}
+users:
+  - name: ${svc_account_name}
+    user:
+      token: ${user_token}
+current-context: ${new_context_name}
+EOF
 
 echo "certificate is valid now, generated ${output_file} can now be used to communicate with the cluster"
 echo "DONE 🚀"

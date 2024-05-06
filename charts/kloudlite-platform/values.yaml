@@ -332,6 +332,8 @@ apps:
       tag: ""
     configuration:
       replicas: 1
+      httpPort: 3000
+      grpcPort: 3001
 
   klInstaller:
     image:
@@ -347,6 +349,7 @@ apps:
       tag: ""
     configuration:
       replicas: 1
+      grpcPort: 3001
 
   consoleApi:
     # -- image (with tag) for console api
@@ -356,8 +359,10 @@ apps:
     configuration:
       logsAndMetricsHttpPort: 9100
       vpnDeviceNamespace: "kl-vpn-devices"
-
       replicas: 1
+
+      httpPort: 3000
+      grpcPort: 3001
         
   accountsApi:
     # -- image (with tag) for accounts api
@@ -366,6 +371,8 @@ apps:
       tag: ""
     configuration:
       replicas: 1
+      httpPort: 3000
+      grpcPort: 3001
 
   iamApi:
     image:
@@ -373,6 +380,8 @@ apps:
       tag: ""
     configuration:
       replicas: 1
+      httpPort: 3000
+      grpcPort: 3001
 
   infraApi:
     # -- image (with tag) for infra api
@@ -382,6 +391,8 @@ apps:
     configuration:
       replicas: 1
       kloudliteRelease: ""
+      httpPort: 3000
+      grpcPort: 3001
 
   gatewayApi:
     image:
@@ -389,6 +400,7 @@ apps:
       tag: ""
     configuration:
       replicas: 1
+      httpPort: 3000
 
 
   containerRegistryApi:
@@ -410,6 +422,8 @@ apps:
       # -- namespace, in which build runs should be created
       jobBuildNamespace: "kloudlite"
       authorizerPort: 4000
+      httpPort: 3000
+      grpcPort: 3001
 
   auditLoggingWorker:
     image: 
@@ -472,6 +486,8 @@ apps:
       artifactHubKeyID: ""
       artifactHubKeySecret: ""
 
+      httpPort: 3000
+
   authWeb:
     enabled: true
     # -- image (with tag) for auth web
@@ -480,7 +496,7 @@ apps:
       tag: ""
     configuration:
       replicas: 1
-
+      httpPort: 3000
 
 operators:
   preferOperatorsOnMasterNodes: true

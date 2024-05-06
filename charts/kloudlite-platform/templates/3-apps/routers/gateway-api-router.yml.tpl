@@ -22,4 +22,4 @@ spec:
   routes:
     - app: gateway
       path: /
-      port: 80
+      port: {{.Values.apps.gatewayApi.configuration.httpPort}}

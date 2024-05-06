@@ -19,10 +19,7 @@ spec:
   replicas: {{.Values.apps.webhooksApi.configuration.replicas}}
 
   services:
-    - port: 80
-      targetPort: 3001
-      name: http
-      type: tcp
+    - port: 3001
   containers:
     - name: main
       image: {{.Values.apps.webhooksApi.image.repository}}:{{.Values.apps.webhooksApi.image.tag | default (include "image-tag" .) }}

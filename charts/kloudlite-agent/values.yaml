@@ -1,17 +1,17 @@
 # -- container image pull policy
 imagePullPolicy: Always
 
-# -- (string REQUIRED) kloudlite account name
-accountName: ''
-
-# -- (string REQUIRED) kloudlite cluster name
-clusterName: ''
-
 # -- (string REQUIRED) kloudlite issued cluster token
 clusterToken: ''
 
 # -- (string) kloudlite issued access token (if already have)
 accessToken: ''
+
+# -- (string, if available) kloudlite account name
+accountName: ''
+
+# -- (string, if available) kloudlite cluster name
+clusterName: ''
 
 # -- (string) cluster identity secret name, which keeps cluster token and access token
 clusterIdentitySecretName: kl-cluster-identity
@@ -97,6 +97,15 @@ operators:
           repository: ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner
           tag: ""
 
+      msvc:
+        credsSvc:
+          name: "msvc-creds"
+
+          # -- generate using python -c "import secrets; print(secrets.token_urlsafe(64))"
+          sharedSecret: ""
+          httpPort: "3000"
+          requestPath: "/get-msvc-creds"
+
       wireguard:
         enabled: true
         podCIDR: 10.42.0.0/16
@@ -124,8 +133,8 @@ helmCharts:
     tolerations: []
     nodeSelector: {}
     configuration:
-      controllerKind: DaemonSet
-      ingressClassName: nginx
+      controllerKind: Deployment
+      ingressClassName: kl-ingress
 
   certManager:
     enabled: false

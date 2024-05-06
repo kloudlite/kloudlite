@@ -97,7 +97,7 @@ tasks:
 
         # kloudlite operator CRDs
         pushd {{.OperatorDir}} 2>&1 > /dev/null
-        task yaml:crds > {{.OutputDir}}/crds-kloudlite.yml
+        task yaml:primary-crds > {{.OutputDir}}/crds-kloudlite.yml
         popd 2>&1 > /dev/null
 
         # cert manager CRDs

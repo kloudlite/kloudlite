@@ -64,7 +64,7 @@ spec:
       ingressClass: {{$ingressClassName}}
       electionID: {{$ingressClassName}}
       ingressClassResource:
-        enabled: true
+        enabled: false
         name: {{$ingressClassName}}
         controllerValue: "k8s.io/{{$ingressClassName}}"
 
@@ -78,4 +78,3 @@ spec:
         failurePolicy: Ignore
 
 {{- end }}
-

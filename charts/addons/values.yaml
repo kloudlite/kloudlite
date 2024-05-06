@@ -1,5 +1,7 @@
 podLabels: {}
 
+kloudliteRelease: ""
+
 serviceAccount:
   create: true
   name: "addons-sa"

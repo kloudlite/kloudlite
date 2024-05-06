@@ -38,7 +38,7 @@ spec:
         kloudlite.io/node.is-spot: "true"
       containers:
       - name: main
-        image: {{.Values.gcp.spot_node_terminator.configuration.image.repository}}:{{.Values.gcp.spot_node_terminator.configuration.image.tag | default .Chart.AppVersion }}
+        image: {{.Values.gcp.spot_node_terminator.configuration.image.repository}}:{{.Values.gcp.spot_node_terminator.configuration.image.tag | default (include "image-tag" .) }}
         env:
           - name: DEBUG
             value: "false"

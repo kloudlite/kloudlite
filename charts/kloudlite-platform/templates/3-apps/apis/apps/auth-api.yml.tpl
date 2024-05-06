@@ -19,14 +19,8 @@ spec:
 
   replicas: {{.Values.apps.authApi.configuration.replicas }}
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
+    - port: 3000
     - port: 3001
-      targetPort: 3001
-      name: grpc
-      type: tcp
 
   containers:
     - name: main

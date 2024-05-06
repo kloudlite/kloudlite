@@ -20,10 +20,7 @@ spec:
   replicas: {{.Values.apps.gatewayApi.configuration.replicas}}
 
   services:
-    - port: 80
-      targetPort: 3000
-      type: tcp
-      name: http
+    - port: {{.Values.apps.gatewayApi.configuration.httpPort}}
   containers:
     - name: main
       image: {{.Values.apps.gatewayApi.image.repository}}:{{.Values.apps.gatewayApi.image.tag | default (include "image-tag" .) }}
@@ -34,7 +31,7 @@ spec:
       {{end}}
       env:
         - key: PORT
-          value: '3000'
+          value: {{.Values.apps.gatewayApi.configuration.httpPort | squote}}
         - key: SUPERGRAPH_CONFIG
           value: /kloudlite/config
       resourceCpu:
@@ -53,7 +50,7 @@ spec:
         type: httpGet
         httpGet:
           path: /healthz 
-          port: 3000
+          port: {{.Values.apps.gatewayApi.configuration.httpPort}}
         initialDelay: 7
         interval: 10
 
@@ -61,6 +58,6 @@ spec:
         type: httpGet
         httpGet:
           path: /healthz
-          port: 3000
+          port: {{.Values.apps.gatewayApi.configuration.httpPort}}
         initialDelay: 7
         interval: 10

@@ -18,3 +18,8 @@ kloudlite.io/node.has-role: agent
 {{- define "gcp-csi-namespace" -}}
 gce-pd-csi-driver
 {{- end -}}
+
+{{- define "image-tag" -}}
+{{ .Values.kloudliteRelease | default .Chart.AppVersion }}
+{{- end -}}
+

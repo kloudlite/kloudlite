@@ -9,11 +9,7 @@ spec:
   nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 4}}
 
   services:
-    - port: 80
-      targetPort: 3000
-      name: grpc
-      type: tcp
-
+    - port: 3000
   containers:
     - name: main
       image: {{.Values.apps.klInstaller.image.repository}}:{{.Values.apps.klInstaller.image.tag | default (include "image-tag" .) }}
