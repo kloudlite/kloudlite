@@ -83,8 +83,6 @@ func Configure(
 	verbose bool,
 ) error {
 
-	fmt.Println(string(configuration))
-
 	s := spinner.NewSpinner()
 	cfg := wgc.Config{}
 
