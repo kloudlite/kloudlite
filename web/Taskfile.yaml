@@ -106,7 +106,7 @@ tasks:
         BASE_URL=kloudlite.io
         URL_SUFFIX=""
         COOKIE_DOMAIN=".kloudlite.io"
-        GATEWAY_URL="http://gateway.kloudlite.svc.cluster.local"
+        GATEWAY_URL="http://gateway.kloudlite.svc.cluster.local:3000"
 
         case {{.app}} in
           "auth")

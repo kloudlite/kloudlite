@@ -16,6 +16,7 @@ const Infra = () => {
         { label: 'Kloudlite Clusters', value: 'clusters' },
         // { label: 'Helm Repos', value: 'helm-repos' },
         { label: 'Bring your own Kubernetes', value: 'byok-cluster' },
+        { label: 'Vpn Devices', value: 'vpn-devices' },
       ]}
       parentPath="/infra"
     >

@@ -645,6 +645,7 @@ query consoleGetEnvironment($name: String!) {
     }
     creationTime
     displayName
+    clusterName
     lastUpdatedBy {
       userEmail
       userId
@@ -722,6 +723,7 @@ query consoleListEnvironments($search: SearchEnvironments, $pq: CursorPagination
         }
         creationTime
         displayName
+        clusterName
         lastUpdatedBy {
           userEmail
           userId
@@ -3661,6 +3663,62 @@ query consoleListImagePullSecrets($envName: String!, $search: SearchImagePullSec
   }
 }
 
+mutation consoleDeleteGlobalVpnDevice($gvpn: String!, $deviceName: String!) {
+  infra_deleteGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName)
+}
+
+mutation consoleCreateGlobalVpnDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+  infra_createGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+    id
+  }
+}
+
+mutation consoleUpdateGlobalVpnDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+  infra_updateGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+    id
+  }
+}
+
+query consoleGetGlobalVpnDevice($gvpn: String!, $deviceName: String!) {
+  infra_getGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    globalVPNName
+    id
+    ipAddr
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    privateKey
+    publicKey
+    publiEndpoint
+    recordVersion
+    updateTime
+    wireguardConfig {
+      value
+      encoding
+    }
+  }
+}
+
 query consoleListGlobalVpnDevices($gvpn: String!, $search: SearchGlobalVPNDevices, $pagination: CursorPaginationIn) {
   infra_listGlobalVPNDevices(
     gvpn: $gvpn
@@ -5334,6 +5392,54 @@ mutation authCli_createDevice($vpnDevice: ConsoleVPNDeviceIn!) {
     wireguardConfig {
       encoding
       value
+    }
+  }
+}
+
+query authCli_getMresOutputKeyValues($envName: String!, $keyrefs: [ManagedResourceKeyRefIn]) {
+  core_getManagedResouceOutputKeyValues(envName: $envName, keyrefs: $keyrefs) {
+    key
+    mresName
+    value
+  }
+}
+
+query authCli_getGlobalVpnDevice($gvpn: String!, $deviceName: String!) {
+  infra_getGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName) {
+    accountName
+    creationTime
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    displayName
+    globalVPNName
+    id
+    ipAddr
+    lastUpdatedBy {
+      userName
+      userId
+      userEmail
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    privateKey
+    publiEndpoint
+    publicKey
+    recordVersion
+    updateTime
+    wireguardConfig {
+      value
+      encoding
     }
   }
 }

@@ -166,13 +166,15 @@ type BYOKCluster {
   accountName: String!
   clusterPublicEndpoint: String!
   clusterSvcCIDR: String!
+  clusterToken: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  globalVPN: String
+  globalVPN: String!
   id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
+  messageQueueTopicName: String!
   metadata: Metadata!
   recordVersion: Int!
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
@@ -186,7 +188,9 @@ type BYOKClusterEdge {
 
 input BYOKClusterIn {
   clusterPublicEndpoint: String!
+  clusterToken: String!
   displayName: String!
+  messageQueueTopicName: String!
   metadata: MetadataIn!
 }
 

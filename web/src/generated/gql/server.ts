@@ -824,7 +824,9 @@ export type RepositoryIn = {
 
 export type ByokClusterIn = {
   clusterPublicEndpoint: Scalars['String']['input'];
+  clusterToken: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
+  messageQueueTopicName: Scalars['String']['input'];
   metadata: MetadataIn;
 };
 
@@ -2264,8 +2266,8 @@ export type ConsoleGetEnvironmentQuery = {
   core_getEnvironment?: {
     creationTime: any;
     displayName: string;
-    markedForDeletion?: boolean;
     clusterName: string;
+    markedForDeletion?: boolean;
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
@@ -2345,6 +2347,7 @@ export type ConsoleListEnvironmentsQuery = {
       node: {
         creationTime: any;
         displayName: string;
+        clusterName: string;
         markedForDeletion?: boolean;
         recordVersion: number;
         updateTime: any;
@@ -4439,7 +4442,7 @@ export type ConsoleGetByokClusterQuery = {
     updateTime: any;
     clusterPublicEndpoint: string;
     clusterSvcCIDR: string;
-    globalVPN?: string;
+    globalVPN: string;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
     metadata: {
@@ -4478,7 +4481,7 @@ export type ConsoleListByokClustersQuery = {
         clusterSvcCIDR: string;
         creationTime: any;
         displayName: string;
-        globalVPN?: string;
+        globalVPN: string;
         id: string;
         markedForDeletion?: boolean;
         recordVersion: number;
@@ -5151,6 +5154,65 @@ export type ConsoleListImagePullSecretsQuery = {
       hasPreviousPage?: boolean;
       startCursor?: string;
     };
+  };
+};
+
+export type ConsoleDeleteGlobalVpnDeviceMutationVariables = Exact<{
+  gvpn: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteGlobalVpnDeviceMutation = {
+  infra_deleteGlobalVPNDevice: boolean;
+};
+
+export type ConsoleCreateGlobalVpnDeviceMutationVariables = Exact<{
+  gvpnDevice: GlobalVpnDeviceIn;
+}>;
+
+export type ConsoleCreateGlobalVpnDeviceMutation = {
+  infra_createGlobalVPNDevice?: { id: string };
+};
+
+export type ConsoleUpdateGlobalVpnDeviceMutationVariables = Exact<{
+  gvpnDevice: GlobalVpnDeviceIn;
+}>;
+
+export type ConsoleUpdateGlobalVpnDeviceMutation = {
+  infra_updateGlobalVPNDevice?: { id: string };
+};
+
+export type ConsoleGetGlobalVpnDeviceQueryVariables = Exact<{
+  gvpn: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetGlobalVpnDeviceQuery = {
+  infra_getGlobalVPNDevice?: {
+    accountName: string;
+    creationTime: any;
+    displayName: string;
+    globalVPNName: string;
+    id: string;
+    ipAddr: string;
+    markedForDeletion?: boolean;
+    privateKey: string;
+    publicKey: string;
+    publiEndpoint?: string;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    wireguardConfig?: { value: string; encoding: string };
   };
 };
 
@@ -6835,6 +6897,56 @@ export type AuthCli_CreateDeviceMutation = {
   core_createVPNDevice?: {
     metadata?: { name: string };
     wireguardConfig?: { encoding: string; value: string };
+  };
+};
+
+export type AuthCli_GetMresOutputKeyValuesQueryVariables = Exact<{
+  envName: Scalars['String']['input'];
+  keyrefs?: InputMaybe<
+    | Array<InputMaybe<ManagedResourceKeyRefIn>>
+    | InputMaybe<ManagedResourceKeyRefIn>
+  >;
+}>;
+
+export type AuthCli_GetMresOutputKeyValuesQuery = {
+  core_getManagedResouceOutputKeyValues: Array<{
+    key: string;
+    mresName: string;
+    value: string;
+  }>;
+};
+
+export type AuthCli_GetGlobalVpnDeviceQueryVariables = Exact<{
+  gvpn: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetGlobalVpnDeviceQuery = {
+  infra_getGlobalVPNDevice?: {
+    accountName: string;
+    creationTime: any;
+    displayName: string;
+    globalVPNName: string;
+    id: string;
+    ipAddr: string;
+    markedForDeletion?: boolean;
+    privateKey: string;
+    publiEndpoint?: string;
+    publicKey: string;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userName: string; userId: string; userEmail: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    wireguardConfig?: { value: string; encoding: string };
   };
 };
 

@@ -38,6 +38,7 @@ import {
   GearSix,
   Project,
   WireGuardlogo,
+  BackingServices,
 } from '~/console/components/icons';
 
 const restActions = (ctx: IExtRemixCtx) => {
@@ -90,6 +91,16 @@ const AccountTabs = () => {
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
+              <BackingServices size={iconSize} />
+              Managed Services
+            </span>
+          ),
+          to: '/managed-services',
+          value: '/managed-services',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
               <ContainerIcon size={iconSize} />
               Packages
             </span>
@@ -97,16 +108,16 @@ const AccountTabs = () => {
           to: '/packages/repos',
           value: '/packages',
         },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
-              <WireGuardlogo size={iconSize} />
-              Vpn Devices
-            </span>
-          ),
-          to: '/vpn-devices',
-          value: '/vpn-devices',
-        },
+        // {
+        //   label: (
+        //     <span className="flex flex-row items-center gap-lg">
+        //       <WireGuardlogo size={iconSize} />
+        //       Vpn Devices
+        //     </span>
+        //   ),
+        //   to: '/vpn-devices',
+        //   value: '/vpn-devices',
+        // },
         {
           label: (
             <span className="flex flex-row items-center gap-lg">

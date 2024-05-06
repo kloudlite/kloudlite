@@ -1,4 +1,4 @@
-import { Copy, GearSix, Globe, ShieldCheck } from '~/console/components/icons';
+import { Copy, GearSix } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { generateKey, titleCase } from '~/components/utils';
@@ -22,7 +22,6 @@ import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
-import { Badge } from '~/components/atoms/badge';
 import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'environment';
@@ -141,9 +140,9 @@ const ListView = ({ items, onAction }: IResource) => {
             className: 'flex-1 min-w-[30px] flex items-center justify-center',
           },
           {
-            render: () => 'Environmet',
-            name: 'environment',
-            className: 'w-[180px]',
+            render: () => 'Cluster',
+            name: 'cluster',
+            className: 'w-[250px]',
           },
           {
             render: () => 'Updated',
@@ -172,21 +171,24 @@ const ListView = ({ items, onAction }: IResource) => {
               status: {
                 render: () => <SyncStatusV2 item={i} />,
               },
-              environment: {
-                render: () => (
-                  <Badge
-                    icon={
-                      i.spec?.routing?.mode === 'private' ? (
-                        <ShieldCheck />
-                      ) : (
-                        <Globe />
-                      )
-                    }
-                  >
-                    {i.spec?.routing?.mode}
-                  </Badge>
-                ),
+              cluster: {
+                render: () => <ListItem data={i.clusterName} />,
               },
+              // environment: {
+              //   render: () => (
+              //     <Badge
+              //       icon={
+              //         i.spec?.routing?.mode === 'private' ? (
+              //           <ShieldCheck />
+              //         ) : (
+              //           <Globe />
+              //         )
+              //       }
+              //     >
+              //       {i.spec?.routing?.mode}
+              //     </Badge>
+              //   ),
+              // },
               updated: {
                 render: () => (
                   <ListItem
