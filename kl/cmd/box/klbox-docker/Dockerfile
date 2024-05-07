@@ -1,4 +1,12 @@
 # Use the official Ubuntu base image
+FROM golang:1.21 as builder
+
+WORKDIR /app
+
+COPY main.go main.go
+
+RUN go build -o mounter main.go
+
 FROM ubuntu:latest
 
 RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2
@@ -26,7 +34,7 @@ EOF
 
 COPY .bashrc .profile /tmp/
 
-COPY ./bin/mounter /mounter
+COPY --from=builder /app/mounter /mounter
 
 SHELL ["/bin/bash", "-c"]
 RUN cat > /entrypoint.sh <<'EOF'
