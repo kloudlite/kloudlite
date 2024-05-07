@@ -1,12 +1,10 @@
 package box
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 
-	"github.com/kloudlite/kl/constants"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
@@ -19,29 +17,26 @@ var sshCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		return
 	},
 }
 
-func sshBox(_ *cobra.Command, _ []string) error {
-	//containerName := "kl-box-" + getCwdHash()
-	//command := exec.Command("docker", "exec", "-it", containerName, "bash")
-
+func sshBox(cmd *cobra.Command, _ []string) error {
+	debug := fn.ParseBoolFlag(cmd, "debug")
 	command := exec.Command("ssh", "kl@localhost", "-p", "1729")
 
-	if runtime.GOOS == constants.RuntimeWindows {
-		command = exec.Command("bash", "-c", "ssh kl@localhost -p 1729")
+	if debug {
+		fn.Log(command.String())
 	}
 
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	if err := command.Run(); err != nil {
-		fn.PrintError(errors.New(("Error opening ssh to kl-box container. Please ensure that container is running.")))
+		fn.PrintError(fmt.Errorf(("error opening ssh to kl-box container. Please ensure that container is running")))
 		return err
 	}
 	return nil
 }
 
 func init() {
-	sshCmd.Aliases = append(sshCmd.Aliases, "ss")
+	sshCmd.Flags().BoolP("debug", "d", false, "run in debug mode")
 }

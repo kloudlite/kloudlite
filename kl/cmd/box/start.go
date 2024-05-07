@@ -166,8 +166,8 @@ func getCwdHash() string {
 
 func ensurePublicKey() {
 	sshPath := path.Join(xdg.Home, ".ssh")
-	if _, err := os.Stat(fmt.Sprintf("%s/id_rsa.pub", sshPath)); os.IsNotExist(err) {
-		cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "4096", "-f", fmt.Sprintf("%s/id_rsa", sshPath), "-N", "")
+	if _, err := os.Stat(path.Join(sshPath, "id_rsa.pub")); os.IsNotExist(err) {
+		cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "4096", "-f", path.Join(sshPath, "id_rsa.pub"), "-N", "")
 		err := cmd.Run()
 		if err != nil {
 			panic(err)
