@@ -263,6 +263,14 @@ type ComplexityRoot struct {
 		SyncScheduledAt func(childComplexity int) int
 	}
 
+	Github__com___kloudlite___operator___apis___common____types__MsvcRef struct {
+		APIVersion  func(childComplexity int) int
+		ClusterName func(childComplexity int) int
+		Kind        func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Namespace   func(childComplexity int) int
+	}
+
 	Github__com___kloudlite___operator___apis___crds___v1__AppContainer struct {
 		Args            func(childComplexity int) int
 		Command         func(childComplexity int) int
@@ -299,10 +307,8 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__AppSvc struct {
-		Name       func(childComplexity int) int
-		Port       func(childComplexity int) int
-		TargetPort func(childComplexity int) int
-		Type       func(childComplexity int) int
+		Port     func(childComplexity int) int
+		Protocol func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__BasicAuth struct {
@@ -395,13 +401,6 @@ type ComplexityRoot struct {
 		Kind       func(childComplexity int) int
 		MsvcRef    func(childComplexity int) int
 		Spec       func(childComplexity int) int
-	}
-
-	Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef struct {
-		APIVersion func(childComplexity int) int
-		Kind       func(childComplexity int) int
-		Name       func(childComplexity int) int
-		Namespace  func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__Probe struct {
@@ -513,7 +512,7 @@ type ComplexityRoot struct {
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
 		DockerConfigJson  func(childComplexity int) int
-		EnvironmentName   func(childComplexity int) int
+		Environments      func(childComplexity int) int
 		Format            func(childComplexity int) int
 		Id                func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
@@ -643,7 +642,7 @@ type ComplexityRoot struct {
 		CoreCreateApp             func(childComplexity int, envName string, app entities.App) int
 		CoreCreateConfig          func(childComplexity int, envName string, config entities.Config) int
 		CoreCreateEnvironment     func(childComplexity int, env entities.Environment) int
-		CoreCreateImagePullSecret func(childComplexity int, envName string, imagePullSecretIn entities.ImagePullSecret) int
+		CoreCreateImagePullSecret func(childComplexity int, imagePullSecretIn entities.ImagePullSecret) int
 		CoreCreateManagedResource func(childComplexity int, envName string, mres entities.ManagedResource) int
 		CoreCreateRouter          func(childComplexity int, envName string, router entities.Router) int
 		CoreCreateSecret          func(childComplexity int, envName string, secret entities.Secret) int
@@ -651,7 +650,7 @@ type ComplexityRoot struct {
 		CoreDeleteApp             func(childComplexity int, envName string, appName string) int
 		CoreDeleteConfig          func(childComplexity int, envName string, configName string) int
 		CoreDeleteEnvironment     func(childComplexity int, envName string) int
-		CoreDeleteImagePullSecret func(childComplexity int, envName string, secretName string) int
+		CoreDeleteImagePullSecret func(childComplexity int, name string) int
 		CoreDeleteManagedResource func(childComplexity int, envName string, mresName string) int
 		CoreDeleteRouter          func(childComplexity int, envName string, routerName string) int
 		CoreDeleteSecret          func(childComplexity int, envName string, secretName string) int
@@ -688,7 +687,7 @@ type ComplexityRoot struct {
 		CoreGetConfig                        func(childComplexity int, envName string, name string) int
 		CoreGetConfigValues                  func(childComplexity int, envName string, queries []*domain.ConfigKeyRef) int
 		CoreGetEnvironment                   func(childComplexity int, name string) int
-		CoreGetImagePullSecret               func(childComplexity int, envName string, name string) int
+		CoreGetImagePullSecret               func(childComplexity int, name string) int
 		CoreGetManagedResouceOutputKeyValues func(childComplexity int, envName string, keyrefs []*domain.ManagedResourceKeyRef) int
 		CoreGetManagedResouceOutputKeys      func(childComplexity int, envName string, name string) int
 		CoreGetManagedResource               func(childComplexity int, envName string, name string) int
@@ -699,7 +698,7 @@ type ComplexityRoot struct {
 		CoreListApps                         func(childComplexity int, envName string, search *model.SearchApps, pq *repos.CursorPagination) int
 		CoreListConfigs                      func(childComplexity int, envName string, search *model.SearchConfigs, pq *repos.CursorPagination) int
 		CoreListEnvironments                 func(childComplexity int, search *model.SearchEnvironments, pq *repos.CursorPagination) int
-		CoreListImagePullSecrets             func(childComplexity int, envName string, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) int
+		CoreListImagePullSecrets             func(childComplexity int, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) int
 		CoreListManagedResources             func(childComplexity int, envName string, search *model.SearchManagedResources, pq *repos.CursorPagination) int
 		CoreListRouters                      func(childComplexity int, envName string, search *model.SearchRouters, pq *repos.CursorPagination) int
 		CoreListSecrets                      func(childComplexity int, envName string, search *model.SearchSecrets, pq *repos.CursorPagination) int
@@ -709,7 +708,7 @@ type ComplexityRoot struct {
 		CoreResyncApp                        func(childComplexity int, envName string, name string) int
 		CoreResyncConfig                     func(childComplexity int, envName string, name string) int
 		CoreResyncEnvironment                func(childComplexity int, name string) int
-		CoreResyncImagePullSecret            func(childComplexity int, envName string, name string) int
+		CoreResyncImagePullSecret            func(childComplexity int, name string) int
 		CoreResyncManagedResource            func(childComplexity int, envName string, name string) int
 		CoreResyncRouter                     func(childComplexity int, envName string, name string) int
 		CoreResyncSecret                     func(childComplexity int, envName string, name string) int
@@ -879,8 +878,8 @@ type MutationResolver interface {
 	CoreUpdateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error)
 	CoreDeleteEnvironment(ctx context.Context, envName string) (bool, error)
 	CoreCloneEnvironment(ctx context.Context, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) (*entities.Environment, error)
-	CoreCreateImagePullSecret(ctx context.Context, envName string, imagePullSecretIn entities.ImagePullSecret) (*entities.ImagePullSecret, error)
-	CoreDeleteImagePullSecret(ctx context.Context, envName string, secretName string) (bool, error)
+	CoreCreateImagePullSecret(ctx context.Context, imagePullSecretIn entities.ImagePullSecret) (*entities.ImagePullSecret, error)
+	CoreDeleteImagePullSecret(ctx context.Context, name string) (bool, error)
 	CoreCreateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
 	CoreUpdateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
 	CoreDeleteApp(ctx context.Context, envName string, appName string) (bool, error)
@@ -910,9 +909,9 @@ type QueryResolver interface {
 	CoreListEnvironments(ctx context.Context, search *model.SearchEnvironments, pq *repos.CursorPagination) (*model.EnvironmentPaginatedRecords, error)
 	CoreGetEnvironment(ctx context.Context, name string) (*entities.Environment, error)
 	CoreResyncEnvironment(ctx context.Context, name string) (bool, error)
-	CoreListImagePullSecrets(ctx context.Context, envName string, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error)
-	CoreGetImagePullSecret(ctx context.Context, envName string, name string) (*entities.ImagePullSecret, error)
-	CoreResyncImagePullSecret(ctx context.Context, envName string, name string) (bool, error)
+	CoreListImagePullSecrets(ctx context.Context, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error)
+	CoreGetImagePullSecret(ctx context.Context, name string) (*entities.ImagePullSecret, error)
+	CoreResyncImagePullSecret(ctx context.Context, name string) (bool, error)
 	CoreListApps(ctx context.Context, envName string, search *model.SearchApps, pq *repos.CursorPagination) (*model.AppPaginatedRecords, error)
 	CoreGetApp(ctx context.Context, envName string, name string) (*entities.App, error)
 	CoreResyncApp(ctx context.Context, envName string, name string) (bool, error)
@@ -1841,6 +1840,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___api___pkg___types__SyncStatus.SyncScheduledAt(childComplexity), true
 
+	case "Github__com___kloudlite___operator___apis___common____types__MsvcRef.apiVersion":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.APIVersion == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.APIVersion(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___common____types__MsvcRef.clusterName":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.ClusterName == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.ClusterName(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___common____types__MsvcRef.kind":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.Kind == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.Kind(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___common____types__MsvcRef.name":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.Name == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.Name(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___common____types__MsvcRef.namespace":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.Namespace == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.Namespace(childComplexity), true
+
 	case "Github__com___kloudlite___operator___apis___crds___v1__AppContainer.args":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppContainer.Args == nil {
 			break
@@ -2023,13 +2057,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSpec.TopologySpreadConstraints(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___crds___v1__AppSvc.name":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Name == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Name(childComplexity), true
-
 	case "Github__com___kloudlite___operator___apis___crds___v1__AppSvc.port":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Port == nil {
 			break
@@ -2037,19 +2064,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Port(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___crds___v1__AppSvc.targetPort":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.TargetPort == nil {
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppSvc.protocol":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Protocol == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.TargetPort(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__AppSvc.type":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Type == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Type(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Protocol(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___crds___v1__BasicAuth.enabled":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__BasicAuth.Enabled == nil {
@@ -2379,34 +2399,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate.Spec(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.apiVersion":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.APIVersion == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.APIVersion(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.kind":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.Kind == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.Kind(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.name":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.Name == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.Name(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.namespace":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.Namespace == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef.Namespace(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___crds___v1__Probe.failureThreshold":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__Probe.FailureThreshold == nil {
@@ -2870,12 +2862,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ImagePullSecret.DockerConfigJson(childComplexity), true
 
-	case "ImagePullSecret.environmentName":
-		if e.complexity.ImagePullSecret.EnvironmentName == nil {
+	case "ImagePullSecret.environments":
+		if e.complexity.ImagePullSecret.Environments == nil {
 			break
 		}
 
-		return e.complexity.ImagePullSecret.EnvironmentName(childComplexity), true
+		return e.complexity.ImagePullSecret.Environments(childComplexity), true
 
 	case "ImagePullSecret.format":
 		if e.complexity.ImagePullSecret.Format == nil {
@@ -3495,7 +3487,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateImagePullSecret(childComplexity, args["envName"].(string), args["imagePullSecretIn"].(entities.ImagePullSecret)), true
+		return e.complexity.Mutation.CoreCreateImagePullSecret(childComplexity, args["imagePullSecretIn"].(entities.ImagePullSecret)), true
 
 	case "Mutation.core_createManagedResource":
 		if e.complexity.Mutation.CoreCreateManagedResource == nil {
@@ -3591,7 +3583,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreDeleteImagePullSecret(childComplexity, args["envName"].(string), args["secretName"].(string)), true
+		return e.complexity.Mutation.CoreDeleteImagePullSecret(childComplexity, args["name"].(string)), true
 
 	case "Mutation.core_deleteManagedResource":
 		if e.complexity.Mutation.CoreDeleteManagedResource == nil {
@@ -3897,7 +3889,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetImagePullSecret(childComplexity, args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreGetImagePullSecret(childComplexity, args["name"].(string)), true
 
 	case "Query.core_getManagedResouceOutputKeyValues":
 		if e.complexity.Query.CoreGetManagedResouceOutputKeyValues == nil {
@@ -4029,7 +4021,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreListImagePullSecrets(childComplexity, args["envName"].(string), args["search"].(*model.SearchImagePullSecrets), args["pq"].(*repos.CursorPagination)), true
+		return e.complexity.Query.CoreListImagePullSecrets(childComplexity, args["search"].(*model.SearchImagePullSecrets), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.core_listManagedResources":
 		if e.complexity.Query.CoreListManagedResources == nil {
@@ -4144,7 +4136,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreResyncImagePullSecret(childComplexity, args["envName"].(string), args["name"].(string)), true
+		return e.complexity.Query.CoreResyncImagePullSecret(childComplexity, args["name"].(string)), true
 
 	case "Query.core_resyncManagedResource":
 		if e.complexity.Query.CoreResyncManagedResource == nil {
@@ -4581,6 +4573,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCoreSearchVPNDevices,
 		ec.unmarshalInputCursorPaginationIn,
 		ec.unmarshalInputEnvironmentIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__MsvcRefIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppContainerIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppSpecIn,
@@ -4600,7 +4593,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__InterceptIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn,
-		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ProbeIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__RateLimitIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__RouteIn,
@@ -4736,191 +4728,191 @@ directive @isLoggedInAndVerified on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
 enum ConsoleResType {
-  app
-  config
-  secret
-  router
-  managed_service
-  managed_resource
-  environment
-  vpn_device
+	app
+	config
+	secret
+	router
+	managed_service
+	managed_resource
+	environment
+	vpn_device
 }
 
 type ConsoleCheckNameAvailabilityOutput @shareable {
-    result: Boolean!
-    suggestedNames: [String!]
+	result: Boolean!
+	suggestedNames: [String!]
 }
 
 input SearchProjects {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchImagePullSecrets {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchEnvironments {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchApps {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchConfigs {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchSecrets {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchRouters {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchManagedResources {
-    text: MatchFilterIn
-    managedServiceName: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	managedServiceName: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchProjectManagedService {
-    text: MatchFilterIn
-    managedServiceName: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	managedServiceName: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input CoreSearchVPNDevices {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 type Query {
-    core_checkNameAvailability(envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+	core_checkNameAvailability(envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
-    # core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
-    # core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
-    # core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
+	# core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
+	# core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listEnvironments(search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getEnvironment(name: String!): Environment @isLoggedInAndVerified @hasAccount
-    core_resyncEnvironment(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_listEnvironments(search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getEnvironment(name: String!): Environment @isLoggedInAndVerified @hasAccount
+	core_resyncEnvironment(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    # get image pull secrets
-    core_listImagePullSecrets(envName: String!, search: SearchImagePullSecrets, pq: CursorPaginationIn): ImagePullSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getImagePullSecret(envName: String!, name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccount
-    core_resyncImagePullSecret(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# get image pull secrets
+	core_listImagePullSecrets(search: SearchImagePullSecrets, pq: CursorPaginationIn): ImagePullSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getImagePullSecret(name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccount
+	core_resyncImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listApps(envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
-    core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_restartApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_listApps(envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
+	core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_restartApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_getConfigValues(envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!] @isLoggedInAndVerified @hasAccount
-    core_listConfigs(envName: String!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getConfig(envName: String!, name: String!): Config @isLoggedInAndVerified @hasAccount
-    core_resyncConfig(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_getConfigValues(envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!] @isLoggedInAndVerified @hasAccount
+	core_listConfigs(envName: String!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getConfig(envName: String!, name: String!): Config @isLoggedInAndVerified @hasAccount
+	core_resyncConfig(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!] @isLoggedInAndVerified @hasAccount
-    core_listSecrets(envName: String!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getSecret(envName: String!, name: String!): Secret @isLoggedInAndVerified @hasAccount
-    core_resyncSecret(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!] @isLoggedInAndVerified @hasAccount
+	core_listSecrets(envName: String!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getSecret(envName: String!, name: String!): Secret @isLoggedInAndVerified @hasAccount
+	core_resyncSecret(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listRouters(envName: String!, search: SearchRouters, pq: CursorPaginationIn): RouterPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getRouter(envName: String!, name: String!): Router @isLoggedInAndVerified @hasAccount
-    core_resyncRouter(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_listRouters(envName: String!, search: SearchRouters, pq: CursorPaginationIn): RouterPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getRouter(envName: String!, name: String!): Router @isLoggedInAndVerified @hasAccount
+	core_resyncRouter(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_getManagedResouceOutputKeys(envName: String!, name: String!): [String!]! @isLoggedInAndVerified @hasAccount
-    core_getManagedResouceOutputKeyValues(envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
-    core_listManagedResources(envName: String!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getManagedResource(envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
-    core_resyncManagedResource(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_getManagedResouceOutputKeys(envName: String!, name: String!): [String!]! @isLoggedInAndVerified @hasAccount
+	core_getManagedResouceOutputKeyValues(envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
+	core_listManagedResources(envName: String!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getManagedResource(envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
+	core_resyncManagedResource(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    # core_listProjectManagedServices(search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    # core_getProjectManagedService( name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    # core_resyncProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    # core_restartProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# core_listProjectManagedServices(search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
+	# core_getProjectManagedService( name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+	# core_resyncProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# core_restartProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_listVPNDevicesForUser: [ConsoleVPNDevice!] @isLoggedInAndVerified @hasAccount
-    core_getVPNDevice(name: String!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
+	core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_listVPNDevicesForUser: [ConsoleVPNDevice!] @isLoggedInAndVerified @hasAccount
+	core_getVPNDevice(name: String!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
-    # core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
-    # core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
-    # core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
+	# core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
+	# core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
-    core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
-    core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_cloneEnvironment(sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
+	core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
+	core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
+	core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_cloneEnvironment(sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
 
-    # image pull secrets
-    core_createImagePullSecret(envName: String!, imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
-    core_deleteImagePullSecret(envName: String!, secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# image pull secrets
+	core_createImagePullSecret(imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
+	core_deleteImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
-    core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
-    core_deleteApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_createApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
+	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
+	core_deleteApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
-    core_updateConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
-    core_deleteConfig(envName: String!, configName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_createConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
+	core_updateConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
+	core_deleteConfig(envName: String!, configName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createSecret(envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
-    core_updateSecret(envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
-    core_deleteSecret(envName: String!, secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_createSecret(envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
+	core_updateSecret(envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
+	core_deleteSecret(envName: String!, secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
-    core_updateRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
-    core_deleteRouter(envName: String!, routerName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_createRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
+	core_updateRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
+	core_deleteRouter(envName: String!, routerName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
-    core_updateManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
-    core_deleteManagedResource(envName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_createManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
+	core_updateManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
+	core_deleteManagedResource(envName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    # core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    # core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    # core_deleteProjectManagedService(pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+	# core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+	# core_deleteProjectManagedService(pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 
-    core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
-    core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
+	core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
+	core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 
-    core_updateVPNDevicePorts(deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_updateVPNDeviceEnv(deviceName: String!,envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_updateVpnDeviceNs(deviceName: String!,ns: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_updateVpnClusterName(deviceName: String!,clusterName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_updateVPNDevicePorts(deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_updateVPNDeviceEnv(deviceName: String!,envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_updateVpnDeviceNs(deviceName: String!,ns: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_updateVpnClusterName(deviceName: String!,clusterName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type Build @key(fields: "id") {
-  id: ID! @isLoggedInAndVerified @hasAccount
+	id: ID! @isLoggedInAndVerified @hasAccount
 }
 
 extend type App {
-  build: Build
+	build: Build
 }
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/app.graphqls", Input: `type App @shareable {
@@ -4986,6 +4978,14 @@ type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
   syncScheduledAt: Date
 }
 
+type Github__com___kloudlite___operator___apis___common____types__MsvcRef @shareable {
+  apiVersion: String
+  clusterName: String!
+  kind: String
+  name: String!
+  namespace: String!
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__AppContainer @shareable {
   args: [String!]
   command: [String!]
@@ -5022,10 +5022,8 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppSpec @shareable {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppSvc @shareable {
-  name: String
   port: Int!
-  targetPort: Int
-  type: String
+  protocol: String
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__BasicAuth @shareable {
@@ -5116,15 +5114,8 @@ type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec 
 type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate @shareable {
   apiVersion: String!
   kind: String!
-  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef!
+  msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRef!
   spec: Map!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef @shareable {
-  apiVersion: String!
-  kind: String!
-  name: String!
-  namespace: String!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Probe @shareable {
@@ -5287,6 +5278,13 @@ type PageInfo @shareable {
   startCursor: String
 }
 
+input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
+  apiVersion: String
+  kind: String
+  name: String!
+  namespace: String!
+}
+
 input Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn {
   args: [String!]
   command: [String!]
@@ -5323,10 +5321,8 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn {
-  name: String
   port: Int!
-  targetPort: Int
-  type: String
+  protocol: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn {
@@ -5415,15 +5411,8 @@ input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec
 input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
   apiVersion: String!
   kind: String!
-  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn!
+  msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRefIn!
   spec: Map!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn {
-  apiVersion: String!
-  kind: String!
-  name: String!
-  namespace: String!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn {
@@ -5783,7 +5772,7 @@ input EnvironmentIn {
   creationTime: Date!
   displayName: String!
   dockerConfigJson: String
-  environmentName: String!
+  environments: [String!]
   format: Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat!
   id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -5811,6 +5800,7 @@ type ImagePullSecretPaginatedRecords @shareable {
 input ImagePullSecretIn {
   displayName: String!
   dockerConfigJson: String
+  environments: [String!]
   format: Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat!
   metadata: MetadataIn!
   registryPassword: String
@@ -6225,24 +6215,15 @@ func (ec *executionContext) field_Mutation_core_createEnvironment_args(ctx conte
 func (ec *executionContext) field_Mutation_core_createImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg0
-	var arg1 entities.ImagePullSecret
+	var arg0 entities.ImagePullSecret
 	if tmp, ok := rawArgs["imagePullSecretIn"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imagePullSecretIn"))
-		arg1, err = ec.unmarshalNImagePullSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, tmp)
+		arg0, err = ec.unmarshalNImagePullSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["imagePullSecretIn"] = arg1
+	args["imagePullSecretIn"] = arg0
 	return args, nil
 }
 
@@ -6400,23 +6381,14 @@ func (ec *executionContext) field_Mutation_core_deleteImagePullSecret_args(ctx c
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["secretName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["secretName"] = arg1
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -6949,23 +6921,14 @@ func (ec *executionContext) field_Query_core_getImagePullSecret_args(ctx context
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg1
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -7221,33 +7184,24 @@ func (ec *executionContext) field_Query_core_listEnvironments_args(ctx context.C
 func (ec *executionContext) field_Query_core_listImagePullSecrets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg0
-	var arg1 *model.SearchImagePullSecrets
+	var arg0 *model.SearchImagePullSecrets
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchImagePullSecrets2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchImagePullSecrets(ctx, tmp)
+		arg0, err = ec.unmarshalOSearchImagePullSecrets2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchImagePullSecrets(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["search"] = arg1
-	var arg2 *repos.CursorPagination
+	args["search"] = arg0
+	var arg1 *repos.CursorPagination
 	if tmp, ok := rawArgs["pq"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pq"] = arg2
+	args["pq"] = arg1
 	return args, nil
 }
 
@@ -7465,23 +7419,14 @@ func (ec *executionContext) field_Query_core_resyncImagePullSecret_args(ctx cont
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg1
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -13163,6 +13108,220 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___t
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MsvcRef_apiVersion(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesMsvcRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_apiVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.APIVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___common____types__MsvcRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MsvcRef_clusterName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesMsvcRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_clusterName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClusterName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___common____types__MsvcRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MsvcRef_kind(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesMsvcRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_kind(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Kind, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___common____types__MsvcRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MsvcRef_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesMsvcRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___common____types__MsvcRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MsvcRef_namespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesMsvcRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_namespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Namespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___common____types__MsvcRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppContainer_args(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppContainer) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_args(ctx, field)
 	if err != nil {
@@ -14277,14 +14436,10 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_name(ctx, field)
 			case "port":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_port(ctx, field)
-			case "targetPort":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_targetPort(ctx, field)
-			case "type":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_type(ctx, field)
+			case "protocol":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__AppSvc", field.Name)
 		},
@@ -14404,47 +14559,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSvc_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSvc) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSvc",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSvc_port(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSvc) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_port(ctx, field)
 	if err != nil {
@@ -14489,8 +14603,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSvc_targetPort(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSvc) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_targetPort(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSvc) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14503,48 +14617,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.TargetPort, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_targetPort(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSvc",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSvc_type(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSvc) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_type(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
+		return obj.Protocol, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14558,7 +14631,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSvc",
 		Field:      field,
@@ -16523,9 +16596,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1MsvcNamedRef)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCommonTypesMsvcRef)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1MsvcNamedRef(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___operator___apis___common____types__MsvcRef2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMsvcRef(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate_msvcRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16537,15 +16610,17 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "apiVersion":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_apiVersion(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_clusterName(ctx, field)
 			case "kind":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_kind(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_kind(ctx, field)
 			case "name":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_name(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_name(ctx, field)
 			case "namespace":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_namespace(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_namespace(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___common____types__MsvcRef", field.Name)
 		},
 	}
 	return fc, nil
@@ -16590,182 +16665,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_apiVersion(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1MsvcNamedRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_apiVersion(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.APIVersion, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_kind(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1MsvcNamedRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_kind(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Kind, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1MsvcNamedRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_namespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1MsvcNamedRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_namespace(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Namespace, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -19637,8 +19536,8 @@ func (ec *executionContext) fieldContext_ImagePullSecret_dockerConfigJson(ctx co
 	return fc, nil
 }
 
-func (ec *executionContext) _ImagePullSecret_environmentName(ctx context.Context, field graphql.CollectedField, obj *entities.ImagePullSecret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImagePullSecret_environmentName(ctx, field)
+func (ec *executionContext) _ImagePullSecret_environments(ctx context.Context, field graphql.CollectedField, obj *entities.ImagePullSecret) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImagePullSecret_environments(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -19651,24 +19550,21 @@ func (ec *executionContext) _ImagePullSecret_environmentName(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.EnvironmentName, nil
+		return obj.Environments, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_environmentName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_environments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -20284,8 +20180,8 @@ func (ec *executionContext) fieldContext_ImagePullSecretEdge_node(ctx context.Co
 				return ec.fieldContext_ImagePullSecret_displayName(ctx, field)
 			case "dockerConfigJson":
 				return ec.fieldContext_ImagePullSecret_dockerConfigJson(ctx, field)
-			case "environmentName":
-				return ec.fieldContext_ImagePullSecret_environmentName(ctx, field)
+			case "environments":
+				return ec.fieldContext_ImagePullSecret_environments(ctx, field)
 			case "format":
 				return ec.fieldContext_ImagePullSecret_format(ctx, field)
 			case "id":
@@ -23777,7 +23673,7 @@ func (ec *executionContext) _Mutation_core_createImagePullSecret(ctx context.Con
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateImagePullSecret(rctx, fc.Args["envName"].(string), fc.Args["imagePullSecretIn"].(entities.ImagePullSecret))
+			return ec.resolvers.Mutation().CoreCreateImagePullSecret(rctx, fc.Args["imagePullSecretIn"].(entities.ImagePullSecret))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -23834,8 +23730,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createImagePullSecret(ctx
 				return ec.fieldContext_ImagePullSecret_displayName(ctx, field)
 			case "dockerConfigJson":
 				return ec.fieldContext_ImagePullSecret_dockerConfigJson(ctx, field)
-			case "environmentName":
-				return ec.fieldContext_ImagePullSecret_environmentName(ctx, field)
+			case "environments":
+				return ec.fieldContext_ImagePullSecret_environments(ctx, field)
 			case "format":
 				return ec.fieldContext_ImagePullSecret_format(ctx, field)
 			case "id":
@@ -23891,7 +23787,7 @@ func (ec *executionContext) _Mutation_core_deleteImagePullSecret(ctx context.Con
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreDeleteImagePullSecret(rctx, fc.Args["envName"].(string), fc.Args["secretName"].(string))
+			return ec.resolvers.Mutation().CoreDeleteImagePullSecret(rctx, fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -26871,7 +26767,7 @@ func (ec *executionContext) _Query_core_listImagePullSecrets(ctx context.Context
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreListImagePullSecrets(rctx, fc.Args["envName"].(string), fc.Args["search"].(*model.SearchImagePullSecrets), fc.Args["pq"].(*repos.CursorPagination))
+			return ec.resolvers.Query().CoreListImagePullSecrets(rctx, fc.Args["search"].(*model.SearchImagePullSecrets), fc.Args["pq"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -26957,7 +26853,7 @@ func (ec *executionContext) _Query_core_getImagePullSecret(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetImagePullSecret(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreGetImagePullSecret(rctx, fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -27014,8 +26910,8 @@ func (ec *executionContext) fieldContext_Query_core_getImagePullSecret(ctx conte
 				return ec.fieldContext_ImagePullSecret_displayName(ctx, field)
 			case "dockerConfigJson":
 				return ec.fieldContext_ImagePullSecret_dockerConfigJson(ctx, field)
-			case "environmentName":
-				return ec.fieldContext_ImagePullSecret_environmentName(ctx, field)
+			case "environments":
+				return ec.fieldContext_ImagePullSecret_environments(ctx, field)
 			case "format":
 				return ec.fieldContext_ImagePullSecret_format(ctx, field)
 			case "id":
@@ -27071,7 +26967,7 @@ func (ec *executionContext) _Query_core_resyncImagePullSecret(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreResyncImagePullSecret(rctx, fc.Args["envName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreResyncImagePullSecret(rctx, fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -34324,6 +34220,62 @@ func (ec *executionContext) unmarshalInputEnvironmentIn(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___common____types__MsvcRefIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCommonTypesMsvcRefIn, error) {
+	var it model.GithubComKloudliteOperatorApisCommonTypesMsvcRefIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"apiVersion", "kind", "name", "namespace"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "apiVersion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.APIVersion = data
+		case "kind":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "namespace":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Namespace = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppContainerIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1AppContainerIn, error) {
 	var it model.GithubComKloudliteOperatorApisCrdsV1AppContainerIn
 	asMap := map[string]interface{}{}
@@ -34625,22 +34577,13 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "port", "targetPort", "type"}
+	fieldsInOrder := [...]string{"port", "protocol"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "name":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
 		case "port":
 			var err error
 
@@ -34650,24 +34593,15 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.Port = data
-		case "targetPort":
+		case "protocol":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPort"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TargetPort = data
-		case "type":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("protocol"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Type = data
+			it.Protocol = data
 		}
 	}
 
@@ -35359,7 +35293,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcRef"))
-			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1MsvcNamedRefIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__MsvcRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMsvcRefIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35373,62 +35307,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.Spec = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1MsvcNamedRefIn, error) {
-	var it model.GithubComKloudliteOperatorApisCrdsV1MsvcNamedRefIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"apiVersion", "kind", "name", "namespace"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "apiVersion":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.APIVersion = data
-		case "kind":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Kind = data
-		case "name":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		case "namespace":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Namespace = data
 		}
 	}
 
@@ -35919,7 +35797,7 @@ func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"displayName", "dockerConfigJson", "format", "metadata", "registryPassword", "registryURL", "registryUsername"}
+	fieldsInOrder := [...]string{"displayName", "dockerConfigJson", "environments", "format", "metadata", "registryPassword", "registryURL", "registryUsername"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -35944,6 +35822,15 @@ func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context,
 				return it, err
 			}
 			it.DockerConfigJson = data
+		case "environments":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("environments"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Environments = data
 		case "format":
 			var err error
 
@@ -39045,6 +38932,59 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 	return out
 }
 
+var github__com___kloudlite___operator___apis___common____types__MsvcRefImplementors = []string{"Github__com___kloudlite___operator___apis___common____types__MsvcRef"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MsvcRef(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCommonTypesMsvcRef) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___common____types__MsvcRefImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___common____types__MsvcRef")
+		case "apiVersion":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MsvcRef_apiVersion(ctx, field, obj)
+		case "clusterName":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MsvcRef_clusterName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "kind":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MsvcRef_kind(ctx, field, obj)
+		case "name":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MsvcRef_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "namespace":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MsvcRef_namespace(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var github__com___kloudlite___operator___apis___crds___v1__AppContainerImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__AppContainer"}
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppContainer(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1AppContainer) graphql.Marshaler {
@@ -39225,17 +39165,13 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__AppSvc")
-		case "name":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSvc_name(ctx, field, obj)
 		case "port":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSvc_port(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "targetPort":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSvc_targetPort(ctx, field, obj)
-		case "type":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSvc_type(ctx, field, obj)
+		case "protocol":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -39894,60 +39830,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			}
 		case "spec":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate_spec(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef"}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1MsvcNamedRef) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef")
-		case "apiVersion":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_apiVersion(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "kind":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_kind(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "name":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "namespace":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef_namespace(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -40833,11 +40715,8 @@ func (ec *executionContext) _ImagePullSecret(ctx context.Context, sel ast.Select
 			}
 		case "dockerConfigJson":
 			out.Values[i] = ec._ImagePullSecret_dockerConfigJson(ctx, field, obj)
-		case "environmentName":
-			out.Values[i] = ec._ImagePullSecret_environmentName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
+		case "environments":
+			out.Values[i] = ec._ImagePullSecret_environments(ctx, field, obj)
 		case "format":
 			field := field
 
@@ -44541,6 +44420,21 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types_
 	return ec._Github__com___kloudlite___api___pkg___types__SyncStatus(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___common____types__MsvcRef2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMsvcRef(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCommonTypesMsvcRef) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___common____types__MsvcRef(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___common____types__MsvcRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMsvcRefIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCommonTypesMsvcRefIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__MsvcRefIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___crds___v1__AppContainer2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppContainerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GithubComKloudliteOperatorApisCrdsV1AppContainer) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -44793,21 +44687,6 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___
 
 func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn, error) {
 	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1MsvcNamedRef(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1MsvcNamedRef) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1MsvcNamedRefIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCrdsV1MsvcNamedRefIn, error) {
-	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -45913,7 +45792,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -45921,7 +45800,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

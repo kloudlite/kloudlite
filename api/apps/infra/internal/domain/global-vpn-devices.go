@@ -74,26 +74,13 @@ func (d *domain) claimNextFreeDeviceIP(ctx InfraContext, deviceName string, gvpn
 	}
 }
 
-func (d *domain) addToFreeDeviceIPPool(ctx InfraContext, gvpnName string, ip string) error {
-	_, err := d.freeDeviceIpRepo.Create(ctx, &entities.FreeDeviceIP{
-		AccountName:   ctx.AccountName,
-		GlobalVPNName: gvpnName,
-		IPAddr:        ip,
-	})
-	return err
-}
-
 func (d *domain) UpdateGlobalVPNDevice(ctx InfraContext, device entities.GlobalVPNDevice) (*entities.GlobalVPNDevice, error) {
 	panic("implement me")
 }
 
-func (d *domain) DeleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName string) error {
+func (d *domain) deleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName string) error {
 	device, err := d.findGlobalVPNDevice(ctx, gvpn, deviceName)
 	if err != nil {
-		return err
-	}
-
-	if err := d.addToFreeDeviceIPPool(ctx, gvpn, device.IPAddr); err != nil {
 		return err
 	}
 
@@ -101,6 +88,14 @@ func (d *domain) DeleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName
 		fc.AccountName:                  ctx.AccountName,
 		fc.GlobalVPNDeviceGlobalVPNName: gvpn,
 		fc.ClaimDeviceIPClaimedBy:       deviceName,
+	}); err != nil {
+		return err
+	}
+
+	if _, err := d.freeDeviceIpRepo.Create(ctx, &entities.FreeDeviceIP{
+		AccountName:   ctx.AccountName,
+		GlobalVPNName: gvpn,
+		IPAddr:        device.IPAddr,
 	}); err != nil {
 		return err
 	}
@@ -114,6 +109,10 @@ func (d *domain) DeleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName
 	}
 
 	return nil
+}
+
+func (d *domain) DeleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName string) error {
+	return d.deleteGlobalVPNConnection(ctx, gvpn, deviceName)
 }
 
 func (d *domain) ListGlobalVPNDevice(ctx InfraContext, gvpn string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.GlobalVPNDevice], error) {

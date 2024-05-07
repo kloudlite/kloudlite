@@ -93,17 +93,13 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSvc struct {
-	Name       *string `json:"name,omitempty"`
-	Port       int     `json:"port"`
-	TargetPort *int    `json:"targetPort,omitempty"`
-	Type       *string `json:"type,omitempty"`
+	Port     int     `json:"port"`
+	Protocol *string `json:"protocol,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSvcIn struct {
-	Name       *string `json:"name,omitempty"`
-	Port       int     `json:"port"`
-	TargetPort *int    `json:"targetPort,omitempty"`
-	Type       *string `json:"type,omitempty"`
+	Port     int     `json:"port"`
+	Protocol *string `json:"protocol,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ContainerEnv struct {

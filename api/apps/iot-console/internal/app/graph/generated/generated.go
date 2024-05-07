@@ -121,10 +121,8 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__AppSvc struct {
-		Name       func(childComplexity int) int
-		Port       func(childComplexity int) int
-		TargetPort func(childComplexity int) int
-		Type       func(childComplexity int) int
+		Port     func(childComplexity int) int
+		Protocol func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv struct {
@@ -856,13 +854,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSpec.TopologySpreadConstraints(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___crds___v1__AppSvc.name":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Name == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Name(childComplexity), true
-
 	case "Github__com___kloudlite___operator___apis___crds___v1__AppSvc.port":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Port == nil {
 			break
@@ -870,19 +861,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Port(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___crds___v1__AppSvc.targetPort":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.TargetPort == nil {
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppSvc.protocol":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Protocol == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.TargetPort(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__AppSvc.type":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Type == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Type(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSvc.Protocol(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv.key":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv.Key == nil {
@@ -2892,10 +2876,8 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppSpec @shareable {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppSvc @shareable {
-  name: String
   port: Int!
-  targetPort: Int
-  type: String
+  protocol: String
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv @shareable {
@@ -3095,10 +3077,8 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn {
-  name: String
   port: Int!
-  targetPort: Int
-  type: String
+  protocol: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ContainerEnvIn {
@@ -5903,14 +5883,10 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_name(ctx, field)
 			case "port":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_port(ctx, field)
-			case "targetPort":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_targetPort(ctx, field)
-			case "type":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_type(ctx, field)
+			case "protocol":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__AppSvc", field.Name)
 		},
@@ -6030,47 +6006,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSvc_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSvc) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSvc",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSvc_port(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSvc) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_port(ctx, field)
 	if err != nil {
@@ -6115,8 +6050,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSvc_targetPort(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSvc) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_targetPort(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSvc) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6129,48 +6064,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.TargetPort, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_targetPort(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSvc",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSvc_type(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSvc) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_type(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
+		return obj.Protocol, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6184,7 +6078,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSvc",
 		Field:      field,
@@ -20359,22 +20253,13 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "port", "targetPort", "type"}
+	fieldsInOrder := [...]string{"port", "protocol"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "name":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
 		case "port":
 			var err error
 
@@ -20384,24 +20269,15 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.Port = data
-		case "targetPort":
+		case "protocol":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPort"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TargetPort = data
-		case "type":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("protocol"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Type = data
+			it.Protocol = data
 		}
 	}
 
@@ -22256,17 +22132,13 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__AppSvc")
-		case "name":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSvc_name(ctx, field, obj)
 		case "port":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSvc_port(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "targetPort":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSvc_targetPort(ctx, field, obj)
-		case "type":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSvc_type(ctx, field, obj)
+		case "protocol":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
