@@ -6,21 +6,21 @@ global:
   providerSecretName: provider-sample
 ---
 label: Check Name Availability
-query: |+
-  query Infra_checkNameAvailability($resType: ResType!, $name: String!) {
-    infra_checkNameAvailability(resType: $resType, name: $name) {
+query: |+ #graphql
+  query Infra_checkNameAvailability($resType: ResType!, $clusterName: String!,  $name: String!) {
+    infra_checkNameAvailability(resType: $resType,clusterName: $clusterName, name: $name) {
       result
       suggestedNames
     }
   }
 variables:
-  resType: vpn_device
-  # name: sample 
+  resType: cluster_managed_service
+  clusterName: "{{.clusterName}}"
   name: sample
 ---
 
 label: Check Name Availability, with ClusterName
-query: |+
+query: |+ #graphql
   query Infra_checkNameAvailability($resType: ResType!, $clusterName: String, $name: String!) {
     infra_checkNameAvailability(resType: $resType, clusterName: $clusterName, name: $name) {
       result
