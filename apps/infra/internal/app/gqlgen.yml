@@ -131,6 +131,7 @@ models:
 
   Node: &node-model
     model: github.com/kloudlite/api/apps/infra/internal/entities.Node
+
   ResType:
     model: github.com/kloudlite/api/apps/infra/internal/domain.ResType
 
