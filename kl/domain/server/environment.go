@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"

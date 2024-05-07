@@ -18,16 +18,19 @@ func CurrentDeviceName() (string, error) {
 	return file.DeviceName, nil
 }
 
-func CurrentDeviceDNS() ([]net.IP, error) {
+func CurrentDeviceDNS() (*string, error) {
 	dev, err := CurrentDeviceName()
 	if err != nil {
 		return nil, err
 	}
-	ips, err := net.LookupIP(fmt.Sprintf("%s.local", dev))
+
+	ipAddr, err := net.ResolveIPAddr("", fmt.Sprintf("%s.device.local", dev))
 	if err != nil {
 		return nil, err
 	}
-	return ips, nil
+
+	kk := ipAddr.IP.String()
+	return &kk, nil
 }
 
 func SelectDevice(deviceName string) error {

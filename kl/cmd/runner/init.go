@@ -54,9 +54,9 @@ Examples:
 				},
 			}
 			if defEnv == "" {
-				fn.Warn("No environment found for the project, Please create environments from dashboard\n")
+				fn.Warn("No environment found, Please create environments from dashboard\n")
 			} else {
-				fn.Log("Default env set to: ", defEnv)
+				fn.Log("default env set to: ", defEnv)
 			}
 
 		} else {
@@ -73,7 +73,6 @@ Examples:
 }
 
 func init() {
-	InitCommand.Flags().StringP("project", "p", "", "project name")
 	InitCommand.Flags().StringP("account", "a", "", "account name")
 	InitCommand.Flags().StringP("file", "f", "", "file name")
 	fn.WithKlFile(InitCommand)

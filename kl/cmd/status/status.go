@@ -2,6 +2,7 @@ package status
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
@@ -66,14 +67,9 @@ var Cmd = &cobra.Command{
 				}
 			}()))
 
-			ips, err := client.CurrentDeviceDNS()
+			ip, err := client.CurrentDeviceDNS()
 			if err == nil {
-				fmt.Print(fmt.Sprintf(text.Bold(text.Blue("Device IP: "))))
-				var ipAddr []string
-				for _, ip := range ips {
-					ipAddr = append(ipAddr, ip.String())
-				}
-				fmt.Println(ipAddr)
+				fn.Logf("%s %s", text.Bold(text.Blue("Device IP:")), *ip)
 			}
 		}
 	},
