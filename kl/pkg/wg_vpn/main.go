@@ -78,7 +78,6 @@ func StartServiceInBg(devName string, configFolder string) error {
 
 func Configure(
 	configuration []byte,
-	_ string,
 	interfaceName string,
 	verbose bool,
 ) error {
