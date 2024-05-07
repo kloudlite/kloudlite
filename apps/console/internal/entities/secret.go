@@ -14,7 +14,6 @@ type Secret struct {
 	corev1.Secret    `json:",inline"`
 
 	AccountName     string `json:"accountName" graphql:"noinput"`
-	ProjectName     string `json:"projectName" graphql:"noinput"`
 	EnvironmentName string `json:"environmentName" graphql:"noinput"`
 
 	common.ResourceMetadata `json:",inline"`
@@ -47,7 +46,6 @@ var SecretIndexes = []repos.IndexField{
 			{Key: fields.MetadataName, Value: repos.IndexAsc},
 			{Key: fields.MetadataNamespace, Value: repos.IndexAsc},
 			{Key: fields.AccountName, Value: repos.IndexAsc},
-			{Key: fields.ProjectName, Value: repos.IndexAsc},
 			{Key: fields.EnvironmentName, Value: repos.IndexAsc},
 		},
 		Unique: true,

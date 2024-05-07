@@ -17,7 +17,9 @@ const (
 	AppSpecHpaThresholdCpu           = "spec.hpa.thresholdCpu"
 	AppSpecHpaThresholdMemory        = "spec.hpa.thresholdMemory"
 	AppSpecIntercept                 = "spec.intercept"
+	AppSpecInterceptDeviceHostSuffix = "spec.intercept.deviceHostSuffix"
 	AppSpecInterceptEnabled          = "spec.intercept.enabled"
+	AppSpecInterceptPortMappings     = "spec.intercept.portMappings"
 	AppSpecInterceptToDevice         = "spec.intercept.toDevice"
 	AppSpecNodeSelector              = "spec.nodeSelector"
 	AppSpecRegion                    = "spec.region"
@@ -52,7 +54,6 @@ const (
 // constant vars generated for struct Environment
 const (
 	EnvironmentSpec                           = "spec"
-	EnvironmentSpecProjectName                = "spec.projectName"
 	EnvironmentSpecRouting                    = "spec.routing"
 	EnvironmentSpecRoutingMode                = "spec.routing.mode"
 	EnvironmentSpecRoutingPrivateIngressClass = "spec.routing.privateIngressClass"
@@ -110,29 +111,6 @@ const (
 	ManagedResourceSyncedOutputSecretRefMetadataUid                        = "syncedOutputSecretRef.metadata.uid"
 	ManagedResourceSyncedOutputSecretRefStringData                         = "syncedOutputSecretRef.stringData"
 	ManagedResourceSyncedOutputSecretRefType                               = "syncedOutputSecretRef.type"
-)
-
-// constant vars generated for struct Project
-const (
-	ProjectSpec                = "spec"
-	ProjectSpecTargetNamespace = "spec.targetNamespace"
-)
-
-// constant vars generated for struct ProjectManagedService
-const (
-	ProjectManagedServiceOutput                                = "output"
-	ProjectManagedServiceOutputCredentialsRef                  = "output.credentialsRef"
-	ProjectManagedServiceOutputCredentialsRefName              = "output.credentialsRef.name"
-	ProjectManagedServiceSpec                                  = "spec"
-	ProjectManagedServiceSpecMsvcSpec                          = "spec.msvcSpec"
-	ProjectManagedServiceSpecMsvcSpecNodeSelector              = "spec.msvcSpec.nodeSelector"
-	ProjectManagedServiceSpecMsvcSpecServiceTemplate           = "spec.msvcSpec.serviceTemplate"
-	ProjectManagedServiceSpecMsvcSpecServiceTemplateApiVersion = "spec.msvcSpec.serviceTemplate.apiVersion"
-	ProjectManagedServiceSpecMsvcSpecServiceTemplateKind       = "spec.msvcSpec.serviceTemplate.kind"
-	ProjectManagedServiceSpecMsvcSpecServiceTemplateSpec       = "spec.msvcSpec.serviceTemplate.spec"
-	ProjectManagedServiceSpecMsvcSpecTolerations               = "spec.msvcSpec.tolerations"
-	ProjectManagedServiceSpecTargetNamespace                   = "spec.targetNamespace"
-	ProjectManagedServiceSyncedOutputSecretRef                 = "syncedOutputSecretRef"
 )
 
 // constant vars generated for struct ResourceMapping
@@ -221,7 +199,6 @@ const (
 	MetadataResourceVersion            = "metadata.resourceVersion"
 	MetadataSelfLink                   = "metadata.selfLink"
 	MetadataUid                        = "metadata.uid"
-	ProjectName                        = "projectName"
 	RecordVersion                      = "recordVersion"
 	Status                             = "status"
 	StatusCheckList                    = "status.checkList"

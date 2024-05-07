@@ -49,3 +49,8 @@ var CreatedOrUpdatedByKloudlite = CreatedOrUpdatedBy{
 	UserName:  "kloudlite",
 	UserEmail: "support@kloudlite.io",
 }
+
+type EncodedValue struct {
+	Value    string `json:"value"`
+	Encoding string `json:"encoding"`
+}

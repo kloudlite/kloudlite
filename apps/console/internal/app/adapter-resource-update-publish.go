@@ -14,8 +14,8 @@ type ResourceEventPublisherImpl struct {
 	logger logging.Logger
 }
 
-func (r *ResourceEventPublisherImpl) PublishProjectResourceEvent(ctx domain.ConsoleContext, projectName string, resourceType entities.ResourceType, name string, update domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.project.%s.%s.%s", ctx.AccountName, projectName, resourceType, name)
+func (r *ResourceEventPublisherImpl) PublishEnvironmentResourceEvent(ctx domain.ConsoleContext, envName string, resourceType entities.ResourceType, name string, update domain.PublishMsg) {
+	subject := fmt.Sprintf("res-updates.account.%s.environment.%s.%s.%s", ctx.AccountName, envName, resourceType, name)
 	r.publish(subject, update)
 }
 
@@ -25,7 +25,7 @@ func (r *ResourceEventPublisherImpl) PublishConsoleEvent(ctx domain.ConsoleConte
 }
 
 func (r *ResourceEventPublisherImpl) PublishResourceEvent(ctx domain.ResourceContext, resourceType entities.ResourceType, name string, update domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.project.%s.environment.%s.%s.%s", ctx.AccountName, ctx.ProjectName, ctx.EnvironmentName, resourceType, name)
+	subject := fmt.Sprintf("res-updates.account.%s.environment.%s.%s.%s", ctx.AccountName, ctx.EnvironmentName, resourceType, name)
 	r.publish(subject, update)
 }
 
@@ -36,8 +36,5 @@ func (r *ResourceEventPublisherImpl) publish(subject string, msg domain.PublishM
 }
 
 func NewResourceEventPublisher(cli *nats.Client, logger logging.Logger) domain.ResourceEventPublisher {
-	return &ResourceEventPublisherImpl{
-		cli,
-		logger,
-	}
+	return &ResourceEventPublisherImpl{cli, logger}
 }

@@ -16,7 +16,7 @@ type Environment struct {
 	crdsv1.Environment `json:",inline"`
 
 	AccountName string `json:"accountName" graphql:"noinput"`
-	ProjectName string `json:"projectName" graphql:"noinput"`
+	ClusterName string `json:"clusterName"`
 
 	common.ResourceMetadata `json:",inline"`
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
@@ -46,21 +46,22 @@ var EnvironmentIndexes = []repos.IndexField{
 			{Key: fields.MetadataName, Value: repos.IndexAsc},
 			{Key: fields.MetadataNamespace, Value: repos.IndexAsc},
 			{Key: fields.AccountName, Value: repos.IndexAsc},
-			{Key: fields.ProjectName, Value: repos.IndexAsc},
+			{Key: fields.ClusterName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
 			{Key: fields.AccountName, Value: repos.IndexAsc},
-			{Key: fc.EnvironmentSpecProjectName, Value: repos.IndexAsc},
 			{Key: fc.EnvironmentSpecTargetNamespace, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
-	{
-		Field: []repos.IndexKey{
-			{Key: fc.EnvironmentSpecProjectName, Value: repos.IndexAsc},
-		},
-	},
+}
+
+func EnvironmentDBFilter(accountName string, envName string) repos.Filter {
+	return repos.Filter{
+		fc.AccountName:  accountName,
+		fc.MetadataName: envName,
+	}
 }

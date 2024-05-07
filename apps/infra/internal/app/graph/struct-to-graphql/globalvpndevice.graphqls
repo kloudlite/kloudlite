@@ -11,6 +11,7 @@ type GlobalVPNDevice @shareable {
   metadata: Metadata! @goField(name: "objectMeta")
   privateKey: String!
   publicKey: String!
+  publiEndpoint: String
   recordVersion: Int!
   updateTime: Date!
 }
@@ -29,5 +30,6 @@ type GlobalVPNDevicePaginatedRecords @shareable {
 input GlobalVPNDeviceIn {
   globalVPNName: String!
   metadata: MetadataIn!
+  publiEndpoint: String
 }
 

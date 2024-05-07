@@ -114,6 +114,16 @@ type GithubComKloudliteOperatorApisCrdsV1AppContainerIn struct {
 	Volumes         []*GithubComKloudliteOperatorApisCrdsV1ContainerVolumeIn `json:"volumes,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappings struct {
+	AppPort    int `json:"appPort"`
+	DevicePort int `json:"devicePort"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn struct {
+	AppPort    int `json:"appPort"`
+	DevicePort int `json:"devicePort"`
+}
+
 type GithubComKloudliteOperatorApisCrdsV1AppSpec struct {
 	Containers                []*GithubComKloudliteOperatorApisCrdsV1AppContainer `json:"containers"`
 	DisplayName               *string                                             `json:"displayName,omitempty"`
@@ -255,13 +265,11 @@ type GithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1EnvironmentSpec struct {
-	ProjectName     string                                                  `json:"projectName"`
 	Routing         *GithubComKloudliteOperatorApisCrdsV1EnvironmentRouting `json:"routing,omitempty"`
 	TargetNamespace *string                                                 `json:"targetNamespace,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1EnvironmentSpecIn struct {
-	ProjectName     string                                                    `json:"projectName"`
 	Routing         *GithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingIn `json:"routing,omitempty"`
 	TargetNamespace *string                                                   `json:"targetNamespace,omitempty"`
 }
@@ -307,13 +315,15 @@ type GithubComKloudliteOperatorApisCrdsV1HTTPSIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1Intercept struct {
-	Enabled  bool   `json:"enabled"`
-	ToDevice string `json:"toDevice"`
+	Enabled      bool                                                            `json:"enabled"`
+	PortMappings []*GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappings `json:"portMappings,omitempty"`
+	ToDevice     string                                                          `json:"toDevice"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1InterceptIn struct {
-	Enabled  bool   `json:"enabled"`
-	ToDevice string `json:"toDevice"`
+	Enabled      bool                                                              `json:"enabled"`
+	PortMappings []*GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn `json:"portMappings,omitempty"`
+	ToDevice     string                                                            `json:"toDevice"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
@@ -324,18 +334,6 @@ type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn struct {
 	ResourceNamePrefix *string                                                     `json:"resourceNamePrefix,omitempty"`
 	ResourceTemplate   *GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn `json:"resourceTemplate"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
-	NodeSelector    map[string]interface{}                               `json:"nodeSelector,omitempty"`
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"serviceTemplate"`
-	Tolerations     []*K8sIoAPICoreV1Toleration                          `json:"tolerations,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn struct {
-	NodeSelector    map[string]interface{}                                 `json:"nodeSelector,omitempty"`
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"serviceTemplate"`
-	Tolerations     []*K8sIoAPICoreV1TolerationIn                          `json:"tolerations,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate struct {
@@ -384,24 +382,6 @@ type GithubComKloudliteOperatorApisCrdsV1ProbeIn struct {
 	Shell            *GithubComKloudliteOperatorApisCrdsV1ShellProbeIn   `json:"shell,omitempty"`
 	TCP              *GithubComKloudliteOperatorApisCrdsV1TCPProbeIn     `json:"tcp,omitempty"`
 	Type             string                                              `json:"type"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ProjectManagedServiceSpec struct {
-	MsvcSpec        *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec `json:"msvcSpec"`
-	TargetNamespace string                                                  `json:"targetNamespace"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ProjectManagedServiceSpecIn struct {
-	MsvcSpec        *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn `json:"msvcSpec"`
-	TargetNamespace string                                                    `json:"targetNamespace"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ProjectSpec struct {
-	TargetNamespace string `json:"targetNamespace"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ProjectSpecIn struct {
-	TargetNamespace string `json:"targetNamespace"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1RateLimit struct {
@@ -454,18 +434,6 @@ type GithubComKloudliteOperatorApisCrdsV1RouterSpecIn struct {
 	MaxBodySizeInMb *int                                             `json:"maxBodySizeInMB,omitempty"`
 	RateLimit       *GithubComKloudliteOperatorApisCrdsV1RateLimitIn `json:"rateLimit,omitempty"`
 	Routes          []*GithubComKloudliteOperatorApisCrdsV1RouteIn   `json:"routes,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ServiceTemplate struct {
-	APIVersion string                 `json:"apiVersion"`
-	Kind       string                 `json:"kind"`
-	Spec       map[string]interface{} `json:"spec"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
-	APIVersion string                 `json:"apiVersion"`
-	Kind       string                 `json:"kind"`
-	Spec       map[string]interface{} `json:"spec"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ShellProbe struct {
@@ -533,6 +501,7 @@ type GithubComKloudliteOperatorPkgOperatorCheck struct {
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
 	Name        string  `json:"name"`
 	Title       string  `json:"title"`
 }
@@ -653,28 +622,6 @@ type Port struct {
 	TargetPort *int `json:"targetPort,omitempty"`
 }
 
-type ProjectEdge struct {
-	Cursor string            `json:"cursor"`
-	Node   *entities.Project `json:"node"`
-}
-
-type ProjectManagedServiceEdge struct {
-	Cursor string                          `json:"cursor"`
-	Node   *entities.ProjectManagedService `json:"node"`
-}
-
-type ProjectManagedServicePaginatedRecords struct {
-	Edges      []*ProjectManagedServiceEdge `json:"edges"`
-	PageInfo   *PageInfo                    `json:"pageInfo"`
-	TotalCount int                          `json:"totalCount"`
-}
-
-type ProjectPaginatedRecords struct {
-	Edges      []*ProjectEdge `json:"edges"`
-	PageInfo   *PageInfo      `json:"pageInfo"`
-	TotalCount int            `json:"totalCount"`
-}
-
 type RouterEdge struct {
 	Cursor string           `json:"cursor"`
 	Node   *entities.Router `json:"node"`
@@ -700,7 +647,6 @@ type SearchConfigs struct {
 
 type SearchEnvironments struct {
 	Text              *repos.MatchFilter `json:"text,omitempty"`
-	ProjectName       *repos.MatchFilter `json:"projectName,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
 	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }

@@ -1,12 +1,13 @@
 ---
 global:
   envTargetNamespace: "nxtcoder17"
+  envName: "test-env"
 ---
 
 label: List Environments
 query: |+ #graphql
-  query Core_listEnvironments($projectName: String!) {
-    core_listEnvironments(projectName: $projectName) {
+  query Core_listEnvironments {
+    core_listEnvironments() {
       edges {
         cursor
         node {
@@ -51,19 +52,16 @@ query: |+ #graphql
       totalCount
     }
   }
-variables:
-  projectName: "{{.projectName}}"
 
 ---
 
 label: Create Environment
 query: |+ #graphql
-  mutation Core_createEnvironment($projectName: String!, $env: EnvironmentIn!) {
-    core_createEnvironment(projectName: $projectName, env: $env) {
+  mutation Core_createEnvironment($env: EnvironmentIn!) {
+    core_createEnvironment(env: $env) {
       apiVersion
       kind
       spec {
-        projectName
         targetNamespace
       }
       syncStatus {
@@ -76,13 +74,13 @@ query: |+ #graphql
     }
   }
 variables:
-  projectName: "{{.projectName}}"
   env:
     displayName: Display Name of a sample environment
+    clusterName: "{{.gcpClusterName}}"
     metadata:
       name: "{{.envName}}"
-    spec:
-      projectName: "{{.projectName}}"
+    # spec:
+    # projectName: "{{.projectName}}"
 ---
 
 label: resync environment

@@ -52,7 +52,7 @@ func (d *domain) CreateRouter(ctx ResourceContext, router entities.Router) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	namespace, err := d.envTargetNamespace(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	namespace, err := d.envTargetNamespace(ctx.ConsoleContext, ctx.EnvironmentName)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,6 @@ func (d *domain) CreateRouter(ctx ResourceContext, router entities.Router) (*ent
 	router.LastUpdatedBy = router.CreatedBy
 
 	router.AccountName = ctx.AccountName
-	router.ProjectName = ctx.ProjectName
 	router.EnvironmentName = ctx.EnvironmentName
 	router.SyncStatus = t.GenSyncStatus(t.SyncActionApply, router.RecordVersion)
 
@@ -101,7 +100,7 @@ func (d *domain) createAndApplyRouter(ctx ResourceContext, router *entities.Rout
 	}
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeRouter, nrouter.Name, PublishAdd)
 
-	if err := d.applyK8sResource(ctx, nrouter.ProjectName, &nrouter.Router, nrouter.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, nrouter.EnvironmentName, &nrouter.Router, nrouter.RecordVersion); err != nil {
 		return nrouter, errors.NewE(err)
 	}
 
@@ -144,7 +143,7 @@ func (d *domain) UpdateRouter(ctx ResourceContext, router entities.Router) (*ent
 	}
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeRouter, upRouter.Name, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, upRouter.ProjectName, &upRouter.Router, upRouter.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, upRouter.EnvironmentName, &upRouter.Router, upRouter.RecordVersion); err != nil {
 		return upRouter, errors.NewE(err)
 	}
 
@@ -167,7 +166,7 @@ func (d *domain) DeleteRouter(ctx ResourceContext, name string) error {
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeRouter, urouter.Name, PublishUpdate)
 
-	if err := d.deleteK8sResource(ctx, urouter.ProjectName, &urouter.Router); err != nil {
+	if err := d.deleteK8sResource(ctx, urouter.EnvironmentName, &urouter.Router); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.routerRepo.DeleteById(ctx, urouter.Id)
 		}
@@ -201,7 +200,7 @@ func (d *domain) OnRouterUpdateMessage(ctx ResourceContext, router entities.Rout
 
 	recordVersion, err := d.MatchRecordVersion(router.Annotations, xRouter.RecordVersion)
 	if err != nil {
-		return d.resyncK8sResource(ctx, xRouter.ProjectName, xRouter.SyncStatus.Action, &xRouter.Router, xRouter.RecordVersion)
+		return d.resyncK8sResource(ctx, xRouter.EnvironmentName, xRouter.SyncStatus.Action, &xRouter.Router, xRouter.RecordVersion)
 	}
 
 	urouter, err := d.routerRepo.PatchById(
@@ -244,5 +243,5 @@ func (d *domain) ResyncRouter(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	return d.resyncK8sResource(ctx, router.ProjectName, router.SyncStatus.Action, &router.Router, router.RecordVersion)
+	return d.resyncK8sResource(ctx, router.EnvironmentName, router.SyncStatus.Action, &router.Router, router.RecordVersion)
 }

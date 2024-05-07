@@ -1,9 +1,10 @@
 package domain
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
+	"strings"
+
+	fn "github.com/kloudlite/api/pkg/functions"
 
 	"github.com/kloudlite/api/common/fields"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -24,27 +25,62 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 )
 
-func (d *domain) findEnvironment(ctx ConsoleContext, projectName string, name string) (*entities.Environment, error) {
+func (d *domain) findEnvironment(ctx ConsoleContext, name string) (*entities.Environment, error) {
 	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName:  ctx.AccountName,
-		fields.ProjectName:  projectName,
 		fields.MetadataName: name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 	if env == nil {
-		return nil, errors.Newf("no environment with name (%s) and project (%s)", name, projectName)
+		return nil, errors.Newf("no environment with name (%s)", name)
 	}
 	return env, nil
 }
 
-func (d *domain) envTargetNamespace(ctx ConsoleContext, projectName string, envName string) (string, error) {
-	key := fmt.Sprintf("environment-namespace.%s/%s/%s", ctx.AccountName, projectName, envName)
+func (d *domain) getClusterAttachedToEnvironment(ctx K8sContext, name string) (*string, error) {
+	cacheKey := fmt.Sprintf("account_name_%s-cluster_name_%s", ctx.GetAccountName(), name)
+
+	clusterName, err := d.consoleCacheStore.Get(ctx, cacheKey)
+	if err != nil && !d.consoleCacheStore.ErrKeyNotFound(err) {
+		return nil, err
+	}
+
+	if len(clusterName) == 0 {
+		env, err := d.environmentRepo.FindOne(ctx, repos.Filter{
+			fields.AccountName:  ctx.GetAccountName(),
+			fields.MetadataName: name,
+		})
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+		if env == nil {
+			return nil, errors.Newf("no cluster attached to this environment")
+		}
+
+		defer func() {
+			if err := d.consoleCacheStore.Set(ctx, cacheKey, []byte(env.ClusterName)); err != nil {
+				d.logger.Infof("failed to set env cluster map: %v", err)
+			}
+		}()
+
+		return &env.ClusterName, nil
+	}
+
+	if clusterName == nil {
+		return nil, nil
+	}
+
+	return fn.New(string(clusterName)), nil
+}
+
+func (d *domain) envTargetNamespace(ctx ConsoleContext, envName string) (string, error) {
+	key := fmt.Sprintf("environment-namespace.%s/%s", ctx.AccountName, envName)
 	b, err := d.consoleCacheStore.Get(ctx, key)
 	if err != nil {
 		if d.consoleCacheStore.ErrKeyNotFound(err) {
-			env, err := d.findEnvironment(ctx, projectName, envName)
+			env, err := d.findEnvironment(ctx, envName)
 			if err != nil {
 				return "", err
 			}
@@ -60,23 +96,20 @@ func (d *domain) envTargetNamespace(ctx ConsoleContext, projectName string, envN
 	return string(b), nil
 }
 
-func (d *domain) GetEnvironment(ctx ConsoleContext, projectName string, name string) (*entities.Environment, error) {
-	if err := d.canReadResourcesInProject(ctx, projectName); err != nil {
+func (d *domain) GetEnvironment(ctx ConsoleContext, name string) (*entities.Environment, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.GetEnvironment); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	return d.findEnvironment(ctx, projectName, name)
+	return d.findEnvironment(ctx, name)
 }
 
-func (d *domain) ListEnvironments(ctx ConsoleContext, projectName string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Environment], error) {
-	if err := d.canReadResourcesInProject(ctx, projectName); err != nil {
+func (d *domain) ListEnvironments(ctx ConsoleContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Environment], error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.ListEnvironments); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	filter := repos.Filter{
-		fields.AccountName:            ctx.AccountName,
-		fc.EnvironmentSpecProjectName: projectName,
-	}
+	filter := repos.Filter{fields.AccountName: ctx.AccountName}
 
 	return d.environmentRepo.FindPaginated(ctx, d.environmentRepo.MergeMatchFilters(filter, search), pq)
 }
@@ -97,18 +130,12 @@ func (d *domain) findEnvironmentByTargetNs(ctx ConsoleContext, targetNs string) 
 	return w, nil
 }
 
-func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env entities.Environment) (*entities.Environment, error) {
-	project, err := d.findProject(ctx, projectName)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
+func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error) {
+	env.Namespace = "kloudlite-environments"
 
-	if err := d.canMutateResourcesInProject(ctx, project.Name); err != nil {
-		return nil, errors.NewE(err)
+	if strings.TrimSpace(env.ClusterName) == "" {
+		return nil, fmt.Errorf("clustername must be set while creating environments")
 	}
-
-	env.ProjectName = project.Name
-	env.Namespace = project.Spec.TargetNamespace
 
 	env.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &env.Environment); err != nil {
@@ -118,7 +145,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 	env.IncrementRecordVersion()
 
 	if env.Spec.TargetNamespace == "" {
-		env.Spec.TargetNamespace = d.getEnvironmentTargetNamespace(projectName, env.Name)
+		env.Spec.TargetNamespace = d.getEnvironmentTargetNamespace(env.Name)
 	}
 
 	if env.Spec.Routing == nil {
@@ -137,10 +164,6 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 	env.AccountName = ctx.AccountName
 	env.SyncStatus = t.GenSyncStatus(t.SyncActionApply, env.RecordVersion)
 
-	if _, err := d.upsertEnvironmentResourceMapping(ResourceContext{ConsoleContext: ctx, ProjectName: env.ProjectName, EnvironmentName: env.Name}, &env); err != nil {
-		return nil, errors.NewE(err)
-	}
-
 	nenv, err := d.environmentRepo.Create(ctx, &env)
 	if err != nil {
 		if d.environmentRepo.ErrAlreadyExists(err) {
@@ -150,7 +173,11 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, nenv.ProjectName, entities.ResourceTypeEnvironment, nenv.Name, PublishAdd)
+	if _, err := d.upsertEnvironmentResourceMapping(ResourceContext{ConsoleContext: ctx, EnvironmentName: env.Name}, &env); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, nenv.Name, entities.ResourceTypeEnvironment, nenv.Name, PublishAdd)
 
 	if _, err := d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
 		UserId:       string(ctx.UserId),
@@ -165,25 +192,25 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, nenv.ProjectName, &nenv.Environment, nenv.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, nenv.Name, &nenv.Environment, nenv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.syncAccountLevelImagePullSecrets(ctx, nenv.ProjectName, nenv.Spec.TargetNamespace); err != nil {
+	if err := d.syncAccountLevelImagePullSecrets(ctx, nenv.Name, nenv.Spec.TargetNamespace); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	return nenv, nil
 }
 
-func (d *domain) syncAccountLevelImagePullSecrets(ctx ConsoleContext, projectName string, envTargetNamespace string) error {
+func (d *domain) syncAccountLevelImagePullSecrets(ctx ConsoleContext, envName string, envTargetNamespace string) error {
 	secrets, err := d.k8sClient.ListSecrets(ctx, constants.GetAccountTargetNamespace(ctx.AccountName), corev1.SecretTypeDockerConfigJson)
 	if err != nil {
 		return err
 	}
 
 	for i := range secrets {
-		if err := d.applyK8sResource(ctx, projectName, &corev1.Secret{
+		if err := d.applyK8sResource(ctx, envName, &corev1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Secret",
 				APIVersion: "v1",
@@ -203,12 +230,12 @@ func (d *domain) syncAccountLevelImagePullSecrets(ctx ConsoleContext, projectNam
 	return nil
 }
 
-func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, sourceEnvName string, destinationEnvName string, displayName string, envRoutingMode crdsv1.EnvironmentRoutingMode) (*entities.Environment, error) {
-	if err := d.canMutateResourcesInProject(ctx, projectName); err != nil {
+func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, destinationEnvName string, displayName string, envRoutingMode crdsv1.EnvironmentRoutingMode) (*entities.Environment, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.CloneEnvironment); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	sourceEnv, err := d.findEnvironment(ctx, projectName, sourceEnvName)
+	sourceEnv, err := d.findEnvironment(ctx, sourceEnvName)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -221,15 +248,13 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 				Namespace: sourceEnv.Namespace,
 			},
 			Spec: crdsv1.EnvironmentSpec{
-				ProjectName:     projectName,
-				TargetNamespace: d.getEnvironmentTargetNamespace(projectName, destinationEnvName),
+				TargetNamespace: d.getEnvironmentTargetNamespace(destinationEnvName),
 				Routing: &crdsv1.EnvironmentRouting{
 					Mode: envRoutingMode,
 				},
 			},
 		},
 		AccountName: ctx.AccountName,
-		ProjectName: projectName,
 		ResourceMetadata: common.ResourceMetadata{
 			DisplayName: displayName,
 			CreatedBy: common.CreatedOrUpdatedBy{
@@ -264,11 +289,11 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 		return nil, errors.NewE(err)
 	}
 
-	if _, err := d.upsertEnvironmentResourceMapping(ResourceContext{ConsoleContext: ctx, ProjectName: sourceEnv.ProjectName, EnvironmentName: sourceEnv.Name}, sourceEnv); err != nil {
+	if _, err := d.upsertEnvironmentResourceMapping(ResourceContext{ConsoleContext: ctx, EnvironmentName: sourceEnv.Name}, sourceEnv); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, sourceEnv.ProjectName, &corev1.Namespace{
+	if err := d.applyK8sResource(ctx, sourceEnv.Name, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: destEnv.Spec.TargetNamespace,
@@ -277,23 +302,21 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.syncAccountLevelImagePullSecrets(ctx, destEnv.ProjectName, destEnv.Spec.TargetNamespace); err != nil {
+	if err := d.syncAccountLevelImagePullSecrets(ctx, destEnv.Name, destEnv.Spec.TargetNamespace); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, sourceEnv.ProjectName, &destEnv.Environment, destEnv.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, sourceEnv.Name, &destEnv.Environment, destEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	resCtx := ResourceContext{
 		ConsoleContext:  ctx,
-		ProjectName:     sourceEnv.ProjectName,
 		EnvironmentName: destEnv.Name,
 	}
 
 	filters := repos.Filter{
 		fields.AccountName:     resCtx.AccountName,
-		fields.ProjectName:     resCtx.ProjectName,
 		fields.EnvironmentName: sourceEnvName,
 	}
 
@@ -363,7 +386,6 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 				Spec:       apps[i].Spec,
 			},
 			AccountName:      ctx.AccountName,
-			ProjectName:      projectName,
 			EnvironmentName:  destEnv.Name,
 			ResourceMetadata: resourceMetadata(apps[i].DisplayName),
 			SyncStatus:       t.GenSyncStatus(t.SyncActionApply, 0),
@@ -383,7 +405,6 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 				Type:       secrets[i].Type,
 			},
 			AccountName:      ctx.AccountName,
-			ProjectName:      projectName,
 			EnvironmentName:  destEnv.Name,
 			ResourceMetadata: resourceMetadata(secrets[i].DisplayName),
 		}); err != nil {
@@ -401,7 +422,6 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 				BinaryData: configs[i].BinaryData,
 			},
 			AccountName:      ctx.AccountName,
-			ProjectName:      projectName,
 			EnvironmentName:  destEnv.Name,
 			ResourceMetadata: resourceMetadata(configs[i].DisplayName),
 		}); err != nil {
@@ -418,7 +438,6 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 				Enabled:    routers[i].Enabled,
 			},
 			AccountName:      ctx.AccountName,
-			ProjectName:      projectName,
 			EnvironmentName:  destEnv.Name,
 			ResourceMetadata: resourceMetadata(routers[i].DisplayName),
 		}); err != nil {
@@ -436,7 +455,6 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 				Enabled:    managedResources[i].Enabled,
 			},
 			AccountName:      ctx.AccountName,
-			ProjectName:      projectName,
 			EnvironmentName:  destEnv.Name,
 			ResourceMetadata: resourceMetadata(managedResources[i].DisplayName),
 		}); err != nil {
@@ -447,18 +465,19 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 	return destEnv, nil
 }
 
-func (d *domain) getEnvironmentTargetNamespace(projectName string, envName string) string {
-	envNamespace := fmt.Sprintf("env-%s-%s", projectName, envName)
-	hash := md5.Sum([]byte(envNamespace))
-	return fmt.Sprintf("env-%s", hex.EncodeToString(hash[:]))
+func (d *domain) getEnvironmentTargetNamespace(envName string) string {
+	return fmt.Sprintf("env-%s", envName)
+	// envNamespace := fmt.Sprintf("env-%s", envName)
+	// hash := md5.Sum([]byte(envNamespace))
+	// return fmt.Sprintf("env-%s", hex.EncodeToString(hash[:]))
 }
 
-func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env entities.Environment) (*entities.Environment, error) {
-	if err := d.canMutateResourcesInProject(ctx, projectName); err != nil {
+func (d *domain) UpdateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.UpdateEnvironment); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	env.Namespace = "trest"
+	env.Namespace = "non-empty-namespace"
 
 	env.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &env.Environment); err != nil {
@@ -480,43 +499,34 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 		repos.Filter{
 			fields.AccountName:  ctx.AccountName,
 			fields.MetadataName: env.Name,
-			fields.ProjectName:  projectName,
 		},
 		patchForUpdate,
 	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, upEnv.ProjectName, entities.ResourceTypeEnvironment, upEnv.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, upEnv.Name, entities.ResourceTypeEnvironment, upEnv.Name, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, upEnv.ProjectName, &upEnv.Environment, upEnv.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, upEnv.Name, &upEnv.Environment, upEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	return upEnv, nil
 }
 
-func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name string) error {
-	if err := d.canMutateResourcesInProject(ctx, projectName); err != nil {
+func (d *domain) DeleteEnvironment(ctx ConsoleContext, name string) error {
+	if err := d.canPerformActionInAccount(ctx, iamT.DeleteEnvironment); err != nil {
 		return errors.NewE(err)
 	}
 
-	uenv, err := d.environmentRepo.Patch(
-		ctx,
-		repos.Filter{
-			fields.AccountName:  ctx.AccountName,
-			fields.ProjectName:  projectName,
-			fields.MetadataName: name,
-		},
-		common.PatchForMarkDeletion(),
-	)
+	uenv, err := d.environmentRepo.Patch(ctx, entities.EnvironmentDBFilter(ctx.AccountName, name), common.PatchForMarkDeletion())
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, uenv.ProjectName, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, uenv.Name, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
 
-	if err := d.deleteK8sResource(ctx, uenv.ProjectName, &uenv.Environment); err != nil {
+	if err := d.deleteK8sResource(ctx, uenv.Name, &uenv.Environment); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.environmentRepo.DeleteById(ctx, uenv.Id)
 		}
@@ -545,7 +555,7 @@ func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, 
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, uenv.ProjectName, entities.ResourceTypeEnvironment, uenv.Name, PublishDelete)
+	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, uenv.Name, entities.ResourceTypeEnvironment, uenv.Name, PublishDelete)
 
 	return errors.NewE(err)
 }
@@ -556,7 +566,6 @@ func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Env
 		repos.Filter{
 			fields.AccountName:  ctx.AccountName,
 			fields.MetadataName: env.Name,
-			fields.ProjectName:  env.Spec.ProjectName,
 		},
 	)
 	if err != nil {
@@ -569,12 +578,12 @@ func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Env
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, env.ProjectName, entities.ResourceTypeEnvironment, env.Name, PublishDelete)
+	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, env.Name, entities.ResourceTypeEnvironment, env.Name, PublishDelete)
 	return nil
 }
 
 func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Environment, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
-	xenv, err := d.findEnvironment(ctx, env.Spec.ProjectName, env.Name)
+	xenv, err := d.findEnvironment(ctx, env.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -585,7 +594,7 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 
 	recordVersion, err := d.MatchRecordVersion(env.Annotations, xenv.RecordVersion)
 	if err != nil {
-		return d.resyncK8sResource(ctx, xenv.ProjectName, xenv.SyncStatus.Action, &xenv.Environment, xenv.RecordVersion)
+		return d.resyncK8sResource(ctx, xenv.Name, xenv.SyncStatus.Action, &xenv.Environment, xenv.RecordVersion)
 	}
 
 	uenv, err := d.environmentRepo.PatchById(
@@ -602,12 +611,12 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 		return err
 	}
 
-	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, uenv.ProjectName, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, uenv.Name, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
 	return nil
 }
 
 func (d *domain) applyEnvironmentTargetNamespace(ctx ConsoleContext, env *entities.Environment) error {
-	if err := d.applyK8sResource(ctx, env.ProjectName, &corev1.Namespace{
+	if err := d.applyK8sResource(ctx, env.Name, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: env.Spec.TargetNamespace,
@@ -622,17 +631,17 @@ func (d *domain) applyEnvironmentTargetNamespace(ctx ConsoleContext, env *entiti
 	return nil
 }
 
-func (d *domain) ResyncEnvironment(ctx ConsoleContext, projectName string, name string) error {
-	if err := d.canMutateResourcesInProject(ctx, projectName); err != nil {
+func (d *domain) ResyncEnvironment(ctx ConsoleContext, name string) error {
+	if err := d.canPerformActionInAccount(ctx, iamT.CreateEnvironment); err != nil {
 		return errors.NewE(err)
 	}
 
-	e, err := d.findEnvironment(ctx, projectName, name)
+	e, err := d.findEnvironment(ctx, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.resyncK8sResource(ctx, e.ProjectName, t.SyncActionApply, &corev1.Namespace{
+	if err := d.resyncK8sResource(ctx, e.Name, t.SyncActionApply, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: e.Spec.TargetNamespace,
@@ -644,5 +653,5 @@ func (d *domain) ResyncEnvironment(ctx ConsoleContext, projectName string, name 
 		return errors.NewE(err)
 	}
 
-	return d.resyncK8sResource(ctx, e.ProjectName, e.SyncStatus.Action, &e.Environment, e.RecordVersion)
+	return d.resyncK8sResource(ctx, e.Name, e.SyncStatus.Action, &e.Environment, e.RecordVersion)
 }
