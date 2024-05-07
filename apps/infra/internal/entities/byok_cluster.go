@@ -1,6 +1,7 @@
 package entities
 
 import (
+	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -41,20 +42,16 @@ func (c *BYOKCluster) GetStatus() operator.Status {
 var BYOKClusterIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
+			{Key: fc.Id, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "metadata.name", Value: repos.IndexAsc},
-			{Key: "metadata.namespace", Value: repos.IndexAsc},
+			{Key: fc.MetadataName, Value: repos.IndexAsc},
+			{Key: fc.MetadataNamespace, Value: repos.IndexAsc},
+			{Key: fc.AccountName, Value: repos.IndexAsc},
 		},
 		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "accountName", Value: repos.IndexAsc},
-		},
 	},
 }

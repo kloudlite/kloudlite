@@ -110,6 +110,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
   debug: Boolean
   description: String
+  hide: Boolean
   name: String!
   title: String!
 }
@@ -220,6 +221,7 @@ input Github__com___kloudlite___operator___pkg___operator__CheckIn {
 input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn {
   debug: Boolean
   description: String
+  hide: Boolean
   name: String!
   title: String!
 }
