@@ -620,6 +620,7 @@ type ComplexityRoot struct {
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
 		PrivateKey        func(childComplexity int) int
+		PublicEndpoint    func(childComplexity int) int
 		PublicKey         func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
@@ -4039,6 +4040,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GlobalVPNDevice.PrivateKey(childComplexity), true
+
+	case "GlobalVPNDevice.publiEndpoint":
+		if e.complexity.GlobalVPNDevice.PublicEndpoint == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.PublicEndpoint(childComplexity), true
 
 	case "GlobalVPNDevice.publicKey":
 		if e.complexity.GlobalVPNDevice.PublicKey == nil {
@@ -9058,7 +9066,6 @@ input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
 
 input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn {
   msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
-  targetNamespace: String!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn {
@@ -9754,6 +9761,7 @@ input GlobalVPNIn {
   metadata: Metadata! @goField(name: "objectMeta")
   privateKey: String!
   publicKey: String!
+  publiEndpoint: String
   recordVersion: Int!
   updateTime: Date!
 }
@@ -9772,6 +9780,7 @@ type GlobalVPNDevicePaginatedRecords @shareable {
 input GlobalVPNDeviceIn {
   globalVPNName: String!
   metadata: MetadataIn!
+  publiEndpoint: String
 }
 
 `, BuiltIn: false},
@@ -27060,6 +27069,47 @@ func (ec *executionContext) fieldContext_GlobalVPNDevice_publicKey(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _GlobalVPNDevice_publiEndpoint(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_publiEndpoint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PublicEndpoint, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_publiEndpoint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GlobalVPNDevice_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
 	if err != nil {
@@ -27302,6 +27352,8 @@ func (ec *executionContext) fieldContext_GlobalVPNDeviceEdge_node(ctx context.Co
 				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
 			case "publicKey":
 				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
+			case "publiEndpoint":
+				return ec.fieldContext_GlobalVPNDevice_publiEndpoint(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
 			case "updateTime":
@@ -40811,6 +40863,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createGlobalVPNDevice(ct
 				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
 			case "publicKey":
 				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
+			case "publiEndpoint":
+				return ec.fieldContext_GlobalVPNDevice_publiEndpoint(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
 			case "updateTime":
@@ -40921,6 +40975,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateGlobalVPNDevice(ct
 				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
 			case "publicKey":
 				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
+			case "publiEndpoint":
+				return ec.fieldContext_GlobalVPNDevice_publiEndpoint(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
 			case "updateTime":
@@ -48634,6 +48690,8 @@ func (ec *executionContext) fieldContext_Query_infra_getGlobalVPNDevice(ctx cont
 				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
 			case "publicKey":
 				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
+			case "publiEndpoint":
+				return ec.fieldContext_GlobalVPNDevice_publiEndpoint(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
 			case "updateTime":
@@ -54893,7 +54951,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"msvcSpec", "targetNamespace"}
+	fieldsInOrder := [...]string{"msvcSpec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -54909,15 +54967,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.MsvcSpec = data
-		case "targetNamespace":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetNamespace"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TargetNamespace = data
 		}
 	}
 
@@ -55182,7 +55231,7 @@ func (ec *executionContext) unmarshalInputGlobalVPNDeviceIn(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"globalVPNName", "metadata"}
+	fieldsInOrder := [...]string{"globalVPNName", "metadata", "publiEndpoint"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -55209,6 +55258,15 @@ func (ec *executionContext) unmarshalInputGlobalVPNDeviceIn(ctx context.Context,
 			if err = ec.resolvers.GlobalVPNDeviceIn().Metadata(ctx, &it, data); err != nil {
 				return it, err
 			}
+		case "publiEndpoint":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("publiEndpoint"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PublicEndpoint = data
 		}
 	}
 
@@ -64267,6 +64325,8 @@ func (ec *executionContext) _GlobalVPNDevice(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "publiEndpoint":
+			out.Values[i] = ec._GlobalVPNDevice_publiEndpoint(ctx, field, obj)
 		case "recordVersion":
 			out.Values[i] = ec._GlobalVPNDevice_recordVersion(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -73264,7 +73324,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -73272,7 +73332,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -231,6 +231,7 @@ type GithubComKloudliteOperatorPkgOperatorCheckIn struct {
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
 	Name        string  `json:"name"`
 	Title       string  `json:"title"`
 }
@@ -238,6 +239,7 @@ type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 type GithubComKloudliteOperatorPkgOperatorCheckMetaIn struct {
 	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
 	Name        string  `json:"name"`
 	Title       string  `json:"title"`
 }

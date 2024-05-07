@@ -98,10 +98,6 @@ var (
 	errNilRouter                = errors.Newf("router obj is nil")
 )
 
-func newResourceContext(ctx domain.ConsoleContext, projectName string, environmentName string) domain.ResourceContext {
-	return domain.ResourceContext{
-		ConsoleContext:  ctx,
-		ProjectName:     projectName,
-		EnvironmentName: environmentName,
-	}
+func newResourceContext(ctx domain.ConsoleContext, environmentName string) domain.ResourceContext {
+	return domain.ResourceContext{ConsoleContext: ctx, EnvironmentName: environmentName}
 }

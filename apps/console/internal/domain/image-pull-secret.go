@@ -102,7 +102,7 @@ func (d *domain) CreateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 		return nil, errors.NewE(err)
 	}
 
-	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.EnvironmentName)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -119,7 +119,6 @@ func (d *domain) CreateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 	ips.LastUpdatedBy = ips.CreatedBy
 
 	ips.AccountName = ctx.AccountName
-	ips.ProjectName = ctx.ProjectName
 	ips.EnvironmentName = ctx.EnvironmentName
 	ips.SyncStatus = t.GenSyncStatus(t.SyncActionApply, ips.RecordVersion)
 
@@ -144,7 +143,7 @@ func (d *domain) CreateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeImagePullSecret, nips.Name, PublishAdd)
 
-	if err := d.applyK8sResource(ctx, nips.ProjectName, &pullSecret, nips.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, nips.EnvironmentName, &pullSecret, nips.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -198,7 +197,7 @@ func (d *domain) UpdateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 	}
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeImagePullSecret, upIps.Name, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, upIps.ProjectName, &pullSecret, upIps.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, upIps.EnvironmentName, &pullSecret, upIps.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -221,7 +220,7 @@ func (d *domain) DeleteImagePullSecret(ctx ResourceContext, name string) error {
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, uips.Name, PublishUpdate)
 
-	if err := d.deleteK8sResource(ctx, uips.ProjectName, &corev1.Secret{
+	if err := d.deleteK8sResource(ctx, "", &corev1.Secret{
 		TypeMeta:   v1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
 		ObjectMeta: v1.ObjectMeta{Name: uips.Name, Namespace: uips.Namespace},
 	}); err != nil {
@@ -245,7 +244,7 @@ func (d *domain) OnImagePullSecretUpdateMessage(ctx ResourceContext, ips entitie
 
 	recordVersion, err := d.MatchRecordVersion(ips.Annotations, xips.RecordVersion)
 	if err != nil {
-		return d.resyncK8sResource(ctx, xips.ProjectName, xips.SyncStatus.Action, &xips.GeneratedK8sSecret, xips.RecordVersion)
+		return d.resyncK8sResource(ctx, xips.EnvironmentName, xips.SyncStatus.Action, &xips.GeneratedK8sSecret, xips.RecordVersion)
 	}
 
 	uips, err := d.pullSecretsRepo.PatchById(
@@ -301,5 +300,5 @@ func (d *domain) ResyncImagePullSecret(ctx ResourceContext, name string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	return d.resyncK8sResource(ctx, xips.ProjectName, xips.SyncStatus.Action, &xips.GeneratedK8sSecret, xips.RecordVersion)
+	return d.resyncK8sResource(ctx, xips.EnvironmentName, xips.SyncStatus.Action, &xips.GeneratedK8sSecret, xips.RecordVersion)
 }
