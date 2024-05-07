@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -17,11 +16,6 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
-)
-
-var (
-	foreground bool
-	debug      bool
 )
 
 type EnvironmentVariable struct {
@@ -63,13 +57,13 @@ var startCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		return
 	},
 }
 
-func startBox(_ *cobra.Command, args []string) error {
-	flag.BoolVar(&foreground, "foreground", false, "--foreground")
-	flag.Parse()
+func startBox(cmd *cobra.Command, args []string) error {
+
+	foreground := fn.ParseBoolFlag(cmd, "foreground")
+	debug := fn.ParseBoolFlag(cmd, "debug")
 
 	if isPortInUse("1729") {
 		fn.Log("Port 1729 is not being used by any other container. Please stop that container first.")
@@ -117,9 +111,12 @@ func startBox(_ *cobra.Command, args []string) error {
 		}
 
 		kConf.EnvVars = ev
+		if kConf.EnvVars == nil {
+			kConf.EnvVars = []EnvironmentVariable{}
+		}
 		kConf.Mounts = fMounts
 
-		ensureBoxExist(*kConf)
+		ensureBoxExist(*kConf, foreground, debug)
 		ensureBoxRunning()
 	}
 
@@ -182,17 +179,17 @@ func ensureCacheExist() {
 	command := exec.Command("docker", "volume", "create", "nix-store")
 	err := command.Run()
 	if err != nil {
-		fn.PrintError(errors.New("Error creating nix-store cache volume"))
+		fn.PrintError(errors.New("error creating nix-store cache volume"))
 	}
 
 	command = exec.Command("docker", "volume", "create", "kl-home-cache")
 	err = command.Run()
 	if err != nil {
-		fn.PrintError(errors.New("Error creating home cache volume"))
+		fn.PrintError(errors.New("error creating home cache volume"))
 	}
 }
 
-func ensureBoxExist(klConfig KLConfigType) {
+func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) {
 	currentUser, _ := user.Current()
 	containerName := "kl-box-" + getCwdHash()
 	cwd, _ := os.Getwd()
@@ -234,7 +231,7 @@ func ensureBoxExist(klConfig KLConfigType) {
 		err = command.Run()
 		if err != nil {
 			fn.PrintError(err)
-			fn.PrintError(errors.New("Error running kl-box container"))
+			fn.PrintError(errors.New("error running kl-box container"))
 		}
 	}
 
@@ -252,7 +249,7 @@ func ensureBoxExist(klConfig KLConfigType) {
 		var containers []Container
 		err := json.Unmarshal(o, &containers)
 		if err != nil {
-			fn.PrintError(errors.New("Error parsing docker inspect output"))
+			fn.PrintError(errors.New("error parsing docker inspect output"))
 		}
 		for _, container := range containers {
 			for _, mount := range container.Mounts {
@@ -278,14 +275,14 @@ func ensureBoxExist(klConfig KLConfigType) {
 			"stop", containerName)
 		err = command.Run()
 		if err != nil {
-			fn.PrintError(errors.New("Error stopping kl-box container"))
+			fn.PrintError(errors.New("error stopping kl-box container"))
 		}
 		command = exec.Command(
 			"docker",
 			"rm", containerName)
 		err = command.Run()
 		if err != nil {
-			fn.PrintError(errors.New("Error removing kl-box container"))
+			fn.PrintError(errors.New("error removing kl-box container"))
 		}
 		startContainer()
 	}
@@ -296,7 +293,7 @@ func ensureBoxRunning() {
 	command := exec.Command("docker", "start", containerName)
 	err := command.Run()
 	if err != nil {
-		fn.PrintError(errors.New("Error starting kl-box container"))
+		fn.PrintError(errors.New("error starting kl-box container"))
 	}
 }
 
@@ -304,7 +301,7 @@ func isPortInUse(port string) bool {
 	command := exec.Command("docker", "ps", "--format", "{{.Ports}}")
 	output, err := command.Output()
 	if err != nil {
-		fn.PrintError(errors.New("Error checking docker containers"))
+		fn.PrintError(errors.New("error checking docker containers"))
 		return false
 	}
 	lines := strings.Split(string(output), "\n")
@@ -317,5 +314,6 @@ func isPortInUse(port string) bool {
 }
 
 func init() {
-	startCmd.Aliases = append(startCmd.Aliases, "s")
+	startCmd.Flags().BoolP("debug", "d", false, "run in debug mode")
+	startCmd.Flags().BoolP("foreground", "f", false, "run in foreground mode")
 }
