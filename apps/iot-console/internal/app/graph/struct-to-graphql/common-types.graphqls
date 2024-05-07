@@ -45,10 +45,8 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppSpec @shareable {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppSvc @shareable {
-  name: String
   port: Int!
-  targetPort: Int
-  type: String
+  protocol: String
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv @shareable {
@@ -248,10 +246,8 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn {
-  name: String
   port: Int!
-  targetPort: Int
-  type: String
+  protocol: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ContainerEnvIn {

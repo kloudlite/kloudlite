@@ -195,7 +195,27 @@ func (d *domain) createGlobalVPNConnection(ctx InfraContext, gvpnConn entities.G
 	return gv, nil
 }
 
-func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string, clusterSvcCIDR string, groupName string) (*entities.GlobalVPNConnection, error) {
+func (d *domain) deleteGlobalVPNConnection(ctx InfraContext, clusterName string, gvpnName string) error {
+	gvpnConn, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: gvpnName,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+	if gvpnConn == nil {
+		return errors.Newf("no global vpn connection with name (%s) not found, for cluster (%s)", gvpnName, clusterName)
+	}
+
+	if err := d.deleteGlobalVPNDevice(ctx, gvpnName, fmt.Sprintf("%s-cluster-gateway", gvpnConn.ClusterName)); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
+}
+
+func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string, clusterSvcCIDR string, groupName string, clusterPublicEndpoint string) (*entities.GlobalVPNConnection, error) {
 	gvpn, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName:  ctx.AccountName,
 		fields.ClusterName:  clusterName,
@@ -233,7 +253,7 @@ func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string,
 		ResourceMetadata:      common.ResourceMetadata{DisplayName: groupName, CreatedBy: common.CreatedOrUpdatedByKloudlite, LastUpdatedBy: common.CreatedOrUpdatedByKloudlite},
 		AccountName:           ctx.AccountName,
 		ClusterName:           clusterName,
-		ClusterPublicEndpoint: fmt.Sprintf("%s.%s.tenants.%s", clusterName, ctx.AccountName, d.env.PublicDNSHostSuffix),
+		ClusterPublicEndpoint: clusterPublicEndpoint,
 		ClusterSvcCIDR:        clusterSvcCIDR,
 		ParsedWgParams:        nil,
 	})
@@ -273,11 +293,11 @@ func (d *domain) findGlobalVPNConnection(ctx InfraContext, clusterName string, g
 	return cc, nil
 }
 
-func (d *domain) OnGlobalVPNConnectionDeleteMessage(ctx InfraContext, clusterName string, gvpn entities.GlobalVPNConnection) error {
+func (d *domain) OnGlobalVPNConnectionDeleteMessage(ctx InfraContext, clusterName string, gvpnConn entities.GlobalVPNConnection) error {
 	currRecord, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName:  ctx.AccountName,
 		fields.ClusterName:  clusterName,
-		fields.MetadataName: gvpn.Name,
+		fields.MetadataName: gvpnConn.Name,
 	})
 	if err != nil {
 		return err
@@ -286,35 +306,16 @@ func (d *domain) OnGlobalVPNConnectionDeleteMessage(ctx InfraContext, clusterNam
 	if err := d.gvpnConnRepo.DeleteOne(ctx, repos.Filter{
 		fields.AccountName:  ctx.AccountName,
 		fields.ClusterName:  clusterName,
-		fields.MetadataName: gvpn.Name,
+		fields.MetadataName: gvpnConn.Name,
 	}); err != nil {
 		return errors.NewE(err)
 	}
 
-	claimedDeviceIP, err := d.claimDeviceIPRepo.FindOne(ctx, repos.Filter{
-		fields.AccountName:            ctx.AccountName,
-		fc.ClaimDeviceIPGlobalVPNName: gvpn.GlobalVPNName,
-		fc.ClaimDeviceIPClaimedBy:     "cluster-gateway",
-	})
-	if err != nil {
+	if err := d.deleteGlobalVPNDevice(ctx, currRecord.GlobalVPNName, fmt.Sprintf("%s-cluster-gateway", currRecord.ClusterName)); err != nil {
 		return errors.NewE(err)
 	}
 
-	if claimedDeviceIP != nil {
-		if _, err := d.freeDeviceIpRepo.Create(ctx, &entities.FreeDeviceIP{
-			AccountName:   ctx.AccountName,
-			GlobalVPNName: gvpn.Name,
-			IPAddr:        claimedDeviceIP.IPAddr,
-		}); err != nil {
-			return errors.NewE(err)
-		}
-	}
-
-	if err := d.addToFreeDeviceIPPool(ctx, gvpn.Name, currRecord.GatewayIPAddr); err != nil {
-		return errors.NewE(err)
-	}
-
-	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeClusterConnection, gvpn.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeClusterConnection, gvpnConn.Name, PublishDelete)
 	return err
 }
 
@@ -322,10 +323,6 @@ func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterNam
 	xconn, err := d.findGlobalVPNConnection(ctx, clusterName, gvpn.Name)
 	if err != nil {
 		return errors.NewE(err)
-	}
-
-	if xconn == nil {
-		return errors.Newf("no global vpn found")
 	}
 
 	if _, err := d.matchRecordVersion(gvpn.Annotations, xconn.RecordVersion); err != nil {

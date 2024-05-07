@@ -90,18 +90,33 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	BYOKCluster struct {
-		AccountName       func(childComplexity int) int
-		ClusterSpec       func(childComplexity int) int
-		CreatedBy         func(childComplexity int) int
-		CreationTime      func(childComplexity int) int
-		DisplayName       func(childComplexity int) int
-		ID                func(childComplexity int) int
-		LastUpdatedBy     func(childComplexity int) int
-		MarkedForDeletion func(childComplexity int) int
-		ObjectMeta        func(childComplexity int) int
-		RecordVersion     func(childComplexity int) int
-		SyncStatus        func(childComplexity int) int
-		UpdateTime        func(childComplexity int) int
+		AccountName           func(childComplexity int) int
+		ClusterPublicEndpoint func(childComplexity int) int
+		ClusterSvcCIDR        func(childComplexity int) int
+		ClusterToken          func(childComplexity int) int
+		CreatedBy             func(childComplexity int) int
+		CreationTime          func(childComplexity int) int
+		DisplayName           func(childComplexity int) int
+		GlobalVPN             func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		LastUpdatedBy         func(childComplexity int) int
+		MarkedForDeletion     func(childComplexity int) int
+		MessageQueueTopicName func(childComplexity int) int
+		ObjectMeta            func(childComplexity int) int
+		RecordVersion         func(childComplexity int) int
+		SyncStatus            func(childComplexity int) int
+		UpdateTime            func(childComplexity int) int
+	}
+
+	BYOKClusterEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	BYOKClusterPaginatedRecords struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	CheckAwsAccessOutput struct {
@@ -564,6 +579,7 @@ type ComplexityRoot struct {
 	Github__com___kloudlite___operator___pkg___operator__CheckMeta struct {
 		Debug       func(childComplexity int) int
 		Description func(childComplexity int) int
+		Hide        func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Title       func(childComplexity int) int
 	}
@@ -1115,15 +1131,16 @@ type ComplexityRoot struct {
 	Mutation struct {
 		InfraCreateBYOKCluster           func(childComplexity int, cluster entities.BYOKCluster) int
 		InfraCreateCluster               func(childComplexity int, cluster entities.Cluster) int
-		InfraCreateClusterManagedService func(childComplexity int, clusterName string, service entities.ClusterManagedService) int
+		InfraCreateClusterManagedService func(childComplexity int, service entities.ClusterManagedService) int
 		InfraCreateDomainEntry           func(childComplexity int, domainEntry entities.DomainEntry) int
 		InfraCreateGlobalVPNDevice       func(childComplexity int, gvpnDevice entities.GlobalVPNDevice) int
 		InfraCreateGlobalVpn             func(childComplexity int, gvpn entities.GlobalVPN) int
 		InfraCreateHelmRelease           func(childComplexity int, clusterName string, release entities.HelmRelease) int
 		InfraCreateNodePool              func(childComplexity int, clusterName string, pool entities.NodePool) int
 		InfraCreateProviderSecret        func(childComplexity int, secret entities.CloudProviderSecret) int
+		InfraDeleteBYOKCluster           func(childComplexity int, name string) int
 		InfraDeleteCluster               func(childComplexity int, name string) int
-		InfraDeleteClusterManagedService func(childComplexity int, clusterName string, serviceName string) int
+		InfraDeleteClusterManagedService func(childComplexity int, name string) int
 		InfraDeleteDomainEntry           func(childComplexity int, domainName string) int
 		InfraDeleteGlobalVPNDevice       func(childComplexity int, gvpn string, deviceName string) int
 		InfraDeleteGlobalVpn             func(childComplexity int, name string) int
@@ -1131,8 +1148,9 @@ type ComplexityRoot struct {
 		InfraDeleteNodePool              func(childComplexity int, clusterName string, poolName string) int
 		InfraDeleteProviderSecret        func(childComplexity int, secretName string) int
 		InfraDeletePv                    func(childComplexity int, clusterName string, pvName string) int
+		InfraUpdateBYOKCluster           func(childComplexity int, clusterName string, displayName string) int
 		InfraUpdateCluster               func(childComplexity int, cluster entities.Cluster) int
-		InfraUpdateClusterManagedService func(childComplexity int, clusterName string, service entities.ClusterManagedService) int
+		InfraUpdateClusterManagedService func(childComplexity int, service entities.ClusterManagedService) int
 		InfraUpdateDomainEntry           func(childComplexity int, domainEntry entities.DomainEntry) int
 		InfraUpdateGlobalVPNDevice       func(childComplexity int, gvpnDevice entities.GlobalVPNDevice) int
 		InfraUpdateGlobalVpn             func(childComplexity int, gvpn entities.GlobalVPN) int
@@ -1299,8 +1317,9 @@ type ComplexityRoot struct {
 	Query struct {
 		InfraCheckAwsAccess              func(childComplexity int, cloudproviderName string) int
 		InfraCheckNameAvailability       func(childComplexity int, resType domain.ResType, clusterName *string, name string) int
+		InfraGetBYOKCluster              func(childComplexity int, name string) int
 		InfraGetCluster                  func(childComplexity int, name string) int
-		InfraGetClusterManagedService    func(childComplexity int, clusterName string, name string) int
+		InfraGetClusterManagedService    func(childComplexity int, name string) int
 		InfraGetDomainEntry              func(childComplexity int, domainName string) int
 		InfraGetGlobalVPNDevice          func(childComplexity int, gvpn string, deviceName string) int
 		InfraGetGlobalVpn                func(childComplexity int, name string) int
@@ -1312,7 +1331,8 @@ type ComplexityRoot struct {
 		InfraGetPv                       func(childComplexity int, clusterName string, name string) int
 		InfraGetPvc                      func(childComplexity int, clusterName string, name string) int
 		InfraGetVolumeAttachment         func(childComplexity int, clusterName string, name string) int
-		InfraListClusterManagedServices  func(childComplexity int, clusterName string, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) int
+		InfraListBYOKClusters            func(childComplexity int, search *model.SearchCluster, pagination *repos.CursorPagination) int
+		InfraListClusterManagedServices  func(childComplexity int, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) int
 		InfraListClusters                func(childComplexity int, search *model.SearchCluster, pagination *repos.CursorPagination) int
 		InfraListDomainEntries           func(childComplexity int, search *model.SearchDomainEntry, pagination *repos.CursorPagination) int
 		InfraListGlobalVPNDevices        func(childComplexity int, gvpn string, search *model.SearchGlobalVPNDevices, pagination *repos.CursorPagination) int
@@ -1364,8 +1384,6 @@ type ComplexityRoot struct {
 }
 
 type BYOKClusterResolver interface {
-	ClusterSpec(ctx context.Context, obj *entities.BYOKCluster) (*model.GithubComKloudliteOperatorApisClustersV1ClusterSpec, error)
-
 	CreationTime(ctx context.Context, obj *entities.BYOKCluster) (string, error)
 
 	ID(ctx context.Context, obj *entities.BYOKCluster) (repos.ID, error)
@@ -1477,6 +1495,8 @@ type MutationResolver interface {
 	InfraUpdateGlobalVPNDevice(ctx context.Context, gvpnDevice entities.GlobalVPNDevice) (*entities.GlobalVPNDevice, error)
 	InfraDeleteGlobalVPNDevice(ctx context.Context, gvpn string, deviceName string) (bool, error)
 	InfraCreateBYOKCluster(ctx context.Context, cluster entities.BYOKCluster) (*entities.BYOKCluster, error)
+	InfraUpdateBYOKCluster(ctx context.Context, clusterName string, displayName string) (*entities.BYOKCluster, error)
+	InfraDeleteBYOKCluster(ctx context.Context, name string) (bool, error)
 	InfraUpgradeHelmKloudliteAgent(ctx context.Context, clusterName string) (bool, error)
 	InfraCreateProviderSecret(ctx context.Context, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
 	InfraUpdateProviderSecret(ctx context.Context, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
@@ -1487,9 +1507,9 @@ type MutationResolver interface {
 	InfraCreateNodePool(ctx context.Context, clusterName string, pool entities.NodePool) (*entities.NodePool, error)
 	InfraUpdateNodePool(ctx context.Context, clusterName string, pool entities.NodePool) (*entities.NodePool, error)
 	InfraDeleteNodePool(ctx context.Context, clusterName string, poolName string) (bool, error)
-	InfraCreateClusterManagedService(ctx context.Context, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
-	InfraUpdateClusterManagedService(ctx context.Context, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
-	InfraDeleteClusterManagedService(ctx context.Context, clusterName string, serviceName string) (bool, error)
+	InfraCreateClusterManagedService(ctx context.Context, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
+	InfraUpdateClusterManagedService(ctx context.Context, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
+	InfraDeleteClusterManagedService(ctx context.Context, name string) (bool, error)
 	InfraCreateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error)
 	InfraUpdateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error)
 	InfraDeleteHelmRelease(ctx context.Context, clusterName string, releaseName string) (bool, error)
@@ -1546,6 +1566,8 @@ type QueryResolver interface {
 	InfraCheckNameAvailability(ctx context.Context, resType domain.ResType, clusterName *string, name string) (*domain.CheckNameAvailabilityOutput, error)
 	InfraListClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.ClusterPaginatedRecords, error)
 	InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error)
+	InfraListBYOKClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.BYOKClusterPaginatedRecords, error)
+	InfraGetBYOKCluster(ctx context.Context, name string) (*entities.BYOKCluster, error)
 	InfraListGlobalVPNs(ctx context.Context, search *model.SearchGlobalVPNs, pagination *repos.CursorPagination) (*model.GlobalVPNPaginatedRecords, error)
 	InfraGetGlobalVpn(ctx context.Context, name string) (*entities.GlobalVPN, error)
 	InfraListGlobalVPNDevices(ctx context.Context, gvpn string, search *model.SearchGlobalVPNDevices, pagination *repos.CursorPagination) (*model.GlobalVPNDevicePaginatedRecords, error)
@@ -1557,8 +1579,8 @@ type QueryResolver interface {
 	InfraListDomainEntries(ctx context.Context, search *model.SearchDomainEntry, pagination *repos.CursorPagination) (*model.DomainEntryPaginatedRecords, error)
 	InfraGetDomainEntry(ctx context.Context, domainName string) (*entities.DomainEntry, error)
 	InfraCheckAwsAccess(ctx context.Context, cloudproviderName string) (*model.CheckAwsAccessOutput, error)
-	InfraListClusterManagedServices(ctx context.Context, clusterName string, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) (*model.ClusterManagedServicePaginatedRecords, error)
-	InfraGetClusterManagedService(ctx context.Context, clusterName string, name string) (*entities.ClusterManagedService, error)
+	InfraListClusterManagedServices(ctx context.Context, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) (*model.ClusterManagedServicePaginatedRecords, error)
+	InfraGetClusterManagedService(ctx context.Context, name string) (*entities.ClusterManagedService, error)
 	InfraListHelmReleases(ctx context.Context, clusterName string, search *model.SearchHelmRelease, pagination *repos.CursorPagination) (*model.HelmReleasePaginatedRecords, error)
 	InfraGetHelmRelease(ctx context.Context, clusterName string, name string) (*entities.HelmRelease, error)
 	InfraListManagedServiceTemplates(ctx context.Context) ([]*entities.MsvcTemplate, error)
@@ -1661,12 +1683,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BYOKCluster.AccountName(childComplexity), true
 
-	case "BYOKCluster.ClusterSpec":
-		if e.complexity.BYOKCluster.ClusterSpec == nil {
+	case "BYOKCluster.clusterPublicEndpoint":
+		if e.complexity.BYOKCluster.ClusterPublicEndpoint == nil {
 			break
 		}
 
-		return e.complexity.BYOKCluster.ClusterSpec(childComplexity), true
+		return e.complexity.BYOKCluster.ClusterPublicEndpoint(childComplexity), true
+
+	case "BYOKCluster.clusterSvcCIDR":
+		if e.complexity.BYOKCluster.ClusterSvcCIDR == nil {
+			break
+		}
+
+		return e.complexity.BYOKCluster.ClusterSvcCIDR(childComplexity), true
+
+	case "BYOKCluster.clusterToken":
+		if e.complexity.BYOKCluster.ClusterToken == nil {
+			break
+		}
+
+		return e.complexity.BYOKCluster.ClusterToken(childComplexity), true
 
 	case "BYOKCluster.createdBy":
 		if e.complexity.BYOKCluster.CreatedBy == nil {
@@ -1689,6 +1725,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BYOKCluster.DisplayName(childComplexity), true
 
+	case "BYOKCluster.globalVPN":
+		if e.complexity.BYOKCluster.GlobalVPN == nil {
+			break
+		}
+
+		return e.complexity.BYOKCluster.GlobalVPN(childComplexity), true
+
 	case "BYOKCluster.id":
 		if e.complexity.BYOKCluster.ID == nil {
 			break
@@ -1709,6 +1752,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BYOKCluster.MarkedForDeletion(childComplexity), true
+
+	case "BYOKCluster.messageQueueTopicName":
+		if e.complexity.BYOKCluster.MessageQueueTopicName == nil {
+			break
+		}
+
+		return e.complexity.BYOKCluster.MessageQueueTopicName(childComplexity), true
 
 	case "BYOKCluster.metadata":
 		if e.complexity.BYOKCluster.ObjectMeta == nil {
@@ -1737,6 +1787,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BYOKCluster.UpdateTime(childComplexity), true
+
+	case "BYOKClusterEdge.cursor":
+		if e.complexity.BYOKClusterEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.BYOKClusterEdge.Cursor(childComplexity), true
+
+	case "BYOKClusterEdge.node":
+		if e.complexity.BYOKClusterEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.BYOKClusterEdge.Node(childComplexity), true
+
+	case "BYOKClusterPaginatedRecords.edges":
+		if e.complexity.BYOKClusterPaginatedRecords.Edges == nil {
+			break
+		}
+
+		return e.complexity.BYOKClusterPaginatedRecords.Edges(childComplexity), true
+
+	case "BYOKClusterPaginatedRecords.pageInfo":
+		if e.complexity.BYOKClusterPaginatedRecords.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.BYOKClusterPaginatedRecords.PageInfo(childComplexity), true
+
+	case "BYOKClusterPaginatedRecords.totalCount":
+		if e.complexity.BYOKClusterPaginatedRecords.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.BYOKClusterPaginatedRecords.TotalCount(childComplexity), true
 
 	case "CheckAwsAccessOutput.installationUrl":
 		if e.complexity.CheckAwsAccessOutput.InstallationURL == nil {
@@ -3753,6 +3838,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Description(childComplexity), true
+
+	case "Github__com___kloudlite___operator___pkg___operator__CheckMeta.hide":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Hide == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Hide(childComplexity), true
 
 	case "Github__com___kloudlite___operator___pkg___operator__CheckMeta.name":
 		if e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Name == nil {
@@ -6119,7 +6211,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InfraCreateClusterManagedService(childComplexity, args["clusterName"].(string), args["service"].(entities.ClusterManagedService)), true
+		return e.complexity.Mutation.InfraCreateClusterManagedService(childComplexity, args["service"].(entities.ClusterManagedService)), true
 
 	case "Mutation.infra_createDomainEntry":
 		if e.complexity.Mutation.InfraCreateDomainEntry == nil {
@@ -6193,6 +6285,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.InfraCreateProviderSecret(childComplexity, args["secret"].(entities.CloudProviderSecret)), true
 
+	case "Mutation.infra_deleteBYOKCluster":
+		if e.complexity.Mutation.InfraDeleteBYOKCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_deleteBYOKCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraDeleteBYOKCluster(childComplexity, args["name"].(string)), true
+
 	case "Mutation.infra_deleteCluster":
 		if e.complexity.Mutation.InfraDeleteCluster == nil {
 			break
@@ -6215,7 +6319,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InfraDeleteClusterManagedService(childComplexity, args["clusterName"].(string), args["serviceName"].(string)), true
+		return e.complexity.Mutation.InfraDeleteClusterManagedService(childComplexity, args["name"].(string)), true
 
 	case "Mutation.infra_deleteDomainEntry":
 		if e.complexity.Mutation.InfraDeleteDomainEntry == nil {
@@ -6301,6 +6405,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.InfraDeletePv(childComplexity, args["clusterName"].(string), args["pvName"].(string)), true
 
+	case "Mutation.infra_updateBYOKCluster":
+		if e.complexity.Mutation.InfraUpdateBYOKCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_updateBYOKCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraUpdateBYOKCluster(childComplexity, args["clusterName"].(string), args["displayName"].(string)), true
+
 	case "Mutation.infra_updateCluster":
 		if e.complexity.Mutation.InfraUpdateCluster == nil {
 			break
@@ -6323,7 +6439,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.InfraUpdateClusterManagedService(childComplexity, args["clusterName"].(string), args["service"].(entities.ClusterManagedService)), true
+		return e.complexity.Mutation.InfraUpdateClusterManagedService(childComplexity, args["service"].(entities.ClusterManagedService)), true
 
 	case "Mutation.infra_updateDomainEntry":
 		if e.complexity.Mutation.InfraUpdateDomainEntry == nil {
@@ -7175,6 +7291,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraCheckNameAvailability(childComplexity, args["resType"].(domain.ResType), args["clusterName"].(*string), args["name"].(string)), true
 
+	case "Query.infra_getBYOKCluster":
+		if e.complexity.Query.InfraGetBYOKCluster == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getBYOKCluster_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetBYOKCluster(childComplexity, args["name"].(string)), true
+
 	case "Query.infra_getCluster":
 		if e.complexity.Query.InfraGetCluster == nil {
 			break
@@ -7197,7 +7325,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraGetClusterManagedService(childComplexity, args["clusterName"].(string), args["name"].(string)), true
+		return e.complexity.Query.InfraGetClusterManagedService(childComplexity, args["name"].(string)), true
 
 	case "Query.infra_getDomainEntry":
 		if e.complexity.Query.InfraGetDomainEntry == nil {
@@ -7331,6 +7459,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraGetVolumeAttachment(childComplexity, args["clusterName"].(string), args["name"].(string)), true
 
+	case "Query.infra_listBYOKClusters":
+		if e.complexity.Query.InfraListBYOKClusters == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_listBYOKClusters_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraListBYOKClusters(childComplexity, args["search"].(*model.SearchCluster), args["pagination"].(*repos.CursorPagination)), true
+
 	case "Query.infra_listClusterManagedServices":
 		if e.complexity.Query.InfraListClusterManagedServices == nil {
 			break
@@ -7341,7 +7481,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraListClusterManagedServices(childComplexity, args["clusterName"].(string), args["search"].(*model.SearchClusterManagedService), args["pagination"].(*repos.CursorPagination)), true
+		return e.complexity.Query.InfraListClusterManagedServices(childComplexity, args["search"].(*model.SearchClusterManagedService), args["pagination"].(*repos.CursorPagination)), true
 
 	case "Query.infra_listClusters":
 		if e.complexity.Query.InfraListClusters == nil {
@@ -7863,6 +8003,9 @@ directive @hasAccount on FIELD_DEFINITION
 
 enum ResType {
     cluster
+    cluster_managed_service
+    byok_cluster
+    global_vpn_device
     # cloudprovider
     providersecret
     # edge
@@ -7943,6 +8086,10 @@ type Query {
     infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getCluster(name: String!): Cluster @isLoggedInAndVerified @hasAccount
 
+    # byok
+    infra_listBYOKClusters(search: SearchCluster, pagination: CursorPaginationIn): BYOKClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getBYOKCluster(name: String!): BYOKCluster @isLoggedInAndVerified @hasAccount
+
     # global VPN
     infra_listGlobalVPNs(search: SearchGlobalVPNs, pagination: CursorPaginationIn): GlobalVPNPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getGlobalVPN(name: String!): GlobalVPN @isLoggedInAndVerified @hasAccount
@@ -7965,8 +8112,8 @@ type Query {
 
     infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput! @isLoggedInAndVerified @hasAccount
 
-    infra_listClusterManagedServices(clusterName: String!, search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    infra_getClusterManagedService(clusterName: String!, name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+    infra_listClusterManagedServices(search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getClusterManagedService(name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
 
     infra_listHelmReleases(clusterName: String!, search: SearchHelmRelease, pagination: CursorPaginationIn): HelmReleasePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getHelmRelease(clusterName: String!, name: String!): HelmRelease @isLoggedInAndVerified @hasAccount
@@ -8004,6 +8151,8 @@ type Mutation {
     infra_deleteGlobalVPNDevice(gvpn: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
       
     infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster @isLoggedInAndVerified @hasAccount
+    infra_updateBYOKCluster(clusterName: String!, displayName: String!): BYOKCluster @isLoggedInAndVerified @hasAccount
+    infra_deleteBYOKCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     infra_upgradeHelmKloudliteAgent(clusterName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
@@ -8019,9 +8168,9 @@ type Mutation {
     infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
     infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    infra_createClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
-    infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
-    infra_deleteClusterManagedService(clusterName: String!, serviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    infra_createClusterManagedService(service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+    infra_updateClusterManagedService(service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+    infra_deleteClusterManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
     infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
@@ -8045,21 +8194,39 @@ extend type GlobalVPNDevice {
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/byokcluster.graphqls", Input: `type BYOKCluster @shareable {
   accountName: String!
-  ClusterSpec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec
+  clusterPublicEndpoint: String!
+  clusterSvcCIDR: String!
+  clusterToken: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
+  globalVPN: String!
   id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
+  messageQueueTopicName: String!
   metadata: Metadata! @goField(name: "objectMeta")
   recordVersion: Int!
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
+type BYOKClusterEdge @shareable {
+  cursor: String!
+  node: BYOKCluster!
+}
+
+type BYOKClusterPaginatedRecords @shareable {
+  edges: [BYOKClusterEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 input BYOKClusterIn {
+  clusterPublicEndpoint: String!
+  clusterToken: String!
   displayName: String!
+  messageQueueTopicName: String!
   metadata: MetadataIn!
 }
 
@@ -8172,6 +8339,7 @@ type ClusterManagedServicePaginatedRecords @shareable {
 
 input ClusterManagedServiceIn {
   apiVersion: String
+  clusterName: String!
   displayName: String!
   kind: String
   metadata: MetadataIn
@@ -8485,7 +8653,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec @
 type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @shareable {
   apiVersion: String!
   kind: String!
-  spec: Map!
+  spec: Map
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
@@ -8502,6 +8670,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
   debug: Boolean
   description: String
+  hide: Boolean
   name: String!
   title: String!
 }
@@ -9096,7 +9265,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecI
 input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
   apiVersion: String!
   kind: String!
-  spec: Map!
+  spec: Map
 }
 
 input K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn {
@@ -10156,24 +10325,15 @@ func (ec *executionContext) field_Mutation_infra_createBYOKCluster_args(ctx cont
 func (ec *executionContext) field_Mutation_infra_createClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterName"] = arg0
-	var arg1 entities.ClusterManagedService
+	var arg0 entities.ClusterManagedService
 	if tmp, ok := rawArgs["service"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service"))
-		arg1, err = ec.unmarshalNClusterManagedServiceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterManagedService(ctx, tmp)
+		arg0, err = ec.unmarshalNClusterManagedServiceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterManagedService(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["service"] = arg1
+	args["service"] = arg0
 	return args, nil
 }
 
@@ -10300,27 +10460,33 @@ func (ec *executionContext) field_Mutation_infra_createProviderSecret_args(ctx c
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_infra_deleteClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_infra_deleteBYOKCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["serviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_deleteClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["serviceName"] = arg1
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -10480,7 +10646,7 @@ func (ec *executionContext) field_Mutation_infra_deleteProviderSecret_args(ctx c
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_infra_updateClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_infra_updateBYOKCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -10492,15 +10658,30 @@ func (ec *executionContext) field_Mutation_infra_updateClusterManagedService_arg
 		}
 	}
 	args["clusterName"] = arg0
-	var arg1 entities.ClusterManagedService
-	if tmp, ok := rawArgs["service"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service"))
-		arg1, err = ec.unmarshalNClusterManagedServiceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterManagedService(ctx, tmp)
+	var arg1 string
+	if tmp, ok := rawArgs["displayName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["service"] = arg1
+	args["displayName"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_updateClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 entities.ClusterManagedService
+	if tmp, ok := rawArgs["service"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("service"))
+		arg0, err = ec.unmarshalNClusterManagedServiceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterManagedService(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["service"] = arg0
 	return args, nil
 }
 
@@ -10705,27 +10886,33 @@ func (ec *executionContext) field_Query_infra_checkNameAvailability_args(ctx con
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_infra_getClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_infra_getBYOKCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["clusterName"] = arg0
-	var arg1 string
+	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_getClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg1
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -10981,36 +11168,51 @@ func (ec *executionContext) field_Query_infra_getVolumeAttachment_args(ctx conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_infra_listBYOKClusters_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.SearchCluster
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg0, err = ec.unmarshalOSearchCluster2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchCluster(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["search"] = arg0
+	var arg1 *repos.CursorPagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pagination"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_infra_listClusterManagedServices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterName"] = arg0
-	var arg1 *model.SearchClusterManagedService
+	var arg0 *model.SearchClusterManagedService
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchClusterManagedService2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchClusterManagedService(ctx, tmp)
+		arg0, err = ec.unmarshalOSearchClusterManagedService2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchClusterManagedService(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["search"] = arg1
-	var arg2 *repos.CursorPagination
+	args["search"] = arg0
+	var arg1 *repos.CursorPagination
 	if tmp, ok := rawArgs["pagination"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pagination"] = arg2
+	args["pagination"] = arg1
 	return args, nil
 }
 
@@ -11423,8 +11625,8 @@ func (ec *executionContext) fieldContext_BYOKCluster_accountName(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _BYOKCluster_ClusterSpec(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_BYOKCluster_ClusterSpec(ctx, field)
+func (ec *executionContext) _BYOKCluster_clusterPublicEndpoint(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKCluster_clusterPublicEndpoint(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11437,62 +11639,119 @@ func (ec *executionContext) _BYOKCluster_ClusterSpec(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.BYOKCluster().ClusterSpec(rctx, obj)
+		return obj.ClusterPublicEndpoint, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1ClusterSpec)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpec(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_BYOKCluster_ClusterSpec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BYOKCluster_clusterPublicEndpoint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BYOKCluster",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "accountId":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountId(ctx, field)
-			case "accountName":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx, field)
-			case "availabilityMode":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_availabilityMode(ctx, field)
-			case "aws":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_aws(ctx, field)
-			case "backupToS3Enabled":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_backupToS3Enabled(ctx, field)
-			case "cloudflareEnabled":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudflareEnabled(ctx, field)
-			case "cloudProvider":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudProvider(ctx, field)
-			case "clusterInternalDnsHost":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterInternalDnsHost(ctx, field)
-			case "clusterServiceCIDR":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterServiceCIDR(ctx, field)
-			case "clusterTokenRef":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx, field)
-			case "gcp":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_gcp(ctx, field)
-			case "kloudliteRelease":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_kloudliteRelease(ctx, field)
-			case "messageQueueTopicName":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_messageQueueTopicName(ctx, field)
-			case "output":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_output(ctx, field)
-			case "publicDNSHost":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_publicDNSHost(ctx, field)
-			case "taintMasterNodes":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_taintMasterNodes(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec", field.Name)
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOKCluster_clusterSvcCIDR(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKCluster_clusterSvcCIDR(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClusterSvcCIDR, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKCluster_clusterSvcCIDR(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKCluster",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOKCluster_clusterToken(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKCluster_clusterToken(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClusterToken, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKCluster_clusterToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKCluster",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11638,6 +11897,50 @@ func (ec *executionContext) fieldContext_BYOKCluster_displayName(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _BYOKCluster_globalVPN(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKCluster_globalVPN(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GlobalVPN, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKCluster_globalVPN(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKCluster",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BYOKCluster_id(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BYOKCluster_id(ctx, field)
 	if err != nil {
@@ -11770,6 +12073,50 @@ func (ec *executionContext) fieldContext_BYOKCluster_markedForDeletion(ctx conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOKCluster_messageQueueTopicName(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKCluster_messageQueueTopicName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MessageQueueTopicName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKCluster_messageQueueTopicName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKCluster",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11976,6 +12323,276 @@ func (ec *executionContext) fieldContext_BYOKCluster_updateTime(ctx context.Cont
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOKClusterEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.BYOKClusterEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKClusterEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKClusterEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKClusterEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOKClusterEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.BYOKClusterEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKClusterEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entities.BYOKCluster)
+	fc.Result = res
+	return ec.marshalNBYOKCluster2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐBYOKCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKClusterEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKClusterEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_BYOKCluster_accountName(ctx, field)
+			case "clusterPublicEndpoint":
+				return ec.fieldContext_BYOKCluster_clusterPublicEndpoint(ctx, field)
+			case "clusterSvcCIDR":
+				return ec.fieldContext_BYOKCluster_clusterSvcCIDR(ctx, field)
+			case "clusterToken":
+				return ec.fieldContext_BYOKCluster_clusterToken(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_BYOKCluster_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_BYOKCluster_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_BYOKCluster_displayName(ctx, field)
+			case "globalVPN":
+				return ec.fieldContext_BYOKCluster_globalVPN(ctx, field)
+			case "id":
+				return ec.fieldContext_BYOKCluster_id(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_BYOKCluster_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_BYOKCluster_markedForDeletion(ctx, field)
+			case "messageQueueTopicName":
+				return ec.fieldContext_BYOKCluster_messageQueueTopicName(ctx, field)
+			case "metadata":
+				return ec.fieldContext_BYOKCluster_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_BYOKCluster_recordVersion(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_BYOKCluster_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_BYOKCluster_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BYOKCluster", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOKClusterPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField, obj *model.BYOKClusterPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKClusterPaginatedRecords_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.BYOKClusterEdge)
+	fc.Result = res
+	return ec.marshalNBYOKClusterEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOKClusterEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKClusterPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKClusterPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_BYOKClusterEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_BYOKClusterEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BYOKClusterEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOKClusterPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.BYOKClusterPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKClusterPaginatedRecords_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKClusterPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKClusterPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOKClusterPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.BYOKClusterPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKClusterPaginatedRecords_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKClusterPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKClusterPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -23923,6 +24540,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx, field)
 			case "description":
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx, field)
+			case "hide":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx, field)
 			case "name":
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field)
 			case "title":
@@ -24724,14 +25343,11 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(map[string]interface{})
 	fc.Result = res
-	return ec.marshalNMap2map(ctx, field.Selections, res)
+	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25160,6 +25776,47 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pk
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorPkgOperatorCheckMeta) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Hide, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___pkg___operator__CheckMeta",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorPkgOperatorCheckMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field)
 	if err != nil {
@@ -25464,6 +26121,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pk
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx, field)
 			case "description":
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx, field)
+			case "hide":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx, field)
 			case "name":
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field)
 			case "title":
@@ -41146,20 +41805,28 @@ func (ec *executionContext) fieldContext_Mutation_infra_createBYOKCluster(ctx co
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_BYOKCluster_accountName(ctx, field)
-			case "ClusterSpec":
-				return ec.fieldContext_BYOKCluster_ClusterSpec(ctx, field)
+			case "clusterPublicEndpoint":
+				return ec.fieldContext_BYOKCluster_clusterPublicEndpoint(ctx, field)
+			case "clusterSvcCIDR":
+				return ec.fieldContext_BYOKCluster_clusterSvcCIDR(ctx, field)
+			case "clusterToken":
+				return ec.fieldContext_BYOKCluster_clusterToken(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_BYOKCluster_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_BYOKCluster_creationTime(ctx, field)
 			case "displayName":
 				return ec.fieldContext_BYOKCluster_displayName(ctx, field)
+			case "globalVPN":
+				return ec.fieldContext_BYOKCluster_globalVPN(ctx, field)
 			case "id":
 				return ec.fieldContext_BYOKCluster_id(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_BYOKCluster_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_BYOKCluster_markedForDeletion(ctx, field)
+			case "messageQueueTopicName":
+				return ec.fieldContext_BYOKCluster_messageQueueTopicName(ctx, field)
 			case "metadata":
 				return ec.fieldContext_BYOKCluster_metadata(ctx, field)
 			case "recordVersion":
@@ -41180,6 +41847,199 @@ func (ec *executionContext) fieldContext_Mutation_infra_createBYOKCluster(ctx co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_infra_createBYOKCluster_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_infra_updateBYOKCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_updateBYOKCluster(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraUpdateBYOKCluster(rctx, fc.Args["clusterName"].(string), fc.Args["displayName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.BYOKCluster); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.BYOKCluster`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.BYOKCluster)
+	fc.Result = res
+	return ec.marshalOBYOKCluster2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐBYOKCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_infra_updateBYOKCluster(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_BYOKCluster_accountName(ctx, field)
+			case "clusterPublicEndpoint":
+				return ec.fieldContext_BYOKCluster_clusterPublicEndpoint(ctx, field)
+			case "clusterSvcCIDR":
+				return ec.fieldContext_BYOKCluster_clusterSvcCIDR(ctx, field)
+			case "clusterToken":
+				return ec.fieldContext_BYOKCluster_clusterToken(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_BYOKCluster_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_BYOKCluster_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_BYOKCluster_displayName(ctx, field)
+			case "globalVPN":
+				return ec.fieldContext_BYOKCluster_globalVPN(ctx, field)
+			case "id":
+				return ec.fieldContext_BYOKCluster_id(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_BYOKCluster_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_BYOKCluster_markedForDeletion(ctx, field)
+			case "messageQueueTopicName":
+				return ec.fieldContext_BYOKCluster_messageQueueTopicName(ctx, field)
+			case "metadata":
+				return ec.fieldContext_BYOKCluster_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_BYOKCluster_recordVersion(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_BYOKCluster_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_BYOKCluster_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BYOKCluster", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_infra_updateBYOKCluster_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_infra_deleteBYOKCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_deleteBYOKCluster(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraDeleteBYOKCluster(rctx, fc.Args["name"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_infra_deleteBYOKCluster(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_infra_deleteBYOKCluster_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -42165,7 +43025,7 @@ func (ec *executionContext) _Mutation_infra_createClusterManagedService(ctx cont
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().InfraCreateClusterManagedService(rctx, fc.Args["clusterName"].(string), fc.Args["service"].(entities.ClusterManagedService))
+			return ec.resolvers.Mutation().InfraCreateClusterManagedService(rctx, fc.Args["service"].(entities.ClusterManagedService))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -42277,7 +43137,7 @@ func (ec *executionContext) _Mutation_infra_updateClusterManagedService(ctx cont
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().InfraUpdateClusterManagedService(rctx, fc.Args["clusterName"].(string), fc.Args["service"].(entities.ClusterManagedService))
+			return ec.resolvers.Mutation().InfraUpdateClusterManagedService(rctx, fc.Args["service"].(entities.ClusterManagedService))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -42389,7 +43249,7 @@ func (ec *executionContext) _Mutation_infra_deleteClusterManagedService(ctx cont
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().InfraDeleteClusterManagedService(rctx, fc.Args["clusterName"].(string), fc.Args["serviceName"].(string))
+			return ec.resolvers.Mutation().InfraDeleteClusterManagedService(rctx, fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -48320,6 +49180,204 @@ func (ec *executionContext) fieldContext_Query_infra_getCluster(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_infra_listBYOKClusters(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_listBYOKClusters(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraListBYOKClusters(rctx, fc.Args["search"].(*model.SearchCluster), fc.Args["pagination"].(*repos.CursorPagination))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.BYOKClusterPaginatedRecords); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/app/graph/model.BYOKClusterPaginatedRecords`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.BYOKClusterPaginatedRecords)
+	fc.Result = res
+	return ec.marshalOBYOKClusterPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOKClusterPaginatedRecords(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_listBYOKClusters(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_BYOKClusterPaginatedRecords_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_BYOKClusterPaginatedRecords_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_BYOKClusterPaginatedRecords_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BYOKClusterPaginatedRecords", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_listBYOKClusters_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_getBYOKCluster(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_getBYOKCluster(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraGetBYOKCluster(rctx, fc.Args["name"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.BYOKCluster); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.BYOKCluster`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.BYOKCluster)
+	fc.Result = res
+	return ec.marshalOBYOKCluster2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐBYOKCluster(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_getBYOKCluster(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_BYOKCluster_accountName(ctx, field)
+			case "clusterPublicEndpoint":
+				return ec.fieldContext_BYOKCluster_clusterPublicEndpoint(ctx, field)
+			case "clusterSvcCIDR":
+				return ec.fieldContext_BYOKCluster_clusterSvcCIDR(ctx, field)
+			case "clusterToken":
+				return ec.fieldContext_BYOKCluster_clusterToken(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_BYOKCluster_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_BYOKCluster_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_BYOKCluster_displayName(ctx, field)
+			case "globalVPN":
+				return ec.fieldContext_BYOKCluster_globalVPN(ctx, field)
+			case "id":
+				return ec.fieldContext_BYOKCluster_id(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_BYOKCluster_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_BYOKCluster_markedForDeletion(ctx, field)
+			case "messageQueueTopicName":
+				return ec.fieldContext_BYOKCluster_messageQueueTopicName(ctx, field)
+			case "metadata":
+				return ec.fieldContext_BYOKCluster_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_BYOKCluster_recordVersion(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_BYOKCluster_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_BYOKCluster_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BYOKCluster", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_getBYOKCluster_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_infra_listGlobalVPNs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_infra_listGlobalVPNs(ctx, field)
 	if err != nil {
@@ -49396,7 +50454,7 @@ func (ec *executionContext) _Query_infra_listClusterManagedServices(ctx context.
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraListClusterManagedServices(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchClusterManagedService), fc.Args["pagination"].(*repos.CursorPagination))
+			return ec.resolvers.Query().InfraListClusterManagedServices(rctx, fc.Args["search"].(*model.SearchClusterManagedService), fc.Args["pagination"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -49482,7 +50540,7 @@ func (ec *executionContext) _Query_infra_getClusterManagedService(ctx context.Co
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraGetClusterManagedService(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().InfraGetClusterManagedService(rctx, fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -53713,13 +54771,31 @@ func (ec *executionContext) unmarshalInputBYOKClusterIn(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"displayName", "metadata"}
+	fieldsInOrder := [...]string{"clusterPublicEndpoint", "clusterToken", "displayName", "messageQueueTopicName", "metadata"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "clusterPublicEndpoint":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterPublicEndpoint"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClusterPublicEndpoint = data
+		case "clusterToken":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterToken"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClusterToken = data
 		case "displayName":
 			var err error
 
@@ -53729,6 +54805,15 @@ func (ec *executionContext) unmarshalInputBYOKClusterIn(ctx context.Context, obj
 				return it, err
 			}
 			it.DisplayName = data
+		case "messageQueueTopicName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("messageQueueTopicName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MessageQueueTopicName = data
 		case "metadata":
 			var err error
 
@@ -53904,7 +54989,7 @@ func (ec *executionContext) unmarshalInputClusterManagedServiceIn(ctx context.Co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "displayName", "kind", "metadata", "spec"}
+	fieldsInOrder := [...]string{"apiVersion", "clusterName", "displayName", "kind", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -53920,6 +55005,15 @@ func (ec *executionContext) unmarshalInputClusterManagedServiceIn(ctx context.Co
 				return it, err
 			}
 			it.APIVersion = data
+		case "clusterName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClusterName = data
 		case "displayName":
 			var err error
 
@@ -55213,7 +56307,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			data, err := ec.unmarshalNMap2map(ctx, v)
+			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -59623,39 +60717,21 @@ func (ec *executionContext) _BYOKCluster(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "ClusterSpec":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BYOKCluster_ClusterSpec(ctx, field, obj)
-				return res
+		case "clusterPublicEndpoint":
+			out.Values[i] = ec._BYOKCluster_clusterPublicEndpoint(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
+		case "clusterSvcCIDR":
+			out.Values[i] = ec._BYOKCluster_clusterSvcCIDR(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "clusterToken":
+			out.Values[i] = ec._BYOKCluster_clusterToken(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdBy":
 			out.Values[i] = ec._BYOKCluster_createdBy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -59702,6 +60778,11 @@ func (ec *executionContext) _BYOKCluster(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "globalVPN":
+			out.Values[i] = ec._BYOKCluster_globalVPN(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "id":
 			field := field
 
@@ -59745,6 +60826,11 @@ func (ec *executionContext) _BYOKCluster(ctx context.Context, sel ast.SelectionS
 			}
 		case "markedForDeletion":
 			out.Values[i] = ec._BYOKCluster_markedForDeletion(ctx, field, obj)
+		case "messageQueueTopicName":
+			out.Values[i] = ec._BYOKCluster_messageQueueTopicName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "metadata":
 			out.Values[i] = ec._BYOKCluster_metadata(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -59796,6 +60882,99 @@ func (ec *executionContext) _BYOKCluster(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var bYOKClusterEdgeImplementors = []string{"BYOKClusterEdge"}
+
+func (ec *executionContext) _BYOKClusterEdge(ctx context.Context, sel ast.SelectionSet, obj *model.BYOKClusterEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bYOKClusterEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BYOKClusterEdge")
+		case "cursor":
+			out.Values[i] = ec._BYOKClusterEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._BYOKClusterEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var bYOKClusterPaginatedRecordsImplementors = []string{"BYOKClusterPaginatedRecords"}
+
+func (ec *executionContext) _BYOKClusterPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.BYOKClusterPaginatedRecords) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bYOKClusterPaginatedRecordsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BYOKClusterPaginatedRecords")
+		case "edges":
+			out.Values[i] = ec._BYOKClusterPaginatedRecords_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._BYOKClusterPaginatedRecords_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._BYOKClusterPaginatedRecords_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -63537,9 +64716,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			}
 		case "spec":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate_spec(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -63693,6 +64869,8 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx, field, obj)
 		case "description":
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx, field, obj)
+		case "hide":
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -67850,6 +69028,17 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_createBYOKCluster(ctx, field)
 			})
+		case "infra_updateBYOKCluster":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_updateBYOKCluster(ctx, field)
+			})
+		case "infra_deleteBYOKCluster":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_deleteBYOKCluster(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "infra_upgradeHelmKloudliteAgent":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_upgradeHelmKloudliteAgent(ctx, field)
@@ -69732,6 +70921,44 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "infra_listBYOKClusters":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_listBYOKClusters(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "infra_getBYOKCluster":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getBYOKCluster(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "infra_listGlobalVPNs":
 			field := field
 
@@ -70991,6 +72218,70 @@ func (ec *executionContext) marshalNAny2interface(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNBYOKCluster2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐBYOKCluster(ctx context.Context, sel ast.SelectionSet, v *entities.BYOKCluster) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BYOKCluster(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNBYOKClusterEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOKClusterEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.BYOKClusterEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNBYOKClusterEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOKClusterEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNBYOKClusterEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOKClusterEdge(ctx context.Context, sel ast.SelectionSet, v *model.BYOKClusterEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BYOKClusterEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNBYOKClusterIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐBYOKCluster(ctx context.Context, v interface{}) (entities.BYOKCluster, error) {
@@ -73324,7 +74615,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -73332,7 +74623,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -73383,6 +74674,13 @@ func (ec *executionContext) marshalOBYOKCluster2ᚖgithubᚗcomᚋkloudliteᚋap
 		return graphql.Null
 	}
 	return ec._BYOKCluster(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOBYOKClusterPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOKClusterPaginatedRecords(ctx context.Context, sel ast.SelectionSet, v *model.BYOKClusterPaginatedRecords) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._BYOKClusterPaginatedRecords(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
@@ -73709,13 +75007,6 @@ func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___
 		return graphql.Null
 	}
 	return ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfig2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPClusterConfig(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1GCPClusterConfig) graphql.Marshaler {

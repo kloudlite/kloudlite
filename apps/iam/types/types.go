@@ -161,6 +161,13 @@ const (
 	UpdateBuildIntegration Action = "update-build-integration"
 	CreateBuildIntegration Action = "create-build-integration"
 	DeleteBuildIntegration Action = "delete-build-integration"
+
+	// image pull secrets
+	ListImagePullSecrets  Action = "list-image-pull-secrets"
+	GetImagePullSecret    Action = "get-image-pull-secret"
+	UpdateImagePullSecret Action = "update-image-pull-secret"
+	CreateImagePullSecret Action = "create-image-pull-secret"
+	DeleteImagePullSecret Action = "delete-image-pull-secret"
 )
 
 func NewResourceRef(accountName string, resourceType ResourceType, resourceName string) string {
