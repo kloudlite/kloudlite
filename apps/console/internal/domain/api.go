@@ -217,16 +217,16 @@ type Domain interface {
 	ResyncManagedResource(ctx ResourceContext, name string) error
 
 	// image pull secrets
-	ListImagePullSecrets(ctx ResourceContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error)
-	GetImagePullSecret(ctx ResourceContext, name string) (*entities.ImagePullSecret, error)
-	CreateImagePullSecret(ctx ResourceContext, secret entities.ImagePullSecret) (*entities.ImagePullSecret, error)
-	DeleteImagePullSecret(ctx ResourceContext, name string) error
+	ListImagePullSecrets(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error)
+	GetImagePullSecret(ctx ConsoleContext, name string) (*entities.ImagePullSecret, error)
+	CreateImagePullSecret(ctx ConsoleContext, secret entities.ImagePullSecret) (*entities.ImagePullSecret, error)
+	DeleteImagePullSecret(ctx ConsoleContext, name string) error
 
-	OnImagePullSecretApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
-	OnImagePullSecretDeleteMessage(ctx ResourceContext, ips entities.ImagePullSecret) error
-	OnImagePullSecretUpdateMessage(ctx ResourceContext, ips entities.ImagePullSecret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnImagePullSecretApplyError(ctx ConsoleContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
+	OnImagePullSecretDeleteMessage(ctx ConsoleContext, ips entities.ImagePullSecret) error
+	OnImagePullSecretUpdateMessage(ctx ConsoleContext, ips entities.ImagePullSecret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
-	ResyncImagePullSecret(ctx ResourceContext, name string) error
+	ResyncImagePullSecret(ctx ConsoleContext, name string) error
 
 	GetEnvironmentResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error)
 	//GetProjectResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error)

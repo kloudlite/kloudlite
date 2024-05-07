@@ -84,6 +84,21 @@ type GithubComKloudliteAPIPkgTypesEncodedString struct {
 	Value    string `json:"value"`
 }
 
+type GithubComKloudliteOperatorApisCommonTypesMsvcRef struct {
+	APIVersion  *string `json:"apiVersion,omitempty"`
+	ClusterName string  `json:"clusterName"`
+	Kind        *string `json:"kind,omitempty"`
+	Name        string  `json:"name"`
+	Namespace   string  `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorApisCommonTypesMsvcRefIn struct {
+	APIVersion *string `json:"apiVersion,omitempty"`
+	Kind       *string `json:"kind,omitempty"`
+	Name       string  `json:"name"`
+	Namespace  string  `json:"namespace"`
+}
+
 type GithubComKloudliteOperatorApisCrdsV1AppContainer struct {
 	Args            []string                                               `json:"args,omitempty"`
 	Command         []string                                               `json:"command,omitempty"`
@@ -155,17 +170,13 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSvc struct {
-	Name       *string `json:"name,omitempty"`
-	Port       int     `json:"port"`
-	TargetPort *int    `json:"targetPort,omitempty"`
-	Type       *string `json:"type,omitempty"`
+	Port     int     `json:"port"`
+	Protocol *string `json:"protocol,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSvcIn struct {
-	Name       *string `json:"name,omitempty"`
-	Port       int     `json:"port"`
-	TargetPort *int    `json:"targetPort,omitempty"`
-	Type       *string `json:"type,omitempty"`
+	Port     int     `json:"port"`
+	Protocol *string `json:"protocol,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1BasicAuth struct {
@@ -339,29 +350,15 @@ type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn struct {
 type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate struct {
 	APIVersion string                                            `json:"apiVersion"`
 	Kind       string                                            `json:"kind"`
-	MsvcRef    *GithubComKloudliteOperatorApisCrdsV1MsvcNamedRef `json:"msvcRef"`
+	MsvcRef    *GithubComKloudliteOperatorApisCommonTypesMsvcRef `json:"msvcRef"`
 	Spec       map[string]interface{}                            `json:"spec"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn struct {
 	APIVersion string                                              `json:"apiVersion"`
 	Kind       string                                              `json:"kind"`
-	MsvcRef    *GithubComKloudliteOperatorApisCrdsV1MsvcNamedRefIn `json:"msvcRef"`
+	MsvcRef    *GithubComKloudliteOperatorApisCommonTypesMsvcRefIn `json:"msvcRef"`
 	Spec       map[string]interface{}                              `json:"spec"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1MsvcNamedRef struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
-	Name       string `json:"name"`
-	Namespace  string `json:"namespace"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1MsvcNamedRefIn struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
-	Name       string `json:"name"`
-	Namespace  string `json:"namespace"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1Probe struct {
