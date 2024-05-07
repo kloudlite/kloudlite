@@ -38,20 +38,20 @@ func (d *domain) getClusterFromDevice(ctx ConsoleContext, device *entities.Conso
 		return "", errors.Newf("device is nil")
 	}
 
-	if device.ProjectName == nil && device.ClusterName != nil {
+	if device.ClusterName != nil {
 		return *device.ClusterName, nil
 	}
 
-	if device.ProjectName == nil {
-		return "", errors.NewE(errors.Newf("project name is nil"))
+	if device.EnvironmentName == nil {
+		return "", errors.NewE(errors.Newf("environment name is nil"))
 	}
 
-	cluster, err := d.getClusterAttachedToProject(ctx, *device.ProjectName)
+	cluster, err := d.getClusterAttachedToEnvironment(ctx, *device.EnvironmentName)
 	if err != nil {
 		return "", errors.NewE(err)
 	}
 	if cluster == nil {
-		return "", errors.NewE(errors.Newf("no cluster attached to project %s", *device.ProjectName))
+		return "", errors.NewE(errors.Newf("no cluster attached to env %s", *device.EnvironmentName))
 	}
 	return *cluster, nil
 }
@@ -63,13 +63,13 @@ func (d *domain) updateVpnOnCluster(ctx ConsoleContext, ndev, xdev *entities.Con
 		return errors.NewE(err)
 	}
 
-	if (ndev.ProjectName != nil && ndev.EnvironmentName != nil) || ndev.ClusterName != nil {
+	if (ndev.EnvironmentName != nil) || ndev.ClusterName != nil {
 		if err := d.applyVPNDevice(ctx, ndev); err != nil {
 			return errors.NewE(err)
 		}
 	}
 
-	if (xdev.ProjectName != nil && (ndev.ProjectName == nil || *xdev.ProjectName != *ndev.ProjectName)) ||
+	if (xdev.EnvironmentName != nil && (ndev.EnvironmentName == nil || *xdev.EnvironmentName != *ndev.EnvironmentName)) ||
 		(xdev.ClusterName != nil && (ndev.ClusterName == nil || *xdev.ClusterName != *ndev.ClusterName)) {
 		xdev.Spec.Disabled = true
 		if err := d.applyVPNDevice(ctx, xdev); err != nil {
@@ -126,8 +126,8 @@ func (d *domain) GetVPNDevice(ctx ConsoleContext, name string) (*entities.Consol
 }
 
 func (d *domain) applyVPNDevice(ctx ConsoleContext, device *entities.ConsoleVPNDevice) error {
-	if device.ProjectName != nil {
-		if err := d.applyK8sResource(ctx, *device.ProjectName, &device.Device, device.RecordVersion); err != nil {
+	if device.EnvironmentName != nil {
+		if err := d.applyK8sResource(ctx, *device.EnvironmentName, &device.Device, device.RecordVersion); err != nil {
 			return errors.NewE(err)
 		}
 
@@ -168,8 +168,8 @@ func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 
 	device.SyncStatus = t.GenSyncStatus(t.SyncActionApply, device.RecordVersion)
 
-	if device.ProjectName != nil && device.EnvironmentName != nil {
-		s, err := d.envTargetNamespace(ctx, *device.ProjectName, *device.EnvironmentName)
+	if device.EnvironmentName != nil {
+		s, err := d.envTargetNamespace(ctx, *device.EnvironmentName)
 		if err != nil {
 			return nil, errors.NewE(err)
 		}
@@ -204,7 +204,7 @@ func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 
 	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeVPNDevice, nDevice.Name, PublishAdd)
 
-	if device.ProjectName == nil || device.EnvironmentName == nil {
+	if device.EnvironmentName == nil {
 		return nDevice, nil
 	}
 
@@ -246,7 +246,7 @@ func (d *domain) ActivateVPNDeviceOnNamespace(ctx ConsoleContext, devName string
 	return nil
 }
 
-func (d *domain) updateVpnDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice, projectName, envName, clusterName *string) (*entities.ConsoleVPNDevice, error) {
+func (d *domain) updateVpnDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice, envName, clusterName *string) (*entities.ConsoleVPNDevice, error) {
 	if err := d.canPerformActionInDevice(ctx, iamT.UpdateVPNDevice, device.Name); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -264,14 +264,14 @@ func (d *domain) updateVpnDevice(ctx ConsoleContext, device entities.ConsoleVPND
 		linkedClusters = append(linkedClusters, *clusterName)
 	}
 
-	if projectName != nil && envName != nil {
-		activeNamespace, err := d.envTargetNamespace(ctx, *projectName, *envName)
+	if envName != nil {
+		activeNamespace, err := d.envTargetNamespace(ctx, *envName)
 		if err != nil {
 			return nil, errors.NewE(err)
 		}
 		device.Spec.ActiveNamespace = &activeNamespace
 
-		cName, err := d.getClusterAttachedToProject(ctx, *projectName)
+		cName, err := d.getClusterAttachedToEnvironment(ctx, *envName)
 		if err != nil {
 			return nil, errors.NewE(err)
 		}
@@ -285,7 +285,7 @@ func (d *domain) updateVpnDevice(ctx ConsoleContext, device entities.ConsoleVPND
 	if clusterName != nil {
 		device.ClusterName = clusterName
 
-		device.ProjectName = nil
+		device.EnvironmentName = nil
 		device.EnvironmentName = nil
 	}
 
@@ -295,7 +295,6 @@ func (d *domain) updateVpnDevice(ctx ConsoleContext, device entities.ConsoleVPND
 		common.PatchOpts{
 			XPatch: repos.Document{
 				fc.ConsoleVPNDeviceSpec:           device.Spec,
-				fields.ProjectName:                device.ProjectName,
 				fields.EnvironmentName:            device.EnvironmentName,
 				fields.ClusterName:                device.ClusterName,
 				fc.ConsoleVPNDeviceLinkedClusters: linkedClusters,
@@ -320,7 +319,7 @@ func (d *domain) updateVpnDevice(ctx ConsoleContext, device entities.ConsoleVPND
 }
 
 func (d *domain) UpdateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error) {
-	return d.updateVpnDevice(ctx, device, device.ProjectName, device.EnvironmentName, nil)
+	return d.updateVpnDevice(ctx, device, device.EnvironmentName, nil)
 }
 
 func (d *domain) DeleteVPNDevice(ctx ConsoleContext, name string) error {
@@ -391,16 +390,15 @@ func (d *domain) UpdateVpnDevicePorts(ctx ConsoleContext, devName string, ports 
 	return nil
 }
 
-func (d *domain) ActivateVpnDeviceOnEnvironment(ctx ConsoleContext, devName string, projectName string, envName string) error {
+func (d *domain) ActivateVpnDeviceOnEnvironment(ctx ConsoleContext, devName string, envName string) error {
 	xdevice, err := d.findVPNDevice(ctx, devName)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	xdevice.ProjectName = &projectName
 	xdevice.EnvironmentName = &envName
 
-	_, err = d.updateVpnDevice(ctx, *xdevice, xdevice.ProjectName, xdevice.EnvironmentName, nil)
+	_, err = d.updateVpnDevice(ctx, *xdevice, xdevice.EnvironmentName, nil)
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -420,7 +418,7 @@ func (d *domain) ActivateVpnDeviceOnCluster(ctx ConsoleContext, devName string, 
 	// TODO: check if cluster exists in account
 
 	xdevice.ClusterName = &clusterName
-	_, err = d.updateVpnDevice(ctx, *xdevice, nil, nil, &clusterName)
+	_, err = d.updateVpnDevice(ctx, *xdevice, nil, &clusterName)
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -436,8 +434,8 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.Co
 
 	recordVersion, err := d.MatchRecordVersion(device.Annotations, xdevice.RecordVersion)
 	if err != nil {
-		if xdevice.ProjectName != nil {
-			return d.resyncK8sResource(ctx, *xdevice.ProjectName, xdevice.SyncStatus.Action, &xdevice.Device, xdevice.RecordVersion)
+		if xdevice.EnvironmentName != nil {
+			return d.resyncK8sResource(ctx, *xdevice.EnvironmentName, xdevice.SyncStatus.Action, &xdevice.Device, xdevice.RecordVersion)
 		}
 	}
 
@@ -470,8 +468,8 @@ func (d *domain) OnVPNDeviceDeleteMessage(ctx ConsoleContext, device entities.Co
 	}
 
 	var linkedClusters []string
-	if device.ProjectName != nil {
-		clusterName, err := d.getClusterAttachedToProject(ctx, *device.ProjectName)
+	if device.EnvironmentName != nil {
+		clusterName, err := d.getClusterAttachedToEnvironment(ctx, *device.EnvironmentName)
 		if err != nil {
 			return errors.NewE(err)
 		}

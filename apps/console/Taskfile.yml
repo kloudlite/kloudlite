@@ -17,7 +17,6 @@ tasks:
     cmds:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
-        --struct github.com/kloudlite/api/apps/console/internal/entities.Project
         --struct github.com/kloudlite/api/apps/console/internal/entities.Environment
         --struct github.com/kloudlite/api/apps/console/internal/entities.App
         --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
@@ -33,13 +32,12 @@ tasks:
         --struct github.com/kloudlite/api/apps/console/internal/entities.Router
         --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
         --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
-        --struct github.com/kloudlite/api/apps/console/internal/entities.ProjectManagedService
         --struct github.com/kloudlite/api/pkg/repos.MatchFilter
         --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Environment,App,Secret,Config,Router,ManagedResource,ProjectManagedService,ImagePullSecret,ConsoleVPNDevice
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,Secret,Config,Router,ManagedResource,ImagePullSecret,ConsoleVPNDevice
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
@@ -58,8 +56,8 @@ tasks:
   build:
     cmds:
       - task: gen:constants
-      - task: go:build 
-        vars: 
+      - task: go:build
+        vars:
           Out: ./bin/{{.app}}
 
   local:build-and-push:
