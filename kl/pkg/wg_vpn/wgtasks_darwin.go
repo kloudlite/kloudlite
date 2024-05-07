@@ -75,6 +75,7 @@ func getCurrentDns(verbose bool) ([]string, error) {
 }
 
 func SetDeviceIp(deviceIp net.IPNet, _ string, verbose bool) error {
+	fmt.Println(deviceIp.IP.String(), deviceIp.IP.String())
 	return ExecCmd(fmt.Sprintf("ifconfig %s %s %s", ifName, deviceIp.IP.String(), deviceIp.IP.String()), verbose)
 }
 
