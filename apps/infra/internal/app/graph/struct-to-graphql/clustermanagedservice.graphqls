@@ -30,6 +30,7 @@ type ClusterManagedServicePaginatedRecords @shareable {
 
 input ClusterManagedServiceIn {
   apiVersion: String
+  clusterName: String!
   displayName: String!
   kind: String
   metadata: MetadataIn

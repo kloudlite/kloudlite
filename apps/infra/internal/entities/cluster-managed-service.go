@@ -14,7 +14,7 @@ type ClusterManagedService struct {
 	crdsv1.ClusterManagedService `json:",inline"`
 
 	AccountName string `json:"accountName" graphql:"noinput"`
-	ClusterName string `json:"clusterName" graphql:"noinput"`
+	ClusterName string `json:"clusterName"`
 
 	SyncedOutputSecretRef *corev1.Secret `json:"syncedOutputSecretRef" graphql:"ignore"`
 
