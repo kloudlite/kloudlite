@@ -45,6 +45,7 @@ var (
 	namespaceGVK        = fn.GVK("v1", "Namespace")
 	clusterMsvcGVK      = fn.GVK("crds.kloudlite.io/v1", "ClusterManagedService")
 	ingressGVK          = fn.GVK("networking.k8s.io/v1", "Ingress")
+	secretGVK           = fn.GVK("v1", "Secret")
 )
 
 func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
@@ -241,6 +242,24 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 					return d.OnIngressDeleteMessage(dctx, su.ClusterName, ingress)
 				}
 				return d.OnIngressUpdateMessage(dctx, su.ClusterName, ingress, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+			}
+
+		case secretGVK.String():
+			{
+				var secret corev1.Secret
+				if err := fn.JsonConversion(su.Object, &secret); err != nil {
+					return errors.NewE(err)
+				}
+
+				if secret.Name != "byok-kubeconfig" {
+					return nil
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					// FIXME: not implemented for now
+					return nil
+				}
+				return d.UpsertBYOKClusterKubeconfig(dctx, su.ClusterName, secret.Data["kubeconfig"])
 			}
 		default:
 			{

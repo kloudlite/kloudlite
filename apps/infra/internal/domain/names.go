@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
@@ -16,6 +17,8 @@ type ResType string
 
 const (
 	ResTypeCluster               ResType = "cluster"
+	ResTypeBYOKCluster           ResType = "byok_cluster"
+	ResTypeGlobalVPNDevice       ResType = "global_vpn_device"
 	ResTypeClusterManagedService ResType = "cluster_managed_service"
 	ResTypeProviderSecret        ResType = "providersecret"
 	ResTypeNodePool              ResType = "nodepool"
@@ -44,7 +47,6 @@ func checkResourceName[T repos.Entity](ctx context.Context, filters repos.Filter
 }
 
 func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error) {
-
 	if !fn.IsValidK8sResourceName(name) {
 		return &CheckNameAvailabilityOutput{Result: false, SuggestedNames: fn.GenValidK8sResourceNames(name, 3)}, nil
 	}
@@ -57,12 +59,26 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				fields.MetadataName: name,
 			}, d.clusterRepo)
 		}
+	case ResTypeBYOKCluster:
+		{
+			return checkResourceName(ctx, repos.Filter{
+				fields.AccountName:  ctx.AccountName,
+				fields.MetadataName: name,
+			}, d.byokClusterRepo)
+		}
 	case ResTypeProviderSecret:
 		{
 			return checkResourceName(ctx, repos.Filter{
 				fields.AccountName:  ctx.AccountName,
 				fields.MetadataName: name,
 			}, d.secretRepo)
+		}
+	case ResTypeGlobalVPNDevice:
+		{
+			return checkResourceName(ctx, repos.Filter{
+				fields.AccountName:  ctx.AccountName,
+				fields.MetadataName: name,
+			}, d.gvpnDevicesRepo)
 		}
 	case ResTypeNodePool:
 		{
@@ -89,7 +105,7 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 	case ResTypeClusterManagedService:
 		{
 			if clusterName == nil || *clusterName == "" {
-				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeNodePool)
+				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeClusterManagedService)
 			}
 			return checkResourceName(ctx, repos.Filter{
 				fields.AccountName:  ctx.AccountName,

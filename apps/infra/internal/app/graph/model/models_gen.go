@@ -13,6 +13,17 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type BYOKClusterEdge struct {
+	Cursor string                `json:"cursor"`
+	Node   *entities.BYOKCluster `json:"node"`
+}
+
+type BYOKClusterPaginatedRecords struct {
+	Edges      []*BYOKClusterEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount int                `json:"totalCount"`
+}
+
 type CheckAwsAccessOutput struct {
 	Result          bool    `json:"result"`
 	InstallationURL *string `json:"installationUrl,omitempty"`
@@ -484,18 +495,19 @@ type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn struct {
 type GithubComKloudliteOperatorApisCrdsV1ServiceTemplate struct {
 	APIVersion string                 `json:"apiVersion"`
 	Kind       string                 `json:"kind"`
-	Spec       map[string]interface{} `json:"spec"`
+	Spec       map[string]interface{} `json:"spec,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
 	APIVersion string                 `json:"apiVersion"`
 	Kind       string                 `json:"kind"`
-	Spec       map[string]interface{} `json:"spec"`
+	Spec       map[string]interface{} `json:"spec,omitempty"`
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
 	Name        string  `json:"name"`
 	Title       string  `json:"title"`
 }
