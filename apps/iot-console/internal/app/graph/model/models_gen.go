@@ -52,6 +52,16 @@ type GithubComKloudliteOperatorApisCrdsV1AppContainerIn struct {
 	Volumes         []*GithubComKloudliteOperatorApisCrdsV1ContainerVolumeIn `json:"volumes,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappings struct {
+	AppPort    int `json:"appPort"`
+	DevicePort int `json:"devicePort"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn struct {
+	AppPort    int `json:"appPort"`
+	DevicePort int `json:"devicePort"`
+}
+
 type GithubComKloudliteOperatorApisCrdsV1AppSpec struct {
 	Containers                []*GithubComKloudliteOperatorApisCrdsV1AppContainer `json:"containers"`
 	DisplayName               *string                                             `json:"displayName,omitempty"`
@@ -187,13 +197,15 @@ type GithubComKloudliteOperatorApisCrdsV1HTTPGetProbeIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1Intercept struct {
-	Enabled  bool   `json:"enabled"`
-	ToDevice string `json:"toDevice"`
+	Enabled      bool                                                            `json:"enabled"`
+	PortMappings []*GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappings `json:"portMappings,omitempty"`
+	ToDevice     string                                                          `json:"toDevice"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1InterceptIn struct {
-	Enabled  bool   `json:"enabled"`
-	ToDevice string `json:"toDevice"`
+	Enabled      bool                                                              `json:"enabled"`
+	PortMappings []*GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn `json:"portMappings,omitempty"`
+	ToDevice     string                                                            `json:"toDevice"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1Probe struct {
@@ -246,6 +258,7 @@ type GithubComKloudliteOperatorPkgOperatorCheck struct {
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
 	Name        string  `json:"name"`
 	Title       string  `json:"title"`
 }
