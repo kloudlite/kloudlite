@@ -64,6 +64,7 @@ const (
 // constant vars generated for struct ImagePullSecret
 const (
 	ImagePullSecretDockerConfigJson   = "dockerConfigJson"
+	ImagePullSecretEnvironments       = "environments"
 	ImagePullSecretFormat             = "format"
 	ImagePullSecretGeneratedK8sSecret = "generatedK8sSecret"
 	ImagePullSecretRegistryPassword   = "registryPassword"
@@ -84,9 +85,11 @@ const (
 	ManagedResourceSpecResourceTemplateKind                                = "spec.resourceTemplate.kind"
 	ManagedResourceSpecResourceTemplateMsvcRef                             = "spec.resourceTemplate.msvcRef"
 	ManagedResourceSpecResourceTemplateMsvcRefApiVersion                   = "spec.resourceTemplate.msvcRef.apiVersion"
+	ManagedResourceSpecResourceTemplateMsvcRefClusterName                  = "spec.resourceTemplate.msvcRef.clusterName"
 	ManagedResourceSpecResourceTemplateMsvcRefKind                         = "spec.resourceTemplate.msvcRef.kind"
 	ManagedResourceSpecResourceTemplateMsvcRefName                         = "spec.resourceTemplate.msvcRef.name"
 	ManagedResourceSpecResourceTemplateMsvcRefNamespace                    = "spec.resourceTemplate.msvcRef.namespace"
+	ManagedResourceSpecResourceTemplateMsvcRefSharedSecret                 = "spec.resourceTemplate.msvcRef.sharedSecret"
 	ManagedResourceSpecResourceTemplateSpec                                = "spec.resourceTemplate.spec"
 	ManagedResourceSyncedOutputSecretRef                                   = "syncedOutputSecretRef"
 	ManagedResourceSyncedOutputSecretRefApiVersion                         = "syncedOutputSecretRef.apiVersion"

@@ -3,189 +3,189 @@ directive @isLoggedInAndVerified on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
 enum ConsoleResType {
-  app
-  config
-  secret
-  router
-  managed_service
-  managed_resource
-  environment
-  vpn_device
+	app
+	config
+	secret
+	router
+	managed_service
+	managed_resource
+	environment
+	vpn_device
 }
 
 type ConsoleCheckNameAvailabilityOutput @shareable {
-    result: Boolean!
-    suggestedNames: [String!]
+	result: Boolean!
+	suggestedNames: [String!]
 }
 
 input SearchProjects {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchImagePullSecrets {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchEnvironments {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchApps {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchConfigs {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchSecrets {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchRouters {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchManagedResources {
-    text: MatchFilterIn
-    managedServiceName: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	managedServiceName: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input SearchProjectManagedService {
-    text: MatchFilterIn
-    managedServiceName: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	managedServiceName: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 input CoreSearchVPNDevices {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
 }
 
 type Query {
-    core_checkNameAvailability(envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+	core_checkNameAvailability(envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
-    # core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
-    # core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
-    # core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
+	# core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
+	# core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listEnvironments(search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getEnvironment(name: String!): Environment @isLoggedInAndVerified @hasAccount
-    core_resyncEnvironment(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_listEnvironments(search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getEnvironment(name: String!): Environment @isLoggedInAndVerified @hasAccount
+	core_resyncEnvironment(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    # get image pull secrets
-    core_listImagePullSecrets(envName: String!, search: SearchImagePullSecrets, pq: CursorPaginationIn): ImagePullSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getImagePullSecret(envName: String!, name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccount
-    core_resyncImagePullSecret(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# get image pull secrets
+	core_listImagePullSecrets(search: SearchImagePullSecrets, pq: CursorPaginationIn): ImagePullSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getImagePullSecret(name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccount
+	core_resyncImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listApps(envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
-    core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_restartApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_listApps(envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
+	core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_restartApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_getConfigValues(envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!] @isLoggedInAndVerified @hasAccount
-    core_listConfigs(envName: String!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getConfig(envName: String!, name: String!): Config @isLoggedInAndVerified @hasAccount
-    core_resyncConfig(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_getConfigValues(envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!] @isLoggedInAndVerified @hasAccount
+	core_listConfigs(envName: String!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getConfig(envName: String!, name: String!): Config @isLoggedInAndVerified @hasAccount
+	core_resyncConfig(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!] @isLoggedInAndVerified @hasAccount
-    core_listSecrets(envName: String!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getSecret(envName: String!, name: String!): Secret @isLoggedInAndVerified @hasAccount
-    core_resyncSecret(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!] @isLoggedInAndVerified @hasAccount
+	core_listSecrets(envName: String!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getSecret(envName: String!, name: String!): Secret @isLoggedInAndVerified @hasAccount
+	core_resyncSecret(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listRouters(envName: String!, search: SearchRouters, pq: CursorPaginationIn): RouterPaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getRouter(envName: String!, name: String!): Router @isLoggedInAndVerified @hasAccount
-    core_resyncRouter(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_listRouters(envName: String!, search: SearchRouters, pq: CursorPaginationIn): RouterPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getRouter(envName: String!, name: String!): Router @isLoggedInAndVerified @hasAccount
+	core_resyncRouter(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_getManagedResouceOutputKeys(envName: String!, name: String!): [String!]! @isLoggedInAndVerified @hasAccount
-    core_getManagedResouceOutputKeyValues(envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
-    core_listManagedResources(envName: String!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getManagedResource(envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
-    core_resyncManagedResource(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_getManagedResouceOutputKeys(envName: String!, name: String!): [String!]! @isLoggedInAndVerified @hasAccount
+	core_getManagedResouceOutputKeyValues(envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
+	core_listManagedResources(envName: String!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getManagedResource(envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
+	core_resyncManagedResource(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    # core_listProjectManagedServices(search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    # core_getProjectManagedService( name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    # core_resyncProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    # core_restartProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# core_listProjectManagedServices(search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
+	# core_getProjectManagedService( name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+	# core_resyncProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# core_restartProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_listVPNDevicesForUser: [ConsoleVPNDevice!] @isLoggedInAndVerified @hasAccount
-    core_getVPNDevice(name: String!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
+	core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_listVPNDevicesForUser: [ConsoleVPNDevice!] @isLoggedInAndVerified @hasAccount
+	core_getVPNDevice(name: String!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
-    # core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
-    # core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
-    # core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
+	# core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
+	# core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
-    core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
-    core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_cloneEnvironment(sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
+	core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
+	core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
+	core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_cloneEnvironment(sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
 
-    # image pull secrets
-    core_createImagePullSecret(envName: String!, imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
-    core_deleteImagePullSecret(envName: String!, secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# image pull secrets
+	core_createImagePullSecret(imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
+	core_deleteImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
-    core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
-    core_deleteApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_createApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
+	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
+	core_deleteApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
-    core_updateConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
-    core_deleteConfig(envName: String!, configName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_createConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
+	core_updateConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
+	core_deleteConfig(envName: String!, configName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createSecret(envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
-    core_updateSecret(envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
-    core_deleteSecret(envName: String!, secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_createSecret(envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
+	core_updateSecret(envName: String!, secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccount
+	core_deleteSecret(envName: String!, secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
-    core_updateRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
-    core_deleteRouter(envName: String!, routerName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_createRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
+	core_updateRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
+	core_deleteRouter(envName: String!, routerName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
-    core_updateManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
-    core_deleteManagedResource(envName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_createManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
+	core_updateManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
+	core_deleteManagedResource(envName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    # core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    # core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    # core_deleteProjectManagedService(pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	# core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+	# core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+	# core_deleteProjectManagedService(pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 
-    core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
-    core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
+	core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
+	core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 
-    core_updateVPNDevicePorts(deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_updateVPNDeviceEnv(deviceName: String!,envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_updateVpnDeviceNs(deviceName: String!,ns: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_updateVpnClusterName(deviceName: String!,clusterName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_updateVPNDevicePorts(deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_updateVPNDeviceEnv(deviceName: String!,envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_updateVpnDeviceNs(deviceName: String!,ns: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_updateVpnClusterName(deviceName: String!,clusterName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type Build @key(fields: "id") {
-  id: ID! @isLoggedInAndVerified @hasAccount
+	id: ID! @isLoggedInAndVerified @hasAccount
 }
 
 extend type App {
-  build: Build
+	build: Build
 }
