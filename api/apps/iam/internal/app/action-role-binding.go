@@ -74,6 +74,13 @@ var roleBindings RoleBindingMap = RoleBindingMap{
 	t.ListCloudProviderSecrets:  []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
 	t.GetCloudProviderSecret:    []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
 
+	// image pull secrets
+	t.CreateImagePullSecret: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
+	t.UpdateImagePullSecret: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
+	t.DeleteImagePullSecret: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
+	t.ListImagePullSecrets:  []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
+	t.GetImagePullSecret:    []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
+
 	// for projects
 	t.CreateProject: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
 	t.ListProjects:  []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember, t.RoleProjectAdmin, t.RoleProjectMember},
