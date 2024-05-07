@@ -33,6 +33,11 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppContainer @sharea
   volumes: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume!]
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings @shareable {
+  appPort: Int!
+  devicePort: Int!
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__AppSpec @shareable {
   containers: [Github__com___kloudlite___operator___apis___crds___v1__AppContainer!]!
   displayName: String
@@ -131,6 +136,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__Https @shareable {
 
 type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable {
   enabled: Boolean!
+  portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings!]
   toDevice: String!
 }
 
@@ -230,6 +236,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
   debug: Boolean
   description: String
+  hide: Boolean
   name: String!
   title: String!
 }
@@ -325,6 +332,11 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn {
   resourceCpu: Github__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn
   resourceMemory: Github__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn
   volumes: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeIn!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn {
+  appPort: Int!
+  devicePort: Int!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn {
@@ -423,6 +435,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn {
 
 input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
   enabled: Boolean!
+  portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
   toDevice: String!
 }
 

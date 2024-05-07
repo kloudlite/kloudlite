@@ -12,7 +12,7 @@ import (
 	"github.com/kloudlite/api/apps/iot-console/internal/app/graph/generated"
 	"github.com/kloudlite/api/common"
 	fn "github.com/kloudlite/api/pkg/functions"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // UserID is the resolver for the userId field.
@@ -83,8 +83,6 @@ func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResol
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
-type (
-	github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
-	metadataResolver                                                   struct{ *Resolver }
-	metadataInResolver                                                 struct{ *Resolver }
-)
+type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
+type metadataResolver struct{ *Resolver }
+type metadataInResolver struct{ *Resolver }
