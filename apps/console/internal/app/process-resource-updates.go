@@ -29,7 +29,6 @@ func newResourceContext(ctx domain.ConsoleContext, environmentName string) domai
 }
 
 var (
-	//projectGVK               = fn.GVK("crds.kloudlite.io/v1", "Project")
 	appsGVK                  = fn.GVK("crds.kloudlite.io/v1", "App")
 	environmentGVK           = fn.GVK("crds.kloudlite.io/v1", "Environment")
 	deviceGVK                = fn.GVK("wireguard.kloudlite.io/v1", "Device")
@@ -241,20 +240,20 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeSecret, ru.ClusterName, obj)
-				if err != nil {
-					return errors.NewE(err)
-				}
-
 				if secret.Type == corev1.SecretTypeDockerConfigJson {
 					// secret is an image pull secret
 					ips := entities.ImagePullSecret{
 						ObjectMeta: secret.ObjectMeta,
 					}
 					if resStatus == types.ResourceStatusDeleted {
-						return d.OnImagePullSecretDeleteMessage(rctx, ips)
+						return d.OnImagePullSecretDeleteMessage(dctx, ips)
 					}
-					return d.OnImagePullSecretUpdateMessage(rctx, ips, resStatus, opts)
+					return d.OnImagePullSecretUpdateMessage(dctx, ips, resStatus, opts)
+				}
+
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeSecret, ru.ClusterName, obj)
+				if err != nil {
+					return errors.NewE(err)
 				}
 
 				if resStatus == types.ResourceStatusDeleted {

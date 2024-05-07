@@ -400,25 +400,6 @@ func (d *domain) canReadSecretsFromAccount(ctx context.Context, userId string, a
 	return nil
 }
 
-//func (d *domain) checkProjectAccess(ctx ConsoleContext, projectName string, action iamT.Action) error {
-//	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-//		UserId: string(ctx.UserId),
-//		ResourceRefs: []string{
-//			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-//			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, projectName),
-//		},
-//		Action: string(action),
-//	})
-//	if err != nil {
-//		return errors.NewE(err)
-//	}
-//
-//	if !co.Status {
-//		return errors.Newf("unauthorized to access project %q", projectName)
-//	}
-//	return nil
-//}
-
 func (d *domain) checkEnvironmentAccess(ctx ResourceContext, action iamT.Action) error {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
