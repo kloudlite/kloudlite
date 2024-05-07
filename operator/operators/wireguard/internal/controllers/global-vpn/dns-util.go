@@ -31,14 +31,20 @@ func (r *Reconciler) getCustomCoreDnsConfig(req *rApi.Request[*wgv1.GlobalVPN], 
 		if p.ClusterName == r.Env.ClusterName {
 			updatedContent += fmt.Sprintf(`
 %s.local:53 {
-        log
-        errors
-        kubernetes %s.local {
-          pods insecure
-          fallthrough 
-        }
-        cache 30
-        loop
+  log
+  errors
+
+  # for handling DNS requests for headless stateful services
+  # mongo-svc-0.mongo-svc.mongo-namespace.svc.cluster.local
+  # to
+  # mongo-svc-0-mongo-svc.mongo-namespace.svc.cluster.local
+  rewrite name regex (.*)\.(.*)\.(.*)\.svc\.(.*)\.local {1}-{2}.{3}.svc.{4}.local answer auto
+
+  kubernetes %s.local {
+    pods insecure
+  }
+  cache 30
+  loop
 }
 `, p.ClusterName, p.ClusterName)
 			continue
