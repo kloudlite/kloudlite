@@ -2,10 +2,13 @@ package box
 
 import (
 	"errors"
-	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
+	"runtime"
+
+	"github.com/kloudlite/kl/constants"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/spf13/cobra"
 )
 
 var sshCmd = &cobra.Command{
@@ -23,7 +26,13 @@ var sshCmd = &cobra.Command{
 func sshBox(_ *cobra.Command, _ []string) error {
 	//containerName := "kl-box-" + getCwdHash()
 	//command := exec.Command("docker", "exec", "-it", containerName, "bash")
+
 	command := exec.Command("ssh", "kl@localhost", "-p", "1729")
+
+	if runtime.GOOS == constants.RuntimeWindows {
+		command = exec.Command("bash", "-c", "ssh kl@localhost -p 1729")
+	}
+
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	if err := command.Run(); err != nil {

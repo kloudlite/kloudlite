@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/user"
+	"path"
 	"strings"
 
+	"github.com/adrg/xdg"
 	"github.com/kloudlite/kl/domain/server"
 
 	"github.com/kloudlite/kl/constants"
@@ -164,8 +165,7 @@ func getCwdHash() string {
 }
 
 func ensurePublicKey() {
-	currentUser, _ := user.Current()
-	sshPath := fmt.Sprintf("%s/.ssh", currentUser.HomeDir)
+	sshPath := path.Join(xdg.Home, ".ssh")
 	if _, err := os.Stat(fmt.Sprintf("%s/id_rsa.pub", sshPath)); os.IsNotExist(err) {
 		cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "4096", "-f", fmt.Sprintf("%s/id_rsa", sshPath), "-N", "")
 		err := cmd.Run()
@@ -190,7 +190,6 @@ func ensureCacheExist() {
 }
 
 func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) {
-	currentUser, _ := user.Current()
 	containerName := "kl-box-" + getCwdHash()
 	cwd, _ := os.Getwd()
 	o, err := exec.Command("docker", "inspect", containerName).Output()
@@ -205,8 +204,10 @@ func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) {
 			dockerArgs = append(dockerArgs, "-d")
 		}
 
+		sshPath := path.Join(xdg.Home, ".ssh", "id_rsa.pub")
+
 		dockerArgs = append(dockerArgs, "--name", containerName,
-			"-v", fmt.Sprintf("%s/.ssh/id_rsa.pub:/home/kl/.ssh/authorized_keys:z", currentUser.HomeDir),
+			"-v", fmt.Sprintf("%s:/home/kl/.ssh/authorized_keys:z", sshPath),
 			"-v", "/var/run/docker.sock:/var/run/docker.sock:ro",
 			// "-v", "kl-home-cache:/home:rw",
 			// "-v", "nix-store:/nix:rw",
