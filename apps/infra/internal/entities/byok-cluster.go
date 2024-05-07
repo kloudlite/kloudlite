@@ -5,7 +5,6 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
-	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/pkg/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -13,14 +12,22 @@ import (
 type BYOKCluster struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
-	*clustersv1.ClusterSpec `json:",inline" graphql:"noinput"`
-
 	metav1.ObjectMeta `json:"metadata"`
+
+	GlobalVPN             string `json:"globalVPN" graphql:"noinput"`
+	ClusterSvcCIDR        string `json:"clusterSvcCIDR" graphql:"noinput"`
+	ClusterPublicEndpoint string `json:"clusterPublicEndpoint"`
+	ClusterToken          string `json:"clusterToken"`
+
+	MessageQueueTopicName string `json:"messageQueueTopicName"`
 
 	common.ResourceMetadata `json:",inline"`
 
 	SyncStatus  t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 	AccountName string       `json:"accountName" graphql:"noinput"`
+
+	// to be set post sync
+	Kubeconfig t.EncodedString `json:"kubeconfig" graphql:"ignore"`
 }
 
 func (c *BYOKCluster) GetDisplayName() string {
@@ -30,12 +37,7 @@ func (c *BYOKCluster) GetDisplayName() string {
 func (c *BYOKCluster) GetStatus() operator.Status {
 	return operator.Status{
 		IsReady: true,
-		// Resources:           []operator.ResourceRef{},
-		// Message:             &raw_json.RawJson{},
-		// CheckList:           []operator.CheckMeta{},
-		Checks: map[string]operator.Check{},
-		// LastReadyGeneration: 0,
-		// LastReconcileTime:   &metav1.Time{},
+		Checks:  map[string]operator.Check{},
 	}
 }
 
@@ -49,9 +51,21 @@ var BYOKClusterIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: fc.MetadataName, Value: repos.IndexAsc},
-			{Key: fc.MetadataNamespace, Value: repos.IndexAsc},
 			{Key: fc.AccountName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
+}
+
+func UniqueBYOKClusterFilter(accountName string, clusterName string) repos.Filter {
+	return repos.Filter{
+		fc.AccountName:  accountName,
+		fc.MetadataName: clusterName,
+	}
+}
+
+func ListBYOKClusterFilter(accountName string) repos.Filter {
+	return repos.Filter{
+		fc.AccountName: accountName,
+	}
 }

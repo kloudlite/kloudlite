@@ -1,20 +1,38 @@
 type BYOKCluster @shareable {
   accountName: String!
-  ClusterSpec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec
+  clusterPublicEndpoint: String!
+  clusterSvcCIDR: String!
+  clusterToken: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
+  globalVPN: String!
   id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
+  messageQueueTopicName: String!
   metadata: Metadata! @goField(name: "objectMeta")
   recordVersion: Int!
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
+type BYOKClusterEdge @shareable {
+  cursor: String!
+  node: BYOKCluster!
+}
+
+type BYOKClusterPaginatedRecords @shareable {
+  edges: [BYOKClusterEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 input BYOKClusterIn {
+  clusterPublicEndpoint: String!
+  clusterToken: String!
   displayName: String!
+  messageQueueTopicName: String!
   metadata: MetadataIn!
 }
 

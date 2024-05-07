@@ -37,7 +37,7 @@ tasks:
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,Node,NodePool,GlobalVPN,GlobalVPNDevice,CloudProviderSecret,DomainEntry,PersistentVolumeClaim,ClusterManagedService,HelmRelease,Namespace,VolumeAttachment,PersistentVolume
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,BYOKCluster,Node,NodePool,GlobalVPN,GlobalVPNDevice,CloudProviderSecret,DomainEntry,PersistentVolumeClaim,ClusterManagedService,HelmRelease,Namespace,VolumeAttachment,PersistentVolume
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 

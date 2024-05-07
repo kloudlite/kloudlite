@@ -304,7 +304,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec @
 type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @shareable {
   apiVersion: String!
   kind: String!
-  spec: Map!
+  spec: Map
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
@@ -321,6 +321,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
   debug: Boolean
   description: String
+  hide: Boolean
   name: String!
   title: String!
 }
@@ -915,7 +916,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecI
 input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
   apiVersion: String!
   kind: String!
-  spec: Map!
+  spec: Map
 }
 
 input K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn {

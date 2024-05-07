@@ -148,24 +148,34 @@ var Module = fx.Module(
 			trackingId := r.URL.Query().Get("tracking_id")
 
 			if !strings.HasPrefix(trackingId, "clus-") {
-				out, err := infraCli.GetClusterKubeconfig(r.Context(), &infra.GetClusterIn{
-					UserId:      string(sess.UserId),
-					UserName:    sess.UserName,
-					UserEmail:   sess.UserEmail,
-					AccountName: accountName,
-					ClusterName: clusterName,
-				})
-				if err != nil {
-					http.Error(w, err.Error(), 500)
-					return
+				cfg := &rest.Config{
+					Host: fmt.Sprintf("kubectl-proxy.%s.svc.cluster.local", accountName),
+					WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
+						return httpServer.NewRoundTripperWithHeaders(rt, map[string][]string{
+							"kloudlite-cluster": []string{clusterName},
+						})
+					},
 				}
 
-				cfg, err := k8s.RestConfigFromKubeConfig(out.Kubeconfig)
-				if err != nil {
-					http.Error(w, err.Error(), 500)
-					return
-				}
+				//out, err := infraCli.GetClusterKubeconfig(r.Context(), &infra.GetClusterIn{
+				//	UserId:      string(sess.UserId),
+				//	UserName:    sess.UserName,
+				//	UserEmail:   sess.UserEmail,
+				//	AccountName: accountName,
+				//	ClusterName: clusterName,
+				//})
+				//if err != nil {
+				//	http.Error(w, err.Error(), 500)
+				//	return
+				//}
+				//
+				//cfg, err := k8s.RestConfigFromKubeConfig(out.Kubeconfig)
+				//if err != nil {
+				//	http.Error(w, err.Error(), 500)
+				//	return
+				//}
 
+				var err error
 				kcli, err = k8s.NewClient(cfg, nil)
 				if err != nil {
 					http.Error(w, err.Error(), 500)
