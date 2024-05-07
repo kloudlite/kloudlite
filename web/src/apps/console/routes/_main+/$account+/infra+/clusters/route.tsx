@@ -3,15 +3,19 @@ import { defer } from '@remix-run/node';
 import { Link, useLoaderData, useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
-import { parseNodes } from '~/console/server/r-utils/common';
+import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import fake from '~/root/fake-data-generator/fake';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { useState } from 'react';
+import { IClusters } from '~/console/server/gql/queries/cluster-queries';
+import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
+import OptionList from '~/components/atoms/option-list';
 import Tools from './tools';
 import ClusterResourcesV2 from './cluster-resources-v2';
+import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -26,6 +30,16 @@ export const loader = async (ctx: IRemixCtx) => {
       throw errors[0];
     }
 
+    const { data: byokClustersList, errors: byokErrors } =
+      await GQLServerHandler(ctx.request).listByokClusters({
+        pagination: getPagination(ctx),
+        search: getSearch(ctx),
+      });
+
+    if (byokErrors) {
+      throw byokErrors[0];
+    }
+
     if (data.edges.length === 0) {
       const { data: secrets, errors: sErrors } = await GQLServerHandler(
         ctx.request
@@ -37,12 +51,14 @@ export const loader = async (ctx: IRemixCtx) => {
 
       return {
         clustersData: data || {},
+        byokClustersData: byokClustersList || {},
         secretsCount: secrets.edges.length,
       };
     }
 
     return {
       clustersData: data,
+      byokClustersData: byokClustersList,
       secretsCount: -1,
     };
   });
@@ -50,8 +66,59 @@ export const loader = async (ctx: IRemixCtx) => {
   return defer({ promise });
 };
 
-const Clusters = () => {
-  const { promise } = useLoaderData<typeof loader>();
+const CreateClusterButton = () => {
+  const { account } = useParams();
+
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <>
+      <OptionList.Root>
+        <OptionList.Trigger>
+          <Button
+            content="Create cluster"
+            variant="primary"
+            prefix={<Plus />}
+          />
+        </OptionList.Trigger>
+        <OptionList.Content>
+          <OptionList.Link to={`/${account}/new-cluster`} LinkComponent={Link}>
+            Kloudlite Cluster
+          </OptionList.Link>
+          <OptionList.Item
+            onClick={() => {
+              setVisible(true);
+            }}
+          >
+            Attached Cluster
+          </OptionList.Item>
+        </OptionList.Content>
+      </OptionList.Root>
+      <HandleByokCluster
+        {...{
+          visible,
+          setVisible,
+          isUpdate: false,
+        }}
+      />
+    </>
+  );
+};
+
+const ClusterComponent = ({
+  clusters,
+  byokClusters,
+  secretsCount,
+}: // pageInfo,
+// totalCount,
+{
+  clusters: ExtractNodeType<IClusters>[];
+  byokClusters: ExtractNodeType<IByocClusters>[];
+  secretsCount: number;
+  // pageInfo: IClusters['pageInfo'];
+  // totalCount: IClusters['totalCount'];
+}) => {
+  const [clusterType, setClusterType] = useState('All');
 
   const { account } = useParams();
 
@@ -112,48 +179,68 @@ const Clusters = () => {
     };
   };
 
+  if (!clusters || !byokClusters) {
+    return null;
+  }
+
+  return (
+    <Wrapper
+      secondaryHeader={{
+        title: 'Clusters',
+        action: clusters.length > 0 && (
+          <CreateClusterButton />
+          // <Button
+          //   content="Create cluster"
+          //   variant="primary"
+          //   prefix={<Plus />}
+          //   LinkComponent={Link}
+          //   to={`/${account}/new-cluster`}
+          // />
+        ),
+      }}
+      empty={getEmptyState({
+        clustersCount: clusters.length,
+        cloudProviderSecretsCount: secretsCount,
+      })}
+      tools={
+        <Tools
+          onChange={(type) => {
+            setClusterType(type);
+          }}
+          value={clusterType}
+        />
+      }
+    >
+      <ClusterResourcesV2
+        items={clusterType !== 'Byok' ? clusters : []}
+        byokItems={clusterType !== 'Normal' ? byokClusters : []}
+      />
+    </Wrapper>
+  );
+};
+
+const Clusters = () => {
+  const { promise } = useLoaderData<typeof loader>();
+
   return (
     <LoadingComp
       data={promise}
-      skeletonData={{
-        clustersData: fake.ConsoleListClustersQuery.infra_listClusters as any,
-        secretsCount: 1,
-      }}
+      // skeletonData={{
+      //   clustersData: fake.ConsoleListClustersQuery.infra_listClusters as any,
+      //   secretsCount: 1,
+      // }}
     >
-      {({ clustersData, secretsCount }) => {
+      {({ clustersData, byokClustersData, secretsCount }) => {
         const clusters = parseNodes(clustersData);
 
-        if (!clusters) {
-          return null;
-        }
+        const byokClusters = parseNodes(byokClustersData);
 
-        const { pageInfo, totalCount } = clustersData;
         return (
-          <Wrapper
-            secondaryHeader={{
-              title: 'Clusters',
-              action: clusters.length > 0 && (
-                <Button
-                  content="Create cluster"
-                  variant="primary"
-                  prefix={<Plus />}
-                  LinkComponent={Link}
-                  to={`/${account}/new-cluster`}
-                />
-              ),
-            }}
-            empty={getEmptyState({
-              clustersCount: clusters.length,
-              cloudProviderSecretsCount: secretsCount,
-            })}
-            pagination={{
-              pageInfo,
-              totalCount,
-            }}
-            tools={<Tools />}
-          >
-            <ClusterResourcesV2 items={clusters} />
-          </Wrapper>
+          <ClusterComponent
+            clusters={clusters}
+            byokClusters={byokClusters}
+            secretsCount={secretsCount}
+          />
         );
       }}
     </LoadingComp>

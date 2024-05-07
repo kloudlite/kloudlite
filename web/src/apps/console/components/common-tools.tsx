@@ -5,7 +5,7 @@ import {
   Plus,
 } from '~/console/components/icons';
 import { useSearchParams } from '@remix-run/react';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import OptionList from '~/components/atoms/option-list';
 import Toolbar from '~/components/atoms/toolbar';
 import { cn } from '~/components/utils';
@@ -121,12 +121,14 @@ interface ICommonTools extends IModeProps {
   options: FilterType[];
   noViewMode?: boolean;
   noSort?: boolean;
+  commonToolPrefix?: ReactNode;
 }
 
 const CommonTools = ({
   options,
   noViewMode = false,
   noSort = false,
+  commonToolPrefix,
 }: ICommonTools) => {
   const [appliedFilters, setAppliedFilters] = useState<IAppliedFilters>({});
   const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
@@ -143,6 +145,7 @@ const CommonTools = ({
         <div className="hidden md:flex">
           <Toolbar.Root>
             <SearchBox />
+            {commonToolPrefix}
             <CommonFilterOptions options={options} />
             {!noSort && (
               <SortbyOptionList
