@@ -12,7 +12,6 @@ type ConsoleVPNDevice @shareable {
   linkedClusters: [String!]
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
-  projectName: String
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -39,7 +38,6 @@ input ConsoleVPNDeviceIn {
   environmentName: String
   kind: String
   metadata: MetadataIn
-  projectName: String
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
 }
 

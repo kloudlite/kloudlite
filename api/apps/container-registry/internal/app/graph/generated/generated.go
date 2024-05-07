@@ -346,6 +346,7 @@ type ComplexityRoot struct {
 	Github__com___kloudlite___operator___pkg___operator__CheckMeta struct {
 		Debug       func(childComplexity int) int
 		Description func(childComplexity int) int
+		Hide        func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Title       func(childComplexity int) int
 	}
@@ -1863,6 +1864,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Description(childComplexity), true
 
+	case "Github__com___kloudlite___operator___pkg___operator__CheckMeta.hide":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Hide == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Hide(childComplexity), true
+
 	case "Github__com___kloudlite___operator___pkg___operator__CheckMeta.name":
 		if e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Name == nil {
 			break
@@ -3098,6 +3106,7 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
   debug: Boolean
   description: String
+  hide: Boolean
   name: String!
   title: String!
 }
@@ -3208,6 +3217,7 @@ input Github__com___kloudlite___operator___pkg___operator__CheckIn {
 input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn {
   debug: Boolean
   description: String
+  hide: Boolean
   name: String!
   title: String!
 }
@@ -12314,6 +12324,47 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pk
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorPkgOperatorCheckMeta) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Hide, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___pkg___operator__CheckMeta",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorPkgOperatorCheckMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field)
 	if err != nil {
@@ -12618,6 +12669,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pk
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx, field)
 			case "description":
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx, field)
+			case "hide":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx, field)
 			case "name":
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field)
 			case "title":
@@ -20662,7 +20715,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"debug", "description", "name", "title"}
+	fieldsInOrder := [...]string{"debug", "description", "hide", "name", "title"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20687,6 +20740,15 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 				return it, err
 			}
 			it.Description = data
+		case "hide":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hide"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Hide = data
 		case "name":
 			var err error
 
@@ -23686,6 +23748,8 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx, field, obj)
 		case "description":
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx, field, obj)
+		case "hide":
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -26868,7 +26932,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -26876,7 +26940,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

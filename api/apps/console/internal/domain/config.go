@@ -83,7 +83,7 @@ func (d *domain) CreateConfig(ctx ResourceContext, config entities.Config) (*ent
 	config.SetGroupVersionKind(fn.GVK("v1", "ConfigMap"))
 
 	var err error
-	config.Namespace, err = d.envTargetNamespace(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	config.Namespace, err = d.envTargetNamespace(ctx.ConsoleContext, ctx.EnvironmentName)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,6 @@ func (d *domain) CreateConfig(ctx ResourceContext, config entities.Config) (*ent
 	config.LastUpdatedBy = config.CreatedBy
 
 	config.AccountName = ctx.AccountName
-	config.ProjectName = ctx.ProjectName
 	config.EnvironmentName = ctx.EnvironmentName
 
 	if config.Annotations == nil {
@@ -126,7 +125,7 @@ func (d *domain) createAndApplyConfig(ctx ResourceContext, config *entities.Conf
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, cfg.ProjectName, &cfg.ConfigMap, cfg.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, ctx.EnvironmentName, &cfg.ConfigMap, cfg.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -159,11 +158,19 @@ func (d *domain) UpdateConfig(ctx ResourceContext, config entities.Config) (*ent
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, upConfig.Name, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, upConfig.ProjectName, &upConfig.ConfigMap, upConfig.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, upConfig.EnvironmentName, &upConfig.ConfigMap, upConfig.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	return upConfig, nil
+}
+
+func (d *domain) applyConfigToK8s(ctx ResourceContext, config *entities.Config) error {
+	return d.applyK8sResource(ctx, ctx.EnvironmentName, &config.ConfigMap, config.RecordVersion)
+}
+
+func (d *domain) deleteConfigFromK8s(ctx ResourceContext, config *entities.Config) error {
+	return d.deleteK8sResource(ctx, ctx.EnvironmentName, &config.ConfigMap)
 }
 
 func (d *domain) DeleteConfig(ctx ResourceContext, name string) error {
@@ -181,7 +188,7 @@ func (d *domain) DeleteConfig(ctx ResourceContext, name string) error {
 	}
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, uc.Name, PublishUpdate)
 
-	if err := d.deleteK8sResource(ctx, uc.ProjectName, &uc.ConfigMap); err != nil {
+	if err := d.deleteConfigFromK8s(ctx, uc); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.configRepo.DeleteById(ctx, uc.Id)
 		}
@@ -230,7 +237,7 @@ func (d *domain) OnConfigUpdateMessage(ctx ResourceContext, configIn entities.Co
 
 	recordVersion, err := d.MatchRecordVersion(configIn.Annotations, xconfig.RecordVersion)
 	if err != nil {
-		return d.resyncK8sResource(ctx, xconfig.ProjectName, xconfig.SyncStatus.Action, &xconfig.ConfigMap, xconfig.RecordVersion)
+		return d.resyncK8sResource(ctx, xconfig.EnvironmentName, xconfig.SyncStatus.Action, &xconfig.ConfigMap, xconfig.RecordVersion)
 	}
 
 	uc, err := d.configRepo.PatchById(ctx, xconfig.Id, common.PatchForSyncFromAgent(&configIn, recordVersion, status, common.PatchOpts{
@@ -250,5 +257,5 @@ func (d *domain) ResyncConfig(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	return d.resyncK8sResource(ctx, cfg.ProjectName, cfg.SyncStatus.Action, &cfg.ConfigMap, cfg.RecordVersion)
+	return d.resyncK8sResource(ctx, cfg.EnvironmentName, cfg.SyncStatus.Action, &cfg.ConfigMap, cfg.RecordVersion)
 }
