@@ -4,10 +4,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
+	iamT "github.com/kloudlite/api/apps/iam/types"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -17,21 +18,16 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (d *domain) ListImagePullSecrets(ctx ResourceContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error) {
-	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
+func (d *domain) ListImagePullSecrets(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.ListImagePullSecrets); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	filters := ctx.DBFilters()
-
-	return d.pullSecretsRepo.FindPaginated(ctx, d.pullSecretsRepo.MergeMatchFilters(filters, search), pagination)
+	return d.pullSecretsRepo.FindPaginated(ctx, d.pullSecretsRepo.MergeMatchFilters(entities.FilterListImagePullSecret(ctx.AccountName), search), pagination)
 }
 
-func (d *domain) findImagePullSecret(ctx ResourceContext, name string) (*entities.ImagePullSecret, error) {
-	ips, err := d.pullSecretsRepo.FindOne(
-		ctx,
-		ctx.DBFilters().Add(fields.MetadataName, name),
-	)
+func (d *domain) findImagePullSecret(ctx ConsoleContext, name string) (*entities.ImagePullSecret, error) {
+	ips, err := d.pullSecretsRepo.FindOne(ctx, entities.FilterUniqueImagePullSecret(ctx.AccountName, name))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -42,11 +38,10 @@ func (d *domain) findImagePullSecret(ctx ResourceContext, name string) (*entitie
 	return ips, nil
 }
 
-func (d *domain) GetImagePullSecret(ctx ResourceContext, name string) (*entities.ImagePullSecret, error) {
-	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
+func (d *domain) GetImagePullSecret(ctx ConsoleContext, name string) (*entities.ImagePullSecret, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.GetImagePullSecret); err != nil {
 		return nil, errors.NewE(err)
 	}
-
 	return d.findImagePullSecret(ctx, name)
 }
 
@@ -93,21 +88,14 @@ func generateImagePullSecret(ips entities.ImagePullSecret) (corev1.Secret, error
 	return secret, nil
 }
 
-func (d *domain) CreateImagePullSecret(ctx ResourceContext, ips entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
-	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+func (d *domain) CreateImagePullSecret(ctx ConsoleContext, ips entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.CreateImagePullSecret); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	if err := ips.Validate(); err != nil {
 		return nil, errors.NewE(err)
 	}
-
-	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.EnvironmentName)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	ips.Namespace = env.Spec.TargetNamespace
 
 	ips.IncrementRecordVersion()
 
@@ -119,18 +107,14 @@ func (d *domain) CreateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 	ips.LastUpdatedBy = ips.CreatedBy
 
 	ips.AccountName = ctx.AccountName
-	ips.EnvironmentName = ctx.EnvironmentName
+	ips.Environments = []string{"*"}
 	ips.SyncStatus = t.GenSyncStatus(t.SyncActionApply, ips.RecordVersion)
 
 	pullSecret, err := generateImagePullSecret(ips)
 	if err != nil {
-		return nil, errors.NewEf(err, "failed to create a valid kubernetes secret")
+		return nil, errors.NewEf(err, "failed to create a valid kubernetes ips")
 	}
 	ips.GeneratedK8sSecret = pullSecret
-
-	if _, err := d.upsertEnvironmentResourceMapping(ctx, &ips); err != nil {
-		return nil, errors.NewE(err)
-	}
 
 	nips, err := d.pullSecretsRepo.Create(ctx, &ips)
 	if err != nil {
@@ -141,17 +125,83 @@ func (d *domain) CreateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeImagePullSecret, nips.Name, PublishAdd)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeImagePullSecret, nips.Name, PublishAdd)
 
-	if err := d.applyK8sResource(ctx, nips.EnvironmentName, &pullSecret, nips.RecordVersion); err != nil {
-		return nil, errors.NewE(err)
+	if err := d.applyImagePullSecret(ctx, nips); err != nil {
+		return nil, err
 	}
 
 	return nips, nil
 }
 
-func (d *domain) UpdateImagePullSecret(ctx ResourceContext, ips entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
-	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+func (d *domain) applyImagePullSecret(ctx ConsoleContext, ips *entities.ImagePullSecret) error {
+	environments := ips.Environments
+
+	allEnvironments := false
+	for i := range ips.Environments {
+		if ips.Environments[i] == "*" {
+			allEnvironments = true
+			break
+		}
+	}
+
+	if allEnvironments {
+		envs, err := d.listEnvironments(ctx)
+		if err != nil {
+			return err
+		}
+		for i := range envs {
+			environments = append(environments, envs[i].Name)
+		}
+	}
+
+	for i := range environments {
+		if err := d.applyK8sResource(ctx, environments[i], &ips.GeneratedK8sSecret, ips.RecordVersion); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *domain) deleteImagePullSecret(ctx ConsoleContext, ips *entities.ImagePullSecret) error {
+	environments := ips.Environments
+
+	allEnvironments := false
+	for i := range ips.Environments {
+		if ips.Environments[i] == "*" {
+			allEnvironments = true
+			break
+		}
+	}
+
+	if allEnvironments {
+		envs, err := d.listEnvironments(ctx)
+		if err != nil {
+			return err
+		}
+		for i := range envs {
+			environments = append(environments, envs[i].Name)
+		}
+	}
+
+	for i := range environments {
+		if err := d.deleteK8sResource(ctx, environments[i], &corev1.Secret{
+			TypeMeta:   v1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+			ObjectMeta: v1.ObjectMeta{Name: ips.Name, Namespace: ips.Namespace},
+		}); err != nil {
+			if errors.Is(err, ErrNoClusterAttached) {
+				return d.pullSecretsRepo.DeleteById(ctx, ips.Id)
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *domain) UpdateImagePullSecret(ctx ConsoleContext, ips entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.UpdateImagePullSecret); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -173,66 +223,59 @@ func (d *domain) UpdateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 		return nil, errors.NewE(err)
 	}
 
-	patchForUpdate := common.PatchForUpdate(
-		ctx,
-		&ips,
-		common.PatchOpts{
-			XPatch: repos.Document{
-				fc.ImagePullSecretFormat:             ips.Format,
-				fc.ImagePullSecretDockerConfigJson:   ips.DockerConfigJson,
-				fc.ImagePullSecretRegistryURL:        ips.RegistryURL,
-				fc.ImagePullSecretRegistryUsername:   ips.RegistryUsername,
-				fc.ImagePullSecretRegistryPassword:   ips.RegistryPassword,
-				fc.ImagePullSecretGeneratedK8sSecret: pullSecret,
-			},
-		},
-	)
-	upIps, err := d.pullSecretsRepo.Patch(
-		ctx,
-		ctx.DBFilters().Add(fields.MetadataName, ips.Name),
-		patchForUpdate,
-	)
+	patch := repos.Document{
+		fc.ImagePullSecretFormat:             ips.Format,
+		fc.ImagePullSecretDockerConfigJson:   ips.DockerConfigJson,
+		fc.ImagePullSecretRegistryURL:        ips.RegistryURL,
+		fc.ImagePullSecretRegistryUsername:   ips.RegistryUsername,
+		fc.ImagePullSecretRegistryPassword:   ips.RegistryPassword,
+		fc.ImagePullSecretGeneratedK8sSecret: pullSecret,
+	}
+
+	if ips.Environments != nil {
+		patch[fc.ImagePullSecretEnvironments] = ips.Environments
+	}
+
+	patchForUpdate := common.PatchForUpdate(ctx, &ips, common.PatchOpts{XPatch: patch})
+	upIps, err := d.pullSecretsRepo.Patch(ctx, entities.FilterUniqueImagePullSecret(ctx.AccountName, ips.Name), patchForUpdate)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeImagePullSecret, upIps.Name, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, upIps.EnvironmentName, &pullSecret, upIps.RecordVersion); err != nil {
-		return nil, errors.NewE(err)
-	}
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeImagePullSecret, upIps.Name, PublishUpdate)
 
 	return upIps, errors.NewE(err)
 }
 
-func (d *domain) DeleteImagePullSecret(ctx ResourceContext, name string) error {
-	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+func (d *domain) DeleteImagePullSecret(ctx ConsoleContext, name string) error {
+	if err := d.canPerformActionInAccount(ctx, iamT.DeleteImagePullSecret); err != nil {
 		return errors.NewE(err)
 	}
 
-	uips, err := d.pullSecretsRepo.Patch(
-		ctx,
-		ctx.DBFilters().Add(fields.MetadataName, name),
-		common.PatchForMarkDeletion(),
-	)
+	uips, err := d.pullSecretsRepo.Patch(ctx, entities.FilterUniqueImagePullSecret(ctx.AccountName, name), common.PatchForMarkDeletion())
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, uips.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeImagePullSecret, uips.Name, PublishUpdate)
 
-	if err := d.deleteK8sResource(ctx, "", &corev1.Secret{
-		TypeMeta:   v1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
-		ObjectMeta: v1.ObjectMeta{Name: uips.Name, Namespace: uips.Namespace},
-	}); err != nil {
-		if errors.Is(err, ErrNoClusterAttached) {
-			return d.pullSecretsRepo.DeleteById(ctx, uips.Id)
-		}
+	if err := d.deleteImagePullSecret(ctx, uips); err != nil {
 		return err
 	}
+
+	//if err := d.deleteK8sResource(ctx, "", &corev1.Secret{
+	//	TypeMeta:   v1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+	//	ObjectMeta: v1.ObjectMeta{Name: uips.Name, Namespace: uips.Namespace},
+	//}); err != nil {
+	//	if errors.Is(err, ErrNoClusterAttached) {
+	//		return d.pullSecretsRepo.DeleteById(ctx, uips.Id)
+	//	}
+	//	return err
+	//}
 	return nil
 }
 
-func (d *domain) OnImagePullSecretUpdateMessage(ctx ResourceContext, ips entities.ImagePullSecret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+func (d *domain) OnImagePullSecretUpdateMessage(ctx ConsoleContext, ips entities.ImagePullSecret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	xips, err := d.findImagePullSecret(ctx, ips.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -244,7 +287,7 @@ func (d *domain) OnImagePullSecretUpdateMessage(ctx ResourceContext, ips entitie
 
 	recordVersion, err := d.MatchRecordVersion(ips.Annotations, xips.RecordVersion)
 	if err != nil {
-		return d.resyncK8sResource(ctx, xips.EnvironmentName, xips.SyncStatus.Action, &xips.GeneratedK8sSecret, xips.RecordVersion)
+		return err
 	}
 
 	uips, err := d.pullSecretsRepo.PatchById(
@@ -257,26 +300,23 @@ func (d *domain) OnImagePullSecretUpdateMessage(ctx ResourceContext, ips entitie
 		return err
 	}
 
-	d.resourceEventPublisher.PublishResourceEvent(ctx, uips.GetResourceType(), uips.GetName(), PublishUpdate)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, ips.GetResourceType(), uips.GetName(), PublishUpdate)
 	return errors.NewE(err)
 }
 
-func (d *domain) OnImagePullSecretDeleteMessage(ctx ResourceContext, ips entities.ImagePullSecret) error {
-	err := d.pullSecretsRepo.DeleteOne(
-		ctx,
-		ctx.DBFilters().Add(fields.MetadataName, ips.Name),
-	)
+func (d *domain) OnImagePullSecretDeleteMessage(ctx ConsoleContext, ips entities.ImagePullSecret) error {
+	err := d.pullSecretsRepo.DeleteOne(ctx, entities.FilterUniqueImagePullSecret(ctx.AccountName, ips.Name))
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeImagePullSecret, ips.Name, PublishDelete)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, ips.GetResourceType(), ips.Name, PublishDelete)
 	return nil
 }
 
-func (d *domain) OnImagePullSecretApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error {
+func (d *domain) OnImagePullSecretApplyError(ctx ConsoleContext, errMsg string, name string, opts UpdateAndDeleteOpts) error {
 	uips, err := d.pullSecretsRepo.Patch(
 		ctx,
-		ctx.DBFilters().Add(fields.MetadataName, name),
+		entities.FilterUniqueImagePullSecret(ctx.AccountName, name),
 		common.PatchForErrorFromAgent(
 			errMsg,
 			common.PatchOpts{
@@ -287,18 +327,20 @@ func (d *domain) OnImagePullSecretApplyError(ctx ResourceContext, errMsg string,
 	if err != nil {
 		return err
 	}
-	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeImagePullSecret, uips.Name, PublishDelete)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeImagePullSecret, uips.Name, PublishDelete)
 	return nil
 }
 
-func (d *domain) ResyncImagePullSecret(ctx ResourceContext, name string) error {
-	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
-		return errors.NewE(err)
-	}
-
-	xips, err := d.findImagePullSecret(ctx, name)
-	if err != nil {
-		return errors.NewE(err)
-	}
-	return d.resyncK8sResource(ctx, xips.EnvironmentName, xips.SyncStatus.Action, &xips.GeneratedK8sSecret, xips.RecordVersion)
+func (d *domain) ResyncImagePullSecret(ctx ConsoleContext, name string) error {
+	return errors.Newf("not implemented")
+	//	if err := d.canPerformActionInAccount(ctx, iamT.DeleteImagePullSecret); err != nil {
+	//		return errors.NewE(err)
+	//	}
+	//
+	//	xips, err := d.findImagePullSecret(ctx, name)
+	//	if err != nil {
+	//		return errors.NewE(err)
+	//	}
+	//
+	//	return d.resyncK8sResource(ctx, xips.EnvironmentName, xips.SyncStatus.Action, &xips.GeneratedK8sSecret, xips.RecordVersion)
 }

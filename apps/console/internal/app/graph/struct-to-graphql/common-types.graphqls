@@ -18,6 +18,14 @@ type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
   syncScheduledAt: Date
 }
 
+type Github__com___kloudlite___operator___apis___common____types__MsvcRef @shareable {
+  apiVersion: String
+  clusterName: String!
+  kind: String
+  name: String!
+  namespace: String!
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__AppContainer @shareable {
   args: [String!]
   command: [String!]
@@ -54,10 +62,8 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppSpec @shareable {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppSvc @shareable {
-  name: String
   port: Int!
-  targetPort: Int
-  type: String
+  protocol: String
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__BasicAuth @shareable {
@@ -148,15 +154,8 @@ type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec 
 type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate @shareable {
   apiVersion: String!
   kind: String!
-  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef!
+  msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRef!
   spec: Map!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef @shareable {
-  apiVersion: String!
-  kind: String!
-  name: String!
-  namespace: String!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Probe @shareable {
@@ -319,6 +318,13 @@ type PageInfo @shareable {
   startCursor: String
 }
 
+input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
+  apiVersion: String
+  kind: String
+  name: String!
+  namespace: String!
+}
+
 input Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn {
   args: [String!]
   command: [String!]
@@ -355,10 +361,8 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn {
-  name: String
   port: Int!
-  targetPort: Int
-  type: String
+  protocol: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn {
@@ -447,15 +451,8 @@ input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec
 input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
   apiVersion: String!
   kind: String!
-  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn!
+  msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRefIn!
   spec: Map!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn {
-  apiVersion: String!
-  kind: String!
-  name: String!
-  namespace: String!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn {

@@ -114,6 +114,12 @@ func (d *domain) ListEnvironments(ctx ConsoleContext, search map[string]repos.Ma
 	return d.environmentRepo.FindPaginated(ctx, d.environmentRepo.MergeMatchFilters(filter, search), pq)
 }
 
+func (d *domain) listEnvironments(ctx ConsoleContext) ([]*entities.Environment, error) {
+	return d.environmentRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{fields.AccountName: ctx.AccountName},
+	})
+}
+
 func (d *domain) findEnvironmentByTargetNs(ctx ConsoleContext, targetNs string) (*entities.Environment, error) {
 	w, err := d.environmentRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName:                ctx.AccountName,
