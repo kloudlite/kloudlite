@@ -275,16 +275,18 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_interceptApp: executor(
     gql`
       mutation Core_interceptApp(
-        $envName: String!
-        $appname: String!
-        $deviceName: String!
+        $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
         $intercept: Boolean!
+        $deviceName: String!
+        $appname: String!
+        $envName: String!
       ) {
         core_interceptApp(
-          envName: $envName
-          appname: $appname
-          deviceName: $deviceName
+          portMappings: $portMappings
           intercept: $intercept
+          deviceName: $deviceName
+          appname: $appname
+          envName: $envName
         )
       }
     `,

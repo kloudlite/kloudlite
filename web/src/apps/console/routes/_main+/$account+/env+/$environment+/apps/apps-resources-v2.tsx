@@ -4,7 +4,7 @@ import {
   Link as LinkIcon,
   Repeat,
 } from '~/console/components/icons';
-import { Link, useParams } from '@remix-run/react';
+import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -30,7 +30,10 @@ import { useReload } from '~/lib/client/helpers/reloader';
 import { SyncStatusV2 } from '~/console/components/sync-status';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
-import useActiveDevice from '~/console/hooks/use-device';
+import { useState } from 'react';
+import { Badge } from '~/components/atoms/badge';
+import HandleIntercept from './handle-intercept';
+import { IEnvironmentContext } from '../_layout';
 
 const RESOURCE_NAME = 'app';
 type BaseType = ExtractNodeType<IApps>;
@@ -184,12 +187,12 @@ const ListView = ({ items = [], onAction }: IResource) => {
           {
             render: () => '',
             name: 'intercept',
-            className: 'w-[250px]',
+            className: 'w-[250px] truncate overflow-hidden flex-1',
           },
           {
             render: () => 'Status',
             name: 'status',
-            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+            className: 'w-[180px] flex items-center justify-center',
           },
           {
             render: () => 'Updated',
@@ -214,11 +217,22 @@ const ListView = ({ items = [], onAction }: IResource) => {
                   i.spec.intercept?.enabled && (
                     <ListItem
                       subtitle={
-                        <div>
-                          Intercepted to{' '}
-                          <span className="bodyMd-medium text-text-strong">
-                            {i.spec.intercept.toDevice}
-                          </span>
+                        <div className="flex flex-col gap-lg">
+                          <div>
+                            Intercepted to{' '}
+                            <span className="bodyMd-medium text-text-strong">
+                              {i.spec.intercept.toDevice}
+                            </span>
+                          </div>
+                          <div className="flex gap-lg">
+                            {i.spec.intercept?.portMappings?.map((d) => {
+                              return (
+                                <Badge key={d.appPort}>
+                                  {d.appPort} → {d.devicePort}
+                                </Badge>
+                              );
+                            })}
+                          </div>
                         </div>
                       }
                     />
@@ -254,9 +268,11 @@ const ListView = ({ items = [], onAction }: IResource) => {
 
 const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
   const api = useConsoleApi();
-  const { environment,  account } = useParams();
-  const { device } = useActiveDevice();
+  const { environment, account } = useOutletContext<IEnvironmentContext>();
   const reload = useReload();
+
+  const [visible, setVisible] = useState(false);
+  const [mi, setItem] = useState<ExtractNodeType<IApps>>();
 
   useWatchReload(
     items.map((i) => {
@@ -266,48 +282,40 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
     })
   );
 
-  // useWatchItems(items, (item) => ({
-  //   account,
-  //   
-  //   environment,
-  //   app: pn(item),
-  // }));
-
   const interceptApp = async (item: BaseType, intercept: boolean) => {
-    if (!environment ) {
-      throw new Error('Environment is required!.');
+    if (intercept) {
+      setItem(item);
+      setVisible(true);
+      return;
     }
-    if (device) {
-      try {
-        const { errors } = await api.interceptApp({
-          appname: pn(item),
-          deviceName: pn(device),
-          envName: environment,
-          intercept,
-          
-        });
 
-        if (errors) {
-          throw errors[0];
-        }
-        toast.success('App intercepted successfully');
-        reload();
-      } catch (error) {
-        handleError(error);
+    try {
+      const { errors } = await api.interceptApp({
+        appname: pn(item),
+        deviceName: item.spec.intercept?.toDevice || '',
+        envName: pn(environment),
+        intercept,
+      });
+
+      if (errors) {
+        throw errors[0];
       }
+      toast.success('app intercepted successfully');
+      reload();
+    } catch (error) {
+      handleError(error);
     }
   };
 
   const restartApp = async (item: BaseType) => {
-    if (!environment ) {
+    if (!environment) {
       throw new Error('Environment is required!.');
     }
 
     try {
       const { errors } = await api.restartApp({
         appName: pn(item),
-        envName: environment,
-        
+        envName: pn(environment),
       });
 
       if (errors) {
@@ -338,10 +346,19 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
     },
   };
   return (
-    <ListGridView
-      listView={<ListView {...props} />}
-      gridView={<GridView {...props} />}
-    />
+    <>
+      <ListGridView
+        listView={<ListView {...props} />}
+        gridView={<GridView {...props} />}
+      />
+      <HandleIntercept
+        {...{
+          visible,
+          setVisible,
+          app: mi,
+        }}
+      />
+    </>
   );
 };
 

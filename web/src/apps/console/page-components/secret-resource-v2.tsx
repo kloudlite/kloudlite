@@ -268,13 +268,13 @@ const SecretResourcesV2 = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!environment ) {
+          if (!environment) {
             throw new Error('Project and Environment is required!.');
           }
           try {
             const { errors } = await api.deleteSecret({
               envName: environment,
-              
+
               secretName: parseName(showDeleteDialog),
             });
 

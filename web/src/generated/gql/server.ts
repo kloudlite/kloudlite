@@ -2587,10 +2587,14 @@ export type ConsoleUpdateAppMutationVariables = Exact<{
 export type ConsoleUpdateAppMutation = { core_updateApp?: { id: string } };
 
 export type ConsoleInterceptAppMutationVariables = Exact<{
-  envName: Scalars['String']['input'];
-  appname: Scalars['String']['input'];
-  deviceName: Scalars['String']['input'];
+  portMappings?: InputMaybe<
+    | Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn>
+    | Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn
+  >;
   intercept: Scalars['Boolean']['input'];
+  deviceName: Scalars['String']['input'];
+  appname: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
 }>;
 
 export type ConsoleInterceptAppMutation = { core_interceptApp: boolean };
@@ -2677,7 +2681,11 @@ export type ConsoleGetAppQuery = {
         thresholdCpu?: number;
         thresholdMemory?: number;
       };
-      intercept?: { enabled: boolean; toDevice: string };
+      intercept?: {
+        enabled: boolean;
+        toDevice: string;
+        portMappings?: Array<{ devicePort: number; appPort: number }>;
+      };
       services?: Array<{ port: number }>;
       tolerations?: Array<{
         effect?: K8s__Io___Api___Core___V1__TaintEffect;
@@ -2794,7 +2802,11 @@ export type ConsoleListAppsQuery = {
             thresholdCpu?: number;
             thresholdMemory?: number;
           };
-          intercept?: { enabled: boolean; toDevice: string };
+          intercept?: {
+            enabled: boolean;
+            toDevice: string;
+            portMappings?: Array<{ devicePort: number; appPort: number }>;
+          };
           services?: Array<{ port: number }>;
           tolerations?: Array<{
             effect?: K8s__Io___Api___Core___V1__TaintEffect;
@@ -7268,10 +7280,14 @@ export type AuthCli_GetConfigSecretMapQuery = {
 };
 
 export type AuthCli_InterceptAppMutationVariables = Exact<{
-  envName: Scalars['String']['input'];
-  appname: Scalars['String']['input'];
-  deviceName: Scalars['String']['input'];
+  portMappings?: InputMaybe<
+    | Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn>
+    | Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn
+  >;
   intercept: Scalars['Boolean']['input'];
+  deviceName: Scalars['String']['input'];
+  appname: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
 }>;
 
 export type AuthCli_InterceptAppMutation = { core_interceptApp: boolean };

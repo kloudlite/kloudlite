@@ -6,9 +6,7 @@ import {
   Search,
   File,
   Check,
-  ChevronDown,
-  Globe,
-  ShieldCheck,
+  ChevronUpDown,
 } from '~/console/components/icons';
 import {
   Link,
@@ -17,7 +15,7 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import OptionList from '~/components/atoms/option-list';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import HandleScope from '~/console/page-components/handle-environment';
@@ -167,27 +165,53 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
   );
 
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isMouseOver, setIsMouseOver] = useState<boolean>(false);
 
   return (
     <>
       <BreadcrumSlash />
       <span className="mx-md" />
 
+      <Button
+        // prefix={
+        //   <span className="p-md flex items-center justify-center rounded-full border border-border-default text-text-soft">
+        //     <Buildings size={16} />
+        //   </span>
+        // }
+        content={environment.displayName}
+        size="sm"
+        variant="plain"
+        LinkComponent={Link}
+        to={`/${account}/env/${parseName(environment)}/apps`}
+      />
+
       <OptionList.Root open={open} onOpenChange={setOpen} modal={false}>
         <OptionList.Trigger>
-          <Button
-            content={`${environment.displayName}`}
-            size="sm"
-            variant="plain"
-            suffix={<ChevronDown />}
-            prefix={
-              environment.spec?.routing?.mode === 'private' ? (
-                <ShieldCheck />
-              ) : (
-                <Globe />
-              )
-            }
-          />
+          <button
+            ref={buttonRef}
+            aria-label="accounts"
+            className={cn(
+              'outline-none rounded py-lg px-md mx-md bg-surface-basic-hovered',
+              open || isMouseOver ? 'bg-surface-basic-pressed' : ''
+            )}
+            onMouseOver={() => {
+              setIsMouseOver(true);
+            }}
+            onMouseOut={() => {
+              setIsMouseOver(false);
+            }}
+            onFocus={() => {
+              //
+            }}
+            onBlur={() => {
+              //
+            }}
+          >
+            <div className="flex flex-row items-center gap-md">
+              <ChevronUpDown size={16} />
+            </div>
+          </button>
         </OptionList.Trigger>
         <OptionList.Content className="!pt-0 !pb-md" align="center">
           <div className="p-[3px] pb-0">
@@ -202,7 +226,10 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
             />
           </div>
           <OptionList.Separator />
-          {parseNodes(environments)?.map((item) => {
+          {parseNodes(environments)?.map((item, i) => {
+            if (i > 5) {
+              return null;
+            }
             return (
               <OptionList.Link
                 key={parseName(item)}
@@ -224,6 +251,12 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
               </OptionList.Link>
             );
           })}
+
+          {parseNodes(environments).length > 5 && (
+            <span className="bodySm-medium text-text-soft px-xl py-sm">
+              search for more...
+            </span>
+          )}
 
           {parseNodes(environments).length === 0 && !isLoading && (
             <div className="flex flex-col gap-lg max-w-[198px] px-xl py-lg">

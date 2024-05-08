@@ -43,22 +43,6 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-// const ExtraButton = ({ cluster }: { cluster: BaseType }) => {
-//   const { account } = useParams();
-//   return (
-//     <ResourceExtraAction
-//       options={[
-//         {
-//           label: 'Settings',
-//           icon: <GearSix size={16} />,
-//           type: 'item',
-//           to: `/${account}/infra/${cluster.metadata.name}/settings`,
-//           key: 'settings',
-//         },
-//       ]}
-//     />
-//   );
-// };
 const ExtraButton = ({
   onDelete,
 }: // onEdit,
@@ -282,8 +266,6 @@ const VPNResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   );
   const [showWireguardConfig, setShowWireguardConfig] =
     useState<BaseType | null>(null);
-  // const [showHandleGlobalVpnDevice, setShowHandleGlobalVpnDevice] =
-  //   useState<BaseType | null>(null);
 
   const api = useConsoleApi();
 

@@ -976,12 +976,13 @@ mutation consoleUpdateApp($envName: String!, $app: AppIn!) {
   }
 }
 
-mutation consoleInterceptApp($envName: String!, $appname: String!, $deviceName: String!, $intercept: Boolean!) {
+mutation consoleInterceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $deviceName: String!, $appname: String!, $envName: String!) {
   core_interceptApp(
-    envName: $envName
-    appname: $appname
-    deviceName: $deviceName
+    portMappings: $portMappings
     intercept: $intercept
+    deviceName: $deviceName
+    appname: $appname
+    envName: $envName
   )
 }
 
@@ -1085,6 +1086,10 @@ query consoleGetApp($envName: String!, $name: String!) {
       intercept {
         enabled
         toDevice
+        portMappings {
+          devicePort
+          appPort
+        }
       }
       nodeSelector
       region
@@ -1229,6 +1234,10 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
           intercept {
             enabled
             toDevice
+            portMappings {
+              devicePort
+              appPort
+            }
           }
           nodeSelector
           region
@@ -5752,12 +5761,13 @@ query authCli_getConfigSecretMap($envName: String!, $configQueries: [ConfigKeyRe
   }
 }
 
-mutation authCli_interceptApp($envName: String!, $appname: String!, $deviceName: String!, $intercept: Boolean!) {
+mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $deviceName: String!, $appname: String!, $envName: String!) {
   core_interceptApp(
-    envName: $envName
-    appname: $appname
-    deviceName: $deviceName
+    portMappings: $portMappings
     intercept: $intercept
+    deviceName: $deviceName
+    appname: $appname
+    envName: $envName
   )
 }
 

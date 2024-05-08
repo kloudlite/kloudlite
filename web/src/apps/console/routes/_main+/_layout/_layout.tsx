@@ -34,7 +34,6 @@ import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
 import {
   InfraAsCode,
-  Container as ContainerIcon,
   GearSix,
   Project,
   BackingServices,
@@ -55,7 +54,7 @@ export type IConsoleRootContext = {
 
 export const meta = (c: IRemixCtx) => {
   return [
-    { title: `Account | ${c.params?.account || ''}` },
+    { title: `Account ${constants.metadot} ${c.params?.account || ''}` },
     { name: 'theme-color', content: LightTitlebarColor },
   ];
 };

@@ -133,6 +133,9 @@ const CommonTools = ({
   const [appliedFilters, setAppliedFilters] = useState<IAppliedFilters>({});
   const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
 
+  // eslint-disable-next-line no-param-reassign
+  noViewMode = true;
+
   useSetAppliedFilters({
     setAppliedFilters,
     types: options,
