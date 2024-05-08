@@ -3,6 +3,7 @@ package box
 import (
 	"errors"
 	"fmt"
+
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +16,6 @@ var stopCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		return
 	},
 }
 

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 
+	"github.com/adrg/xdg"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
@@ -22,7 +24,7 @@ var sshCmd = &cobra.Command{
 
 func sshBox(cmd *cobra.Command, _ []string) error {
 	debug := fn.ParseBoolFlag(cmd, "debug")
-	command := exec.Command("ssh", "kl@localhost", "-p", "1729")
+	command := exec.Command("ssh", "kl@localhost", "-p", "1729", "-i", path.Join(xdg.Home, ".ssh", "id_rsa"))
 
 	if debug {
 		fn.Log(command.String())
