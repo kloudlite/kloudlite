@@ -94,7 +94,6 @@ export const globalVpnQueries = (executor: IExecutor) => ({
           }
           privateKey
           publicKey
-          publiEndpoint
           recordVersion
           updateTime
           wireguardConfig {
@@ -153,7 +152,6 @@ export const globalVpnQueries = (executor: IExecutor) => ({
               }
               privateKey
               publicKey
-              publiEndpoint
               recordVersion
               updateTime
               wireguardConfig {

@@ -17,6 +17,8 @@ import {
   ConsoleUpdateClusterMutation,
   ConsoleUpdateClusterMutationVariables,
   ConsoleListDnsHostsQueryVariables,
+  ConsoleListAllClustersQuery,
+  ConsoleListAllClustersQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type ICluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
@@ -88,6 +90,185 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleClustersCountQuery) => data.infra_listClusters,
       vars(_: ConsoleClustersCountQueryVariables) {},
+    }
+  ),
+
+  listAllClusters: executor(
+    gql`
+      query Infra_listClusterss(
+        $search: SearchCluster
+        $pagination: CursorPaginationIn
+      ) {
+        byok_clusters: infra_listBYOKClusters(
+          search: $search
+          pagination: $pagination
+        ) {
+          edges {
+            cursor
+            node {
+              accountName
+              clusterPublicEndpoint
+              clusterSvcCIDR
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              creationTime
+              displayName
+              globalVPN
+              id
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              markedForDeletion
+              metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
+                generation
+                labels
+                name
+                namespace
+              }
+              recordVersion
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
+              updateTime
+            }
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+          totalCount
+        }
+
+        clusters: infra_listClusters(search: $search, pagination: $pagination) {
+          totalCount
+          pageInfo {
+            startCursor
+            hasPreviousPage
+            hasNextPage
+            endCursor
+          }
+          edges {
+            cursor
+            node {
+              id
+              displayName
+              markedForDeletion
+              metadata {
+                name
+                annotations
+                generation
+              }
+              creationTime
+              lastUpdatedBy {
+                userId
+                userName
+                userEmail
+              }
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              updateTime
+              status {
+                checks
+                checkList {
+                  description
+                  debug
+                  name
+                  title
+                }
+                isReady
+                lastReadyGeneration
+                lastReconcileTime
+                message {
+                  RawMessage
+                }
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
+              recordVersion
+              spec {
+                messageQueueTopicName
+                kloudliteRelease
+
+                clusterTokenRef {
+                  key
+                  name
+                  namespace
+                }
+                accountId
+                accountName
+                availabilityMode
+                aws {
+                  k3sMasters {
+                    iamInstanceProfileRole
+                    instanceType
+                    nodes
+                    nvidiaGpuEnabled
+                    rootVolumeSize
+                    rootVolumeType
+                  }
+                  nodePools
+                  region
+                  spotNodePools
+                }
+                gcp {
+                  credentialsRef {
+                    name
+                    namespace
+                  }
+                  gcpProjectID
+                  region
+                }
+                cloudProvider
+                backupToS3Enabled
+                cloudflareEnabled
+                clusterInternalDnsHost
+                output {
+                  keyK3sAgentJoinToken
+                  keyK3sServerJoinToken
+                  keyKubeconfig
+                  secretName
+                }
+                publicDNSHost
+                taintMasterNodes
+              }
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleListAllClustersQuery) => data,
+      vars(_: ConsoleListAllClustersQueryVariables) {},
     }
   ),
 

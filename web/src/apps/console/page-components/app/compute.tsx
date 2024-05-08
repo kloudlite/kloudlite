@@ -15,9 +15,9 @@ import { useOutletContext } from '@remix-run/react';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
+import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$environment+/_layout';
 import { plans } from './datas';
 import appInitialFormValues, { mapFormValuesToApp } from './app-utils';
-import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$environment+/_layout';
 
 const valueRender = ({
   label,

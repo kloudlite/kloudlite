@@ -37,7 +37,6 @@ export const cliQueries = (executor: IExecutor) => ({
             namespace
           }
           privateKey
-          publiEndpoint
           publicKey
           recordVersion
           updateTime
@@ -109,7 +108,6 @@ export const cliQueries = (executor: IExecutor) => ({
             namespace
           }
           privateKey
-          publiEndpoint
           publicKey
           recordVersion
           updateTime

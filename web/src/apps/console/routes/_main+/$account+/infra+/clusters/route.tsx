@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
 import OptionList from '~/components/atoms/option-list';
+import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
 import ClusterResourcesV2 from './cluster-resources-v2';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
@@ -20,27 +21,18 @@ import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { data, errors } = await GQLServerHandler(ctx.request).listClusters({
+    const { data, errors } = await GQLServerHandler(
+      ctx.request
+    ).listAllClusters({
       pagination: getPagination(ctx),
       search: getSearch(ctx),
     });
-    console.log(errors);
 
     if (errors) {
       throw errors[0];
     }
 
-    const { data: byokClustersList, errors: byokErrors } =
-      await GQLServerHandler(ctx.request).listByokClusters({
-        pagination: getPagination(ctx),
-        search: getSearch(ctx),
-      });
-
-    if (byokErrors) {
-      throw byokErrors[0];
-    }
-
-    if (data.edges.length === 0) {
+    if (!data.clusters?.totalCount && !data.byok_clusters?.totalCount) {
       const { data: secrets, errors: sErrors } = await GQLServerHandler(
         ctx.request
       ).listProviderSecrets({});
@@ -51,14 +43,12 @@ export const loader = async (ctx: IRemixCtx) => {
 
       return {
         clustersData: data || {},
-        byokClustersData: byokClustersList || {},
         secretsCount: secrets.edges.length,
       };
     }
 
     return {
       clustersData: data,
-      byokClustersData: byokClustersList,
       secretsCount: -1,
     };
   });
@@ -216,15 +206,15 @@ const Clusters = () => {
   return (
     <LoadingComp
       data={promise}
-      // skeletonData={{
-      //   clustersData: fake.ConsoleListClustersQuery.infra_listClusters as any,
-      //   secretsCount: 1,
-      // }}
+      skeletonData={{
+        clustersData: fake.ConsoleListAllClustersQuery as any,
+        secretsCount: 1,
+      }}
     >
-      {({ clustersData, byokClustersData, secretsCount }) => {
-        const clusters = parseNodes(clustersData);
+      {({ clustersData, secretsCount }) => {
+        const clusters = parseNodes(clustersData.clusters);
 
-        const byokClusters = parseNodes(byokClustersData);
+        const byokClusters = parseNodes(clustersData.byok_clusters);
 
         return (
           <ClusterComponent

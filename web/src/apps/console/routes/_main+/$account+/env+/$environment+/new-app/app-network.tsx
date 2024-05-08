@@ -9,7 +9,6 @@ import { useAppState } from '~/console/page-components/app-states';
 import { BottomNavigation, InfoLabel } from '~/console/components/commons';
 import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
 import {
-  ArrowRight,
   ChevronLeft,
   ChevronRight,
   SmileySad,
@@ -18,7 +17,6 @@ import {
 import { FadeIn, parseValue } from '~/console/page-components/util';
 
 interface IExposedPorts {
-  targetPort?: number;
   port: number;
 }
 
@@ -82,11 +80,8 @@ const ExposedPortList = ({
                     className: 'flex-1',
                     render: () => (
                       <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
-                        <span>Service: </span>
-                        {ep.port}
-                        <ArrowRight size={16} />
                         <span>Container: </span>
-                        {ep.targetPort}
+                        {ep.port}
                       </div>
                     ),
                   },
@@ -129,7 +124,6 @@ const ExposedPortList = ({
 
 export const ExposedPorts = () => {
   const [port, setPort] = useState<number | string>('');
-  const [targetPort, setTargetPort] = useState<number | string>('');
   const [portError, setPortError] = useState<string>('');
 
   const { services, setServices } = useAppState();
@@ -141,7 +135,6 @@ export const ExposedPorts = () => {
   useEffect(() => {
     if (!hasChanges) {
       setPort('');
-      setTargetPort('');
       setPortError('');
     }
   }, [hasChanges]);
@@ -166,24 +159,6 @@ export const ExposedPorts = () => {
               }}
             />
           </div>
-          <div className="flex-1">
-            <NumberInput
-              min={0}
-              max={65534}
-              label={
-                <InfoLabel
-                  info="info about container port"
-                  label="Container port"
-                />
-              }
-              size="lg"
-              autoComplete="off"
-              value={targetPort}
-              onChange={({ target }) => {
-                setTargetPort(parseValue(target.value, 0));
-              }}
-            />
-          </div>
         </div>
         <div className="flex flex-row gap-md items-center">
           <div className="bodySm text-text-soft flex-1">
@@ -193,22 +168,19 @@ export const ExposedPorts = () => {
           <Button
             content="Expose port"
             variant="basic"
-            disabled={!port || !targetPort}
+            disabled={!port}
             onClick={() => {
               if (services?.find((ep) => ep.port && ep.port === port)) {
                 setPortError('Port is already exposed.');
               } else {
-                if (typeof port === 'number' && typeof targetPort === 'number')
+                if (typeof port === 'number')
                   setServices((prev) => [
                     ...prev,
                     {
-                      name: `port-${port}`,
                       port,
-                      targetPort,
                     },
                   ]);
                 setPort('');
-                setTargetPort('');
                 setPortError('');
               }
             }}

@@ -839,10 +839,7 @@ export type RepositoryIn = {
 };
 
 export type ByokClusterIn = {
-  clusterPublicEndpoint: Scalars['String']['input'];
-  clusterToken: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
-  messageQueueTopicName: Scalars['String']['input'];
   metadata: MetadataIn;
 };
 
@@ -941,9 +938,9 @@ export type GlobalVpnIn = {
 };
 
 export type GlobalVpnDeviceIn = {
+  displayName: Scalars['String']['input'];
   globalVPNName: Scalars['String']['input'];
   metadata: MetadataIn;
-  publiEndpoint?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type HelmReleaseIn = {
@@ -1813,6 +1810,145 @@ export type ConsoleClustersCountQueryVariables = Exact<{
 
 export type ConsoleClustersCountQuery = {
   infra_listClusters?: { totalCount: number };
+};
+
+export type ConsoleListAllClustersQueryVariables = Exact<{
+  search?: InputMaybe<SearchCluster>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListAllClustersQuery = {
+  byok_clusters?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        clusterPublicEndpoint: string;
+        clusterSvcCIDR: string;
+        creationTime: any;
+        displayName: string;
+        globalVPN: string;
+        id: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+  clusters?: {
+    totalCount: number;
+    pageInfo: {
+      startCursor?: string;
+      hasPreviousPage?: boolean;
+      hasNextPage?: boolean;
+      endCursor?: string;
+    };
+    edges: Array<{
+      cursor: string;
+      node: {
+        id: string;
+        displayName: string;
+        markedForDeletion?: boolean;
+        creationTime: any;
+        updateTime: any;
+        recordVersion: number;
+        metadata: { name: string; annotations?: any; generation: number };
+        lastUpdatedBy: { userId: string; userName: string; userEmail: string };
+        createdBy: { userEmail: string; userId: string; userName: string };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReadyGeneration?: number;
+          lastReconcileTime?: any;
+          checkList?: Array<{
+            description?: string;
+            debug?: boolean;
+            name: string;
+            title: string;
+          }>;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion: string;
+            kind: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+        spec: {
+          messageQueueTopicName: string;
+          kloudliteRelease: string;
+          accountId: string;
+          accountName: string;
+          availabilityMode: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode;
+          cloudProvider: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
+          backupToS3Enabled: boolean;
+          cloudflareEnabled?: boolean;
+          clusterInternalDnsHost?: string;
+          publicDNSHost: string;
+          taintMasterNodes: boolean;
+          clusterTokenRef?: { key: string; name: string; namespace?: string };
+          aws?: {
+            nodePools?: any;
+            region: string;
+            spotNodePools?: any;
+            k3sMasters?: {
+              iamInstanceProfileRole?: string;
+              instanceType: string;
+              nodes?: any;
+              nvidiaGpuEnabled: boolean;
+              rootVolumeSize: number;
+              rootVolumeType: string;
+            };
+          };
+          gcp?: {
+            gcpProjectID: string;
+            region: string;
+            credentialsRef: { name: string; namespace?: string };
+          };
+          output?: {
+            keyK3sAgentJoinToken: string;
+            keyK3sServerJoinToken: string;
+            keyKubeconfig: string;
+            secretName: string;
+          };
+        };
+      };
+    }>;
+  };
 };
 
 export type ConsoleListClustersQueryVariables = Exact<{
@@ -5266,7 +5402,6 @@ export type ConsoleGetGlobalVpnDeviceQuery = {
     markedForDeletion?: boolean;
     privateKey: string;
     publicKey: string;
-    publiEndpoint?: string;
     recordVersion: number;
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
@@ -5305,7 +5440,6 @@ export type ConsoleListGlobalVpnDevicesQuery = {
         markedForDeletion?: boolean;
         privateKey: string;
         publicKey: string;
-        publiEndpoint?: string;
         recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
@@ -6972,7 +7106,6 @@ export type AuthCli_CreateGlobalVpnDeviceMutation = {
     ipAddr: string;
     markedForDeletion?: boolean;
     privateKey: string;
-    publiEndpoint?: string;
     publicKey: string;
     recordVersion: number;
     updateTime: any;
@@ -7022,7 +7155,6 @@ export type AuthCli_GetGlobalVpnDeviceQuery = {
     ipAddr: string;
     markedForDeletion?: boolean;
     privateKey: string;
-    publiEndpoint?: string;
     publicKey: string;
     recordVersion: number;
     updateTime: any;

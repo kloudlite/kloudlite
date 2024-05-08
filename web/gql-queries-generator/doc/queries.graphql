@@ -115,6 +115,169 @@ query consoleClustersCount {
   }
 }
 
+query consoleListAllClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
+  byok_clusters: infra_listBYOKClusters(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        clusterPublicEndpoint
+        clusterSvcCIDR
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        globalVPN
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+  clusters: infra_listClusters(search: $search, pagination: $pagination) {
+    totalCount
+    pageInfo {
+      startCursor
+      hasPreviousPage
+      hasNextPage
+      endCursor
+    }
+    edges {
+      cursor
+      node {
+        id
+        displayName
+        markedForDeletion
+        metadata {
+          name
+          annotations
+          generation
+        }
+        creationTime
+        lastUpdatedBy {
+          userId
+          userName
+          userEmail
+        }
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        updateTime
+        status {
+          checks
+          checkList {
+            description
+            debug
+            name
+            title
+          }
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        recordVersion
+        spec {
+          messageQueueTopicName
+          kloudliteRelease
+          clusterTokenRef {
+            key
+            name
+            namespace
+          }
+          accountId
+          accountName
+          availabilityMode
+          aws {
+            k3sMasters {
+              iamInstanceProfileRole
+              instanceType
+              nodes
+              nvidiaGpuEnabled
+              rootVolumeSize
+              rootVolumeType
+            }
+            nodePools
+            region
+            spotNodePools
+          }
+          gcp {
+            credentialsRef {
+              name
+              namespace
+            }
+            gcpProjectID
+            region
+          }
+          cloudProvider
+          backupToS3Enabled
+          cloudflareEnabled
+          clusterInternalDnsHost
+          output {
+            keyK3sAgentJoinToken
+            keyK3sServerJoinToken
+            keyKubeconfig
+            secretName
+          }
+          publicDNSHost
+          taintMasterNodes
+        }
+      }
+    }
+  }
+}
+
 query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
   infra_listClusters(search: $search, pagination: $pagination) {
     totalCount
@@ -3754,7 +3917,6 @@ query consoleGetGlobalVpnDevice($gvpn: String!, $deviceName: String!) {
     }
     privateKey
     publicKey
-    publiEndpoint
     recordVersion
     updateTime
     wireguardConfig {
@@ -3801,7 +3963,6 @@ query consoleListGlobalVpnDevices($gvpn: String!, $search: SearchGlobalVPNDevice
         }
         privateKey
         publicKey
-        publiEndpoint
         recordVersion
         updateTime
         wireguardConfig {
@@ -5464,7 +5625,6 @@ mutation authCli_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
       namespace
     }
     privateKey
-    publiEndpoint
     publicKey
     recordVersion
     updateTime
@@ -5512,7 +5672,6 @@ query authCli_getGlobalVpnDevice($gvpn: String!, $deviceName: String!) {
       namespace
     }
     privateKey
-    publiEndpoint
     publicKey
     recordVersion
     updateTime

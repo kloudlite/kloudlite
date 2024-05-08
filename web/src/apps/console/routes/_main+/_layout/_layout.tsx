@@ -37,7 +37,6 @@ import {
   Container as ContainerIcon,
   GearSix,
   Project,
-  WireGuardlogo,
   BackingServices,
 } from '~/console/components/icons';
 
@@ -98,16 +97,16 @@ const AccountTabs = () => {
           to: '/infra',
           value: '/infra',
         },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
-              <ContainerIcon size={iconSize} />
-              Packages
-            </span>
-          ),
-          to: '/packages/repos',
-          value: '/packages',
-        },
+        // {
+        //   label: (
+        //     <span className="flex flex-row items-center gap-lg">
+        //       <ContainerIcon size={iconSize} />
+        //       Packages
+        //     </span>
+        //   ),
+        //   to: '/packages/repos',
+        //   value: '/packages',
+        // },
         // {
         //   label: (
         //     <span className="flex flex-row items-center gap-lg">

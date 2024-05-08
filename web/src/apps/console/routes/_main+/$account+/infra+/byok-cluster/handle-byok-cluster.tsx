@@ -10,7 +10,6 @@ import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
-import { TextInput } from '~/components/atoms/input';
 
 type IDialog = IDialogBase<ExtractNodeType<IByocClusters>>;
 
@@ -26,13 +25,11 @@ const Root = (props: IDialog) => {
         ? {
             displayName: props.data.displayName,
             name: parseName(props.data),
-            clusterPublicEndpoint: props.data.clusterPublicEndpoint,
             isNameError: false,
           }
         : {
             name: '',
             displayName: '',
-            clusterPublicEndpoint: '',
             isNameError: false,
           },
       validationSchema: Yup.object({
@@ -48,7 +45,6 @@ const Root = (props: IDialog) => {
                 metadata: {
                   name: val.name,
                 },
-                clusterPublicEndpoint: val.clusterPublicEndpoint,
               },
             });
             if (e) {
@@ -97,15 +93,6 @@ const Root = (props: IDialog) => {
             handleChange={handleChange}
             nameErrorLabel="isNameError"
             isUpdate={isUpdate}
-          />
-
-          <TextInput
-            label="Cluster Public Endpoint"
-            size="lg"
-            placeholder="cluster Public Endpoint"
-            value={values.clusterPublicEndpoint}
-            onChange={handleChange('clusterPublicEndpoint')}
-            disabled={isUpdate}
           />
         </div>
       </Popup.Content>

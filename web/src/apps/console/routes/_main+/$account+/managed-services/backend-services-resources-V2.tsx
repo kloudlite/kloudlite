@@ -23,12 +23,10 @@ import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import HandleBackendService from './handle-backend-service';
 import { IAccountContext } from '../_layout';
-// import { IClusterContext } from '../_layout';
 
 const RESOURCE_NAME = 'managed service';
 type BaseType = ExtractNodeType<IClusterMSvs>;
@@ -149,8 +147,7 @@ const GridView = ({ items = [], templates = [], onAction: _ }: IResource) => {
 };
 
 const ListView = ({ items = [], templates = [], onAction }: IResource) => {
-  // const { account, cluster } = useOutletContext<IClusterContext>();
-  // const { account } = useOutletContext<IAccountContext>();
+  const { account } = useOutletContext<IAccountContext>();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -214,9 +211,7 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
                 render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
-            // to: `/${parseName(account)}/infra/${parseName(
-            //   cluster
-            // )}/msvc/${id}/logs-n-metrics`,
+            to: `/${parseName(account)}/msvc/${id}/logs-n-metrics`,
           };
         }),
       }}
@@ -237,17 +232,6 @@ const BackendServicesResourcesV2 = ({
   const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const params = useParams();
-
-  // const { account, cluster } = useOutletContext<IClusterContext>();
-  // const { account } = useOutletContext<IAccountContext>();
-  // useWatchReload(
-  //   items.map((i) => {
-  //     return `account:${parseName(account)}.cluster:${parseName(
-  //       cluster
-  //     )}.managed_service:${parseName(i)}`;
-  //   })
-  // );
 
   const props: IResource = {
     items,

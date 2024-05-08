@@ -10,7 +10,6 @@ import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IGlobalVpnDevices } from '~/console/server/gql/queries/global-vpn-queries';
-// import { TextInput } from '~/components/atoms/input';
 
 type IDialog = IDialogBase<ExtractNodeType<IGlobalVpnDevices>>;
 
@@ -26,13 +25,11 @@ const Root = (props: IDialog) => {
         ? {
             displayName: props.data.displayName,
             name: parseName(props.data),
-            globalVpnName: props.data.globalVPNName,
             isNameError: false,
           }
         : {
             displayName: '',
             name: '',
-            globalVpnName: '',
             isNameError: false,
           },
       validationSchema: Yup.object({
@@ -44,6 +41,7 @@ const Root = (props: IDialog) => {
           if (!isUpdate) {
             const { errors: e } = await api.createGlobalVpnDevice({
               gvpnDevice: {
+                displayName: val.name,
                 globalVPNName: 'default',
                 metadata: {
                   name: val.name,
@@ -54,15 +52,6 @@ const Root = (props: IDialog) => {
               throw e[0];
             }
           }
-          //   else if (isUpdate) {
-          //     const { errors: e } = await api.updateByokCluster({
-          //       clusterName: val.name,
-          //       displayName: val.globalVpnName,
-          //     });
-          //     if (e) {
-          //       throw e[0];
-          //     }
-          //   }
           reloadPage();
           resetValues();
           toast.success(
@@ -98,15 +87,6 @@ const Root = (props: IDialog) => {
             nameErrorLabel="isNameError"
             isUpdate={isUpdate}
           />
-
-          {/* <TextInput
-            label="Global Vpn Name"
-            size="lg"
-            placeholder="global vpn name"
-            value={values.globalVpnName}
-            onChange={handleChange('globalVpnName')}
-            disabled={isUpdate}
-          /> */}
         </div>
       </Popup.Content>
       <Popup.Footer>

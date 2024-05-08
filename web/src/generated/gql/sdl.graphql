@@ -187,10 +187,7 @@ type BYOKClusterEdge {
 }
 
 input BYOKClusterIn {
-  clusterPublicEndpoint: String!
-  clusterToken: String!
   displayName: String!
-  messageQueueTopicName: String!
   metadata: MetadataIn!
 }
 
@@ -1939,8 +1936,8 @@ type GlobalVPNDevice {
   markedForDeletion: Boolean
   metadata: Metadata!
   privateKey: String!
+  publicEndpoint: String
   publicKey: String!
-  publiEndpoint: String
   recordVersion: Int!
   updateTime: Date!
   wireguardConfig: EncodedValue
@@ -1952,9 +1949,9 @@ type GlobalVPNDeviceEdge {
 }
 
 input GlobalVPNDeviceIn {
+  displayName: String!
   globalVPNName: String!
   metadata: MetadataIn!
-  publiEndpoint: String
 }
 
 type GlobalVPNDevicePaginatedRecords {
@@ -3767,6 +3764,7 @@ type Query {
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
   infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
+  infrat_getBYOKClusterSetupInstructions(name: String!): String
   iot_getApp(deviceBlueprintName: String!, name: String!, projectName: String!): IOTApp
   iot_getDeployment(name: String!, projectName: String!): IOTDeployment
   iot_getDevice(deploymentName: String!, name: String!, projectName: String!): IOTDevice

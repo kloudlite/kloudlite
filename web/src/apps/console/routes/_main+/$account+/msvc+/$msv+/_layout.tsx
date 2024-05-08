@@ -16,15 +16,15 @@ import { BreadcrumSlash } from '~/console/utils/commons';
 import { Truncate } from '~/root/lib/utils/common';
 import { IClusterMSv } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import fake from '~/root/fake-data-generator/fake';
-import { IClusterContext } from '../../_layout';
+import { IAccountContext } from '../../_layout';
 
 const ManagedServiceTabs = () => {
-  const { account, msv, cluster } = useParams();
+  const { account, msv } = useParams();
   return (
     <CommonTabs
-      baseurl={`/${account}/infra/${cluster}/msvc/${msv}`}
+      baseurl={`/${account}/msvc/${msv}`}
       backButton={{
-        to: `/${account}/infra/${cluster}/managed-services`,
+        to: `/${account}/managed-services`,
         label: 'Managed Services',
       }}
       tabs={[
@@ -65,7 +65,7 @@ export const handle = ({
   };
 };
 
-export interface IManagedServiceContext extends IClusterContext {
+export interface IManagedServiceContext extends IAccountContext {
   managedService: IClusterMSv;
 }
 
@@ -82,12 +82,11 @@ const MSOutlet = ({
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { msv, cluster } = ctx.params;
+    const { msv } = ctx.params;
     try {
       const { data, errors } = await GQLServerHandler(
         ctx.request
       ).getClusterMSv({
-        clusterName: cluster,
         name: msv,
       });
       if (errors) {

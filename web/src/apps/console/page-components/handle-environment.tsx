@@ -38,13 +38,23 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
 
   const { data: clustersData, isLoading: cIsLoading } = useCustomSwr(
     'clusters',
-    async () => api.listClusters({}),
+    async () =>
+      api.listClusters({
+        pagination: {
+          first: 100,
+        },
+      }),
     true
   );
 
   const { data: byokClustersData, isLoading: byokCIsLoading } = useCustomSwr(
     'byokclusters',
-    async () => api.listByokClusters({}),
+    async () =>
+      api.listByokClusters({
+        pagination: {
+          first: 100,
+        },
+      }),
     true
   );
 
