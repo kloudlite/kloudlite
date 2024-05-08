@@ -60,13 +60,16 @@ chown -R kl /home/kl/.nix-shell-args
 if [ ! -f "/tmp/ssh2" ]; then
     mkdir -p /home/kl/.ssh
     chown -R kl /home/kl/.ssh
-    cp /tmp/ssh2/* /home/kl/.ssh/*
-    chmod -R 400 /home/kl/.ssh
+    cp /tmp/ssh2/authorized_keys /home/kl/.ssh/authorized_keys
+    chmod 600 /home/kl/.ssh/authorized_keys
+    chown kl /home/kl/.ssh/authorized_keys
     echo "successfully copied ssh credentials"
 fi 
 
 sudo /mounter --conf /tmp/sample.json
 
+
+echo "starting sshd"
 /usr/sbin/sshd -D
 EOF
 RUN chmod +x /entrypoint.sh

@@ -30,6 +30,7 @@ func sshBox(cmd *cobra.Command, _ []string) error {
 		fn.Log(command.String())
 	}
 
+	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	if err := command.Run(); err != nil {
