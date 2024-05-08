@@ -928,10 +928,7 @@ query consoleGetApp($envName: String!, $name: String!) {
       replicas
       serviceAccount
       services {
-        name
         port
-        targetPort
-        type
       }
       tolerations {
         effect
@@ -1075,10 +1072,7 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
           replicas
           serviceAccount
           services {
-            name
             port
-            targetPort
-            type
           }
           tolerations {
             effect
@@ -2753,11 +2747,19 @@ query consoleGetBuildRun($buildId: ID!, $buildRunName: String!) {
   }
 }
 
-query consoleGetClusterMSv($clusterName: String!, $name: String!) {
-  infra_getClusterManagedService(clusterName: $clusterName, name: $name) {
-    id
+query consoleGetClusterMSv($name: String!) {
+  infra_getClusterManagedService(name: $name) {
     clusterName
+    creationTime
     displayName
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
     metadata {
       annotations
       creationTimestamp
@@ -2770,35 +2772,46 @@ query consoleGetClusterMSv($clusterName: String!, $name: String!) {
     recordVersion
     spec {
       msvcSpec {
+        nodeSelector
         serviceTemplate {
           apiVersion
           kind
           spec
         }
+        tolerations {
+          effect
+          key
+          operator
+          tolerationSeconds
+          value
+        }
       }
       targetNamespace
     }
+    updateTime
   }
 }
 
-mutation consoleCreateClusterMSv($clusterName: String!, $service: ClusterManagedServiceIn!) {
-  infra_createClusterManagedService(clusterName: $clusterName, service: $service) {
+mutation consoleCreateClusterMSv($service: ClusterManagedServiceIn!) {
+  infra_createClusterManagedService(service: $service) {
     id
   }
 }
 
-mutation consoleUpdateClusterMSv($clusterName: String!, $service: ClusterManagedServiceIn!) {
-  infra_updateClusterManagedService(clusterName: $clusterName, service: $service) {
+mutation consoleUpdateClusterMSv($service: ClusterManagedServiceIn!) {
+  infra_updateClusterManagedService(service: $service) {
     id
   }
 }
 
-query consoleListClusterMSvs($clusterName: String!) {
-  infra_listClusterManagedServices(clusterName: $clusterName) {
+query consoleListClusterMSvs($search: SearchClusterManagedService) {
+  infra_listClusterManagedServices(search: $search) {
     edges {
       cursor
       node {
-        id
+        accountName
+        apiVersion
+        clusterName
         createdBy {
           userEmail
           userId
@@ -2806,6 +2819,8 @@ query consoleListClusterMSvs($clusterName: String!) {
         }
         creationTime
         displayName
+        id
+        kind
         lastUpdatedBy {
           userEmail
           userId
@@ -2813,20 +2828,41 @@ query consoleListClusterMSvs($clusterName: String!) {
         }
         markedForDeletion
         metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
           name
           namespace
         }
         recordVersion
         spec {
           msvcSpec {
+            nodeSelector
             serviceTemplate {
               apiVersion
               kind
               spec
             }
+            tolerations {
+              effect
+              key
+              operator
+              tolerationSeconds
+              value
+            }
           }
+          targetNamespace
         }
         status {
+          checkList {
+            debug
+            description
+            hide
+            name
+            title
+          }
           checks
           isReady
           lastReadyGeneration
@@ -2862,11 +2898,8 @@ query consoleListClusterMSvs($clusterName: String!) {
   }
 }
 
-mutation consoleDeleteClusterMSv($clusterName: String!, $serviceName: String!) {
-  infra_deleteClusterManagedService(
-    clusterName: $clusterName
-    serviceName: $serviceName
-  )
+mutation consoleDeleteClusterMSv($name: String!) {
+  infra_deleteClusterManagedService(name: $name)
 }
 
 mutation consoleDeleteByokCluster($name: String!) {
@@ -3603,20 +3636,28 @@ mutation consoleDeleteConsoleVpnDevice($deviceName: String!) {
   core_deleteVPNDevice(deviceName: $deviceName)
 }
 
-mutation consoleCreateImagePullSecret($envName: String!, $imagePullSecretIn: ImagePullSecretIn!) {
-  core_createImagePullSecret(
-    envName: $envName
-    imagePullSecretIn: $imagePullSecretIn
-  ) {
+mutation consoleCreateImagePullSecret($pullSecret: ImagePullSecretIn!) {
+  core_createImagePullSecret(pullSecret: $pullSecret) {
     id
   }
 }
 
-query consoleListImagePullSecrets($envName: String!, $search: SearchImagePullSecrets, $pq: CursorPaginationIn) {
-  core_listImagePullSecrets(envName: $envName, search: $search, pq: $pq) {
+mutation consoleUpdateImagePullSecret($pullSecret: ImagePullSecretIn!) {
+  core_updateImagePullSecret(pullSecret: $pullSecret) {
+    id
+  }
+}
+
+mutation consoleDeleteImagePullSecrets($name: String!) {
+  core_deleteImagePullSecret(name: $name)
+}
+
+query consoleListImagePullSecrets($search: SearchImagePullSecrets, $pq: CursorPaginationIn) {
+  core_listImagePullSecrets(search: $search, pq: $pq) {
     edges {
       cursor
       node {
+        accountName
         createdBy {
           userEmail
           userId
@@ -3625,8 +3666,9 @@ query consoleListImagePullSecrets($envName: String!, $search: SearchImagePullSec
         creationTime
         displayName
         dockerConfigJson
-        environmentName
+        environments
         format
+        id
         lastUpdatedBy {
           userEmail
           userId
@@ -3634,7 +3676,11 @@ query consoleListImagePullSecrets($envName: String!, $search: SearchImagePullSec
         }
         markedForDeletion
         metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
           generation
+          labels
           name
           namespace
         }
@@ -4234,10 +4280,7 @@ query iotconsoleGetIotApp($projectName: String!, $deviceBlueprintName: String!, 
       replicas
       serviceAccount
       services {
-        name
         port
-        targetPort
-        type
       }
       tolerations {
         effect
@@ -4404,10 +4447,7 @@ query iotconsoleListIotApps($deviceBlueprintName: String!, $search: SearchIOTApp
           replicas
           serviceAccount
           services {
-            name
             port
-            targetPort
-            type
           }
           tolerations {
             effect
@@ -5589,10 +5629,7 @@ query authCli_listApps($envName: String!) {
           replicas
           serviceAccount
           services {
-            name
             port
-            targetPort
-            type
           }
         }
         status {

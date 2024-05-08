@@ -1,10 +1,13 @@
-import { GearSix, PencilSimple, Trash } from '~/console/components/icons';
+import { PencilSimple, Trash } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
   ListTitle,
+  listClass,
+  listFlex,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
+import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import {
   ExtractNodeType,
@@ -21,10 +24,8 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
-import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { SyncStatusV2 } from '~/console/components/sync-status';
+import { useOutletContext, useParams } from '@remix-run/react';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import ListV2 from '~/console/components/listV2';
 import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import HandleBackendService from './handle-backend-service';
 import { IAccountContext } from '../_layout';
@@ -93,38 +94,23 @@ interface IResource {
   onAction: OnAction;
 }
 
-const GridView = ({ items = [], templates = [], onAction: _ }: IResource) => {
-  const { account, project } = useParams();
+const GridView = ({ items = [], templates = [], onAction }: IResource) => {
   return (
-    <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
+    <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
         const { name, id, logo, updateInfo } = parseItem(item, templates);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${project}/msvc/${id}/logs-n-metrics`}
             rows={[
               {
-                key: generateKey(keyPrefix, name + id),
+                key: generateKey(keyPrefix, name),
                 render: () => (
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    action={
-                      <ResourceExtraAction
-                        options={[
-                          {
-                            key: 'managed-services-resource-extra-action-1',
-                            to: `/${account}/${project}/msvc/${id}/logs-n-metrics`,
-                            icon: <GearSix size={16} />,
-                            label: 'logs & metrics',
-                            type: 'item',
-                          },
-                        ]}
-                      />
-                    }
-                    // action={<ExtraButton onAction={onAction} item={item} />}
+                    action={<ExtraButton onAction={onAction} item={item} />}
                     avatar={
                       <img src={logo} alt={name} className="w-4xl h-4xl" />
                     }
@@ -149,44 +135,19 @@ const GridView = ({ items = [], templates = [], onAction: _ }: IResource) => {
 };
 
 const ListView = ({ items = [], templates = [], onAction }: IResource) => {
-  // const { account, cluster } = useOutletContext<IClusterContext>();
-  // const { account } = useOutletContext<IAccountContext>();
   return (
-    <ListV2.Root
-      linkComponent={Link}
-      data={{
-        headers: [
-          {
-            render: () => (
-              <div className="flex flex-row">
-                <span className="w-[48px]" />
-                Name
-              </div>
-            ),
-            name: 'name',
-            className: 'w-[180px]',
-          },
-          {
-            render: () => 'Status',
-            name: 'status',
-            className: 'flex-1 min-w-[30px] flex items-center justify-center',
-          },
-          {
-            render: () => 'Updated',
-            name: 'updated',
-            className: 'w-[180px]',
-          },
-          {
-            render: () => '',
-            name: 'action',
-            className: 'w-[24px]',
-          },
-        ],
-        rows: items.map((i) => {
-          const { name, id, logo, updateInfo } = parseItem(i, templates);
-          return {
-            columns: {
-              name: {
+    <List.Root>
+      {items.map((item, index) => {
+        const { name, id, logo, updateInfo } = parseItem(item, templates);
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        return (
+          <List.Row
+            key={id}
+            className="!p-3xl"
+            columns={[
+              {
+                key: generateKey(keyPrefix, name),
+                className: listClass.title,
                 render: () => (
                   <ListTitle
                     title={name}
@@ -199,32 +160,30 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
                   />
                 ),
               },
-              status: {
-                render: () => <SyncStatusV2 item={i} />,
-              },
-              updated: {
+              listFlex({ key: `${keyPrefix}flex-1` }),
+              {
+                key: generateKey(keyPrefix, 'author'),
+                className: listClass.author,
                 render: () => (
                   <ListItem
-                    data={`${updateInfo.author}`}
+                    data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              action: {
-                render: () => <ExtraButton item={i} onAction={onAction} />,
+              {
+                key: generateKey(keyPrefix, 'action'),
+                render: () => <ExtraButton onAction={onAction} item={item} />,
               },
-            },
-            // to: `/${parseName(account)}/infra/${parseName(
-            //   cluster
-            // )}/msvc/${id}/logs-n-metrics`,
-          };
-        }),
-      }}
-    />
+            ]}
+          />
+        );
+      })}
+    </List.Root>
   );
 };
 
-const BackendServicesResourcesV2 = ({
+const BackendServicesResources = ({
   items = [],
   templates = [],
 }: {
@@ -239,7 +198,6 @@ const BackendServicesResourcesV2 = ({
   const reloadPage = useReload();
   const params = useParams();
 
-  // const { account, cluster } = useOutletContext<IClusterContext>();
   // const { account } = useOutletContext<IAccountContext>();
   // useWatchReload(
   //   items.map((i) => {
@@ -277,6 +235,9 @@ const BackendServicesResourcesV2 = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
+          if (!params.project) {
+            throw new Error('Project is required!.');
+          }
           try {
             const { errors } = await api.deleteClusterMSv({
               name: parseName(showDeleteDialog),
@@ -306,4 +267,4 @@ const BackendServicesResourcesV2 = ({
   );
 };
 
-export default BackendServicesResourcesV2;
+export default BackendServicesResources;

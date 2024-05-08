@@ -305,6 +305,7 @@ type ClusterManagedServiceEdge {
 
 input ClusterManagedServiceIn {
   apiVersion: String
+  clusterName: String!
   displayName: String!
   kind: String
   metadata: MetadataIn
@@ -1147,6 +1148,21 @@ input Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn
   min: String!
 }
 
+type Github__com___kloudlite___operator___apis___common____types__MsvcRef {
+  apiVersion: String
+  clusterName: String!
+  kind: String
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
+  apiVersion: String
+  kind: String
+  name: String!
+  namespace: String!
+}
+
 type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef {
   key: String!
   name: String!
@@ -1203,6 +1219,30 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMap
   devicePort: Int!
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__AppRouter {
+  backendProtocol: String
+  basicAuth: Github__com___kloudlite___operator___apis___crds___v1__BasicAuth
+  cors: Github__com___kloudlite___operator___apis___crds___v1__Cors
+  domains: [String!]!
+  https: Github__com___kloudlite___operator___apis___crds___v1__Https
+  ingressClass: String
+  maxBodySizeInMB: Int
+  rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimit
+  routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__AppRouterIn {
+  backendProtocol: String
+  basicAuth: Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn
+  cors: Github__com___kloudlite___operator___apis___crds___v1__CorsIn
+  domains: [String!]!
+  https: Github__com___kloudlite___operator___apis___crds___v1__HttpsIn
+  ingressClass: String
+  maxBodySizeInMB: Int
+  rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
+  routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__AppSpec {
   containers: [Github__com___kloudlite___operator___apis___crds___v1__AppContainer!]!
   displayName: String
@@ -1212,6 +1252,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppSpec {
   nodeSelector: Map
   region: String
   replicas: Int
+  router: Github__com___kloudlite___operator___apis___crds___v1__AppRouter
   serviceAccount: String
   services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvc!]
   tolerations: [K8s__io___api___core___v1__Toleration!]
@@ -1227,6 +1268,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn {
   nodeSelector: Map
   region: String
   replicas: Int
+  router: Github__com___kloudlite___operator___apis___crds___v1__AppRouterIn
   serviceAccount: String
   services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn!]
   tolerations: [K8s__io___api___core___v1__TolerationIn!]
@@ -1234,17 +1276,13 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppSvc {
-  name: String
   port: Int!
-  targetPort: Int
-  type: String
+  protocol: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn {
-  name: String
   port: Int!
-  targetPort: Int
-  type: String
+  protocol: String
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__BasicAuth {
@@ -1501,29 +1539,15 @@ input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecI
 type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate {
   apiVersion: String!
   kind: String!
-  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef!
+  msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRef!
   spec: Map!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
   apiVersion: String!
   kind: String!
-  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn!
+  msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRefIn!
   spec: Map!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef {
-  apiVersion: String!
-  kind: String!
-  name: String!
-  namespace: String!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn {
-  apiVersion: String!
-  kind: String!
-  name: String!
-  namespace: String!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Probe {
@@ -1601,13 +1625,13 @@ input Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn {
 type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate {
   apiVersion: String!
   kind: String!
-  spec: Map!
+  spec: Map
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
   apiVersion: String!
   kind: String!
-  spec: Map!
+  spec: Map
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ShellProbe {
@@ -2005,7 +2029,7 @@ type ImagePullSecret {
   creationTime: Date!
   displayName: String!
   dockerConfigJson: String
-  environmentName: String!
+  environments: [String!]
   format: Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat!
   id: ID!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -2027,6 +2051,7 @@ type ImagePullSecretEdge {
 input ImagePullSecretIn {
   displayName: String!
   dockerConfigJson: String
+  environments: [String!]
   format: Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat!
   metadata: MetadataIn!
   registryPassword: String
@@ -3355,7 +3380,7 @@ type Mutation {
   core_createApp(app: AppIn!, envName: String!): App
   core_createConfig(config: ConfigIn!, envName: String!): Config
   core_createEnvironment(env: EnvironmentIn!): Environment
-  core_createImagePullSecret(envName: String!, imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret
+  core_createImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret
   core_createManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource
   core_createRouter(envName: String!, router: RouterIn!): Router
   core_createSecret(envName: String!, secret: SecretIn!): Secret
@@ -3363,7 +3388,7 @@ type Mutation {
   core_deleteApp(appName: String!, envName: String!): Boolean!
   core_deleteConfig(configName: String!, envName: String!): Boolean!
   core_deleteEnvironment(envName: String!): Boolean!
-  core_deleteImagePullSecret(envName: String!, secretName: String!): Boolean!
+  core_deleteImagePullSecret(name: String!): Boolean!
   core_deleteManagedResource(envName: String!, mresName: String!): Boolean!
   core_deleteRouter(envName: String!, routerName: String!): Boolean!
   core_deleteSecret(envName: String!, secretName: String!): Boolean!
@@ -3372,6 +3397,7 @@ type Mutation {
   core_updateApp(app: AppIn!, envName: String!): App
   core_updateConfig(config: ConfigIn!, envName: String!): Config
   core_updateEnvironment(env: EnvironmentIn!): Environment
+  core_updateImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret
   core_updateManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource
   core_updateRouter(envName: String!, router: RouterIn!): Router
   core_updateSecret(envName: String!, secret: SecretIn!): Secret
@@ -3391,7 +3417,7 @@ type Mutation {
   cr_updateBuild(build: BuildIn!, id: ID!): Build
   infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
-  infra_createClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
+  infra_createClusterManagedService(service: ClusterManagedServiceIn!): ClusterManagedService
   infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
   infra_createGlobalVPN(gvpn: GlobalVPNIn!): GlobalVPN
   infra_createGlobalVPNDevice(gvpnDevice: GlobalVPNDeviceIn!): GlobalVPNDevice
@@ -3400,7 +3426,7 @@ type Mutation {
   infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
   infra_deleteBYOKCluster(name: String!): Boolean!
   infra_deleteCluster(name: String!): Boolean!
-  infra_deleteClusterManagedService(clusterName: String!, serviceName: String!): Boolean!
+  infra_deleteClusterManagedService(name: String!): Boolean!
   infra_deleteDomainEntry(domainName: String!): Boolean!
   infra_deleteGlobalVPN(name: String!): Boolean!
   infra_deleteGlobalVPNDevice(deviceName: String!, gvpn: String!): Boolean!
@@ -3410,7 +3436,7 @@ type Mutation {
   infra_deletePV(clusterName: String!, pvName: String!): Boolean!
   infra_updateBYOKCluster(clusterName: String!, displayName: String!): BYOKCluster
   infra_updateCluster(cluster: ClusterIn!): Cluster
-  infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
+  infra_updateClusterManagedService(service: ClusterManagedServiceIn!): ClusterManagedService
   infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
   infra_updateGlobalVPN(gvpn: GlobalVPNIn!): GlobalVPN
   infra_updateGlobalVPNDevice(gvpnDevice: GlobalVPNDeviceIn!): GlobalVPNDevice
@@ -3670,7 +3696,7 @@ type Query {
   core_getConfig(envName: String!, name: String!): Config
   core_getConfigValues(envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!]
   core_getEnvironment(name: String!): Environment
-  core_getImagePullSecret(envName: String!, name: String!): ImagePullSecret
+  core_getImagePullSecret(name: String!): ImagePullSecret
   core_getManagedResouceOutputKeys(envName: String!, name: String!): [String!]!
   core_getManagedResouceOutputKeyValues(envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]!
   core_getManagedResource(envName: String!, name: String!): ManagedResource
@@ -3681,7 +3707,7 @@ type Query {
   core_listApps(envName: String!, pq: CursorPaginationIn, search: SearchApps): AppPaginatedRecords
   core_listConfigs(envName: String!, pq: CursorPaginationIn, search: SearchConfigs): ConfigPaginatedRecords
   core_listEnvironments(pq: CursorPaginationIn, search: SearchEnvironments): EnvironmentPaginatedRecords
-  core_listImagePullSecrets(envName: String!, pq: CursorPaginationIn, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
+  core_listImagePullSecrets(pq: CursorPaginationIn, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
   core_listManagedResources(envName: String!, pq: CursorPaginationIn, search: SearchManagedResources): ManagedResourcePaginatedRecords
   core_listRouters(envName: String!, pq: CursorPaginationIn, search: SearchRouters): RouterPaginatedRecords
   core_listSecrets(envName: String!, pq: CursorPaginationIn, search: SearchSecrets): SecretPaginatedRecords
@@ -3691,7 +3717,7 @@ type Query {
   core_resyncApp(envName: String!, name: String!): Boolean!
   core_resyncConfig(envName: String!, name: String!): Boolean!
   core_resyncEnvironment(name: String!): Boolean!
-  core_resyncImagePullSecret(envName: String!, name: String!): Boolean!
+  core_resyncImagePullSecret(name: String!): Boolean!
   core_resyncManagedResource(envName: String!, name: String!): Boolean!
   core_resyncRouter(envName: String!, name: String!): Boolean!
   core_resyncSecret(envName: String!, name: String!): Boolean!
@@ -3715,7 +3741,7 @@ type Query {
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
   infra_getBYOKCluster(name: String!): BYOKCluster
   infra_getCluster(name: String!): Cluster
-  infra_getClusterManagedService(clusterName: String!, name: String!): ClusterManagedService
+  infra_getClusterManagedService(name: String!): ClusterManagedService
   infra_getDomainEntry(domainName: String!): DomainEntry
   infra_getGlobalVPN(name: String!): GlobalVPN
   infra_getGlobalVPNDevice(deviceName: String!, gvpn: String!): GlobalVPNDevice
@@ -3728,7 +3754,7 @@ type Query {
   infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim
   infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment
   infra_listBYOKClusters(pagination: CursorPaginationIn, search: SearchCluster): BYOKClusterPaginatedRecords
-  infra_listClusterManagedServices(clusterName: String!, pagination: CursorPaginationIn, search: SearchClusterManagedService): ClusterManagedServicePaginatedRecords
+  infra_listClusterManagedServices(pagination: CursorPaginationIn, search: SearchClusterManagedService): ClusterManagedServicePaginatedRecords
   infra_listClusters(pagination: CursorPaginationIn, search: SearchCluster): ClusterPaginatedRecords
   infra_listDomainEntries(pagination: CursorPaginationIn, search: SearchDomainEntry): DomainEntryPaginatedRecords
   infra_listGlobalVPNDevices(gvpn: String!, pagination: CursorPaginationIn, search: SearchGlobalVPNDevices): GlobalVPNDevicePaginatedRecords
@@ -3790,6 +3816,7 @@ enum ResType {
   byok_cluster
   cluster
   cluster_managed_service
+  global_vpn_device
   helm_release
   nodepool
   providersecret

@@ -195,10 +195,7 @@ export const iotAppQueries = (executor: IExecutor) => ({
             replicas
             serviceAccount
             services {
-              name
               port
-              targetPort
-              type
             }
             tolerations {
               effect
@@ -377,10 +374,7 @@ export const iotAppQueries = (executor: IExecutor) => ({
                 replicas
                 serviceAccount
                 services {
-                  name
                   port
-                  targetPort
-                  type
                 }
                 tolerations {
                   effect

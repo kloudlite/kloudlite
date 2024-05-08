@@ -340,10 +340,7 @@ export const cliQueries = (executor: IExecutor) => ({
                 replicas
                 serviceAccount
                 services {
-                  name
                   port
-                  targetPort
-                  type
                 }
               }
               status {

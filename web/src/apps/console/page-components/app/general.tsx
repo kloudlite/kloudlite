@@ -13,7 +13,7 @@ import { TextInput } from '~/components/atoms/input';
 import { useEffect, useState } from 'react';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
-import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+// import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { constants } from '~/console/server/utils/constants';
 import HandleBuild from '~/console/routes/_main+/$account+/repo+/$repo+/builds/handle-builds';
 import {
@@ -327,7 +327,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           />
         )}
         <div className="flex flex-col gap-xl">
-          <ExtendedFilledTab
+          {/* <ExtendedFilledTab
             value={values.imageMode}
             onChange={(e) => {
               handleChange('imageMode')(dummyEvent(e));
@@ -355,7 +355,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               },
             ]}
             size="sm"
-          />
+          /> */}
 
           {values.imageMode === 'default' && (
             <RepoSelector

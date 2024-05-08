@@ -4,7 +4,13 @@ import { NameIdView } from '~/console/components/name-id-view';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { FormEventHandler, useEffect, useRef, useState } from 'react';
+import {
+  FormEventHandler,
+  ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   IMSvTemplate,
   IMSvTemplates,
@@ -12,7 +18,7 @@ import {
 import { Switch } from '~/components/atoms/switch';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import { handleError } from '~/root/lib/utils/common';
-import { titleCase, useMapper } from '~/components/utils';
+import { titleCase, useAppend, useMapper } from '~/components/utils';
 import { flatMapValidations, flatM } from '~/console/utils/commons';
 import MultiStepProgress, {
   useMultiStepProgress,
@@ -25,7 +31,7 @@ import {
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { IClusterContext } from '../_layout';
+import { IAccountContext } from '../_layout';
 
 const valueRender = ({ label, icon }: { label: string; icon: string }) => {
   return (
@@ -241,6 +247,8 @@ const TemplateView = ({
 const FieldView = ({
   selectedTemplate,
   nodepools,
+  nodepoolIsLoading,
+  clusters,
   values,
   handleSubmit,
   handleChange,
@@ -252,6 +260,13 @@ const FieldView = ({
   errors: Record<string, any>;
   selectedTemplate: ISelectedTemplate | null;
   nodepools: { label: string; value: string }[];
+  nodepoolIsLoading: boolean;
+  clusters: {
+    label: string;
+    value: string;
+    ready?: boolean;
+    render: () => ReactNode;
+  }[];
 }) => {
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -272,12 +287,36 @@ const FieldView = ({
         ref={nameRef}
         placeholder="Enter managed service name"
         label="Name"
-        resType="cluster_managed_service"
+        // resType="cluster_managed_service"
+        resType="environment"
         name={values.name}
         displayName={values.displayName}
         errors={errors.name}
         handleChange={handleChange}
         nameErrorLabel="isNameError"
+      />
+
+      <Select
+        label="Select Cluster"
+        size="lg"
+        value={values.clusterName}
+        // disabled={cIsLoading}
+        placeholder="Select a Cluster"
+        options={async () => [
+          ...((clusters &&
+            clusters.filter((c) => {
+              return c.ready;
+            })) ||
+            []),
+        ]}
+        onChange={({ value }) => {
+          handleChange('clusterName')(dummyEvent(value));
+          handleChange('nodepoolName')(dummyEvent(''));
+        }}
+        showclear
+        error={!!errors.clusterName}
+        message={errors.clusterName}
+        // loading={cIsLoading || byokCIsLoading}
       />
 
       <Select
@@ -293,6 +332,7 @@ const FieldView = ({
         error={!!errors.nodepoolName}
         message={errors.nodepoolName}
         showclear
+        loading={nodepoolIsLoading}
         noOptionMessage={
           <div className="p-2xl bodyMd text-center">
             No stateful nodepools available
@@ -408,9 +448,15 @@ const ReviewView = ({
                 {values?.selectedTemplate?.template?.displayName}
               </div>
             </div>
-            <div className="flex flex-col gap-lg">
+            <div className="flex flex-col gap-lg pb-xl border-b border-border-default">
               <div className="flex-1 bodyMd-medium text-text-default">
-                Node Selector
+                Cluster Name
+              </div>
+              <div className="text-text-soft bodyMd">{values.clusterName}</div>
+            </div>
+            <div className="flex flex-col gap-lg">
+              <div className="flex-1 bodyMd-medium  text-text-default">
+                Nodepool Name
               </div>
               <div className="text-text-soft bodyMd">{values.nodepoolName}</div>
             </div>
@@ -462,15 +508,35 @@ const ReviewView = ({
   );
 };
 
+const ClusterSelectItem = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) => {
+  return (
+    <div>
+      <div className="flex flex-col">
+        <div>{label}</div>
+        <div className="bodySm text-text-soft">{value}</div>
+      </div>
+    </div>
+  );
+};
+
 const ManagedServiceLayout = () => {
-  const { msvtemplates, cluster, account } =
-    useOutletContext<IClusterContext>();
+  // const { msvtemplates, cluster, account } =
+  //   useOutletContext<IClusterContext>();
+  const { msvtemplates, account } = useOutletContext<IAccountContext>();
   const navigate = useNavigate();
   const api = useConsoleApi();
 
-  const rootUrl = `/${parseName(account)}/infra/${parseName(
-    cluster
-  )}/managed-services`;
+  // const rootUrl = `/${parseName(account)}/infra/${parseName(
+  //   account
+  // )}/managed-services`;
+
+  const rootUrl = `/${parseName(account)}/managed-services`;
 
   const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
     defaultStep: 1,
@@ -485,6 +551,7 @@ const ManagedServiceLayout = () => {
         res: {},
         selectedTemplate: null,
         isNameError: false,
+        clusterName: '',
         nodepoolName: '',
       },
       validationSchema: Yup.object().shape({
@@ -539,13 +606,12 @@ const ManagedServiceLayout = () => {
               throw new Error('Service apiversion or kind error.');
             }
             const { errors: e } = await api.createClusterMSv({
-              clusterName: parseName(cluster),
               service: {
                 displayName: val.displayName,
                 metadata: {
                   name: val.name,
                 },
-
+                clusterName: val.clusterName,
                 spec: {
                   msvcSpec: {
                     nodeSelector: {
@@ -587,19 +653,62 @@ const ManagedServiceLayout = () => {
       },
     });
 
-  const { data: nodepoolData } = useCustomSwr('/nodepools', async () => {
-    return api.listNodePools({ clusterName: parseName(cluster) });
+  // const { data: nodepoolData } = useCustomSwr('/nodepools', async () => {
+  //   return api.listNodePools({ clusterName: parseName(cluster) });
+  // });
+
+  const { data: clustersData } = useCustomSwr(
+    'clusters',
+    async () => api.listClusters({}),
+    true
+  );
+
+  const { data: byokClustersData } = useCustomSwr(
+    'byokclusters',
+    async () => api.listByokClusters({}),
+    true
+  );
+
+  const cData = useMapper(parseNodes(clustersData), (item) => {
+    return {
+      label: item.displayName,
+      value: parseName(item),
+      ready: item.status?.isReady,
+      render: () => (
+        <ClusterSelectItem label={item.displayName} value={parseName(item)} />
+      ),
+    };
   });
 
-  const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
+  const bCData = useMapper(parseNodes(byokClustersData), (item) => {
+    return {
+      label: item.displayName,
+      value: parseName(item),
+      ready: true,
+      render: () => (
+        <ClusterSelectItem label={item.displayName} value={parseName(item)} />
+      ),
+    };
+  });
+
+  const clusterList = useAppend(cData, bCData);
+
+  const { data: nodepoolData, isLoading: nodepoolIsLoading } = useCustomSwr(
+    () => `/nodepools${values.clusterName}`,
+    async () => {
+      return api.listNodePools({ clusterName: values.clusterName });
+    }
+  );
+
+  const statefulNodepools = useMapper(parseNodes(nodepoolData), (val) => ({
     label: val.metadata?.name || '',
     value: val.metadata?.name || '',
     nodepoolStateType: val.spec.nodeLabels[keyconstants.nodepoolStateType],
   }));
 
-  const statefulNodepools = nodepools.filter(
-    (np) => np.nodepoolStateType === 'stateful'
-  );
+  // const statefulNodepools = nodepools.filter(
+  //   (np) => np.nodepoolStateType === 'stateful'
+  // );
 
   useEffect(() => {
     const selectedTemplate =
@@ -646,6 +755,8 @@ const ManagedServiceLayout = () => {
             handleChange={handleChange}
             handleSubmit={handleSubmit}
             nodepools={statefulNodepools}
+            nodepoolIsLoading={nodepoolIsLoading}
+            clusters={clusterList}
           />
         </MultiStepProgress.Step>
         <MultiStepProgress.Step label="Review" step={3}>

@@ -16,8 +16,6 @@ import { Switch } from '~/components/atoms/switch';
 import { getManagedTemplate } from '~/console/utils/commons';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
-import { useOutletContext } from 'react-router-dom';
-import { IClusterContext } from '../_layout';
 
 type IDialog = IDialogBase<ExtractNodeType<IClusterMSvs>> & {
   templates: IMSvTemplates;
@@ -229,13 +227,14 @@ const Root = (props: IDialog) => {
   const api = useConsoleApi();
   const reload = useReload();
 
-  const { cluster } = useOutletContext<IClusterContext>();
+  // const { cluster } = useOutletContext<IClusterContext>();
 
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
     initialValues: isUpdate
       ? {
           name: parseName(props.data),
           displayName: props.data.displayName,
+          clusterName: props.data.clusterName,
           isNameError: false,
           res: {
             ...props.data.spec?.msvcSpec.serviceTemplate.spec,
@@ -244,6 +243,7 @@ const Root = (props: IDialog) => {
       : {
           name: '',
           displayName: '',
+          clusterName: '',
           res: {},
           isNameError: false,
         },
@@ -252,13 +252,12 @@ const Root = (props: IDialog) => {
       if (isUpdate) {
         try {
           const { errors: e } = await api.updateClusterMSv({
-            clusterName: parseName(cluster),
             service: {
               displayName: val.displayName,
               metadata: {
                 name: val.name,
               },
-
+              clusterName: val.clusterName,
               spec: {
                 msvcSpec: {
                   serviceTemplate: {

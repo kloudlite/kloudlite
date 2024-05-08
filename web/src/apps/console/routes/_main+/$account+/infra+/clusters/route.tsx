@@ -90,7 +90,7 @@ const CreateClusterButton = () => {
               setVisible(true);
             }}
           >
-            Attached Cluster
+            Byok Cluster
           </OptionList.Item>
         </OptionList.Content>
       </OptionList.Root>
@@ -187,16 +187,7 @@ const ClusterComponent = ({
     <Wrapper
       secondaryHeader={{
         title: 'Clusters',
-        action: clusters.length > 0 && (
-          <CreateClusterButton />
-          // <Button
-          //   content="Create cluster"
-          //   variant="primary"
-          //   prefix={<Plus />}
-          //   LinkComponent={Link}
-          //   to={`/${account}/new-cluster`}
-          // />
-        ),
+        action: clusters.length > 0 && <CreateClusterButton />,
       }}
       empty={getEmptyState({
         clustersCount: clusters.length,

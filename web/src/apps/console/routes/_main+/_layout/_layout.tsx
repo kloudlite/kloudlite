@@ -81,22 +81,22 @@ const AccountTabs = () => {
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
-              <InfraAsCode size={iconSize} />
-              Infrastructure
-            </span>
-          ),
-          to: '/infra',
-          value: '/infra',
-        },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
               <BackingServices size={iconSize} />
               Managed Services
             </span>
           ),
           to: '/managed-services',
           value: '/managed-services',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <InfraAsCode size={iconSize} />
+              Infrastructure
+            </span>
+          ),
+          to: '/infra',
+          value: '/infra',
         },
         {
           label: (

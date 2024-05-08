@@ -1,4 +1,5 @@
-import { PencilSimple, Trash } from '~/console/components/icons';
+import { Trash, PencilLine } from '~/console/components/icons';
+import { useState } from 'react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -6,47 +7,36 @@ import {
   listClass,
   listFlex,
 } from '~/console/components/console-list-components';
+import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
-import { getManagedTemplate } from '~/console/utils/commons';
-import DeleteDialog from '~/console/components/delete-dialog';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useState } from 'react';
-import { handleError } from '~/root/lib/utils/common';
+import { useReload } from '~/lib/client/helpers/reloader';
+import { handleError } from '~/lib/utils/common';
+import { Link, useParams } from '@remix-run/react';
+import { IImagePullSecrets } from '~/console/server/gql/queries/image-pull-secrets-queries';
 import { toast } from '~/components/molecule/toast';
-import { useOutletContext, useParams } from '@remix-run/react';
-import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
-import HandleBackendService from './handle-backend-service';
-import { IClusterContext } from '../_layout';
+import HandleImagePullSecret from './handle-image-pull-secret';
 
-const RESOURCE_NAME = 'managed service';
-type BaseType = ExtractNodeType<IClusterMSvs>;
+const RESOURCE_NAME = 'image pull secret';
+type BaseType = ExtractNodeType<IImagePullSecrets>;
 
-const parseItem = (item: BaseType, templates: IMSvTemplates) => {
-  const template = getManagedTemplate({
-    templates,
-    kind: item.spec?.msvcSpec?.serviceTemplate.kind || '',
-    apiVersion: item.spec?.msvcSpec?.serviceTemplate.apiVersion || '',
-  });
+const parseItem = (item: BaseType) => {
   return {
-    name: item?.displayName,
+    name: item.displayName,
     id: parseName(item),
     updateInfo: {
-      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
+      author: `Updated by ${parseUpdateOrCreatedBy(item)}`,
       time: parseUpdateOrCreatedOn(item),
     },
-    logo: template?.logoUrl,
   };
 };
 
@@ -54,7 +44,7 @@ type OnAction = ({
   action,
   item,
 }: {
-  action: 'delete' | 'edit';
+  action: 'edit' | 'delete' | 'detail';
   item: BaseType;
 }) => void;
 
@@ -69,7 +59,7 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
       options={[
         {
           label: 'Edit',
-          icon: <PencilSimple size={16} />,
+          icon: <PencilLine size={16} />,
           type: 'item',
           onClick: () => onAction({ action: 'edit', item }),
           key: 'edit',
@@ -89,35 +79,32 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
 
 interface IResource {
   items: BaseType[];
-  templates: IMSvTemplates;
   onAction: OnAction;
 }
 
-const GridView = ({ items = [], templates = [], onAction }: IResource) => {
+const GridView = ({ items, onAction }: IResource) => {
+  const { account, environment } = useParams();
   return (
-    <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
+    <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, logo, updateInfo } = parseItem(item, templates);
+        const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
+            to={`/${account}/env/${environment}/router/${id}/routes`}
             rows={[
               {
-                key: generateKey(keyPrefix, name),
+                key: generateKey(keyPrefix, name + id),
                 render: () => (
                   <ListTitle
                     title={name}
-                    subtitle={id}
                     action={<ExtraButton onAction={onAction} item={item} />}
-                    avatar={
-                      <img src={logo} alt={name} className="w-4xl h-4xl" />
-                    }
                   />
                 ),
               },
               {
-                key: generateKey(keyPrefix, 'author'),
+                key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
                   <ListItem
                     data={updateInfo.author}
@@ -133,35 +120,27 @@ const GridView = ({ items = [], templates = [], onAction }: IResource) => {
   );
 };
 
-const ListView = ({ items = [], templates = [], onAction }: IResource) => {
+const ListView = ({ items, onAction }: IResource) => {
+  const { account, environment } = useParams();
   return (
-    <List.Root>
+    <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, logo, updateInfo } = parseItem(item, templates);
+        const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
             key={id}
             className="!p-3xl"
+            to={`/${account}/env/${environment}/router/${id}/routes`}
             columns={[
               {
-                key: generateKey(keyPrefix, name),
+                key: generateKey(keyPrefix, name + id),
                 className: listClass.title,
-                render: () => (
-                  <ListTitle
-                    title={name}
-                    subtitle={id}
-                    avatar={
-                      <div className="pulsable pulsable-circle aspect-square">
-                        <img src={logo} alt={name} className="w-4xl h-4xl" />
-                      </div>
-                    }
-                  />
-                ),
+                render: () => <ListTitle title={name} />,
               },
-              listFlex({ key: `${keyPrefix}flex-1` }),
+              listFlex({ key: 'flex-1' }),
               {
-                key: generateKey(keyPrefix, 'author'),
+                key: generateKey(keyPrefix, updateInfo.author),
                 className: listClass.author,
                 render: () => (
                   <ListItem
@@ -182,43 +161,25 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
   );
 };
 
-const BackendServicesResources = ({
-  items = [],
-  templates = [],
-}: {
-  items: BaseType[];
-  templates: IMSvTemplates;
-}) => {
+const ImagePullSecretsResources = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
   const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const params = useParams();
-
-  const { account, cluster } = useOutletContext<IClusterContext>();
-  useWatchReload(
-    items.map((i) => {
-      return `account:${parseName(account)}.cluster:${parseName(
-        cluster
-      )}.managed_service:${parseName(i)}`;
-    })
-  );
 
   const props: IResource = {
     items,
-    templates,
     onAction: ({ action, item }) => {
       switch (action) {
-        case 'delete':
-          setShowDeleteDialog(item);
-          break;
         case 'edit':
           setVisible(item);
           break;
-        default:
+        case 'delete':
+          setShowDeleteDialog(item);
           break;
+        default:
       }
     },
   };
@@ -229,18 +190,14 @@ const BackendServicesResources = ({
         gridView={<GridView {...props} />}
       />
       <DeleteDialog
-        resourceName={parseName(showDeleteDialog)}
+        resourceName={showDeleteDialog?.displayName}
         resourceType={RESOURCE_NAME}
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!params.project) {
-            throw new Error('Project is required!.');
-          }
           try {
-            const { errors } = await api.deleteClusterMSv({
-              serviceName: parseName(showDeleteDialog),
-              clusterName: parseName(cluster),
+            const { errors } = await api.deleteImagePullSecrets({
+              name: parseName(showDeleteDialog),
             });
 
             if (errors) {
@@ -254,17 +211,16 @@ const BackendServicesResources = ({
           }
         }}
       />
-      <HandleBackendService
+      <HandleImagePullSecret
         {...{
           isUpdate: true,
+          data: visible!,
           visible: !!visible,
           setVisible: () => setVisible(null),
-          data: visible!,
-          templates: templates || [],
         }}
       />
     </>
   );
 };
 
-export default BackendServicesResources;
+export default ImagePullSecretsResources;

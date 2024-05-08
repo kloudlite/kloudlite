@@ -93,7 +93,7 @@ const Devices = () => {
           return (
             <Wrapper
               secondaryHeader={{
-                title: 'Vpn Devices',
+                title: 'Devices',
                 action: vpnDevices.length > 0 && (
                   <Button
                     content="Create device"
