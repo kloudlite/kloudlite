@@ -1,7 +1,9 @@
 import {
+  ArrowClockwise,
   ArrowCounterClockwise,
   GearSix,
   PencilLine,
+  PlugsConnected,
   Trash,
 } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
@@ -169,13 +171,14 @@ const ByokButton = ({ item }: { item: CombinedBaseType }) => {
       ) : (
         <div className="flex gap-xl items-center pulsable">
           {/* <span>{item.aws?.awsAccountId}</span> */}
-          <IconButton
+          <Button
+            content="setup"
             onClick={() => {
               setShow(true);
             }}
             size="sm"
             variant="outline"
-            icon={<ArrowCounterClockwise size={16} />}
+            prefix={<ArrowClockwise size={16} />}
           />
         </div>
       )}

@@ -99,4 +99,5 @@ export {
   EyeSlash,
   CheckCircle,
   CalendarCheckFill,
+  PlugsConnected,
 } from '@jengaicons/react';
