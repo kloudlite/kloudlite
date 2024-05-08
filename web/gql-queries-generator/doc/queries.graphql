@@ -3081,6 +3081,10 @@ mutation consoleUpdateByokCluster($clusterName: String!, $displayName: String!) 
   }
 }
 
+query consoleGetBYOKClusterInstructions($name: String!) {
+  infrat_getBYOKClusterSetupInstructions(name: $name)
+}
+
 query consoleGetByokCluster($name: String!) {
   infra_getBYOKCluster(name: $name) {
     accountName
@@ -3353,6 +3357,7 @@ query consoleListManagedResources($envName: String!, $search: SearchManagedResou
               kind
               name
               namespace
+              clusterName
             }
             spec
           }

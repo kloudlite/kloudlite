@@ -319,7 +319,7 @@ const FieldView = ({
         // loading={cIsLoading || byokCIsLoading}
       />
 
-      <Select
+      {/* <Select
         label="Nodepool Name"
         size="lg"
         placeholder="Select Nodepool"
@@ -338,7 +338,7 @@ const FieldView = ({
             No stateful nodepools available
           </div>
         }
-      />
+      /> */}
 
       {selectedTemplate?.template.fields?.map((field) => {
         const k = field.name;

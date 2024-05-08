@@ -3,6 +3,8 @@ import hljs from 'highlight.js';
 import { useEffect, useRef } from 'react';
 import { toast } from '~/components/molecule/toast';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
+import classNames from 'classnames';
+import { cn } from '~/components/utils';
 
 interface ICodeView {
   data: string;
@@ -10,6 +12,7 @@ interface ICodeView {
   showShellPrompt?: boolean;
   language?: string;
   title?: string;
+  preClassName?: string;
 }
 const CodeView = ({
   data,
@@ -17,6 +20,7 @@ const CodeView = ({
   showShellPrompt: _,
   language = 'shell',
   title,
+  preClassName,
 }: ICodeView) => {
   const { copy: cpy } = useClipboard({
     onSuccess() {
@@ -44,7 +48,7 @@ const CodeView = ({
   }, [data, language]);
 
   return (
-    <div className="flex flex-col gap-lg flex-1 min-w-[45%]">
+    <div className="flex flex-col gap-lg flex-1 min-w-[45%] ">
       {!!title && (
         <div className="bodyMd-medium text-text-default">{title}</div>
       )}
@@ -55,7 +59,7 @@ const CodeView = ({
           }}
           className="group/sha cursor-pointer p-lg rounded-md bodyMd flex flex-row gap-xl items-center hljs w-full"
         >
-          <pre className="flex-1 overflow-auto">
+          <pre className={cn('flex-1 overflow-auto', preClassName)}>
             <code ref={ref}>{data}</code>
           </pre>
 

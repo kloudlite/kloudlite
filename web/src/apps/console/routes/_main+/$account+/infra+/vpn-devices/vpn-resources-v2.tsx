@@ -92,10 +92,11 @@ const ExtraButton = ({
 interface IResource {
   items: BaseType[];
   onDelete: (item: BaseType) => void;
+  showWgConfig: (item: BaseType) => void;
   // onEdit: (item: BaseType) => void;
 }
 
-const GridView = ({ items = [], onDelete }: IResource) => {
+const GridView = ({ items = [], onDelete, showWgConfig }: IResource) => {
   const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
@@ -145,8 +146,7 @@ const GridView = ({ items = [], onDelete }: IResource) => {
     </Grid.Root>
   );
 };
-const ListView = ({ items = [], onDelete }: IResource) => {
-  const [visible, setVisible] = useState(false);
+const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -210,15 +210,9 @@ const ListView = ({ items = [], onDelete }: IResource) => {
                       <div>
                         <Button
                           variant="plain"
-                          onClick={() => setVisible((s) => !s)}
+                          onClick={() => showWgConfig(i)}
                           content="View"
                           suffix={<Eye />}
-                        />
-
-                        <ShowWireguardConfig
-                          setVisible={setVisible}
-                          visible={visible}
-                          data={i.wireguardConfig}
                         />
                       </div>
                     }
@@ -286,6 +280,8 @@ const VPNResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
+  const [showWireguardConfig, setShowWireguardConfig] =
+    useState<BaseType | null>(null);
   // const [showHandleGlobalVpnDevice, setShowHandleGlobalVpnDevice] =
   //   useState<BaseType | null>(null);
 
@@ -297,6 +293,9 @@ const VPNResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
     items,
     onDelete: (item) => {
       setShowDeleteDialog(item);
+    },
+    showWgConfig: (item) => {
+      setShowWireguardConfig(item);
     },
     // onEdit: (item) => {
     //   setShowHandleGlobalVpnDevice(item);
@@ -338,6 +337,12 @@ const VPNResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
             handleError(err);
           }
         }}
+      />
+
+      <ShowWireguardConfig
+        setVisible={() => setShowWireguardConfig(null)}
+        visible={!!showWireguardConfig}
+        data={showWireguardConfig?.wireguardConfig}
       />
     </>
   );

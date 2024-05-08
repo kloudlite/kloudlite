@@ -535,13 +535,14 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
                     msvcRef: {
                       name: parseName(selectedService?.service),
                       namespace:
-                        selectedService?.service.metadata?.namespace || '',
+                        selectedService?.service.spec?.targetNamespace || '',
                       apiVersion:
                         selectedService?.service?.spec?.msvcSpec.serviceTemplate
                           .apiVersion || '',
                       kind:
                         selectedService?.service?.spec?.msvcSpec.serviceTemplate
                           .kind || '',
+                      clusterName: selectedService.service.clusterName,
                     },
                   },
                 },

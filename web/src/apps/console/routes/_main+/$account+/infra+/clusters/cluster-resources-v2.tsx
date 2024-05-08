@@ -1,4 +1,9 @@
-import { GearSix, PencilLine, Trash } from '~/console/components/icons';
+import {
+  ArrowCounterClockwise,
+  GearSix,
+  PencilLine,
+  Trash,
+} from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import {
   generateKey,
@@ -34,7 +39,7 @@ import LogAction from '~/console/page-components/log-action';
 import { useDataState } from '~/console/page-components/common-state';
 import { useState } from 'react';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import { Button } from '~/components/atoms/button';
+import { Button, IconButton } from '~/components/atoms/button';
 import { dayjs } from '~/components/molecule/dayjs';
 import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
 import DeleteDialog from '~/console/components/delete-dialog';
@@ -43,6 +48,9 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { it } from '@faker-js/faker';
+import Popup from '~/components/molecule/popup';
+import CodeView from '~/console/components/code-view';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
@@ -87,6 +95,92 @@ const parseItem = (item: CombinedBaseType) => {
       time: parseUpdateOrCreatedOn(item),
     },
   };
+};
+
+const ByokInstructionsPopup = ({
+  show,
+  item,
+  onClose,
+  clusterName,
+}: {
+  show: boolean;
+  item: CombinedBaseType;
+  onClose: () => void;
+  clusterName: string;
+}) => {
+  const api = useConsoleApi();
+
+  const { data, isLoading } = useCustomSwr(
+    item.metadata?.name || null,
+    async () => {
+      if (!item.metadata?.name) {
+        throw new Error('Invalid cluster name');
+      }
+      return api.getBYOKClusterInstructions({
+        name: item.metadata.name,
+      });
+    }
+  );
+
+  console.log('data', data);
+
+  // const [isLoading, setIsLoading] = useState(false);
+
+  return (
+    <Popup.Root onOpenChange={onClose} show={show} className="!w-[800px]">
+      <Popup.Header>{`${clusterName} setup instructions:`}</Popup.Header>
+      <Popup.Content>
+        <form className="flex flex-col gap-2xl">
+          {data && (
+            <div className="flex flex-col gap-xl text-start ">
+              <span className="flex flex-wrap items-center gap-md">
+                Please follow below instruction for further steps
+              </span>
+              <CodeView
+                preClassName="!overflow-none text-wrap break-words"
+                copy
+                data={data || ''}
+              />
+            </div>
+          )}
+        </form>
+      </Popup.Content>
+      <Popup.Footer>
+        <Button variant="primary-outline" content="close" onClick={onClose} />
+      </Popup.Footer>
+    </Popup.Root>
+  );
+};
+
+const ByokButton = ({ item }: { item: CombinedBaseType }) => {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div>
+      {show ? (
+        <ByokInstructionsPopup
+          clusterName={item.displayName || ''}
+          show={show}
+          onClose={() => {
+            setShow(false);
+          }}
+          item={item}
+        />
+      ) : (
+        <div className="flex gap-xl items-center pulsable">
+          {/* <span>{item.aws?.awsAccountId}</span> */}
+          <IconButton
+            onClick={() => {
+              setShow(true);
+            }}
+            size="sm"
+            variant="outline"
+            icon={<ArrowCounterClockwise size={16} />}
+          />
+        </div>
+      )}
+    </div>
+  );
 };
 
 const ExtraButton = ({
@@ -269,23 +363,25 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
               },
               logs: {
                 render: () =>
-                  isLatest ? (
-                    <Button
-                      size="sm"
-                      variant="basic"
-                      content={open === i.id ? 'Hide Logs' : 'Show Logs'}
-                      onClick={(e) => {
-                        e.preventDefault();
+                  i.type === 'normal'
+                    ? isLatest && (
+                        <Button
+                          size="sm"
+                          variant="basic"
+                          content={open === i.id ? 'Hide Logs' : 'Show Logs'}
+                          onClick={(e) => {
+                            e.preventDefault();
 
-                        setOpen((s) => {
-                          if (s === i.id) {
-                            return '';
-                          }
-                          return i.id;
-                        });
-                      }}
-                    />
-                  ) : null,
+                            setOpen((s) => {
+                              if (s === i.id) {
+                                return '';
+                              }
+                              return i.id;
+                            });
+                          }}
+                        />
+                      )
+                    : i.type === 'byok' && <ByokButton item={i} />,
               },
               status: {
                 render: () => <SyncStatusV2 item={i} />,
@@ -312,7 +408,7 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
                 ),
               },
             },
-            to: `/${account}/infra/${id}/overview`,
+            // to: `/${account}/infra/${id}/overview`,
             detail: (
               <AnimateHide
                 onClick={(e) => e.preventDefault()}

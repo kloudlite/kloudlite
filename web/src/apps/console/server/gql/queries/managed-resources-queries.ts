@@ -135,6 +135,7 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                     kind
                     name
                     namespace
+                    clusterName
                   }
                   spec
                 }

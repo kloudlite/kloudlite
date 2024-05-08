@@ -1155,6 +1155,7 @@ type Github__com___kloudlite___operator___apis___common____types__MsvcRef {
 
 input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
   apiVersion: String
+  clusterName: String!
   kind: String
   name: String!
   namespace: String!
@@ -3390,7 +3391,7 @@ type Mutation {
   core_deleteRouter(envName: String!, routerName: String!): Boolean!
   core_deleteSecret(envName: String!, secretName: String!): Boolean!
   core_deleteVPNDevice(deviceName: String!): Boolean!
-  core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!): Boolean!
+  core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_updateApp(app: AppIn!, envName: String!): App
   core_updateConfig(config: ConfigIn!, envName: String!): Config
   core_updateEnvironment(env: EnvironmentIn!): Environment

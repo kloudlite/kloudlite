@@ -686,6 +686,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresResourceT
 export type Github__Com___Kloudlite___Operator___Apis___Common____Types__MsvcRefIn =
   {
     apiVersion?: InputMaybe<Scalars['String']['input']>;
+    clusterName: Scalars['String']['input'];
     kind?: InputMaybe<Scalars['String']['input']>;
     name: Scalars['String']['input'];
     namespace: Scalars['String']['input'];
@@ -4608,6 +4609,14 @@ export type ConsoleUpdateByokClusterMutation = {
   infra_updateBYOKCluster?: { id: string };
 };
 
+export type ConsoleGetByokClusterInstructionsQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetByokClusterInstructionsQuery = {
+  infrat_getBYOKClusterSetupInstructions?: string;
+};
+
 export type ConsoleGetByokClusterQueryVariables = Exact<{
   name: Scalars['String']['input'];
 }>;
@@ -4883,6 +4892,7 @@ export type ConsoleListManagedResourcesQuery = {
               kind?: string;
               name: string;
               namespace: string;
+              clusterName: string;
             };
           };
         };
