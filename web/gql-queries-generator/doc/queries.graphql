@@ -2804,8 +2804,8 @@ mutation consoleUpdateClusterMSv($service: ClusterManagedServiceIn!) {
   }
 }
 
-query consoleListClusterMSvs($search: SearchClusterManagedService) {
-  infra_listClusterManagedServices(search: $search) {
+query consoleListClusterMSvs($pagination: CursorPaginationIn, $search: SearchClusterManagedService) {
+  infra_listClusterManagedServices(pagination: $pagination, search: $search) {
     edges {
       cursor
       node {
@@ -3666,7 +3666,6 @@ query consoleListImagePullSecrets($search: SearchImagePullSecrets, $pq: CursorPa
         creationTime
         displayName
         dockerConfigJson
-        environments
         format
         id
         lastUpdatedBy {
@@ -5432,6 +5431,46 @@ mutation authCli_createDevice($vpnDevice: ConsoleVPNDeviceIn!) {
     wireguardConfig {
       encoding
       value
+    }
+  }
+}
+
+mutation authCli_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+  infra_createGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+    accountName
+    creationTime
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    displayName
+    globalVPNName
+    id
+    ipAddr
+    lastUpdatedBy {
+      userName
+      userId
+      userEmail
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    privateKey
+    publiEndpoint
+    publicKey
+    recordVersion
+    updateTime
+    wireguardConfig {
+      value
+      encoding
     }
   }
 }

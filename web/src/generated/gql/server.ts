@@ -4355,6 +4355,7 @@ export type ConsoleUpdateClusterMSvMutation = {
 };
 
 export type ConsoleListClusterMSvsQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPaginationIn>;
   search?: InputMaybe<SearchClusterManagedService>;
 }>;
 
@@ -5186,7 +5187,6 @@ export type ConsoleListImagePullSecretsQuery = {
         creationTime: any;
         displayName: string;
         dockerConfigJson?: string;
-        environments?: Array<string>;
         format: Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__PullSecretFormat;
         id: string;
         markedForDeletion?: boolean;
@@ -6955,6 +6955,39 @@ export type AuthCli_CreateDeviceMutation = {
   core_createVPNDevice?: {
     metadata?: { name: string };
     wireguardConfig?: { encoding: string; value: string };
+  };
+};
+
+export type AuthCli_CreateGlobalVpnDeviceMutationVariables = Exact<{
+  gvpnDevice: GlobalVpnDeviceIn;
+}>;
+
+export type AuthCli_CreateGlobalVpnDeviceMutation = {
+  infra_createGlobalVPNDevice?: {
+    accountName: string;
+    creationTime: any;
+    displayName: string;
+    globalVPNName: string;
+    id: string;
+    ipAddr: string;
+    markedForDeletion?: boolean;
+    privateKey: string;
+    publiEndpoint?: string;
+    publicKey: string;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userName: string; userId: string; userEmail: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    wireguardConfig?: { value: string; encoding: string };
   };
 };
 

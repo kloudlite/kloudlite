@@ -76,7 +76,6 @@ export const imagePullSecretsQueries = (executor: IExecutor) => ({
               creationTime
               displayName
               dockerConfigJson
-              environments
               format
               id
               lastUpdatedBy {

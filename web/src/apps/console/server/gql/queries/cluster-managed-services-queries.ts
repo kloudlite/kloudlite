@@ -111,9 +111,13 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
   listClusterMSvs: executor(
     gql`
       query Infra_listClusterManagedServices(
+        $pagination: CursorPaginationIn
         $search: SearchClusterManagedService
       ) {
-        infra_listClusterManagedServices(search: $search) {
+        infra_listClusterManagedServices(
+          pagination: $pagination
+          search: $search
+        ) {
           edges {
             cursor
             node {
