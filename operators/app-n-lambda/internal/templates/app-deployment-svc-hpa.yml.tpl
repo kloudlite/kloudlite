@@ -76,24 +76,24 @@ spec:
       volumes: {{- $volumes| toYAML | nindent 8 }}
       {{- end }}
       {{- end }}
----
-{{- if .Spec.Services }}
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{.Name}}
-  namespace: {{.Namespace}}
-  ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
-spec:
-  selector: {{ $podLabels | toYAML | nindent 4}}
-  ports:
-    {{- range $svc := .Spec.Services }}
-    {{- with $svc }}
-    - protocol: {{.Protocol | default "TCP"}}
-      port: {{.Port}}
-      name: {{printf "p-%d" .Port | squote}}
-      targetPort: {{.Port}}
-    {{- end }}
-    {{- end }}
-{{- end }}
+{{- /* --- */}}
+{{- /* {{- if .Spec.Services }} */}}
+{{- /* apiVersion: v1 */}}
+{{- /* kind: Service */}}
+{{- /* metadata: */}}
+{{- /*   name: {{.Name}} */}}
+{{- /*   namespace: {{.Namespace}} */}}
+{{- /*   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}} */}}
+{{- /* spec: */}}
+{{- /*   selector: {{ $podLabels | toYAML | nindent 4}} */}}
+{{- /*   ports: */}}
+{{- /*     {{- range $svc := .Spec.Services }} */}}
+{{- /*     {{- with $svc }} */}}
+{{- /*     - protocol: {{.Protocol | default "TCP"}} */}}
+{{- /*       port: {{.Port}} */}}
+{{- /*       name: {{printf "p-%d" .Port | squote}} */}}
+{{- /*       targetPort: {{.Port}} */}}
+{{- /*     {{- end }} */}}
+{{- /*     {{- end }} */}}
+{{- /* {{- end }} */}}
 {{- end }}
