@@ -1,5 +1,7 @@
 package server
 
+import "encoding/json"
+
 type Metadata struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
@@ -8,7 +10,7 @@ type Metadata struct {
 type Status struct {
 	IsReady bool `json:"isReady"`
 	Message struct {
-		RawMessage string `json:"RawMessage"`
+		RawMessage json.RawMessage `json:",inline"`
 	} `json:"message"`
 }
 
