@@ -55,8 +55,6 @@ sudo {cmd} vpn start`),
 					envName = klFile.DefaultEnv
 				}
 			}
-			//projectName := fn.ParseStringFlag(cmd, "project")
-			//options = append(options, fn.MakeOption("projectName", projectName))
 			options = append(options, fn.MakeOption("envName", envName))
 
 		case constants.InfraCliName:
@@ -139,7 +137,6 @@ func init() {
 	switch flags.CliName {
 	case constants.CoreCliName:
 		{
-			startCmd.Flags().StringP("project", "p", "", "project name")
 			startCmd.Flags().StringP("env", "e", "", "environment name")
 		}
 	case constants.InfraCliName:
