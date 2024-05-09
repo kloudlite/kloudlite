@@ -4,14 +4,11 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 
-	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -46,9 +43,7 @@ func ExecCmd(cmdString string, verbose bool) error {
 	}
 
 	cmd.Stderr = os.Stderr
-	// s.Start()
 	err = cmd.Run()
-	// s.Stop()
 	return err
 }
 
@@ -95,22 +90,6 @@ func Configure(
 
 	s.Stop()
 
-	// ps := []wgtypes.PeerConfig{}
-	//
-	// for i := range cfg.Peers {
-	// 	// if i <= 1 {
-	// 	// 	continue
-	// 	// }
-	//
-	// 	ps = append(ps, cfg.Peers[i])
-	//
-	// 	fmt.Printf("\n\n%d-> %+v\n\n", i, cfg.Peers[i])
-	// }
-	//
-	// cfg.Peers = ps
-
-	// return fmt.Errorf("wip")
-
 	if len(cfg.Address) == 0 {
 		return errors.New("device ip not found")
 	} else if e := SetDeviceIp(cfg.Address[0], interfaceName, verbose); e != nil {
@@ -126,104 +105,9 @@ func Configure(
 		fn.Log("[#] setting up connection")
 	}
 
-	dnsServers := make([]net.IPNet, 0)
-	isSystemdReslov := IsSystemdReslov()
-
-	if err := func() error {
-		if isSystemdReslov {
-			return nil
-		}
-
-		dServers, err := getCurrentDns(verbose)
-		if err != nil {
-			return err
-		}
-
-		dnsServers = func() []net.IPNet {
-			var ipNet []net.IPNet
-			for _, v := range dServers {
-				ip := net.ParseIP(v)
-				if ip == nil {
-					continue
-				}
-				in := net.IPNet{
-					IP: ip,
-					Mask: func() net.IPMask {
-						if ip.To4() != nil {
-							return net.CIDRMask(32, 32)
-						}
-						return net.CIDRMask(128, 128)
-					}(),
-				}
-				ipNet = append(ipNet, in)
-			}
-
-			return ipNet
-		}()
-
-		// if runtime.GOOS != constants.RuntimeDarwin {
-		// 	emptydns := []net.IP{}
-		// 	cfg.DNS = emptydns
-		// }
-
-		return nil
-	}(); err != nil {
+	if err := SetDnsServers(cfg.DNS, interfaceName, verbose); err != nil {
 		return err
 	}
-
-	if err := func() error {
-		if runtime.GOOS != constants.RuntimeLinux {
-			return nil
-		}
-
-		if isSystemdReslov {
-			return setDnsServer(cfg.DNS[0], interfaceName, verbose)
-		}
-
-		return setLinuxDnsServers(cfg.DNS, verbose)
-	}(); err != nil {
-		return err
-	}
-
-	if runtime.GOOS == constants.RuntimeDarwin {
-		if err := setDnsServers(func() []net.IPNet {
-			ipNet := dnsServers
-
-			matched := false
-			for _, i2 := range dnsServers {
-				if i2.IP.String() == cfg.DNS[0].String() {
-					matched = true
-					break
-				}
-			}
-
-			if !matched {
-				ipNet = append([]net.IPNet{{
-					IP:   cfg.DNS[0],
-					Mask: net.CIDRMask(32, 32),
-				}}, ipNet...)
-
-				client.SetDns(func() []string {
-					var dns []string
-					for _, v := range cfg.DNS {
-						dns = append(dns, v.String())
-					}
-					return dns
-				}())
-
-			}
-
-			return ipNet
-		}(), "Wi-Fi", verbose); err != nil {
-			return err
-		}
-	}
-
-	// cfg.Peers[0].AllowedIPs = append(cfg.Peers[0].AllowedIPs, dnsServers...)
-
-	//for _, p := range cfg.Config.Peers {
-	//	fmt.Println("peers ", p.Endpoint)
-	//}
 
 	err = wg.ConfigureDevice(interfaceName, cfg.Config)
 	if err != nil {

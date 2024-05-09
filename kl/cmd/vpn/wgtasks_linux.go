@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/server"
@@ -26,8 +25,8 @@ func connect(verbose bool, options ...fn.Option) error {
 		if !success {
 			_ = wg_vpn.StopService(verbose)
 
-			if runtime.GOOS == constants.RuntimeLinux && !wg_vpn.IsSystemdReslov() {
-				wg_vpn.ResetLinuxDnsServers()
+			if !wg_vpn.IsSystemdReslov() {
+				wg_vpn.ResetDnsServers(ifName, verbose)
 			}
 		}
 
@@ -93,8 +92,8 @@ func disconnect(verbose bool) error {
 		return err
 	}
 
-	if runtime.GOOS == constants.RuntimeLinux && !wg_vpn.IsSystemdReslov() {
-		if err := wg_vpn.ResetLinuxDnsServers(); err != nil {
+	if !wg_vpn.IsSystemdReslov() {
+		if err := wg_vpn.ResetDnsServers(ifName, verbose); err != nil {
 			return err
 		}
 	}
