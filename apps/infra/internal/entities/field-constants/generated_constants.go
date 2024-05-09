@@ -251,11 +251,11 @@ const (
 
 // constant vars generated for struct GlobalVPNDevice
 const (
-	GlobalVPNDeviceGlobalVPNName = "globalVPNName"
-	GlobalVPNDeviceIpAddr        = "ipAddr"
-	GlobalVPNDevicePrivateKey    = "privateKey"
-	GlobalVPNDevicePubliEndpoint = "publiEndpoint"
-	GlobalVPNDevicePublicKey     = "publicKey"
+	GlobalVPNDeviceGlobalVPNName  = "globalVPNName"
+	GlobalVPNDeviceIpAddr         = "ipAddr"
+	GlobalVPNDevicePrivateKey     = "privateKey"
+	GlobalVPNDevicePublicEndpoint = "publicEndpoint"
+	GlobalVPNDevicePublicKey      = "publicKey"
 )
 
 // constant vars generated for struct HelmRelease

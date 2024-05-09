@@ -16,10 +16,9 @@ type BYOKCluster struct {
 
 	GlobalVPN             string `json:"globalVPN" graphql:"noinput"`
 	ClusterSvcCIDR        string `json:"clusterSvcCIDR" graphql:"noinput"`
-	ClusterPublicEndpoint string `json:"clusterPublicEndpoint"`
-	ClusterToken          string `json:"clusterToken"`
-
-	MessageQueueTopicName string `json:"messageQueueTopicName"`
+	ClusterPublicEndpoint string `json:"clusterPublicEndpoint" graphql:"noinput"`
+	ClusterToken          string `json:"clusterToken" graphql:"noinput"`
+	MessageQueueTopicName string `json:"messageQueueTopicName" graphql:"noinput"`
 
 	common.ResourceMetadata `json:",inline"`
 
