@@ -18,6 +18,8 @@ import (
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
 )
 
@@ -39,16 +41,9 @@ type VolMount struct {
 	Key  string `yaml:"key"`
 }
 
-// type FileMounts struct {
-// 	MountBasePath string     `yaml:"mountbasepath" json:"mountbasepath"`
-// 	Mounts        []VolMount `yaml:"mounts" json:"mounts"`
-// }
-
 type FileMountType struct {
 	FileMount client.MountType `yaml:"filemount" json:"filemount"`
 }
-
-// var fm FM
 
 var imageName string
 
@@ -64,9 +59,13 @@ var startCmd = &cobra.Command{
 }
 
 func startBox(cmd *cobra.Command, args []string) error {
-
 	foreground := fn.ParseBoolFlag(cmd, "foreground")
 	debug := fn.ParseBoolFlag(cmd, "debug")
+
+	s := spinner.NewSpinner("starting container please wait")
+
+	s.Start()
+	defer s.Stop()
 
 	if isPortInUse("1729") {
 		fn.Log("Port 1729 is not being used by any other container. Please stop that container first.")
@@ -78,11 +77,10 @@ func startBox(cmd *cobra.Command, args []string) error {
 		imageName = args[0]
 	}
 
-	// if err := fn.ExecCmd(fmt.Sprintf("docker pull %s", imageName), nil, false); err != nil {
-	// 	return err
-	// }
-
-	fn.Log("starting container...")
+	cwd, _ := os.Getwd()
+	if debug {
+		fn.Logf("starting container in: %s", text.Blue(cwd))
+	}
 
 	{
 		// Global setup
@@ -124,6 +122,10 @@ func startBox(cmd *cobra.Command, args []string) error {
 		}
 
 		ensureBoxRunning()
+	}
+
+	if debug {
+		fn.Logf("Started container of: %s", text.Blue(cwd))
 	}
 
 	return nil
@@ -220,8 +222,6 @@ func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) error {
 
 		td, err := os.MkdirTemp("", "kl-tmp")
 		if err != nil {
-			fmt.Println("here")
-
 			return err
 		}
 		akTmpPath := path.Join(td, "authorized_keys")
@@ -246,9 +246,12 @@ func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) error {
 			dockerArgs = append(dockerArgs, "-v", "/var/run/docker.sock:/var/run/docker.sock:ro")
 		}
 
-		fmt.Println(akTmpPath)
+		cwd, _ := os.Getwd()
 
-		dockerArgs = append(dockerArgs, "--name", containerName,
+		dockerArgs = append(dockerArgs,
+			"--name", containerName,
+			"--label", "kl-box=true",
+			"--label", fmt.Sprintf("kl-box-cwd=%s", cwd),
 			"-v", fmt.Sprintf("%s:/tmp/ssh2/authorized_keys:ro", akTmpPath),
 			"-v", "kl-home-cache:/home:rw",
 			"-v", "nix-store:/nix:rw",
@@ -260,17 +263,22 @@ func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) error {
 
 		command := exec.Command("docker", dockerArgs...)
 
-		command.Stdout = os.Stdout
+		// command.Stdout = os.Stdout
 		command.Stderr = os.Stderr
 
 		if debug {
 			fn.Logf("docker container started with cmd: %s\n", command.String())
 		}
 
-		err = command.Run()
+		out, err := command.Output()
 		if err != nil {
 			return fmt.Errorf("error running kl-box container [%s]", err.Error())
 		}
+
+		if debug {
+			fn.Logf("docker container started with output: %s\n", string(out))
+		}
+
 		return nil
 	}
 
@@ -326,7 +334,6 @@ func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) error {
 		return startContainer()
 	}
 
-	return nil
 }
 
 func ensureBoxRunning() {

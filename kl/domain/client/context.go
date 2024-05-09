@@ -54,33 +54,35 @@ type InfraContexts struct {
 }
 
 type ExtraData struct {
-	BaseUrl           string          `json:"baseUrl"`
-	SelectedEnvs      map[string]*Env `json:"selectedEnvs"`
-	DNS               []string        `json:"dns"`
-	Loading           bool            `json:"loading"`
-	VpnConnected      bool            `json:"vpnConnected"`
-	DevInfo           string          `json:"devInfo"`
-	SearchDomainAdded bool            `json:"searchDomainAdded"`
-	DnsAdded          bool            `json:"dnsAdded"`
-	DnsValues         []string        `json:"dnsValues"`
+	BaseUrl      string          `json:"baseUrl"`
+	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
+	DNS          []string        `json:"dns"`
+	Loading      bool            `json:"loading"`
+	VpnConnected bool            `json:"vpnConnected"`
+
+	// TODO: don't have any idea about this field, needs to remove if not required
+	ActiveCluster string `json:"activeCluster"`
+	// SearchDomainAdded bool   `json:"searchDomainAdded"`
+	// DnsAdded          bool            `json:"dnsAdded"`
+	// DnsValues         []string        `json:"dnsValues"`
 }
 
-func GetDevInfo() (string, error) {
+func GetActiveCluster() (string, error) {
 	extraData, err := GetExtraData()
 	if err != nil {
 		return "", err
 	}
 
-	return extraData.DevInfo, nil
+	return extraData.ActiveCluster, nil
 }
 
-func SetDevInfo(devCluster string) error {
+func SetActiveCluster(devCluster string) error {
 	extraData, err := GetExtraData()
 	if err != nil {
 		return err
 	}
 
-	extraData.DevInfo = devCluster
+	extraData.ActiveCluster = devCluster
 
 	file, err := yaml.Marshal(extraData)
 	if err != nil {
@@ -235,7 +237,7 @@ func GetMainCtx() (*MainContext, error) {
 
 func DeleteDeviceContext(dName string) error {
 	if dName == "" {
-		return fmt.Errorf("Device Name is required")
+		return fmt.Errorf("device Name is required")
 	}
 
 	c, err := GetDeviceContext()
@@ -245,7 +247,7 @@ func DeleteDeviceContext(dName string) error {
 	}
 
 	if c.DeviceName != dName {
-		return fmt.Errorf("Device %s not found", dName)
+		return fmt.Errorf("device %s not found", dName)
 	}
 
 	c.DeviceName = ""

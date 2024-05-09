@@ -1,10 +1,14 @@
 package box
 
 import (
-	"errors"
+	"context"
 	"fmt"
 
+	"github.com/docker/docker/api/types/container"
+	"github.com/kloudlite/kl/pkg/dockercli"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
 )
 
@@ -12,30 +16,54 @@ var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "stop running container",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := stopBox("", cmd, args); err != nil {
+		if err := stopBox(cmd, args); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func stopBox(containerName string, _ *cobra.Command, _ []string) error {
-	if containerName == "" {
-		containerName = "kl-box-" + getCwdHash()
-	}
-	fn.Log("stopping container...")
-	if err := fn.ExecCmd(fmt.Sprintf("docker stop %s", containerName), nil, false); err != nil {
-		fn.PrintError(errors.New("Error stoping kl-box container"))
+func stopBox(cmd *cobra.Command, _ []string) error {
+
+	debug := fn.ParseBoolFlag(cmd, "debug")
+
+	s := spinner.NewSpinner("stopping container please wait")
+
+	s.Start()
+	defer s.Stop()
+
+	cr, err := getRunningContainer()
+	if err != nil {
 		return err
 	}
 
-	if err := fn.ExecCmd(fmt.Sprintf("docker rm %s", containerName), nil, false); err != nil {
+	if cr.Name == "" {
+		return fmt.Errorf("no running container found")
+	}
+
+	if debug {
+		fn.Logf("stopping container of: %s", text.Blue(cr.Path))
+	}
+
+	cli, err := dockercli.GetClient()
+	if err != nil {
 		return err
 	}
-	fn.Log("stopped container")
+
+	if err := cli.ContainerStop(context.TODO(), cr.Name, container.StopOptions{}); err != nil {
+		return fmt.Errorf("error stoping container: %s", err)
+	}
+
+	if err := cli.ContainerRemove(context.TODO(), cr.Name, container.RemoveOptions{}); err != nil {
+		return fmt.Errorf("failed to remove container: %s", err)
+	}
+
+	if debug {
+		fn.Logf("stopped container of: %s", text.Blue(cr.Path))
+	}
 	return nil
 }
 
 func init() {
-	stopCmd.Aliases = append(stopCmd.Aliases, "st")
+	stopCmd.Flags().BoolP("debug", "d", false, "run in debug mode")
 }

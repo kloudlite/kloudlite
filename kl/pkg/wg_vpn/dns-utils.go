@@ -2,24 +2,26 @@ package wg_vpn
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"net"
 )
 
 func ResetDnsServers(devName string, verbose bool) error {
-	currDns, err := client.ActiveDns()
+
+	bkDns, err := client.BackupDns()
 	if err != nil {
 		fn.PrintError(fmt.Errorf("failed to get active dns servers: %w", err))
 		return nil
 	}
 
-	if len(currDns) == 0 {
+	if len(bkDns) == 0 {
 		return nil
 	}
 
 	ips := make([]net.IP, 0)
-	for _, v := range currDns {
+	for _, v := range bkDns {
 		ips = append(ips, net.ParseIP(v))
 	}
 
@@ -27,7 +29,7 @@ func ResetDnsServers(devName string, verbose bool) error {
 		return err
 	}
 
-	if err := client.SetActiveDns([]string{}); err != nil {
+	if err := client.SetBackupDns([]string{}); err != nil {
 		fn.PrintError(err)
 	}
 
@@ -35,6 +37,7 @@ func ResetDnsServers(devName string, verbose bool) error {
 }
 
 func SetDnsServers(dnsServers []net.IP, devName string, verbose bool) error {
+
 	warn := func(str ...interface{}) {
 		if verbose {
 			fn.Warn(str)
@@ -82,7 +85,7 @@ func SetDnsServers(dnsServers []net.IP, devName string, verbose bool) error {
 			}
 		}
 
-		return client.SetActiveDns(currDns)
+		return client.SetBackupDns(currDns)
 	}(); err != nil {
 		return err
 	}

@@ -15,8 +15,6 @@ import (
 
 // not required in linux
 
-var connectVerbose bool
-
 var skipCheck bool
 
 var startCmd = &cobra.Command{
@@ -26,8 +24,9 @@ var startCmd = &cobra.Command{
 sudo {cmd} vpn start`),
 	Run: func(cmd *cobra.Command, _ []string) {
 
+		verbose := fn.ParseBoolFlag(cmd, "verbose")
 		if runtime.GOOS == constants.RuntimeWindows {
-			if err := connect(connectVerbose); err != nil {
+			if err := connect(verbose); err != nil {
 				fn.Notify("Error:", err.Error())
 				fn.PrintError(err)
 			}
@@ -79,12 +78,12 @@ sudo {cmd} vpn start`),
 
 			fn.Log("\n[#] reconnecting")
 
-			if err := disconnect(connectVerbose); err != nil {
+			if err := disconnect(verbose); err != nil {
 				fn.PrintError(err)
 				return
 			}
 
-			if err := startConnecting(connectVerbose, options...); err != nil {
+			if err := startConnecting(verbose, options...); err != nil {
 				fn.PrintError(err)
 				return
 			}
@@ -95,7 +94,7 @@ sudo {cmd} vpn start`),
 			return
 		}
 
-		if err := startConnecting(connectVerbose, options...); err != nil {
+		if err := startConnecting(verbose, options...); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -133,7 +132,7 @@ func startConnecting(verbose bool, options ...fn.Option) error {
 }
 
 func init() {
-	startCmd.Flags().BoolVarP(&connectVerbose, "verbose", "v", false, "show verbose")
+	startCmd.Flags().BoolP("verbose", "v", false, "run in debug mode")
 	startCmd.Flags().BoolVarP(&skipCheck, "skipCheck", "s", false, "skip checks of env and cluster")
 	startCmd.Aliases = append(stopCmd.Aliases, "connect")
 

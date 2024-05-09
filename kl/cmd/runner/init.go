@@ -4,6 +4,7 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/spf13/cobra"
 )
@@ -38,8 +39,20 @@ Examples:
 
 			defEnv := ""
 			if len(envs) != 0 {
-				defEnv = envs[0].Metadata.Name
+				de, err := fzf.FindOne(envs, func(item server.Env) string {
+					return item.Metadata.Name
+				}, fzf.WithPrompt("Select default environment >"))
+
+				if err != nil {
+					fn.PrintError(err)
+					return
+				}
+
+				defEnv = de.Metadata.Name
+			} else {
+				fn.Warn("no environment found, please create environments from dashboard")
 			}
+
 			initFile = &client.KLFileType{
 				Version:    "v1",
 				DefaultEnv: defEnv,
