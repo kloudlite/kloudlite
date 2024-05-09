@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"reflect"
 	"strings"
 	"time"
@@ -23,14 +24,17 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 type Reconciler struct {
@@ -44,7 +48,6 @@ type Reconciler struct {
 
 	appDeploymentTemplate []byte
 	hpaTemplate           []byte
-	appInterceptTemplate  []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -54,6 +57,7 @@ func (r *Reconciler) GetName() string {
 const (
 	ImagesLabelled  string = "images-labelled"
 	DeploymentReady string = "deployment-ready"
+	ServicesReady   string = "services-ready"
 	HPAConfigured   string = "hpa-configured"
 
 	CleanedOwnedResources string = "cleaned-owned-resources"
@@ -62,6 +66,7 @@ const (
 	AppInterceptCreated string = "app-intercept-created"
 
 	DefaultsPatched string = "defaults-patched"
+	AppRouterReady  string = "app-router-ready"
 )
 
 var DeleteChecklist = []rApi.CheckMeta{
@@ -96,7 +101,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		{Name: DeploymentSvcCreated, Title: "Deployment And Service Created"},
 		{Name: DeploymentReady, Title: "Deployment Ready", Hide: req.Object.IsInterceptEnabled()},
 		{Name: HPAConfigured, Title: "Horizontal pod autoscaling configured", Hide: req.Object.IsInterceptEnabled()},
-		{Name: AppInterceptCreated, Title: "App Intercept Created", Hide: !req.Object.IsInterceptEnabled()},
+		{Name: ServicesReady, Title: "Services Ready", Hide: len(req.Object.Spec.Services) == 0},
+		{Name: AppRouterReady, Title: "App Router Ready", Hide: req.Object.Spec.Router == nil},
 	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -129,7 +135,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.checkAppIntercept(req); !step.ShouldProceed() {
+	if step := r.createAppService(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.checkAppRouter(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -193,7 +203,7 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 			"volume-mounts":      vMounts,
 			"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			"account-name":       obj.GetAnnotations()[constants.AccountNameKey],
-			"pod-labels":         fn.MapFilter(obj.Labels, "kloudlite.io/"),
+			"pod-labels":         obj.GetLabels(),
 			"pod-annotations":    fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
 			"cluster-dns-suffix": r.Env.ClusterInternalDNS,
 		},
@@ -212,86 +222,195 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 	return check.Completed()
 }
 
-func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+// func (r *Reconciler) checkAppIntercept(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+// 	ctx, obj := req.Context(), req.Object
+//
+// 	podname := obj.Name + "-intercept"
+// 	podns := obj.Namespace
+// 	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: podname, Namespace: podns}}
+//
+// 	check := rApi.NewRunningCheck(AppInterceptCreated, req)
+//
+// 	if obj.Spec.Intercept == nil || !obj.Spec.Intercept.Enabled {
+// 		if err := r.Delete(ctx, pod); err != nil {
+// 			if !apiErrors.IsNotFound(err) {
+// 				return check.Failed(err)
+// 			}
+// 		}
+// 		return check.Completed()
+// 	}
+//
+// 	if obj.Spec.Services == nil {
+// 		return check.Failed(fmt.Errorf("no services configured on app, failed to intercept")).NoRequeue()
+// 	}
+//
+// 	if obj.Spec.Intercept.PortMappings == nil {
+// 		obj.Spec.Intercept.PortMappings = make([]crdsv1.AppInterceptPortMappings, len(obj.Spec.Services))
+// 		for i := range obj.Spec.Services {
+// 			obj.Spec.Intercept.PortMappings[i] = crdsv1.AppInterceptPortMappings{
+// 				AppPort:    obj.Spec.Services[i].Port,
+// 				DevicePort: obj.Spec.Services[i].Port,
+// 			}
+// 		}
+// 		if err := r.Update(ctx, obj); err != nil {
+// 			return check.Failed(err)
+// 		}
+//
+// 		return check.Completed()
+// 	}
+//
+// 	appGenerationLabel := "kloudlite.io/app-generation"
+//
+// 	if err := r.Get(ctx, client.ObjectKeyFromObject(pod), pod); err != nil {
+// 		if apiErrors.IsNotFound(err) {
+// 			portMappings := make(map[uint16]uint16, len(obj.Spec.Intercept.PortMappings))
+// 			for _, pm := range obj.Spec.Intercept.PortMappings {
+// 				portMappings[pm.AppPort] = pm.DevicePort
+// 			}
+//
+// 			deviceHostSuffix := "device.local"
+// 			if obj.Spec.Intercept.DeviceHostSuffix != nil {
+// 				deviceHostSuffix = *obj.Spec.Intercept.DeviceHostSuffix
+// 			}
+//
+// 			b, err := templates.ParseBytes(r.appInterceptTemplate, map[string]any{
+// 				"name":             podname,
+// 				"namespace":        podns,
+// 				"labels":           fn.MapMerge(fn.MapFilter(obj.Labels, "kloudlite.io/"), map[string]string{appGenerationLabel: fmt.Sprintf("%d", obj.Generation)}),
+// 				"owner-references": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+// 				"device-host":      fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix),
+// 				"port-mappings":    portMappings,
+// 			})
+// 			if err != nil {
+// 				return check.Failed(err).NoRequeue()
+// 			}
+//
+// 			if _, err := r.YamlClient.ApplyYAML(ctx, b); err != nil {
+// 				return check.Failed(err).NoRequeue()
+// 			}
+//
+// 			return check.StillRunning(fmt.Errorf("waiting for intercept pod to start"))
+// 		}
+// 	}
+//
+// 	if pod.Labels[appGenerationLabel] != fmt.Sprintf("%d", obj.Generation) {
+// 		if err := r.Delete(ctx, pod); err != nil {
+// 			return check.Failed(err)
+// 		}
+// 		return check.StillRunning(fmt.Errorf("waiting for previous generation pod to be deleted"))
+// 	}
+//
+// 	if pod.Status.Phase != corev1.PodRunning {
+// 		return check.StillRunning(fmt.Errorf("waiting for pod to start running"))
+// 	}
+//
+// 	return check.Completed()
+// }
+
+func (r *Reconciler) createAppService(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(ServicesReady, req)
 
-	podname := obj.Name + "-intercept"
-	podns := obj.Namespace
-	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: podname, Namespace: podns}}
-
-	check := rApi.NewRunningCheck(AppInterceptCreated, req)
-
-	if obj.Spec.Intercept == nil || !obj.Spec.Intercept.Enabled {
-		if err := r.Delete(ctx, pod); err != nil {
-			if !apiErrors.IsNotFound(err) {
-				return check.Failed(err)
-			}
-		}
+	if len(obj.Spec.Services) == 0 {
 		return check.Completed()
 	}
 
-	if obj.Spec.Services == nil {
-		return check.Failed(fmt.Errorf("no services configured on app, failed to intercept")).NoRequeue()
-	}
+	ports := func() []corev1.ServicePort {
+		mappings := make([]corev1.ServicePort, 0, len(obj.Spec.Services))
 
-	if obj.Spec.Intercept.PortMappings == nil {
-		obj.Spec.Intercept.PortMappings = make([]crdsv1.AppInterceptPortMappings, len(obj.Spec.Services))
+		if obj.IsInterceptEnabled() {
+			for i := range obj.Spec.Intercept.PortMappings {
+				protocol := corev1.ProtocolTCP
+				// if obj.Spec.Intercept.PortMappings[i] != nil {
+				// 	protocol = corev1.Protocol(*obj.Spec.Services[i].Protocol)
+				// }
+				mappings = append(mappings, corev1.ServicePort{
+					Name:       fmt.Sprintf("p-%d", obj.Spec.Intercept.PortMappings[i].AppPort),
+					Protocol:   protocol,
+					Port:       int32(obj.Spec.Intercept.PortMappings[i].AppPort),
+					TargetPort: intstr.FromInt32(int32(obj.Spec.Intercept.PortMappings[i].DevicePort)),
+				})
+			}
+
+			return mappings
+		}
+
 		for i := range obj.Spec.Services {
-			obj.Spec.Intercept.PortMappings[i] = crdsv1.AppInterceptPortMappings{
-				AppPort:    obj.Spec.Services[i].Port,
-				DevicePort: obj.Spec.Services[i].Port,
+			protocol := corev1.ProtocolTCP
+			if obj.Spec.Services[i].Protocol != nil {
+				protocol = corev1.Protocol(*obj.Spec.Services[i].Protocol)
 			}
-		}
-		if err := r.Update(ctx, obj); err != nil {
-			return check.Failed(err)
+			mappings = append(mappings, corev1.ServicePort{
+				Name:       fmt.Sprintf("p-%d", obj.Spec.Services[i].Port),
+				Protocol:   protocol,
+				Port:       int32(obj.Spec.Services[i].Port),
+				TargetPort: intstr.FromInt32(int32(obj.Spec.Services[i].Port)),
+			})
 		}
 
+		return mappings
+	}()
+
+	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
+		svc.SetLabels(obj.GetLabels())
+		svc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+
+		if !obj.IsInterceptEnabled() {
+			svc.Spec.Selector = obj.GetLabels()
+		}
+
+		svc.Spec.Ports = ports
+		svc.Spec.Type = corev1.ServiceTypeClusterIP
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	if !obj.IsInterceptEnabled() {
 		return check.Completed()
 	}
 
-	appGenerationLabel := "kloudlite.io/app-generation"
+	deviceHostSuffix := "device.local"
+	if obj.Spec.Intercept.DeviceHostSuffix != nil {
+		deviceHostSuffix = *obj.Spec.Intercept.DeviceHostSuffix
+	}
 
-	if err := r.Get(ctx, client.ObjectKeyFromObject(pod), pod); err != nil {
-		if apiErrors.IsNotFound(err) {
-			portMappings := make(map[uint16]uint16, len(obj.Spec.Intercept.PortMappings))
-			for _, pm := range obj.Spec.Intercept.PortMappings {
-				portMappings[pm.AppPort] = pm.DevicePort
+	deviceHost := fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix)
+
+	endpointslice := &discoveryv1.EndpointSlice{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, endpointslice, func() error {
+		endpointslice.SetLabels(map[string]string{"kubernetes.io/service-name": obj.Name})
+
+		endpointslice.AddressType = discoveryv1.AddressTypeIPv4
+		endpointslice.Ports = func() []discoveryv1.EndpointPort {
+			m := make([]discoveryv1.EndpointPort, 0, len(ports))
+			for i := range ports {
+				m = append(m, discoveryv1.EndpointPort{
+					Name:     &ports[i].Name,
+					Protocol: &ports[i].Protocol,
+					Port:     fn.New(int32(ports[i].TargetPort.IntValue())),
+				})
 			}
-
-			deviceHostSuffix := "device.local"
-			if obj.Spec.Intercept.DeviceHostSuffix != nil {
-				deviceHostSuffix = *obj.Spec.Intercept.DeviceHostSuffix
-			}
-
-			b, err := templates.ParseBytes(r.appInterceptTemplate, map[string]any{
-				"name":             podname,
-				"namespace":        podns,
-				"labels":           fn.MapMerge(fn.MapFilter(obj.Labels, "kloudlite.io/"), map[string]string{appGenerationLabel: fmt.Sprintf("%d", obj.Generation)}),
-				"owner-references": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"device-host":      fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix),
-				"port-mappings":    portMappings,
-			})
+			return m
+		}()
+		endpointslice.Endpoints = func() []discoveryv1.Endpoint {
+			addrs, err := net.LookupHost(deviceHost)
 			if err != nil {
-				return check.Failed(err).NoRequeue()
+				return nil
 			}
 
-			if _, err := r.YamlClient.ApplyYAML(ctx, b); err != nil {
-				return check.Failed(err).NoRequeue()
+			m := make([]discoveryv1.Endpoint, 0, len(addrs))
+			for i := range addrs {
+				m = append(m, discoveryv1.Endpoint{
+					Addresses: []string{addrs[i]},
+				})
 			}
-
-			return check.StillRunning(fmt.Errorf("waiting for intercept pod to start"))
-		}
-	}
-
-	if pod.Labels[appGenerationLabel] != fmt.Sprintf("%d", obj.Generation) {
-		if err := r.Delete(ctx, pod); err != nil {
-			return check.Failed(err)
-		}
-		return check.StillRunning(fmt.Errorf("waiting for previous generation pod to be deleted"))
-	}
-
-	if pod.Status.Phase != corev1.PodRunning {
-		return check.StillRunning(fmt.Errorf("waiting for pod to start running"))
+			return m
+		}()
+		return nil
+	}); err != nil {
+		return check.Failed(err)
 	}
 
 	return check.Completed()
@@ -393,6 +512,44 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 	return check.Completed()
 }
 
+func (r *Reconciler) checkAppRouter(req *rApi.Request[*crdsv1.App]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(AppRouterReady, req)
+
+	if obj.Spec.Router == nil {
+		return check.Completed()
+	}
+
+	if len(obj.Spec.Router.Routes) == 0 {
+		if len(obj.Spec.Services) != 0 {
+			return check.Failed(fmt.Errorf("app has multiple exposed services, cannot deduce router routes automatically from services, router routes must be explicity set via .spec.router.routes"))
+		}
+
+		obj.Spec.Router.Routes = append(obj.Spec.Router.Routes, crdsv1.Route{
+			App:  obj.Name,
+			Path: "/",
+			Port: obj.Spec.Services[0].Port,
+		})
+
+		if err := r.Update(ctx, obj); err != nil {
+			return check.Failed(err)
+		}
+
+		return check.StillRunning(fmt.Errorf("updating app router default routes"))
+	}
+
+	router := &crdsv1.Router{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-app-router", obj.Name), Namespace: obj.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, router, func() error {
+		router.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		router.Spec = obj.Spec.Router.RouterSpec
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	return check.Completed()
+}
+
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
@@ -407,11 +564,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	r.hpaTemplate, err = templates.Read(templates.HPATemplate)
-	if err != nil {
-		return err
-	}
-
-	r.appInterceptTemplate, err = templates.Read(templates.AppIntercept)
 	if err != nil {
 		return err
 	}

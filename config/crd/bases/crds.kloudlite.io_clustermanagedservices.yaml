@@ -84,7 +84,6 @@ spec:
                     required:
                     - apiVersion
                     - kind
-                    - spec
                     type: object
                   sharedSecret:
                     type: string

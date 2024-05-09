@@ -1,6 +1,7 @@
 # vim: set ft=dockerfile:
-FROM docker.io/alpine/helm:3.12.3
+FROM --platform=$TARGETPLATFORM docker.io/alpine/helm:3.12.3
 RUN apk add bash curl
 # FIXME: this url is for amd64 only
+ARG KUBECTL_VERSION=v1.30.0
 ARG TARGETPLATFORM
-RUN curl -L0 -o /usr/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/$TARGETPLATFORM/kubectl" && chmod +x /usr/bin/kubectl
+RUN curl -LO https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${TARGETPLATFORM}/kubectl > /usr/bin/kubectl && chmod +x /usr/bin/kubectl
