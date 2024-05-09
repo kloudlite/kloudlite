@@ -2,10 +2,9 @@ package wg_vpn
 
 import (
 	"fmt"
-	"net"
-
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"net"
 )
 
 func ResetDnsServers(devName string, verbose bool) error {
@@ -68,6 +67,19 @@ func SetDnsServers(dnsServers []net.IP, devName string, verbose bool) error {
 
 		if len(bkDns) != 0 {
 			return nil
+		}
+
+		for _, i := range currDns {
+			found := false
+			for _, j := range dnsServers {
+				if j.To4().String() == i {
+					found = true
+					break
+				}
+			}
+			if !found {
+				dnsServers = append(dnsServers, net.ParseIP(i))
+			}
 		}
 
 		return client.SetActiveDns(currDns)

@@ -32,22 +32,22 @@ func ipRouteAdd(ip string, interfaceIp string, deviceName string, verbose bool) 
 	return ExecCmd(fmt.Sprintf("route -n add -net %s %s", ip, interfaceIp), verbose)
 }
 
-func getNetworkServices(verbose bool) ([]string, error) {
-	output, err := exec.Command("networksetup", "-listallnetworkservices").Output()
-	if err != nil {
-		functions.Log(string(output))
-		return nil, err
-	}
-	lines := strings.Split(string(output), "\n")
-	var networkServices []string
-	for _, line := range lines[1:] {
-		if line == "" {
-			continue
-		}
-		networkServices = append(networkServices, line)
-	}
-	return networkServices, err
-}
+//func getNetworkServices(verbose bool) ([]string, error) {
+//	output, err := exec.Command("networksetup", "-listallnetworkservices").Output()
+//	if err != nil {
+//		functions.Log(string(output))
+//		return nil, err
+//	}
+//	lines := strings.Split(string(output), "\n")
+//	var networkServices []string
+//	for _, line := range lines[1:] {
+//		if line == "" {
+//			continue
+//		}
+//		networkServices = append(networkServices, line)
+//	}
+//	return networkServices, err
+//}
 
 func getCurrentDns(verbose bool) ([]string, error) {
 	networkService := "Wi-Fi"
@@ -179,10 +179,10 @@ func StopService(verbose bool) error {
 			}
 		}
 
-		if err := setDnsServers(func() []net.IPNet {
-			var ipNets []net.IPNet
+		if err := setDnsServers(func() []net.IP {
+			var ipNets []net.IP
 			for _, dnsServer := range filteredDnsServers {
-				ipNets = append(ipNets, net.IPNet{IP: net.ParseIP(dnsServer)})
+				ipNets = append(ipNets, net.ParseIP(dnsServer))
 			}
 			return ipNets
 		}(), "Wi-Fi", verbose); err != nil {
@@ -194,9 +194,9 @@ func StopService(verbose bool) error {
 	return nil
 }
 
-func setDnsServer(dnsServer net.IP, d string, verbose bool) error {
-	return ExecCmd(fmt.Sprintf("networksetup -setdnsservers %s %s", d, dnsServer.String()), verbose)
-}
+//func setDnsServer(dnsServer net.IP, d string, verbose bool) error {
+//	return ExecCmd(fmt.Sprintf("networksetup -setdnsservers %s %s", d, dnsServer.String()), verbose)
+//}
 
 func setDnsSearchDomain(networkService string, localSearchDomains []string) error {
 	if localSearchDomains == nil {
@@ -248,7 +248,7 @@ func SetDnsSearch() error {
 		return err
 	}
 
-	var privateIPs []net.IPNet
+	var privateIPs []net.IP
 	for _, ipStr := range data.DnsValues {
 		ip := net.ParseIP(ipStr)
 		if ip == nil {
@@ -256,7 +256,7 @@ func SetDnsSearch() error {
 			continue
 		}
 		if isPrivateIP(ip) {
-			privateIPs = append(privateIPs, net.IPNet{IP: net.ParseIP(ipStr)})
+			privateIPs = append(privateIPs, net.ParseIP(ipStr))
 		}
 	}
 
@@ -296,9 +296,9 @@ func UnsetDnsSearch() error {
 	}
 
 	if data.DnsAdded {
-		ips := []net.IPNet{}
+		ips := make([]net.IP, 0)
 		for _, dns := range data.DnsValues {
-			ips = append(ips, net.IPNet{IP: net.ParseIP(dns)})
+			ips = append(ips, net.ParseIP(dns))
 		}
 		if err := setDnsServers(ips, constants.NetworkService, false); err != nil {
 			return err
@@ -343,11 +343,19 @@ func isPrivateIP(ip net.IP) bool {
 	return private
 }
 
-func dwSetDnsServers(dnsServers []net.IPNet, _ string, verbose bool) error {
+func setDnsServers(dnsServers []net.IP, _ string, verbose bool) error {
+
+	if len(dnsServers) == 0 {
+		if verbose {
+			functions.Warn("dns not configured, using old dns server")
+		}
+		return nil
+	}
+
 	return ExecCmd(fmt.Sprintf("networksetup -setdnsservers %s %s", constants.NetworkService, func() string {
 		var dns []string
 		for _, v := range dnsServers {
-			dns = append(dns, v.IP.String())
+			dns = append(dns, v.To4().String())
 		}
 		return strings.Join(dns, " ")
 	}()), verbose)

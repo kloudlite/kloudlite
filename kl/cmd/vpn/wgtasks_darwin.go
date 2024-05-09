@@ -53,9 +53,9 @@ func connect(verbose bool, options ...fn.Option) error {
 		fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
 	}
 
-	if err = wg_vpn.SetDnsSearch(); err != nil {
-		return err
-	}
+	//if err = wg_vpn.SetDnsSearch(); err != nil {
+	//	return err
+	//}
 
 	if err := startConfiguration(verbose, options...); err != nil {
 		_ = wg_vpn.UnsetDnsSearch()
