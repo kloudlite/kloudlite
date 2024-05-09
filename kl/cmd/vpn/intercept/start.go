@@ -9,8 +9,6 @@ import (
 	"strings"
 )
 
-var maps []string
-
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "start intercept app to tunnel trafic to your device",
@@ -21,8 +19,13 @@ Examples:
 
 	`,
 
-	Run: func(cmd *cobra.Command, _ []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		app := fn.ParseStringFlag(cmd, "app")
+		maps, err := cmd.Flags().GetStringArray("port")
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
 		ports := make([]server.AppPort, 0)
 
@@ -53,7 +56,7 @@ Examples:
 			})
 		}
 
-		err := server.InterceptApp(true, ports, []fn.Option{
+		err = server.InterceptApp(true, ports, []fn.Option{
 			fn.MakeOption("appName", app),
 		}...)
 
@@ -69,8 +72,8 @@ Examples:
 
 func init() {
 	startCmd.Flags().StringP("app", "a", "", "app name")
-	startCmd.Flags().StringArrayVarP(
-		&maps, "port", "p", []string{},
+	startCmd.Flags().StringArrayP(
+		"port", "p", []string{},
 		"expose port <server_port>:<local_port>",
 	)
 
