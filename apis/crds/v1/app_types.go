@@ -212,6 +212,11 @@ type HPA struct {
 	ThresholdMemory int `json:"thresholdMemory,omitempty"`
 }
 
+// AppRouter inspired by github.com/kloudlite/operator/apis/crds/v1.RouterSpec
+type AppRouter struct {
+	RouterSpec `json:",inline,omitempty"`
+}
+
 // AppSpec defines the desired state of App
 type AppSpec struct {
 	DisplayName string `json:"displayName,omitempty"`
@@ -230,6 +235,8 @@ type AppSpec struct {
 	Containers []AppContainer `json:"containers"`
 
 	Hpa *HPA `json:"hpa,omitempty"`
+
+	Router *AppRouter `json:"router,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	NodeSelector              map[string]string                 `json:"nodeSelector,omitempty"`
@@ -260,7 +267,7 @@ type JsonPatch struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/intercept\\.toDevice",name=Intercepted,type=string

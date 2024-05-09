@@ -14,7 +14,7 @@ import (
 type ServiceTemplate struct {
 	Kind       string                          `json:"kind"`
 	APIVersion string                          `json:"apiVersion"`
-	Spec       map[string]apiextensionsv1.JSON `json:"spec"`
+	Spec       map[string]apiextensionsv1.JSON `json:"spec,omitempty"`
 }
 
 func (s *ServiceTemplate) GroupVersionKind() schema.GroupVersionKind {
