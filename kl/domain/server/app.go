@@ -19,6 +19,11 @@ type App struct {
 	Status      Status   `json:"status"`
 }
 
+type AppPort struct {
+	AppPort    int `json:"appPort"`
+	DevicePort int `json:"devicePort,omitempty"`
+}
+
 func ListApps(options ...fn.Option) ([]App, error) {
 
 	envName := fn.GetOption(options, "envName")
@@ -99,12 +104,11 @@ func EnsureApp(options ...fn.Option) (*string, error) {
 	return &appName, nil
 }
 
-func InterceptApp(status bool, options ...fn.Option) error {
+func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 
 	appName := fn.GetOption(options, "appName")
 	devName := fn.GetOption(options, "deviceName")
 	envName := fn.GetOption(options, "envName")
-	projectName := fn.GetOption(options, "projectName")
 
 	var err error
 
@@ -145,11 +149,11 @@ func InterceptApp(status bool, options ...fn.Option) error {
 	}
 
 	respData, err := klFetch("cli_interceptApp", map[string]any{
-		"appname":     appName,
-		"projectName": projectName,
-		"envName":     envName,
-		"deviceName":  devName,
-		"intercept":   status,
+		"appname":      appName,
+		"envName":      envName,
+		"deviceName":   devName,
+		"intercept":    status,
+		"portMappings": ports,
 	}, &cookie)
 
 	if err != nil {
