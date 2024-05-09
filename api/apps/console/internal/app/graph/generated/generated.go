@@ -69,6 +69,7 @@ type ResolverRoot interface {
 	ConfigIn() ConfigInResolver
 	ConsoleVPNDeviceIn() ConsoleVPNDeviceInResolver
 	EnvironmentIn() EnvironmentInResolver
+	Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn() Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver
 	ImagePullSecretIn() ImagePullSecretInResolver
 	ManagedResourceIn() ManagedResourceInResolver
 	MetadataIn() MetadataInResolver
@@ -291,6 +292,18 @@ type ComplexityRoot struct {
 		DevicePort func(childComplexity int) int
 	}
 
+	Github__com___kloudlite___operator___apis___crds___v1__AppRouter struct {
+		BackendProtocol func(childComplexity int) int
+		BasicAuth       func(childComplexity int) int
+		Cors            func(childComplexity int) int
+		Domains         func(childComplexity int) int
+		HTTPS           func(childComplexity int) int
+		IngressClass    func(childComplexity int) int
+		MaxBodySizeInMb func(childComplexity int) int
+		RateLimit       func(childComplexity int) int
+		Routes          func(childComplexity int) int
+	}
+
 	Github__com___kloudlite___operator___apis___crds___v1__AppSpec struct {
 		Containers                func(childComplexity int) int
 		DisplayName               func(childComplexity int) int
@@ -300,6 +313,7 @@ type ComplexityRoot struct {
 		NodeSelector              func(childComplexity int) int
 		Region                    func(childComplexity int) int
 		Replicas                  func(childComplexity int) int
+		Router                    func(childComplexity int) int
 		ServiceAccount            func(childComplexity int) int
 		Services                  func(childComplexity int) int
 		Tolerations               func(childComplexity int) int
@@ -642,7 +656,7 @@ type ComplexityRoot struct {
 		CoreCreateApp             func(childComplexity int, envName string, app entities.App) int
 		CoreCreateConfig          func(childComplexity int, envName string, config entities.Config) int
 		CoreCreateEnvironment     func(childComplexity int, env entities.Environment) int
-		CoreCreateImagePullSecret func(childComplexity int, imagePullSecretIn entities.ImagePullSecret) int
+		CoreCreateImagePullSecret func(childComplexity int, pullSecret entities.ImagePullSecret) int
 		CoreCreateManagedResource func(childComplexity int, envName string, mres entities.ManagedResource) int
 		CoreCreateRouter          func(childComplexity int, envName string, router entities.Router) int
 		CoreCreateSecret          func(childComplexity int, envName string, secret entities.Secret) int
@@ -655,10 +669,11 @@ type ComplexityRoot struct {
 		CoreDeleteRouter          func(childComplexity int, envName string, routerName string) int
 		CoreDeleteSecret          func(childComplexity int, envName string, secretName string) int
 		CoreDeleteVPNDevice       func(childComplexity int, deviceName string) int
-		CoreInterceptApp          func(childComplexity int, envName string, appname string, deviceName string, intercept bool) int
+		CoreInterceptApp          func(childComplexity int, envName string, appname string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
 		CoreUpdateApp             func(childComplexity int, envName string, app entities.App) int
 		CoreUpdateConfig          func(childComplexity int, envName string, config entities.Config) int
 		CoreUpdateEnvironment     func(childComplexity int, env entities.Environment) int
+		CoreUpdateImagePullSecret func(childComplexity int, pullSecret entities.ImagePullSecret) int
 		CoreUpdateManagedResource func(childComplexity int, envName string, mres entities.ManagedResource) int
 		CoreUpdateRouter          func(childComplexity int, envName string, router entities.Router) int
 		CoreUpdateSecret          func(childComplexity int, envName string, secret entities.Secret) int
@@ -878,12 +893,13 @@ type MutationResolver interface {
 	CoreUpdateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error)
 	CoreDeleteEnvironment(ctx context.Context, envName string) (bool, error)
 	CoreCloneEnvironment(ctx context.Context, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) (*entities.Environment, error)
-	CoreCreateImagePullSecret(ctx context.Context, imagePullSecretIn entities.ImagePullSecret) (*entities.ImagePullSecret, error)
+	CoreCreateImagePullSecret(ctx context.Context, pullSecret entities.ImagePullSecret) (*entities.ImagePullSecret, error)
+	CoreUpdateImagePullSecret(ctx context.Context, pullSecret entities.ImagePullSecret) (*entities.ImagePullSecret, error)
 	CoreDeleteImagePullSecret(ctx context.Context, name string) (bool, error)
 	CoreCreateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
 	CoreUpdateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
 	CoreDeleteApp(ctx context.Context, envName string, appName string) (bool, error)
-	CoreInterceptApp(ctx context.Context, envName string, appname string, deviceName string, intercept bool) (bool, error)
+	CoreInterceptApp(ctx context.Context, envName string, appname string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) (bool, error)
 	CoreCreateConfig(ctx context.Context, envName string, config entities.Config) (*entities.Config, error)
 	CoreUpdateConfig(ctx context.Context, envName string, config entities.Config) (*entities.Config, error)
 	CoreDeleteConfig(ctx context.Context, envName string, configName string) (bool, error)
@@ -972,6 +988,10 @@ type ConsoleVPNDeviceInResolver interface {
 type EnvironmentInResolver interface {
 	Metadata(ctx context.Context, obj *entities.Environment, data *v13.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.Environment, data *model.GithubComKloudliteOperatorApisCrdsV1EnvironmentSpecIn) error
+}
+type Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver interface {
+	AppPort(ctx context.Context, obj *v1.AppInterceptPortMappings, data int) error
+	DevicePort(ctx context.Context, obj *v1.AppInterceptPortMappings, data int) error
 }
 type ImagePullSecretInResolver interface {
 	Format(ctx context.Context, obj *entities.ImagePullSecret, data model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) error
@@ -1973,6 +1993,69 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings.DevicePort(childComplexity), true
 
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppRouter.backendProtocol":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.BackendProtocol == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.BackendProtocol(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppRouter.basicAuth":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.BasicAuth == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.BasicAuth(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppRouter.cors":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.Cors == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.Cors(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppRouter.domains":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.Domains == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.Domains(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppRouter.https":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.HTTPS == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.HTTPS(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppRouter.ingressClass":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.IngressClass == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.IngressClass(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppRouter.maxBodySizeInMB":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.MaxBodySizeInMb == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.MaxBodySizeInMb(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppRouter.rateLimit":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.RateLimit == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.RateLimit(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppRouter.routes":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.Routes == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppRouter.Routes(childComplexity), true
+
 	case "Github__com___kloudlite___operator___apis___crds___v1__AppSpec.containers":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSpec.Containers == nil {
 			break
@@ -2028,6 +2111,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSpec.Replicas(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___crds___v1__AppSpec.router":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSpec.Router == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSpec.Router(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___crds___v1__AppSpec.serviceAccount":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__AppSpec.ServiceAccount == nil {
@@ -3487,7 +3577,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateImagePullSecret(childComplexity, args["imagePullSecretIn"].(entities.ImagePullSecret)), true
+		return e.complexity.Mutation.CoreCreateImagePullSecret(childComplexity, args["pullSecret"].(entities.ImagePullSecret)), true
 
 	case "Mutation.core_createManagedResource":
 		if e.complexity.Mutation.CoreCreateManagedResource == nil {
@@ -3643,7 +3733,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreInterceptApp(childComplexity, args["envName"].(string), args["appname"].(string), args["deviceName"].(string), args["intercept"].(bool)), true
+		return e.complexity.Mutation.CoreInterceptApp(childComplexity, args["envName"].(string), args["appname"].(string), args["deviceName"].(string), args["intercept"].(bool), args["portMappings"].([]*v1.AppInterceptPortMappings)), true
 
 	case "Mutation.core_updateApp":
 		if e.complexity.Mutation.CoreUpdateApp == nil {
@@ -3680,6 +3770,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CoreUpdateEnvironment(childComplexity, args["env"].(entities.Environment)), true
+
+	case "Mutation.core_updateImagePullSecret":
+		if e.complexity.Mutation.CoreUpdateImagePullSecret == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_updateImagePullSecret_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreUpdateImagePullSecret(childComplexity, args["pullSecret"].(entities.ImagePullSecret)), true
 
 	case "Mutation.core_updateManagedResource":
 		if e.complexity.Mutation.CoreUpdateManagedResource == nil {
@@ -4576,6 +4678,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__MsvcRefIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppContainerIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppRouterIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppSvcIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__BasicAuthIn,
@@ -4867,13 +4970,14 @@ type Mutation {
 	core_cloneEnvironment(sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
 
 	# image pull secrets
-	core_createImagePullSecret(imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
+	core_createImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
+	core_updateImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
 	core_deleteImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_deleteApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
 	core_updateConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
@@ -4894,7 +4998,6 @@ type Mutation {
 	# core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
 	# core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
 	# core_deleteProjectManagedService(pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
 
 	core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 	core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
@@ -5006,6 +5109,18 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMapp
   devicePort: Int!
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__AppRouter @shareable {
+  backendProtocol: String
+  basicAuth: Github__com___kloudlite___operator___apis___crds___v1__BasicAuth
+  cors: Github__com___kloudlite___operator___apis___crds___v1__Cors
+  domains: [String!]!
+  https: Github__com___kloudlite___operator___apis___crds___v1__Https
+  ingressClass: String
+  maxBodySizeInMB: Int
+  rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimit
+  routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__AppSpec @shareable {
   containers: [Github__com___kloudlite___operator___apis___crds___v1__AppContainer!]!
   displayName: String
@@ -5015,6 +5130,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__AppSpec @shareable {
   nodeSelector: Map
   region: String
   replicas: Int
+  router: Github__com___kloudlite___operator___apis___crds___v1__AppRouter
   serviceAccount: String
   services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvc!]
   tolerations: [K8s__io___api___core___v1__Toleration!]
@@ -5280,6 +5396,7 @@ type PageInfo @shareable {
 
 input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
   apiVersion: String
+  clusterName: String!
   kind: String
   name: String!
   namespace: String!
@@ -5305,6 +5422,18 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMap
   devicePort: Int!
 }
 
+input Github__com___kloudlite___operator___apis___crds___v1__AppRouterIn {
+  backendProtocol: String
+  basicAuth: Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn
+  cors: Github__com___kloudlite___operator___apis___crds___v1__CorsIn
+  domains: [String!]!
+  https: Github__com___kloudlite___operator___apis___crds___v1__HttpsIn
+  ingressClass: String
+  maxBodySizeInMB: Int
+  rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
+  routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
+}
+
 input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn {
   containers: [Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn!]!
   displayName: String
@@ -5314,6 +5443,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn {
   nodeSelector: Map
   region: String
   replicas: Int
+  router: Github__com___kloudlite___operator___apis___crds___v1__AppRouterIn
   serviceAccount: String
   services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn!]
   tolerations: [K8s__io___api___core___v1__TolerationIn!]
@@ -6216,14 +6346,14 @@ func (ec *executionContext) field_Mutation_core_createImagePullSecret_args(ctx c
 	var err error
 	args := map[string]interface{}{}
 	var arg0 entities.ImagePullSecret
-	if tmp, ok := rawArgs["imagePullSecretIn"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imagePullSecretIn"))
+	if tmp, ok := rawArgs["pullSecret"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pullSecret"))
 		arg0, err = ec.unmarshalNImagePullSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["imagePullSecretIn"] = arg0
+	args["pullSecret"] = arg0
 	return args, nil
 }
 
@@ -6518,6 +6648,15 @@ func (ec *executionContext) field_Mutation_core_interceptApp_args(ctx context.Co
 		}
 	}
 	args["intercept"] = arg3
+	var arg4 []*v1.AppInterceptPortMappings
+	if tmp, ok := rawArgs["portMappings"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portMappings"))
+		arg4, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappingsᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["portMappings"] = arg4
 	return args, nil
 }
 
@@ -6581,6 +6720,21 @@ func (ec *executionContext) field_Mutation_core_updateEnvironment_args(ctx conte
 		}
 	}
 	args["env"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_updateImagePullSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 entities.ImagePullSecret
+	if tmp, ok := rawArgs["pullSecret"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pullSecret"))
+		arg0, err = ec.unmarshalNImagePullSecretIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pullSecret"] = arg0
 	return args, nil
 }
 
@@ -8225,6 +8379,8 @@ func (ec *executionContext) fieldContext_App_spec(ctx context.Context, field gra
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_region(ctx, field)
 			case "replicas":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_replicas(ctx, field)
+			case "router":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_router(ctx, field)
 			case "serviceAccount":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_serviceAccount(ctx, field)
 			case "services":
@@ -13982,6 +14138,422 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter_backendProtocol(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_backendProtocol(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BackendProtocol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_backendProtocol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter_basicAuth(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_basicAuth(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BasicAuth, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1BasicAuth)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__BasicAuth2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1BasicAuth(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_basicAuth(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "enabled":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__BasicAuth_enabled(ctx, field)
+			case "secretName":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__BasicAuth_secretName(ctx, field)
+			case "username":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__BasicAuth_username(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__BasicAuth", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter_cors(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_cors(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cors, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1Cors)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Cors2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1Cors(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_cors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "allowCredentials":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Cors_allowCredentials(ctx, field)
+			case "enabled":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Cors_enabled(ctx, field)
+			case "origins":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Cors_origins(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__Cors", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter_domains(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_domains(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Domains, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_domains(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter_https(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_https(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HTTPS, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1HTTPS)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Https2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HTTPS(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_https(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "clusterIssuer":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Https_clusterIssuer(ctx, field)
+			case "enabled":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Https_enabled(ctx, field)
+			case "forceRedirect":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Https_forceRedirect(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__Https", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter_ingressClass(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_ingressClass(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IngressClass, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_ingressClass(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter_maxBodySizeInMB(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_maxBodySizeInMB(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MaxBodySizeInMb, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_maxBodySizeInMB(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter_rateLimit(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_rateLimit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RateLimit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1RateLimit)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__RateLimit2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RateLimit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_rateLimit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "connections":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_connections(ctx, field)
+			case "enabled":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_enabled(ctx, field)
+			case "rpm":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_rpm(ctx, field)
+			case "rps":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_rps(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__RateLimit", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter_routes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_routes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Routes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.GithubComKloudliteOperatorApisCrdsV1Route)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Route2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1Routeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_routes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "app":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_app(ctx, field)
+			case "path":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_path(ctx, field)
+			case "port":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_port(ctx, field)
+			case "rewrite":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_rewrite(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__Route", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSpec_containers(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSpec) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_containers(ctx, field)
 	if err != nil {
@@ -14354,6 +14926,67 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSpec_router(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_router(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Router, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1AppRouter)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__AppRouter2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppRouter(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_router(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "backendProtocol":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_backendProtocol(ctx, field)
+			case "basicAuth":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_basicAuth(ctx, field)
+			case "cors":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_cors(ctx, field)
+			case "domains":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_domains(ctx, field)
+			case "https":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_https(ctx, field)
+			case "ingressClass":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_ingressClass(ctx, field)
+			case "maxBodySizeInMB":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_maxBodySizeInMB(ctx, field)
+			case "rateLimit":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_rateLimit(ctx, field)
+			case "routes":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_routes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__AppRouter", field.Name)
 		},
 	}
 	return fc, nil
@@ -23673,7 +24306,7 @@ func (ec *executionContext) _Mutation_core_createImagePullSecret(ctx context.Con
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateImagePullSecret(rctx, fc.Args["imagePullSecretIn"].(entities.ImagePullSecret))
+			return ec.resolvers.Mutation().CoreCreateImagePullSecret(rctx, fc.Args["pullSecret"].(entities.ImagePullSecret))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -23766,6 +24399,120 @@ func (ec *executionContext) fieldContext_Mutation_core_createImagePullSecret(ctx
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_core_createImagePullSecret_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_core_updateImagePullSecret(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_updateImagePullSecret(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreUpdateImagePullSecret(rctx, fc.Args["pullSecret"].(entities.ImagePullSecret))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.ImagePullSecret); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.ImagePullSecret)
+	fc.Result = res
+	return ec.marshalOImagePullSecret2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_updateImagePullSecret(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_ImagePullSecret_accountName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_ImagePullSecret_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_ImagePullSecret_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_ImagePullSecret_displayName(ctx, field)
+			case "dockerConfigJson":
+				return ec.fieldContext_ImagePullSecret_dockerConfigJson(ctx, field)
+			case "environments":
+				return ec.fieldContext_ImagePullSecret_environments(ctx, field)
+			case "format":
+				return ec.fieldContext_ImagePullSecret_format(ctx, field)
+			case "id":
+				return ec.fieldContext_ImagePullSecret_id(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_ImagePullSecret_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_ImagePullSecret_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_ImagePullSecret_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_ImagePullSecret_recordVersion(ctx, field)
+			case "registryPassword":
+				return ec.fieldContext_ImagePullSecret_registryPassword(ctx, field)
+			case "registryURL":
+				return ec.fieldContext_ImagePullSecret_registryURL(ctx, field)
+			case "registryUsername":
+				return ec.fieldContext_ImagePullSecret_registryUsername(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_ImagePullSecret_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_ImagePullSecret_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ImagePullSecret", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_core_updateImagePullSecret_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -24185,7 +24932,7 @@ func (ec *executionContext) _Mutation_core_interceptApp(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreInterceptApp(rctx, fc.Args["envName"].(string), fc.Args["appname"].(string), fc.Args["deviceName"].(string), fc.Args["intercept"].(bool))
+			return ec.resolvers.Mutation().CoreInterceptApp(rctx, fc.Args["envName"].(string), fc.Args["appname"].(string), fc.Args["deviceName"].(string), fc.Args["intercept"].(bool), fc.Args["portMappings"].([]*v1.AppInterceptPortMappings))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -34227,7 +34974,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "kind", "name", "namespace"}
+	fieldsInOrder := [...]string{"apiVersion", "clusterName", "kind", "name", "namespace"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -34243,6 +34990,15 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.APIVersion = data
+		case "clusterName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClusterName = data
 		case "kind":
 			var err error
 
@@ -34404,8 +35160,8 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn, error) {
-	var it model.GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn(ctx context.Context, obj interface{}) (v1.AppInterceptPortMappings, error) {
+	var it v1.AppInterceptPortMappings
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -34426,7 +35182,9 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			if err != nil {
 				return it, err
 			}
-			it.AppPort = data
+			if err = ec.resolvers.Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn().AppPort(ctx, &it, data); err != nil {
+				return it, err
+			}
 		case "devicePort":
 			var err error
 
@@ -34435,7 +35193,110 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			if err != nil {
 				return it, err
 			}
-			it.DevicePort = data
+			if err = ec.resolvers.Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn().DevicePort(ctx, &it, data); err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppRouterIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1AppRouterIn, error) {
+	var it model.GithubComKloudliteOperatorApisCrdsV1AppRouterIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"backendProtocol", "basicAuth", "cors", "domains", "https", "ingressClass", "maxBodySizeInMB", "rateLimit", "routes"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "backendProtocol":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backendProtocol"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BackendProtocol = data
+		case "basicAuth":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("basicAuth"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__BasicAuthIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1BasicAuthIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BasicAuth = data
+		case "cors":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cors"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__CorsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1CorsIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Cors = data
+		case "domains":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domains"))
+			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Domains = data
+		case "https":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("https"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__HttpsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HTTPSIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HTTPS = data
+		case "ingressClass":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ingressClass"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IngressClass = data
+		case "maxBodySizeInMB":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxBodySizeInMB"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxBodySizeInMb = data
+		case "rateLimit":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateLimit"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__RateLimitIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RateLimitIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RateLimit = data
+		case "routes":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("routes"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__RouteIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RouteInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Routes = data
 		}
 	}
 
@@ -34449,7 +35310,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"containers", "displayName", "freeze", "hpa", "intercept", "nodeSelector", "region", "replicas", "serviceAccount", "services", "tolerations", "topologySpreadConstraints"}
+	fieldsInOrder := [...]string{"containers", "displayName", "freeze", "hpa", "intercept", "nodeSelector", "region", "replicas", "router", "serviceAccount", "services", "tolerations", "topologySpreadConstraints"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -34528,6 +35389,15 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.Replicas = data
+		case "router":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("router"))
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppRouterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppRouterIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Router = data
 		case "serviceAccount":
 			var err error
 
@@ -35199,7 +36069,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portMappings"))
-			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsInᚄ(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappingsᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39093,6 +39963,61 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return out
 }
 
+var github__com___kloudlite___operator___apis___crds___v1__AppRouterImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__AppRouter"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppRouter(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__AppRouterImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__AppRouter")
+		case "backendProtocol":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_backendProtocol(ctx, field, obj)
+		case "basicAuth":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_basicAuth(ctx, field, obj)
+		case "cors":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_cors(ctx, field, obj)
+		case "domains":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_domains(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "https":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_https(ctx, field, obj)
+		case "ingressClass":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_ingressClass(ctx, field, obj)
+		case "maxBodySizeInMB":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_maxBodySizeInMB(ctx, field, obj)
+		case "rateLimit":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_rateLimit(ctx, field, obj)
+		case "routes":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter_routes(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var github__com___kloudlite___operator___apis___crds___v1__AppSpecImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__AppSpec"}
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__AppSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1AppSpec) graphql.Marshaler {
@@ -39123,6 +40048,8 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSpec_region(ctx, field, obj)
 		case "replicas":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSpec_replicas(ctx, field, obj)
+		case "router":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSpec_router(ctx, field, obj)
 		case "serviceAccount":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__AppSpec_serviceAccount(ctx, field, obj)
 		case "services":
@@ -41916,6 +42843,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_createImagePullSecret(ctx, field)
 			})
+		case "core_updateImagePullSecret":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_updateImagePullSecret(ctx, field)
+			})
 		case "core_deleteImagePullSecret":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_deleteImagePullSecret(ctx, field)
@@ -44521,7 +45452,7 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___
 	return ec._Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn, error) {
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappings(ctx context.Context, v interface{}) (*v1.AppInterceptPortMappings, error) {
 	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -45792,7 +46723,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -45800,7 +46731,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46154,7 +47085,7 @@ func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___
 	return ret
 }
 
-func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsInᚄ(ctx context.Context, v interface{}) ([]*model.GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappingsᚄ(ctx context.Context, v interface{}) ([]*v1.AppInterceptPortMappings, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -46163,15 +47094,30 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*model.GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn, len(vSlice))
+	res := make([]*v1.AppInterceptPortMappings, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappings(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
 	}
 	return res, nil
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__AppRouter2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppRouter(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1AppRouter) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___crds___v1__AppRouter(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppRouterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppRouterIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCrdsV1AppRouterIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__AppRouterIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__AppSvc2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppSvcᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GithubComKloudliteOperatorApisCrdsV1AppSvc) graphql.Marshaler {

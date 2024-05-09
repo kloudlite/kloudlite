@@ -137,8 +137,6 @@ func (d *domain) findEnvironmentByTargetNs(ctx ConsoleContext, targetNs string) 
 }
 
 func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error) {
-	env.Namespace = "kloudlite-environments"
-
 	if strings.TrimSpace(env.ClusterName) == "" {
 		return nil, fmt.Errorf("clustername must be set while creating environments")
 	}
@@ -202,38 +200,11 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment)
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.syncAccountLevelImagePullSecrets(ctx, nenv.Name, nenv.Spec.TargetNamespace); err != nil {
+	if err := d.syncImagePullSecretsToEnvironment(ctx, nenv.Name); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	return nenv, nil
-}
-
-func (d *domain) syncAccountLevelImagePullSecrets(ctx ConsoleContext, envName string, envTargetNamespace string) error {
-	secrets, err := d.k8sClient.ListSecrets(ctx, constants.GetAccountTargetNamespace(ctx.AccountName), corev1.SecretTypeDockerConfigJson)
-	if err != nil {
-		return err
-	}
-
-	for i := range secrets {
-		if err := d.applyK8sResource(ctx, envName, &corev1.Secret{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Secret",
-				APIVersion: "v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      secrets[i].Name,
-				Namespace: envTargetNamespace,
-			},
-			Data:       secrets[i].Data,
-			StringData: secrets[i].StringData,
-			Type:       secrets[i].Type,
-		}, 1); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, destinationEnvName string, displayName string, envRoutingMode crdsv1.EnvironmentRoutingMode) (*entities.Environment, error) {
@@ -308,9 +279,9 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.syncAccountLevelImagePullSecrets(ctx, destEnv.Name, destEnv.Spec.TargetNamespace); err != nil {
-		return nil, errors.NewE(err)
-	}
+	// if err := d.syncAccountLevelImagePullSecrets(ctx, destEnv.Name, destEnv.Spec.TargetNamespace); err != nil {
+	// 	return nil, errors.NewE(err)
+	// }
 
 	if err := d.applyK8sResource(ctx, sourceEnv.Name, &destEnv.Environment, destEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -341,6 +312,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+
 	configs, err := d.configRepo.Find(ctx, repos.Query{
 		Filter: filters,
 		Sort:   nil,
@@ -466,6 +438,10 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 		}); err != nil {
 			return nil, err
 		}
+	}
+
+	if err := d.syncImagePullSecretsToEnvironment(ctx, destinationEnvName); err != nil {
+		return nil, err
 	}
 
 	return destEnv, nil

@@ -15,6 +15,7 @@ import (
 	"github.com/kloudlite/api/common"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/types"
+	v12 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/operator"
 	v11 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -164,6 +165,24 @@ func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[
 	return m, nil
 }
 
+// AppPort is the resolver for the appPort field.
+func (r *github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver) AppPort(ctx context.Context, obj *v12.AppInterceptPortMappings, data int) error {
+	if obj == nil {
+		return errors.Newf("object is nil")
+	}
+	obj.AppPort = uint16(data)
+	return nil
+}
+
+// DevicePort is the resolver for the devicePort field.
+func (r *github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver) DevicePort(ctx context.Context, obj *v12.AppInterceptPortMappings, data int) error {
+	if obj == nil {
+		return errors.Newf("object is nil")
+	}
+	obj.DevicePort = uint16(data)
+	return nil
+}
+
 // Annotations is the resolver for the annotations field.
 func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
 	var m map[string]string
@@ -207,6 +226,11 @@ func (r *Resolver) K8s__io___api___core___v1__Secret() generated.K8s__io___api__
 // Metadata returns generated.MetadataResolver implementation.
 func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResolver{r} }
 
+// Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn returns generated.Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver implementation.
+func (r *Resolver) Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn() generated.Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver {
+	return &github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver{r}
+}
+
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
@@ -215,4 +239,5 @@ type github__com___kloudlite___api___pkg___types__SyncStatusResolver struct{ *Re
 type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
 type k8s__io___api___core___v1__SecretResolver struct{ *Resolver }
 type metadataResolver struct{ *Resolver }
+type github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }

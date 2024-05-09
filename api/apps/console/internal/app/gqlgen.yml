@@ -193,3 +193,6 @@ models:
   Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode:
     model: github.com/kloudlite/operator/apis/crds/v1.EnvironmentRoutingMode
 
+  Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn:
+    model: github.com/kloudlite/operator/apis/crds/v1.AppInterceptPortMappings
+

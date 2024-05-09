@@ -209,16 +209,21 @@ func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.A
 }
 
 // InterceptApp implements Domain.
-func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName string, intercept bool) (bool, error) {
+func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName string, intercept bool, portMappings []crdsv1.AppInterceptPortMappings) (bool, error) {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return false, errors.NewE(err)
 	}
-	uApp, err := d.appRepo.Patch(ctx, ctx.DBFilters().Add(fields.MetadataName, appName), repos.Document{
-		fc.AppSpecIntercept: crdsv1.Intercept{
-			Enabled:  intercept,
-			ToDevice: deviceName,
-		},
-	})
+
+	patch := repos.Document{
+		fc.AppSpecInterceptEnabled:  intercept,
+		fc.AppSpecInterceptToDevice: deviceName,
+	}
+
+	if portMappings != nil {
+		patch[fc.AppSpecInterceptPortMappings] = portMappings
+	}
+
+	uApp, err := d.appRepo.Patch(ctx, ctx.DBFilters().Add(fields.MetadataName, appName), patch)
 	if err != nil {
 		return false, errors.NewE(err)
 	}
@@ -295,6 +300,7 @@ func (d *domain) OnAppApplyError(ctx ResourceContext, errMsg string, name string
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, uapp.Name, PublishDelete)
 	return errors.NewE(err)
 }
