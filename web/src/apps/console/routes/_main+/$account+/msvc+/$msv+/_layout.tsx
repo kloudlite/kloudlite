@@ -12,14 +12,16 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import logger from '~/lib/client/helpers/log';
 import { defer } from '@remix-run/node';
 import Breadcrum from '~/console/components/breadcrum';
-import { BreadcrumSlash } from '~/console/utils/commons';
+import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
 import { Truncate } from '~/root/lib/utils/common';
 import { IClusterMSv } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import fake from '~/root/fake-data-generator/fake';
+import { GearSix } from '~/console/components/icons';
 import { IAccountContext } from '../../_layout';
 
 const ManagedServiceTabs = () => {
   const { account, msv } = useParams();
+  const iconSize = tabIconSize;
   return (
     <CommonTabs
       baseurl={`/${account}/msvc/${msv}`}
@@ -32,6 +34,16 @@ const ManagedServiceTabs = () => {
           label: 'Logs & Metrics',
           to: '/logs-n-metrics',
           value: '/logs-n-metrics',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <GearSix size={iconSize} />
+              Settings
+            </span>
+          ),
+          to: '/settings/general',
+          value: '/settings',
         },
       ]}
     />

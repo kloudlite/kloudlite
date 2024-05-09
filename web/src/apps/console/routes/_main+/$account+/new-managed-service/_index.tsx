@@ -246,8 +246,8 @@ const TemplateView = ({
 
 const FieldView = ({
   selectedTemplate,
-  nodepools,
-  nodepoolIsLoading,
+  // nodepools,
+  // nodepoolIsLoading,
   clusters,
   values,
   handleSubmit,
@@ -259,8 +259,8 @@ const FieldView = ({
   values: Record<string, any>;
   errors: Record<string, any>;
   selectedTemplate: ISelectedTemplate | null;
-  nodepools: { label: string; value: string }[];
-  nodepoolIsLoading: boolean;
+  // nodepools: { label: string; value: string }[];
+  // nodepoolIsLoading: boolean;
   clusters: {
     label: string;
     value: string;
@@ -448,17 +448,11 @@ const ReviewView = ({
                 {values?.selectedTemplate?.template?.displayName}
               </div>
             </div>
-            <div className="flex flex-col gap-lg pb-xl border-b border-border-default">
+            <div className="flex flex-col gap-lg ">
               <div className="flex-1 bodyMd-medium text-text-default">
                 Cluster Name
               </div>
               <div className="text-text-soft bodyMd">{values.clusterName}</div>
-            </div>
-            <div className="flex flex-col gap-lg">
-              <div className="flex-1 bodyMd-medium  text-text-default">
-                Nodepool Name
-              </div>
-              <div className="text-text-soft bodyMd">{values.nodepoolName}</div>
             </div>
           </div>
         </ReviewComponent>
@@ -693,18 +687,18 @@ const ManagedServiceLayout = () => {
 
   const clusterList = useAppend(cData, bCData);
 
-  const { data: nodepoolData, isLoading: nodepoolIsLoading } = useCustomSwr(
-    () => `/nodepools${values.clusterName}`,
-    async () => {
-      return api.listNodePools({ clusterName: values.clusterName });
-    }
-  );
+  // const { data: nodepoolData, isLoading: nodepoolIsLoading } = useCustomSwr(
+  //   () => `/nodepools${values.clusterName}`,
+  //   async () => {
+  //     return api.listNodePools({ clusterName: values.clusterName });
+  //   }
+  // );
 
-  const statefulNodepools = useMapper(parseNodes(nodepoolData), (val) => ({
-    label: val.metadata?.name || '',
-    value: val.metadata?.name || '',
-    nodepoolStateType: val.spec.nodeLabels[keyconstants.nodepoolStateType],
-  }));
+  // const statefulNodepools = useMapper(parseNodes(nodepoolData), (val) => ({
+  //   label: val.metadata?.name || '',
+  //   value: val.metadata?.name || '',
+  //   nodepoolStateType: val.spec.nodeLabels[keyconstants.nodepoolStateType],
+  // }));
 
   // const statefulNodepools = nodepools.filter(
   //   (np) => np.nodepoolStateType === 'stateful'
@@ -754,8 +748,8 @@ const ManagedServiceLayout = () => {
             errors={errors}
             handleChange={handleChange}
             handleSubmit={handleSubmit}
-            nodepools={statefulNodepools}
-            nodepoolIsLoading={nodepoolIsLoading}
+            // nodepools={statefulNodepools}
+            // nodepoolIsLoading={nodepoolIsLoading}
             clusters={clusterList}
           />
         </MultiStepProgress.Step>

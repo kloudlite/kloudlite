@@ -1,4 +1,4 @@
-import { GearSix, PencilSimple, Trash } from '~/console/components/icons';
+import { GearSix } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -14,18 +14,11 @@ import {
 } from '~/console/server/r-utils/common';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { getManagedTemplate } from '~/console/utils/commons';
-import DeleteDialog from '~/console/components/delete-dialog';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useState } from 'react';
-import { handleError } from '~/root/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { SyncStatusV2 } from '~/console/components/sync-status';
 import ListV2 from '~/console/components/listV2';
 import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
-import HandleBackendService from './handle-backend-service';
 import { IAccountContext } from '../_layout';
 
 const RESOURCE_NAME = 'managed service';
@@ -48,50 +41,31 @@ const parseItem = (item: BaseType, templates: IMSvTemplates) => {
   };
 };
 
-type OnAction = ({
-  action,
-  item,
-}: {
-  action: 'delete' | 'edit';
-  item: BaseType;
-}) => void;
-
-type IExtraButton = {
-  onAction: OnAction;
-  item: BaseType;
-};
-
-const ExtraButton = ({ onAction, item }: IExtraButton) => {
+const ExtraButton = ({ managedService }: { managedService: BaseType }) => {
+  const { account } = useParams();
   return (
     <ResourceExtraAction
       options={[
         {
-          label: 'Edit',
-          icon: <PencilSimple size={16} />,
+          label: 'Settings',
+          icon: <GearSix size={16} />,
           type: 'item',
-          onClick: () => onAction({ action: 'edit', item }),
-          key: 'edit',
-        },
-        {
-          label: 'Delete',
-          icon: <Trash size={16} />,
-          type: 'item',
-          onClick: () => onAction({ action: 'delete', item }),
-          key: 'delete',
-          className: '!text-text-critical',
+
+          to: `/${account}/msvc/${parseName(managedService)}/settings`,
+          key: 'settings',
         },
       ]}
     />
   );
 };
 
-interface IResource {
+const GridView = ({
+  items,
+  templates,
+}: {
   items: BaseType[];
   templates: IMSvTemplates;
-  onAction: OnAction;
-}
-
-const GridView = ({ items = [], templates = [], onAction: _ }: IResource) => {
+}) => {
   const { account, project } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
@@ -146,7 +120,13 @@ const GridView = ({ items = [], templates = [], onAction: _ }: IResource) => {
   );
 };
 
-const ListView = ({ items = [], templates = [], onAction }: IResource) => {
+const ListView = ({
+  items,
+  templates,
+}: {
+  items: BaseType[];
+  templates: IMSvTemplates;
+}) => {
   const { account } = useOutletContext<IAccountContext>();
   return (
     <ListV2.Root
@@ -208,7 +188,7 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
                 ),
               },
               action: {
-                render: () => <ExtraButton item={i} onAction={onAction} />,
+                render: () => <ExtraButton managedService={i} />,
               },
             },
             to: `/${parseName(account)}/msvc/${id}/logs-n-metrics`,
@@ -226,67 +206,11 @@ const BackendServicesResourcesV2 = ({
   items: BaseType[];
   templates: IMSvTemplates;
 }) => {
-  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
-  );
-  const [visible, setVisible] = useState<BaseType | null>(null);
-  const api = useConsoleApi();
-  const reloadPage = useReload();
-
-  const props: IResource = {
-    items,
-    templates,
-    onAction: ({ action, item }) => {
-      switch (action) {
-        case 'delete':
-          setShowDeleteDialog(item);
-          break;
-        case 'edit':
-          setVisible(item);
-          break;
-        default:
-          break;
-      }
-    },
-  };
   return (
-    <>
-      <ListGridView
-        listView={<ListView {...props} />}
-        gridView={<GridView {...props} />}
-      />
-      <DeleteDialog
-        resourceName={parseName(showDeleteDialog)}
-        resourceType={RESOURCE_NAME}
-        show={showDeleteDialog}
-        setShow={setShowDeleteDialog}
-        onSubmit={async () => {
-          try {
-            const { errors } = await api.deleteClusterMSv({
-              name: parseName(showDeleteDialog),
-            });
-
-            if (errors) {
-              throw errors[0];
-            }
-            reloadPage();
-            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
-            setShowDeleteDialog(null);
-          } catch (err) {
-            handleError(err);
-          }
-        }}
-      />
-      <HandleBackendService
-        {...{
-          isUpdate: true,
-          visible: !!visible,
-          setVisible: () => setVisible(null),
-          data: visible!,
-          templates: templates || [],
-        }}
-      />
-    </>
+    <ListGridView
+      listView={<ListView items={items} templates={templates} />}
+      gridView={<GridView items={items} templates={templates} />}
+    />
   );
 };
 

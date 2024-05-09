@@ -1919,6 +1919,7 @@ export type ConsoleListAllClustersQuery = {
           backupToS3Enabled: boolean;
           cloudflareEnabled?: boolean;
           clusterInternalDnsHost?: string;
+          clusterServiceCIDR?: string;
           publicDNSHost: string;
           taintMasterNodes: boolean;
           clusterTokenRef?: { key: string; name: string; namespace?: string };

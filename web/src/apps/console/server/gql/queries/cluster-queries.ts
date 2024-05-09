@@ -252,6 +252,7 @@ export const clusterQueries = (executor: IExecutor) => ({
                 backupToS3Enabled
                 cloudflareEnabled
                 clusterInternalDnsHost
+                clusterServiceCIDR
                 output {
                   keyK3sAgentJoinToken
                   keyK3sServerJoinToken

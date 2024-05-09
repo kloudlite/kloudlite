@@ -162,7 +162,7 @@ const RenderField = ({
   return <div>unknown input type {field.inputType}</div>;
 };
 
-const Fill = ({
+export const Fill = ({
   selectedService,
   values,
   handleChange,

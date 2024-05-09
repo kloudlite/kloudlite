@@ -21,6 +21,8 @@ export type IClusterMSvs = NN<
   ConsoleListClusterMSvsQuery['infra_listClusterManagedServices']
 >;
 
+export type InClusterMSvs = ConsoleUpdateClusterMSvMutationVariables;
+
 export const clusterManagedServicesQueries = (executor: IExecutor) => ({
   getClusterMSv: executor(
     gql`

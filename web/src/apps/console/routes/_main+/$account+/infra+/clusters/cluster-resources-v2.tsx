@@ -1,9 +1,7 @@
 import {
   ArrowClockwise,
-  ArrowCounterClockwise,
   GearSix,
   PencilLine,
-  PlugsConnected,
   Trash,
 } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
@@ -41,7 +39,7 @@ import LogAction from '~/console/page-components/log-action';
 import { useDataState } from '~/console/page-components/common-state';
 import { useState } from 'react';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import { Button, IconButton } from '~/components/atoms/button';
+import { Button } from '~/components/atoms/button';
 import { dayjs } from '~/components/molecule/dayjs';
 import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
 import DeleteDialog from '~/console/components/delete-dialog';
@@ -49,7 +47,6 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
-import { it } from '@faker-js/faker';
 import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
