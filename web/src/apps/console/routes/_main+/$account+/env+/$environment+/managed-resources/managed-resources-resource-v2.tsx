@@ -249,13 +249,13 @@ const ManagedResourceResourcesV2 = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!params.project || !params.environment) {
-            throw new Error('Project and Environment is required!.');
-          }
+          // if (!params.project || !params.environment) {
+          //   throw new Error('Project and Environment is required!.');
+          // }
           try {
             const { errors } = await api.deleteManagedResource({
               mresName: parseName(showDeleteDialog),
-              envName: params.environment,
+              envName: environment || '',
             });
 
             if (errors) {

@@ -219,6 +219,7 @@ export type ResType =
   | 'byok_cluster'
   | 'cluster'
   | 'cluster_managed_service'
+  | 'global_vpn_device'
   | 'helm_release'
   | 'nodepool'
   | 'providersecret';
@@ -411,6 +412,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSpecIn = {
   nodeSelector?: InputMaybe<Scalars['Map']['input']>;
   region?: InputMaybe<Scalars['String']['input']>;
   replicas?: InputMaybe<Scalars['Int']['input']>;
+  router?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppRouterIn>;
   serviceAccount?: InputMaybe<Scalars['String']['input']>;
   services?: InputMaybe<
     Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSvcIn>
@@ -530,11 +532,58 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptP
     devicePort: Scalars['Int']['input'];
   };
 
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSvcIn = {
-  name?: InputMaybe<Scalars['String']['input']>;
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppRouterIn =
+  {
+    backendProtocol?: InputMaybe<Scalars['String']['input']>;
+    basicAuth?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__BasicAuthIn>;
+    cors?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__CorsIn>;
+    domains: Array<Scalars['String']['input']>;
+    https?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__HttpsIn>;
+    ingressClass?: InputMaybe<Scalars['String']['input']>;
+    maxBodySizeInMB?: InputMaybe<Scalars['Int']['input']>;
+    rateLimit?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__RateLimitIn>;
+    routes?: InputMaybe<
+      Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouteIn>
+    >;
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__BasicAuthIn =
+  {
+    enabled: Scalars['Boolean']['input'];
+    secretName?: InputMaybe<Scalars['String']['input']>;
+    username?: InputMaybe<Scalars['String']['input']>;
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__CorsIn = {
+  allowCredentials?: InputMaybe<Scalars['Boolean']['input']>;
+  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  origins?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HttpsIn = {
+  clusterIssuer?: InputMaybe<Scalars['String']['input']>;
+  enabled: Scalars['Boolean']['input'];
+  forceRedirect?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RateLimitIn =
+  {
+    connections?: InputMaybe<Scalars['Int']['input']>;
+    enabled?: InputMaybe<Scalars['Boolean']['input']>;
+    rpm?: InputMaybe<Scalars['Int']['input']>;
+    rps?: InputMaybe<Scalars['Int']['input']>;
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouteIn = {
+  app: Scalars['String']['input'];
+  path: Scalars['String']['input'];
   port: Scalars['Int']['input'];
-  targetPort?: InputMaybe<Scalars['Int']['input']>;
-  type?: InputMaybe<Scalars['String']['input']>;
+  rewrite?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSvcIn = {
+  port: Scalars['Int']['input'];
+  protocol?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type K8s__Io___Api___Core___V1__TolerationIn = {
@@ -603,6 +652,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRo
 export type ImagePullSecretIn = {
   displayName: Scalars['String']['input'];
   dockerConfigJson?: InputMaybe<Scalars['String']['input']>;
+  environments?: InputMaybe<Array<Scalars['String']['input']>>;
   format: Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__PullSecretFormat;
   metadata: MetadataIn;
   registryPassword?: InputMaybe<Scalars['String']['input']>;
@@ -629,14 +679,15 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresResourceT
   {
     apiVersion: Scalars['String']['input'];
     kind: Scalars['String']['input'];
-    msvcRef: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcNamedRefIn;
+    msvcRef: Github__Com___Kloudlite___Operator___Apis___Common____Types__MsvcRefIn;
     spec: Scalars['Map']['input'];
   };
 
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcNamedRefIn =
+export type Github__Com___Kloudlite___Operator___Apis___Common____Types__MsvcRefIn =
   {
-    apiVersion: Scalars['String']['input'];
-    kind: Scalars['String']['input'];
+    apiVersion?: InputMaybe<Scalars['String']['input']>;
+    clusterName: Scalars['String']['input'];
+    kind?: InputMaybe<Scalars['String']['input']>;
     name: Scalars['String']['input'];
     namespace: Scalars['String']['input'];
   };
@@ -664,40 +715,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouterSpecIn 
       Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouteIn>
     >;
   };
-
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__BasicAuthIn =
-  {
-    enabled: Scalars['Boolean']['input'];
-    secretName?: InputMaybe<Scalars['String']['input']>;
-    username?: InputMaybe<Scalars['String']['input']>;
-  };
-
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__CorsIn = {
-  allowCredentials?: InputMaybe<Scalars['Boolean']['input']>;
-  enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  origins?: InputMaybe<Array<Scalars['String']['input']>>;
-};
-
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HttpsIn = {
-  clusterIssuer?: InputMaybe<Scalars['String']['input']>;
-  enabled: Scalars['Boolean']['input'];
-  forceRedirect?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RateLimitIn =
-  {
-    connections?: InputMaybe<Scalars['Int']['input']>;
-    enabled?: InputMaybe<Scalars['Boolean']['input']>;
-    rpm?: InputMaybe<Scalars['Int']['input']>;
-    rps?: InputMaybe<Scalars['Int']['input']>;
-  };
-
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouteIn = {
-  app: Scalars['String']['input'];
-  path: Scalars['String']['input'];
-  port: Scalars['Int']['input'];
-  rewrite?: InputMaybe<Scalars['Boolean']['input']>;
-};
 
 export type SecretIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
@@ -823,7 +840,6 @@ export type RepositoryIn = {
 };
 
 export type ByokClusterIn = {
-  clusterPublicEndpoint: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
   metadata: MetadataIn;
 };
@@ -879,6 +895,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpCluste
 
 export type ClusterManagedServiceIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
+  clusterName: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
   kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
@@ -901,7 +918,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTempla
   {
     apiVersion: Scalars['String']['input'];
     kind: Scalars['String']['input'];
-    spec: Scalars['Map']['input'];
+    spec?: InputMaybe<Scalars['Map']['input']>;
   };
 
 export type DomainEntryIn = {
@@ -922,9 +939,9 @@ export type GlobalVpnIn = {
 };
 
 export type GlobalVpnDeviceIn = {
+  displayName: Scalars['String']['input'];
   globalVPNName: Scalars['String']['input'];
   metadata: MetadataIn;
-  publiEndpoint?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type HelmReleaseIn = {
@@ -1796,6 +1813,146 @@ export type ConsoleClustersCountQuery = {
   infra_listClusters?: { totalCount: number };
 };
 
+export type ConsoleListAllClustersQueryVariables = Exact<{
+  search?: InputMaybe<SearchCluster>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListAllClustersQuery = {
+  byok_clusters?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        clusterPublicEndpoint: string;
+        clusterSvcCIDR: string;
+        creationTime: any;
+        displayName: string;
+        globalVPN: string;
+        id: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+  clusters?: {
+    totalCount: number;
+    pageInfo: {
+      startCursor?: string;
+      hasPreviousPage?: boolean;
+      hasNextPage?: boolean;
+      endCursor?: string;
+    };
+    edges: Array<{
+      cursor: string;
+      node: {
+        id: string;
+        displayName: string;
+        markedForDeletion?: boolean;
+        creationTime: any;
+        updateTime: any;
+        recordVersion: number;
+        metadata: { name: string; annotations?: any; generation: number };
+        lastUpdatedBy: { userId: string; userName: string; userEmail: string };
+        createdBy: { userEmail: string; userId: string; userName: string };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReadyGeneration?: number;
+          lastReconcileTime?: any;
+          checkList?: Array<{
+            description?: string;
+            debug?: boolean;
+            name: string;
+            title: string;
+          }>;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion: string;
+            kind: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+        spec: {
+          messageQueueTopicName: string;
+          kloudliteRelease: string;
+          accountId: string;
+          accountName: string;
+          availabilityMode: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode;
+          cloudProvider: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
+          backupToS3Enabled: boolean;
+          cloudflareEnabled?: boolean;
+          clusterInternalDnsHost?: string;
+          clusterServiceCIDR?: string;
+          publicDNSHost: string;
+          taintMasterNodes: boolean;
+          clusterTokenRef?: { key: string; name: string; namespace?: string };
+          aws?: {
+            nodePools?: any;
+            region: string;
+            spotNodePools?: any;
+            k3sMasters?: {
+              iamInstanceProfileRole?: string;
+              instanceType: string;
+              nodes?: any;
+              nvidiaGpuEnabled: boolean;
+              rootVolumeSize: number;
+              rootVolumeType: string;
+            };
+          };
+          gcp?: {
+            gcpProjectID: string;
+            region: string;
+            credentialsRef: { name: string; namespace?: string };
+          };
+          output?: {
+            keyK3sAgentJoinToken: string;
+            keyK3sServerJoinToken: string;
+            keyKubeconfig: string;
+            secretName: string;
+          };
+        };
+      };
+    }>;
+  };
+};
+
 export type ConsoleListClustersQueryVariables = Exact<{
   search?: InputMaybe<SearchCluster>;
   pagination?: InputMaybe<CursorPaginationIn>;
@@ -2264,8 +2421,8 @@ export type ConsoleGetEnvironmentQuery = {
   core_getEnvironment?: {
     creationTime: any;
     displayName: string;
-    markedForDeletion?: boolean;
     clusterName: string;
+    markedForDeletion?: boolean;
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
@@ -2345,6 +2502,7 @@ export type ConsoleListEnvironmentsQuery = {
       node: {
         creationTime: any;
         displayName: string;
+        clusterName: string;
         markedForDeletion?: boolean;
         recordVersion: number;
         updateTime: any;
@@ -2430,10 +2588,14 @@ export type ConsoleUpdateAppMutationVariables = Exact<{
 export type ConsoleUpdateAppMutation = { core_updateApp?: { id: string } };
 
 export type ConsoleInterceptAppMutationVariables = Exact<{
-  envName: Scalars['String']['input'];
-  appname: Scalars['String']['input'];
-  deviceName: Scalars['String']['input'];
+  portMappings?: InputMaybe<
+    | Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn>
+    | Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn
+  >;
   intercept: Scalars['Boolean']['input'];
+  deviceName: Scalars['String']['input'];
+  appname: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
 }>;
 
 export type ConsoleInterceptAppMutation = { core_interceptApp: boolean };
@@ -2520,13 +2682,12 @@ export type ConsoleGetAppQuery = {
         thresholdCpu?: number;
         thresholdMemory?: number;
       };
-      intercept?: { enabled: boolean; toDevice: string };
-      services?: Array<{
-        name?: string;
-        port: number;
-        targetPort?: number;
-        type?: string;
-      }>;
+      intercept?: {
+        enabled: boolean;
+        toDevice: string;
+        portMappings?: Array<{ devicePort: number; appPort: number }>;
+      };
+      services?: Array<{ port: number }>;
       tolerations?: Array<{
         effect?: K8s__Io___Api___Core___V1__TaintEffect;
         key?: string;
@@ -2642,13 +2803,12 @@ export type ConsoleListAppsQuery = {
             thresholdCpu?: number;
             thresholdMemory?: number;
           };
-          intercept?: { enabled: boolean; toDevice: string };
-          services?: Array<{
-            name?: string;
-            port: number;
-            targetPort?: number;
-            type?: string;
-          }>;
+          intercept?: {
+            enabled: boolean;
+            toDevice: string;
+            portMappings?: Array<{ devicePort: number; appPort: number }>;
+          };
+          services?: Array<{ port: number }>;
           tolerations?: Array<{
             effect?: K8s__Io___Api___Core___V1__TaintEffect;
             key?: string;
@@ -4288,16 +4448,20 @@ export type ConsoleGetBuildRunQuery = {
 };
 
 export type ConsoleGetClusterMSvQueryVariables = Exact<{
-  clusterName: Scalars['String']['input'];
   name: Scalars['String']['input'];
 }>;
 
 export type ConsoleGetClusterMSvQuery = {
   infra_getClusterManagedService?: {
-    id: string;
     clusterName: string;
+    creationTime: any;
     displayName: string;
+    id: string;
+    kind?: string;
+    markedForDeletion?: boolean;
     recordVersion: number;
+    updateTime: any;
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
     metadata?: {
       annotations?: any;
       creationTimestamp: any;
@@ -4310,14 +4474,21 @@ export type ConsoleGetClusterMSvQuery = {
     spec?: {
       targetNamespace: string;
       msvcSpec: {
-        serviceTemplate: { apiVersion: string; kind: string; spec: any };
+        nodeSelector?: any;
+        serviceTemplate: { apiVersion: string; kind: string; spec?: any };
+        tolerations?: Array<{
+          effect?: K8s__Io___Api___Core___V1__TaintEffect;
+          key?: string;
+          operator?: K8s__Io___Api___Core___V1__TolerationOperator;
+          tolerationSeconds?: number;
+          value?: string;
+        }>;
       };
     };
   };
 };
 
 export type ConsoleCreateClusterMSvMutationVariables = Exact<{
-  clusterName: Scalars['String']['input'];
   service: ClusterManagedServiceIn;
 }>;
 
@@ -4326,7 +4497,6 @@ export type ConsoleCreateClusterMSvMutation = {
 };
 
 export type ConsoleUpdateClusterMSvMutationVariables = Exact<{
-  clusterName: Scalars['String']['input'];
   service: ClusterManagedServiceIn;
 }>;
 
@@ -4335,7 +4505,8 @@ export type ConsoleUpdateClusterMSvMutation = {
 };
 
 export type ConsoleListClusterMSvsQueryVariables = Exact<{
-  clusterName: Scalars['String']['input'];
+  pagination?: InputMaybe<CursorPaginationIn>;
+  search?: InputMaybe<SearchClusterManagedService>;
 }>;
 
 export type ConsoleListClusterMSvsQuery = {
@@ -4344,18 +4515,39 @@ export type ConsoleListClusterMSvsQuery = {
     edges: Array<{
       cursor: string;
       node: {
-        id: string;
+        accountName: string;
+        apiVersion?: string;
+        clusterName: string;
         creationTime: any;
         displayName: string;
+        id: string;
+        kind?: string;
         markedForDeletion?: boolean;
         recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { name: string; namespace?: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
         spec?: {
+          targetNamespace: string;
           msvcSpec: {
-            serviceTemplate: { apiVersion: string; kind: string; spec: any };
+            nodeSelector?: any;
+            serviceTemplate: { apiVersion: string; kind: string; spec?: any };
+            tolerations?: Array<{
+              effect?: K8s__Io___Api___Core___V1__TaintEffect;
+              key?: string;
+              operator?: K8s__Io___Api___Core___V1__TolerationOperator;
+              tolerationSeconds?: number;
+              value?: string;
+            }>;
           };
         };
         status?: {
@@ -4363,6 +4555,13 @@ export type ConsoleListClusterMSvsQuery = {
           isReady: boolean;
           lastReadyGeneration?: number;
           lastReconcileTime?: any;
+          checkList?: Array<{
+            debug?: boolean;
+            description?: string;
+            hide?: boolean;
+            name: string;
+            title: string;
+          }>;
           message?: { RawMessage?: any };
           resources?: Array<{
             apiVersion: string;
@@ -4391,8 +4590,7 @@ export type ConsoleListClusterMSvsQuery = {
 };
 
 export type ConsoleDeleteClusterMSvMutationVariables = Exact<{
-  clusterName: Scalars['String']['input'];
-  serviceName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
 }>;
 
 export type ConsoleDeleteClusterMSvMutation = {
@@ -4424,6 +4622,14 @@ export type ConsoleUpdateByokClusterMutation = {
   infra_updateBYOKCluster?: { id: string };
 };
 
+export type ConsoleGetByokClusterInstructionsQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetByokClusterInstructionsQuery = {
+  infrat_getBYOKClusterSetupInstructions?: string;
+};
+
 export type ConsoleGetByokClusterQueryVariables = Exact<{
   name: Scalars['String']['input'];
 }>;
@@ -4439,7 +4645,7 @@ export type ConsoleGetByokClusterQuery = {
     updateTime: any;
     clusterPublicEndpoint: string;
     clusterSvcCIDR: string;
-    globalVPN?: string;
+    globalVPN: string;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
     metadata: {
@@ -4478,7 +4684,7 @@ export type ConsoleListByokClustersQuery = {
         clusterSvcCIDR: string;
         creationTime: any;
         displayName: string;
-        globalVPN?: string;
+        globalVPN: string;
         id: string;
         markedForDeletion?: boolean;
         recordVersion: number;
@@ -4633,8 +4839,8 @@ export type ConsoleGetManagedResourceQuery = {
         kind: string;
         spec: any;
         msvcRef: {
-          apiVersion: string;
-          kind: string;
+          apiVersion?: string;
+          kind?: string;
           name: string;
           namespace: string;
         };
@@ -4695,10 +4901,11 @@ export type ConsoleListManagedResourcesQuery = {
             kind: string;
             spec: any;
             msvcRef: {
-              apiVersion: string;
-              kind: string;
+              apiVersion?: string;
+              kind?: string;
               name: string;
               namespace: string;
+              clusterName: string;
             };
           };
         };
@@ -5101,16 +5308,30 @@ export type ConsoleDeleteConsoleVpnDeviceMutation = {
 };
 
 export type ConsoleCreateImagePullSecretMutationVariables = Exact<{
-  envName: Scalars['String']['input'];
-  imagePullSecretIn: ImagePullSecretIn;
+  pullSecret: ImagePullSecretIn;
 }>;
 
 export type ConsoleCreateImagePullSecretMutation = {
   core_createImagePullSecret?: { id: string };
 };
 
+export type ConsoleUpdateImagePullSecretMutationVariables = Exact<{
+  pullSecret: ImagePullSecretIn;
+}>;
+
+export type ConsoleUpdateImagePullSecretMutation = {
+  core_updateImagePullSecret?: { id: string };
+};
+
+export type ConsoleDeleteImagePullSecretsMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteImagePullSecretsMutation = {
+  core_deleteImagePullSecret: boolean;
+};
+
 export type ConsoleListImagePullSecretsQueryVariables = Exact<{
-  envName: Scalars['String']['input'];
   search?: InputMaybe<SearchImagePullSecrets>;
   pq?: InputMaybe<CursorPaginationIn>;
 }>;
@@ -5121,11 +5342,12 @@ export type ConsoleListImagePullSecretsQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        accountName: string;
         creationTime: any;
         displayName: string;
         dockerConfigJson?: string;
-        environmentName: string;
         format: Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__PullSecretFormat;
+        id: string;
         markedForDeletion?: boolean;
         recordVersion: number;
         registryPassword?: string;
@@ -5134,7 +5356,15 @@ export type ConsoleListImagePullSecretsQuery = {
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata: { generation: number; name: string; namespace?: string };
+        metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
         syncStatus: {
           action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
           error?: string;
@@ -5151,6 +5381,64 @@ export type ConsoleListImagePullSecretsQuery = {
       hasPreviousPage?: boolean;
       startCursor?: string;
     };
+  };
+};
+
+export type ConsoleDeleteGlobalVpnDeviceMutationVariables = Exact<{
+  gvpn: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteGlobalVpnDeviceMutation = {
+  infra_deleteGlobalVPNDevice: boolean;
+};
+
+export type ConsoleCreateGlobalVpnDeviceMutationVariables = Exact<{
+  gvpnDevice: GlobalVpnDeviceIn;
+}>;
+
+export type ConsoleCreateGlobalVpnDeviceMutation = {
+  infra_createGlobalVPNDevice?: { id: string };
+};
+
+export type ConsoleUpdateGlobalVpnDeviceMutationVariables = Exact<{
+  gvpnDevice: GlobalVpnDeviceIn;
+}>;
+
+export type ConsoleUpdateGlobalVpnDeviceMutation = {
+  infra_updateGlobalVPNDevice?: { id: string };
+};
+
+export type ConsoleGetGlobalVpnDeviceQueryVariables = Exact<{
+  gvpn: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetGlobalVpnDeviceQuery = {
+  infra_getGlobalVPNDevice?: {
+    accountName: string;
+    creationTime: any;
+    displayName: string;
+    globalVPNName: string;
+    id: string;
+    ipAddr: string;
+    markedForDeletion?: boolean;
+    privateKey: string;
+    publicKey: string;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    wireguardConfig?: { value: string; encoding: string };
   };
 };
 
@@ -5175,7 +5463,6 @@ export type ConsoleListGlobalVpnDevicesQuery = {
         markedForDeletion?: boolean;
         privateKey: string;
         publicKey: string;
-        publiEndpoint?: string;
         recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
@@ -5656,12 +5943,7 @@ export type IotconsoleGetIotAppQuery = {
         thresholdMemory?: number;
       };
       intercept?: { enabled: boolean; toDevice: string };
-      services?: Array<{
-        name?: string;
-        port: number;
-        targetPort?: number;
-        type?: string;
-      }>;
+      services?: Array<{ port: number }>;
       tolerations?: Array<{
         effect?: K8s__Io___Api___Core___V1__TaintEffect;
         key?: string;
@@ -5799,12 +6081,7 @@ export type IotconsoleListIotAppsQuery = {
             thresholdMemory?: number;
           };
           intercept?: { enabled: boolean; toDevice: string };
-          services?: Array<{
-            name?: string;
-            port: number;
-            targetPort?: number;
-            type?: string;
-          }>;
+          services?: Array<{ port: number }>;
           tolerations?: Array<{
             effect?: K8s__Io___Api___Core___V1__TaintEffect;
             key?: string;
@@ -6838,6 +7115,87 @@ export type AuthCli_CreateDeviceMutation = {
   };
 };
 
+export type AuthCli_CreateGlobalVpnDeviceMutationVariables = Exact<{
+  gvpnDevice: GlobalVpnDeviceIn;
+}>;
+
+export type AuthCli_CreateGlobalVpnDeviceMutation = {
+  infra_createGlobalVPNDevice?: {
+    accountName: string;
+    creationTime: any;
+    displayName: string;
+    globalVPNName: string;
+    id: string;
+    ipAddr: string;
+    markedForDeletion?: boolean;
+    privateKey: string;
+    publicKey: string;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userName: string; userId: string; userEmail: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    wireguardConfig?: { value: string; encoding: string };
+  };
+};
+
+export type AuthCli_GetMresOutputKeyValuesQueryVariables = Exact<{
+  envName: Scalars['String']['input'];
+  keyrefs?: InputMaybe<
+    | Array<InputMaybe<ManagedResourceKeyRefIn>>
+    | InputMaybe<ManagedResourceKeyRefIn>
+  >;
+}>;
+
+export type AuthCli_GetMresOutputKeyValuesQuery = {
+  core_getManagedResouceOutputKeyValues: Array<{
+    key: string;
+    mresName: string;
+    value: string;
+  }>;
+};
+
+export type AuthCli_GetGlobalVpnDeviceQueryVariables = Exact<{
+  gvpn: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetGlobalVpnDeviceQuery = {
+  infra_getGlobalVPNDevice?: {
+    accountName: string;
+    creationTime: any;
+    displayName: string;
+    globalVPNName: string;
+    id: string;
+    ipAddr: string;
+    markedForDeletion?: boolean;
+    privateKey: string;
+    publicKey: string;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userName: string; userId: string; userEmail: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    wireguardConfig?: { value: string; encoding: string };
+  };
+};
+
 export type AuthCli_CoreCheckNameAvailabilityQueryVariables = Exact<{
   resType: ConsoleResType;
   name: Scalars['String']['input'];
@@ -6923,10 +7281,14 @@ export type AuthCli_GetConfigSecretMapQuery = {
 };
 
 export type AuthCli_InterceptAppMutationVariables = Exact<{
-  envName: Scalars['String']['input'];
-  appname: Scalars['String']['input'];
-  deviceName: Scalars['String']['input'];
+  portMappings?: InputMaybe<
+    | Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn>
+    | Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn
+  >;
   intercept: Scalars['Boolean']['input'];
+  deviceName: Scalars['String']['input'];
+  appname: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
 }>;
 
 export type AuthCli_InterceptAppMutation = { core_interceptApp: boolean };
@@ -7002,12 +7364,7 @@ export type AuthCli_ListAppsQuery = {
             }>;
           }>;
           intercept?: { enabled: boolean; toDevice: string };
-          services?: Array<{
-            name?: string;
-            port: number;
-            targetPort?: number;
-            type?: string;
-          }>;
+          services?: Array<{ port: number }>;
         };
         status?: {
           checks?: any;

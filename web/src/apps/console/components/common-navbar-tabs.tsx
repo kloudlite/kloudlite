@@ -1,7 +1,7 @@
 import { ChevronLeft } from '~/console/components/icons';
 import { Link } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ReactNode, useContext, useState } from 'react';
+import { ReactNode, useContext } from 'react';
 import ScrollArea from '~/components/atoms/scroll-area';
 import Tabs from '~/components/atoms/tabs';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -30,8 +30,6 @@ export const CommonTabs = ({
 
   const context = useContext(TopBarContext);
   const { isSticked } = context || {};
-
-  const [activeTab, setActiveTab] = useState(`/${activePath.split('/')[1]}`);
 
   return (
     <div className="flex flex-row items-center">
@@ -67,10 +65,10 @@ export const CommonTabs = ({
         >
           <Tabs.Root
             basePath={baseurl}
-            value={`/${activePath.split('/')[1]}`}
+            value={activePath ? `/${activePath.split('/')[1]}` : activePath}
             fitted
             LinkComponent={Link}
-            onChange={(tab) => setActiveTab(tab)}
+            // onChange={(tab) => setActiveTab(tab)}
           >
             {tabs.map(({ value, to, label }) => {
               return <Tabs.Tab {...{ value, to, label }} key={value} />;

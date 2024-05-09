@@ -7,4 +7,5 @@ export const constants = {
   defaultAppRepoName: (account: string) =>
     `${registryHost}/${account}/kloudlite-apps`,
   defaultAppRepoNameOnly: 'kloudlite-apps',
+  metadot: '·',
 };

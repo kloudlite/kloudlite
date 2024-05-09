@@ -28,7 +28,6 @@ import { IDeploymentContext } from '../../_layout';
 export const updateDeployment = async ({
   api,
   data,
-  
 }: {
   api: ConsoleApiType;
   data: ExtractNodeType<IDeployments>;
@@ -36,7 +35,6 @@ export const updateDeployment = async ({
 }) => {
   try {
     const { errors: e } = await api.updateIotDeployment({
-      
       deployment: {
         name: data.name,
         displayName: data.displayName,
@@ -61,8 +59,7 @@ export const updateDeployment = async ({
 };
 
 const ProjectSettingGeneral = () => {
-  const {  account, deployment } =
-    useOutletContext<IDeploymentContext>();
+  const { account, deployment } = useOutletContext<IDeploymentContext>();
 
   const { setHasChanges, resetAndReload } = useUnsavedChanges();
 

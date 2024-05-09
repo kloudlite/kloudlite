@@ -9,9 +9,9 @@ import { IDialogBase } from '~/console/components/types.d';
 import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
+import { IGlobalVpnDevices } from '~/console/server/gql/queries/global-vpn-queries';
 
-type IDialog = IDialogBase<ExtractNodeType<IByocClusters>>;
+type IDialog = IDialogBase<ExtractNodeType<IGlobalVpnDevices>>;
 
 const Root = (props: IDialog) => {
   const { setVisible, isUpdate } = props;
@@ -28,8 +28,8 @@ const Root = (props: IDialog) => {
             isNameError: false,
           }
         : {
-            name: '',
             displayName: '',
+            name: '',
             isNameError: false,
           },
       validationSchema: Yup.object({
@@ -39,9 +39,10 @@ const Root = (props: IDialog) => {
       onSubmit: async (val) => {
         try {
           if (!isUpdate) {
-            const { errors: e } = await api.createBYOKCluster({
-              cluster: {
-                displayName: val.displayName,
+            const { errors: e } = await api.createGlobalVpnDevice({
+              gvpnDevice: {
+                displayName: val.name,
+                globalVPNName: 'default',
                 metadata: {
                   name: val.name,
                 },
@@ -50,19 +51,11 @@ const Root = (props: IDialog) => {
             if (e) {
               throw e[0];
             }
-          } else if (isUpdate) {
-            const { errors: e } = await api.updateByokCluster({
-              clusterName: val.name,
-              displayName: val.displayName,
-            });
-            if (e) {
-              throw e[0];
-            }
           }
           reloadPage();
           resetValues();
           toast.success(
-            `byoc cluster ${isUpdate ? 'updated' : 'created'} successfully`
+            `vpn device ${isUpdate ? 'updated' : 'created'} successfully`
           );
           setVisible(false);
         } catch (err) {
@@ -87,8 +80,8 @@ const Root = (props: IDialog) => {
             resType="cluster"
             displayName={values.displayName}
             name={values.name}
-            label="Cluster name"
-            placeholder="Enter cluster name"
+            label="Device name"
+            placeholder="Enter device name"
             errors={errors.name}
             handleChange={handleChange}
             nameErrorLabel="isNameError"
@@ -109,15 +102,15 @@ const Root = (props: IDialog) => {
   );
 };
 
-const HandleByokCluster = (props: IDialog) => {
+const HandleGlobalVpnDevice = (props: IDialog) => {
   const { isUpdate, setVisible, visible } = props;
 
   return (
     <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
-      <Popup.Header>{isUpdate ? 'Edit Cluster' : 'Add Cluster'}</Popup.Header>
+      <Popup.Header>{isUpdate ? 'Edit Device' : 'Add Device'}</Popup.Header>
       {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>
   );
 };
 
-export default HandleByokCluster;
+export default HandleGlobalVpnDevice;

@@ -1,8 +1,57 @@
+import { ArrowsDownUp } from '~/console/components/icons';
 import { useSearchParams } from '@remix-run/react';
 import { useMemo } from 'react';
+import OptionList from '~/components/atoms/option-list';
+import Toolbar from '~/components/atoms/toolbar';
 import CommonTools from '~/console/components/common-tools';
 
-const Tools = () => {
+interface IFilterByClusterType {
+  onChange: (data: string) => void;
+  value: string;
+}
+
+const FilterByCLusterType = ({ onChange, value }: IFilterByClusterType) => {
+  return (
+    <OptionList.Root>
+      <OptionList.Trigger>
+        <Toolbar.Button
+          content="Filter Cluster"
+          variant="basic"
+          prefix={<ArrowsDownUp />}
+        />
+      </OptionList.Trigger>
+      <OptionList.Content>
+        <OptionList.RadioGroup
+          value={value}
+          onValueChange={(e) => {
+            onChange?.(e);
+          }}
+        >
+          <OptionList.RadioGroupItem
+            value="All"
+            onClick={(e) => e.preventDefault()}
+          >
+            All
+          </OptionList.RadioGroupItem>
+          <OptionList.RadioGroupItem
+            value="Normal"
+            onClick={(e) => e.preventDefault()}
+          >
+            Kloudlite clusters
+          </OptionList.RadioGroupItem>
+          <OptionList.RadioGroupItem
+            value="Byok"
+            onClick={(e) => e.preventDefault()}
+          >
+            Attached Clusters
+          </OptionList.RadioGroupItem>
+        </OptionList.RadioGroup>
+      </OptionList.Content>
+    </OptionList.Root>
+  );
+};
+
+const Tools = ({ onChange, value }: IFilterByClusterType) => {
   const [searchParams] = useSearchParams();
 
   const options = useMemo(
@@ -49,7 +98,20 @@ const Tools = () => {
     [searchParams]
   );
 
-  return <CommonTools {...{ options }} />;
+  return (
+    <CommonTools
+      {...{ options }}
+      commonToolPrefix={
+        <FilterByCLusterType
+          onChange={(e) => {
+            console.log(e);
+            onChange?.(e);
+          }}
+          value={value}
+        />
+      }
+    />
+  );
 };
 
 export default Tools;

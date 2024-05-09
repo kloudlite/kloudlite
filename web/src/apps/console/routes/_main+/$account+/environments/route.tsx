@@ -21,18 +21,6 @@ import EnvironmentResourcesV2 from './environment-resources-v2';
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
 
-  const cData = pWrapper(async () => {
-    const { data: cData, errors: cErrors } = await GQLServerHandler(
-      ctx.request
-    ).listClusters({});
-
-    if (cErrors) {
-      throw cErrors[0];
-    }
-
-    return cData;
-  });
-
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(
       ctx.request
@@ -50,7 +38,7 @@ export const loader = async (ctx: IRemixCtx) => {
     };
   });
 
-  return defer({ promise, cData: await cData });
+  return defer({ promise });
 };
 
 const Workspaces = () => {

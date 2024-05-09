@@ -13,9 +13,10 @@ const Infra = () => {
   return (
     <SidebarLayout
       navItems={[
-        { label: 'Kloudlite Clusters', value: 'clusters' },
+        { label: 'Clusters', value: 'clusters' },
         // { label: 'Helm Repos', value: 'helm-repos' },
-        { label: 'Bring your own Kubernetes', value: 'byok-cluster' },
+        // { label: 'Bring your own Kubernetes', value: 'byok-cluster' },
+        { label: 'Devices', value: 'vpn-devices' },
       ]}
       parentPath="/infra"
     >

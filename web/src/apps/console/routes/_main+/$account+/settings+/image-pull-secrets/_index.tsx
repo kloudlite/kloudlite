@@ -12,22 +12,21 @@ import {
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/lib/types/common';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button.js';
+import { Button } from '~/components/atoms/button';
 import Tools from './tools';
 import ImagePullSecretsResources from './image-pull-secrets-resources';
 import HandleImagePullSecret from './handle-image-pull-secret';
+import ImagePullSecretsResourcesV2 from './image-pull-secrets-resource-v2';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
   ensureClusterSet(ctx);
-  const { environment } = ctx.params;
+  // const { environment } = ctx.params;
 
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(
       ctx.request
     ).listImagePullSecrets({
-      envName: environment,
-      
       pq: getPagination(ctx),
       search: getSearch(ctx),
     });
@@ -86,7 +85,7 @@ const Routers = () => {
               }}
               tools={<Tools />}
             >
-              <ImagePullSecretsResources items={imagePullSecrets} />
+              <ImagePullSecretsResourcesV2 items={imagePullSecrets} />
             </Wrapper>
           );
         }}

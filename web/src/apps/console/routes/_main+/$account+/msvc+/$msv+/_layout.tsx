@@ -12,19 +12,21 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import logger from '~/lib/client/helpers/log';
 import { defer } from '@remix-run/node';
 import Breadcrum from '~/console/components/breadcrum';
-import { BreadcrumSlash } from '~/console/utils/commons';
+import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
 import { Truncate } from '~/root/lib/utils/common';
 import { IClusterMSv } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import fake from '~/root/fake-data-generator/fake';
-import { IClusterContext } from '../../_layout';
+import { GearSix } from '~/console/components/icons';
+import { IAccountContext } from '../../_layout';
 
 const ManagedServiceTabs = () => {
-  const { account, msv, cluster } = useParams();
+  const { account, msv } = useParams();
+  const iconSize = tabIconSize;
   return (
     <CommonTabs
-      baseurl={`/${account}/infra/${cluster}/msvc/${msv}`}
+      baseurl={`/${account}/msvc/${msv}`}
       backButton={{
-        to: `/${account}/infra/${cluster}/managed-services`,
+        to: `/${account}/managed-services`,
         label: 'Managed Services',
       }}
       tabs={[
@@ -32,6 +34,16 @@ const ManagedServiceTabs = () => {
           label: 'Logs & Metrics',
           to: '/logs-n-metrics',
           value: '/logs-n-metrics',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <GearSix size={iconSize} />
+              Settings
+            </span>
+          ),
+          to: '/settings/general',
+          value: '/settings',
         },
       ]}
     />
@@ -65,7 +77,7 @@ export const handle = ({
   };
 };
 
-export interface IManagedServiceContext extends IClusterContext {
+export interface IManagedServiceContext extends IAccountContext {
   managedService: IClusterMSv;
 }
 
@@ -82,12 +94,11 @@ const MSOutlet = ({
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { msv, cluster } = ctx.params;
+    const { msv } = ctx.params;
     try {
       const { data, errors } = await GQLServerHandler(
         ctx.request
       ).getClusterMSv({
-        clusterName: cluster,
         name: msv,
       });
       if (errors) {

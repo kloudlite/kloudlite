@@ -241,7 +241,7 @@ const AppDetail = () => {
           nameErrorLabel="isNameError"
         />
         <div className="flex flex-col gap-xl">
-          <ExtendedFilledTab
+          {/* <ExtendedFilledTab
             value={values.imageMode}
             onChange={(e) => {
               handleChange('imageMode')(dummyEvent(e));
@@ -254,7 +254,7 @@ const AppDetail = () => {
               },
             ]}
             size="sm"
-          />
+          /> */}
 
           {values.imageMode === 'default' && (
             <RepoSelector

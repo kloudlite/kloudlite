@@ -29,7 +29,6 @@ import appFun from '../../../new-app/app-pre-submit';
 const navItems = [
   { label: 'General', value: 'general' },
   { label: 'Compute', value: 'compute' },
-  { label: 'Scaling', value: 'scaling' },
   { label: 'Environment', value: 'environment' },
   { label: 'Network', value: 'network' },
   { label: 'Advance', value: 'advance' },

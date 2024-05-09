@@ -1,5 +1,5 @@
 overwrite: true
-schema: "http://gateway.kloudlite.svc.cluster.local"
+schema: "http://gateway.kloudlite.svc.cluster.local:3000"
 generates:
   gql/sdl.graphql:
     plugins:

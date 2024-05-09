@@ -13,7 +13,7 @@ import { TextInput } from '~/components/atoms/input';
 import { useEffect, useState } from 'react';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
-import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+// import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { constants } from '~/console/server/utils/constants';
 import HandleBuild from '~/console/routes/_main+/$account+/repo+/$repo+/builds/handle-builds';
 import {
@@ -32,6 +32,7 @@ import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$env
 import { getImageTag } from '~/console/routes/_main+/$account+/env+/$environment+/new-app/app-utils';
 import appFun from '~/console/routes/_main+/$account+/env+/$environment+/new-app/app-pre-submit';
 import BuildSelectionDialog from '~/console/routes/_main+/$account+/env+/$environment+/new-app/app-build-selection-dialog';
+import { Checkbox } from '~/components/atoms/checkbox';
 
 const ExtraButton = ({
   onNew,
@@ -91,6 +92,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     activeContIndex,
     setExistingBuildID,
     existingBuildId,
+    setContainer,
   } = useAppState();
 
   const { account, environment } = useOutletContext<IEnvironmentContext>();
@@ -137,6 +139,10 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       dockerfilePath: '',
       dockerfileContent: '',
       isGitLoading: false,
+
+      imagePullPolicy:
+        readOnlyApp?.spec.containers[activeContIndex]?.imagePullPolicy ||
+        'Always',
     },
     validationSchema: Yup.object({
       name: Yup.string().required(),
@@ -290,6 +296,20 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     resetValues();
   }, [readOnlyApp]);
 
+  useEffect(() => {
+    if (
+      values.imagePullPolicy !==
+      readOnlyApp.spec.containers[activeContIndex].imagePullPolicy
+    ) {
+      setContainer((s) => {
+        return {
+          ...s,
+          imagePullPolicy: values.imagePullPolicy,
+        };
+      });
+    }
+  }, [values.imagePullPolicy]);
+
   return (
     <FadeIn
       onSubmit={(e) => {
@@ -327,7 +347,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           />
         )}
         <div className="flex flex-col gap-xl">
-          <ExtendedFilledTab
+          {/* <ExtendedFilledTab
             value={values.imageMode}
             onChange={(e) => {
               handleChange('imageMode')(dummyEvent(e));
@@ -355,7 +375,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               },
             ]}
             size="sm"
-          />
+          /> */}
 
           {values.imageMode === 'default' && (
             <RepoSelector
@@ -476,6 +496,15 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             }}
           />
         </div>
+
+        <Checkbox
+          label="Always pull image on restart"
+          checked={values.imagePullPolicy === 'Always'}
+          onChange={(val) => {
+            const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
+            handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
+          }}
+        />
       </div>
       {mode === 'new' && (
         <BottomNavigation

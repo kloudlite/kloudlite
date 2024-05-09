@@ -7,6 +7,7 @@ import {
   Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode as AvailabilityMode,
   Github__Com___Kloudlite___Api___Pkg___Types__SyncAction as SyncAction,
   Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncState,
+  Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__PullSecretFormat as ImagePullSecretFormat,
 } from '~/root/src/generated/gql/server';
 
 type IparseNodes<T> = {
@@ -224,4 +225,16 @@ export const ensureResource = <T>(v: T | undefined | null): T => {
   }
 
   return v;
+};
+
+export const validateImagePullSecretFormat = (
+  v: string
+): ImagePullSecretFormat => {
+  switch (v as ImagePullSecretFormat) {
+    case 'dockerConfigJson':
+    case 'params':
+      return v as ImagePullSecretFormat;
+    default:
+      throw Error(`invalid image pull secret format ${v}`);
+  }
 };

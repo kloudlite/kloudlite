@@ -6,6 +6,55 @@ import { vpnQueries } from './queries/device-queries';
 export const cliQueries = (executor: IExecutor) => ({
   ...vpnQueries(executor),
 
+  cli_createGlobalVPNDevice: executor(
+    gql`
+      mutation Infra_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+        infra_createGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+          accountName
+          creationTime
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          displayName
+          globalVPNName
+          id
+          ipAddr
+          lastUpdatedBy {
+            userName
+            userId
+            userEmail
+          }
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          privateKey
+          publicKey
+          recordVersion
+          updateTime
+          wireguardConfig {
+            value
+            encoding
+          }
+        }
+      }
+    `,
+    {
+      transformer(data: any) {
+        return data.infra_createGlobalVPNDevice;
+      },
+      vars(_: any) {},
+    }
+  ),
+
   cli_getMresOutputKeyValues: executor(
     gql`
       query Core_getManagedResouceOutputKeyValues(
@@ -59,7 +108,6 @@ export const cliQueries = (executor: IExecutor) => ({
             namespace
           }
           privateKey
-          publiEndpoint
           publicKey
           recordVersion
           updateTime
@@ -227,16 +275,18 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_interceptApp: executor(
     gql`
       mutation Core_interceptApp(
-        $envName: String!
-        $appname: String!
-        $deviceName: String!
+        $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
         $intercept: Boolean!
+        $deviceName: String!
+        $appname: String!
+        $envName: String!
       ) {
         core_interceptApp(
-          envName: $envName
-          appname: $appname
-          deviceName: $deviceName
+          portMappings: $portMappings
           intercept: $intercept
+          deviceName: $deviceName
+          appname: $appname
+          envName: $envName
         )
       }
     `,
@@ -340,10 +390,7 @@ export const cliQueries = (executor: IExecutor) => ({
                 replicas
                 serviceAccount
                 services {
-                  name
                   port
-                  targetPort
-                  type
                 }
               }
               status {

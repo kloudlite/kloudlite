@@ -37,7 +37,6 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const Apps = () => {
   const { promise } = useLoaderData<typeof loader>();
-
   useEffect(() => {
     clearAppState();
   }, []);

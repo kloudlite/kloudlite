@@ -34,10 +34,9 @@ import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
 import {
   InfraAsCode,
-  Container as ContainerIcon,
   GearSix,
   Project,
-  WireGuardlogo,
+  BackingServices,
 } from '~/console/components/icons';
 
 const restActions = (ctx: IExtRemixCtx) => {
@@ -55,7 +54,7 @@ export type IConsoleRootContext = {
 
 export const meta = (c: IRemixCtx) => {
   return [
-    { title: `Account | ${c.params?.account || ''}` },
+    { title: `Account ${constants.metadot} ${c.params?.account || ''}` },
     { name: 'theme-color', content: LightTitlebarColor },
   ];
 };
@@ -80,6 +79,16 @@ const AccountTabs = () => {
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
+              <BackingServices size={iconSize} />
+              Managed Services
+            </span>
+          ),
+          to: '/managed-services',
+          value: '/managed-services',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
               <InfraAsCode size={iconSize} />
               Infrastructure
             </span>
@@ -87,26 +96,26 @@ const AccountTabs = () => {
           to: '/infra',
           value: '/infra',
         },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
-              <ContainerIcon size={iconSize} />
-              Packages
-            </span>
-          ),
-          to: '/packages/repos',
-          value: '/packages',
-        },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
-              <WireGuardlogo size={iconSize} />
-              Vpn Devices
-            </span>
-          ),
-          to: '/vpn-devices',
-          value: '/vpn-devices',
-        },
+        // {
+        //   label: (
+        //     <span className="flex flex-row items-center gap-lg">
+        //       <ContainerIcon size={iconSize} />
+        //       Packages
+        //     </span>
+        //   ),
+        //   to: '/packages/repos',
+        //   value: '/packages',
+        // },
+        // {
+        //   label: (
+        //     <span className="flex flex-row items-center gap-lg">
+        //       <WireGuardlogo size={iconSize} />
+        //       Vpn Devices
+        //     </span>
+        //   ),
+        //   to: '/vpn-devices',
+        //   value: '/vpn-devices',
+        // },
         {
           label: (
             <span className="flex flex-row items-center gap-lg">

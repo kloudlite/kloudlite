@@ -115,6 +115,170 @@ query consoleClustersCount {
   }
 }
 
+query consoleListAllClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
+  byok_clusters: infra_listBYOKClusters(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        clusterPublicEndpoint
+        clusterSvcCIDR
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        globalVPN
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+  clusters: infra_listClusters(search: $search, pagination: $pagination) {
+    totalCount
+    pageInfo {
+      startCursor
+      hasPreviousPage
+      hasNextPage
+      endCursor
+    }
+    edges {
+      cursor
+      node {
+        id
+        displayName
+        markedForDeletion
+        metadata {
+          name
+          annotations
+          generation
+        }
+        creationTime
+        lastUpdatedBy {
+          userId
+          userName
+          userEmail
+        }
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        updateTime
+        status {
+          checks
+          checkList {
+            description
+            debug
+            name
+            title
+          }
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        recordVersion
+        spec {
+          messageQueueTopicName
+          kloudliteRelease
+          clusterTokenRef {
+            key
+            name
+            namespace
+          }
+          accountId
+          accountName
+          availabilityMode
+          aws {
+            k3sMasters {
+              iamInstanceProfileRole
+              instanceType
+              nodes
+              nvidiaGpuEnabled
+              rootVolumeSize
+              rootVolumeType
+            }
+            nodePools
+            region
+            spotNodePools
+          }
+          gcp {
+            credentialsRef {
+              name
+              namespace
+            }
+            gcpProjectID
+            region
+          }
+          cloudProvider
+          backupToS3Enabled
+          cloudflareEnabled
+          clusterInternalDnsHost
+          clusterServiceCIDR
+          output {
+            keyK3sAgentJoinToken
+            keyK3sServerJoinToken
+            keyKubeconfig
+            secretName
+          }
+          publicDNSHost
+          taintMasterNodes
+        }
+      }
+    }
+  }
+}
+
 query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
   infra_listClusters(search: $search, pagination: $pagination) {
     totalCount
@@ -645,6 +809,7 @@ query consoleGetEnvironment($name: String!) {
     }
     creationTime
     displayName
+    clusterName
     lastUpdatedBy {
       userEmail
       userId
@@ -722,6 +887,7 @@ query consoleListEnvironments($search: SearchEnvironments, $pq: CursorPagination
         }
         creationTime
         displayName
+        clusterName
         lastUpdatedBy {
           userEmail
           userId
@@ -811,12 +977,13 @@ mutation consoleUpdateApp($envName: String!, $app: AppIn!) {
   }
 }
 
-mutation consoleInterceptApp($envName: String!, $appname: String!, $deviceName: String!, $intercept: Boolean!) {
+mutation consoleInterceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $deviceName: String!, $appname: String!, $envName: String!) {
   core_interceptApp(
-    envName: $envName
-    appname: $appname
-    deviceName: $deviceName
+    portMappings: $portMappings
     intercept: $intercept
+    deviceName: $deviceName
+    appname: $appname
+    envName: $envName
   )
 }
 
@@ -920,16 +1087,17 @@ query consoleGetApp($envName: String!, $name: String!) {
       intercept {
         enabled
         toDevice
+        portMappings {
+          devicePort
+          appPort
+        }
       }
       nodeSelector
       region
       replicas
       serviceAccount
       services {
-        name
         port
-        targetPort
-        type
       }
       tolerations {
         effect
@@ -1067,16 +1235,17 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
           intercept {
             enabled
             toDevice
+            portMappings {
+              devicePort
+              appPort
+            }
           }
           nodeSelector
           region
           replicas
           serviceAccount
           services {
-            name
             port
-            targetPort
-            type
           }
           tolerations {
             effect
@@ -2751,11 +2920,19 @@ query consoleGetBuildRun($buildId: ID!, $buildRunName: String!) {
   }
 }
 
-query consoleGetClusterMSv($clusterName: String!, $name: String!) {
-  infra_getClusterManagedService(clusterName: $clusterName, name: $name) {
-    id
+query consoleGetClusterMSv($name: String!) {
+  infra_getClusterManagedService(name: $name) {
     clusterName
+    creationTime
     displayName
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
     metadata {
       annotations
       creationTimestamp
@@ -2768,35 +2945,46 @@ query consoleGetClusterMSv($clusterName: String!, $name: String!) {
     recordVersion
     spec {
       msvcSpec {
+        nodeSelector
         serviceTemplate {
           apiVersion
           kind
           spec
         }
+        tolerations {
+          effect
+          key
+          operator
+          tolerationSeconds
+          value
+        }
       }
       targetNamespace
     }
+    updateTime
   }
 }
 
-mutation consoleCreateClusterMSv($clusterName: String!, $service: ClusterManagedServiceIn!) {
-  infra_createClusterManagedService(clusterName: $clusterName, service: $service) {
+mutation consoleCreateClusterMSv($service: ClusterManagedServiceIn!) {
+  infra_createClusterManagedService(service: $service) {
     id
   }
 }
 
-mutation consoleUpdateClusterMSv($clusterName: String!, $service: ClusterManagedServiceIn!) {
-  infra_updateClusterManagedService(clusterName: $clusterName, service: $service) {
+mutation consoleUpdateClusterMSv($service: ClusterManagedServiceIn!) {
+  infra_updateClusterManagedService(service: $service) {
     id
   }
 }
 
-query consoleListClusterMSvs($clusterName: String!) {
-  infra_listClusterManagedServices(clusterName: $clusterName) {
+query consoleListClusterMSvs($pagination: CursorPaginationIn, $search: SearchClusterManagedService) {
+  infra_listClusterManagedServices(pagination: $pagination, search: $search) {
     edges {
       cursor
       node {
-        id
+        accountName
+        apiVersion
+        clusterName
         createdBy {
           userEmail
           userId
@@ -2804,6 +2992,8 @@ query consoleListClusterMSvs($clusterName: String!) {
         }
         creationTime
         displayName
+        id
+        kind
         lastUpdatedBy {
           userEmail
           userId
@@ -2811,20 +3001,41 @@ query consoleListClusterMSvs($clusterName: String!) {
         }
         markedForDeletion
         metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
           name
           namespace
         }
         recordVersion
         spec {
           msvcSpec {
+            nodeSelector
             serviceTemplate {
               apiVersion
               kind
               spec
             }
+            tolerations {
+              effect
+              key
+              operator
+              tolerationSeconds
+              value
+            }
           }
+          targetNamespace
         }
         status {
+          checkList {
+            debug
+            description
+            hide
+            name
+            title
+          }
           checks
           isReady
           lastReadyGeneration
@@ -2860,11 +3071,8 @@ query consoleListClusterMSvs($clusterName: String!) {
   }
 }
 
-mutation consoleDeleteClusterMSv($clusterName: String!, $serviceName: String!) {
-  infra_deleteClusterManagedService(
-    clusterName: $clusterName
-    serviceName: $serviceName
-  )
+mutation consoleDeleteClusterMSv($name: String!) {
+  infra_deleteClusterManagedService(name: $name)
 }
 
 mutation consoleDeleteByokCluster($name: String!) {
@@ -2881,6 +3089,10 @@ mutation consoleUpdateByokCluster($clusterName: String!, $displayName: String!) 
   infra_updateBYOKCluster(clusterName: $clusterName, displayName: $displayName) {
     id
   }
+}
+
+query consoleGetBYOKClusterInstructions($name: String!) {
+  infrat_getBYOKClusterSetupInstructions(name: $name)
 }
 
 query consoleGetByokCluster($name: String!) {
@@ -3155,6 +3367,7 @@ query consoleListManagedResources($envName: String!, $search: SearchManagedResou
               kind
               name
               namespace
+              clusterName
             }
             spec
           }
@@ -3601,20 +3814,28 @@ mutation consoleDeleteConsoleVpnDevice($deviceName: String!) {
   core_deleteVPNDevice(deviceName: $deviceName)
 }
 
-mutation consoleCreateImagePullSecret($envName: String!, $imagePullSecretIn: ImagePullSecretIn!) {
-  core_createImagePullSecret(
-    envName: $envName
-    imagePullSecretIn: $imagePullSecretIn
-  ) {
+mutation consoleCreateImagePullSecret($pullSecret: ImagePullSecretIn!) {
+  core_createImagePullSecret(pullSecret: $pullSecret) {
     id
   }
 }
 
-query consoleListImagePullSecrets($envName: String!, $search: SearchImagePullSecrets, $pq: CursorPaginationIn) {
-  core_listImagePullSecrets(envName: $envName, search: $search, pq: $pq) {
+mutation consoleUpdateImagePullSecret($pullSecret: ImagePullSecretIn!) {
+  core_updateImagePullSecret(pullSecret: $pullSecret) {
+    id
+  }
+}
+
+mutation consoleDeleteImagePullSecrets($name: String!) {
+  core_deleteImagePullSecret(name: $name)
+}
+
+query consoleListImagePullSecrets($search: SearchImagePullSecrets, $pq: CursorPaginationIn) {
+  core_listImagePullSecrets(search: $search, pq: $pq) {
     edges {
       cursor
       node {
+        accountName
         createdBy {
           userEmail
           userId
@@ -3623,8 +3844,8 @@ query consoleListImagePullSecrets($envName: String!, $search: SearchImagePullSec
         creationTime
         displayName
         dockerConfigJson
-        environmentName
         format
+        id
         lastUpdatedBy {
           userEmail
           userId
@@ -3632,7 +3853,11 @@ query consoleListImagePullSecrets($envName: String!, $search: SearchImagePullSec
         }
         markedForDeletion
         metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
           generation
+          labels
           name
           namespace
         }
@@ -3658,6 +3883,61 @@ query consoleListImagePullSecrets($envName: String!, $search: SearchImagePullSec
       startCursor
     }
     totalCount
+  }
+}
+
+mutation consoleDeleteGlobalVpnDevice($gvpn: String!, $deviceName: String!) {
+  infra_deleteGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName)
+}
+
+mutation consoleCreateGlobalVpnDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+  infra_createGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+    id
+  }
+}
+
+mutation consoleUpdateGlobalVpnDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+  infra_updateGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+    id
+  }
+}
+
+query consoleGetGlobalVpnDevice($gvpn: String!, $deviceName: String!) {
+  infra_getGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    globalVPNName
+    id
+    ipAddr
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    privateKey
+    publicKey
+    recordVersion
+    updateTime
+    wireguardConfig {
+      value
+      encoding
+    }
   }
 }
 
@@ -3698,7 +3978,6 @@ query consoleListGlobalVpnDevices($gvpn: String!, $search: SearchGlobalVPNDevice
         }
         privateKey
         publicKey
-        publiEndpoint
         recordVersion
         updateTime
         wireguardConfig {
@@ -4176,10 +4455,7 @@ query iotconsoleGetIotApp($projectName: String!, $deviceBlueprintName: String!, 
       replicas
       serviceAccount
       services {
-        name
         port
-        targetPort
-        type
       }
       tolerations {
         effect
@@ -4346,10 +4622,7 @@ query iotconsoleListIotApps($deviceBlueprintName: String!, $search: SearchIOTApp
           replicas
           serviceAccount
           services {
-            name
             port
-            targetPort
-            type
           }
           tolerations {
             effect
@@ -5338,6 +5611,92 @@ mutation authCli_createDevice($vpnDevice: ConsoleVPNDeviceIn!) {
   }
 }
 
+mutation authCli_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+  infra_createGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+    accountName
+    creationTime
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    displayName
+    globalVPNName
+    id
+    ipAddr
+    lastUpdatedBy {
+      userName
+      userId
+      userEmail
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    privateKey
+    publicKey
+    recordVersion
+    updateTime
+    wireguardConfig {
+      value
+      encoding
+    }
+  }
+}
+
+query authCli_getMresOutputKeyValues($envName: String!, $keyrefs: [ManagedResourceKeyRefIn]) {
+  core_getManagedResouceOutputKeyValues(envName: $envName, keyrefs: $keyrefs) {
+    key
+    mresName
+    value
+  }
+}
+
+query authCli_getGlobalVpnDevice($gvpn: String!, $deviceName: String!) {
+  infra_getGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName) {
+    accountName
+    creationTime
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    displayName
+    globalVPNName
+    id
+    ipAddr
+    lastUpdatedBy {
+      userName
+      userId
+      userEmail
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    privateKey
+    publicKey
+    recordVersion
+    updateTime
+    wireguardConfig {
+      value
+      encoding
+    }
+  }
+}
+
 query authCli_coreCheckNameAvailability($resType: ConsoleResType!, $name: String!) {
   core_checkNameAvailability(resType: $resType, name: $name) {
     result
@@ -5403,12 +5762,13 @@ query authCli_getConfigSecretMap($envName: String!, $configQueries: [ConfigKeyRe
   }
 }
 
-mutation authCli_interceptApp($envName: String!, $appname: String!, $deviceName: String!, $intercept: Boolean!) {
+mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $deviceName: String!, $appname: String!, $envName: String!) {
   core_interceptApp(
-    envName: $envName
-    appname: $appname
-    deviceName: $deviceName
+    portMappings: $portMappings
     intercept: $intercept
+    deviceName: $deviceName
+    appname: $appname
+    envName: $envName
   )
 }
 
@@ -5483,10 +5843,7 @@ query authCli_listApps($envName: String!) {
           replicas
           serviceAccount
           services {
-            name
             port
-            targetPort
-            type
           }
         }
         status {

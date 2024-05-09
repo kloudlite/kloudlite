@@ -15,8 +15,10 @@ import { generatePlainColor } from '~/root/lib/utils/color-generator';
 import { IManagedServiceContext } from '../_layout';
 
 const LogsAndMetrics = () => {
-  const { account, cluster, managedService } =
+  const { account, managedService } =
     useOutletContext<IManagedServiceContext>();
+
+  const { clusterName } = managedService;
   type tData = {
     metric: {
       exported_pod: string;
@@ -89,9 +91,7 @@ const LogsAndMetrics = () => {
       (async () => {
         try {
           const resp = await axios({
-            url: `${observeUrl}/observability/metrics/cpu?cluster_name=${parseName(
-              cluster
-            )}&tracking_id=${managedService.id}`,
+            url: `${observeUrl}/observability/metrics/cpu?cluster_name=${clusterName}&tracking_id=${managedService.id}`,
             method: 'GET',
             withCredentials: true,
           });
@@ -109,9 +109,7 @@ const LogsAndMetrics = () => {
       (async () => {
         try {
           const resp = await axios({
-            url: `${observeUrl}/observability/metrics/memory?cluster_name=${parseName(
-              cluster
-            )}&tracking_id=${managedService.id}`,
+            url: `${observeUrl}/observability/metrics/memory?cluster_name=${clusterName}&tracking_id=${managedService.id}`,
             method: 'GET',
             withCredentials: true,
           });
@@ -280,7 +278,7 @@ const LogsAndMetrics = () => {
             actionComponent: <LogAction />,
             websocket: {
               account: parseName(account),
-              cluster: parseName(cluster),
+              cluster: clusterName,
               trackingId: managedService.id,
               recordVersion: managedService.recordVersion,
             },

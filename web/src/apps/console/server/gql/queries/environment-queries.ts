@@ -36,6 +36,7 @@ export const environmentQueries = (executor: IExecutor) => ({
           }
           creationTime
           displayName
+          clusterName
           lastUpdatedBy {
             userEmail
             userId
@@ -150,6 +151,7 @@ export const environmentQueries = (executor: IExecutor) => ({
               }
               creationTime
               displayName
+              clusterName
               lastUpdatedBy {
                 userEmail
                 userId

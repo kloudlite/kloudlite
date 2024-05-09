@@ -6,6 +6,8 @@ import {
   ConsoleCreateByokClusterMutationVariables,
   ConsoleGetByokClusterQuery,
   ConsoleGetByokClusterQueryVariables,
+  ConsoleGetByokClusterInstructionsQuery,
+  ConsoleGetByokClusterInstructionsQueryVariables,
   ConsoleListByokClustersQuery,
   ConsoleListByokClustersQueryVariables,
   ConsoleUpdateByokClusterMutation,
@@ -66,6 +68,18 @@ export const byokClusterQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleUpdateByokClusterMutation) =>
         data.infra_updateBYOKCluster,
       vars(_: ConsoleUpdateByokClusterMutationVariables) {},
+    }
+  ),
+  getBYOKClusterInstructions: executor(
+    gql`
+      query Query($name: String!) {
+        infrat_getBYOKClusterSetupInstructions(name: $name)
+      }
+    `,
+    {
+      transformer: (data: ConsoleGetByokClusterInstructionsQuery) =>
+        data.infrat_getBYOKClusterSetupInstructions,
+      vars(_: ConsoleGetByokClusterInstructionsQueryVariables) {},
     }
   ),
   getByokCluster: executor(

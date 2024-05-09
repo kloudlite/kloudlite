@@ -2,52 +2,72 @@ import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { NN } from '~/root/lib/types/common';
 import {
-    ConsoleCreateImagePullSecretMutation,
-    ConsoleCreateImagePullSecretMutationVariables,
-    ConsoleListImagePullSecretsQuery,
-    ConsoleListImagePullSecretsQueryVariables,
+  ConsoleCreateImagePullSecretMutation,
+  ConsoleCreateImagePullSecretMutationVariables,
+  ConsoleUpdateImagePullSecretMutation,
+  ConsoleUpdateImagePullSecretMutationVariables,
+  ConsoleListImagePullSecretsQuery,
+  ConsoleListImagePullSecretsQueryVariables,
+  ConsoleDeleteImagePullSecretsMutation,
+  ConsoleDeleteImagePullSecretsMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IImagePullSecrets = NN<
-    ConsoleListImagePullSecretsQuery['core_listImagePullSecrets']
+  ConsoleListImagePullSecretsQuery['core_listImagePullSecrets']
 >;
 
 export const imagePullSecretsQueries = (executor: IExecutor) => ({
-    createImagePullSecret: executor(
-        gql`
-      mutation Core_createImagePullSecret(
-        $envName: String!
-        $imagePullSecretIn: ImagePullSecretIn!
-      ) {
-        core_createImagePullSecret(
-          envName: $envName
-          imagePullSecretIn: $imagePullSecretIn
-        ) {
+  createImagePullSecret: executor(
+    gql`
+      mutation Core_createImagePullSecret($pullSecret: ImagePullSecretIn!) {
+        core_createImagePullSecret(pullSecret: $pullSecret) {
           id
         }
       }
     `,
-        {
-            transformer: (data: ConsoleCreateImagePullSecretMutation) =>
-                data.core_createImagePullSecret,
-            vars(_: ConsoleCreateImagePullSecretMutationVariables) { },
+    {
+      transformer: (data: ConsoleCreateImagePullSecretMutation) =>
+        data.core_createImagePullSecret,
+      vars(_: ConsoleCreateImagePullSecretMutationVariables) {},
+    }
+  ),
+  updateImagePullSecret: executor(
+    gql`
+      mutation Core_updateImagePullSecret($pullSecret: ImagePullSecretIn!) {
+        core_updateImagePullSecret(pullSecret: $pullSecret) {
+          id
         }
-    ),
-    listImagePullSecrets: executor(
-        gql`
+      }
+    `,
+    {
+      transformer: (data: ConsoleUpdateImagePullSecretMutation) =>
+        data.core_updateImagePullSecret,
+      vars(_: ConsoleUpdateImagePullSecretMutationVariables) {},
+    }
+  ),
+  deleteImagePullSecrets: executor(
+    gql`
+      mutation Core_deleteImagePullSecret($name: String!) {
+        core_deleteImagePullSecret(name: $name)
+      }
+    `,
+    {
+      transformer: (data: ConsoleDeleteImagePullSecretsMutation) =>
+        data.core_deleteImagePullSecret,
+      vars(_: ConsoleDeleteImagePullSecretsMutationVariables) {},
+    }
+  ),
+  listImagePullSecrets: executor(
+    gql`
       query Core_listImagePullSecrets(
-        $envName: String!
         $search: SearchImagePullSecrets
         $pq: CursorPaginationIn
       ) {
-        core_listImagePullSecrets(
-          envName: $envName
-          search: $search
-          pq: $pq
-        ) {
+        core_listImagePullSecrets(search: $search, pq: $pq) {
           edges {
             cursor
             node {
+              accountName
               createdBy {
                 userEmail
                 userId
@@ -56,8 +76,8 @@ export const imagePullSecretsQueries = (executor: IExecutor) => ({
               creationTime
               displayName
               dockerConfigJson
-              environmentName
               format
+              id
               lastUpdatedBy {
                 userEmail
                 userId
@@ -65,7 +85,11 @@ export const imagePullSecretsQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
                 generation
+                labels
                 name
                 namespace
               }
@@ -94,10 +118,10 @@ export const imagePullSecretsQueries = (executor: IExecutor) => ({
         }
       }
     `,
-        {
-            transformer: (data: ConsoleListImagePullSecretsQuery) =>
-                data.core_listImagePullSecrets,
-            vars(_: ConsoleListImagePullSecretsQueryVariables) { },
-        }
-    ),
+    {
+      transformer: (data: ConsoleListImagePullSecretsQuery) =>
+        data.core_listImagePullSecrets,
+      vars(_: ConsoleListImagePullSecretsQueryVariables) {},
+    }
+  ),
 });

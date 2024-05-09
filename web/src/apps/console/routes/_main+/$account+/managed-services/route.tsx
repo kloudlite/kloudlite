@@ -15,9 +15,7 @@ export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     const { data: mData, errors: mErrors } = await GQLServerHandler(
       ctx.request
-    ).listClusterMSvs({
-      clusterName: ctx.params.cluster,
-    });
+    ).listClusterMSvs({});
 
     const { data: msvTemplates, errors: msvError } = await GQLServerHandler(
       ctx.request

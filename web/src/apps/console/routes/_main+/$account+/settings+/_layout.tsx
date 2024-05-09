@@ -9,7 +9,8 @@ const Settings = () => {
         { label: 'General', value: 'general' },
         { label: 'User management', value: 'user-management' },
         { label: 'Cloud providers', value: 'cloud-providers' },
-        { label: 'VPN', value: 'vpn' },
+        { label: 'Image pull secrets', value: 'image-pull-secrets' },
+        // { label: 'VPN', value: 'vpn' },
       ]}
       parentPath="/settings"
       // headerTitle="Settings"

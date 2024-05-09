@@ -1,5 +1,3 @@
-/* eslint-disable guard-for-in */
-
 import {
   useLoaderData,
   useNavigate,
@@ -40,21 +38,14 @@ import { IEnvironmentContext } from '../_layout';
 
 export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
-    const { environment } = ctx.params;
-
-    const { data: cData, errors: cErrors } = await GQLServerHandler(
-      ctx.request
-    ).getEnvironment({
-      name: environment,
-    });
-    if (cErrors) {
-      throw cErrors[0];
-    }
-
     const { data: mData, errors: mErrors } = await GQLServerHandler(
       ctx.request
     ).listClusterMSvs({
-      clusterName: cData.clusterName,
+      pagination: {
+        orderBy: 'updateTime',
+        sortDirection: 'DESC',
+        first: 100,
+      },
     });
 
     if (mErrors) {
@@ -194,6 +185,7 @@ const RenderField = ({
 
 const flatM = (obj: Record<string, any>) => {
   const flatJson = {};
+  // eslint-disable-next-line guard-for-in
   for (const key in obj) {
     const parts = key.split('.');
 
@@ -543,13 +535,14 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
                     msvcRef: {
                       name: parseName(selectedService?.service),
                       namespace:
-                        selectedService?.service.metadata?.namespace || '',
+                        selectedService?.service.spec?.targetNamespace || '',
                       apiVersion:
                         selectedService?.service?.spec?.msvcSpec.serviceTemplate
                           .apiVersion || '',
                       kind:
                         selectedService?.service?.spec?.msvcSpec.serviceTemplate
                           .kind || '',
+                      clusterName: selectedService.service.clusterName,
                     },
                   },
                 },

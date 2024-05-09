@@ -1,6 +1,16 @@
-import { GearSix } from '~/console/components/icons';
+import {
+  ArrowClockwise,
+  GearSix,
+  PencilLine,
+  Trash,
+} from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { generateKey, titleCase } from '~/components/utils';
+import {
+  generateKey,
+  titleCase,
+  useAppend,
+  useMapper,
+} from '~/components/utils';
 import { listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -31,8 +41,21 @@ import { useState } from 'react';
 import { SyncStatusV2 } from '~/console/components/sync-status';
 import { Button } from '~/components/atoms/button';
 import { dayjs } from '~/components/molecule/dayjs';
+import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
+import DeleteDialog from '~/console/components/delete-dialog';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { toast } from '~/components/molecule/toast';
+import { handleError } from '~/root/lib/utils/common';
+import Popup from '~/components/molecule/popup';
+import CodeView from '~/console/components/code-view';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
-type BaseType = ExtractNodeType<IClusters>;
+type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
+type ByokBaseType = ExtractNodeType<IByocClusters> & { type: 'byok' };
+type CombinedBaseType = BaseType | ByokBaseType;
+
 const RESOURCE_NAME = 'cluster';
 
 const getProvider = (item: BaseType) => {
@@ -61,11 +84,11 @@ const getProvider = (item: BaseType) => {
   }
 };
 
-const parseItem = (item: BaseType) => {
+const parseItem = (item: CombinedBaseType) => {
   return {
     name: item.displayName,
     id: parseName(item),
-    provider: getProvider(item),
+    provider: item.type === 'byok' ? null : getProvider(item),
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
@@ -73,16 +96,131 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-const ExtraButton = ({ cluster }: { cluster: BaseType }) => {
-  const { account } = useParams();
+const ByokInstructionsPopup = ({
+  show,
+  item,
+  onClose,
+  clusterName,
+}: {
+  show: boolean;
+  item: CombinedBaseType;
+  onClose: () => void;
+  clusterName: string;
+}) => {
+  const api = useConsoleApi();
+
+  const { data, isLoading } = useCustomSwr(
+    item.metadata?.name || null,
+    async () => {
+      if (!item.metadata?.name) {
+        throw new Error('Invalid cluster name');
+      }
+      return api.getBYOKClusterInstructions({
+        name: item.metadata.name,
+      });
+    }
+  );
+
+  console.log('data', data);
+
+  // const [isLoading, setIsLoading] = useState(false);
+
   return (
+    <Popup.Root onOpenChange={onClose} show={show} className="!w-[800px]">
+      <Popup.Header>{`${clusterName} setup instructions:`}</Popup.Header>
+      <Popup.Content>
+        <form className="flex flex-col gap-2xl">
+          {data && (
+            <div className="flex flex-col gap-xl text-start ">
+              <span className="flex flex-wrap items-center gap-md">
+                Please follow below instruction for further steps
+              </span>
+              <CodeView
+                preClassName="!overflow-none text-wrap break-words"
+                copy
+                data={data || ''}
+              />
+            </div>
+          )}
+        </form>
+      </Popup.Content>
+      <Popup.Footer>
+        <Button variant="primary-outline" content="close" onClick={onClose} />
+      </Popup.Footer>
+    </Popup.Root>
+  );
+};
+
+const ByokButton = ({ item }: { item: CombinedBaseType }) => {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div>
+      {show ? (
+        <ByokInstructionsPopup
+          clusterName={item.displayName || ''}
+          show={show}
+          onClose={() => {
+            setShow(false);
+          }}
+          item={item}
+        />
+      ) : (
+        <div className="flex gap-xl items-center pulsable">
+          {/* <span>{item.aws?.awsAccountId}</span> */}
+          <Button
+            content="setup"
+            onClick={() => {
+              setShow(true);
+            }}
+            size="sm"
+            variant="outline"
+            prefix={<ArrowClockwise size={16} />}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ExtraButton = ({
+  onDelete,
+  onEdit,
+  item,
+}: {
+  onDelete: () => void;
+  onEdit: () => void;
+  item: CombinedBaseType;
+}) => {
+  const { account } = useParams();
+  return item.type === 'byok' ? (
+    <ResourceExtraAction
+      options={[
+        {
+          key: '1',
+          label: 'Edit',
+          icon: <PencilLine size={16} />,
+          type: 'item',
+          onClick: onEdit,
+        },
+        {
+          label: 'Delete',
+          icon: <Trash size={16} />,
+          type: 'item',
+          onClick: onDelete,
+          key: 'delete',
+          className: '!text-text-critical',
+        },
+      ]}
+    />
+  ) : (
     <ResourceExtraAction
       options={[
         {
           label: 'Settings',
           icon: <GearSix size={16} />,
           type: 'item',
-          to: `/${account}/infra/${cluster.metadata.name}/settings`,
+          to: `/${account}/infra/${item.metadata.name}/settings`,
           key: 'settings',
         },
       ]}
@@ -90,7 +228,13 @@ const ExtraButton = ({ cluster }: { cluster: BaseType }) => {
   );
 };
 
-const GridView = ({ items }: { items: BaseType[] }) => {
+interface IResource {
+  items: CombinedBaseType[];
+  onDelete: (item: CombinedBaseType) => void;
+  onEdit: (item: CombinedBaseType) => void;
+}
+
+const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
   const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
@@ -111,9 +255,16 @@ const GridView = ({ items }: { items: BaseType[] }) => {
                     title={name}
                     subtitle={id}
                     action={
-                      // <ExtraButton status={status.status} cluster={item} />
-                      <span />
+                      <ExtraButton
+                        onDelete={() => onDelete(item)}
+                        onEdit={() => onEdit(item)}
+                        item={item}
+                      />
                     }
+                    // action={
+                    //   // <ExtraButton status={status.status} cluster={item} />
+                    //   <span />
+                    // }
                   />
                 ),
               },
@@ -143,7 +294,7 @@ const GridView = ({ items }: { items: BaseType[] }) => {
     </Grid.Root>
   );
 };
-const ListView = ({ items }: { items: BaseType[] }) => {
+const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
   const [open, setOpen] = useState<string>('');
   const { state } = useDataState<{
     linesVisible: boolean;
@@ -212,23 +363,25 @@ const ListView = ({ items }: { items: BaseType[] }) => {
               },
               logs: {
                 render: () =>
-                  isLatest ? (
-                    <Button
-                      size="sm"
-                      variant="basic"
-                      content={open === i.id ? 'Hide Logs' : 'Show Logs'}
-                      onClick={(e) => {
-                        e.preventDefault();
+                  i.type === 'normal'
+                    ? isLatest && (
+                        <Button
+                          size="sm"
+                          variant="basic"
+                          content={open === i.id ? 'Hide Logs' : 'Show Logs'}
+                          onClick={(e) => {
+                            e.preventDefault();
 
-                        setOpen((s) => {
-                          if (s === i.id) {
-                            return '';
-                          }
-                          return i.id;
-                        });
-                      }}
-                    />
-                  ) : null,
+                            setOpen((s) => {
+                              if (s === i.id) {
+                                return '';
+                              }
+                              return i.id;
+                            });
+                          }}
+                        />
+                      )
+                    : i.type === 'byok' && <ByokButton item={i} />,
               },
               status: {
                 render: () => <SyncStatusV2 item={i} />,
@@ -242,11 +395,20 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   />
                 ),
               },
+              // action: {
+              //   render: () => <ExtraButton cluster={i} />,
+              // },
               action: {
-                render: () => <ExtraButton cluster={i} />,
+                render: () => (
+                  <ExtraButton
+                    onDelete={() => onDelete(i)}
+                    onEdit={() => onEdit(i)}
+                    item={i}
+                  />
+                ),
               },
             },
-            to: `/${account}/infra/${id}/overview`,
+            // to: `/${account}/infra/${id}/overview`,
             detail: (
               <AnimateHide
                 onClick={(e) => e.preventDefault()}
@@ -280,19 +442,87 @@ const ListView = ({ items }: { items: BaseType[] }) => {
   );
 };
 
-const ClusterResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
+const ClusterResourcesV2 = ({
+  items,
+  byokItems,
+}: {
+  items: Omit<BaseType, 'type'>[];
+  byokItems: Omit<ByokBaseType, 'type'>[];
+}) => {
   const { account } = useOutletContext<IAccountContext>();
+  const normalItems = useMapper(items, (i) => {
+    return { ...i, type: 'normal' as BaseType['type'] };
+  });
+
+  const bItems = useMapper(byokItems, (i) => {
+    return { ...i, type: 'byok' as ByokBaseType['type'] };
+  });
+
+  const finalItems = useAppend(normalItems, bItems);
+
   useWatchReload(
-    items.map((i) => {
+    finalItems.map((i) => {
       return `account:${parseName(account)}.cluster:${parseName(i)}`;
     })
   );
 
+  const [showDeleteDialog, setShowDeleteDialog] =
+    useState<CombinedBaseType | null>(null);
+  const [showHandleByokCluster, setShowHandleByokCluster] =
+    useState<CombinedBaseType | null>(null);
+
+  const api = useConsoleApi();
+  const reloadPage = useReload();
+
+  const props: IResource = {
+    items: finalItems,
+    onDelete: (item) => {
+      setShowDeleteDialog(item);
+    },
+    onEdit: (item) => {
+      setShowHandleByokCluster(item);
+    },
+  };
+
   return (
-    <ListGridView
-      gridView={<GridView {...{ items }} />}
-      listView={<ListView {...{ items }} />}
-    />
+    <>
+      <ListGridView
+        listView={<ListView {...props} />}
+        gridView={<GridView {...props} />}
+      />
+      <DeleteDialog
+        resourceName={showDeleteDialog?.displayName}
+        resourceType={RESOURCE_NAME}
+        show={showDeleteDialog}
+        setShow={setShowDeleteDialog}
+        onSubmit={async () => {
+          try {
+            const { errors } = await api.deleteByokCluster({
+              name: parseName(showDeleteDialog),
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            reloadPage();
+            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
+            setShowDeleteDialog(null);
+          } catch (err) {
+            handleError(err);
+          }
+        }}
+      />
+      <HandleByokCluster
+        {...{
+          isUpdate: true,
+          visible: !!showHandleByokCluster,
+          setVisible: () => {
+            setShowHandleByokCluster(null);
+          },
+          data: showHandleByokCluster! as ByokBaseType,
+        }}
+      />
+    </>
   );
 };
 
