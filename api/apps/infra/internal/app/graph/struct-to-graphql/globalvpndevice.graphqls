@@ -10,8 +10,8 @@ type GlobalVPNDevice @shareable {
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
   privateKey: String!
+  publicEndpoint: String
   publicKey: String!
-  publiEndpoint: String
   recordVersion: Int!
   updateTime: Date!
 }
@@ -28,8 +28,8 @@ type GlobalVPNDevicePaginatedRecords @shareable {
 }
 
 input GlobalVPNDeviceIn {
+  displayName: String!
   globalVPNName: String!
   metadata: MetadataIn!
-  publiEndpoint: String
 }
 

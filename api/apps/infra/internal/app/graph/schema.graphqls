@@ -90,6 +90,7 @@ type Query {
     # byok
     infra_listBYOKClusters(search: SearchCluster, pagination: CursorPaginationIn): BYOKClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getBYOKCluster(name: String!): BYOKCluster @isLoggedInAndVerified @hasAccount
+    infrat_getBYOKClusterSetupInstructions(name: String!): String @isLoggedInAndVerified @hasAccount
 
     # global VPN
     infra_listGlobalVPNs(search: SearchGlobalVPNs, pagination: CursorPaginationIn): GlobalVPNPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -187,6 +188,11 @@ type EncodedValue {
 
 extend type Cluster {
   adminKubeconfig: EncodedValue
+  clusterDNSSuffix: String!
+}
+
+extend type BYOKCluster {
+  clusterDNSSuffix: String!
 }
 
 extend type GlobalVPNDevice {
