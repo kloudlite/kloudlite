@@ -1,5 +1,5 @@
 import { Outlet, useOutletContext } from '@remix-run/react';
-import SidebarLayout from '~/iotconsole/components/sidebar-layout';
+import SidebarLayout from '~/console/components/sidebar-layout';
 import { IManagedServiceContext } from '../_layout';
 
 const Settings = () => {
