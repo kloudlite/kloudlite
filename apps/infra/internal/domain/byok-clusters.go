@@ -2,6 +2,7 @@ package domain
 
 import (
 	"encoding/base64"
+	"fmt"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -170,6 +171,14 @@ func (d *domain) GetBYOKCluster(ctx InfraContext, name string) (*entities.BYOKCl
 	return c, nil
 }
 
+func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string) (*string, error) {
+	cluster, err := d.findBYOKCluster(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return fn.New(fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set kloudliteRelease="%s" --set byok.enabled=true --set helmCharts.ingressNginx.enabled=true --set helmCharts.certManager.enabled=true`, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr, d.env.KloudliteRelease)), nil
+}
+
 func (d *domain) DeleteBYOKCluster(ctx InfraContext, name string) error {
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteCluster); err != nil {
 		return errors.NewE(err)
@@ -236,4 +245,13 @@ func (d *domain) UpsertBYOKClusterKubeconfig(ctx InfraContext, clusterName strin
 	}
 
 	return nil
+}
+
+func (d *domain) isBYOKCluster(ctx InfraContext, name string) bool {
+	cluster, err := d.findBYOKCluster(ctx, name)
+	if err != nil {
+		return false
+	}
+
+	return cluster != nil
 }
