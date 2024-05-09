@@ -1,8 +1,8 @@
 package domain
 
 import (
-	"encoding/base64"
 	"encoding/json"
+	"slices"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 
@@ -68,7 +68,8 @@ func generateImagePullSecret(ips entities.ImagePullSecret) (corev1.Secret, error
 			return corev1.Secret{}, err
 		}
 
-		data[corev1.DockerConfigJsonKey] = []byte(base64.StdEncoding.EncodeToString(b))
+		// data[corev1.DockerConfigJsonKey] = []byte(base64.StdEncoding.EncodeToString(b))
+		data[corev1.DockerConfigJsonKey] = []byte(b)
 	}
 
 	secret := corev1.Secret{
@@ -134,6 +135,11 @@ func (d *domain) CreateImagePullSecret(ctx ConsoleContext, ips entities.ImagePul
 	return nips, nil
 }
 
+func (d *domain) applyImagePullSecretToEnvironment(ctx ConsoleContext, envName string, ips *entities.ImagePullSecret) error {
+	ips.GeneratedK8sSecret.Namespace = d.getEnvironmentTargetNamespace(envName)
+	return d.applyK8sResource(ctx, envName, &ips.GeneratedK8sSecret, ips.RecordVersion)
+}
+
 func (d *domain) applyImagePullSecret(ctx ConsoleContext, ips *entities.ImagePullSecret) error {
 	environments := ips.Environments
 
@@ -141,6 +147,7 @@ func (d *domain) applyImagePullSecret(ctx ConsoleContext, ips *entities.ImagePul
 	for i := range ips.Environments {
 		if ips.Environments[i] == "*" {
 			allEnvironments = true
+			environments = []string{}
 			break
 		}
 	}
@@ -156,7 +163,7 @@ func (d *domain) applyImagePullSecret(ctx ConsoleContext, ips *entities.ImagePul
 	}
 
 	for i := range environments {
-		if err := d.applyK8sResource(ctx, environments[i], &ips.GeneratedK8sSecret, ips.RecordVersion); err != nil {
+		if err := d.applyImagePullSecretToEnvironment(ctx, environments[i], ips); err != nil {
 			return err
 		}
 	}
@@ -171,6 +178,7 @@ func (d *domain) deleteImagePullSecret(ctx ConsoleContext, ips *entities.ImagePu
 	for i := range ips.Environments {
 		if ips.Environments[i] == "*" {
 			allEnvironments = true
+			environments = []string{}
 			break
 		}
 	}
@@ -272,6 +280,23 @@ func (d *domain) DeleteImagePullSecret(ctx ConsoleContext, name string) error {
 	//	}
 	//	return err
 	//}
+	return nil
+}
+
+func (d *domain) syncImagePullSecretsToEnvironment(ctx ConsoleContext, envName string) error {
+	pullSecrets, err := d.pullSecretsRepo.Find(ctx, repos.Query{Filter: entities.FilterListImagePullSecret(ctx.AccountName)})
+	if err != nil {
+		return err
+	}
+
+	for i := range pullSecrets {
+		if slices.Contains(pullSecrets[i].Environments, "*") {
+			if err := d.applyImagePullSecretToEnvironment(ctx, envName, pullSecrets[i]); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
