@@ -342,3 +342,13 @@ func isPrivateIP(ip net.IP) bool {
 	}
 	return private
 }
+
+func dwSetDnsServers(dnsServers []net.IPNet, _ string, verbose bool) error {
+	return ExecCmd(fmt.Sprintf("networksetup -setdnsservers %s %s", constants.NetworkService, func() string {
+		var dns []string
+		for _, v := range dnsServers {
+			dns = append(dns, v.IP.String())
+		}
+		return strings.Join(dns, " ")
+	}()), verbose)
+}
