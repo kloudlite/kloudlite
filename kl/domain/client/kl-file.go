@@ -99,17 +99,5 @@ func GetKlFile(filePath string) (*KLFileType, error) {
 		return nil, err
 	}
 
-	// file, err := os.ReadFile(*filePath)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	//
-	// klfile := KLFileType{}
-	//
-	// err = yaml.Unmarshal(file, &klfile)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	return klfile, nil
 }

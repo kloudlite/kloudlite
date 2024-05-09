@@ -26,7 +26,7 @@ func restartBox(_ *cobra.Command, _ []string) error {
 		return err
 	}
 	if isRunning {
-		if err := stopBox("", nil, nil); err != nil {
+		if err := stopBox(nil, nil); err != nil {
 			return err
 		}
 	}

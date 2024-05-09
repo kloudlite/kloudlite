@@ -1,9 +1,11 @@
 package confighandler
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 
+	"github.com/kloudlite/kl/pkg/ui/text"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -11,9 +13,8 @@ func ReadConfig[T any](path string) (*T, error) {
 	var v T
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s, %s", err.Error(), text.Colored("please ensure kl.yaml file by running \"kl init\" command in your project root.", 0))
 	}
-
 	if err := yaml.Unmarshal(b, &v); err != nil {
 		return nil, err
 	}

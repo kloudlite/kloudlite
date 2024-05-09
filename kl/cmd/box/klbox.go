@@ -20,5 +20,6 @@ func init() {
 	BoxCmd.AddCommand(stopCmd)
 	BoxCmd.AddCommand(sshCmd)
 	BoxCmd.AddCommand(restartCmd)
+	BoxCmd.AddCommand(execCmd)
 	//BoxCmd.Aliases = append(BoxCmd.Aliases, "b")
 }
