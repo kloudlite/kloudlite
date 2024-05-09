@@ -29,10 +29,7 @@ type BYOKClusterPaginatedRecords @shareable {
 }
 
 input BYOKClusterIn {
-  clusterPublicEndpoint: String!
-  clusterToken: String!
   displayName: String!
-  messageQueueTopicName: String!
   metadata: MetadataIn!
 }
 
