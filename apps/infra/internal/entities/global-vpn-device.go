@@ -12,13 +12,13 @@ type GlobalVPNDevice struct {
 
 	metav1.ObjectMeta `json:"metadata"`
 
-	common.ResourceMetadata `json:",inline" graphql:"noinput"`
+	common.ResourceMetadata `json:",inline"`
 
 	AccountName   string `json:"accountName" graphql:"noinput"`
 	GlobalVPNName string `json:"globalVPNName"`
 
 	// Only needs to be set, if vpn device has a public IP
-	PublicEndpoint *string `json:"publiEndpoint"`
+	PublicEndpoint *string `json:"publicEndpoint,omitempty" graphql:"noinput"`
 
 	IPAddr string `json:"ipAddr" graphql:"noinput"`
 
