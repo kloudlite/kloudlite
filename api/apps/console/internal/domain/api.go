@@ -150,7 +150,7 @@ type Domain interface {
 	UpdateApp(ctx ResourceContext, app entities.App) (*entities.App, error)
 	DeleteApp(ctx ResourceContext, name string) error
 
-	InterceptApp(ctx ResourceContext, appName string, deviceName string, intercept bool) (bool, error)
+	InterceptApp(ctx ResourceContext, appName string, deviceName string, intercept bool, portMappings []crdsv1.AppInterceptPortMappings) (bool, error)
 	RestartApp(ctx ResourceContext, appName string) error
 
 	OnAppApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
@@ -220,6 +220,7 @@ type Domain interface {
 	ListImagePullSecrets(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error)
 	GetImagePullSecret(ctx ConsoleContext, name string) (*entities.ImagePullSecret, error)
 	CreateImagePullSecret(ctx ConsoleContext, secret entities.ImagePullSecret) (*entities.ImagePullSecret, error)
+	UpdateImagePullSecret(ctx ConsoleContext, secret entities.ImagePullSecret) (*entities.ImagePullSecret, error)
 	DeleteImagePullSecret(ctx ConsoleContext, name string) error
 
 	OnImagePullSecretApplyError(ctx ConsoleContext, errMsg string, name string, opts UpdateAndDeleteOpts) error

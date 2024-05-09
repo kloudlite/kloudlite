@@ -93,10 +93,11 @@ type GithubComKloudliteOperatorApisCommonTypesMsvcRef struct {
 }
 
 type GithubComKloudliteOperatorApisCommonTypesMsvcRefIn struct {
-	APIVersion *string `json:"apiVersion,omitempty"`
-	Kind       *string `json:"kind,omitempty"`
-	Name       string  `json:"name"`
-	Namespace  string  `json:"namespace"`
+	APIVersion  *string `json:"apiVersion,omitempty"`
+	ClusterName string  `json:"clusterName"`
+	Kind        *string `json:"kind,omitempty"`
+	Name        string  `json:"name"`
+	Namespace   string  `json:"namespace"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppContainer struct {
@@ -134,9 +135,28 @@ type GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappings struct {
 	DevicePort int `json:"devicePort"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn struct {
-	AppPort    int `json:"appPort"`
-	DevicePort int `json:"devicePort"`
+type GithubComKloudliteOperatorApisCrdsV1AppRouter struct {
+	BackendProtocol *string                                        `json:"backendProtocol,omitempty"`
+	BasicAuth       *GithubComKloudliteOperatorApisCrdsV1BasicAuth `json:"basicAuth,omitempty"`
+	Cors            *GithubComKloudliteOperatorApisCrdsV1Cors      `json:"cors,omitempty"`
+	Domains         []string                                       `json:"domains"`
+	HTTPS           *GithubComKloudliteOperatorApisCrdsV1HTTPS     `json:"https,omitempty"`
+	IngressClass    *string                                        `json:"ingressClass,omitempty"`
+	MaxBodySizeInMb *int                                           `json:"maxBodySizeInMB,omitempty"`
+	RateLimit       *GithubComKloudliteOperatorApisCrdsV1RateLimit `json:"rateLimit,omitempty"`
+	Routes          []*GithubComKloudliteOperatorApisCrdsV1Route   `json:"routes,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1AppRouterIn struct {
+	BackendProtocol *string                                          `json:"backendProtocol,omitempty"`
+	BasicAuth       *GithubComKloudliteOperatorApisCrdsV1BasicAuthIn `json:"basicAuth,omitempty"`
+	Cors            *GithubComKloudliteOperatorApisCrdsV1CorsIn      `json:"cors,omitempty"`
+	Domains         []string                                         `json:"domains"`
+	HTTPS           *GithubComKloudliteOperatorApisCrdsV1HTTPSIn     `json:"https,omitempty"`
+	IngressClass    *string                                          `json:"ingressClass,omitempty"`
+	MaxBodySizeInMb *int                                             `json:"maxBodySizeInMB,omitempty"`
+	RateLimit       *GithubComKloudliteOperatorApisCrdsV1RateLimitIn `json:"rateLimit,omitempty"`
+	Routes          []*GithubComKloudliteOperatorApisCrdsV1RouteIn   `json:"routes,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSpec struct {
@@ -148,6 +168,7 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpec struct {
 	NodeSelector              map[string]interface{}                              `json:"nodeSelector,omitempty"`
 	Region                    *string                                             `json:"region,omitempty"`
 	Replicas                  *int                                                `json:"replicas,omitempty"`
+	Router                    *GithubComKloudliteOperatorApisCrdsV1AppRouter      `json:"router,omitempty"`
 	ServiceAccount            *string                                             `json:"serviceAccount,omitempty"`
 	Services                  []*GithubComKloudliteOperatorApisCrdsV1AppSvc       `json:"services,omitempty"`
 	Tolerations               []*K8sIoAPICoreV1Toleration                         `json:"tolerations,omitempty"`
@@ -163,6 +184,7 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecIn struct {
 	NodeSelector              map[string]interface{}                                `json:"nodeSelector,omitempty"`
 	Region                    *string                                               `json:"region,omitempty"`
 	Replicas                  *int                                                  `json:"replicas,omitempty"`
+	Router                    *GithubComKloudliteOperatorApisCrdsV1AppRouterIn      `json:"router,omitempty"`
 	ServiceAccount            *string                                               `json:"serviceAccount,omitempty"`
 	Services                  []*GithubComKloudliteOperatorApisCrdsV1AppSvcIn       `json:"services,omitempty"`
 	Tolerations               []*K8sIoAPICoreV1TolerationIn                         `json:"tolerations,omitempty"`
@@ -332,9 +354,9 @@ type GithubComKloudliteOperatorApisCrdsV1Intercept struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1InterceptIn struct {
-	Enabled      bool                                                              `json:"enabled"`
-	PortMappings []*GithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsIn `json:"portMappings,omitempty"`
-	ToDevice     string                                                            `json:"toDevice"`
+	Enabled      bool                           `json:"enabled"`
+	PortMappings []*v1.AppInterceptPortMappings `json:"portMappings,omitempty"`
+	ToDevice     string                         `json:"toDevice"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
