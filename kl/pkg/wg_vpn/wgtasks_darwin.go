@@ -3,20 +3,21 @@ package wg_vpn
 import (
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/constants"
 	"net"
 	"os"
 	"os/exec"
 	"os/signal"
-	"runtime"
 	"slices"
 	"strconv"
 	"strings"
 	"syscall"
 
+	"github.com/kloudlite/kl/constants"
+
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/flags"
 	"github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
@@ -51,12 +52,16 @@ func ipRouteAdd(ip string, interfaceIp string, deviceName string, verbose bool) 
 
 func getCurrentDns(verbose bool) ([]string, error) {
 	networkService := "Wi-Fi"
+
+	cmd := exec.Command("networksetup", "-getdnsservers", networkService)
+
 	if verbose {
-		functions.Log(fmt.Sprintf("[#] networksetup -getdnsservers %s", networkService))
+		fn.Log("#", cmd.String())
 	}
-	output, err := exec.Command("networksetup", "-getdnsservers", networkService).Output()
+
+	output, err := cmd.Output()
 	if err != nil {
-		functions.Log(fmt.Sprintf("[#] %s", string(output)))
+		fn.Log(fmt.Sprintf("[#] %s", string(output)))
 		return nil, err
 	}
 
@@ -139,10 +144,16 @@ func StartService(_ string, verbose bool) error {
 }
 
 func StopService(verbose bool) error {
-	output, err := exec.Command("pgrep", "-f", fmt.Sprintf("%s %s", flags.CliName, "vpn start-fg")).Output()
+	cmd := exec.Command("pgrep", "-f", fmt.Sprintf("%s %s", flags.CliName, "vpn start-fg"))
+	output, err := cmd.Output()
 	if err != nil {
 		return err
 	}
+
+	if verbose {
+		functions.Log("[#]", cmd.String())
+	}
+
 	i, err := strconv.ParseInt(strings.TrimSpace(string(output)), 10, 64)
 	if err != nil {
 		return err
@@ -158,37 +169,6 @@ func StopService(verbose bool) error {
 	err = syscall.Kill(int(i), syscall.SIGTERM)
 	if err != nil {
 		return err
-	}
-
-	if runtime.GOOS == "darwin" {
-		dnsServers, err := getCurrentDns(verbose)
-		if err != nil {
-			return err
-		}
-
-		servers, err := client.GetDns()
-		if err != nil {
-			return err
-		}
-
-		filteredDnsServers := []string{}
-
-		for _, dnsServer := range dnsServers {
-			if !slices.Contains(servers, dnsServer) {
-				filteredDnsServers = append(filteredDnsServers, dnsServer)
-			}
-		}
-
-		if err := setDnsServers(func() []net.IP {
-			var ipNets []net.IP
-			for _, dnsServer := range filteredDnsServers {
-				ipNets = append(ipNets, net.ParseIP(dnsServer))
-			}
-			return ipNets
-		}(), "Wi-Fi", verbose); err != nil {
-			return err
-		}
-
 	}
 
 	return nil
@@ -217,53 +197,53 @@ func getDnsSearchDomain(networkService string) ([]string, error) {
 	return domains, nil
 }
 
-func SetDnsSearch() error {
-	data, err := client.GetExtraData()
-	if err != nil {
-		return err
-	}
-	currentDns, err := getCurrentDns(false)
-	if err != nil {
-		return err
-	}
+func _SetDnsSearch() error {
+	// data, err := client.GetExtraData()
+	// if err != nil {
+	// 	return err
+	// }
+	// currentDns, err := getCurrentDns(false)
+	// if err != nil {
+	// 	return err
+	// }
 
-	if data.DnsAdded {
-		uniqueDns := make(map[string]bool)
-		for _, dns := range data.DnsValues {
-			uniqueDns[dns] = true
-		}
-		for _, val := range currentDns {
-			uniqueDns[val] = true
-		}
-		var combinedDns []string
-		for val := range uniqueDns {
-			combinedDns = append(combinedDns, val)
-		}
-		data.DnsValues = combinedDns
-	} else {
-		data.DnsValues = currentDns
-		data.DnsAdded = true
-	}
-	if err := client.SaveExtraData(data); err != nil {
-		return err
-	}
+	// if data.DnsAdded {
+	// 	uniqueDns := make(map[string]bool)
+	// 	for _, dns := range data.DnsValues {
+	// 		uniqueDns[dns] = true
+	// 	}
+	// 	for _, val := range currentDns {
+	// 		uniqueDns[val] = true
+	// 	}
+	// 	var combinedDns []string
+	// 	for val := range uniqueDns {
+	// 		combinedDns = append(combinedDns, val)
+	// 	}
+	// 	data.DnsValues = combinedDns
+	// } else {
+	// 	data.DnsValues = currentDns
+	// 	data.DnsAdded = true
+	// }
+	// if err := client.SaveExtraData(data); err != nil {
+	// 	return err
+	// }
 
-	var privateIPs []net.IP
-	for _, ipStr := range data.DnsValues {
-		ip := net.ParseIP(ipStr)
-		if ip == nil {
-			functions.Log("Invalid IP address: %s\n", ipStr)
-			continue
-		}
-		if isPrivateIP(ip) {
-			privateIPs = append(privateIPs, net.ParseIP(ipStr))
-		}
-	}
+	// var privateIPs []net.IP
+	// for _, ipStr := range data.DnsValues {
+	// 	ip := net.ParseIP(ipStr)
+	// 	if ip == nil {
+	// 		functions.Log("Invalid IP address: %s\n", ipStr)
+	// 		continue
+	// 	}
+	// 	if isPrivateIP(ip) {
+	// 		privateIPs = append(privateIPs, net.ParseIP(ipStr))
+	// 	}
+	// }
 
-	err = setDnsServers(privateIPs, constants.NetworkService, false)
-	if err != nil {
-		return err
-	}
+	// err = setDnsServers(privateIPs, constants.NetworkService, false)
+	// if err != nil {
+	// 	return err
+	// }
 
 	searchDomains, err := getDnsSearchDomain(constants.NetworkService)
 	if err == nil {
@@ -282,49 +262,49 @@ func SetDnsSearch() error {
 			return nil
 		}
 	}
-	data.SearchDomainAdded = true
-	if err := client.SaveExtraData(data); err != nil {
-		return err
-	}
+	// data.SearchDomainAdded = true
+	// if err := client.SaveExtraData(data); err != nil {
+	// 	return err
+	// }
 	return nil
 }
 
-func UnsetDnsSearch() error {
+func _UnsetDnsSearch() error {
 	data, err := client.GetExtraData()
 	if err != nil {
 		return err
 	}
 
-	if data.DnsAdded {
-		ips := make([]net.IP, 0)
-		for _, dns := range data.DnsValues {
-			ips = append(ips, net.ParseIP(dns))
-		}
-		if err := setDnsServers(ips, constants.NetworkService, false); err != nil {
-			return err
-		}
-	}
-	data.DnsAdded = false
-	data.DnsValues = nil
+	// if data.DnsAdded {
+	// 	ips := make([]net.IP, 0)
+	// 	for _, dns := range data.DnsValues {
+	// 		ips = append(ips, net.ParseIP(dns))
+	// 	}
+	// 	if err := setDnsServers(ips, constants.NetworkService, false); err != nil {
+	// 		return err
+	// 	}
+	// }
+	// data.DnsAdded = false
+	// data.DnsValues = nil
 
 	if err := client.SaveExtraData(data); err != nil {
 		return err
 	}
 
-	if data.SearchDomainAdded {
-		searchDomains, err := getDnsSearchDomain(constants.NetworkService)
-		if err != nil {
-			return err
-		}
-		searchDomains = functions.RemoveFromArray(constants.LocalSearchDomains, searchDomains)
-		if err = setDnsSearchDomain(constants.NetworkService, searchDomains); err != nil {
-			return err
-		}
-		data.SearchDomainAdded = false
-		if err := client.SaveExtraData(data); err != nil {
-			return err
-		}
-	}
+	// if data.SearchDomainAdded {
+	// 	searchDomains, err := getDnsSearchDomain(constants.NetworkService)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	searchDomains = functions.RemoveFromArray(constants.LocalSearchDomains, searchDomains)
+	// 	if err = setDnsSearchDomain(constants.NetworkService, searchDomains); err != nil {
+	// 		return err
+	// 	}
+	// 	data.SearchDomainAdded = false
+	// 	if err := client.SaveExtraData(data); err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 

@@ -220,8 +220,6 @@ func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) error {
 
 		td, err := os.MkdirTemp("", "kl-tmp")
 		if err != nil {
-			fmt.Println("here")
-
 			return err
 		}
 		akTmpPath := path.Join(td, "authorized_keys")

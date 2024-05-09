@@ -2,6 +2,9 @@ package vpn
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
@@ -9,8 +12,6 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
-	"os"
-	"os/exec"
 )
 
 func connect(verbose bool, options ...fn.Option) error {
@@ -58,7 +59,7 @@ func connect(verbose bool, options ...fn.Option) error {
 	//}
 
 	if err := startConfiguration(verbose, options...); err != nil {
-		_ = wg_vpn.UnsetDnsSearch()
+		_ = wg_vpn.ResetDnsServers(ifName, verbose)
 		return err
 	}
 	success = true
@@ -75,6 +76,7 @@ func connect(verbose bool, options ...fn.Option) error {
 }
 
 func disconnect(verbose bool) error {
+
 	if err := ensureAppRunning(); err != nil {
 		fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
 	}
@@ -88,13 +90,16 @@ func disconnect(verbose bool) error {
 		return err
 	}
 	data.VpnConnected = false
-	data.DNS = nil
 	if err := client.SaveExtraData(data); err != nil {
 		return err
 	}
-	if err = wg_vpn.UnsetDnsSearch(); err != nil {
+
+	if err := wg_vpn.ResetDnsServers(ifName, verbose); err != nil {
 		return err
 	}
+	// if err = wg_vpn.UnsetDnsSearch(); err != nil {
+	// 	return err
+	// }
 	return nil
 }
 

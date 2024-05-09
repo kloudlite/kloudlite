@@ -1,10 +1,11 @@
 package handler
 
 import (
+	"time"
+
 	"github.com/getlantern/systray"
 	ns "github.com/kloudlite/kl/app/handler/name-conts"
 	"github.com/kloudlite/kl/domain/client"
-	"time"
 )
 
 func (h *handler) ReconAccount() {
@@ -117,7 +118,7 @@ func (h *handler) ReconAccount() {
 			//	acc.SetTitle(fmt.Sprintf("Account: %s", file.AccountName))
 			//}
 
-			devCluster, _ := client.GetDevInfo()
+			devCluster, _ := client.GetActiveCluster()
 
 			if devCluster == "" {
 				cluster.SetTitle("No Cluster")
