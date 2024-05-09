@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -67,13 +68,23 @@ func (r *mutationResolver) CoreCloneEnvironment(ctx context.Context, sourceEnvNa
 }
 
 // CoreCreateImagePullSecret is the resolver for the core_createImagePullSecret field.
-func (r *mutationResolver) CoreCreateImagePullSecret(ctx context.Context, imagePullSecretIn entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
+func (r *mutationResolver) CoreCreateImagePullSecret(ctx context.Context, pullSecret entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	return r.Domain.CreateImagePullSecret(cc, imagePullSecretIn)
+	return r.Domain.CreateImagePullSecret(cc, pullSecret)
+}
+
+// CoreUpdateImagePullSecret is the resolver for the core_updateImagePullSecret field.
+func (r *mutationResolver) CoreUpdateImagePullSecret(ctx context.Context, pullSecret entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.UpdateImagePullSecret(cc, pullSecret)
 }
 
 // CoreDeleteImagePullSecret is the resolver for the core_deleteImagePullSecret field.
@@ -119,12 +130,20 @@ func (r *mutationResolver) CoreDeleteApp(ctx context.Context, envName string, ap
 }
 
 // CoreInterceptApp is the resolver for the core_interceptApp field.
-func (r *mutationResolver) CoreInterceptApp(ctx context.Context, envName string, appname string, deviceName string, intercept bool) (bool, error) {
+func (r *mutationResolver) CoreInterceptApp(ctx context.Context, envName string, appname string, deviceName string, intercept bool, portMappings []*v11.AppInterceptPortMappings) (bool, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return false, errors.NewE(err)
 	}
-	return r.Domain.InterceptApp(newResourceContext(cc, envName), appname, deviceName, intercept)
+
+	pmappings := make([]v11.AppInterceptPortMappings, 0, len(portMappings))
+	for i := range portMappings {
+		if portMappings[i] != nil {
+			pmappings = append(pmappings, *portMappings[i])
+		}
+	}
+
+	return r.Domain.InterceptApp(newResourceContext(cc, envName), appname, deviceName, intercept, pmappings)
 }
 
 // CoreCreateConfig is the resolver for the core_createConfig field.
@@ -811,5 +830,7 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

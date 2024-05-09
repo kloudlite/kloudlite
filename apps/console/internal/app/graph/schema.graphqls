@@ -142,13 +142,14 @@ type Mutation {
 	core_cloneEnvironment(sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
 
 	# image pull secrets
-	core_createImagePullSecret(imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
+	core_createImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
+	core_updateImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
 	core_deleteImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_deleteApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
 	core_updateConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
@@ -169,7 +170,6 @@ type Mutation {
 	# core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
 	# core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
 	# core_deleteProjectManagedService(pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
 
 	core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 	core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount

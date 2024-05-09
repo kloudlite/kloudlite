@@ -325,6 +325,17 @@ func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterNam
 		return errors.NewE(err)
 	}
 
+	//INFO: BYOK cluster does not have any status update message
+	if d.isBYOKCluster(ctx, xconn.ClusterName) {
+		if _, err := d.byokClusterRepo.PatchOne(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, clusterName), repos.Document{
+			fc.SyncStatusState:        t.SyncStateUpdatedAtAgent,
+			fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
+			fc.SyncStatusError:        nil,
+		}); err != nil {
+			return errors.NewE(err)
+		}
+	}
+
 	if _, err := d.matchRecordVersion(gvpn.Annotations, xconn.RecordVersion); err != nil {
 		return d.resyncToTargetCluster(ctx, xconn.SyncStatus.Action, clusterName, &xconn.GlobalVPN, xconn.RecordVersion)
 	}
@@ -334,11 +345,9 @@ func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterNam
 		return errors.NewE(err)
 	}
 
-	patchDoc := common.PatchForSyncFromAgent(&gvpn,
-		recordVersion, status,
-		common.PatchOpts{
-			MessageTimestamp: opts.MessageTimestamp,
-		})
+	patchDoc := common.PatchForSyncFromAgent(&gvpn, recordVersion, status, common.PatchOpts{
+		MessageTimestamp: opts.MessageTimestamp,
+	})
 
 	if gvpn.ParsedWgParams != nil {
 		patchDoc[fc.GlobalVPNConnectionParsedWgParams] = gvpn.ParsedWgParams
