@@ -1,6 +1,7 @@
 package kl
 
 import (
+	"github.com/kloudlite/kl/cmd/box"
 	"github.com/kloudlite/kl/cmd/completion"
 	"github.com/kloudlite/kl/cmd/shell"
 	"runtime"
@@ -40,6 +41,8 @@ func init() {
 	rootCmd.AddCommand(auth.Cmd)
 
 	rootCmd.AddCommand(vpn.Cmd)
+
+	rootCmd.AddCommand(box.BoxCmd)
 
 	if runtime.GOOS != constants.RuntimeWindows {
 		rootCmd.AddCommand(app.Cmd)

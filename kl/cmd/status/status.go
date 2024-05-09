@@ -2,6 +2,7 @@ package status
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
@@ -31,10 +32,6 @@ var Cmd = &cobra.Command{
 		switch flags.CliName {
 		case constants.CoreCliName:
 			{
-				if s, err := client.CurrentProjectName(); err == nil {
-					fn.Log(fmt.Sprint(text.Bold(text.Blue("Project: ")), s))
-				}
-
 				if e, err := client.CurrentEnv(); err == nil {
 					fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), e.Name))
 				}
@@ -70,14 +67,9 @@ var Cmd = &cobra.Command{
 				}
 			}()))
 
-			ips, err := client.CurrentDeviceDNS()
+			ip, err := client.CurrentDeviceDNS()
 			if err == nil {
-				fmt.Print(fmt.Sprintf(text.Bold(text.Blue("Device IP: "))))
-				var ipAddr []string
-				for _, ip := range ips {
-					ipAddr = append(ipAddr, ip.String())
-				}
-				fmt.Println(ipAddr)
+				fn.Logf("%s %s", text.Bold(text.Blue("Device IP:")), *ip)
 			}
 		}
 	},

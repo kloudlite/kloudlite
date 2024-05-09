@@ -21,8 +21,8 @@ type ResEnvType struct {
 }
 
 type EnvType struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Key   string `json:"key" yaml:"key"`
+	Value string `json:"value" yaml:"value"`
 }
 
 type ResType struct {
@@ -45,7 +45,7 @@ type MountType struct {
 type KLFileType struct {
 	Version    string    `json:"version"`
 	DefaultEnv string    `json:"defaultEnv"`
-	Project    string    `json:"project"`
+	Packages   []string  `json:"packages"`
 	Mres       []ResType `json:"mres"`
 	Configs    []ResType `json:"configs"`
 	Secrets    []ResType `json:"secrets"`
@@ -98,18 +98,6 @@ func GetKlFile(filePath string) (*KLFileType, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// file, err := os.ReadFile(*filePath)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	//
-	// klfile := KLFileType{}
-	//
-	// err = yaml.Unmarshal(file, &klfile)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	return klfile, nil
 }

@@ -5,14 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
-	"time"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
-	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
 	wg_svc "github.com/kloudlite/kl/pkg/wg_vpn/wg_service"
 )
@@ -22,116 +18,9 @@ const (
 )
 
 func startConfiguration(verbose bool, options ...fn.Option) error {
-	selectedDevice, err := client.GetDeviceContext()
+	device, err := server.EnsureDevice(options...)
 	if err != nil {
 		return err
-	}
-
-	devName := selectedDevice.DeviceName
-
-	if !skipCheck {
-		switch flags.CliName {
-		case constants.CoreCliName:
-			envName := fn.GetOption(options, "envName")
-			if envName != "" {
-				en, err := client.CurrentEnv()
-
-				if (err == nil && en.Name != envName) || (err != nil && envName != "") {
-					if err := server.UpdateDeviceEnv(options...); err != nil {
-						return err
-					}
-				}
-			}
-
-		case constants.InfraCliName:
-			clusterName := fn.GetOption(options, "clusterName")
-			if clusterName != "" {
-				cn, err := client.CurrentClusterName()
-				if err != nil {
-					return err
-				}
-				if cn != "" && cn != clusterName {
-					if err := server.UpdateDeviceClusterName(clusterName); err != nil {
-						return err
-					}
-				}
-
-				time.Sleep(2 * time.Second)
-			}
-		}
-	}
-
-	device, err := server.GetDevice(fn.MakeOption("deviceName", devName))
-	if err != nil {
-		switch flags.CliName {
-		case constants.CoreCliName:
-			return err
-		case constants.InfraCliName:
-			return err
-		default:
-			return err
-		}
-	}
-
-	if device.ClusterName != "" {
-		_ = client.SetDevInfo(fn.Truncate(device.ClusterName, 15))
-	} else {
-		_ = client.SetDevInfo(fmt.Sprintf("%s/%s", fn.Truncate(device.ProjectName, 5), fn.Truncate(device.EnvName, 5)))
-	}
-
-	if !skipCheck {
-		switch flags.CliName {
-		case constants.CoreCliName:
-			envName := fn.GetOption(options, "envName")
-			projectName := fn.GetOption(options, "projectName")
-
-			if envName == "" {
-				en, err := client.CurrentEnv()
-				if err == nil && en.Name != "" {
-					envName = en.Name
-				}
-			}
-
-			if projectName == "" {
-				pn, err := client.CurrentProjectName()
-				if err == nil && pn != "" {
-					projectName = pn
-				}
-			}
-
-			if (envName != "" && device.EnvName != envName) || (projectName != "" && device.ProjectName != projectName) {
-				if err := server.UpdateDeviceEnv([]fn.Option{
-					fn.MakeOption("envName", envName),
-					fn.MakeOption("projectName", projectName),
-				}...); err != nil {
-					return err
-				}
-				time.Sleep(2 * time.Second)
-			}
-
-		case constants.InfraCliName:
-			clusterName := fn.GetOption(options, "clusterName")
-
-			if clusterName == "" {
-				if s, err := client.CurrentClusterName(); err != nil {
-					return err
-				} else {
-					clusterName = s
-				}
-			}
-
-			if device.ClusterName == "" || (device.ClusterName != clusterName) {
-				if err := server.UpdateDeviceClusterName(clusterName); err != nil {
-					return err
-				}
-
-				time.Sleep(2 * time.Second)
-			}
-		}
-	}
-
-	if len(device.Spec.Ports) == 0 {
-		fn.Log(text.Yellow(fmt.Sprintf("[#] no ports found for device %s, you can export ports using %s vpn expose\n", devName, flags.CliName)))
 	}
 
 	if device.WireguardConfig.Value == "" {
@@ -151,26 +40,14 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 		return nil
 	}
 
-	if err := wg_vpn.Configure(configuration, devName, ifName, verbose); err != nil {
+	if err := wg_vpn.Configure(configuration, ifName, verbose); err != nil {
 		return err
 	}
 
-	// if err := wg_vpn.Configure(configuration, devName, func() string {
-	// 	if runtime.GOOS == constants.RuntimeDarwin {
-	// 		return ifName
-	// 	}
-	//
-	// 	return "kl-device"
-	//
-	// 	// return devName
-	// }(), verbose); err != nil {
-	// 	return err
-	// }
-
 	if wg_vpn.IsSystemdReslov() {
 		if err := wg_vpn.ExecCmd(fmt.Sprintf("resolvectl domain %s %s", device.Metadata.Name, func() string {
-			if device.Spec.ActiveNamespace != "" {
-				return fmt.Sprintf("%s.svc.cluster.local", device.Spec.ActiveNamespace)
+			if device.EnvironmentName != "" {
+				return fmt.Sprintf("%s.svc.cluster.local", device.EnvironmentName)
 			}
 
 			return "~."

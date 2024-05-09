@@ -1,11 +1,10 @@
 package runner
 
 import (
-	"fmt"
-
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/spf13/cobra"
 )
@@ -24,64 +23,53 @@ Examples:
 
 	Run: func(cmd *cobra.Command, _ []string) {
 
-		pName := fn.ParseStringFlag(cmd, "project")
 		aName := fn.ParseStringFlag(cmd, "account")
 		filePath := fn.ParseKlFile(cmd)
 		initFile, err := client.GetKlFile(filePath)
 
 		if err != nil {
 
-			acc, err := server.EnsureAccount(
-				fn.MakeOption("accountName", aName),
-			)
+			envs, err := server.ListEnvs(fn.MakeOption("accountName", aName))
 			if err != nil {
 				fn.PrintError(err)
 				return
 			}
 
-			p, err := server.SelectProject(pName)
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
+			packages := []string{"vim", "git", "go"}
 
-			envs, err := server.ListEnvs(fn.MakeOption("projectName", p.Metadata.Name))
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-
-			// prj, err := server.EnsureProject(
-			// 	[]fn.Option{
-			// 		fn.MakeOption("accountName", aName),
-			// 		fn.MakeOption("projectName", pName),
-			// 	}...,
-			// )
-			// if err != nil {
-			// 	fn.PrintError(err)
-			// 	return
-			// }
 			defEnv := ""
 			if len(envs) != 0 {
-				defEnv = envs[0].Metadata.Name
+				de, err := fzf.FindOne(envs, func(item server.Env) string {
+					return item.Metadata.Name
+				}, fzf.WithPrompt("Select default environment >"))
+
+				if err != nil {
+					fn.PrintError(err)
+					return
+				}
+
+				defEnv = de.Metadata.Name
+			} else {
+				fn.Warn("no environment found, please create environments from dashboard")
 			}
+
 			initFile = &client.KLFileType{
 				Version:    "v1",
-				Project:    fmt.Sprintf("%s/%s", acc, p.Metadata.Name),
 				DefaultEnv: defEnv,
+				Packages:   packages,
 				Mres:       make([]client.ResType, 0),
 				Configs:    make([]client.ResType, 0),
 				Secrets:    make([]client.ResType, 0),
-				Env:        []client.EnvType{{Key: "SAMPLE_ENV", Value: "sample_value"}},
+				Env:        []client.EnvType{{Key: "SAMPLE", Value: "sampleValue"}},
 				FileMount: client.MountType{
 					MountBasePath: "./.mounts",
 					Mounts:        make([]client.FileEntry, 0),
 				},
 			}
 			if defEnv == "" {
-				fn.Warn("No environment found for the project, Please create environments from dashboard\n")
+				fn.Warn("No environment found, Please create environments from dashboard\n")
 			} else {
-				fn.Log("Default env set to: ", defEnv)
+				fn.Log("default env set to: ", defEnv)
 			}
 
 		} else {
@@ -98,7 +86,6 @@ Examples:
 }
 
 func init() {
-	InitCommand.Flags().StringP("project", "p", "", "project name")
 	InitCommand.Flags().StringP("account", "a", "", "account name")
 	InitCommand.Flags().StringP("file", "f", "", "file name")
 	fn.WithKlFile(InitCommand)

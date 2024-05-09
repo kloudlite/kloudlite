@@ -14,16 +14,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var reconnectVerbose bool
 var restartCmd = &cobra.Command{
 	Use:   "restart",
 	Short: "restart vpn device",
 	Long: fn.Desc(`# restart vpn device
 sudo {cmd} vpn start`),
-	Run: func(_ *cobra.Command, _ []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
+
+		verbose := fn.ParseBoolFlag(cmd, "verbose")
 
 		if runtime.GOOS == constants.RuntimeWindows {
-			if err := connect(connectVerbose); err != nil {
+			if err := connect(verbose); err != nil {
 				fn.Notify("Error:", err.Error())
 				fn.PrintError(err)
 			}
@@ -49,7 +50,7 @@ sudo {cmd} vpn start`),
 		if len(wgInterface) == 0 {
 			fn.Log(text.Colored("[#] no devices connected yet", 209))
 		} else {
-			if err := disconnect(reconnectVerbose); err != nil {
+			if err := disconnect(verbose); err != nil {
 				fn.PrintError(err)
 				return
 			}
@@ -58,7 +59,7 @@ sudo {cmd} vpn start`),
 		fn.Log("[#] connecting")
 		time.Sleep(time.Second * 2)
 
-		if err := startConnecting(reconnectVerbose); err != nil {
+		if err := startConnecting(verbose); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -84,6 +85,6 @@ sudo {cmd} vpn start`),
 }
 
 func init() {
-	restartCmd.Flags().BoolVarP(&reconnectVerbose, "verbose", "v", false, "show verbose")
+	restartCmd.Flags().BoolP("verbose", "v", false, "run in debug mode")
 	restartCmd.Aliases = append(restartCmd.Aliases, "reconnect")
 }

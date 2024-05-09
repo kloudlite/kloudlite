@@ -49,6 +49,10 @@ func Warn(str ...interface{}) {
 	_, _ = fmt.Fprintf(os.Stderr, text.Yellow(fmt.Sprint(fmt.Sprint(str...), "\n")))
 }
 
+func Warnf(format string, str ...interface{}) {
+	_, _ = fmt.Fprintf(os.Stderr, text.Yellow(fmt.Sprintf("%s", fmt.Sprintf(fmt.Sprint(format, "\n"), str...))))
+}
+
 func Logf(format string, str ...interface{}) {
 	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprintf(fmt.Sprint(format, "\n"), str...))
 }

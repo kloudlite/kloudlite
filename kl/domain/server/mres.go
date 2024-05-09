@@ -19,20 +19,14 @@ func ListMreses(options ...fn.Option) ([]Mres, error) {
 		return nil, err
 	}
 
-	projectName, err := client.CurrentProjectName()
-	if err != nil {
-		return nil, err
-	}
-
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
 	respData, err := klFetch("cli_listMreses", map[string]any{
-		"projectName": projectName,
-		"envName":     env.Name,
-		"pq":          PaginationDefault,
+		"envName": env.Name,
+		"pq":      PaginationDefault,
 	}, &cookie)
 	if err != nil {
 		return nil, err
@@ -82,20 +76,14 @@ func ListMresKeys(options ...fn.Option) ([]string, error) {
 		return nil, err
 	}
 
-	projectName, err := client.CurrentProjectName()
-	if err != nil {
-		return nil, err
-	}
-
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
 	respData, err := klFetch("cli_getMresKeys", map[string]any{
-		"projectName": projectName,
-		"envName":     env.Name,
-		"name":        mresName,
+		"envName": env.Name,
+		"name":    mresName,
 	}, &cookie)
 	if err != nil {
 		return nil, err
@@ -135,14 +123,6 @@ type MresResp struct {
 }
 
 func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
-
-	projectName := fn.GetOption(options, "projectName")
-	projectName, err := EnsureProject(options...)
-
-	if err != nil {
-		return nil, err
-	}
-
 	env, err := EnsureEnv(&client.Env{
 		Name: fn.GetOption(options, "envName"),
 	}, options...)
@@ -165,9 +145,8 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 		return nil, err
 	}
 
-	respData, err := klFetch("cli_getMresKeys", map[string]any{
-		"projectName": projectName,
-		"envName":     env.Name,
+	respData, err := klFetch("cli_getMresOutputKeyValues", map[string]any{
+		"envName": env.Name,
 		"keyrefs": func() []map[string]string {
 			var keyrefs []map[string]string
 			for _, m := range kt.Mres {
@@ -181,6 +160,7 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 			return keyrefs
 		}(),
 	}, &cookie)
+
 	if err != nil {
 		return nil, err
 	}

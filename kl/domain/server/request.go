@@ -1,14 +1,18 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"io"
+	"net"
 	"net/http"
 	"strings"
+	"time"
+
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 
 	"github.com/kloudlite/kl/constants"
 )
@@ -26,7 +30,35 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 
 	payload := strings.NewReader(string(marshal))
 
-	client := &http.Client{}
+	// Define the custom DNS resolver
+	customResolver := &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			// Specify the address of your custom DNS server
+			dnsServer := "1.1.1.1:53"
+			d := net.Dialer{
+				Timeout: time.Millisecond * time.Duration(10000),
+			}
+			return d.DialContext(ctx, "udp", dnsServer)
+		},
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				// Use the custom DNS resolver to resolve the address
+
+				addrArray := strings.Split(addr, ":")
+				host, port := addrArray[0], addrArray[1]
+				ips, err := customResolver.LookupIPAddr(ctx, host)
+				if err != nil || len(ips) == 0 {
+					return nil, err // or: return nil, errors.New("couldn't resolve the host")
+				}
+				// Use the first IP address returned by the custom DNS resolver
+				return net.Dial(network, net.JoinHostPort(ips[0].String(), port))
+			},
+		},
+	}
 	req, err := http.NewRequest(http.MethodPost, url, payload)
 
 	if err != nil {

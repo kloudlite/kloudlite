@@ -1,13 +1,10 @@
 package vpn
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 
 	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
-	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
@@ -45,26 +42,9 @@ Example:
 			fn.PrintError(err)
 			return
 		}
-
-		fn.Log(text.Bold(text.Green("\n[#]Selected Device: ")), text.Red(s), "\n")
-
-		dev, err := server.GetDevice([]fn.Option{
-			fn.MakeOption("deviceName", s),
-		}...)
-		if err != nil {
-			fn.PrintError(err)
-			return
+		if err == nil {
+			fn.Log(text.Bold(text.Green("\n[#]Selected Device: ")), text.Red(s), "\n")
 		}
-
-		if len(dev.Spec.Ports) != 0 {
-			fn.Log(text.Bold(text.Green("\n[#]Exposed Ports: ")))
-			for _, v := range dev.Spec.Ports {
-				fn.Log(text.Blue(fmt.Sprintf("%d:%d\t", v.Port, v.TargetPort)))
-			}
-		} else {
-			fn.Warn(fmt.Sprintf("[#] no ports exposed, you can expose ports using `%s vpn expose` command", flags.CliName))
-		}
-
 	},
 }
 

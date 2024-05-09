@@ -20,7 +20,6 @@ var InfraCmd = &cobra.Command{
 }
 
 func init() {
-	Cmd.AddCommand(projectsCmd)
 	Cmd.AddCommand(configsCmd)
 	Cmd.AddCommand(secretsCmd)
 	Cmd.AddCommand(appsCmd)

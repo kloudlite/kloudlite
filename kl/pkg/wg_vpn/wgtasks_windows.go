@@ -10,21 +10,21 @@ func getCurrentDns(verbose bool) ([]string, error) {
 }
 
 func SetDeviceIp(ip net.IPNet, deviceName string, _ bool) error {
-	return errors.New("This command is not available for windows, will be available soon")
+	return errors.New("this command is not available for windows, will be available soon")
 }
 
 func StartService(_ string, verbose bool) error {
-	return errors.New("This command is not available for windows, will be available soon")
+	return errors.New("this command is not available for windows, will be available soon")
 }
 
 func ipRouteAdd(ip string, interfaceIp string, devName string, verbose bool) error {
-	return errors.New("This command is not available for windows, will be available soon")
+	return errors.New("this command is not available for windows, will be available soon")
 }
 
 func StopService(verbose bool) error {
-	return errors.New("This command is not available for windows, will be available soon")
+	return errors.New("this command is not available for windows, will be available soon")
 }
 
-func setDnsServer(dnsServer net.IP, deviceName string, verbose bool) error {
-	return errors.New("This command is not available for windows, will be available soon")
+func setDnsServers(_ []net.IP, _ string, _ bool) error {
+	return errors.New("this command is not available for windows, will be available soon")
 }

@@ -3,6 +3,7 @@ package wg_vpn
 import (
 	"fmt"
 	"net"
+	"os"
 	"strings"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -11,7 +12,7 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-func getCurrentDns(verbose bool) ([]string, error) {
+func getCurrentDns(_ bool) ([]string, error) {
 	config, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 
 	if err != nil {
@@ -104,8 +105,26 @@ func StopService(verbose bool) error {
 	return nil
 }
 
-func setDnsServer(dnsServer net.IP, deviceName string, verbose bool) error {
-	return ExecCmd(fmt.Sprintf("resolvectl dns %s %s", deviceName, dnsServer.String()), verbose)
+func setDnsServers(dnsServers []net.IP, deviceName string, verbose bool) error {
+	if IsSystemdReslov() {
+		if len(dnsServers) == 0 {
+			fn.Warnf("No DNS server configured for %s", deviceName)
+			return nil
+		}
+
+		return ExecCmd(fmt.Sprintf("resolvectl dns %s %s", deviceName, dnsServers[0].String()), verbose)
+	}
+
+	ips := []string{}
+	for _, v := range dnsServers {
+		ips = append(ips, fmt.Sprintf("nameserver %s", v.To4().String()))
+	}
+
+	if err := os.WriteFile("/etc/resolv.conf", []byte(strings.Join(ips, "\n")), 0644); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func SetDeviceIp(ip net.IPNet, deviceName string, _ bool) error {

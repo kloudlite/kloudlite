@@ -1,7 +1,6 @@
 package server
 
 import (
-	// "encoding/json"
 	"encoding/json"
 
 	"github.com/kloudlite/kl/domain/client"
@@ -51,14 +50,8 @@ func GenerateEnv() (*GeneratedEnvs, error) {
 		return nil, err
 	}
 
-	projectId, err := client.CurrentProjectName()
-	if err != nil {
-		return nil, err
-	}
-
 	respData, err := klFetch("cli_generateEnv", map[string]any{
-		"projectId": projectId,
-		"klConfig":  klFile,
+		"klConfig": klFile,
 	}, &cookie)
 
 	if err != nil {
@@ -100,14 +93,8 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 		return nil, nil, err
 	}
 
-	projectName, err := client.CurrentProjectName()
-	if err != nil {
-		return nil, nil, err
-	}
-
 	respData, err := klFetch("cli_getConfigSecretMap", map[string]any{
-		"projectName": projectName,
-		"envName":     env.Name,
+		"envName": env.Name,
 		"configQueries": func() []any {
 			var queries []any
 			for _, v := range kt.Configs {

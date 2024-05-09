@@ -84,41 +84,49 @@ func (h *handler) StartListener() {
 
 				case ns.ToggleDevice:
 					{
-						cmd := constants.InfraCliName
-						if s, err := client.CurrentClusterName(); err != nil || s == "" {
-							kt, err := client.GetKlFile("")
-							defEnv := ""
-							if err == nil && kt.DefaultEnv != "" {
-								defEnv = kt.DefaultEnv
+						func() {
+
+							err := client.SetLoading(true)
+							if err == nil {
+								defer client.SetLoading(false)
 							}
 
-							if e, err := client.CurrentEnv(); (err != nil || e == nil || e.Name == "") && (defEnv == "") {
-								fn.Println(err)
-								fn.Alert("No Cluster or Environment Selected", "Please select a cluster or environment")
-								continue
+							cmd := constants.InfraCliName
+							if s, err := client.CurrentClusterName(); err != nil || s == "" {
+								kt, err := client.GetKlFile("")
+								defEnv := ""
+								if err == nil && kt.DefaultEnv != "" {
+									defEnv = kt.DefaultEnv
+								}
+
+								if e, err := client.CurrentEnv(); (err != nil || e == nil || e.Name == "") && (defEnv == "") {
+									fn.Println(err)
+									fn.Alert("No Cluster or Environment Selected", "Please select a cluster or environment")
+									return
+								}
+
+								cmd = constants.CoreCliName
 							}
 
-							cmd = constants.CoreCliName
-						}
+							if !IsCmdExists(cmd, true) {
+								return
+							}
 
-						if !IsCmdExists(cmd, true) {
-							continue
-						}
+							if !server.CheckDeviceStatus() {
+								if err := fn.ExecCmd(fmt.Sprintf("%s vpn start -s", cmd), nil, true); err != nil {
+									fn.PrintError(err)
+									fn.Alert("Start VPN failed", err.Error())
+								}
+								fn.Notify("Info", "Kloudlite VPN Connected")
+								return
+							}
 
-						if !server.CheckDeviceStatus() {
-							if err := fn.ExecCmd(fmt.Sprintf("%s vpn start -s", cmd), nil, true); err != nil {
+							if err := fn.ExecCmd(fmt.Sprintf("%s vpn stop", cmd), nil, true); err != nil {
 								fn.PrintError(err)
-								fn.Alert("Start VPN failed", err.Error())
+								fn.Alert("Stop VPN failed", err.Error())
 							}
-							fn.Notify("Info", "Kloudlite VPN Connected")
-							continue
-						}
-
-						if err := fn.ExecCmd(fmt.Sprintf("%s vpn stop", cmd), nil, true); err != nil {
-							fn.PrintError(err)
-							fn.Alert("Stop VPN failed", err.Error())
-						}
-						fn.Notify("Info", "Kloudlite VPN Disconnected")
+							fn.Notify("Info", "Kloudlite VPN Disconnected")
+						}()
 					}
 
 				case ns.Quit:

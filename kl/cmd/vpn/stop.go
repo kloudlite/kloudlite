@@ -12,8 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var disconnectVerbose bool
-
 var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "stop vpn device",
@@ -22,10 +20,12 @@ Example:
   # stop vpn device
   sudo kl vpn stop
 	`,
-	Run: func(_ *cobra.Command, _ []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
+
+		verbose := fn.ParseBoolFlag(cmd, "verbose")
 
 		if runtime.GOOS == constants.RuntimeWindows {
-			if err := disconnect(connectVerbose); err != nil {
+			if err := disconnect(verbose); err != nil {
 				fn.Notify("Error:", err.Error())
 				fn.PrintError(err)
 			}
@@ -53,7 +53,7 @@ Example:
 			return
 		}
 
-		err = disconnect(disconnectVerbose)
+		err = disconnect(verbose)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -74,7 +74,7 @@ Example:
 }
 
 func init() {
-	stopCmd.Flags().BoolVarP(&disconnectVerbose, "verbose", "v", false, "show verbose")
+	stopCmd.Flags().BoolP("verbose", "v", false, "run in debug mode")
 
 	stopCmd.Aliases = append(stopCmd.Aliases, "disconnect")
 }

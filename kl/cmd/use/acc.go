@@ -25,20 +25,6 @@ var accCmd = &cobra.Command{
 			return
 		}
 
-		d, err := server.EnsureDevice([]fn.Option{
-			fn.MakeOption("accountName", acc.Metadata.Name),
-		}...)
-
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		if err := client.WriteDeviceContext(d); err != nil {
-			fn.PrintError(err)
-			return
-		}
-
 		fn.Logf("%s %s", text.Blue(text.Bold("\nSelected Account:")), acc.Metadata.Name)
 	},
 }

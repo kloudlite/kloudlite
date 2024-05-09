@@ -21,7 +21,7 @@ func connect(verbose bool, options ...fn.Option) error {
 		}
 	}()
 
-	if err := startConfiguration(connectVerbose, options...); err != nil {
+	if err := startConfiguration(verbose, options...); err != nil {
 		return err
 	}
 

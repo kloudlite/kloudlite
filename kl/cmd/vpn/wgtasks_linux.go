@@ -2,10 +2,11 @@ package vpn
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/domain/server"
 	"os"
 	"os/exec"
+
+	"github.com/kloudlite/kl/constants"
+	"github.com/kloudlite/kl/domain/server"
 
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -23,15 +24,20 @@ func connect(verbose bool, options ...fn.Option) error {
 	defer func() {
 		if !success {
 			_ = wg_vpn.StopService(verbose)
+
+			if !wg_vpn.IsSystemdReslov() {
+				wg_vpn.ResetDnsServers(ifName, verbose)
+			}
 		}
 
 		client.SetLoading(false)
+
 	}()
 
 	if !skipCheck {
 		switch flags.CliName {
 		case constants.CoreCliName:
-			_, err := server.EnsureProject()
+			_, err := server.EnsureEnv(nil, options...)
 			if err != nil {
 				return err
 			}
@@ -45,9 +51,7 @@ func connect(verbose bool, options ...fn.Option) error {
 
 	// TODO: handle this error later
 	if err := wg_vpn.StartService(ifName, verbose); err != nil {
-		if verbose {
-			fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
-		}
+		fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
 	}
 
 	if err := ensureAppRunning(); err != nil {
@@ -86,6 +90,12 @@ func disconnect(verbose bool) error {
 	data.VpnConnected = false
 	if err := client.SaveExtraData(data); err != nil {
 		return err
+	}
+
+	if !wg_vpn.IsSystemdReslov() {
+		if err := wg_vpn.ResetDnsServers(ifName, verbose); err != nil {
+			return err
+		}
 	}
 
 	return nil

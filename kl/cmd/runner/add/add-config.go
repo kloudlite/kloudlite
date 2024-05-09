@@ -92,9 +92,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 
 		selectedGroup, e := fzf.FindOne(
 			configs,
-			func(item server.Config) string {
-				return item.Metadata.Name
-			},
+			func(item server.Config) string { return item.Metadata.Name },
 			fzf.WithPrompt("Select Config Group >"),
 		)
 		if e != nil {
@@ -144,7 +142,6 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 						Value: v,
 					})
 				}
-
 				return kvs
 			}(),
 			func(val KV) string {
@@ -156,6 +153,20 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+	// var found bool
+	// for i, envVar := range klFile.EnvVars {
+	// 	if envVar.Key == selectedConfigKey.Key {
+	// 		klFile.EnvVars[i].Value = selectedConfigKey.Value
+	// 		found = true
+	// 		break
+	// 	}
+	// }
+	// if !found {
+	// 	klFile.EnvVars = append(klFile.EnvVars, client.EnvType{
+	// 		Key:   selectedConfigKey.Key,
+	// 		Value: selectedConfigKey.Value,
+	// 	})
+	// }
 
 	matchedGroupIndex := -1
 	for i, rt := range klFile.Configs {

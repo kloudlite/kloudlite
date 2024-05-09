@@ -39,7 +39,6 @@ var InfraCmd = &cobra.Command{
 
 func init() {
 	Cmd.Aliases = append(Cmd.Aliases, "dev")
-	Cmd.AddCommand(exposeCmd)
 	Cmd.AddCommand(startCmd)
 	Cmd.AddCommand(startFgCmd)
 	Cmd.AddCommand(restartCmd)
@@ -48,12 +47,10 @@ func init() {
 	Cmd.AddCommand(intercept.Cmd)
 
 	InfraCmd.Aliases = append(InfraCmd.Aliases, "dev")
-	InfraCmd.AddCommand(exposeCmd)
 	InfraCmd.AddCommand(startCmd)
 	InfraCmd.AddCommand(startFgCmd)
 	InfraCmd.AddCommand(restartCmd)
 	InfraCmd.AddCommand(stopCmd)
 	InfraCmd.AddCommand(statusCmd)
-	InfraCmd.AddCommand(activateCmd)
 	// InfraCmd.AddCommand(intercept.Cmd)
 }

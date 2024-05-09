@@ -6,8 +6,6 @@ import (
 	"github.com/getlantern/systray"
 	"github.com/google/uuid"
 	ns "github.com/kloudlite/kl/app/handler/name-conts"
-	"github.com/kloudlite/kl/domain/server"
-	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 func (h *handler) RedrawEnvs(m projectMap) {
@@ -112,41 +110,17 @@ func (h *handler) ReconEnv() {
 		h.AddItem(ns.EnvBtn, envBtn)
 	}
 
-	go func() {
-		projects := projectMap{}
-		ps, err := server.ListProjects()
-		if err != nil {
-			fn.PrintError(err)
-			fn.Notify("error:", err)
-		}
-
-		for _, p := range ps {
-			projects[p.Metadata.Name] = map[string]string{}
-			e, err := server.ListEnvs(fn.MakeOption("projectName", p.Metadata.Name))
-			if err != nil {
-				fn.PrintError(err)
-				fn.Notify("error:", err)
-			}
-
-			for _, env := range e {
-				projects[p.Metadata.Name][env.Metadata.Name] = env.Metadata.Name
-			}
-		}
-
-		h.RedrawEnvs(projects)
-	}()
-
-	go func() {
-		d, err := server.GetDevice()
-		if err != nil {
-			fn.PrintError(err)
-			fn.Notify("error:", err)
-
-			envBtn.SetTitle("...")
-			return
-		}
-
-		envBtn.SetTitle(fmt.Sprintf("%s/%s", d.ProjectName, d.EnvName))
-	}()
+	//go func() {
+	//	d, err := server.GetDevice()
+	//	if err != nil {
+	//		fn.PrintError(err)
+	//		fn.Notify("error:", err)
+	//
+	//		envBtn.SetTitle("...")
+	//		return
+	//	}
+	//
+	//	envBtn.SetTitle(fmt.Sprintf("%s/%s", d.ProjectName, d.EnvName))
+	//}()
 
 }
