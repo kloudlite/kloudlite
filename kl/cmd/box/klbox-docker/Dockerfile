@@ -56,13 +56,22 @@ echo $@ | jq -r | jq -r '.envVars | map_values(. = "export \(.key)=\(.value)") |
 chown -R kl /home/kl/.env-vars
 sudo -u kl bash -c "/home/kl/.nix-profile/bin/nix-shell -p $(cat /home/kl/.nix-shell-args) --run 'echo done' | tee /tmp/exec.log"
 chown -R kl /home/kl/.nix-shell-args
-chown -R kl /home/kl/.ssh
+
+if [ ! -f "/tmp/ssh2" ]; then
+    mkdir -p /home/kl/.ssh
+    chown -R kl /home/kl/.ssh
+    cp /tmp/ssh2/authorized_keys /home/kl/.ssh/authorized_keys
+    chmod 600 /home/kl/.ssh/authorized_keys
+    chown kl /home/kl/.ssh/authorized_keys
+    echo "successfully copied ssh credentials"
+fi 
 
 sudo /mounter --conf /tmp/sample.json
 
+
+echo "starting sshd"
 /usr/sbin/sshd -D
 EOF
 RUN chmod +x /entrypoint.sh
-# Run SSHD on container start
-# ENTRYPOINT ["bash", "/entrypoint.sh"]
+
 ENTRYPOINT ["/entrypoint.sh"]

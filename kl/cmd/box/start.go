@@ -5,11 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
-	"os/user"
+	"path"
+	"runtime"
 	"strings"
 
+	"github.com/adrg/xdg"
 	"github.com/kloudlite/kl/domain/server"
 
 	"github.com/kloudlite/kl/constants"
@@ -75,9 +78,9 @@ func startBox(cmd *cobra.Command, args []string) error {
 		imageName = args[0]
 	}
 
-	if err := fn.ExecCmd(fmt.Sprintf("docker pull %s", imageName), nil, false); err != nil {
-		return err
-	}
+	// if err := fn.ExecCmd(fmt.Sprintf("docker pull %s", imageName), nil, false); err != nil {
+	// 	return err
+	// }
 
 	fn.Log("starting container...")
 
@@ -116,7 +119,10 @@ func startBox(cmd *cobra.Command, args []string) error {
 		}
 		kConf.Mounts = fMounts
 
-		ensureBoxExist(*kConf, foreground, debug)
+		if err := ensureBoxExist(*kConf, foreground, debug); err != nil {
+			return err
+		}
+
 		ensureBoxRunning()
 	}
 
@@ -164,10 +170,9 @@ func getCwdHash() string {
 }
 
 func ensurePublicKey() {
-	currentUser, _ := user.Current()
-	sshPath := fmt.Sprintf("%s/.ssh", currentUser.HomeDir)
-	if _, err := os.Stat(fmt.Sprintf("%s/id_rsa.pub", sshPath)); os.IsNotExist(err) {
-		cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "4096", "-f", fmt.Sprintf("%s/id_rsa", sshPath), "-N", "")
+	sshPath := path.Join(xdg.Home, ".ssh")
+	if _, err := os.Stat(path.Join(sshPath, "id_rsa")); os.IsNotExist(err) {
+		cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "4096", "-f", path.Join(sshPath, "id_rsa"), "-N", "")
 		err := cmd.Run()
 		if err != nil {
 			panic(err)
@@ -189,15 +194,14 @@ func ensureCacheExist() {
 	}
 }
 
-func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) {
-	currentUser, _ := user.Current()
+func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) error {
 	containerName := "kl-box-" + getCwdHash()
 	cwd, _ := os.Getwd()
 	o, err := exec.Command("docker", "inspect", containerName).Output()
-	startContainer := func() {
+	startContainer := func() error {
 		conf, err := json.Marshal(klConfig)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		dockerArgs := []string{"run"}
@@ -205,16 +209,51 @@ func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) {
 			dockerArgs = append(dockerArgs, "-d")
 		}
 
+		sshPath := path.Join(xdg.Home, ".ssh", "id_rsa.pub")
+
+		akByte, err := os.ReadFile(sshPath)
+		if err != nil {
+			return err
+		}
+
+		ak := string(akByte)
+
+		td, err := os.MkdirTemp("", "kl-tmp")
+		if err != nil {
+			fmt.Println("here")
+
+			return err
+		}
+		akTmpPath := path.Join(td, "authorized_keys")
+
+		akByte, err = os.ReadFile(path.Join(xdg.Home, ".ssh", "authorized_keys"))
+		if err == nil {
+			ak += fmt.Sprint("\n", string(akByte))
+		}
+
+		if err := os.WriteFile(akTmpPath, []byte(ak), fs.ModePerm); err != nil {
+			return err
+		}
+
+		switch runtime.GOOS {
+		case constants.RuntimeWindows:
+			fn.Warn("docker support inside container not implemented yet")
+		default:
+			dockerArgs = append(dockerArgs, "-v", "/var/run/docker.sock:/var/run/docker.sock:ro")
+		}
+
+		if runtime.GOOS != constants.RuntimeWindows {
+			dockerArgs = append(dockerArgs, "-v", "/var/run/docker.sock:/var/run/docker.sock:ro")
+		}
+
+		fmt.Println(akTmpPath)
+
 		dockerArgs = append(dockerArgs, "--name", containerName,
-			"-v", fmt.Sprintf("%s/.ssh/id_rsa.pub:/home/kl/.ssh/authorized_keys:z", currentUser.HomeDir),
-			"-v", "/var/run/docker.sock:/var/run/docker.sock:ro",
-			// "-v", "kl-home-cache:/home:rw",
-			// "-v", "nix-store:/nix:rw",
+			"-v", fmt.Sprintf("%s:/tmp/ssh2/authorized_keys:ro", akTmpPath),
 			"-v", "kl-home-cache:/home:rw",
 			"-v", "nix-store:/nix:rw",
 			"--hostname", "box",
-			// "-v", fmt.Sprintf("%s:/home/kl/workspace:rw", cwd),
-			"-v", fmt.Sprintf("%s:/home/kl/workspace:ro", cwd),
+			"-v", fmt.Sprintf("%s:/home/kl/workspace:rw", cwd),
 			"-p", "1729:22",
 			imageName, "--", string(conf),
 		)
@@ -230,13 +269,13 @@ func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) {
 
 		err = command.Run()
 		if err != nil {
-			fn.PrintError(err)
-			fn.PrintError(errors.New("error running kl-box container"))
+			return fmt.Errorf("error running kl-box container [%s]", err.Error())
 		}
+		return nil
 	}
 
 	if err != nil {
-		startContainer()
+		return startContainer()
 	} else {
 		// Get all volume mounts
 		type Container struct {
@@ -249,15 +288,15 @@ func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) {
 		var containers []Container
 		err := json.Unmarshal(o, &containers)
 		if err != nil {
-			fn.PrintError(errors.New("error parsing docker inspect output"))
+			return fmt.Errorf("error parsing docker inspect output [%s]", err.Error())
 		}
 		for _, container := range containers {
 			for _, mount := range container.Mounts {
 				if mount.Destination == "/home/kl/workspace" {
 					if fmt.Sprintf("/host_mnt%s", cwd) != mount.Source {
-						fn.Log("kl-box is running with a different workspace.")
+						fn.Warn("kl-box is running with a different workspace.")
 					} else {
-						return
+						return nil
 					}
 				}
 			}
@@ -267,7 +306,7 @@ func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) {
 		var response string
 		_, _ = fmt.Scanln(&response)
 		if response != "y" {
-			return
+			return nil
 		}
 		fn.Log("Reloading kl-box container...")
 		command := exec.Command(
@@ -284,8 +323,10 @@ func ensureBoxExist(klConfig KLConfigType, foreground, debug bool) {
 		if err != nil {
 			fn.PrintError(errors.New("error removing kl-box container"))
 		}
-		startContainer()
+		return startContainer()
 	}
+
+	return nil
 }
 
 func ensureBoxRunning() {
