@@ -7,15 +7,22 @@ package graph
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
+
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/common/fields"
-	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
+
+// ClusterDNSSuffix is the resolver for the clusterDNSSuffix field.
+func (r *bYOKClusterResolver) ClusterDNSSuffix(ctx context.Context, obj *entities.BYOKCluster) (string, error) {
+	return fmt.Sprintf("%s.local", obj.Name), nil
+}
 
 // AdminKubeconfig is the resolver for the adminKubeconfig field.
 func (r *clusterResolver) AdminKubeconfig(ctx context.Context, obj *entities.Cluster) (*model.EncodedValue, error) {
@@ -36,6 +43,11 @@ func (r *clusterResolver) AdminKubeconfig(ctx context.Context, obj *entities.Clu
 		Value:    base64.StdEncoding.EncodeToString([]byte(*s)),
 		Encoding: "base64",
 	}, nil
+}
+
+// ClusterDNSSuffix is the resolver for the clusterDNSSuffix field.
+func (r *clusterResolver) ClusterDNSSuffix(ctx context.Context, obj *entities.Cluster) (string, error) {
+  return fmt.Sprintf("%s.local", obj.Name), nil
 }
 
 // WireguardConfig is the resolver for the wireguardConfig field.
@@ -475,6 +487,16 @@ func (r *queryResolver) InfraGetBYOKCluster(ctx context.Context, name string) (*
 	}
 
 	return r.Domain.GetBYOKCluster(ictx, name)
+}
+
+// InfratGetBYOKClusterSetupInstructions is the resolver for the infrat_getBYOKClusterSetupInstructions field.
+func (r *queryResolver) InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) (*string, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GetBYOKClusterSetupInstructions(ictx, name)
 }
 
 // InfraListGlobalVPNs is the resolver for the infra_listGlobalVPNs field.
@@ -1080,3 +1102,13 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) InfratGetBYOKSetupInstructions(ctx context.Context, name string) (*string, error) {
+	panic(fmt.Errorf("not implemented: InfratGetBYOKSetupInstructions - infrat_getBYOKSetupInstructions"))
+}

@@ -92,6 +92,8 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, cmsvc entities.Cl
 	cmsvc.AccountName = ctx.AccountName
 	cmsvc.SyncStatus = t.GenSyncStatus(t.SyncActionApply, cmsvc.RecordVersion)
 
+	// cmsvc.Spec.SharedSecret = fn.New(fn.CleanerNanoid(40))
+
 	cmsvc.EnsureGVK()
 
 	if err := d.k8sClient.ValidateObject(ctx, &cmsvc.ClusterManagedService); err != nil {
@@ -127,7 +129,7 @@ func (d *domain) UpdateClusterManagedService(ctx InfraContext, cmsvc entities.Cl
 		&cmsvc,
 		common.PatchOpts{
 			XPatch: repos.Document{
-				fc.ClusterManagedServiceSpecMsvcSpec: cmsvc.Spec,
+				fc.ClusterManagedServiceSpecMsvcSpec: cmsvc.Spec.MSVCSpec,
 			},
 		})
 
@@ -218,12 +220,14 @@ func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterN
 		return errors.NewE(err)
 	}
 
-	ucmsvc, err := d.clusterManagedServiceRepo.PatchById(
-		ctx,
-		xService.Id,
-		common.PatchForSyncFromAgent(&service, recordVersion, status, common.PatchOpts{
-			MessageTimestamp: opts.MessageTimestamp,
-		}))
+	patch := repos.Document{
+		fc.ClusterManagedServiceSpecTargetNamespace: service.Spec.TargetNamespace,
+	}
+
+	ucmsvc, err := d.clusterManagedServiceRepo.PatchById(ctx, xService.Id, common.PatchForSyncFromAgent(&service, recordVersion, status, common.PatchOpts{
+		MessageTimestamp: opts.MessageTimestamp,
+		XPatch:           patch,
+	}))
 	if err != nil {
 		return errors.NewE(err)
 	}

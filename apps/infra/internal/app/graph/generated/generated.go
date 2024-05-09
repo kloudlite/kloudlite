@@ -91,6 +91,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	BYOKCluster struct {
 		AccountName           func(childComplexity int) int
+		ClusterDNSSuffix      func(childComplexity int) int
 		ClusterPublicEndpoint func(childComplexity int) int
 		ClusterSvcCIDR        func(childComplexity int) int
 		ClusterToken          func(childComplexity int) int
@@ -160,6 +161,7 @@ type ComplexityRoot struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
 		AdminKubeconfig   func(childComplexity int) int
+		ClusterDNSSuffix  func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
@@ -1315,37 +1317,38 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		InfraCheckAwsAccess              func(childComplexity int, cloudproviderName string) int
-		InfraCheckNameAvailability       func(childComplexity int, resType domain.ResType, clusterName *string, name string) int
-		InfraGetBYOKCluster              func(childComplexity int, name string) int
-		InfraGetCluster                  func(childComplexity int, name string) int
-		InfraGetClusterManagedService    func(childComplexity int, name string) int
-		InfraGetDomainEntry              func(childComplexity int, domainName string) int
-		InfraGetGlobalVPNDevice          func(childComplexity int, gvpn string, deviceName string) int
-		InfraGetGlobalVpn                func(childComplexity int, name string) int
-		InfraGetHelmRelease              func(childComplexity int, clusterName string, name string) int
-		InfraGetManagedServiceTemplate   func(childComplexity int, category string, name string) int
-		InfraGetNamespace                func(childComplexity int, clusterName string, name string) int
-		InfraGetNodePool                 func(childComplexity int, clusterName string, poolName string) int
-		InfraGetProviderSecret           func(childComplexity int, name string) int
-		InfraGetPv                       func(childComplexity int, clusterName string, name string) int
-		InfraGetPvc                      func(childComplexity int, clusterName string, name string) int
-		InfraGetVolumeAttachment         func(childComplexity int, clusterName string, name string) int
-		InfraListBYOKClusters            func(childComplexity int, search *model.SearchCluster, pagination *repos.CursorPagination) int
-		InfraListClusterManagedServices  func(childComplexity int, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) int
-		InfraListClusters                func(childComplexity int, search *model.SearchCluster, pagination *repos.CursorPagination) int
-		InfraListDomainEntries           func(childComplexity int, search *model.SearchDomainEntry, pagination *repos.CursorPagination) int
-		InfraListGlobalVPNDevices        func(childComplexity int, gvpn string, search *model.SearchGlobalVPNDevices, pagination *repos.CursorPagination) int
-		InfraListGlobalVPNs              func(childComplexity int, search *model.SearchGlobalVPNs, pagination *repos.CursorPagination) int
-		InfraListHelmReleases            func(childComplexity int, clusterName string, search *model.SearchHelmRelease, pagination *repos.CursorPagination) int
-		InfraListManagedServiceTemplates func(childComplexity int) int
-		InfraListNamespaces              func(childComplexity int, clusterName string, search *model.SearchNamespaces, pq *repos.CursorPagination) int
-		InfraListNodePools               func(childComplexity int, clusterName string, search *model.SearchNodepool, pagination *repos.CursorPagination) int
-		InfraListPVCs                    func(childComplexity int, clusterName string, search *model.SearchPersistentVolumeClaims, pq *repos.CursorPagination) int
-		InfraListPVs                     func(childComplexity int, clusterName string, search *model.SearchPersistentVolumes, pq *repos.CursorPagination) int
-		InfraListProviderSecrets         func(childComplexity int, search *model.SearchProviderSecret, pagination *repos.CursorPagination) int
-		InfraListVolumeAttachments       func(childComplexity int, clusterName string, search *model.SearchVolumeAttachments, pq *repos.CursorPagination) int
-		__resolve__service               func(childComplexity int) int
+		InfraCheckAwsAccess                   func(childComplexity int, cloudproviderName string) int
+		InfraCheckNameAvailability            func(childComplexity int, resType domain.ResType, clusterName *string, name string) int
+		InfraGetBYOKCluster                   func(childComplexity int, name string) int
+		InfraGetCluster                       func(childComplexity int, name string) int
+		InfraGetClusterManagedService         func(childComplexity int, name string) int
+		InfraGetDomainEntry                   func(childComplexity int, domainName string) int
+		InfraGetGlobalVPNDevice               func(childComplexity int, gvpn string, deviceName string) int
+		InfraGetGlobalVpn                     func(childComplexity int, name string) int
+		InfraGetHelmRelease                   func(childComplexity int, clusterName string, name string) int
+		InfraGetManagedServiceTemplate        func(childComplexity int, category string, name string) int
+		InfraGetNamespace                     func(childComplexity int, clusterName string, name string) int
+		InfraGetNodePool                      func(childComplexity int, clusterName string, poolName string) int
+		InfraGetProviderSecret                func(childComplexity int, name string) int
+		InfraGetPv                            func(childComplexity int, clusterName string, name string) int
+		InfraGetPvc                           func(childComplexity int, clusterName string, name string) int
+		InfraGetVolumeAttachment              func(childComplexity int, clusterName string, name string) int
+		InfraListBYOKClusters                 func(childComplexity int, search *model.SearchCluster, pagination *repos.CursorPagination) int
+		InfraListClusterManagedServices       func(childComplexity int, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) int
+		InfraListClusters                     func(childComplexity int, search *model.SearchCluster, pagination *repos.CursorPagination) int
+		InfraListDomainEntries                func(childComplexity int, search *model.SearchDomainEntry, pagination *repos.CursorPagination) int
+		InfraListGlobalVPNDevices             func(childComplexity int, gvpn string, search *model.SearchGlobalVPNDevices, pagination *repos.CursorPagination) int
+		InfraListGlobalVPNs                   func(childComplexity int, search *model.SearchGlobalVPNs, pagination *repos.CursorPagination) int
+		InfraListHelmReleases                 func(childComplexity int, clusterName string, search *model.SearchHelmRelease, pagination *repos.CursorPagination) int
+		InfraListManagedServiceTemplates      func(childComplexity int) int
+		InfraListNamespaces                   func(childComplexity int, clusterName string, search *model.SearchNamespaces, pq *repos.CursorPagination) int
+		InfraListNodePools                    func(childComplexity int, clusterName string, search *model.SearchNodepool, pagination *repos.CursorPagination) int
+		InfraListPVCs                         func(childComplexity int, clusterName string, search *model.SearchPersistentVolumeClaims, pq *repos.CursorPagination) int
+		InfraListPVs                          func(childComplexity int, clusterName string, search *model.SearchPersistentVolumes, pq *repos.CursorPagination) int
+		InfraListProviderSecrets              func(childComplexity int, search *model.SearchProviderSecret, pagination *repos.CursorPagination) int
+		InfraListVolumeAttachments            func(childComplexity int, clusterName string, search *model.SearchVolumeAttachments, pq *repos.CursorPagination) int
+		InfratGetBYOKClusterSetupInstructions func(childComplexity int, name string) int
+		__resolve__service                    func(childComplexity int) int
 	}
 
 	VolumeAttachment struct {
@@ -1389,6 +1392,7 @@ type BYOKClusterResolver interface {
 	ID(ctx context.Context, obj *entities.BYOKCluster) (repos.ID, error)
 
 	UpdateTime(ctx context.Context, obj *entities.BYOKCluster) (string, error)
+	ClusterDNSSuffix(ctx context.Context, obj *entities.BYOKCluster) (string, error)
 }
 type CloudProviderSecretResolver interface {
 	Aws(ctx context.Context, obj *entities.CloudProviderSecret) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials, error)
@@ -1410,6 +1414,7 @@ type ClusterResolver interface {
 
 	UpdateTime(ctx context.Context, obj *entities.Cluster) (string, error)
 	AdminKubeconfig(ctx context.Context, obj *entities.Cluster) (*model.EncodedValue, error)
+	ClusterDNSSuffix(ctx context.Context, obj *entities.Cluster) (string, error)
 }
 type ClusterManagedServiceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.ClusterManagedService) (string, error)
@@ -1568,6 +1573,7 @@ type QueryResolver interface {
 	InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error)
 	InfraListBYOKClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.BYOKClusterPaginatedRecords, error)
 	InfraGetBYOKCluster(ctx context.Context, name string) (*entities.BYOKCluster, error)
+	InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) (*string, error)
 	InfraListGlobalVPNs(ctx context.Context, search *model.SearchGlobalVPNs, pagination *repos.CursorPagination) (*model.GlobalVPNPaginatedRecords, error)
 	InfraGetGlobalVpn(ctx context.Context, name string) (*entities.GlobalVPN, error)
 	InfraListGlobalVPNDevices(ctx context.Context, gvpn string, search *model.SearchGlobalVPNDevices, pagination *repos.CursorPagination) (*model.GlobalVPNDevicePaginatedRecords, error)
@@ -1682,6 +1688,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BYOKCluster.AccountName(childComplexity), true
+
+	case "BYOKCluster.clusterDNSSuffix":
+		if e.complexity.BYOKCluster.ClusterDNSSuffix == nil {
+			break
+		}
+
+		return e.complexity.BYOKCluster.ClusterDNSSuffix(childComplexity), true
 
 	case "BYOKCluster.clusterPublicEndpoint":
 		if e.complexity.BYOKCluster.ClusterPublicEndpoint == nil {
@@ -1997,6 +2010,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Cluster.AdminKubeconfig(childComplexity), true
+
+	case "Cluster.clusterDNSSuffix":
+		if e.complexity.Cluster.ClusterDNSSuffix == nil {
+			break
+		}
+
+		return e.complexity.Cluster.ClusterDNSSuffix(childComplexity), true
 
 	case "Cluster.createdBy":
 		if e.complexity.Cluster.CreatedBy == nil {
@@ -4133,7 +4153,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GlobalVPNDevice.PrivateKey(childComplexity), true
 
-	case "GlobalVPNDevice.publiEndpoint":
+	case "GlobalVPNDevice.publicEndpoint":
 		if e.complexity.GlobalVPNDevice.PublicEndpoint == nil {
 			break
 		}
@@ -7622,6 +7642,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraListVolumeAttachments(childComplexity, args["clusterName"].(string), args["search"].(*model.SearchVolumeAttachments), args["pq"].(*repos.CursorPagination)), true
 
+	case "Query.infrat_getBYOKClusterSetupInstructions":
+		if e.complexity.Query.InfratGetBYOKClusterSetupInstructions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infrat_getBYOKClusterSetupInstructions_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfratGetBYOKClusterSetupInstructions(childComplexity, args["name"].(string)), true
+
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
 			break
@@ -8089,6 +8121,7 @@ type Query {
     # byok
     infra_listBYOKClusters(search: SearchCluster, pagination: CursorPaginationIn): BYOKClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getBYOKCluster(name: String!): BYOKCluster @isLoggedInAndVerified @hasAccount
+    infrat_getBYOKClusterSetupInstructions(name: String!): String @isLoggedInAndVerified @hasAccount
 
     # global VPN
     infra_listGlobalVPNs(search: SearchGlobalVPNs, pagination: CursorPaginationIn): GlobalVPNPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -8186,6 +8219,11 @@ type EncodedValue {
 
 extend type Cluster {
   adminKubeconfig: EncodedValue
+  clusterDNSSuffix: String!
+}
+
+extend type BYOKCluster {
+  clusterDNSSuffix: String!
 }
 
 extend type GlobalVPNDevice {
@@ -8223,10 +8261,7 @@ type BYOKClusterPaginatedRecords @shareable {
 }
 
 input BYOKClusterIn {
-  clusterPublicEndpoint: String!
-  clusterToken: String!
   displayName: String!
-  messageQueueTopicName: String!
   metadata: MetadataIn!
 }
 
@@ -9929,8 +9964,8 @@ input GlobalVPNIn {
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
   privateKey: String!
+  publicEndpoint: String
   publicKey: String!
-  publiEndpoint: String
   recordVersion: Int!
   updateTime: Date!
 }
@@ -9947,9 +9982,9 @@ type GlobalVPNDevicePaginatedRecords @shareable {
 }
 
 input GlobalVPNDeviceIn {
+  displayName: String!
   globalVPNName: String!
   metadata: MetadataIn!
-  publiEndpoint: String
 }
 
 `, BuiltIn: false},
@@ -11543,6 +11578,21 @@ func (ec *executionContext) field_Query_infra_listVolumeAttachments_args(ctx con
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_infrat_getBYOKClusterSetupInstructions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -12328,6 +12378,50 @@ func (ec *executionContext) fieldContext_BYOKCluster_updateTime(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _BYOKCluster_clusterDNSSuffix(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKCluster_clusterDNSSuffix(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.BYOKCluster().ClusterDNSSuffix(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKCluster_clusterDNSSuffix(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKCluster",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BYOKClusterEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.BYOKClusterEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BYOKClusterEdge_cursor(ctx, field)
 	if err != nil {
@@ -12443,6 +12537,8 @@ func (ec *executionContext) fieldContext_BYOKClusterEdge_node(ctx context.Contex
 				return ec.fieldContext_BYOKCluster_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_BYOKCluster_updateTime(ctx, field)
+			case "clusterDNSSuffix":
+				return ec.fieldContext_BYOKCluster_clusterDNSSuffix(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BYOKCluster", field.Name)
 		},
@@ -14480,6 +14576,50 @@ func (ec *executionContext) fieldContext_Cluster_adminKubeconfig(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Cluster_clusterDNSSuffix(ctx context.Context, field graphql.CollectedField, obj *entities.Cluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Cluster_clusterDNSSuffix(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Cluster().ClusterDNSSuffix(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Cluster_clusterDNSSuffix(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cluster",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ClusterEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.ClusterEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ClusterEdge_cursor(ctx, field)
 	if err != nil {
@@ -14597,6 +14737,8 @@ func (ec *executionContext) fieldContext_ClusterEdge_node(ctx context.Context, f
 				return ec.fieldContext_Cluster_updateTime(ctx, field)
 			case "adminKubeconfig":
 				return ec.fieldContext_Cluster_adminKubeconfig(ctx, field)
+			case "clusterDNSSuffix":
+				return ec.fieldContext_Cluster_clusterDNSSuffix(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Cluster", field.Name)
 		},
@@ -27684,6 +27826,47 @@ func (ec *executionContext) fieldContext_GlobalVPNDevice_privateKey(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _GlobalVPNDevice_publicEndpoint(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_publicEndpoint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PublicEndpoint, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_publicEndpoint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GlobalVPNDevice_publicKey(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
 	if err != nil {
@@ -27716,47 +27899,6 @@ func (ec *executionContext) _GlobalVPNDevice_publicKey(ctx context.Context, fiel
 }
 
 func (ec *executionContext) fieldContext_GlobalVPNDevice_publicKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GlobalVPNDevice",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GlobalVPNDevice_publiEndpoint(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GlobalVPNDevice_publiEndpoint(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PublicEndpoint, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GlobalVPNDevice_publiEndpoint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GlobalVPNDevice",
 		Field:      field,
@@ -28009,10 +28151,10 @@ func (ec *executionContext) fieldContext_GlobalVPNDeviceEdge_node(ctx context.Co
 				return ec.fieldContext_GlobalVPNDevice_metadata(ctx, field)
 			case "privateKey":
 				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
+			case "publicEndpoint":
+				return ec.fieldContext_GlobalVPNDevice_publicEndpoint(ctx, field)
 			case "publicKey":
 				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
-			case "publiEndpoint":
-				return ec.fieldContext_GlobalVPNDevice_publiEndpoint(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
 			case "updateTime":
@@ -40918,6 +41060,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createCluster(ctx contex
 				return ec.fieldContext_Cluster_updateTime(ctx, field)
 			case "adminKubeconfig":
 				return ec.fieldContext_Cluster_adminKubeconfig(ctx, field)
+			case "clusterDNSSuffix":
+				return ec.fieldContext_Cluster_clusterDNSSuffix(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Cluster", field.Name)
 		},
@@ -41032,6 +41176,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateCluster(ctx contex
 				return ec.fieldContext_Cluster_updateTime(ctx, field)
 			case "adminKubeconfig":
 				return ec.fieldContext_Cluster_adminKubeconfig(ctx, field)
+			case "clusterDNSSuffix":
+				return ec.fieldContext_Cluster_clusterDNSSuffix(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Cluster", field.Name)
 		},
@@ -41520,10 +41666,10 @@ func (ec *executionContext) fieldContext_Mutation_infra_createGlobalVPNDevice(ct
 				return ec.fieldContext_GlobalVPNDevice_metadata(ctx, field)
 			case "privateKey":
 				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
+			case "publicEndpoint":
+				return ec.fieldContext_GlobalVPNDevice_publicEndpoint(ctx, field)
 			case "publicKey":
 				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
-			case "publiEndpoint":
-				return ec.fieldContext_GlobalVPNDevice_publiEndpoint(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
 			case "updateTime":
@@ -41632,10 +41778,10 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateGlobalVPNDevice(ct
 				return ec.fieldContext_GlobalVPNDevice_metadata(ctx, field)
 			case "privateKey":
 				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
+			case "publicEndpoint":
+				return ec.fieldContext_GlobalVPNDevice_publicEndpoint(ctx, field)
 			case "publicKey":
 				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
-			case "publiEndpoint":
-				return ec.fieldContext_GlobalVPNDevice_publiEndpoint(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
 			case "updateTime":
@@ -41835,6 +41981,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createBYOKCluster(ctx co
 				return ec.fieldContext_BYOKCluster_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_BYOKCluster_updateTime(ctx, field)
+			case "clusterDNSSuffix":
+				return ec.fieldContext_BYOKCluster_clusterDNSSuffix(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BYOKCluster", field.Name)
 		},
@@ -41947,6 +42095,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateBYOKCluster(ctx co
 				return ec.fieldContext_BYOKCluster_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_BYOKCluster_updateTime(ctx, field)
+			case "clusterDNSSuffix":
+				return ec.fieldContext_BYOKCluster_clusterDNSSuffix(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BYOKCluster", field.Name)
 		},
@@ -49162,6 +49312,8 @@ func (ec *executionContext) fieldContext_Query_infra_getCluster(ctx context.Cont
 				return ec.fieldContext_Cluster_updateTime(ctx, field)
 			case "adminKubeconfig":
 				return ec.fieldContext_Cluster_adminKubeconfig(ctx, field)
+			case "clusterDNSSuffix":
+				return ec.fieldContext_Cluster_clusterDNSSuffix(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Cluster", field.Name)
 		},
@@ -49360,6 +49512,8 @@ func (ec *executionContext) fieldContext_Query_infra_getBYOKCluster(ctx context.
 				return ec.fieldContext_BYOKCluster_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_BYOKCluster_updateTime(ctx, field)
+			case "clusterDNSSuffix":
+				return ec.fieldContext_BYOKCluster_clusterDNSSuffix(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BYOKCluster", field.Name)
 		},
@@ -49372,6 +49526,84 @@ func (ec *executionContext) fieldContext_Query_infra_getBYOKCluster(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getBYOKCluster_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infrat_getBYOKClusterSetupInstructions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infrat_getBYOKClusterSetupInstructions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfratGetBYOKClusterSetupInstructions(rctx, fc.Args["name"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infrat_getBYOKClusterSetupInstructions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infrat_getBYOKClusterSetupInstructions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -49746,10 +49978,10 @@ func (ec *executionContext) fieldContext_Query_infra_getGlobalVPNDevice(ctx cont
 				return ec.fieldContext_GlobalVPNDevice_metadata(ctx, field)
 			case "privateKey":
 				return ec.fieldContext_GlobalVPNDevice_privateKey(ctx, field)
+			case "publicEndpoint":
+				return ec.fieldContext_GlobalVPNDevice_publicEndpoint(ctx, field)
 			case "publicKey":
 				return ec.fieldContext_GlobalVPNDevice_publicKey(ctx, field)
-			case "publiEndpoint":
-				return ec.fieldContext_GlobalVPNDevice_publiEndpoint(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_GlobalVPNDevice_recordVersion(ctx, field)
 			case "updateTime":
@@ -54771,31 +55003,13 @@ func (ec *executionContext) unmarshalInputBYOKClusterIn(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"clusterPublicEndpoint", "clusterToken", "displayName", "messageQueueTopicName", "metadata"}
+	fieldsInOrder := [...]string{"displayName", "metadata"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "clusterPublicEndpoint":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterPublicEndpoint"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClusterPublicEndpoint = data
-		case "clusterToken":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterToken"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClusterToken = data
 		case "displayName":
 			var err error
 
@@ -54805,15 +55019,6 @@ func (ec *executionContext) unmarshalInputBYOKClusterIn(ctx context.Context, obj
 				return it, err
 			}
 			it.DisplayName = data
-		case "messageQueueTopicName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("messageQueueTopicName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.MessageQueueTopicName = data
 		case "metadata":
 			var err error
 
@@ -56325,13 +56530,22 @@ func (ec *executionContext) unmarshalInputGlobalVPNDeviceIn(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"globalVPNName", "metadata", "publiEndpoint"}
+	fieldsInOrder := [...]string{"displayName", "globalVPNName", "metadata"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "displayName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DisplayName = data
 		case "globalVPNName":
 			var err error
 
@@ -56352,15 +56566,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNDeviceIn(ctx context.Context,
 			if err = ec.resolvers.GlobalVPNDeviceIn().Metadata(ctx, &it, data); err != nil {
 				return it, err
 			}
-		case "publiEndpoint":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("publiEndpoint"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PublicEndpoint = data
 		}
 	}
 
@@ -60882,6 +61087,42 @@ func (ec *executionContext) _BYOKCluster(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "clusterDNSSuffix":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BYOKCluster_clusterDNSSuffix(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -61662,6 +61903,42 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 					}
 				}()
 				res = ec._Cluster_adminKubeconfig(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "clusterDNSSuffix":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Cluster_clusterDNSSuffix(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -65498,13 +65775,13 @@ func (ec *executionContext) _GlobalVPNDevice(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "publicEndpoint":
+			out.Values[i] = ec._GlobalVPNDevice_publicEndpoint(ctx, field, obj)
 		case "publicKey":
 			out.Values[i] = ec._GlobalVPNDevice_publicKey(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "publiEndpoint":
-			out.Values[i] = ec._GlobalVPNDevice_publiEndpoint(ctx, field, obj)
 		case "recordVersion":
 			out.Values[i] = ec._GlobalVPNDevice_recordVersion(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -70950,6 +71227,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_infra_getBYOKCluster(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "infrat_getBYOKClusterSetupInstructions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infrat_getBYOKClusterSetupInstructions(ctx, field)
 				return res
 			}
 
