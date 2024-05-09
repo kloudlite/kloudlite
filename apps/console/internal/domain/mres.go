@@ -242,7 +242,7 @@ func (d *domain) DeleteManagedResource(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeManagedResource, umres.Name, PublishUpdate)
-	if err := d.deleteK8sResource(ctx, "", &umres.ManagedResource); err != nil {
+	if err := d.deleteK8sResource(ctx, ctx.EnvironmentName, &umres.ManagedResource); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.mresRepo.DeleteById(ctx, umres.Id)
 		}
