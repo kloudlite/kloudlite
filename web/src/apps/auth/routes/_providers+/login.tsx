@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/tabindex-no-positive */
 import {
-  ArrowRight,
   Envelope,
   EnvelopeFill,
   GithubLogoFill,
@@ -18,6 +17,7 @@ import { toast } from '~/components/molecule/toast';
 import { Button } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
+import { ArrowRight } from '~/components/icons';
 import Container from '../../components/container';
 import { IProviderContext } from './_layout';
 

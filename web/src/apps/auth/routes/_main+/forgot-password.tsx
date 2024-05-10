@@ -1,6 +1,5 @@
 import { BrandLogo } from '~/components/branding/brand-logo.jsx';
 import { Button } from '~/components/atoms/button';
-import { ArrowRight } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
 import { GoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Link } from '@remix-run/react';
@@ -10,6 +9,7 @@ import { toast } from '~/components/molecule/toast';
 import { cn } from '~/components/utils';
 import { handleError } from '~/root/lib/utils/common';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
+import { ArrowRight } from '~/components/icons';
 import Container from '../../components/container';
 
 const ForgetPassword = () => {

@@ -42,7 +42,7 @@ const ExtraButton = ({ deviceBlueprint }: { deviceBlueprint: BaseType }) => {
           icon: <GearSix size={16} />,
           type: 'item',
 
-          to: `/${account}/${deviceBlueprint.projectName}/deviceblueprint/${deviceBlueprint.name}/settings`,
+          to: `/${account}/deviceblueprint/${deviceBlueprint.name}/settings`,
           key: 'settings',
         },
       ]}
@@ -51,7 +51,7 @@ const ExtraButton = ({ deviceBlueprint }: { deviceBlueprint: BaseType }) => {
 };
 
 const GridView = ({ items = [] }: { items: BaseType[] }) => {
-  const { account, project } = useParams();
+  const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
@@ -60,7 +60,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${project}/deviceblueprint/${id}`}
+            to={`/${account}/deviceblueprint/${id}`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -93,7 +93,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
 };
 
 const ListView = ({ items }: { items: BaseType[] }) => {
-  const { account, project } = useParams();
+  const { account } = useParams();
 
   return (
     <ListV2.Root
@@ -146,7 +146,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                 render: () => <ExtraButton deviceBlueprint={i} />,
               },
             },
-            to: `/${account}/${project}/deviceblueprint/${id}`,
+            to: `/${account}/deviceblueprint/${id}`,
           };
         }),
       }}

@@ -11,6 +11,7 @@ export const handleError = (
   const err = e as Error;
 
   if (typeof window === 'undefined') {
+    logger.error(e);
     return {
       error: {
         message: err.message,

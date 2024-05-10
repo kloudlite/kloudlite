@@ -69,7 +69,8 @@ const state = ({
   const textData = () => {
     switch (state) {
       case 'in-progress':
-        return 'In progress';
+        // return 'In progress';
+        return 'Syncing...';
       case 'error':
         return 'Error';
       case 'ready':

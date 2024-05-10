@@ -2,8 +2,8 @@ export {
   Warning,
   WarningCircleFill,
   Domain,
-  ArrowLeftFill as ArrowLeft,
-  ArrowRightFill as ArrowRight,
+  ArrowLeftLgFill as ArrowLeft,
+  ArrowRightLgFill as ArrowRight,
   ArrowFatUp as ArrowUp,
   ArrowFatDown as ArrowDown,
   ArrowsDownUp,
@@ -99,4 +99,5 @@ export {
   EyeSlash,
   CheckCircle,
   CalendarCheckFill,
+  PlugsConnected,
 } from '@jengaicons/react';

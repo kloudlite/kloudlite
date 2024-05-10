@@ -15,7 +15,7 @@ import { IAppContext } from '../../_layout';
 
 const SettingAdvance = () => {
   const { app } = useAppState();
-  const { deviceblueprint, project } = useOutletContext<IAppContext>();
+  const { deviceblueprint } = useOutletContext<IAppContext>();
   const [deleteApp, setDeleteApp] = useState(false);
   const reload = useReload();
   const api = useIotConsoleApi();

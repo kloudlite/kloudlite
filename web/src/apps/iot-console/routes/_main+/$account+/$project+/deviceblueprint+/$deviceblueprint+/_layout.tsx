@@ -46,7 +46,7 @@ const tabs = [
 ];
 
 const LocalBreadcrum = ({ data }: { data: IDeviceBlueprint }) => {
-  const { displayName, projectName, accountName, name } = data;
+  const { displayName, accountName, name } = data;
   return (
     <div className="flex flex-row items-center">
       <BreadcrumSlash />
@@ -59,11 +59,11 @@ const LocalBreadcrum = ({ data }: { data: IDeviceBlueprint }) => {
 };
 
 const Tabs = () => {
-  const { account, project, deviceblueprint } = useParams();
+  const { account, deviceblueprint } = useParams();
 
   return (
     <CommonTabs
-      baseurl={`/${account}/${project}/deviceblueprint/${deviceblueprint}`}
+      baseurl={`/${account}/deviceblueprint/${deviceblueprint}`}
       tabs={tabs}
     />
   );
@@ -71,7 +71,7 @@ const Tabs = () => {
   // return (
   //   <CommonTabs
   //     backButton={{
-  //       to: `/${account}/${project}/deviceblueprints`,
+  //       to: `/${account}/deviceblueprints`,
   //       label: 'Back to Device Blueprint',
   //     }}
   //   />
@@ -86,13 +86,12 @@ export const handle = ({ deviceblueprint }: { deviceblueprint: any }) => {
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
-  const { project, deviceblueprint, account } = ctx.params;
+  const { deviceblueprint, account } = ctx.params;
 
   try {
     const { data, errors } = await GQLServerHandler(
       ctx.request
     ).getIotDeviceBlueprint({
-      projectName: project,
       name: deviceblueprint,
     });
     if (errors) {
@@ -105,7 +104,7 @@ export const loader = async (ctx: IRemixCtx) => {
     };
   } catch (e) {
     logger.error(e);
-    return redirect(`/${account}/projects`);
+    return redirect(`/${account}/environments`);
   }
 };
 

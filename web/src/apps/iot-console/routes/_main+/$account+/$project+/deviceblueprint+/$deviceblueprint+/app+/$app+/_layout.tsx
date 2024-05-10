@@ -22,12 +22,12 @@ import { IApp } from '~/iotconsole/server/gql/queries/iot-app-queries';
 import { IDeviceBlueprintContext } from '../../_layout';
 
 const LocalTabs = () => {
-  const { account, project, deviceblueprint, app } = useParams();
+  const { account,  deviceblueprint, app } = useParams();
   return (
     <CommonTabs
-      baseurl={`/${account}/${project}/deviceblueprint/${deviceblueprint}/app/${app}`}
+      baseurl={`/${account}/deviceblueprint/${deviceblueprint}/app/${app}`}
       backButton={{
-        to: `/${account}/${project}/deviceblueprint/${deviceblueprint}/apps`,
+        to: `/${account}/deviceblueprint/${deviceblueprint}/apps`,
         label: 'Apps',
       }}
       tabs={[
@@ -81,12 +81,12 @@ const AppOutlet = ({ app: oApp }: { app: IApp }) => {
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { app, deviceblueprint, project } = ctx.params;
+    const { app, deviceblueprint } = ctx.params;
     try {
       const { data, errors } = await GQLServerHandler(ctx.request).getIotApp({
         deviceBlueprintName: deviceblueprint,
         name: app,
-        projectName: project,
+        
       });
       if (errors) {
         throw errors[0];

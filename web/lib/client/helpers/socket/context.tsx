@@ -214,6 +214,7 @@ export const SockProvider = ({ children }: ChildrenProps) => {
           setInfo(m);
           break;
         case 'error':
+          logger.error('error from socket:', m);
           setError(m);
           break;
         default:
@@ -221,6 +222,7 @@ export const SockProvider = ({ children }: ChildrenProps) => {
       }
     } catch (err) {
       console.error(err);
+      console.log('error parsing:', msg.data);
     }
   }, []);
 

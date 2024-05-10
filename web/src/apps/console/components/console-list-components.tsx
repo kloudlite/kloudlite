@@ -1,4 +1,4 @@
-import { ReactNode, forwardRef } from 'react';
+import { ReactNode } from 'react';
 import Tooltip from '~/components/atoms/tooltip';
 import { cn } from '~/components/utils';
 
@@ -65,29 +65,16 @@ const ListItem = ({
   subtitle,
   className = '',
   action,
+  noTooltip = false,
 }: {
   data?: ReactNode;
   subtitle?: ReactNode;
+  noTooltip?: boolean;
 } & IBase) => {
   return (
     <div className={cn(BaseStyle, className)}>
       <div className="flex flex-col flex-1 truncate">
-        <Tooltip.Root
-          className="!w-fit !max-w-[500px]"
-          side="top"
-          content={
-            <div className="flex flex-col flex-1">
-              {data && (
-                <div className="flex-1 bodyMd-medium text-text-strong pulsable">
-                  {data}
-                </div>
-              )}
-              {subtitle && (
-                <div className="pulsable bodyMd text-text-soft">{subtitle}</div>
-              )}
-            </div>
-          }
-        >
+        {noTooltip ? (
           <div className="flex flex-col gap-sm truncate max-w-full w-fit">
             {data && (
               <div className="flex-1 bodyMd-medium text-text-strong truncate pulsable">
@@ -100,7 +87,39 @@ const ListItem = ({
               </div>
             )}
           </div>
-        </Tooltip.Root>
+        ) : (
+          <Tooltip.Root
+            className="!w-fit !max-w-[500px]"
+            side="top"
+            content={
+              <div className="flex flex-col flex-1">
+                {data && (
+                  <div className="flex-1 bodyMd-medium text-text-strong pulsable">
+                    {data}
+                  </div>
+                )}
+                {subtitle && (
+                  <div className="pulsable bodyMd text-text-soft">
+                    {subtitle}
+                  </div>
+                )}
+              </div>
+            }
+          >
+            <div className="flex flex-col gap-sm truncate max-w-full w-fit">
+              {data && (
+                <div className="flex-1 bodyMd-medium text-text-strong truncate pulsable">
+                  {data}
+                </div>
+              )}
+              {subtitle && (
+                <div className="pulsable bodyMd text-text-soft truncate">
+                  {subtitle}
+                </div>
+              )}
+            </div>
+          </Tooltip.Root>
+        )}
       </div>
       {action}
     </div>

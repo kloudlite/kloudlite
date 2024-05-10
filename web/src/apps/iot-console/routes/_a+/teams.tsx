@@ -150,7 +150,7 @@ const Accounts = () => {
       inviteToken,
       api: api.acceptInvitation,
       success: () => {
-        navigate(`/${accountName}/projects`);
+        navigate(`/${accountName}/environments`);
       },
     });
   };
@@ -214,7 +214,7 @@ const Accounts = () => {
                 const { isInvite, displayName, inviteToken } = account;
                 return (
                   <List.Row
-                    {...(isInvite ? {} : { to: `/${name}/projects` })}
+                    {...(isInvite ? {} : { to: `/${name}/environments` })}
                     key={name}
                     plain
                     className={cn(

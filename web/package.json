@@ -20,13 +20,13 @@
 		"typecheck:withtsgen": "pnpm tsgen && pnpm typecheck",
 		"gql:parse": "esbuild gql-queries-generator/index.ts --bundle --format=cjs --outfile=public/dist/gql-generator.cjs --platform=node && node public/dist/gql-generator.cjs",
 		"tsgen": "pnpm gql:parse && cd src/generated && pnpm tsgen",
-		"tsc":"tsc /Users/piyush/workspace/kloudlite/web/src/apps/iot-console/utils/commons.tsx"
+		"tsc": "tsc /Users/piyush/workspace/kloudlite/web/src/apps/iot-console/utils/commons.tsx"
 	},
 	"dependencies": {
 		"@codemirror/lang-javascript": "^6.2.2",
 		"@codemirror/language": "^6.10.0",
 		"@codemirror/legacy-modes": "^6.3.3",
-		"@jengaicons/react": "^1.4.0",
+		"@jengaicons/react": "^1.5.0",
 		"@mdx-js/react": "^2.3.0",
 		"@oshq/react-select": "^1.4.2",
 		"@radix-ui/primitive": "^1.0.1",

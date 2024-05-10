@@ -25,12 +25,10 @@ import {
 import { useReload } from '~/lib/client/helpers/reloader';
 import { handleError } from '~/lib/utils/common';
 import { IConsoleDevices } from '~/console/server/gql/queries/console-vpn-queries';
-import HandleConsoleDevices, {
-  ShowWireguardConfig,
-} from '~/console/page-components/handle-console-devices';
 import ListV2 from '~/console/components/listV2';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import { SyncStatusV2 } from '~/console/components/sync-status';
+import HandleConsoleDevices from '~/console/page-components/handle-console-devices';
 
 const RESOURCE_NAME = 'device';
 type BaseType = ExtractNodeType<IConsoleDevices>;
@@ -165,11 +163,6 @@ const ListView = ({ items, onAction }: IResource) => {
             className: 'flex-1 min-w-[30px] flex items-center justify-center',
           },
           {
-            render: () => 'Project',
-            name: 'project',
-            className: 'w-[180px]',
-          },
-          {
             render: () => 'Updated',
             name: 'updated',
             className: 'w-[180px]',
@@ -196,7 +189,6 @@ const ListView = ({ items, onAction }: IResource) => {
               status: {
                 render: () => <SyncStatusV2 item={i} />,
               },
-              project: { render: () => <ListItem data={i.projectName} /> },
               updated: {
                 render: () => (
                   <ListItem
@@ -280,14 +272,14 @@ const ConsoleDeviceResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
           }
         }}
       />
-      <ShowWireguardConfig
-        {...{
-          visible: !!showWireguardConfig,
-          setVisible: () => setShowWireguardConfig(null),
-          data: showWireguardConfig!,
-          mode: showWireguardConfig?.mode || 'config',
-        }}
-      />
+      {/* <ShowWireguardConfig */}
+      {/*   {...{ */}
+      {/*     visible: !!showWireguardConfig, */}
+      {/*     setVisible: () => setShowWireguardConfig(null), */}
+      {/*     data: showWireguardConfig!, */}
+      {/*     mode: showWireguardConfig?.mode || 'config', */}
+      {/*   }} */}
+      {/* /> */}
       <HandleConsoleDevices
         {...{
           isUpdate: true,

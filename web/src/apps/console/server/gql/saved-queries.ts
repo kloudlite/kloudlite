@@ -13,7 +13,7 @@ import { domainQueries } from './queries/domain-queries';
 import { environmentQueries } from './queries/environment-queries';
 import { gitQueries } from './queries/git-queries';
 import { nodepoolQueries } from './queries/nodepool-queries';
-import { projectQueries } from './queries/project-queries';
+import { byokClusterQueries } from './queries/byok-cluster-queries';
 import { providerSecretQueries } from './queries/provider-secret-queries';
 import { repoQueries } from './queries/repo-queries';
 import { routerQueries } from './queries/router-queries';
@@ -22,20 +22,19 @@ import { tagsQueries } from './queries/tags-queries';
 import { pvcQueries } from './queries/pvc-queries';
 import { pvQueries } from './queries/pv-queries';
 import { clusterManagedServicesQueries } from './queries/cluster-managed-services-queries';
-import { projectManagedServicesQueries } from './queries/project-managed-services-queries';
 import { managedResourceQueries } from './queries/managed-resources-queries';
 import { managedTemplateQueries } from './queries/managed-templates-queries';
 import { helmChartQueries } from './queries/helm-chart-queries';
 import { namespaceQueries } from './queries/namespace-queries';
 import { consoleVpnQueries } from './queries/console-vpn-queries';
 import { imagePullSecretsQueries } from './queries/image-pull-secrets-queries';
+import { globalVpnQueries } from './queries/global-vpn-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
   return {
     ...baseQueries(executor),
     ...accountQueries(executor),
-    ...projectQueries(executor),
     ...clusterQueries(executor),
     ...providerSecretQueries(executor),
     ...nodepoolQueries(executor),
@@ -55,13 +54,14 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...pvQueries(executor),
     ...buildRunQueries(executor),
     ...clusterManagedServicesQueries(executor),
-    ...projectManagedServicesQueries(executor),
+    ...byokClusterQueries(executor),
     ...managedTemplateQueries(executor),
     ...managedResourceQueries(executor),
     ...helmChartQueries(executor),
     ...namespaceQueries(executor),
     ...consoleVpnQueries(executor),
     ...imagePullSecretsQueries(executor),
+    ...globalVpnQueries(executor),
   };
 };
 

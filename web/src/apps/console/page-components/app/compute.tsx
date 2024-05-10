@@ -12,10 +12,9 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useMapper } from '~/components/utils';
 import { BottomNavigation } from '~/console/components/commons';
 import { useOutletContext } from '@remix-run/react';
-import { Checkbox } from '~/components/atoms/checkbox';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
+import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$environment+/_layout';
 import { plans } from './datas';
 import appInitialFormValues, { mapFormValuesToApp } from './app-utils';
 
@@ -44,7 +43,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
   const { app, setApp, setPage, markPageAsCompleted, getContainer } =
     useAppState();
   const api = useConsoleApi();
-  const { cluster } = useOutletContext<IProjectContext>();
+  const { cluster } = useOutletContext<IEnvironmentContext>();
   const [advancedOptions, setAdvancedOptions] = useState(false);
 
   const {
@@ -277,17 +276,6 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               }
               loading={nodepoolLoading}
               showclear
-            />
-          )}
-
-          {advancedOptions && (
-            <Checkbox
-              label="Always pull image on restart"
-              checked={values.imagePullPolicy === 'Always'}
-              onChange={(val) => {
-                const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
-                handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
-              }}
             />
           )}
         </div>

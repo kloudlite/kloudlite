@@ -41,9 +41,9 @@ export const iotDeviceQueries = (executor: IExecutor) => ({
   createIotDevice: executor(
     gql`
       mutation Iot_createDevice(
-        $projectName: String!
         $deploymentName: String!
         $device: IOTDeviceIn!
+        $projectName: String!
       ) {
         iot_createDevice(
           projectName: $projectName
@@ -63,9 +63,9 @@ export const iotDeviceQueries = (executor: IExecutor) => ({
   updateIotDevice: executor(
     gql`
       mutation Iot_updateDevice(
-        $projectName: String!
         $deploymentName: String!
         $device: IOTDeviceIn!
+        $projectName: String!
       ) {
         iot_updateDevice(
           projectName: $projectName
@@ -113,7 +113,6 @@ export const iotDeviceQueries = (executor: IExecutor) => ({
           markedForDeletion
           name
           podCIDR
-          projectName
           publicKey
           recordVersion
           serviceCIDR
@@ -130,10 +129,10 @@ export const iotDeviceQueries = (executor: IExecutor) => ({
   listIotDevices: executor(
     gql`
       query Iot_listDevices(
-        $projectName: String!
         $deploymentName: String!
         $search: SearchIOTDevices
         $pq: CursorPaginationIn
+        $projectName: String!
       ) {
         iot_listDevices(
           projectName: $projectName
@@ -163,7 +162,6 @@ export const iotDeviceQueries = (executor: IExecutor) => ({
               markedForDeletion
               name
               podCIDR
-              projectName
               publicKey
               recordVersion
               serviceCIDR

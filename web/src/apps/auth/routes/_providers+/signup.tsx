@@ -2,7 +2,6 @@ import classNames from 'classnames';
 import { BrandLogo } from '~/components/branding/brand-logo.jsx';
 import { Button } from '~/components/atoms/button.jsx';
 import {
-  ArrowLeft,
   Envelope,
   EnvelopeFill,
   GithubLogoFill,
@@ -21,6 +20,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
+import { ArrowLeft } from '~/components/icons';
 import Container from '../../components/container';
 import { IProviderContext } from './_layout';
 

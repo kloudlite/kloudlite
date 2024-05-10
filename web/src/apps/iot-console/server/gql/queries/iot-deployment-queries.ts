@@ -97,11 +97,10 @@ export const iotDeploymentQueries = (executor: IExecutor) => ({
             userId
             userName
           }
-          exposedDomains
-          exposedIps
+          # exposedDomains
+          # exposedIps
           markedForDeletion
           name
-          projectName
           recordVersion
           updateTime
         }
@@ -116,9 +115,9 @@ export const iotDeploymentQueries = (executor: IExecutor) => ({
   listIotDeployments: executor(
     gql`
       query Iot_listDeployments(
-        $projectName: String!
         $search: SearchIOTDeployments
         $pq: CursorPaginationIn
+        $projectName: String!
       ) {
         iot_listDeployments(
           projectName: $projectName
@@ -147,11 +146,10 @@ export const iotDeploymentQueries = (executor: IExecutor) => ({
                 userId
                 userName
               }
-              exposedDomains
-              exposedIps
+              # exposedDomains
+              # exposedIps
               markedForDeletion
               name
-              projectName
               recordVersion
               updateTime
             }

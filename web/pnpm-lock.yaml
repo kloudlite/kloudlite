@@ -15,8 +15,8 @@ dependencies:
     specifier: ^6.3.3
     version: 6.3.3
   '@jengaicons/react':
-    specifier: ^1.4.0
-    version: 1.4.0(react@18.2.0)
+    specifier: ^1.5.0
+    version: 1.5.0(react@18.2.0)
   '@mdx-js/react':
     specifier: ^2.3.0
     version: 2.3.0(react@18.2.0)
@@ -2563,8 +2563,8 @@ packages:
       wrap-ansi-cjs: /wrap-ansi@7.0.0
     dev: true
 
-  /@jengaicons/react@1.4.0(react@18.2.0):
-    resolution: {integrity: sha512-qs2/xgJ2/yIgCNFpooefTY/GtQQFzNSDfkGmZ7cRUXCNP+LH9bsCFgUYL7hL/LcKepTIMhLKP2b05HC5g7B//g==}
+  /@jengaicons/react@1.5.0(react@18.2.0):
+    resolution: {integrity: sha512-6bh9cXDCCp4Pe25hlK1MVkMXTD0CvC8NA8NyFzkYT/5gB5A+Fj7eSZTfFmuFbPzV6d0qsSDhxXR3D79L28TWJw==}
     peerDependencies:
       react: '>=16'
     dependencies:

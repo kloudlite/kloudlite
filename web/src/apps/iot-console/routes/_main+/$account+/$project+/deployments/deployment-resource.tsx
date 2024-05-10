@@ -52,7 +52,7 @@ const ExtraButton = ({ deployment }: { deployment: BaseType }) => {
 };
 
 const GridView = ({ items = [] }: { items: BaseType[] }) => {
-  const { account, project } = useParams();
+  const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
@@ -61,7 +61,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${project}/${id}/deployment/${id}`}
+            to={`/${account}/${id}/deployment/${id}`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -92,7 +92,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
 };
 
 const ListView = ({ items }: { items: BaseType[] }) => {
-  const { account, project } = useParams();
+  const { account } = useParams();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -145,7 +145,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                 render: () => <ExtraButton deployment={i} />,
               },
             },
-            to: `/${account}/${project}/deployment/${id}`,
+            to: `/${account}/deployment/${id}`,
           };
         }),
       }}

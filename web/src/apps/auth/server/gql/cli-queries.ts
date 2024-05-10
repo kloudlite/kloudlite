@@ -6,6 +6,124 @@ import { vpnQueries } from './queries/device-queries';
 export const cliQueries = (executor: IExecutor) => ({
   ...vpnQueries(executor),
 
+  cli_createGlobalVPNDevice: executor(
+    gql`
+      mutation Infra_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
+        infra_createGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
+          accountName
+          creationTime
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          displayName
+          globalVPNName
+          id
+          ipAddr
+          lastUpdatedBy {
+            userName
+            userId
+            userEmail
+          }
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          privateKey
+          publicKey
+          recordVersion
+          updateTime
+          wireguardConfig {
+            value
+            encoding
+          }
+        }
+      }
+    `,
+    {
+      transformer(data: any) {
+        return data.infra_createGlobalVPNDevice;
+      },
+      vars(_: any) {},
+    }
+  ),
+
+  cli_getMresOutputKeyValues: executor(
+    gql`
+      query Core_getManagedResouceOutputKeyValues(
+        $envName: String!
+        $keyrefs: [ManagedResourceKeyRefIn]
+      ) {
+        core_getManagedResouceOutputKeyValues(
+          envName: $envName
+          keyrefs: $keyrefs
+        ) {
+          key
+          mresName
+          value
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_getManagedResouceOutputKeyValues,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_getGlobalVpnDevice: executor(
+    gql`
+      query Infra_getGlobalVPNDevice($gvpn: String!, $deviceName: String!) {
+        infra_getGlobalVPNDevice(gvpn: $gvpn, deviceName: $deviceName) {
+          accountName
+          creationTime
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          displayName
+          globalVPNName
+          id
+          ipAddr
+          lastUpdatedBy {
+            userName
+            userId
+            userEmail
+          }
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          privateKey
+          publicKey
+          recordVersion
+          updateTime
+          wireguardConfig {
+            value
+            encoding
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_getGlobalVPNDevice,
+      vars: (_: any) => {},
+    }
+  ),
+
   cli_coreCheckNameAvailability: executor(
     gql`
       query Core_checkNameAvailability(
@@ -27,15 +145,10 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_getMresKeys: executor(
     gql`
       query Core_getManagedResouceOutputKeyValues(
-        $projectName: String!
         $envName: String!
         $name: String!
       ) {
-        core_getManagedResouceOutputKeys(
-          projectName: $projectName
-          envName: $envName
-          name: $name
-        )
+        core_getManagedResouceOutputKeys(envName: $envName, name: $name)
       }
     `,
     {
@@ -47,15 +160,10 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_listMreses: executor(
     gql`
       query Core_listManagedResources(
-        $projectName: String!
         $envName: String!
         $pq: CursorPaginationIn
       ) {
-        core_listManagedResources(
-          projectName: $projectName
-          envName: $envName
-          pq: $pq
-        ) {
+        core_listManagedResources(envName: $envName, pq: $pq) {
           edges {
             node {
               displayName
@@ -79,12 +187,10 @@ export const cliQueries = (executor: IExecutor) => ({
       query Core_getManagedResouceOutputKeyValues(
         $keyrefs: [ManagedResourceKeyRefIn]
         $envName: String!
-        $projectName: String!
       ) {
         core_getManagedResouceOutputKeyValues(
           keyrefs: $keyrefs
           envName: $envName
-          projectName: $projectName
         ) {
           key
           mresName
@@ -124,14 +230,12 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_getConfigSecretMap: executor(
     gql`
       query Core_getConfigValues(
-        $projectName: String!
         $envName: String!
         $configQueries: [ConfigKeyRefIn]
         $secretQueries: [SecretKeyRefIn!]
         $mresQueries: [ManagedResourceKeyRefIn]
       ) {
         configs: core_getConfigValues(
-          projectName: $projectName
           envName: $envName
           queries: $configQueries
         ) {
@@ -140,7 +244,6 @@ export const cliQueries = (executor: IExecutor) => ({
           value
         }
         secrets: core_getSecretValues(
-          projectName: $projectName
           envName: $envName
           queries: $secretQueries
         ) {
@@ -151,7 +254,6 @@ export const cliQueries = (executor: IExecutor) => ({
         mreses: core_getManagedResouceOutputKeyValues(
           keyrefs: $mresQueries
           envName: $envName
-          projectName: $projectName
         ) {
           key
           mresName
@@ -173,18 +275,18 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_interceptApp: executor(
     gql`
       mutation Core_interceptApp(
-        $projectName: String!
-        $envName: String!
-        $appname: String!
-        $deviceName: String!
+        $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
         $intercept: Boolean!
+        $deviceName: String!
+        $appname: String!
+        $envName: String!
       ) {
         core_interceptApp(
-          projectName: $projectName
-          envName: $envName
-          appname: $appname
-          deviceName: $deviceName
+          portMappings: $portMappings
           intercept: $intercept
+          deviceName: $deviceName
+          appname: $appname
+          envName: $envName
         )
       }
     `,
@@ -195,8 +297,8 @@ export const cliQueries = (executor: IExecutor) => ({
   ),
   cli_getEnvironment: executor(
     gql`
-      query Core_getEnvironment($projectName: String!, $name: String!) {
-        core_getEnvironment(projectName: $projectName, name: $name) {
+      query Core_getEnvironment($name: String!) {
+        core_getEnvironment(name: $name) {
           spec {
             targetNamespace
           }
@@ -210,16 +312,8 @@ export const cliQueries = (executor: IExecutor) => ({
   ),
   cli_getSecret: executor(
     gql`
-      query Core_getSecret(
-        $projectName: String!
-        $envName: String!
-        $name: String!
-      ) {
-        core_getSecret(
-          projectName: $projectName
-          envName: $envName
-          name: $name
-        ) {
+      query Core_getSecret($envName: String!, $name: String!) {
+        core_getSecret(envName: $envName, name: $name) {
           displayName
           metadata {
             name
@@ -236,16 +330,8 @@ export const cliQueries = (executor: IExecutor) => ({
   ),
   cli_getConfig: executor(
     gql`
-      query Core_getConfig(
-        $projectName: String!
-        $envName: String!
-        $name: String!
-      ) {
-        core_getConfig(
-          projectName: $projectName
-          envName: $envName
-          name: $name
-        ) {
+      query Core_getConfig($envName: String!, $name: String!) {
+        core_getConfig(envName: $envName, name: $name) {
           data
           displayName
           metadata {
@@ -263,8 +349,8 @@ export const cliQueries = (executor: IExecutor) => ({
 
   cli_listApps: executor(
     gql`
-      query Core_listApps($projectName: String!, $envName: String!) {
-        core_listApps(projectName: $projectName, envName: $envName) {
+      query Core_listApps($envName: String!) {
+        core_listApps(envName: $envName) {
           edges {
             cursor
             node {
@@ -276,7 +362,6 @@ export const cliQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              projectName
               spec {
                 displayName
                 containers {
@@ -305,10 +390,7 @@ export const cliQueries = (executor: IExecutor) => ({
                 replicas
                 serviceAccount
                 services {
-                  name
                   port
-                  targetPort
-                  type
                 }
               }
               status {
@@ -330,8 +412,8 @@ export const cliQueries = (executor: IExecutor) => ({
   ),
   cli_listConfigs: executor(
     gql`
-      query Core_listConfigs($projectName: String!, $envName: String!) {
-        core_listConfigs(projectName: $projectName, envName: $envName) {
+      query Core_listConfigs($envName: String!) {
+        core_listConfigs(envName: $envName) {
           totalCount
           edges {
             node {
@@ -353,16 +435,8 @@ export const cliQueries = (executor: IExecutor) => ({
   ),
   cli_listSecrets: executor(
     gql`
-      query Core_listSecrets(
-        $projectName: String!
-        $envName: String!
-        $pq: CursorPaginationIn
-      ) {
-        core_listSecrets(
-          projectName: $projectName
-          envName: $envName
-          pq: $pq
-        ) {
+      query Core_listSecrets($envName: String!, $pq: CursorPaginationIn) {
+        core_listSecrets(envName: $envName, pq: $pq) {
           edges {
             cursor
             node {
@@ -386,11 +460,8 @@ export const cliQueries = (executor: IExecutor) => ({
 
   cli_listEnvironments: executor(
     gql`
-      query Core_listEnvironments(
-        $projectName: String!
-        $pq: CursorPaginationIn
-      ) {
-        core_listEnvironments(projectName: $projectName, pq: $pq) {
+      query Core_listEnvironments($pq: CursorPaginationIn) {
+        core_listEnvironments(pq: $pq) {
           edges {
             cursor
             node {
@@ -401,7 +472,6 @@ export const cliQueries = (executor: IExecutor) => ({
                 namespace
               }
               spec {
-                projectName
                 targetNamespace
               }
               status {
@@ -424,35 +494,6 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listEnvironments,
-      vars: (_: any) => {},
-    }
-  ),
-
-  cli_listProjects: executor(
-    gql`
-      query Core_listProjects($pq: CursorPaginationIn) {
-        core_listProjects(pq: $pq) {
-          edges {
-            node {
-              displayName
-              markedForDeletion
-              metadata {
-                name
-                namespace
-              }
-              status {
-                isReady
-                message {
-                  RawMessage
-                }
-              }
-            }
-          }
-        }
-      }
-    `,
-    {
-      transformer: (data: any) => data.core_listProjects,
       vars: (_: any) => {},
     }
   ),

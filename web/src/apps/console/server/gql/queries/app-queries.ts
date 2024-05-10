@@ -24,12 +24,8 @@ export type IApps = NN<ConsoleListAppsQuery['core_listApps']>;
 export const appQueries = (executor: IExecutor) => ({
   restartApp: executor(
     gql`
-      query Query($projectName: String!, $envName: String!, $appName: String!) {
-        core_restartApp(
-          projectName: $projectName
-          envName: $envName
-          appName: $appName
-        )
+      query Query($envName: String!, $appName: String!) {
+        core_restartApp(envName: $envName, appName: $appName)
       }
     `,
     {
@@ -39,16 +35,8 @@ export const appQueries = (executor: IExecutor) => ({
   ),
   createApp: executor(
     gql`
-      mutation Core_createApp(
-        $projectName: String!
-        $envName: String!
-        $app: AppIn!
-      ) {
-        core_createApp(
-          projectName: $projectName
-          envName: $envName
-          app: $app
-        ) {
+      mutation Core_createApp($envName: String!, $app: AppIn!) {
+        core_createApp(envName: $envName, app: $app) {
           id
         }
       }
@@ -61,16 +49,8 @@ export const appQueries = (executor: IExecutor) => ({
 
   updateApp: executor(
     gql`
-      mutation Core_updateApp(
-        $projectName: String!
-        $envName: String!
-        $app: AppIn!
-      ) {
-        core_updateApp(
-          projectName: $projectName
-          envName: $envName
-          app: $app
-        ) {
+      mutation Core_updateApp($envName: String!, $app: AppIn!) {
+        core_updateApp(envName: $envName, app: $app) {
           id
         }
       }
@@ -85,18 +65,18 @@ export const appQueries = (executor: IExecutor) => ({
   interceptApp: executor(
     gql`
       mutation Core_interceptApp(
-        $projectName: String!
-        $envName: String!
-        $appname: String!
-        $deviceName: String!
+        $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
         $intercept: Boolean!
+        $deviceName: String!
+        $appname: String!
+        $envName: String!
       ) {
         core_interceptApp(
-          projectName: $projectName
-          envName: $envName
-          appname: $appname
-          deviceName: $deviceName
+          portMappings: $portMappings
           intercept: $intercept
+          deviceName: $deviceName
+          appname: $appname
+          envName: $envName
         )
       }
     `,
@@ -108,16 +88,8 @@ export const appQueries = (executor: IExecutor) => ({
   ),
   deleteApp: executor(
     gql`
-      mutation Core_deleteApp(
-        $projectName: String!
-        $envName: String!
-        $appName: String!
-      ) {
-        core_deleteApp(
-          projectName: $projectName
-          envName: $envName
-          appName: $appName
-        )
+      mutation Core_deleteApp($envName: String!, $appName: String!) {
+        core_deleteApp(envName: $envName, appName: $appName)
       }
     `,
     {
@@ -127,12 +99,8 @@ export const appQueries = (executor: IExecutor) => ({
   ),
   getApp: executor(
     gql`
-      query Core_getApp(
-        $projectName: String!
-        $envName: String!
-        $name: String!
-      ) {
-        core_getApp(projectName: $projectName, envName: $envName, name: $name) {
+      query Core_getApp($envName: String!, $name: String!) {
+        core_getApp(envName: $envName, name: $name) {
           id
           recordVersion
           createdBy {
@@ -155,7 +123,6 @@ export const appQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          projectName
           spec {
             containers {
               args
@@ -228,16 +195,17 @@ export const appQueries = (executor: IExecutor) => ({
             intercept {
               enabled
               toDevice
+              portMappings {
+                devicePort
+                appPort
+              }
             }
             nodeSelector
             region
             replicas
             serviceAccount
             services {
-              name
               port
-              targetPort
-              type
             }
             tolerations {
               effect
@@ -313,17 +281,11 @@ export const appQueries = (executor: IExecutor) => ({
   listApps: executor(
     gql`
       query Core_listApps(
-        $projectName: String!
         $envName: String!
         $search: SearchApps
         $pq: CursorPaginationIn
       ) {
-        core_listApps(
-          projectName: $projectName
-          envName: $envName
-          search: $search
-          pq: $pq
-        ) {
+        core_listApps(envName: $envName, search: $search, pq: $pq) {
           edges {
             cursor
             node {
@@ -347,7 +309,6 @@ export const appQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              projectName
               recordVersion
               spec {
                 containers {
@@ -395,16 +356,17 @@ export const appQueries = (executor: IExecutor) => ({
                 intercept {
                   enabled
                   toDevice
+                  portMappings {
+                    devicePort
+                    appPort
+                  }
                 }
                 nodeSelector
                 region
                 replicas
                 serviceAccount
                 services {
-                  name
                   port
-                  targetPort
-                  type
                 }
                 tolerations {
                   effect

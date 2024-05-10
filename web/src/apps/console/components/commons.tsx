@@ -96,7 +96,8 @@ export const CopyButton = ({
 
   return (
     <div
-      onClick={() => {
+      onClick={(e) => {
+        e.preventDefault();
         setCopied(true);
         copy(value);
       }}

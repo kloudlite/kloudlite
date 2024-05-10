@@ -1,6 +1,6 @@
 import { ChangeEventHandler, Dispatch, SetStateAction, useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
-import { Chip, ChipGroup } from '~/components/atoms/chips';
+// import { Chip, ChipGroup } from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
 import Tooltip from '~/components/atoms/tooltip';
 import Popup from '~/components/molecule/popup';
@@ -293,17 +293,17 @@ const RepoSelector = ({
           size="lg"
           error={!!error}
           message={error}
-          suffix={
-            !textValue ? (
-              <ChipGroup onClick={() => setOpen(true)}>
-                <Chip
-                  label="Kloudlite registery"
-                  item="repo"
-                  type="CLICKABLE"
-                />
-              </ChipGroup>
-            ) : null
-          }
+          // suffix={
+          //   !textValue ? (
+          //     <ChipGroup onClick={() => setOpen(true)}>
+          //       <Chip
+          //         label="Kloudlite registery"
+          //         item="repo"
+          //         type="CLICKABLE"
+          //       />
+          //     </ChipGroup>
+          //   ) : null
+          // }
           showclear={!!textValue}
         />
       )}

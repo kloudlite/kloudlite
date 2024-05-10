@@ -24,16 +24,8 @@ export type IManagedResources = NN<
 export const managedResourceQueries = (executor: IExecutor) => ({
   getManagedResource: executor(
     gql`
-      query Core_getManagedResource(
-        $projectName: String!
-        $envName: String!
-        $name: String!
-      ) {
-        core_getManagedResource(
-          projectName: $projectName
-          envName: $envName
-          name: $name
-        ) {
+      query Core_getManagedResource($envName: String!, $name: String!) {
+        core_getManagedResource(envName: $envName, name: $name) {
           displayName
           enabled
           environmentName
@@ -42,7 +34,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          projectName
           spec {
             resourceTemplate {
               apiVersion
@@ -70,15 +61,10 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   createManagedResource: executor(
     gql`
       mutation Core_createManagedResource(
-        $projectName: String!
         $envName: String!
         $mres: ManagedResourceIn!
       ) {
-        core_createManagedResource(
-          projectName: $projectName
-          envName: $envName
-          mres: $mres
-        ) {
+        core_createManagedResource(envName: $envName, mres: $mres) {
           id
         }
       }
@@ -92,15 +78,10 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   updateManagedResource: executor(
     gql`
       mutation Core_updateManagedResource(
-        $projectName: String!
         $envName: String!
         $mres: ManagedResourceIn!
       ) {
-        core_updateManagedResource(
-          projectName: $projectName
-          envName: $envName
-          mres: $mres
-        ) {
+        core_updateManagedResource(envName: $envName, mres: $mres) {
           id
         }
       }
@@ -114,17 +95,11 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   listManagedResources: executor(
     gql`
       query Core_listManagedResources(
-        $projectName: String!
         $envName: String!
         $search: SearchManagedResources
         $pq: CursorPaginationIn
       ) {
-        core_listManagedResources(
-          projectName: $projectName
-          envName: $envName
-          search: $search
-          pq: $pq
-        ) {
+        core_listManagedResources(envName: $envName, search: $search, pq: $pq) {
           edges {
             cursor
             node {
@@ -160,6 +135,7 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                     kind
                     name
                     namespace
+                    clusterName
                   }
                   spec
                 }
@@ -221,15 +197,10 @@ export const managedResourceQueries = (executor: IExecutor) => ({
   deleteManagedResource: executor(
     gql`
       mutation Core_deleteManagedResource(
-        $projectName: String!
         $envName: String!
         $mresName: String!
       ) {
-        core_deleteManagedResource(
-          projectName: $projectName
-          envName: $envName
-          mresName: $mresName
-        )
+        core_deleteManagedResource(envName: $envName, mresName: $mresName)
       }
     `,
     {

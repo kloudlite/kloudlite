@@ -33,7 +33,7 @@ const parseItem = (item: ExtractNodeType<IApps>) => {
 };
 
 const ExtraButton = ({ app }: { app: BaseType }) => {
-  const { account, deviceblueprint, project } = useParams();
+  const { account, deviceblueprint } = useParams();
   return (
     <ResourceExtraAction
       options={[
@@ -42,7 +42,7 @@ const ExtraButton = ({ app }: { app: BaseType }) => {
           icon: <GearSix size={16} />,
           type: 'item',
 
-          to: `/${account}/${project}/deviceblueprint/${deviceblueprint}/app/${parseName(
+          to: `/${account}/deviceblueprint/${deviceblueprint}/app/${parseName(
             app
           )}/settings/general`,
           key: 'settings',
@@ -53,7 +53,7 @@ const ExtraButton = ({ app }: { app: BaseType }) => {
 };
 
 const GridView = ({ items = [] }: { items: BaseType[] }) => {
-  const { account, project, deviceblueprint } = useParams();
+  const { account,  deviceblueprint } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
@@ -62,7 +62,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${project}/deviceblueprint/${deviceblueprint}/app/${id}`}
+            to={`/${account}/deviceblueprint/${deviceblueprint}/app/${id}`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -93,7 +93,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
 };
 
 const ListView = ({ items }: { items: BaseType[] }) => {
-  const { account, project, deviceblueprint } = useParams();
+  const { account,  deviceblueprint } = useParams();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -146,7 +146,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                 render: () => <ExtraButton app={i} />,
               },
             },
-            to: `/${account}/${project}/deviceblueprint/${deviceblueprint}/app/${id}`,
+            to: `/${account}/deviceblueprint/${deviceblueprint}/app/${id}`,
           };
         }),
       }}

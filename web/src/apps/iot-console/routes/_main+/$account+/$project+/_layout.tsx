@@ -68,13 +68,13 @@ const Project = () => {
   const { project } = useLoaderData();
   return (
     <SubNavDataProvider>
-      <Outlet context={{ ...rootContext, project }} />
+      <Outlet context={{ ...rootContext }} />
     </SubNavDataProvider>
   );
 };
 
 const CurrentBreadcrum = ({
-  project,
+  
 }: {
   project: ExtractNodeType<IProjects>;
 }) => {
@@ -98,7 +98,7 @@ const CurrentBreadcrum = ({
 };
 
 const Tabs = () => {
-  const { account, project } = useParams();
+  const { account } = useParams();
 
   return <CommonTabs baseurl={`/${account}/${project}`} tabs={tabs} />;
 };
@@ -106,14 +106,14 @@ const Tabs = () => {
 const Logo = () => {
   const { account } = useParams();
   return (
-    <LogoWrapper to={`/${account}/projects`}>
+    <LogoWrapper to={`/${account}/environments`}>
       <BrandLogo />
     </LogoWrapper>
   );
 };
 
 export const handle = ({
-  project,
+  
 }: {
   project: ExtractNodeType<IProjects>;
 }) => {
@@ -127,10 +127,10 @@ export const handle = ({
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
   ensureClusterSet(ctx);
-  const { account, project } = ctx.params;
+  const { account } = ctx.params;
   try {
     const { data, errors } = await GQLServerHandler(ctx.request).getIotProject({
-      name: project,
+      name: 
     });
 
     if (errors) {
@@ -142,7 +142,7 @@ export const loader = async (ctx: IRemixCtx) => {
     };
   } catch (err) {
     // logger.error(err);
-    return redirect(`/${account}/projects`);
+    return redirect(`/${account}/environments`);
   }
 };
 

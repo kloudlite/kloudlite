@@ -25,7 +25,7 @@ export const loader = async (ctx: IRemixCtx) => {
     const { data, errors } = await GQLServerHandler(
       ctx.request
     ).listIotDeviceBlueprints({
-      projectName: project,
+      projectName: 
       pq: getPagination(ctx),
       search: getSearch(ctx),
     });

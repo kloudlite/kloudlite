@@ -75,7 +75,7 @@ interface IResource {
 }
 
 const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
-  const { account, project, deployment } = useParams();
+  const { account, deployment } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
@@ -84,7 +84,7 @@ const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${project}/${deployment}/${id}`}
+            to={`/${account}/${deployment}/${id}`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),

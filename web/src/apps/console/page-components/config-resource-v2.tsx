@@ -72,7 +72,7 @@ const GridView = ({
   onDelete = (_) => _,
   linkComponent = null,
 }: IResource) => {
-  const { account, project, environment } = useParams();
+  const { account, environment } = useParams();
   const [selected, setSelected] = useState('');
   let props = {};
   if (linkComponent) {
@@ -93,7 +93,7 @@ const GridView = ({
             key={id}
             to={
               linkComponent !== null
-                ? `/${account}/${project}/env/${environment}/config/${id}`
+                ? `/${account}/env/${environment}/config/${id}`
                 : undefined
             }
             rows={[
@@ -146,7 +146,7 @@ const ListView = ({
   onDelete = (_) => _,
   linkComponent = null,
 }: IResource) => {
-  const { account, project, environment } = useParams();
+  const { account, environment } = useParams();
   const [selected, setSelected] = useState('');
   let props = {};
   if (linkComponent) {
@@ -214,7 +214,7 @@ const ListView = ({
             },
             to:
               linkComponent !== null
-                ? `/${account}/${project}/env/${environment}/config/${id}`
+                ? `/${account}/env/${environment}/config/${id}`
                 : undefined,
           };
         }),
@@ -235,11 +235,11 @@ const ConfigResourcesV2 = ({
 
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const { project, environment, account } = useParams();
+  const { environment, account } = useParams();
 
   useWatchReload(
     items.map((i) => {
-      return `account:${account}.project:${project}.environment:${environment}.config:${parseName(
+      return `account:${account}.environment:${environment}.config:${parseName(
         i
       )}`;
     })
@@ -266,13 +266,13 @@ const ConfigResourcesV2 = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!project || !environment) {
+          if ( !environment) {
             throw new Error('Project and Environment name is required!.');
           }
           try {
             const { errors } = await api.deleteConfig({
               configName: parseName(showDeleteDialog),
-              projectName: project,
+              
               envName: environment,
             });
 

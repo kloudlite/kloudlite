@@ -66,11 +66,8 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
     const checkApi = (() => {
       switch (resType) {
         case 'app':
-        case 'project':
         case 'config':
         case 'environment':
-        case 'managed_service':
-        case 'project_managed_service':
         case 'managed_resource':
         case 'router':
         case 'console_vpn_device':
@@ -84,8 +81,11 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
           ensureAccountClientSide(params);
           return api.infraCheckNameAvailability;
         case 'helm_release':
+        case 'cluster_managed_service':
         case 'vpn_device':
         case 'nodepool':
+          ensureAccountClientSide(params);
+          ensureClusterClientSide(params);
           return api.infraCheckNameAvailability;
 
         case 'account':
@@ -147,13 +147,10 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
       return error;
     };
 
-    const { cluster, environment, project } = params;
+    const { cluster, environment } = params;
     useDebounce(
       async () => {
-        let tempResType = resType;
-        if (resType === 'console_vpn_device') {
-          tempResType = 'vpn_device';
-        }
+        const tempResType = resType;
         if (!isUpdate)
           if (displayName) {
             setNameLoading(true);
@@ -161,34 +158,30 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
             try {
               // @ts-ignore
               const { data, errors } = await checkApi({
-                // @ts-ignore
                 resType: tempResType,
                 name: `${name}`,
                 ...([
-                  'project',
                   'app',
                   'environment',
                   'config',
                   'secret',
-                  'project_managed_service',
                   'console_vpn_device',
                   'router',
+                  'managed_resource',
                 ].includes(tempResType)
                   ? {
-                      projectName: project,
                       envName: environment,
                     }
                   : {}),
-                ...(['nodepool', 'vpn_device', 'helm_release'].includes(
-                  tempResType
-                )
+                ...([
+                  'nodepool',
+                  'vpn_device',
+                  'helm_release',
+                  'managed_service',
+                  'cluster_managed_service',
+                ].includes(tempResType)
                   ? {
                       clusterName: cluster,
-                    }
-                  : {}),
-                ...(tempResType === 'managed_resource'
-                  ? {
-                      namespace: '',
                     }
                   : {}),
               });

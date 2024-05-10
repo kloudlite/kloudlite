@@ -169,6 +169,14 @@ const NewCloudProvider = () => {
                 )}
               </div>
               <BottomNavigation
+                secondaryButton={{
+                  variant: 'outline',
+                  content: 'Skip',
+                  prefix: undefined,
+                  onClick: () => {
+                    navigate(`/${accountName}/environments`);
+                  },
+                }}
                 primaryButton={{
                   variant: 'primary',
                   content: 'Next',

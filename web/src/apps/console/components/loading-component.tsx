@@ -101,6 +101,10 @@ interface LoadingCompProps<T = any> {
   errorComp?: (err: Error) => ReactNode;
 }
 
+export function parsePWData<T>(data: SerializeFrom<AwaitRespProps & T>) {
+  return data as NN<T>;
+}
+
 export function LoadingComp<T>({
   data,
   children = (_) => null,

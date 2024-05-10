@@ -44,13 +44,19 @@ export const restActions = async (ctx: IRemixCtx) => {
   } = data || {};
 
   return {
-    githubLoginUrl: checkData.find((v) => v.provider === 'github' && !v.enabled)
+    githubLoginUrl: checkData?.find(
+      (v) => v.provider === 'github' && !v.enabled
+    )
       ? ''
       : githubLoginUrl,
-    gitlabLoginUrl: checkData.find((v) => v.provider === 'gitlab' && !v.enabled)
+    gitlabLoginUrl: checkData?.find(
+      (v) => v.provider === 'gitlab' && !v.enabled
+    )
       ? ''
       : gitlabLoginUrl,
-    googleLoginUrl: checkData.find((v) => v.provider === 'google' && !v.enabled)
+    googleLoginUrl: checkData?.find(
+      (v) => v.provider === 'google' && !v.enabled
+    )
       ? ''
       : googleLoginUrl,
   };

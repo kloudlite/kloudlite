@@ -8,10 +8,10 @@ import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 import { redirect } from '@remix-run/node';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { Button } from '~/components/atoms/button';
-import { ArrowRight } from '@jengaicons/react';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
+import { ArrowRight } from '~/components/icons';
 
 const VerifyEmail = () => {
   const { query, email } = useLoaderData();
