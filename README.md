@@ -1,5 +1,5 @@
 <p align="center">
-  ![logobig](https://github.com/kloudlite/kloudlite/assets/1580519/27001f02-a87f-46b7-aaaf-3b36bafc73e0)
+  <img src="[https://example.com/kloudlite-logo.png](https://github.com/kloudlite/kloudlite/assets/1580519/27001f02-a87f-46b7-aaaf-3b36bafc73e0)" alt="KloudLite Logo">
 </p>
 <p align="center">
   Remote Local Environments to build any distributed application.
