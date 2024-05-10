@@ -8,22 +8,22 @@
 
 ## Components
 ### Core
-- API - Backend microservices
-- Web - Frontend
-- kl - Cli
+- [API](https://github.com/kloudlite/api) - Backend Microservices
+- [Web](https://github.com/kloudlite/web) - Frontend
+- [kl Cli](https://github.com/kloudlite/kl) - Cli
 
 ### Kubernetes Resource Management
-- Operators - Kubernetes Operators
+- [Operators](https://github.com/kloudlite/opertor) - Kubernetes Operators
 
 ### Managed kubernetes
-- Kloudlite Autoscaler - Cluster autoscaler
-- Infrastructure As Code - Terraform modules
+- [Kloudlite Autoscaler](https://github.com/kloudlite/autoscaler) - Cluster autoscaler
+- [Infrastructure As Code](https://github.com/kloudlite/infrastructure-as-code) - Terraform modules
 
 ### Observibility
-- Kubelet Metrics ReExporter - Observibility
+- [Kubelet Metrics ReExporter](https://github.com/kloudlite/kubelet-metrics-reexporter) - Observibility
 
 ### Distribution
-- Helm Charts - Package Distribution
+- [Helm Charts](https://github.com/kloudlite/helm-charts) - Package Distribution
 
 ## Features
 - **Seamless Integration:** Sync configurations, secrets, and development containers between local systems and remote environments.
