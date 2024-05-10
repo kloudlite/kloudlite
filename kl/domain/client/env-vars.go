@@ -10,7 +10,7 @@ import (
 type ResEnvType struct {
 	Name   string `json:"name" yaml:"name"`
 	Key    string `json:"key"`
-	RefKey string `json:"refKey"`
+	RefKey string `json:"refKey" yaml:"refKey"`
 }
 
 type EnvType struct {

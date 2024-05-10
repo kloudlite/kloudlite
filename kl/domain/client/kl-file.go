@@ -8,14 +8,14 @@ import (
 )
 
 type KLFileType struct {
-	Version    string   `json:"version"`
-	DefaultEnv string   `json:"defaultEnv"`
-	Packages   []string `json:"packages"`
+	Version    string   `json:"version" yaml:"version"`
+	DefaultEnv string   `json:"defaultEnv" yaml:"defaultEnv"`
+	Packages   []string `json:"packages" yaml:"packages"`
 	// Mres       []ResType `json:"mres"`
 	// Configs    []ResType `json:"configs"`
 	// Secrets    []ResType `json:"secrets"`
-	EnvVars EnvVars `json:"envVars"`
-	Mounts  Mounts  `json:"mounts"`
+	EnvVars EnvVars `json:"envVars" yaml:"envVars"`
+	Mounts  Mounts  `json:"mounts" yaml:"mounts"`
 }
 
 const (
