@@ -5479,7 +5479,6 @@ export type ConsoleListGlobalVpnDevicesQuery = {
           name: string;
           namespace?: string;
         };
-        wireguardConfig?: { value: string; encoding: string };
       };
     }>;
     pageInfo: {

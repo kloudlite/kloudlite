@@ -155,10 +155,6 @@ export const globalVpnQueries = (executor: IExecutor) => ({
               publicKey
               recordVersion
               updateTime
-              wireguardConfig {
-                value
-                encoding
-              }
             }
           }
           pageInfo {

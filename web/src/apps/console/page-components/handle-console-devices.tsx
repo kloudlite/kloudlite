@@ -37,6 +37,7 @@ import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Select from '~/components/atoms/select';
 import { ConsoleApiType } from '../server/gql/saved-queries';
 import ExtendedFilledTab from '../components/extended-filled-tab';
+import { LoadingIndicator, LoadingPlaceHolder } from '../components/loading';
 
 interface IExposedPorts {
   targetPort?: number;
@@ -290,18 +291,41 @@ const downloadConfig = ({
 export const ShowWireguardConfig = ({
   visible,
   setVisible,
-  data,
-}: {
+  deviceName,
+}: // data,
+{
   visible: boolean;
   setVisible: (visible: boolean) => void;
-  data?: {
-    value: string;
-    encoding: string;
-  };
+  deviceName: string;
 }) => {
   const [mode, setMode] = useState<'config' | 'qr'>('qr');
 
+  const [data, setData] = useState<{
+    value: string;
+    encoding: string;
+  }>();
+
+  const api = useConsoleApi();
+
+  const { data: devData, isLoading } = useCustomSwr(
+    `device-${deviceName}`,
+    async () => api.getGlobalVpnDevice({ deviceName, gvpn: 'default' }),
+    true
+  );
+
+  useEffect(() => {
+    setData(devData?.wireguardConfig);
+  }, [devData]);
+
   const modeView = () => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center">
+          <LoadingPlaceHolder />
+        </div>
+      );
+    }
+
     if (!data) {
       return (
         <div className="h-[100px] flex items-center justify-center">

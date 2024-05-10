@@ -327,7 +327,7 @@ const VPNResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
       <ShowWireguardConfig
         setVisible={() => setShowWireguardConfig(null)}
         visible={!!showWireguardConfig}
-        data={showWireguardConfig?.wireguardConfig}
+        deviceName={parseName(showWireguardConfig)}
       />
     </>
   );

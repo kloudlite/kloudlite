@@ -3981,10 +3981,6 @@ query consoleListGlobalVpnDevices($gvpn: String!, $search: SearchGlobalVPNDevice
         publicKey
         recordVersion
         updateTime
-        wireguardConfig {
-          value
-          encoding
-        }
       }
     }
     pageInfo {
