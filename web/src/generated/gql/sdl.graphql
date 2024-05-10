@@ -1930,6 +1930,7 @@ type GlobalVPN {
 type GlobalVPNDevice {
   accountName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationMethod: String
   creationTime: Date!
   displayName: String!
   globalVPNName: String!
@@ -1952,6 +1953,7 @@ type GlobalVPNDeviceEdge {
 }
 
 input GlobalVPNDeviceIn {
+  creationMethod: String
   displayName: String!
   globalVPNName: String!
   metadata: MetadataIn!
@@ -3912,6 +3914,7 @@ input SearchEnvironments {
 }
 
 input SearchGlobalVPNDevices {
+  creationMethod: MatchFilterIn
   text: MatchFilterIn
 }
 

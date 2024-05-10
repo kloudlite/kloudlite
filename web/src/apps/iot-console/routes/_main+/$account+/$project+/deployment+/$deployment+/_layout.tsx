@@ -58,13 +58,10 @@ const LocalBreadcrum = ({ data }: { data: IDeployment }) => {
 };
 
 const Tabs = () => {
-  const { account,  deployment } = useParams();
+  const { account, deployment } = useParams();
 
   return (
-    <CommonTabs
-      baseurl={`/${account}/deployment/${deployment}`}
-      tabs={tabs}
-    />
+    <CommonTabs baseurl={`/${account}/deployment/${deployment}`} tabs={tabs} />
   );
 
   // return (
@@ -85,13 +82,12 @@ export const handle = ({ deployment }: { deployment: any }) => {
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
-  const {  deployment, account } = ctx.params;
+  const { deployment, account } = ctx.params;
 
   try {
     const { data, errors } = await GQLServerHandler(
       ctx.request
     ).getIotDeployment({
-      
       name: deployment,
     });
     if (errors) {

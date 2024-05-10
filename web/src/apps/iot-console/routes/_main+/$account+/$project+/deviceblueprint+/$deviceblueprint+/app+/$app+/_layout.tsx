@@ -22,7 +22,7 @@ import { IApp } from '~/iotconsole/server/gql/queries/iot-app-queries';
 import { IDeviceBlueprintContext } from '../../_layout';
 
 const LocalTabs = () => {
-  const { account,  deviceblueprint, app } = useParams();
+  const { account, deviceblueprint, app } = useParams();
   return (
     <CommonTabs
       baseurl={`/${account}/deviceblueprint/${deviceblueprint}/app/${app}`}
@@ -86,7 +86,6 @@ export const loader = async (ctx: IRemixCtx) => {
       const { data, errors } = await GQLServerHandler(ctx.request).getIotApp({
         deviceBlueprintName: deviceblueprint,
         name: app,
-        
       });
       if (errors) {
         throw errors[0];

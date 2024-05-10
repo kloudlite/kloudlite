@@ -1,4 +1,5 @@
-import { ReactNode } from 'react';
+/* eslint-disable no-nested-ternary */
+import { ReactNode, isValidElement } from 'react';
 import { Button, IButton } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
 
@@ -7,7 +8,7 @@ interface EmptyStateProps {
   heading: ReactNode;
   children?: ReactNode;
   footer?: ReactNode;
-  action?: IButton;
+  action?: IButton | ReactNode;
   secondaryAction?: IButton;
   shadow?: boolean;
   border?: boolean;
@@ -50,7 +51,13 @@ export const EmptyState = ({
         {(action || secondaryAction) && (
           <div className="flex flex-row items-center justify-center gap-lg pt-lg">
             {secondaryAction && <Button {...secondaryAction} />}
-            {action && <Button {...action} />}
+            {isValidElement(action) ? (
+              action
+            ) : typeof action === 'object' ? (
+              <Button {...(action as IButton)} />
+            ) : (
+              action
+            )}
           </div>
         )}
         {footer && <div className="bodySm text-text-soft">{footer}</div>}

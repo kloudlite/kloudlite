@@ -32,10 +32,12 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
 import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
 import { cn } from '~/components/utils';
-import { Button } from '~/components/atoms/button';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { ILoginUrls, ILogins } from '~/console/server/gql/queries/git-queries';
 import logger from '~/root/lib/client/helpers/log';
+import Breadcrum from '~/console/components/breadcrum';
+import { handleError } from '~/root/lib/utils/common';
+import { ICluster } from '~/console/server/gql/queries/cluster-queries';
 import { IAccountContext } from '../../_layout';
 
 const Environment = () => {
@@ -121,10 +123,10 @@ const EnvironmentTabs = () => {
   const { account, environment } = useParams();
   return (
     <CommonTabs
-      backButton={{
-        to: `/${account}/environments`,
-        label: 'Envs',
-      }}
+      // backButton={{
+      //   to: `/${account}/environments`,
+      //   label: 'Envs',
+      // }}
       baseurl={`/${account}/env/${environment}`}
       tabs={tabs}
     />
@@ -172,8 +174,15 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
     <>
       <BreadcrumSlash />
       <span className="mx-md" />
+      <Breadcrum.Button
+        to={`/${account}/environments`}
+        LinkComponent={Link}
+        content="Envs"
+      />
+      <BreadcrumSlash />
+      <span className="mx-md" />
 
-      <Button
+      <Breadcrum.Button
         // prefix={
         //   <span className="p-md flex items-center justify-center rounded-full border border-border-default text-text-soft">
         //     <Buildings size={16} />
@@ -355,14 +364,11 @@ export const loader = async (ctx: IRemixCtx) => {
     };
   } catch (err) {
     logger.error(err);
-
-    const k: any = {};
-
-    return {
-      logins: k as ILogins,
-      loginUrls: k as ILoginUrls,
-      environment: k as IEnvironment,
-      cluster: k as any,
+    return handleError(err) as {
+      logins: ILogins;
+      loginUrls: ILoginUrls;
+      environment: IEnvironment;
+      cluster: ICluster;
     };
   }
 };

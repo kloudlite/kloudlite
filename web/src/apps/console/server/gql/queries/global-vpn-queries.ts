@@ -130,6 +130,7 @@ export const globalVpnQueries = (executor: IExecutor) => ({
                 userId
                 userName
               }
+              creationMethod
               creationTime
               displayName
               globalVPNName

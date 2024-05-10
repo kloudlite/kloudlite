@@ -1,4 +1,5 @@
 import {
+  Link,
   Outlet,
   useLoaderData,
   useOutletContext,
@@ -13,10 +14,10 @@ import logger from '~/lib/client/helpers/log';
 import { defer } from '@remix-run/node';
 import Breadcrum from '~/console/components/breadcrum';
 import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
-import { Truncate } from '~/root/lib/utils/common';
 import { IClusterMSv } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import fake from '~/root/fake-data-generator/fake';
-import { GearSix } from '~/console/components/icons';
+import { ChevronRight, GearSix } from '~/console/components/icons';
+import { parseName } from '~/console/server/r-utils/common';
 import { IAccountContext } from '../../_layout';
 
 const ManagedServiceTabs = () => {
@@ -25,10 +26,10 @@ const ManagedServiceTabs = () => {
   return (
     <CommonTabs
       baseurl={`/${account}/msvc/${msv}`}
-      backButton={{
-        to: `/${account}/managed-services`,
-        label: 'Managed Services',
-      }}
+      // backButton={{
+      //   to: `/${account}/managed-services`,
+      //   label: 'Managed Services',
+      // }}
       tabs={[
         {
           label: 'Logs & Metrics',
@@ -52,11 +53,24 @@ const ManagedServiceTabs = () => {
 
 const LocalBreadcrum = ({ data }: { data: IClusterMSv }) => {
   const { displayName } = data;
+  const { account } = useParams();
   return (
     <div className="flex flex-row items-center">
       <BreadcrumSlash />
+      <span className="mx-md" />
       <Breadcrum.Button
-        content={<Truncate length={15}>{displayName || ''}</Truncate>}
+        to={`/${account}/managed-services`}
+        LinkComponent={Link}
+        content={
+          <div className="flex flex-row gap-md items-center">
+            Msvc <ChevronRight size={14} />{' '}
+          </div>
+        }
+      />
+      <Breadcrum.Button
+        to={`/${account}/msvc/${parseName(data)}/logs-n-metrics`}
+        LinkComponent={Link}
+        content={<span>{displayName}</span>}
       />
     </div>
   );
