@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"time"
 
@@ -153,11 +151,8 @@ func (c *client) Start() error {
 
 func (c *client) readTillLine(ctx context.Context, file string, desiredLine, stream string, follow bool) (bool, error) {
 
-	l := log.New(&io.PipeWriter{}, "", 0)
+	t, err := tail.TailFile(file, tail.Config{Follow: follow, ReOpen: follow})
 
-	t, err := tail.TailFile(file, tail.Config{Follow: follow, ReOpen: follow,
-		Logger: l,
-	})
 	if err != nil {
 		return false, err
 	}

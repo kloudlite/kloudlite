@@ -89,8 +89,6 @@ if [ -f "/tmp/stdout.log" ]; then
     sudo chown root /tmp/stdout.log
 fi
 
-ls -al /tmp
-
 (tail -f /tmp/stdout.log) &
 pid=$!
 (tail -f /tmp/stderr.log) &
