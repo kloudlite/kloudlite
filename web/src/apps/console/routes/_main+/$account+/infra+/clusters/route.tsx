@@ -114,9 +114,11 @@ const ClusterComponent = ({
 
   const getEmptyState = ({
     clustersCount,
+    byokClustersCount,
     cloudProviderSecretsCount,
   }: {
     clustersCount: number;
+    byokClustersCount: number;
     cloudProviderSecretsCount: number;
   }) => {
     if (cloudProviderSecretsCount === 0) {
@@ -138,19 +140,14 @@ const ClusterComponent = ({
       };
     }
 
-    if (clustersCount === 0) {
+    if (clustersCount === 0 && byokClustersCount === 0) {
       return {
         is: true,
         title: 'This is where you’ll manage your cluster.',
         content: (
           <p>You can create a new cluster and manage the listed cluster.</p>
         ),
-        action: {
-          content: 'Create new cluster',
-          prefix: <Plus />,
-          LinkComponent: Link,
-          to: `/${account}/new-cluster`,
-        },
+        action: <CreateClusterButton />,
       };
     }
 
@@ -160,12 +157,7 @@ const ClusterComponent = ({
       content: (
         <p>You can create a new cluster and manage the listed cluster.</p>
       ),
-      action: {
-        content: 'Create new cluster',
-        prefix: <Plus />,
-        LinkComponent: Link,
-        to: `/${account}/new-cluster`,
-      },
+      action: <CreateClusterButton />,
     };
   };
 
@@ -177,10 +169,13 @@ const ClusterComponent = ({
     <Wrapper
       secondaryHeader={{
         title: 'Clusters',
-        action: clusters.length > 0 && <CreateClusterButton />,
+        action: (clusters.length > 0 || byokClusters.length > 0) && (
+          <CreateClusterButton />
+        ),
       }}
       empty={getEmptyState({
         clustersCount: clusters.length,
+        byokClustersCount: byokClusters.length,
         cloudProviderSecretsCount: secretsCount,
       })}
       tools={

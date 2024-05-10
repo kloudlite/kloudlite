@@ -109,17 +109,14 @@ const ByokInstructionsPopup = ({
 }) => {
   const api = useConsoleApi();
 
-  const { data, isLoading } = useCustomSwr(
-    item.metadata?.name || null,
-    async () => {
-      if (!item.metadata?.name) {
-        throw new Error('Invalid cluster name');
-      }
-      return api.getBYOKClusterInstructions({
-        name: item.metadata.name,
-      });
+  const { data } = useCustomSwr(item.metadata?.name || null, async () => {
+    if (!item.metadata?.name) {
+      throw new Error('Invalid cluster name');
     }
-  );
+    return api.getBYOKClusterInstructions({
+      name: item.metadata.name,
+    });
+  });
 
   console.log('data', data);
 
@@ -409,6 +406,9 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
               },
             },
             // to: `/${account}/infra/${id}/overview`,
+            ...(i.type === 'normal'
+              ? { to: `/${account}/infra/${id}/overview` }
+              : {}),
             detail: (
               <AnimateHide
                 onClick={(e) => e.preventDefault()}

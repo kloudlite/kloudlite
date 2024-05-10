@@ -10,7 +10,6 @@ import withContext from '~/root/lib/app-setup/with-contxt';
 import { IExtRemixCtx } from '~/root/lib/types/common';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import {
-  BackingServices,
   ChevronRight,
   Cpu,
   Crosshair,
@@ -31,6 +30,7 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { BreadcrumSlash } from '~/console/utils/commons';
 import { IAccountContext } from '../../_layout';
 
 export interface IClusterContext extends IAccountContext {
@@ -67,10 +67,10 @@ const ClusterTabs = () => {
   const iconSize = 16;
   return (
     <CommonTabs
-      backButton={{
-        to: `/${account}/infra`,
-        label: 'Infra',
-      }}
+      // backButton={{
+      //   to: `/${account}/infra`,
+      //   label: 'Infra',
+      // }}
       tabs={[
         {
           label: (
@@ -92,16 +92,16 @@ const ClusterTabs = () => {
           to: '/nodepools',
           value: '/nodepools',
         },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
-              <BackingServices size={iconSize} />
-              Managed Services
-            </span>
-          ),
-          to: '/managed-services',
-          value: '/managed-services',
-        },
+        // {
+        //   label: (
+        //     <span className="flex flex-row items-center gap-lg">
+        //       <BackingServices size={iconSize} />
+        //       Managed Services
+        //     </span>
+        //   ),
+        //   to: '/managed-services',
+        //   value: '/managed-services',
+        // },
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
@@ -147,12 +147,14 @@ const NetworkBreadcrum = ({
   const { account } = useParams();
   return (
     <div className="flex flex-row items-center">
+      <BreadcrumSlash />
+      <span className="mx-md" />
       <Breadcrum.Button
         to={`/${account}/infra/clusters`}
         LinkComponent={Link}
         content={
           <div className="flex flex-row gap-md items-center">
-            <ChevronRight size={14} /> Clusters <ChevronRight size={14} />{' '}
+            Clusters <ChevronRight size={14} />{' '}
           </div>
         }
       />

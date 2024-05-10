@@ -187,21 +187,24 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
                 ),
               },
               config: {
-                render: () => (
-                  <ListItem
-                    noTooltip
-                    data={
-                      <div>
-                        <Button
-                          variant="plain"
-                          onClick={() => showWgConfig(i)}
-                          content="View"
-                          suffix={<Eye />}
-                        />
-                      </div>
-                    }
-                  />
-                ),
+                render: () =>
+                  i.creationMethod === '' ? (
+                    <ListItem
+                      noTooltip
+                      data={
+                        <div>
+                          <Button
+                            variant="plain"
+                            onClick={() => showWgConfig(i)}
+                            content="View"
+                            suffix={<Eye />}
+                          />
+                        </div>
+                      }
+                    />
+                  ) : (
+                    <ListItem data="Managed by kloudlite" />
+                  ),
               },
               host: {
                 render: () => (

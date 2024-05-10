@@ -302,6 +302,7 @@ export type SearchDomainEntry = {
 };
 
 export type SearchGlobalVpnDevices = {
+  creationMethod?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -939,6 +940,7 @@ export type GlobalVpnIn = {
 };
 
 export type GlobalVpnDeviceIn = {
+  creationMethod?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   globalVPNName: Scalars['String']['input'];
   metadata: MetadataIn;
@@ -5455,6 +5457,7 @@ export type ConsoleListGlobalVpnDevicesQuery = {
       cursor: string;
       node: {
         accountName: string;
+        creationMethod?: string;
         creationTime: any;
         displayName: string;
         globalVPNName: string;

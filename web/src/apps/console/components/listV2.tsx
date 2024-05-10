@@ -136,7 +136,7 @@ const RowBase = ({
     {
       'bg-surface-basic-default': !pressed,
       'cursor-pointer hover:bg-surface-basic-hovered':
-        (!!onClick || linkComponent !== 'div') && !pressed && !disabled,
+        (!!onClick || !!to) && !pressed && !disabled,
       'bg-surface-basic-pressed': pressed,
       'cursor-default': !!disabled,
     },

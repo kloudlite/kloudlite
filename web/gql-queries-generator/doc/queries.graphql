@@ -3956,6 +3956,7 @@ query consoleListGlobalVpnDevices($gvpn: String!, $search: SearchGlobalVPNDevice
           userId
           userName
         }
+        creationMethod
         creationTime
         displayName
         globalVPNName

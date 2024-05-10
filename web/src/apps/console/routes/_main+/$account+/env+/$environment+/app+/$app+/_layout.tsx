@@ -1,5 +1,6 @@
 import { defer } from '@remix-run/node';
 import {
+  Link,
   Outlet,
   useLoaderData,
   useOutletContext,
@@ -16,6 +17,7 @@ import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { BreadcrumSlash } from '~/console/utils/commons';
 import Breadcrum from '~/console/components/breadcrum';
 import { Truncate } from '~/root/lib/utils/common';
+import { parseName } from '~/console/server/r-utils/common';
 import { IEnvironmentContext } from '../../_layout';
 
 const LocalTabs = () => {
@@ -23,10 +25,10 @@ const LocalTabs = () => {
   return (
     <CommonTabs
       baseurl={`/${account}/env/${environment}/app/${app}`}
-      backButton={{
-        to: `/${account}/env/${environment}/apps`,
-        label: 'Apps',
-      }}
+      // backButton={{
+      //   to: `/${account}/env/${environment}/apps`,
+      //   label: 'Apps',
+      // }}
       tabs={[
         {
           label: 'Logs & Metrics',
@@ -44,12 +46,29 @@ const LocalTabs = () => {
 };
 
 const LocalBreadcrum = ({ data }: { data: IApp }) => {
+  const params = useParams();
+
+  const { account, environment } = params;
+
   const { displayName } = data;
   return (
     <div className="flex flex-row items-center">
       <BreadcrumSlash />
+      <span className="mx-md" />
+      <Breadcrum.Button
+        to={`/${account}/env/${environment}/apps`}
+        LinkComponent={Link}
+        content="Apps"
+      />
+      <BreadcrumSlash />
       <Breadcrum.Button
         content={<Truncate length={15}>{displayName || ''}</Truncate>}
+        size="sm"
+        variant="plain"
+        LinkComponent={Link}
+        to={`/${account}/env/${environment}/app/${parseName(
+          data
+        )}/logs-n-metrics`}
       />
     </div>
   );
@@ -83,7 +102,6 @@ export const loader = async (ctx: IRemixCtx) => {
       const { data, errors } = await GQLServerHandler(ctx.request).getApp({
         envName: environment,
         name: app,
-        
       });
       if (errors) {
         throw errors[0];

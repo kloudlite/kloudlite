@@ -14,7 +14,7 @@ interface WrapperProps {
   empty?: {
     image?: ReactNode;
     title: string;
-    action?: IButton;
+    action?: IButton | ReactNode;
     is: boolean;
     content: ReactNode;
   };
