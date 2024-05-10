@@ -60,7 +60,10 @@ chown -R kl /tmp/sample.json
 
 echo $@ | jq -r | jq -r '.envVars | map_values(. = "export \(.key)=\(.value)") | .[]' > /home/kl/.env-vars
 chown -R kl /home/kl/.env-vars
-sudo -u kl bash -c "/home/kl/.nix-profile/bin/nix-shell -p $(cat /home/kl/.nix-shell-args) --run 'echo done'"
+
+echo "kloudlite-entrypoint:INSTALLING_PACKAGES"
+sudo -u kl bash -c "/home/kl/.nix-profile/bin/nix-shell -p $(cat /home/kl/.nix-shell-args) --run 'echo kloudlite-entrypoint:INSTALLING_PACKAGES_DONE'"
+
 chown -R kl /home/kl/.nix-shell-args
 
 if [ -d "/tmp/ssh2" ]; then

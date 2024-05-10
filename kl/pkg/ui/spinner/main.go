@@ -2,8 +2,9 @@ package spinner
 
 import (
 	"fmt"
-	"github.com/briandowns/spinner"
 	"time"
+
+	"github.com/briandowns/spinner"
 )
 
 func NewSpinner(msg ...string) *spinner.Spinner {

@@ -8,6 +8,7 @@ import (
 
 	dockerclient "github.com/docker/docker/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,8 @@ type client struct {
 	cwd        string
 
 	containerName string
+
+	spinner *spinner.Sp
 }
 
 func (c *client) Context() context.Context {
@@ -34,20 +37,23 @@ func NewClient(cmd *cobra.Command, args []string) (*client, error) {
 	}
 
 	foreground := fn.ParseBoolFlag(cmd, "foreground")
-	debug := fn.ParseBoolFlag(cmd, "verbose")
+	verbose := fn.ParseBoolFlag(cmd, "verbose")
 	cwd, _ := os.Getwd()
 
 	hash := md5.New()
 	hash.Write([]byte(cwd))
 	contName := fmt.Sprintf("kl-box-%x", hash.Sum(nil))
 
+	sp := spinner.NewSpinnerClient("loading please wait", !(foreground || verbose))
+
 	return &client{
 		cli:           cli,
 		cmd:           cmd,
 		args:          args,
 		foreground:    foreground,
-		verbose:       debug,
+		verbose:       verbose,
 		cwd:           cwd,
 		containerName: contName,
+		spinner:       sp,
 	}, nil
 }

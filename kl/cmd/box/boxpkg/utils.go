@@ -123,6 +123,9 @@ func (c *client) ensureCacheExist() error {
 }
 
 func (c *client) startContainer(klConfig KLConfigType, td string) error {
+	c.spinner.Start("starting container please wait")
+	defer c.spinner.Stop()
+
 	conf, err := json.Marshal(klConfig)
 	if err != nil {
 		return err

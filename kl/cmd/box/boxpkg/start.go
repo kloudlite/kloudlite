@@ -9,7 +9,6 @@ import (
 
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/nxadm/tail"
 )
@@ -17,12 +16,7 @@ import (
 var containerNotStartedErr = fmt.Errorf("container not started")
 
 func (c *client) Start() error {
-	s := spinner.NewSpinner("starting container please wait")
-	if !(c.foreground || c.verbose) {
-
-		s.Start()
-		defer s.Stop()
-	}
+	c.spinner.Start("initiating container please wait")
 
 	if c.verbose {
 		fn.Logf("starting container in: %s", text.Blue(c.cwd))
@@ -34,18 +28,22 @@ func (c *client) Start() error {
 	}
 
 	if cr.Name != "" {
-		s.Stop()
+		c.spinner.Stop()
 		fn.Logf("container %s already running in %s", text.Yellow(cr.Name), text.Blue(cr.Path))
 
 		if c.cwd != cr.Path {
 			fn.Printf("do you want to stop that and start here? [Y/n]")
 		} else {
-			fn.Printf("do you want to restart it? [Y/n]")
+			fn.Printf("do you want to restart it? [y/N]")
 		}
 
 		var response string
 		_, _ = fmt.Scanln(&response)
-		if response == "n" {
+		if c.cwd != cr.Path && response == "n" {
+			return containerNotStartedErr
+		}
+
+		if c.cwd == cr.Path && response != "y" {
 			return containerNotStartedErr
 		}
 
@@ -131,7 +129,7 @@ func (c *client) Start() error {
 	select {
 	case exitCode := <-status:
 		{
-			s.Stop()
+			c.spinner.Stop()
 			cancelFn()
 			if exitCode != 0 {
 				_ = c.Stop()
@@ -151,7 +149,7 @@ func (c *client) Start() error {
 
 func (c *client) readTillLine(ctx context.Context, file string, desiredLine, stream string, follow bool) (bool, error) {
 
-	t, err := tail.TailFile(file, tail.Config{Follow: follow, ReOpen: follow})
+	t, err := tail.TailFile(file, tail.Config{Follow: follow, ReOpen: follow, Logger: tail.DiscardingLogger})
 
 	if err != nil {
 		return false, err
@@ -160,6 +158,14 @@ func (c *client) readTillLine(ctx context.Context, file string, desiredLine, str
 	for l := range t.Lines {
 		if l.Text == desiredLine {
 			return true, nil
+		}
+
+		if l.Text == "kloudlite-entrypoint:INSTALLING_PACKAGES" {
+			c.spinner.Update("installing nix packages")
+		}
+
+		if l.Text == "kloudlite-entrypoint:INSTALLING_PACKAGES_DONE" {
+			c.spinner.Update("loading please wait")
 		}
 
 		if c.verbose {
@@ -173,56 +179,4 @@ func (c *client) readTillLine(ctx context.Context, file string, desiredLine, str
 	}
 
 	return false, nil
-}
-
-// TODO: if needs to add below code into logic where container already exists and not runnning
-func Update() {
-	// // Get all volume mounts
-	// type Container struct {
-	// 	Mounts []struct {
-	// 		Type        string `json:"Type"`
-	// 		Source      string `json:"Source"`
-	// 		Destination string `json:"Destination"`
-	// 	}
-	// }
-	// var containers []Container
-	// err := json.Unmarshal(o, &containers)
-	// if err != nil {
-	// 	return fmt.Errorf("error parsing docker inspect output [%s]", err.Error())
-	// }
-	// for _, container := range containers {
-	// 	for _, mount := range container.Mounts {
-	// 		if mount.Destination == "/home/kl/workspace" {
-	// 			if fmt.Sprintf("/host_mnt%s", cwd) != mount.Source {
-	// 				fn.Warn("kl-box is running with a different workspace.")
-	// 			} else {
-	// 				return nil
-	// 			}
-	// 		}
-	// 	}
-	// }
-	//
-	// fn.Log("Do you want to reload with current workspace? [y/N] ")
-	// var response string
-	// _, _ = fmt.Scanln(&response)
-	// if response != "y" {
-	// 	return nil
-	// }
-	//
-	// fn.Log("Reloading kl-box container...")
-	// command := exec.Command(
-	// 	"docker",
-	// 	"stop", containerName)
-	// err = command.Run()
-	// if err != nil {
-	// 	fn.PrintError(errors.New("error stopping kl-box container"))
-	// }
-	// command = exec.Command(
-	// 	"docker",
-	// 	"rm", containerName)
-	// err = command.Run()
-	// if err != nil {
-	// 	fn.PrintError(errors.New("error removing kl-box container"))
-	// }
-	// return startContainer()
 }

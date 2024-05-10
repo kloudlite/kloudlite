@@ -9,7 +9,6 @@ import (
 
 	"github.com/adrg/xdg"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
@@ -19,14 +18,12 @@ func (c *client) Ssh() error {
 		return err
 	}
 
-	s := spinner.NewSpinner("waiting for container to be ready")
-
 	if cont.Name == "" {
 		if err := c.Start(); err == nil {
-			s.Start()
-			time.Sleep(5 * time.Second)
-			s.Stop()
 
+			c.spinner.Start("waiting for container to be ready")
+			time.Sleep(5 * time.Second)
+			c.spinner.Stop()
 		}
 
 		if err != nil && err != containerNotStartedErr {
@@ -35,10 +32,22 @@ func (c *client) Ssh() error {
 	}
 
 	if cont.Name != "" && c.containerName != cont.Name {
-		fn.Warnf("\ncontainer already running, using container of workspace '%s'", c.cwd)
+		// fn.Warnf("\ncontainer already running, using container of workspace '%s'", c.cwd)
+
+		// if needed to restart server for unique workspace then uncomment below line
+
+		if err := c.Start(); err == nil {
+			c.spinner.Start("waiting for container to be ready")
+			time.Sleep(5 * time.Second)
+			c.spinner.Stop()
+		}
+
+		if err != nil && err != containerNotStartedErr {
+			return err
+		}
 	}
 
-	command := exec.Command("ssh", "kl@localhost", "-p", CONTAINER_PORT, "-i", path.Join(xdg.Home, ".ssh", "id_rsa"))
+	command := exec.Command("ssh", "kl@localhost", "-p", CONTAINER_PORT, "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
 
 	fn.Logf("\n%s: %s\n", text.Bold("ssh command"), text.Blue(command.String()))
 

@@ -7,16 +7,13 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/kloudlite/kl/pkg/dockercli"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
+	// "github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 func (c *client) Stop() error {
-	s := spinner.NewSpinner("stopping container please wait")
-	if !c.verbose {
-		s.Start()
-		defer s.Stop()
-	}
+	c.spinner.Start("stopping container please wait")
+	defer c.spinner.Stop()
 
 	cr, err := c.getContainer()
 	if err != nil {
