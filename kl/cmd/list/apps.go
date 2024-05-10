@@ -23,13 +23,11 @@ var appsCmd = &cobra.Command{
 
 func listapps(cmd *cobra.Command, _ []string) error {
 
-	projectName := fn.ParseStringFlag(cmd, "project")
 	envName := fn.ParseStringFlag(cmd, "env")
 	accName := fn.ParseStringFlag(cmd, "account")
 
 	apps, err := server.ListApps([]fn.Option{
 		fn.MakeOption("accountName", accName),
-		fn.MakeOption("projectName", projectName),
 		fn.MakeOption("envName", envName),
 	}...)
 	if err != nil {
@@ -53,14 +51,13 @@ func listapps(cmd *cobra.Command, _ []string) error {
 
 	fn.Println(table.Table(&header, rows, cmd))
 
-	table.KVOutput("apps of", projectName, true)
+	table.KVOutput("apps of", envName, true)
 	table.TotalResults(len(apps), true)
 	return nil
 }
 
 func init() {
 	appsCmd.Aliases = append(appsCmd.Aliases, "app")
-	appsCmd.Flags().StringP("project", "p", "", "project name")
 	appsCmd.Flags().StringP("env", "e", "", "environment name")
 	fn.WithOutputVariant(appsCmd)
 }

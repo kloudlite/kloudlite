@@ -12,7 +12,7 @@ var stopCmd = &cobra.Command{
 	Long: `stop intercept app to stop tunnel traffic to your device
 Examples:
 	# close intercept app
-  kl vpn intercept stop --app <app_name>
+  kl vpn intercept stop --app <app_name> 
 	`,
 
 	Run: func(cmd *cobra.Command, _ []string) {
@@ -34,7 +34,7 @@ Examples:
 			ns = e.TargetNs
 		}
 
-		if err := server.InterceptApp(false, []fn.Option{
+		if err := server.InterceptApp(false, nil, []fn.Option{
 			fn.MakeOption("appName", app),
 		}...); err != nil {
 			fn.PrintError(err)

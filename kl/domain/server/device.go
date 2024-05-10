@@ -10,11 +10,6 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
-type DevicePort struct {
-	Port       int `json:"port"`
-	TargetPort int `json:"targetPort,omitempty"`
-}
-
 type Device struct {
 	AccountName       string `json:"accountName"`
 	CreationTime      string `json:"creationTime"`
@@ -76,6 +71,7 @@ func createDevice(devName string) (*Device, error) {
 		"gvpnDevice": map[string]any{
 			"metadata":      map[string]string{"name": dn},
 			"globalVPNName": Default_GVPN,
+			"displayName":   dn,
 		},
 	}, &cookie)
 	if err != nil {
