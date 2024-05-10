@@ -37,8 +37,14 @@ COPY .bashrc .profile /tmp/
 COPY --from=builder /app/mounter /mounter
 
 SHELL ["/bin/bash", "-c"]
-RUN cat > /entrypoint.sh <<'EOF'
+RUN cat > /start.sh <<'EOF'
 #!/bin/bash
+
+set -o errexit
+set -o pipefail
+
+trap "echo kloudlite-entrypoint:CRASHED >&2" EXIT SIGINT SIGTERM
+
 entrypoint_executed="/home/kl/.kloudlite_entrypoint_executed"
 if [ ! -f "$entrypoint_executed" ]; then
     cp /tmp/.bashrc /home/kl/.bashrc
@@ -54,10 +60,10 @@ chown -R kl /tmp/sample.json
 
 echo $@ | jq -r | jq -r '.envVars | map_values(. = "export \(.key)=\(.value)") | .[]' > /home/kl/.env-vars
 chown -R kl /home/kl/.env-vars
-sudo -u kl bash -c "/home/kl/.nix-profile/bin/nix-shell -p $(cat /home/kl/.nix-shell-args) --run 'echo done' | tee /tmp/exec.log"
+sudo -u kl bash -c "/home/kl/.nix-profile/bin/nix-shell -p $(cat /home/kl/.nix-shell-args) --run 'echo done'"
 chown -R kl /home/kl/.nix-shell-args
 
-if [ ! -f "/tmp/ssh2" ]; then
+if [ -d "/tmp/ssh2" ]; then
     mkdir -p /home/kl/.ssh
     chown -R kl /home/kl/.ssh
     cp /tmp/ssh2/authorized_keys /home/kl/.ssh/authorized_keys
@@ -68,10 +74,34 @@ fi
 
 sudo /mounter --conf /tmp/sample.json
 
-
-echo "starting sshd"
+trap - EXIT SIGTERM SIGINT
+echo "kloudlite-entrypoint: SETUP_COMPLETE"
 /usr/sbin/sshd -D
 EOF
+
+RUN cat > /entrypoint.sh <<'EOF'
+#! /usr/bin/env bash
+if [ -f "/tmp/stderr.log" ]; then
+    sudo chown root /tmp/stderr.log
+fi
+
+if [ -f "/tmp/stdout.log" ]; then
+    sudo chown root /tmp/stdout.log
+fi
+
+ls -al /tmp
+
+(tail -f /tmp/stdout.log) &
+pid=$!
+(tail -f /tmp/stderr.log) &
+pid="$pid $1"
+
+trap "eval kill -9 $pid" EXIT TERM
+/start.sh $@ > /tmp/stdout.log 2> /tmp/stderr.log
+EOF
+
+RUN chmod +x /start.sh
 RUN chmod +x /entrypoint.sh
+
 
 ENTRYPOINT ["/entrypoint.sh"]
