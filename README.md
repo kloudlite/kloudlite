@@ -5,35 +5,27 @@
   Cloud Native RemoteLocal Environments to build distributed applications.
 </p>
 
-Table of Contents
-* Features
-* Installation
-* Usage
-* Contributing
-* License
+---
 
-
-Features
+## Features
 * Seamless Integration: Sync configurations, secrets, and development containers between local systems and remote environments.
 * Reduced Latency: Work with local IDEs while seamlessly interacting with remote resources, reducing latency issues.
 * Debugging Support: Use service interception for debugging and troubleshooting distributed applications.
 * Collaborative Coding: Collaborate effectively with team members, accelerating the development cycle.
 
 
-Installation
+## Installation
 To install KloudLite, simply run:
 `npm install -g kloudlite`
 
-
-
-Usage
+## Usage
 To use KloudLite, follow these steps:
 1. Configure your local environment settings.
 2. Connect to your remote environment using KloudLite.
 3. Start developing your distributed application with reduced latency and enhanced collaboration.
 
 
-Contributing
+## Contributing
 We welcome contributions from the community! If you'd like to contribute to KloudLite, please follow these guidelines:
 1. Fork the repository.
 2. Create a new branch (git checkout -b feature/your-feature-name).
@@ -42,7 +34,7 @@ We welcome contributions from the community! If you'd like to contribute to Klou
 5. Create a new Pull Request.
 
 
-License
+## License
 KloudLite is licensed under the MIT License. See the LICENSE file for details.
 
 
