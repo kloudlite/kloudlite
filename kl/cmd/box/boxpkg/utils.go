@@ -13,6 +13,7 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/kloudlite/kl/constants"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -196,6 +197,10 @@ func (c *client) startContainer(klConfig KLConfigType, td string) error {
 
 	if c.verbose {
 		fn.Logf("docker container started with cmd: %s\n", text.Blue(command.String()))
+	}
+
+	if _, err := c.cli.ImagePull(c.Context(), ImageName, image.PullOptions{}); err != nil {
+		return err
 	}
 
 	if err := command.Run(); err != nil {

@@ -141,14 +141,12 @@ func (c *client) Start() error {
 				c.verbose = true
 				c.readTillLine(timeoutCtx, stdOutPath, "kloudlite-entrypoint: SETUP_COMPLETE", "stdout", false)
 				c.readTillLine(timeoutCtx, stdErrPath, "kloudlite-entrypoint:CRASHED", "stderr", false)
-				return errors.New("kloudlite setup failed")
+				return errors.New("failed to start container")
 			}
 
-			fn.Logf("kloudlite setup done")
+			fn.Log(text.Blue("container started successfully"))
 		}
 	}
-
-	// exitCode := <-status
 
 	return nil
 }
