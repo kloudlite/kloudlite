@@ -2,7 +2,6 @@ package boxpkg
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -19,24 +18,6 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
-
-func (c *client) isPortInUse() bool {
-
-	command := exec.Command("docker", "ps", "--format", "{{.Ports}}")
-	output, err := command.Output()
-	if err != nil {
-		fn.PrintError(errors.New("error checking docker containers"))
-		return false
-	}
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		if strings.Contains(line, CONTAINER_PORT) {
-			return true
-		}
-	}
-	return false
-
-}
 
 type Container struct {
 	Name string
@@ -175,10 +156,6 @@ func (c *client) startContainer(klConfig KLConfigType, td string) error {
 	case constants.RuntimeWindows:
 		fn.Warn("docker support inside container not implemented yet")
 	default:
-		dockerArgs = append(dockerArgs, "-v", "/var/run/docker.sock:/var/run/docker.sock:ro")
-	}
-
-	if runtime.GOOS != constants.RuntimeWindows {
 		dockerArgs = append(dockerArgs, "-v", "/var/run/docker.sock:/var/run/docker.sock:ro")
 	}
 
