@@ -34,7 +34,7 @@ func (*client) loadConfig(mm server.MountMap, envs map[string]string) (*KLConfig
 
 	fm := map[string]string{}
 
-	for _, fe := range kt.FileMount.Mounts {
+	for _, fe := range kt.Mounts.GetMounts() {
 		pth := fe.Path
 		if pth == "" {
 			pth = fe.Key
@@ -50,10 +50,15 @@ func (*client) loadConfig(mm server.MountMap, envs map[string]string) (*KLConfig
 		ev = append(ev, EnvironmentVariable{k, v})
 	}
 
+	for _, ne := range kf.EnvVars.GetEnvs() {
+		ev = append(ev, EnvironmentVariable{ne.Key, ne.Value})
+	}
+
 	klConfig.EnvVars = ev
 	if klConfig.EnvVars == nil {
 		klConfig.EnvVars = []EnvironmentVariable{}
 	}
+
 	klConfig.Mounts = fm
 
 	return klConfig, nil

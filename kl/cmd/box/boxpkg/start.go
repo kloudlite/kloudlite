@@ -162,10 +162,12 @@ func (c *client) readTillLine(ctx context.Context, file string, desiredLine, str
 
 		if l.Text == "kloudlite-entrypoint:INSTALLING_PACKAGES" {
 			c.spinner.Update("installing nix packages")
+			continue
 		}
 
 		if l.Text == "kloudlite-entrypoint:INSTALLING_PACKAGES_DONE" {
 			c.spinner.Update("loading please wait")
+			continue
 		}
 
 		if c.verbose {

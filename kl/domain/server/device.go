@@ -69,9 +69,10 @@ func createDevice(devName string) (*Device, error) {
 
 	respData, err := klFetch("cli_createGlobalVPNDevice", map[string]any{
 		"gvpnDevice": map[string]any{
-			"metadata":      map[string]string{"name": dn},
-			"globalVPNName": Default_GVPN,
-			"displayName":   dn,
+			"metadata":       map[string]string{"name": dn},
+			"globalVPNName":  Default_GVPN,
+			"displayName":    dn,
+			"creationMethod": "kl",
 		},
 	}, &cookie)
 	if err != nil {

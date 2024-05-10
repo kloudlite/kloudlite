@@ -9,6 +9,10 @@ import (
 	"github.com/kloudlite/kl/domain/server"
 )
 
+const (
+	MountPath = "./.kl-mounts"
+)
+
 func MountEnv(args []string) error {
 	klfile, err := client.GetKlFile("")
 	if err != nil {
@@ -21,7 +25,7 @@ func MountEnv(args []string) error {
 	}
 
 	mountfiles := map[string]string{}
-	for _, fe := range klfile.FileMount.Mounts {
+	for _, fe := range klfile.Mounts.GetMounts() {
 		pth := fe.Path
 		if pth == "" {
 			pth = fe.Key
@@ -30,7 +34,7 @@ func MountEnv(args []string) error {
 		mountfiles[pth] = mmap[pth]
 	}
 
-	if err = mounter.Mount(mountfiles, klfile.FileMount.MountBasePath); err != nil {
+	if err = mounter.Mount(mountfiles, MountPath); err != nil {
 		return err
 	}
 
@@ -39,11 +43,11 @@ func MountEnv(args []string) error {
 		cwd = "."
 	}
 
-	for _, ev := range klfile.Env {
+	for _, ev := range klfile.EnvVars.GetEnvs() {
 		envs[ev.Key] = ev.Value
 	}
 
-	envs["KL_MOUNT_PATH"] = path.Join(cwd, klfile.FileMount.MountBasePath)
+	envs["KL_MOUNT_PATH"] = path.Join(cwd, MountPath)
 
 	if err = mounter.Load(envs, args[1:]); err != nil {
 		return err

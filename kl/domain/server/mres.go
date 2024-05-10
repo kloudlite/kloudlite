@@ -136,7 +136,7 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 		return nil, err
 	}
 
-	if kt.Mres == nil {
+	if kt.EnvVars.GetMreses() == nil {
 		return nil, fmt.Errorf("no managed resource selected")
 	}
 
@@ -149,7 +149,7 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 		"envName": env.Name,
 		"keyrefs": func() []map[string]string {
 			var keyrefs []map[string]string
-			for _, m := range kt.Mres {
+			for _, m := range kt.EnvVars.GetMreses() {
 				for _, e := range m.Env {
 					keyrefs = append(keyrefs, map[string]string{
 						"mresName": m.Name,
@@ -185,7 +185,7 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 
 	result := map[string]string{}
 
-	for _, rt := range kt.Mres {
+	for _, rt := range kt.EnvVars.GetMreses() {
 		for _, e := range rt.Env {
 
 			if mresMap[rt.Name] == nil {

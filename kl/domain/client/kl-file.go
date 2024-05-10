@@ -7,50 +7,15 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
-type CSType string
-
-const (
-	ConfigType CSType = "config"
-	SecretType CSType = "secret"
-)
-
-type ResEnvType struct {
-	Name   *string `json:"name,omitempty" yaml:"name,omitempty"`
-	Key    string  `json:"key"`
-	RefKey string  `json:"refKey"`
-}
-
-type EnvType struct {
-	Key   string `json:"key" yaml:"key"`
-	Value string `json:"value" yaml:"value"`
-}
-
-type ResType struct {
-	Name string       `json:"name"`
-	Env  []ResEnvType `json:"env"`
-}
-
-type FileEntry struct {
-	Path string `json:"path"`
-	Type CSType `json:"type"`
-	Name string `json:"Name"`
-	Key  string `json:"key"`
-}
-
-type MountType struct {
-	MountBasePath string      `json:"mountBasePath"`
-	Mounts        []FileEntry `json:"mounts"`
-}
-
 type KLFileType struct {
-	Version    string    `json:"version"`
-	DefaultEnv string    `json:"defaultEnv"`
-	Packages   []string  `json:"packages"`
-	Mres       []ResType `json:"mres"`
-	Configs    []ResType `json:"configs"`
-	Secrets    []ResType `json:"secrets"`
-	Env        []EnvType `json:"env"`
-	FileMount  MountType `json:"fileMount"`
+	Version    string   `json:"version"`
+	DefaultEnv string   `json:"defaultEnv"`
+	Packages   []string `json:"packages"`
+	// Mres       []ResType `json:"mres"`
+	// Configs    []ResType `json:"configs"`
+	// Secrets    []ResType `json:"secrets"`
+	EnvVars EnvVars `json:"envVars"`
+	Mounts  Mounts  `json:"mounts"`
 }
 
 const (

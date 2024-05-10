@@ -57,14 +57,11 @@ Examples:
 				Version:    "v1",
 				DefaultEnv: defEnv,
 				Packages:   packages,
-				Mres:       make([]client.ResType, 0),
-				Configs:    make([]client.ResType, 0),
-				Secrets:    make([]client.ResType, 0),
-				Env:        []client.EnvType{{Key: "SAMPLE", Value: "sampleValue"}},
-				FileMount: client.MountType{
-					MountBasePath: "./.mounts",
-					Mounts:        make([]client.FileEntry, 0),
-				},
+				// Mres:       make([]client.ResType, 0),
+				// Configs:    make([]client.ResType, 0),
+				// Secrets:    make([]client.ResType, 0),
+				EnvVars: []client.EnvType{{Key: "SAMPLE", Value: fn.Ptr("sampleValue")}},
+				Mounts:  client.Mounts{},
 			}
 			if defEnv == "" {
 				fn.Warn("No environment found, Please create environments from dashboard\n")

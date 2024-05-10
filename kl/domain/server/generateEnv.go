@@ -93,11 +93,17 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 		return nil, nil, err
 	}
 
+	currMreses := kt.EnvVars.GetMreses()
+	currSecs := kt.EnvVars.GetSecrets()
+	currConfs := kt.EnvVars.GetConfigs()
+
+	currMounts := kt.Mounts.GetMounts()
+
 	respData, err := klFetch("cli_getConfigSecretMap", map[string]any{
 		"envName": env.Name,
 		"configQueries": func() []any {
 			var queries []any
-			for _, v := range kt.Configs {
+			for _, v := range currConfs {
 				for _, vv := range v.Env {
 					queries = append(queries, map[string]any{
 						"configName": v.Name,
@@ -106,7 +112,7 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 				}
 			}
 
-			for _, fe := range kt.FileMount.Mounts {
+			for _, fe := range currMounts {
 				if fe.Type == client.ConfigType {
 					queries = append(queries, map[string]any{
 						"configName": fe.Name,
@@ -120,7 +126,7 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 
 		"mresQueries": func() []any {
 			var queries []any
-			for _, rt := range kt.Mres {
+			for _, rt := range currMreses {
 				for _, v := range rt.Env {
 					queries = append(queries, map[string]any{
 						"mresName": rt.Name,
@@ -134,7 +140,7 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 
 		"secretQueries": func() []any {
 			var queries []any
-			for _, v := range kt.Secrets {
+			for _, v := range currSecs {
 				for _, vv := range v.Env {
 					queries = append(queries, map[string]any{
 						"secretName": v.Name,
@@ -143,7 +149,7 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 				}
 			}
 
-			for _, fe := range kt.FileMount.Mounts {
+			for _, fe := range currMounts {
 				if fe.Type == client.SecretType {
 					queries = append(queries, map[string]any{
 						"secretName": fe.Name,
@@ -170,7 +176,7 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 
 	cmap := CSResp{}
 
-	for _, rt := range kt.Configs {
+	for _, rt := range currConfs {
 		cmap[rt.Name] = map[string]*Kv{}
 		for _, v := range rt.Env {
 			cmap[rt.Name][v.RefKey] = &Kv{
@@ -181,7 +187,7 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 
 	smap := CSResp{}
 
-	for _, rt := range kt.Secrets {
+	for _, rt := range currSecs {
 		smap[rt.Name] = map[string]*Kv{}
 		for _, v := range rt.Env {
 			smap[rt.Name][v.RefKey] = &Kv{
@@ -191,7 +197,7 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 	}
 
 	mmap := CSResp{}
-	for _, rt := range kt.Mres {
+	for _, rt := range currMreses {
 		mmap[rt.Name] = map[string]*Kv{}
 		for _, v := range rt.Env {
 			mmap[rt.Name][v.RefKey] = &Kv{
@@ -238,7 +244,7 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 	// ************************[ handling mounts ]****************************
 	mountMap := map[string]string{}
 
-	for _, fe := range kt.FileMount.Mounts {
+	for _, fe := range currMounts {
 		pth := fe.Path
 		if pth == "" {
 			pth = fe.Key

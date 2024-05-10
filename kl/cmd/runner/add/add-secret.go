@@ -139,23 +139,11 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	// var found bool
-	// for i, envVar := range klFile.EnvVars {
-	// 	if envVar.Key == selectedSecretKey.Key {
-	// 		klFile.EnvVars[i].Value = selectedSecretKey.Value
-	// 		found = true
-	// 		break
-	// 	}
-	// }
-	// if !found {
-	// 	klFile.EnvVars = append(klFile.EnvVars, client.EnvType{
-	// 		Key:   selectedSecretKey.Key,
-	// 		Value: selectedSecretKey.Value,
-	// 	})
-	// }
+
+	currSecs := klFile.EnvVars.GetSecrets()
 
 	matchedGroupIndex := -1
-	for i, rt := range klFile.Secrets {
+	for i, rt := range currSecs {
 		if rt.Name == selectedSecretGroup.Metadata.Name {
 			matchedGroupIndex = i
 			break
@@ -165,7 +153,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	if matchedGroupIndex != -1 {
 		matchedKeyIndex := -1
 
-		for i, ret := range klFile.Secrets[matchedGroupIndex].Env {
+		for i, ret := range currSecs[matchedGroupIndex].Env {
 			if ret.RefKey == selectedSecretKey.Key {
 				matchedKeyIndex = i
 				break
@@ -173,7 +161,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		}
 
 		if matchedKeyIndex == -1 {
-			klFile.Secrets[matchedGroupIndex].Env = append(klFile.Secrets[matchedGroupIndex].Env, client.ResEnvType{
+			currSecs[matchedGroupIndex].Env = append(currSecs[matchedGroupIndex].Env, client.ResEnvType{
 				Key: RenameKey(func() string {
 					if m != "" {
 						kk := strings.Split(m, "=")
@@ -185,7 +173,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 			})
 		}
 	} else {
-		klFile.Secrets = append(klFile.Secrets, client.ResType{
+		currSecs = append(currSecs, client.ResType{
 			Name: selectedSecretGroup.Metadata.Name,
 			Env: []client.ResEnvType{
 				{
@@ -203,9 +191,10 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 
 	}
 
+	klFile.EnvVars.AddResTypes(currSecs, client.Res_secret)
 	err = client.WriteKLFile(*klFile)
 	if err != nil {
-		fn.PrintError(err)
+		return err
 	}
 
 	fn.Log(fmt.Sprintf("added secret %s/%s to your kl-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key))

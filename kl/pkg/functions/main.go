@@ -261,3 +261,7 @@ func RemoveFromArray(target string, arr []string) []string {
 	}
 	return result
 }
+
+func Ptr[T any](v T) *T {
+	return &v
+}

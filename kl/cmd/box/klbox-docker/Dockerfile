@@ -1,5 +1,5 @@
 # Use the official Ubuntu base image
-FROM golang:1.21 as builder
+FROM --platform=$TARGETPLATFORM golang:1.21 as builder
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ COPY main.go main.go
 
 RUN go build -o mounter main.go
 
-FROM ubuntu:latest
+FROM --platform=$TARGETPLATFORM ubuntu:latest
 
 RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2
 RUN mkdir /var/run/sshd
@@ -23,6 +23,7 @@ RUN sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid
 EXPOSE 22
 
 ENV HOSTNAME box
+RUN mkdir -m 0755 /nix && chown kl /nix
 USER kl
 RUN curl -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-profile
 
