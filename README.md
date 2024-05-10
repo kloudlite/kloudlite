@@ -15,7 +15,10 @@
 ### Setup KloudLite on Kubernetes
 You can install KloudLite platform on Kubernetes using Helm.
 ```
-helm install ...
+helm repo add kloudlite https://kloudlite.github.io/helm-charts
+helm repo update
+
+helm install [RELEASE_NAME] kloudlite/kloudlite-platform --namespace [NAMESPACE] [--create-namespace]
 ```
 
 
