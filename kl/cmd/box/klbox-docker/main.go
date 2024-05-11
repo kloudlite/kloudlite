@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
 )
 
 type config struct {
 	Mounts map[string]string `json:"mounts"`
+	DNS    string            `json:"dns"`
 }
 
 func main() {
@@ -38,7 +41,19 @@ func Run() error {
 	}
 
 	for k, v := range c.Mounts {
-		if err := os.WriteFile(k, []byte(v), os.ModePerm); err != nil {
+
+		if err := os.MkdirAll(filepath.Dir(k), fs.ModePerm); err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(k, []byte(v), fs.ModePerm); err != nil {
+			return err
+		}
+	}
+
+	wgPath := "/etc/resolv.conf"
+	if c.DNS != "" {
+		if err := os.WriteFile(wgPath, []byte(c.DNS), fs.ModePerm); err != nil {
 			return err
 		}
 	}

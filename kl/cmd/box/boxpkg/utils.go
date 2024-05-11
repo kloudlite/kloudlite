@@ -13,7 +13,6 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/kloudlite/kl/constants"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -56,6 +55,42 @@ func (c *client) getContainer() (Container, error) {
 
 		defCr.Name = crlist[0].ID
 		defCr.Path = crlist[0].Labels["kl-box-cwd"]
+
+		return defCr, nil
+	}
+
+	return defCr, nil
+}
+
+func (c *client) getVPNContainer() (Container, error) {
+	defCr := Container{}
+
+	crlist, err := c.cli.ContainerList(c.cmd.Context(), container.ListOptions{
+		Filters: filters.NewArgs(
+			filters.KeyValuePair{Key: "label", Value: "kl-box-vpn=true"},
+		),
+		All: true,
+	})
+	if err != nil {
+		return defCr, err
+	}
+
+	if len(crlist) >= 1 {
+		if len(crlist[0].Names) >= 1 {
+
+			defCr.Name = crlist[0].Names[0]
+
+			if strings.Contains(defCr.Name, "/") {
+				s := strings.Split(defCr.Name, "/")
+				if len(s) >= 1 {
+					defCr.Name = s[1]
+				}
+			}
+
+			return defCr, nil
+		}
+
+		defCr.Name = crlist[0].ID
 
 		return defCr, nil
 	}
@@ -184,10 +219,11 @@ func (c *client) startContainer(klConfig KLConfigType, td string) error {
 		"-v", "kl-home-cache:/home:rw",
 		"-v", "nix-store:/nix:rw",
 		"--hostname", "box",
+		"--network", "host",
 		"-v", fmt.Sprintf("%s:/home/kl/workspace:rw", cwd),
 		"-v", fmt.Sprintf("%s:/tmp/stdout.log:rw", stdOutPath),
 		"-v", fmt.Sprintf("%s:/tmp/stderr.log:rw", stdErrPath),
-		"-p", "1729:22",
+		// "-p", "1729:22",
 		ImageName, "--", string(conf),
 	)
 
@@ -202,9 +238,9 @@ func (c *client) startContainer(klConfig KLConfigType, td string) error {
 		fn.Logf("docker container started with cmd: %s\n", text.Blue(command.String()))
 	}
 
-	if _, err := c.cli.ImagePull(c.Context(), ImageName, image.PullOptions{}); err != nil {
-		return err
-	}
+	// if _, err := c.cli.ImagePull(c.Context(), ImageName, image.PullOptions{}); err != nil {
+	// 	return err
+	// }
 
 	if err := command.Run(); err != nil {
 		return fmt.Errorf("error running kl-box container [%s]", err.Error())

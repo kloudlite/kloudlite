@@ -9,17 +9,19 @@ import (
 
 	"github.com/adrg/xdg"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 func (c *client) Ssh() error {
+	defer c.spinner.Stop()
+
 	cont, err := c.getContainer()
 	if err != nil {
 		return err
 	}
 
 	if cont.Name == "" {
-		if err := c.Start(); err == nil {
+		err := c.Start()
+		if err == nil {
 
 			c.spinner.Start("waiting for container to be ready")
 			time.Sleep(5 * time.Second)
@@ -36,7 +38,8 @@ func (c *client) Ssh() error {
 
 		// if needed to restart server for unique workspace then uncomment below line
 
-		if err := c.Start(); err == nil {
+		err := c.Start()
+		if err == nil {
 			c.spinner.Start("waiting for container to be ready")
 			time.Sleep(5 * time.Second)
 			c.spinner.Stop()
@@ -49,13 +52,11 @@ func (c *client) Ssh() error {
 
 	command := exec.Command("ssh", "kl@localhost", "-p", CONTAINER_PORT, "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
 
-	fn.Logf("\n%s: %s\n", text.Bold("ssh command"), text.Blue(command.String()))
-
 	if c.verbose {
 		fn.Log(command.String())
 	}
 
-	command.Stderr = os.Stderr
+	// command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	if err := command.Run(); err != nil {

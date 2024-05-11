@@ -2,6 +2,7 @@ package boxpkg
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -72,6 +73,17 @@ func (c *client) Start() error {
 	if err != nil {
 		return err
 	}
+
+	d, err := server.EnsureDevice()
+	if err != nil {
+		return err
+	}
+
+	configuration, err := base64.StdEncoding.DecodeString(d.WireguardConfig.Value)
+	if err != nil {
+		return err
+	}
+	kConf.WGConfig = string(configuration)
 
 	td, err := os.MkdirTemp("", "kl-tmp")
 	if err != nil {
