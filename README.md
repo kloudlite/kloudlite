@@ -6,23 +6,16 @@
   Cloud Native RemoteLocal Environments to build distributed applications.
 </p>
 
-Welcome to Kloudlite! Kloudlite is a development environment platform designed to enhance productivity for developers working on distributed applications. By leveraging Kubernetes, Kloudlite provides a seamless bridge between local systems and remote environments, ensuring efficient and effective development workflows.
+Kloudlite is a remote local environments platform designed to enhance productivity for developers working on distributed applications. By leveraging Kubernetes, Kloudlite provides a seamless bridge between local systems and remote environments, ensuring efficient and effective development workflows.
 
 ## Features
+- **Isolated and Replicable Local Development Containers**: Kloudlite provides developers with isolated local development containers that seamlessly connect with remote environments. This setup ensures a replicable development process that is both efficient and consistent across different machines and team members.
 
-- **Remote and Local Environment Sync**: Kloudlite synchronizes configurations and secrets between your local development containers (KL boxes) and remote Kubernetes environments, allowing for a consistent and seamless development experience.
-  
-- **Low-Latency Connectivity**: Unlike traditional remote IDEs, Kloudlite utilizes WireGuard to establish a network mesh that connects your local environment with remote services, drastically reducing latency and improving response times.
+- **Comprehensive Environment Management**: Kloudlite environments are designed to manage configurations, secrets, applications and external services, ensuring that all your development needs are met within a unified platform.
 
-- **Development Containers with SSH**: Each local development container comes equipped with an SSH server, enabling direct connectivity from your local IDE. This makes your development workflow more straightforward and efficient.
+- **Application/Service Interception**: With Kloudlite, developers can intercept and replace an application or service running in the remote environment with the version running in their local IDE. This feature allows for real-time testing and debugging before proceeding with builds and deployments, significantly enhancing development efficiency.
 
-- **Service Interception for Debugging**: Developers can intercept applications running inside the remote environment to debug in real-time, enhancing the ability to test and troubleshoot during the development phase.
-
-- **Collaborative Coding**: Kloudlite supports multiple developers working in the same environment simultaneously. This feature is ideal for team projects and collaborative coding sessions, allowing for real-time interaction and updates.
-
-- **Stateless Workloads**: The stateless nature of Kloudlite workloads facilitates easy cloning and feature environment setups, making it simpler to manage and scale your development efforts.
-
-- **Extensibility**: Easily add external services to your Kubernetes workspace, enhancing the functionality and integrability of your development environment.
+- **Collaborative Development**: Kloudlite supports collaborative development by allowing multiple developers to connect to the same environment. Team members can intercept their respective services and debug collaboratively, directly from their local machines, fostering teamwork and streamlining problem-solving.
 
 ## Getting Started
 
