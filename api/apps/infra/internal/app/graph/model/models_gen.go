@@ -1456,7 +1456,8 @@ type SearchDomainEntry struct {
 }
 
 type SearchGlobalVPNDevices struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	Text           *repos.MatchFilter `json:"text,omitempty"`
+	CreationMethod *repos.MatchFilter `json:"creationMethod,omitempty"`
 }
 
 type SearchGlobalVPNs struct {

@@ -39,6 +39,11 @@ type GlobalVPN struct {
 
 	// Peers []Peer `json:"peers" graphql:"noinput"`
 	AccountName string `json:"accountName" graphql:"noinput"`
+
+	KloudliteDevice struct {
+		Name   string `json:"name"`
+		IPAddr string `json:"ipAddr"`
+	} `json:"kloudliteDevice"`
 }
 
 func (c *GlobalVPN) GetDisplayName() string {

@@ -1,6 +1,9 @@
 package templates
 
-type ClusterKubeProxyVars struct {
-	Namespace               string
-	KloudliteDeviceWgConfig string
+type GVPNKloudliteDeviceTemplateVars struct {
+	Name      string
+	Namespace string
+	WgConfig  string
+
+	KubeReverseProxyImage string
 }
