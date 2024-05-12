@@ -113,8 +113,6 @@ func (d *domain) GetClusterAdminKubeconfig(ctx InfraContext, clusterName string)
 func (d *domain) applyCluster(ctx InfraContext, cluster *entities.Cluster) error {
 	addTrackingId(&cluster.Cluster, cluster.Id)
 	return d.applyK8sResource(ctx, &cluster.Cluster, cluster.RecordVersion)
-
-	// TODO: create cluster connection and apply to target cluster
 }
 
 func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
@@ -374,6 +372,56 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	return nCluster, nil
 }
 
+/*
+TODO:
+  - create a specific device for each global VPN reserved for kloudlite
+  - need to use that device as a kube-proxy to all the clusters
+  - we can read their logs, and everything on demand
+*/
+
+func (d *domain) syncKloudliteDeviceOnCluster(ctx InfraContext, gvpnName string) error {
+	// 1. parse deployment template
+	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	accNs, err := d.getAccNamespace(ctx)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	gv, err := d.findGlobalVPN(ctx, gvpnName)
+	if err != nil {
+		return err
+	}
+
+	if gv.KloudliteDevice.Name == "" {
+		return nil
+	}
+
+	// 2. Grab wireguard config from that device
+	wgConfig, err := d.getGlobalVPNDeviceWgConfig(ctx, gv.Name, gv.KloudliteDevice.Name)
+	if err != nil {
+		return err
+	}
+
+	deploymentBytes, err := templates.ParseBytes(b, templates.GVPNKloudliteDeviceTemplateVars{
+		Name:                  fmt.Sprintf("kloudlite-device-proxy-%s", gv.Name),
+		Namespace:             accNs,
+		WgConfig:              wgConfig,
+		KubeReverseProxyImage: d.env.GlobalVPNKubeReverseProxyImage,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := d.k8sClient.ApplyYAML(ctx, deploymentBytes); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
+}
+
 func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterToken string, cluster *entities.Cluster) error {
 	b, err := templates.Read(templates.HelmKloudliteAgent)
 	if err != nil {
@@ -522,6 +570,26 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 
 	c, err := d.findCluster(ctx, name)
 	if err != nil {
+		if errors.Is(err, ErrClusterNotFound) {
+			byokCluster, err := d.findBYOKCluster(ctx, name)
+			if err != nil {
+				return nil, err
+			}
+			return &entities.Cluster{
+				Cluster: clustersv1.Cluster{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: byokCluster.Name,
+					},
+					Spec: clustersv1.ClusterSpec{
+						ClusterServiceCIDR: byokCluster.ClusterSvcCIDR,
+						PublicDNSHost:      "",
+					},
+				},
+				ResourceMetadata: byokCluster.ResourceMetadata,
+				AccountName:      byokCluster.AccountName,
+				GlobalVPN:        &byokCluster.GlobalVPN,
+			}, nil
+		}
 		return nil, errors.NewE(err)
 	}
 
