@@ -17,46 +17,35 @@ Kloudlite is a remote local environments platform designed to enhance productivi
 
 - **Collaborative Development**: Kloudlite supports collaborative development by allowing multiple developers to connect to the same environment. Team members can intercept their respective services and debug collaboratively, directly from their local machines, fostering teamwork and streamlining problem-solving.
 
+## Installation
+
+To install Kloudlite using Helm, run the following command in your terminal:
+
+```bash
+helm install [NAME] [CHART] [flags]
+```
+Replace [NAME] with the name you want to assign to your Kloudlite installation, and [CHART] with the appropriate Helm chart for Kloudlite.
+
 ## Getting Started
+Follow these steps to begin using Kloudlite:
+- **Add Cluster to Kloudlite:** Start by adding your Kubernetes cluster to Kloudlite. This integration is crucial for managing your environments and services.
+- **Create Your First Environment:** Once your cluster is added, create your first environment. This is where you'll manage your services and applications.
+- **Configure Local Development Container:** Configure your local development container by setting up the kl.yaml file. This file will dictate how your local environment connects and interacts with your remote Kloudlite environment.
+- **Learn More:** To dive deeper into Kloudlite's features and capabilities, visit our documentation.
 
-To get started with Kloudlite, follow these steps:
-
-1. **Installation**:
-   - Install the Kloudlite CLI from [Kloudlite Installation Page](https://kloudlite.com/install).
-   - Set up WireGuard on your system to connect with Kloudlite environments.
-
-2. **Configuration**:
-   - Configure your local KL boxes and sync them with the remote Kubernetes environments.
-   - Ensure all necessary dependencies and services are configured as per your project needs.
-
-3. **Development**:
-   - Start your development by connecting your local IDE to the development container via SSH.
-   - Utilize the service interception feature to debug and test your applications dynamically.
-
-## Documentation
-
+## Documentatio
 For more detailed information and step-by-step guides, please visit our [documentation](https://kloudlite.com/docs).
 
 ## Support
-
 If you encounter any issues or require assistance, please visit our [support page](https://kloudlite.com/support) or reach out to our community on [Discord](https://discord.gg/kloudlite).
 
 ## Contributing
-
 We welcome contributions from the community! If you're interested in making Kloudlite better, please refer to our [contributing guidelines](https://kloudlite.com/contribute).
 
 ## License
-
 Kloudlite is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE.md) file for more details.
 
----
 
-Thank you for choosing Kloudlite. Happy coding!
-
-
-
-
----
 <p align="center">
   Made with ❤️ by the Kloudlite team
 </p>
