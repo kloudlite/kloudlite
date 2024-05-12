@@ -23,8 +23,6 @@ type LogSubscriptionCtx struct {
 }
 
 func (d *domain) handleObservabilityLogsMsg(ctx types.Context, subscriptions map[string]LogSubscriptionCtx, msgAny map[string]any) error {
-	// log := d.logger
-
 	var msg logs.Message
 	b, err := json.Marshal(msgAny)
 	if err != nil {
@@ -51,6 +49,7 @@ func (d *domain) handleObservabilityLogsMsg(ctx types.Context, subscriptions map
 			tpk := logs.LogSubsId(msg.Spec, d.env.LogsStreamName)
 			d.logger.Debugf("tpk: %s", tpk)
 
+			d.logger.Infof("subscribing to logs for %s", msg.Spec.TrackingId)
 			utils.WriteInfo(ctx, "subscribed to logs", msg.Id, types.ForLogs)
 
 			nctx, cf := context.WithCancel(ctx.Context)
@@ -127,6 +126,7 @@ func (d *domain) handleObservabilityLogsMsg(ctx types.Context, subscriptions map
 
 	case logs.EventUnsubscribe:
 		{
+			d.logger.Infof("unsubscribing to logs for %s", msg.Spec.TrackingId)
 			utils.WriteInfo(ctx, "[logs] subscription cancelled for ", msg.Id, types.ForLogs)
 			if v, ok := subscriptions[hash]; ok {
 				v.CancelFunc()

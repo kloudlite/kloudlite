@@ -34,7 +34,30 @@ func (d *domain) createGlobalVPN(ctx InfraContext, gvpn entities.GlobalVPN) (*en
 		gvpn.WgInterface = "kl0"
 	}
 
-	return d.gvpnRepo.Create(ctx, &gvpn)
+	gv, err := d.gvpnRepo.Create(ctx, &gvpn)
+	if err != nil {
+		return nil, err
+	}
+
+	device, err := d.createGlobalVPNDevice(ctx, entities.GlobalVPNDevice{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "kloudlite-platform-device",
+		},
+		ResourceMetadata: common.ResourceMetadata{
+			DisplayName:   "kloudlite-platform-device",
+			CreatedBy:     common.CreatedOrUpdatedByKloudlite,
+			LastUpdatedBy: common.CreatedOrUpdatedByKloudlite,
+		},
+		AccountName:    ctx.AccountName,
+		GlobalVPNName:  gv.Name,
+		PublicEndpoint: nil,
+		CreationMethod: "kloudlite-platform-auto-create",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return d.gvpnRepo.PatchById(ctx, gv.Id, repos.Document{fc.GlobalVPNKloudliteDeviceName: device.Name, fc.GlobalVPNKloudliteDeviceIpAddr: device.IPAddr})
 }
 
 func (d *domain) ensureGlobalVPN(ctx InfraContext, gvpnName string) (*entities.GlobalVPN, error) {

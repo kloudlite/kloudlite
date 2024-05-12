@@ -10,6 +10,11 @@ import (
 	"github.com/kloudlite/operator/pkg/operator"
 )
 
+type GlobalVPNConnDeviceRef struct {
+	Name   string `json:"name"`
+	IPAddr string `json:"ipAddr"`
+}
+
 type GlobalVPNConnection struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
@@ -24,11 +29,10 @@ type GlobalVPNConnection struct {
 	ClusterSvcCIDR        string `json:"clusterSvcCIDR" graphql:"noinput"`
 	ClusterPublicEndpoint string `json:"clusterPublicEndpoint" graphql:"noinput"`
 
-	GatewayIPAddr string `json:"gatewayIPAddr" graphql:"ignore"`
+	DeviceRef GlobalVPNConnDeviceRef `json:"deviceRef" graphql:"noinput"`
 
 	ParsedWgParams *wgv1.WgParams `json:"parsedWgParams" graphql:"ignore"`
-
-	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+	SyncStatus     t.SyncStatus   `json:"syncStatus" graphql:"noinput"`
 }
 
 func (c *GlobalVPNConnection) GetDisplayName() string {
