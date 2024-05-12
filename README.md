@@ -6,7 +6,7 @@
   Cloud Native RemoteLocal Environments to build distributed applications.
 </p>
 
-Welcome to Kloudlite! Kloudlite is a cutting-edge development environment platform designed to enhance productivity for developers working on distributed applications. By leveraging Kubernetes, Kloudlite provides a seamless bridge between local systems and remote environments, ensuring efficient and effective development workflows.
+Welcome to Kloudlite! Kloudlite is a development environment platform designed to enhance productivity for developers working on distributed applications. By leveraging Kubernetes, Kloudlite provides a seamless bridge between local systems and remote environments, ensuring efficient and effective development workflows.
 
 ## Features
 
