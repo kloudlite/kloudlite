@@ -299,6 +299,17 @@ export const cliQueries = (executor: IExecutor) => ({
     gql`
       query Core_getEnvironment($name: String!) {
         core_getEnvironment(name: $name) {
+          status {
+            isReady
+            message {
+              RawMessage
+            }
+          }
+          metadata {
+            name
+          }
+          displayName
+          clusterName
           spec {
             targetNamespace
           }
@@ -467,6 +478,7 @@ export const cliQueries = (executor: IExecutor) => ({
             node {
               displayName
               markedForDeletion
+              clusterName
               metadata {
                 name
                 namespace
