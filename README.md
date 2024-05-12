@@ -14,7 +14,7 @@ Welcome to Kloudlite! Kloudlite is a development environment platform designed t
   
 - **Low-Latency Connectivity**: Unlike traditional remote IDEs, Kloudlite utilizes WireGuard to establish a network mesh that connects your local environment with remote services, drastically reducing latency and improving response times.
 
-- **Development Containers with SSH**: Each local development container is equipped with an SSH server, enabling direct connectivity from your local IDE. This setup supports real-time code synchronization and debugging.
+- **Development Containers with SSH**: Each local development container comes equipped with an SSH server, enabling direct connectivity from your local IDE. This makes your development workflow more straightforward and efficient.
 
 - **Service Interception for Debugging**: Developers can intercept applications running inside the remote environment to debug in real-time, enhancing the ability to test and troubleshoot during the development phase.
 
