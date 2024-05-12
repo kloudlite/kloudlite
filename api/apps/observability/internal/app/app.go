@@ -149,12 +149,9 @@ var Module = fx.Module(
 
 			if !strings.HasPrefix(trackingId, "clus-") {
 				cfg := &rest.Config{
-					Host: fmt.Sprintf("kubectl-proxy.%s.svc.cluster.local", accountName),
-					WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
-						return httpServer.NewRoundTripperWithHeaders(rt, map[string][]string{
-							"kloudlite-cluster": []string{clusterName},
-						})
-					},
+					Host: fmt.Sprintf("http://kloudlite-device-proxy-%s.kl-account-%s.svc.cluster.local:8080/clusters/%s", "default", accountName, clusterName),
+					// Host: fmt.Sprintf("http://kube-access.test-kube-access-globalvpn.svc.cluster.local:8080/clusters/%s", clusterName),
+					// Host: fmt.Sprintf("http://kloudlite-device-proxy-default.kl-%s.svc.cluster.local:8080/clusters/%s", accountName, clusterName),
 				}
 
 				//out, err := infraCli.GetClusterKubeconfig(r.Context(), &infra.GetClusterIn{
