@@ -14,6 +14,7 @@ type KLConfigType struct {
 	Packages []string              `yaml:"packages" json:"packages"`
 	EnvVars  []EnvironmentVariable `yaml:"envVars" json:"envVars"`
 	Mounts   map[string]string     `yaml:"mounts" json:"mounts"`
+	WGConfig string                `yaml:"wgConfig" json:"wgConfig"`
 }
 
 func (*client) loadConfig(mm server.MountMap, envs map[string]string) (*KLConfigType, error) {
