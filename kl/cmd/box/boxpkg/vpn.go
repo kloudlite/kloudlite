@@ -1,18 +1,16 @@
 package boxpkg
 
 import (
-	"encoding/base64"
 	"fmt"
 	"os"
 	"path"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
-func (c *client) EnsureVpnRunning() error {
+func (c *client) EnsureVpnRunning(configuration []byte) error {
 	defer c.spinner.Update("starting vpn container")()
 
 	if c.verbose {
@@ -38,16 +36,16 @@ func (c *client) EnsureVpnRunning() error {
 		return err
 	}
 
-	c.spinner.Stop()
-	d, err := server.EnsureDevice()
-	if err != nil {
-		return err
-	}
+	// c.spinner.Stop()
+	// d, err := server.EnsureDevice()
+	// if err != nil {
+	// 	return err
+	// }
 
-	configuration, err := base64.StdEncoding.DecodeString(d.WireguardConfig.Value)
-	if err != nil {
-		return err
-	}
+	// configuration, err := base64.StdEncoding.DecodeString(d.WireguardConfig.Value)
+	// if err != nil {
+	// 	return err
+	// }
 
 	td, err := os.MkdirTemp("", "kl-tmp")
 	if err != nil {

@@ -13,6 +13,7 @@ type Env struct {
 	DisplayName string   `json:"displayName"`
 	Metadata    Metadata `json:"metadata"`
 	Status      Status   `json:"status"`
+	ClusterName string   `json:"clusterName"`
 	Spec        struct {
 		TargetNamespace string `json:"targetNamespace"`
 	} `json:"spec"`

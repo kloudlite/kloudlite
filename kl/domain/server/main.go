@@ -109,32 +109,26 @@ func GetFromResp[T any](respData []byte) (*T, error) {
 	return &resp.Data, nil
 }
 
-func GetEnvs(appId string) (string, error) {
+func GetEnv(envName string) (*Env, error) {
 	cookie, err := getCookie()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	respData, err := klFetch("cli_getEnv", map[string]any{
-		"appId": appId,
+	respData, err := klFetch("cli_getEnvironment", map[string]any{
+		"name": envName,
 	}, &cookie)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	type Response struct {
-		Envs string `json:"data"`
-	}
-
-	var resp Response
-
-	err = json.Unmarshal(respData, &resp)
+	e, err := GetFromResp[Env](respData)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return resp.Envs, nil
+	return e, nil
 }
 
 type ItemList[T any] struct {

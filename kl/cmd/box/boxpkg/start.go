@@ -11,6 +11,7 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/kloudlite/kl/constants"
+	cl "github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -63,10 +64,6 @@ func (c *client) Start() error {
 		return c.Start()
 	}
 
-	if err := c.EnsureVpnRunning(); err != nil {
-		return err
-	}
-
 	if err := c.ensurePublicKey(); err != nil {
 		return err
 	}
@@ -102,6 +99,20 @@ func (c *client) Start() error {
 	err = cfg.UnmarshalText(configuration)
 	f()
 	if err != nil {
+		return err
+	}
+
+	le, err := cl.CurrentEnv()
+	if err != nil {
+		return err
+	}
+
+	e, err := server.GetEnv(le.Name)
+	if err != nil {
+		return err
+	}
+
+	if err := c.EnsureVpnRunning(configuration); err != nil {
 		return err
 	}
 
@@ -145,7 +156,10 @@ func (c *client) Start() error {
 		args := []string{}
 
 		if len(cfg.DNS) > 0 {
-			args = append(args, []string{"--dns", cfg.DNS[0].To4().String()}...)
+			args = append(args, []string{
+				"--dns", cfg.DNS[0].To4().String(),
+				"--dns-search", fmt.Sprintf("%s.svc.%s.local", e.Spec.TargetNamespace, e.ClusterName),
+			}...)
 		}
 
 		switch runtime.GOOS {
