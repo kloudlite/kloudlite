@@ -33,7 +33,7 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 		if c != nil {
 			mu.Lock()
 			if err := c.WriteJSON(msg); err != nil {
-				d.logger.Warnf("websocket write: %w", err)
+				d.logger.Warnf("websocket write, error: %v", err)
 			}
 			mu.Unlock()
 			return nil
@@ -46,7 +46,7 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 		if c != nil {
 			mu.Lock()
 			if err := c.WriteMessage(websocket.TextMessage, b); err != nil {
-				d.logger.Warnf("websocket write: %w", err)
+				d.logger.Warnf("websocket write, error: %v", err)
 			}
 			mu.Unlock()
 			return nil
@@ -65,12 +65,6 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 
 	logsSubscriptions := make(map[string]LogSubscriptionCtx)
 
-	// disconnect := func() error {
-	// 	fmt.Println("-----DISCONNECTED-----")
-	// 	// write(`{"message": "CLOSING"}`)
-	// 	return c.Close()
-	// }
-
 	closed := false
 	c.SetCloseHandler(func(_ int, _ string) error {
 		closed = true
@@ -79,7 +73,7 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 
 	defer func() {
 		if err := c.Close(); err != nil {
-			d.logger.Warnf("websocket close: %w", err)
+			d.logger.Warnf("websocket close, error: %v", err)
 		}
 
 		for _, v := range logsSubscriptions {

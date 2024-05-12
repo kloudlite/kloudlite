@@ -214,17 +214,28 @@ const (
 const (
 	GlobalVPNCIDR                           = "CIDR"
 	GlobalVPNAllocatableCIDRSuffix          = "allocatableCIDRSuffix"
+	GlobalVPNKloudliteDevice                = "kloudliteDevice"
+	GlobalVPNKloudliteDeviceIpAddr          = "kloudliteDevice.ipAddr"
+	GlobalVPNKloudliteDeviceName            = "kloudliteDevice.name"
 	GlobalVPNNumAllocatedClusterCIDRs       = "numAllocatedClusterCIDRs"
 	GlobalVPNNumAllocatedDevices            = "numAllocatedDevices"
 	GlobalVPNNumReservedIPsForNonClusterUse = "numReservedIPsForNonClusterUse"
 	GlobalVPNWgInterface                    = "wgInterface"
 )
 
+// constant vars generated for struct GlobalVPNConnDeviceRef
+const (
+	GlobalVPNConnDeviceRefIpAddr = "ipAddr"
+	GlobalVPNConnDeviceRefName   = "name"
+)
+
 // constant vars generated for struct GlobalVPNConnection
 const (
 	GlobalVPNConnectionClusterPublicEndpoint        = "clusterPublicEndpoint"
 	GlobalVPNConnectionClusterSvcCIDR               = "clusterSvcCIDR"
-	GlobalVPNConnectionGatewayIPAddr                = "gatewayIPAddr"
+	GlobalVPNConnectionDeviceRef                    = "deviceRef"
+	GlobalVPNConnectionDeviceRefIpAddr              = "deviceRef.ipAddr"
+	GlobalVPNConnectionDeviceRefName                = "deviceRef.name"
 	GlobalVPNConnectionGlobalVPNName                = "globalVPNName"
 	GlobalVPNConnectionParsedWgParams               = "parsedWgParams"
 	GlobalVPNConnectionParsedWgParamsDnsServer      = "parsedWgParams.dnsServer"
@@ -251,6 +262,7 @@ const (
 
 // constant vars generated for struct GlobalVPNDevice
 const (
+	GlobalVPNDeviceCreationMethod = "creationMethod"
 	GlobalVPNDeviceGlobalVPNName  = "globalVPNName"
 	GlobalVPNDeviceIpAddr         = "ipAddr"
 	GlobalVPNDevicePrivateKey     = "privateKey"

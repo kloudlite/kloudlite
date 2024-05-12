@@ -1,0 +1,19 @@
+version: 3
+
+includes:
+  go: ../../.tools/taskfiles/go-build.yml
+
+tasks:
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          Out: ./bin/global-vpn-kube-proxy
+
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image is not set"
+    cmds:
+      - task build upx={{.upx}}
+      - docker buildx build --platform linux/amd64,linux/arm64 --output=type=image,compression=zstd,force-compression=true,compression-level=14,push=true --build-arg BINARY="./bin/global-vpn-kube-proxy" -t {{.Image}} .
