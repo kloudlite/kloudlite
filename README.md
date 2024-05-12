@@ -33,7 +33,7 @@ Follow these steps to begin using Kloudlite:
 - **Configure Local Development Container:** Configure your local development container by setting up the kl.yaml file. This file will dictate how your local environment connects and interacts with your remote Kloudlite environment.
 - **Learn More:** To dive deeper into Kloudlite's features and capabilities, visit our documentation.
 
-## Documentatio
+## Documentation
 For more detailed information and step-by-step guides, please visit our [documentation](https://kloudlite.com/docs).
 
 ## Support
