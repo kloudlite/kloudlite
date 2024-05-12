@@ -35,6 +35,7 @@ if [ -d "/tmp/ssh2" ]; then
     echo "successfully copied ssh credentials"
 fi 
 
+sudo chown -R kl /home/kl/workspace
 sudo /mounter --conf /tmp/sample.json
 
 trap - EXIT SIGTERM SIGINT
