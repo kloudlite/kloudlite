@@ -3,7 +3,7 @@ package kl
 import (
 	"github.com/kloudlite/kl/cmd/box"
 	"github.com/kloudlite/kl/cmd/completion"
-	"github.com/kloudlite/kl/cmd/shell"
+	// "github.com/kloudlite/kl/cmd/shell"
 	"runtime"
 
 	"github.com/kloudlite/kl/flags"
@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/kloudlite/kl/cmd/use"
-	"github.com/kloudlite/kl/cmd/vpn"
+	// "github.com/kloudlite/kl/cmd/vpn"
 
 	"github.com/kloudlite/kl/cmd/list"
 	"github.com/kloudlite/kl/cmd/runner"
@@ -40,7 +40,7 @@ func init() {
 
 	rootCmd.AddCommand(auth.Cmd)
 
-	rootCmd.AddCommand(vpn.Cmd)
+	// rootCmd.AddCommand(vpn.Cmd)
 
 	rootCmd.AddCommand(box.BoxCmd)
 
@@ -56,7 +56,7 @@ func init() {
 
 	rootCmd.AddCommand(status.Cmd)
 
-	rootCmd.AddCommand(shell.ShellCmd)
+	// rootCmd.AddCommand(shell.ShellCmd)
 
 	rootCmd.AddCommand(completion.AutoCompletion)
 

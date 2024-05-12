@@ -12,6 +12,7 @@ import (
 
 var AutoCompletion = &cobra.Command{
 	Use:                   "auto-completion [bash|zsh|fish|powershell]",
+	Hidden:                true,
 	DisableFlagsInUseLine: true,
 	Short:                 "Output shell completion code for the specified shell (bash, zsh, fish, or powershell)",
 	Long:                  `Output shell completion code for the specified shell (bash, zsh, fish, or powershell)`,
