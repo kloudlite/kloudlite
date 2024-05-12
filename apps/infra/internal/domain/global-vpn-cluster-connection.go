@@ -20,6 +20,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	gvpnConnectionDeviceMethod = "gvpn-connection"
+)
+
 func (d *domain) getGlobalVPNConnectionPeers(vpns []*entities.GlobalVPNConnection) ([]wgv1.Peer, error) {
 	peers := make([]wgv1.Peer, 0, len(vpns))
 	for _, c := range vpns {
@@ -176,12 +180,22 @@ func (d *domain) createGlobalVPNConnection(ctx InfraContext, gvpnConn entities.G
 
 	gvpnConn.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
-	gatewayAddr, err := d.claimNextFreeDeviceIP(ctx, fmt.Sprintf("%s-cluster-gateway", gvpnConn.ClusterName), gvpnConn.Name)
+	gvpnDevice, err := d.createGlobalVPNDevice(ctx, entities.GlobalVPNDevice{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("cluster-gateway-%s", gvpnConn.ClusterName),
+		},
+		AccountName:    ctx.AccountName,
+		GlobalVPNName:  gvpnConn.Name,
+		CreationMethod: gvpnConnectionDeviceMethod,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	gvpnConn.GatewayIPAddr = gatewayAddr
+	gvpnConn.DeviceRef = entities.GlobalVPNConnDeviceRef{
+		Name:   gvpnDevice.Name,
+		IPAddr: gvpnDevice.IPAddr,
+	}
 
 	gv, err := d.gvpnConnRepo.Create(ctx, &gvpnConn)
 	if err != nil {
@@ -208,7 +222,7 @@ func (d *domain) deleteGlobalVPNConnection(ctx InfraContext, clusterName string,
 		return errors.Newf("no global vpn connection with name (%s) not found, for cluster (%s)", gvpnName, clusterName)
 	}
 
-	if err := d.deleteGlobalVPNDevice(ctx, gvpnName, fmt.Sprintf("%s-cluster-gateway", gvpnConn.ClusterName)); err != nil {
+	if err := d.deleteGlobalVPNDevice(ctx, gvpnName, gvpnConn.DeviceRef.Name); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -270,7 +284,7 @@ func (d *domain) applyGlobalVPNConnection(ctx InfraContext, gvpn *entities.Globa
 			Namespace: gvpn.Spec.WgRef.Namespace,
 		},
 		StringData: map[string]string{
-			"ip": gvpn.GatewayIPAddr,
+			"ip": gvpn.DeviceRef.IPAddr,
 		},
 	}, 0); err != nil {
 		return err
@@ -325,7 +339,7 @@ func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterNam
 		return errors.NewE(err)
 	}
 
-	//INFO: BYOK cluster does not have any status update message
+	// INFO: BYOK cluster does not have any status update message
 	if d.isBYOKCluster(ctx, xconn.ClusterName) {
 		if _, err := d.byokClusterRepo.PatchOne(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, clusterName), repos.Document{
 			fc.SyncStatusState:        t.SyncStateUpdatedAtAgent,
@@ -359,6 +373,10 @@ func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterNam
 	}
 
 	if err := d.reconGlobalVPNConnections(ctx, xconn.Name); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.syncKloudliteDeviceOnCluster(ctx, xconn.GlobalVPNName); err != nil {
 		return errors.NewE(err)
 	}
 

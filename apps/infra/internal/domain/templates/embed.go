@@ -13,7 +13,8 @@ var templatesDir embed.FS
 type templateFile string
 
 const (
-	HelmKloudliteAgent templateFile = "./helm-charts-kloudlite-agent.yml.tpl"
+	HelmKloudliteAgent               templateFile = "./helm-charts-kloudlite-agent.yml.tpl"
+	GlobalVPNKloudliteDeviceTemplate templateFile = "./global-vpn-kloudlite-device.yml.tpl"
 )
 
 func Read(t templateFile) ([]byte, error) {

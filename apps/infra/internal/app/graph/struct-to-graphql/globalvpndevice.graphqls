@@ -1,6 +1,7 @@
 type GlobalVPNDevice @shareable {
   accountName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationMethod: String
   creationTime: Date!
   displayName: String!
   globalVPNName: String!
@@ -28,6 +29,7 @@ type GlobalVPNDevicePaginatedRecords @shareable {
 }
 
 input GlobalVPNDeviceIn {
+  creationMethod: String
   displayName: String!
   globalVPNName: String!
   metadata: MetadataIn!
