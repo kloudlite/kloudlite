@@ -50,6 +50,8 @@ type Env struct {
 
 	IsDev              bool
 	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY"`
+
+	GlobalVPNKubeReverseProxyImage string `env:"GLOBAL_VPN_KUBE_REVERSE_PROXY_IMAGE" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

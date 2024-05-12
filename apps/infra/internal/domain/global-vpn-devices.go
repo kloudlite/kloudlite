@@ -112,7 +112,7 @@ func (d *domain) deleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName
 }
 
 func (d *domain) DeleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName string) error {
-	return d.deleteGlobalVPNConnection(ctx, gvpn, deviceName)
+	return d.deleteGlobalVPNDevice(ctx, gvpn, deviceName)
 }
 
 func (d *domain) ListGlobalVPNDevice(ctx InfraContext, gvpn string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.GlobalVPNDevice], error) {
@@ -124,6 +124,10 @@ func (d *domain) ListGlobalVPNDevice(ctx InfraContext, gvpn string, search map[s
 }
 
 func (d *domain) CreateGlobalVPNDevice(ctx InfraContext, gvpnDevice entities.GlobalVPNDevice) (*entities.GlobalVPNDevice, error) {
+	return d.createGlobalVPNDevice(ctx, gvpnDevice)
+}
+
+func (d *domain) createGlobalVPNDevice(ctx InfraContext, gvpnDevice entities.GlobalVPNDevice) (*entities.GlobalVPNDevice, error) {
 	gvpnDevice.AccountName = ctx.AccountName
 	gvpnDevice.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
@@ -162,8 +166,9 @@ func (d *domain) CreateGlobalVPNDevice(ctx InfraContext, gvpnDevice entities.Glo
 func (d *domain) buildPeersFromGlobalVPNDevices(ctx InfraContext, gvpn string) (publicPeers []wgv1.Peer, privatePeers []wgv1.Peer, err error) {
 	devices, err := d.gvpnDevicesRepo.Find(ctx, repos.Query{
 		Filter: map[string]any{
-			fc.AccountName:                  ctx.AccountName,
-			fc.GlobalVPNDeviceGlobalVPNName: gvpn,
+			fc.AccountName:                   ctx.AccountName,
+			fc.GlobalVPNDeviceGlobalVPNName:  gvpn,
+			fc.GlobalVPNDeviceCreationMethod: map[string]any{"$ne": gvpnConnectionDeviceMethod},
 		},
 	})
 	if err != nil {
@@ -200,6 +205,10 @@ func (d *domain) GetGlobalVPNDevice(ctx InfraContext, gvpn string, gvpnDevice st
 }
 
 func (d *domain) GetGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnDevice string) (string, error) {
+	return d.getGlobalVPNDeviceWgConfig(ctx, gvpn, gvpnDevice)
+}
+
+func (d *domain) getGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnDevice string) (string, error) {
 	device, err := d.findGlobalVPNDevice(ctx, gvpn, gvpnDevice)
 	if err != nil {
 		return "", err
