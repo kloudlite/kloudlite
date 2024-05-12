@@ -12,20 +12,19 @@ import (
 )
 
 func (c *client) Ssh() error {
-	defer c.spinner.Stop()
+	defer c.spinner.Start("preparing to ssh")()
 
-	cont, err := c.getContainer()
-	if err != nil {
+	cr, err := c.getContainer(map[string]string{
+		CONT_MARK_KEY: "true",
+	})
+	if err != nil && err != notFoundErr {
 		return err
 	}
 
-	if cont.Name == "" {
+	if err == notFoundErr || (err == nil && c.containerName != cr.Name) {
 		err := c.Start()
 		if err == nil {
-
-			c.spinner.Start("waiting for container to be ready")
 			time.Sleep(5 * time.Second)
-			c.spinner.Stop()
 		}
 
 		if err != nil && err != containerNotStartedErr {
@@ -33,23 +32,7 @@ func (c *client) Ssh() error {
 		}
 	}
 
-	if cont.Name != "" && c.containerName != cont.Name {
-		// fn.Warnf("\ncontainer already running, using container of workspace '%s'", c.cwd)
-
-		// if needed to restart server for unique workspace then uncomment below line
-
-		err := c.Start()
-		if err == nil {
-			c.spinner.Start("waiting for container to be ready")
-			time.Sleep(5 * time.Second)
-			c.spinner.Stop()
-		}
-
-		if err != nil && err != containerNotStartedErr {
-			return err
-		}
-	}
-
+	c.spinner.Stop()
 	command := exec.Command("ssh", "kl@localhost", "-p", CONTAINER_PORT, "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
 
 	if c.verbose {

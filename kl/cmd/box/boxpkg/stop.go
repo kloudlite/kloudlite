@@ -1,48 +1,47 @@
 package boxpkg
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/kloudlite/kl/pkg/dockercli"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	// "github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 func (c *client) Stop() error {
-	c.spinner.Start("stopping container please wait")
-	defer c.spinner.Stop()
+	defer c.spinner.Start("stopping container please wait")()
 
-	cr, err := c.getContainer()
-	if err != nil {
+	if err := c.StopVpn(); err != nil {
+		fn.Warn("[#] vpn stop error:", err.Error())
+	}
+
+	cr, err := c.getContainer(map[string]string{
+		CONT_MARK_KEY: "true",
+	})
+	if err != nil && err != notFoundErr {
 		return err
 	}
 
-	if cr.Name == "" {
+	if err == notFoundErr {
 		return fmt.Errorf("no running container found")
 	}
 
+	crPath := cr.Labels[CONT_PATH_KEY]
+
 	if c.verbose {
-		fn.Logf("stopping container of: %s", text.Blue(cr.Path))
+		fn.Logf("stopping container of: %s", text.Blue(crPath))
 	}
 
-	cli, err := dockercli.GetClient()
-	if err != nil {
-		return err
-	}
-
-	if err := cli.ContainerStop(context.TODO(), cr.Name, container.StopOptions{}); err != nil {
+	if err := c.cli.ContainerStop(c.Context(), cr.Name, container.StopOptions{}); err != nil {
 		return fmt.Errorf("error stoping container: %s", err)
 	}
 
-	if err := cli.ContainerRemove(context.TODO(), cr.Name, container.RemoveOptions{}); err != nil {
+	if err := c.cli.ContainerRemove(c.Context(), cr.Name, container.RemoveOptions{}); err != nil {
 		return fmt.Errorf("failed to remove container: %s", err)
 	}
 
 	if c.verbose {
-		fn.Logf("stopped container of: %s", text.Blue(cr.Path))
+		fn.Logf("stopped container of: %s", text.Blue(crPath))
 	}
 	return nil
 }

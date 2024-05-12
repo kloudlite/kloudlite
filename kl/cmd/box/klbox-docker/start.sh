@@ -39,4 +39,4 @@ sudo /mounter --conf /tmp/sample.json
 
 trap - EXIT SIGTERM SIGINT
 echo "kloudlite-entrypoint: SETUP_COMPLETE"
-/usr/sbin/sshd -D -p 1729
+/usr/sbin/sshd -D
