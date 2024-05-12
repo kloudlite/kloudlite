@@ -629,6 +629,7 @@ type ComplexityRoot struct {
 	GlobalVPNDevice struct {
 		AccountName       func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
+		CreationMethod    func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
 		GlobalVPNName     func(childComplexity int) int
@@ -4089,6 +4090,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GlobalVPNDevice.CreatedBy(childComplexity), true
+
+	case "GlobalVPNDevice.creationMethod":
+		if e.complexity.GlobalVPNDevice.CreationMethod == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNDevice.CreationMethod(childComplexity), true
 
 	case "GlobalVPNDevice.creationTime":
 		if e.complexity.GlobalVPNDevice.CreationTime == nil {
@@ -8063,6 +8071,7 @@ input SearchGlobalVPNs {
 
 input SearchGlobalVPNDevices {
     text: MatchFilterIn
+    creationMethod: MatchFilterIn
 }
 
 input SearchClusterManagedService {
@@ -9955,6 +9964,7 @@ input GlobalVPNIn {
 	{Name: "../struct-to-graphql/globalvpndevice.graphqls", Input: `type GlobalVPNDevice @shareable {
   accountName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationMethod: String
   creationTime: Date!
   displayName: String!
   globalVPNName: String!
@@ -9982,6 +9992,7 @@ type GlobalVPNDevicePaginatedRecords @shareable {
 }
 
 input GlobalVPNDeviceIn {
+  creationMethod: String
   displayName: String!
   globalVPNName: String!
   metadata: MetadataIn!
@@ -27409,6 +27420,47 @@ func (ec *executionContext) fieldContext_GlobalVPNDevice_createdBy(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _GlobalVPNDevice_creationMethod(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNDevice_creationMethod(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreationMethod, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNDevice_creationMethod(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GlobalVPNDevice_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GlobalVPNDevice_creationTime(ctx, field)
 	if err != nil {
@@ -28133,6 +28185,8 @@ func (ec *executionContext) fieldContext_GlobalVPNDeviceEdge_node(ctx context.Co
 				return ec.fieldContext_GlobalVPNDevice_accountName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_GlobalVPNDevice_createdBy(ctx, field)
+			case "creationMethod":
+				return ec.fieldContext_GlobalVPNDevice_creationMethod(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_GlobalVPNDevice_creationTime(ctx, field)
 			case "displayName":
@@ -41648,6 +41702,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createGlobalVPNDevice(ct
 				return ec.fieldContext_GlobalVPNDevice_accountName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_GlobalVPNDevice_createdBy(ctx, field)
+			case "creationMethod":
+				return ec.fieldContext_GlobalVPNDevice_creationMethod(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_GlobalVPNDevice_creationTime(ctx, field)
 			case "displayName":
@@ -41760,6 +41816,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateGlobalVPNDevice(ct
 				return ec.fieldContext_GlobalVPNDevice_accountName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_GlobalVPNDevice_createdBy(ctx, field)
+			case "creationMethod":
+				return ec.fieldContext_GlobalVPNDevice_creationMethod(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_GlobalVPNDevice_creationTime(ctx, field)
 			case "displayName":
@@ -49960,6 +50018,8 @@ func (ec *executionContext) fieldContext_Query_infra_getGlobalVPNDevice(ctx cont
 				return ec.fieldContext_GlobalVPNDevice_accountName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_GlobalVPNDevice_createdBy(ctx, field)
+			case "creationMethod":
+				return ec.fieldContext_GlobalVPNDevice_creationMethod(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_GlobalVPNDevice_creationTime(ctx, field)
 			case "displayName":
@@ -56530,13 +56590,22 @@ func (ec *executionContext) unmarshalInputGlobalVPNDeviceIn(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"displayName", "globalVPNName", "metadata"}
+	fieldsInOrder := [...]string{"creationMethod", "displayName", "globalVPNName", "metadata"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "creationMethod":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creationMethod"))
+			data, err := ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreationMethod = data
 		case "displayName":
 			var err error
 
@@ -60555,7 +60624,7 @@ func (ec *executionContext) unmarshalInputSearchGlobalVPNDevices(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text"}
+	fieldsInOrder := [...]string{"text", "creationMethod"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -60571,6 +60640,15 @@ func (ec *executionContext) unmarshalInputSearchGlobalVPNDevices(ctx context.Con
 				return it, err
 			}
 			it.Text = data
+		case "creationMethod":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creationMethod"))
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreationMethod = data
 		}
 	}
 
@@ -65671,6 +65749,8 @@ func (ec *executionContext) _GlobalVPNDevice(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "creationMethod":
+			out.Values[i] = ec._GlobalVPNDevice_creationMethod(ctx, field, obj)
 		case "creationTime":
 			field := field
 
@@ -74911,7 +74991,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -74919,7 +74999,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
