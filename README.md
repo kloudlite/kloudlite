@@ -11,7 +11,7 @@ Kloudlite is a remote local environments platform designed to enhance productivi
 ## Features
 - **Isolated and Replicable Local Development Containers**: Kloudlite provides developers with isolated local development containers that seamlessly connect with remote environments. This setup ensures a replicable development process that is both efficient and consistent across different machines and team members.
 
-- **Comprehensive Environment Management**: Kloudlite environments are designed to manage configurations, secrets, applications and external services, ensuring that all your development needs are met within a unified platform.
+- **Comprehensive Environment Management**: Kloudlite environments handle configurations, secrets, and access to managed services, applications, and external services efficiently. These environments are designed to meet all your development needs. Since they are stateless and ephemeral, developers can easily clone them for isolated, parallel development efforts.
 
 - **Application/Service Interception**: With Kloudlite, developers can intercept and replace an application or service running in the remote environment with the version running in their local IDE. This feature allows for real-time testing and debugging before proceeding with builds and deployments, significantly enhancing development efficiency.
 
