@@ -20,6 +20,8 @@ type GlobalVPNDevice struct {
 	// Only needs to be set, if vpn device has a public IP
 	PublicEndpoint *string `json:"publicEndpoint,omitempty" graphql:"noinput"`
 
+	CreationMethod string `json:"creationMethod,omitempty"`
+
 	IPAddr string `json:"ipAddr" graphql:"noinput"`
 
 	PrivateKey string `json:"privateKey" graphql:"noinput"`

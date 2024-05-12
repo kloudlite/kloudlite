@@ -32,6 +32,7 @@ input SearchGlobalVPNs {
 
 input SearchGlobalVPNDevices {
     text: MatchFilterIn
+    creationMethod: MatchFilterIn
 }
 
 input SearchClusterManagedService {
