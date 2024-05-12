@@ -1,7 +1,7 @@
 ---
 global:
   gvpn: "default"
-  deviceName: "first-device"
+  deviceName: "kloudlite-platform-device"
   # deviceName: "second-device"
 ---
 label: "Create GlobalVPN Device"
