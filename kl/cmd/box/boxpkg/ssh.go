@@ -9,6 +9,7 @@ import (
 
 	"github.com/adrg/xdg"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 func (c *client) Ssh() error {
@@ -23,21 +24,29 @@ func (c *client) Ssh() error {
 
 	if err == notFoundErr || (err == nil && c.containerName != cr.Name) {
 		err := c.Start()
-		if err == nil {
-			time.Sleep(5 * time.Second)
-		}
 
 		if err != nil && err != containerNotStartedErr {
 			return err
 		}
 	}
 
+	count := 0
+	for {
+		if err := exec.Command("ssh", "kl@localhost", "-p", CONTAINER_PORT, "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no", "--", "exit 0").Run(); err == nil {
+			break
+		}
+
+		count++
+		if count == 10 {
+			return fmt.Errorf("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start. %s", err)
+		}
+		time.Sleep(1 * time.Second)
+	}
+
 	c.spinner.Stop()
 	command := exec.Command("ssh", "kl@localhost", "-p", CONTAINER_PORT, "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
 
-	if c.verbose {
-		fn.Log(command.String())
-	}
+	fn.Logf("%s %s", text.Bold("Running ssh command:"), text.Blue(command.String()))
 
 	// command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
