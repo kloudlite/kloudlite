@@ -30,8 +30,8 @@ jobs:
             goos: darwin
             platform: darwin
         exclude:
-          - os: macos-14
-            arch: amd64
+          # - os: macos-14
+          #   arch: amd64
           - os: macos-latest
             arch: arm64
           - os: ubuntu-latest
