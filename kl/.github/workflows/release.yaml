@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [kl,kli]
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-14, macos-13]
         arch: [amd64, arm64]
         include:
           - os: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
           - os: windows-latest
             goos: windows
             platform: windows
-          - os: macos-latest
+          - os: macos-13
             goos: darwin
             platform: darwin
           - os: macos-14
@@ -32,7 +32,7 @@ jobs:
         exclude:
           - os: macos-14
             arch: amd64
-          - os: macos-latest
+          - os: macos-13
             arch: arm64
           - os: ubuntu-latest
             arch: arm64
