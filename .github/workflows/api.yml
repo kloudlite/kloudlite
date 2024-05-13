@@ -115,7 +115,7 @@ jobs:
           set -e
 
           pushd apps/${{ matrix.app }}
-          task container:build-and-push Image="$image"
+          task container:build-and-push Image="$image" upx=true
           popd
 
           popd
