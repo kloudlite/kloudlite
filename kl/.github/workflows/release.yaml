@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [kl,kli]
-        os: [ubuntu-latest, windows-latest, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-14, macos-latest-large]
         # macos-latest,  for darwin amd64
         arch: [amd64, arm64]
         include:
@@ -24,19 +24,19 @@ jobs:
           - os: windows-latest
             goos: windows
             platform: windows
-          # - os: macos-latest
-          #   goos: darwin
-          #   platform: darwin
+          - os: macos-latest-large
+            goos: darwin
+            platform: darwin
           - os: macos-14
             goos: darwin
             platform: darwin
         exclude:
           - os: macos-14
             arch: amd64
-          # - os: macos-latest
-          #   arch: arm64
-          # - os: ubuntu-latest
-          #   arch: arm64
+          - os: macos-latest-large
+            arch: arm64
+          - os: ubuntu-latest
+            arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4.1.1
