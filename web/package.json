@@ -7,7 +7,6 @@
 	"scripts": {
 		"postinstall": "cd src/generated && pnpm i",
 		"fake": "esbuild fake-data-generator/gen.ts --format=cjs --outfile=public/dist/fake-data-generator.cjs --platform=node && node public/dist/fake-data-generator.cjs",
-		"schema": "esbuild json-schema-generator/gen.ts --format=cjs --outfile=public/dist/json-schema-generator.cjs --platform=node && node public/dist/json-schema-generator.cjs",
 		"dev": "remix dev",
 		"serve": "remix-serve ./public/${APP}/server",
 		"watch": "nodemon --watch lib --watch src/${APP} --exec \"pnpm typecheck\"",
@@ -64,7 +63,6 @@
 		"@react-types/shared": "^3.22.0",
 		"@remix-run/node": "^1.19.3",
 		"@remix-run/react": "^1.19.3",
-		"@typeofweb/schema": "^0.7.3",
 		"anser": "^2.1.1",
 		"apexcharts": "^3.45.2",
 		"aria-hidden": "^1.2.3",
@@ -80,7 +78,6 @@
 		"isbot": "^3.8.0",
 		"js-cookie": "^3.0.5",
 		"js-yaml": "^4.1.0",
-		"jsonschema": "^1.4.1",
 		"pino": "^8.17.2",
 		"rc-slider": "^10.5.0",
 		"react": "18.2.0",

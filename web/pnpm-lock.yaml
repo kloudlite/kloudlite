@@ -125,9 +125,6 @@ dependencies:
   '@remix-run/react':
     specifier: ^1.19.3
     version: 1.19.3(react-dom@18.2.0)(react@18.2.0)
-  '@typeofweb/schema':
-    specifier: ^0.7.3
-    version: 0.7.3
   anser:
     specifier: ^2.1.1
     version: 2.1.1
@@ -173,9 +170,6 @@ dependencies:
   js-yaml:
     specifier: ^4.1.0
     version: 4.1.0
-  jsonschema:
-    specifier: ^1.4.1
-    version: 1.4.1
   pino:
     specifier: ^8.17.2
     version: 8.17.2
@@ -4078,11 +4072,6 @@ packages:
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
     dev: true
 
-  /@typeofweb/schema@0.7.3:
-    resolution: {integrity: sha512-kJqjnsYg8Mct5Qjg91GPUFd2Mz/dM3EE4lPO1/87kg/QWHsfDC+u2RXfgHCPQdv21Bd1XPY4MkdSy26IC5QiWA==}
-    engines: {node: '>12.0.0'}
-    dev: false
-
   /@types/acorn@4.0.6:
     resolution: {integrity: sha512-veQTnWP+1D/xbxVrPC3zHnCZRjSrKfhbMUlEA43iMZLu7EsnTtkJklIuwrCPbOi8YkvDQAiW05VQQFvvz9oieQ==}
     dependencies:
@@ -7432,10 +7421,6 @@ packages:
     resolution: {integrity: sha512-zBfiUPM5nD0YZSBT/o/fbCUlCcepMIdP0CJZxM1+KgA4f2T206f6VAg9e7mX35+KlMaIc5qXW34f3BnwJ3w+RA==}
     engines: {node: '>=12.0.0'}
     dev: true
-
-  /jsonschema@1.4.1:
-    resolution: {integrity: sha512-S6cATIPVv1z0IlxdN+zUk5EPjkGCdnhN4wVSBlvoUO1tOLJootbo9CquNJmbIh4yikWHiUedhRYrNPn1arpEmQ==}
-    dev: false
 
   /jsx-ast-utils@3.3.5:
     resolution: {integrity: sha512-ZZow9HBI5O6EPgSJLUb8n2NKgmVWTwCvHGwFuJlMjvLFqlGG6pjirPhtdsseaLZjSibD8eegzmYpUZwoIlj2cQ==}
