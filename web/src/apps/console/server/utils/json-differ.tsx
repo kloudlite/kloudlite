@@ -2,8 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 
 import * as yaml from 'js-yaml';
-import React, { PureComponent } from 'react';
-import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer';
+import ReactDiffViewer from 'react-diff-viewer-continued';
 
 type JsonObject = { [key: string]: any };
 

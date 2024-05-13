@@ -11,10 +11,11 @@ import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/lib/utils/common';
 import Wrapper from '~/console/components/wrapper';
 import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
+import YamlEditor from '~/console/page-components/yaml-editor/yaml-editor';
 import { IAppContext } from '../../_layout';
 
 const SettingAdvance = () => {
-  const { app } = useAppState();
+  const { app, readOnlyApp } = useAppState();
   const { environment } = useOutletContext<IAppContext>();
   const [deleteApp, setDeleteApp] = useState(false);
   const reload = useReload();
@@ -45,18 +46,20 @@ const SettingAdvance = () => {
           ),
         }}
       >
-        <div className="rounded border border-border-default bg-surface-basic-default shadow-button flex flex-col">
-          <div className="flex flex-col gap-3xl p-3xl">
-            <div className="text-text-strong headingLg">Transfer</div>
-            <div className="bodyMd text-text-default">
-              Move your app to a different environment seamlessly, avoiding any
-              downtime or disruptions to workflows.
-            </div>
-          </div>
-          <div className="bg-surface-basic-subdued p-3xl flex flex-row justify-end">
-            <Button variant="basic" content="Transfer" />
-          </div>
-        </div>
+        <YamlEditor item={readOnlyApp} />
+
+        {/* <div className="rounded border border-border-default bg-surface-basic-default shadow-button flex flex-col"> */}
+        {/*   <div className="flex flex-col gap-3xl p-3xl"> */}
+        {/*     <div className="text-text-strong headingLg">Transfer</div> */}
+        {/*     <div className="bodyMd text-text-default"> */}
+        {/*       Move your app to a different environment seamlessly, avoiding any */}
+        {/*       downtime or disruptions to workflows. */}
+        {/*     </div> */}
+        {/*   </div> */}
+        {/*   <div className="bg-surface-basic-subdued p-3xl flex flex-row justify-end"> */}
+        {/*     <Button variant="basic" content="Transfer" /> */}
+        {/*   </div> */}
+        {/* </div> */}
         <DeleteContainer
           title="Delete Application"
           action={async () => {
@@ -77,7 +80,6 @@ const SettingAdvance = () => {
               const { errors } = await api.deleteApp({
                 appName: parseName(app),
                 envName: parseName(environment),
-                
               });
 
               if (errors) {
