@@ -28,6 +28,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
+import { CopyContentToClipboard } from '~/console/components/common-console-components';
 
 type BaseType = ExtractNodeType<IGlobalVpnDevices>;
 const RESOURCE_NAME = 'global-vpn';
@@ -79,6 +80,16 @@ interface IResource {
   showWgConfig: (item: BaseType) => void;
   // onEdit: (item: BaseType) => void;
 }
+
+const DeviceHostView = ({ hostName }: { hostName: string }) => {
+  return (
+    <CopyContentToClipboard
+      toolTip
+      content={hostName}
+      toastMessage="Device host copied successfully."
+    />
+  );
+};
 
 const GridView = ({ items = [], onDelete, showWgConfig }: IResource) => {
   const { account } = useParams();
@@ -144,22 +155,22 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
               </div>
             ),
             name: 'name',
-            className: 'flex-1',
+            className: 'flex-1 w-[80px]',
           },
           {
             render: () => 'Device Config',
             name: 'config',
-            className: 'w-[150px]',
+            className: 'flex items-center justify-center w-[150px]',
           },
           {
             render: () => 'Host',
             name: 'host',
-            className: 'w-[250px]',
+            className: 'flex items-center justify-center w-[250px]',
           },
           {
             render: () => 'IP',
             name: 'ip',
-            className: 'w-[180px]',
+            className: 'flex items-center justify-center w-[180px]',
           },
           {
             render: () => 'Updated',
@@ -203,25 +214,36 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
                       }
                     />
                   ) : (
-                    <ListItem data="Managed by kloudlite" />
+                    <ListItem
+                      data={
+                        <span className="bodyMd-semibold">
+                          {i.creationMethod}
+                        </span>
+                      }
+                    />
                   ),
               },
               host: {
                 render: () => (
-                  <ListItem
-                    noTooltip
-                    data={
-                      <CopyButton
-                        title={
-                          <span className="text-sm">
-                            {parseName(i)}.device.local
-                          </span>
-                        }
-                        value={`${parseName(i)}.device.local`}
-                      />
-                    }
-                  />
+                  <div className="flex w-fit truncate">
+                    <DeviceHostView hostName={`${parseName(i)}.local`} />
+                  </div>
                 ),
+                // render: () => (
+                //   <ListItem
+                //     noTooltip
+                //     data={
+                //       <CopyButton
+                //         title={
+                //           <span className="text-sm">
+                //             {parseName(i)}.device.local
+                //           </span>
+                //         }
+                //         value={`${parseName(i)}.device.local`}
+                //       />
+                //     }
+                //   />
+                // ),
               },
               ip: {
                 render: () => (

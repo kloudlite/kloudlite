@@ -108,7 +108,7 @@ const Root = (props: IDialog) => {
 
         reloadPage();
         setVisible(false);
-        toast.success('Environment created successfully');
+        toast.success('App Intercepted successfully');
       } catch (err) {
         handleError(err);
       }
@@ -144,8 +144,8 @@ const Root = (props: IDialog) => {
                 };
               })
             }
-            onChange={({ value }) => {
-              handleChange('clusterName')(dummyEvent(value));
+            onChange={(_, value) => {
+              handleChange('deviceName')(dummyEvent(value));
             }}
             error={!!errors.clusterName}
             message={errors.clusterName}

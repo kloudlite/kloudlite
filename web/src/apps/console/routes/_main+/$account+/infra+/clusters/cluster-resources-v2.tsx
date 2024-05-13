@@ -50,6 +50,7 @@ import { handleError } from '~/root/lib/utils/common';
 import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
@@ -231,6 +232,16 @@ interface IResource {
   onEdit: (item: CombinedBaseType) => void;
 }
 
+const ClusterDnsView = ({ service }: { service: string }) => {
+  return (
+    <CopyContentToClipboard
+      toolTip
+      content={service}
+      toastMessage="Cluster dns copied successfully."
+    />
+  );
+};
+
 const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
   const { account } = useParams();
   return (
@@ -322,12 +333,17 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
           {
             render: () => 'Status',
             name: 'status',
-            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+            className: 'flex-1 min-w-[3s0px] flex items-center justify-center',
           },
           {
             render: () => 'Provider (Region)',
             name: 'provider',
-            className: 'w-[180px]',
+            className: 'flex w-[180px] items-center justify-center',
+          },
+          {
+            render: () => 'Dns',
+            name: 'dns',
+            className: 'flex w-[180px] items-center justify-center',
           },
           {
             render: () => 'Updated',
@@ -384,6 +400,13 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
                 render: () => <SyncStatusV2 item={i} />,
               },
               provider: { render: () => <ListItem data={provider} /> },
+              dns: {
+                render: () => (
+                  <div className="flex w-fit truncate">
+                    <ClusterDnsView service={`${parseName(i)}.local`} />
+                  </div>
+                ),
+              },
               updated: {
                 render: () => (
                   <ListItem
@@ -392,9 +415,6 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
                   />
                 ),
               },
-              // action: {
-              //   render: () => <ExtraButton cluster={i} />,
-              // },
               action: {
                 render: () => (
                   <ExtraButton
@@ -405,7 +425,6 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
                 ),
               },
             },
-            // to: `/${account}/infra/${id}/overview`,
             ...(i.type === 'normal'
               ? { to: `/${account}/infra/${id}/overview` }
               : {}),
