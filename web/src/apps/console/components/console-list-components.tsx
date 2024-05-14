@@ -7,7 +7,7 @@ interface IBase {
   action?: ReactNode;
 }
 
-const BaseStyle = 'flex flex-row items-center gap-xl';
+const BaseStyle = 'flex flex-row items-center gap-xl truncate';
 
 const ListSecondary = ({
   className,
@@ -94,7 +94,7 @@ const ListItem = ({
             content={
               <div className="flex flex-col flex-1">
                 {data && (
-                  <div className="flex-1 bodyMd-medium text-text-strong pulsable">
+                  <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
                     {data}
                   </div>
                 )}
@@ -108,7 +108,7 @@ const ListItem = ({
           >
             <div className="flex flex-col gap-sm truncate max-w-full w-fit">
               {data && (
-                <div className="flex-1 bodyMd-medium text-text-strong truncate pulsable">
+                <div className="flex-1 bodyMd-medium text-text-strong truncate pulsable group is-data">
                   {data}
                 </div>
               )}

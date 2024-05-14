@@ -42,8 +42,14 @@ import { IAccountContext } from '../../_layout';
 
 const Environment = () => {
   const rootContext = useOutletContext<IAccountContext>();
-  const { environment, managedTemplates, loginUrls, logins, msvtemplates } =
-    useLoaderData();
+  const {
+    environment,
+    managedTemplates,
+    loginUrls,
+    logins,
+    msvtemplates,
+    cluster,
+  } = useLoaderData();
 
   return (
     <SubNavDataProvider>
@@ -55,6 +61,7 @@ const Environment = () => {
           managedTemplates,
           loginUrls,
           logins,
+          cluster,
         }}
       />
     </SubNavDataProvider>
