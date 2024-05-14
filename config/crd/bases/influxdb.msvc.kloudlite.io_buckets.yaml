@@ -74,7 +74,6 @@ spec:
                   sharedSecret:
                     type: string
                 required:
-                - clusterName
                 - name
                 - namespace
                 type: object

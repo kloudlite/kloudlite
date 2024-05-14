@@ -101,6 +101,11 @@ func (in *Database) DeepCopyInto(out *Database) {
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	in.Spec.DeepCopyInto(&out.Spec)
 	in.Status.DeepCopyInto(&out.Status)
+	if in.GlobalVPNEnabled != nil {
+		in, out := &in.GlobalVPNEnabled, &out.GlobalVPNEnabled
+		*out = new(bool)
+		**out = **in
+	}
 	out.Output = in.Output
 }
 

@@ -35,6 +35,7 @@
             kubectl
             kubernetes-helm
             velero
+            natscli
 
             # grpc tools
             protobuf

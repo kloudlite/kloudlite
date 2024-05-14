@@ -87,7 +87,7 @@ type MsvcRef struct {
 	metav1.TypeMeta `json:",inline"`
 	Name            string  `json:"name"`
 	Namespace       string  `json:"namespace"`
-	ClusterName     string  `json:"clusterName"`
+	ClusterName     *string `json:"clusterName,omitempty"`
 	SharedSecret    *string `json:"sharedSecret,omitempty" graphql:"ignore"`
 }
 
