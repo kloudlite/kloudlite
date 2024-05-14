@@ -143,16 +143,12 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	if step := r.ensureCloudproviderStuffs(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
+		return notifyAndExit(step)
 	}
 
 	if step := r.createClusterLifecycle(req); !step.ShouldProceed() {
 		return notifyAndExit(step)
 	}
-
-	// if step := r.startClusterApplyJob(req); !step.ShouldProceed() {
-	// 	return notifyAndExit(step)
-	// }
 
 	req.Object.Status.IsReady = true
 	if err := r.NotifyOnClusterUpdate(ctx, req.Object); err != nil {
@@ -330,6 +326,8 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 				}
 
 				if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, gcpVpc, func() error {
+					fn.MapSet(&gcpVpc.Annotations, constants.ClearStatusKey, "true")
+					fn.MapSet(&gcpVpc.Annotations, fmt.Sprintf("kloudlite.io/used-by-cluster.%s", obj.Name), "true")
 					gcpVpc.Spec.GCPProjectID = obj.Spec.GCP.GCPProjectID
 					gcpVpc.Spec.Region = obj.Spec.GCP.Region
 					gcpVpc.Spec.CredentialsRef = obj.Spec.GCP.CredentialsRef
@@ -340,7 +338,7 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 				}
 
 				if !gcpVpc.Status.IsReady {
-					return check.StillRunning(fmt.Errorf("waiting for a kloudlite-vpc to be ready, before proceeding"))
+					return check.StillRunning(fmt.Errorf("waiting for a kloudlite-vpc to be ready, before proceeding")).NoRequeue()
 				}
 
 				vpcOutput, err := rApi.Get(ctx, r.Client, fn.NN(gcpVpc.Spec.Output.SecretRef.Namespace, gcpVpc.Spec.Output.SecretRef.Name), &corev1.Secret{})
@@ -664,6 +662,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.Cluster{})
 	builder.Owns(&crdsv1.Lifecycle{})
+
 	builder.Watches(&clustersv1.AwsVPC{}, handler.EnqueueRequestsFromMapFunc(
 		func(ctx context.Context, obj client.Object) []reconcile.Request {
 			if v, ok := obj.GetLabels()[constants.RegionKey]; ok {
@@ -690,25 +689,20 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 		},
 	))
 
-	builder.Watches(&clustersv1.AccountS3Bucket{}, handler.EnqueueRequestsFromMapFunc(
+	builder.Watches(&clustersv1.GcpVPC{}, handler.EnqueueRequestsFromMapFunc(
 		func(ctx context.Context, obj client.Object) []reconcile.Request {
-			if v, ok := obj.GetLabels()[constants.AccountNameKey]; ok {
-				var clusterlist clustersv1.ClusterList
-				if err := r.List(ctx, &clusterlist, &client.ListOptions{
-					LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-						constants.AccountNameKey: v,
-					}),
-				}); err != nil {
-					return nil
-				}
-
-				rreq := make([]reconcile.Request, 0, len(clusterlist.Items))
-				for i := range clusterlist.Items {
-					rreq = append(rreq, reconcile.Request{NamespacedName: fn.NN(clusterlist.Items[i].GetNamespace(), clusterlist.Items[i].GetName())})
-				}
-				return rreq
+			var clusterlist clustersv1.ClusterList
+			if err := r.List(ctx, &clusterlist, &client.ListOptions{
+				Namespace: obj.GetNamespace(),
+			}); err != nil {
+				return nil
 			}
-			return nil
+
+			rreq := make([]reconcile.Request, 0, len(clusterlist.Items))
+			for i := range clusterlist.Items {
+				rreq = append(rreq, reconcile.Request{NamespacedName: fn.NN(clusterlist.Items[i].GetNamespace(), clusterlist.Items[i].GetName())})
+			}
+			return rreq
 		}))
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})

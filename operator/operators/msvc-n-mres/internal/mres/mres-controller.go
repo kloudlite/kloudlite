@@ -183,57 +183,6 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepRe
 	return req.Finalize()
 }
 
-// func (r *Reconciler) ensureOwnedByMsvc(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
-// 	ctx, obj := req.Context(), req.Object
-// 	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-//
-// 	checkName := ResourceOwnedByManagedSvc
-//
-// 	req.LogPreCheck(checkName)
-// 	defer req.LogPostCheck(checkName)
-//
-// 	fail := func(err error) stepResult.Result {
-// 		return req.CheckFailed(checkName, check, err.Error())
-// 	}
-//
-// 	msvc, err := rApi.Get(
-// 		ctx, r.Client, fn.NN(obj.Spec.ResourceTemplate.MsvcRef.Namespace, obj.Spec.ResourceTemplate.MsvcRef.Name), &crdsv1.ManagedService{},
-// 	)
-// 	if err != nil {
-// 		return fail(err)
-// 	}
-//
-// 	hasUpdated := false
-//
-// 	msvcLabels := fn.MapFilter(msvc.Labels, constants.KloudliteLabelPrefix)
-// 	if !fn.MapContains(obj.Labels, msvcLabels) {
-// 		hasUpdated = true
-// 		fn.MapJoin(&obj.Labels, msvcLabels)
-// 	}
-//
-// 	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
-// 		hasUpdated = true
-// 		obj.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(msvc, true)})
-// 	}
-//
-// 	if hasUpdated {
-// 		if err := r.Update(ctx, obj); err != nil {
-// 			return fail(err)
-// 		}
-// 		return req.Done().RequeueAfter(100 * time.Millisecond)
-// 	}
-//
-// 	check.Status = true
-// 	if check != obj.Status.Checks[checkName] {
-// 		fn.MapSet(&obj.Status.Checks, checkName, check)
-// 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-// 			return sr
-// 		}
-// 	}
-//
-// 	return req.Next()
-// }
-
 func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}

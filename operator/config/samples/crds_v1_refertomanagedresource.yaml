@@ -1,0 +1,12 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ReferToManagedResource
+metadata:
+  labels:
+    app.kubernetes.io/name: refertomanagedresource
+    app.kubernetes.io/instance: refertomanagedresource-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
+  name: refertomanagedresource-sample
+spec:
+  # TODO(user): Add fields here
