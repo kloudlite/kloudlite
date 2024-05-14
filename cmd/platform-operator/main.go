@@ -19,20 +19,17 @@ import (
 func main() {
 	mgr := operator.New("platform-operator")
 
-	// kloudlite resources
 	app.RegisterInto(mgr)
 	routers.RegisterInto(mgr)
 	project.RegisterInto(mgr)
 	helmCharts.RegisterInto(mgr)
 
-	// kloudlite managed services
 	msvcMongo.RegisterInto(mgr)
 	msvcRedis.RegisterInto(mgr)
 	msvcAndMres.RegisterInto(mgr)
 
 	lifecycle.RegisterInto(mgr)
 
-	// kloudlite cluster management
 	clusters.RegisterInto(mgr)
 	nodepool.RegisterInto(mgr)
 	virtualMachine.RegisterInto(mgr)
