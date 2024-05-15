@@ -4,211 +4,113 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"fmt"
 	"io"
-	"log"
-	"net/http"
+	"log/slog"
+	// "net/http"
 	"os"
 	"os/exec"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/kloudlite/operator/pkg/constants"
-
 	"sigs.k8s.io/yaml"
 )
 
-var logger = log.New(os.Stdout, "k3s-runner", log.LstdFlags)
+var (
+	logger  = slog.New(slog.NewTextHandler(os.Stdout, nil))
+	BuiltAt string
+)
 
 func execK3s(ctx context.Context, args ...string) error {
 	cmd := exec.CommandContext(ctx, "k3s", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	logger.Printf("STARTING k3s @ timestamp: %s, with cmd: %s\n", time.Now().Format(time.RFC3339), cmd.String())
+	// logger.Info("STARTING k3s @ timestamp: %s, with cmd: %s\n", time.Now().Format(time.RFC3339), cmd.String())
+	logger.Info("STARTING k3s", "timestamp", time.Now().Format(time.RFC3339), "cmd", cmd.String())
 
 	if err := cmd.Run(); err != nil {
-		logger.Printf("encountered error: %v\n", err)
+		logger.Error("while executing command, got", "err", err)
 		return err
 	}
 
 	return cmd.Wait()
 }
 
-func getPublicIPv4() (string, error) {
-	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.me", nil)
-	if err != nil {
-		return "", err
-	}
-
-	r, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-
-	b, err := io.ReadAll(r.Body)
-	if err != nil {
-		return "", err
-	}
-	defer r.Body.Close()
-
-	return string(b), nil
-}
-
-var BuiltAt string
+// func getPublicIPv4() (string, error) {
+// 	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.me", nil)
+// 	if err != nil {
+// 		return "", err
+// 	}
+//
+// 	r, err := http.DefaultClient.Do(req)
+// 	if err != nil {
+// 		return "", err
+// 	}
+//
+// 	b, err := io.ReadAll(r.Body)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	defer r.Body.Close()
+//
+// 	return string(b), nil
+// }
 
 func main() {
 	var runnerCfgFile string
+	var hasVersionFlag bool
 	flag.StringVar(&runnerCfgFile, "config", "./runner-config.yml", "--config runner-config-file")
+	flag.BoolVar(&hasVersionFlag, "version", false, "--version")
 	flag.Parse()
 
-	fmt.Printf("kloudlite k3s runner BUILT At: %s\n", BuiltAt)
+	if hasVersionFlag {
+		logger.Info("kloudlite k3s runner", "built-at", BuiltAt)
+		os.Exit(0)
+	}
 
-	logger.Printf("specified configuration file: %s\n", runnerCfgFile)
+	logger.Info("kloudlite k3s runner", "built-at", BuiltAt)
+	logger.Info("using", "configuration-file", runnerCfgFile)
 
 	ctx, cf := signal.NotifyContext(context.TODO(), syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
 	defer cf()
 
 	for {
 		if err := ctx.Err(); err != nil {
-			fmt.Println("context cancelled")
+			logger.Error("command context cancelled")
 			os.Exit(1)
 		}
 		f, err := os.Open(runnerCfgFile)
 		if err != nil {
-			logger.Printf("failed to open configuration file, encountered err: %v", err)
+			logger.Error("failed to open configuration file, encountered", "err", err)
+			<-time.After(3 * time.Second)
 			continue
 		}
 
-		fmt.Println("found runner config file")
+		logger.Info("found runner config file")
 
 		out, err := io.ReadAll(f)
 		if err != nil {
-			logger.Printf("failed to read configuration file, encountered err: %v", err)
+			logger.Error("failed to open configuration file, encountered", "err", err)
 			continue
 		}
 
 		var runnerCfg K3sRunnerConfig
 		if err := yaml.Unmarshal(out, &runnerCfg); err != nil {
-			logger.Printf("encountered err, while unmarshalling: %v", err)
+			logger.Error("while unmarshaling, got", "err", err)
 			continue
 		}
 
-		switch runnerCfg.RunAs {
-		case RunAsAgent:
-			{
-				if err := StartK3sAgent(ctx, runnerCfg.Agent); err != nil {
-					if !errors.Is(err, context.Canceled) {
-						logger.Printf("failed to start k3s in agent mode, encountered err: %v", err)
-						logger.Printf("will retry in 10 seconds")
-						<-time.After(10 * time.Second)
-						continue
-					}
-				}
-			}
-
-		case RunAsPrimaryMaster:
-			{
-				if err := StartPrimaryK3sMaster(ctx, runnerCfg.PrimaryMaster); err != nil {
-					if !errors.Is(err, context.Canceled) {
-						logger.Printf("failed to start k3s in server mode (primary), encountered err: %v", err)
-						logger.Printf("will retry in 10 seconds")
-						<-time.After(10 * time.Second)
-						continue
-					}
-				}
-			}
-
-		case RunAsSecondaryMaster:
-			{
-				if err := StartSecondaryK3sMaster(ctx, runnerCfg.SecondaryMaster); err != nil {
-					if !errors.Is(err, context.Canceled) {
-						logger.Printf("failed to start k3s in server mode (secondary), encountered err: %v", err)
-						logger.Printf("will retry in 10 seconds")
-						<-time.After(10 * time.Second)
-						continue
-					}
-				}
-			}
-		default:
-			{
-				logger.Printf("invalid runAs mode: %v", runnerCfg.RunAs)
+		if err := execK3s(ctx, runnerCfg.K3sFlags...); err != nil {
+			if !errors.Is(err, context.Canceled) {
+				logger.Error("failed to start k3s, encountered", "err", err)
+				logger.Info("will retry in 10 seconds")
+				<-time.After(10 * time.Second)
 				continue
 			}
 		}
 
-		logger.Printf("successfully started runner in %s mode", runnerCfg.RunAs)
+		logger.Info("successfully started runner", "timestamp", time.Now().Format(time.RFC3339))
 		break
 	}
-}
-
-func StartPrimaryK3sMaster(ctx context.Context, pmc *PrimaryMasterConfig) error {
-	logger.Printf("starting runner as primary master, with configuration: %#v\n", *pmc)
-
-	argsAndFlags := []string{
-		"server",
-		"--cluster-init",
-		"--flannel-backend", "wireguard-native",
-		"--write-kubeconfig-mode", "644",
-		"--flannel-backend", "wireguard-native",
-		"--node-label", fmt.Sprintf("%s=%s", constants.PublicIpKey, pmc.PublicIP),
-		"--node-label", fmt.Sprintf("%s=%s", constants.NodeNameKey, pmc.NodeName),
-		"--tls-san", pmc.PublicIP,
-	}
-
-	for i := range pmc.SANs {
-		argsAndFlags = append(argsAndFlags, "--tls-san", pmc.SANs[i])
-	}
-
-	argsAndFlags = append(argsAndFlags, pmc.ParseIntoFlags()...)
-	argsAndFlags = append(argsAndFlags, pmc.ExtraServerArgs...)
-
-	return execK3s(ctx, argsAndFlags...)
-}
-
-func StartSecondaryK3sMaster(ctx context.Context, smc *SecondaryMasterConfig) error {
-	argsAndFlags := []string{
-		"server",
-		"--server", fmt.Sprintf("https://%s:6443", smc.ServerIP),
-		"--flannel-backend", "wireguard-native",
-		"--write-kubeconfig-mode", "644",
-		"--node-label", fmt.Sprintf("%s=%s", constants.PublicIpKey, smc.PublicIP),
-		"--node-label", fmt.Sprintf("%s=%s", constants.NodeNameKey, smc.NodeName),
-		"--tls-san", smc.PublicIP,
-	}
-
-	for i := range smc.SANs {
-		argsAndFlags = append(argsAndFlags, "--tls-san", smc.SANs[i])
-	}
-
-	argsAndFlags = append(argsAndFlags, smc.ParseIntoFlags()...)
-	argsAndFlags = append(argsAndFlags, smc.ExtraServerArgs...)
-
-	return execK3s(ctx, argsAndFlags...)
-}
-
-func StartK3sAgent(ctx context.Context, agentCfg *AgentConfig) error {
-	ip, err := func() (string, error) {
-		if agentCfg.PublicIP != "" {
-			return agentCfg.PublicIP, nil
-		}
-
-		return getPublicIPv4()
-	}()
-	if err != nil {
-		return err
-	}
-
-	argsAndFlags := []string{
-		"agent",
-		"--server", fmt.Sprintf("https://%s:6443", agentCfg.ServerIP),
-		"--node-label", fmt.Sprintf("%s=%s", constants.PublicIpKey, ip),
-		"--node-label", fmt.Sprintf("%s=%s", constants.NodeNameKey, agentCfg.NodeName),
-	}
-
-	argsAndFlags = append(argsAndFlags, agentCfg.ParseIntoFlags()...)
-	argsAndFlags = append(argsAndFlags, agentCfg.ExtraAgentArgs...)
-
-	return execK3s(ctx, argsAndFlags...)
 }
