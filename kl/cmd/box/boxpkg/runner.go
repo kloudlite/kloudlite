@@ -246,7 +246,7 @@ func (c *client) readTillLine(ctx context.Context, file string, desiredLine, str
 		if c.verbose {
 			switch stream {
 			case "stderr":
-				fn.Logf("%s: %s", text.Red("[stderr]"), l.Text)
+				fn.Logf("%s: %s", text.Yellow("[stderr]"), l.Text)
 			default:
 				fn.Logf("%s: %s", text.Blue("[stdout]"), l.Text)
 			}

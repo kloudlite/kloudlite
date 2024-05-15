@@ -58,9 +58,9 @@ func (c *client) EnsureVpnRunning(configuration []byte) error {
 		return err
 	}
 
-	defer func() {
-		os.RemoveAll(td)
-	}()
+	// defer func() {
+	// 	os.RemoveAll(td)
+	// }()
 
 	if err := func() error {
 		args := []string{
