@@ -27,6 +27,12 @@ type WgParams struct {
 	IP string `json:"ip"`
 
 	DNSServer *string `json:"dnsServer"`
+
+	// should default to NodePort service, if not specified
+	// K8sServiceType string `json:"k8sServiceType,omitempty"`
+	//
+	// ExternalWgGatewayAddr *string `json:"externalWgGatewayAddr,omitempty"`
+
 	// must be a valid nodeport
 	NodePort *string `json:"nodeport,omitempty"`
 

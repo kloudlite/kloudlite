@@ -33,7 +33,7 @@ type GcpVPCReconciler struct {
 	Name       string
 	yamlClient kubectl.YAMLClient
 
-	templateGcpVPCJob []byte
+	templateGcpVPCLifecycle []byte
 }
 
 func (r *GcpVPCReconciler) GetName() string {
@@ -86,10 +86,6 @@ func (r *GcpVPCReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -102,7 +98,11 @@ func (r *GcpVPCReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.applyVPCJob(req); !step.ShouldProceed() {
+	if step := r.createVPCLifecycle(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -151,7 +151,7 @@ func (r *GcpVPCReconciler) finalize(req *rApi.Request[*clustersv1.GcpVPC]) stepR
 	return req.Finalize()
 }
 
-func (r *GcpVPCReconciler) applyVPCJob(req *rApi.Request[*clustersv1.GcpVPC]) stepResult.Result {
+func (r *GcpVPCReconciler) createVPCLifecycle(req *rApi.Request[*clustersv1.GcpVPC]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(createVPC, req)
 
@@ -175,8 +175,13 @@ func (r *GcpVPCReconciler) applyVPCJob(req *rApi.Request[*clustersv1.GcpVPC]) st
 		return check.Failed(err)
 	}
 
-	b, err := templates.ParseBytes(r.templateGcpVPCJob, templates.GcpVPCJobVars{
-		JobMetadata:              metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace},
+	b, err := templates.ParseBytes(r.templateGcpVPCLifecycle, templates.GcpVPCLifecycleVars{
+		JobMetadata: metav1.ObjectMeta{
+			Name:        obj.Name,
+			Namespace:   obj.Namespace,
+			Labels:      fn.MapFilter(obj.Labels, "kloudlite.io/"),
+			Annotations: fn.MapFilter(obj.Annotations, "kloudlite.io/"),
+		},
 		JobImage:                 r.Env.IACJobImage,
 		JobImagePullPolicy:       "Always",
 		TFStateSecretNamespace:   obj.Namespace,
@@ -219,12 +224,13 @@ func (r *GcpVPCReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Log
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	var err error
-	r.templateGcpVPCJob, err = templates.Read(templates.GcpVPCJob)
+	r.templateGcpVPCLifecycle, err = templates.Read(templates.GcpVPCLifecycle)
 	if err != nil {
 		return err
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.GcpVPC{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

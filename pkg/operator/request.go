@@ -229,7 +229,7 @@ func (r *Request[T]) ClearStatusIfAnnotated() stepResult.Result {
 		if err := r.client.Status().Update(context.TODO(), obj); err != nil {
 			return r.Done().Err(err)
 		}
-		return r.Done().RequeueAfter(0 * time.Second)
+		return r.Done().RequeueAfter(1 * time.Second)
 	}
 	return r.Next()
 }

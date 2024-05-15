@@ -5,22 +5,19 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: databases.mongodb.msvc.kloudlite.io
+  name: refertomanagedresources.crds.kloudlite.io
 spec:
-  group: mongodb.msvc.kloudlite.io
+  group: crds.kloudlite.io
   names:
-    kind: Database
-    listKind: DatabaseList
-    plural: databases
-    singular: database
+    kind: ReferToManagedResource
+    listKind: ReferToManagedResourceList
+    plural: refertomanagedresources
+    singular: refertomanagedresource
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .metadata.annotations.kloudlite\.io\/msvc-gvk
-      name: Msvc GVK
-      type: string
     - jsonPath: .status.lastReconcileTime
-      name: Last_Reconciled_At
+      name: Seen
       type: date
     - jsonPath: .metadata.annotations.kloudlite\.io\/checks
       name: Checks
@@ -34,16 +31,14 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: Database is the Schema for the databases API
+        description: ReferToManagedResource is the Schema for the refertomanagedresources
+          API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
-          globalVPNEnabled:
-            description: whether this database is enabled with globalVPN support
-            type: boolean
           kind:
             description: 'Kind is a string value representing the REST resource this
               object represents. Servers may infer this from the endpoint the client
@@ -51,52 +46,23 @@ spec:
             type: string
           metadata:
             type: object
-          output:
+          spec:
+            description: ReferToManagedResourceSpec defines the desired state of ReferToManagedResource
             properties:
-              credentialsRef:
-                description: refers to a k8s secret that exists in the same namespace
-                  as managed resource
+              managedResourceRef:
                 properties:
                   name:
                     description: .metadata.name of the resource
                     type: string
-                required:
-                - name
-                type: object
-            required:
-            - credentialsRef
-            type: object
-          spec:
-            description: DatabaseSpec defines the desired state of Database
-            properties:
-              msvcRef:
-                properties:
-                  apiVersion:
-                    description: 'APIVersion defines the versioned schema of this
-                      representation of an object. Servers should convert recognized
-                      schemas to the latest internal value, and may reject unrecognized
-                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                    type: string
-                  clusterName:
-                    type: string
-                  kind:
-                    description: 'Kind is a string value representing the REST resource
-                      this object represents. Servers may infer this from the endpoint
-                      the client submits requests to. Cannot be updated. In CamelCase.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                    type: string
-                  name:
-                    type: string
                   namespace:
-                    type: string
-                  sharedSecret:
+                    description: .metadata.namespace of the resource
                     type: string
                 required:
                 - name
                 - namespace
                 type: object
             required:
-            - msvcRef
+            - managedResourceRef
             type: object
           status:
             properties:
@@ -179,9 +145,6 @@ spec:
                   type: object
                 type: array
             type: object
-        required:
-        - output
-        - spec
         type: object
     served: true
     storage: true

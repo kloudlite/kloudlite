@@ -96,4 +96,5 @@ resources:
 - clusters_v1_gcpvpc.yaml
 - crds_v1_blueprint.yaml
 - clusters_v1_virtualmachine.yaml
+- crds_v1_refertomanagedresource.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

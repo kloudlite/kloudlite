@@ -189,9 +189,13 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 
 			domains := make(map[string]struct{})
 			for i := range ingressList.Items {
+				if ingressList.Items[i].GetLabels()["acme.cert-manager.io/http01-solver"] == "true" {
+					continue
+				}
 				if ingressList.Items[i].Spec.IngressClassName != nil && *ingressList.Items[i].Spec.IngressClassName == r.Env.DefaultIngressClass {
 					continue
 				}
+
 				for j := range ingressList.Items[i].Spec.Rules {
 					domains[ingressList.Items[i].Spec.Rules[j].Host] = struct{}{}
 				}
@@ -662,7 +666,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&wgv1.Device{})
-	builder.WithEventFilter(rApi.ReconcileFilter())
 
 	watchList := []client.Object{
 		&corev1.Secret{},
@@ -706,5 +709,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			}),
 	)
 
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

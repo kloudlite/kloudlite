@@ -28,6 +28,11 @@ func (in *CpuT) DeepCopy() *CpuT {
 func (in *MsvcRef) DeepCopyInto(out *MsvcRef) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
+	if in.ClusterName != nil {
+		in, out := &in.ClusterName, &out.ClusterName
+		*out = new(string)
+		**out = **in
+	}
 	if in.SharedSecret != nil {
 		in, out := &in.SharedSecret, &out.SharedSecret
 		*out = new(string)

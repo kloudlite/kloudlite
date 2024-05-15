@@ -16,6 +16,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/routers/internal/env"
@@ -26,6 +28,7 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 )
 
 type Reconciler struct {
@@ -198,6 +201,15 @@ func (r *Reconciler) EnsuringHttpsCerts(req *rApi.Request[*crdsv1.Router]) stepR
 	}
 
 	for _, domain := range nonWildcardDomains {
+
+		tlsCertLabel := fmt.Sprintf("kloudlite.io/tls-cert.%s", fn.Md5([]byte(genTLSCertName(domain))))
+		if v, ok := obj.Labels[tlsCertLabel]; !ok || v != "true" {
+			fn.MapSet(&obj.Labels, tlsCertLabel, "true")
+			if err := r.Update(ctx, obj); err != nil {
+				return check.StillRunning(err)
+			}
+		}
+
 		cert, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &certmanagerv1.Certificate{})
 		if err != nil {
 			if !apiErrors.IsNotFound(err) {
@@ -242,7 +254,9 @@ func (r *Reconciler) EnsuringHttpsCerts(req *rApi.Request[*crdsv1.Router]) stepR
 		}
 
 		if _, err := IsHttpsCertReady(cert); err != nil {
-			return check.StillRunning(err).RequeueAfter(1 * time.Second)
+			return check.StillRunning(err).NoRequeue()
+			// return check.StillRunning(err)
+			// return check.StillRunning(err).RequeueAfter(1 * time.Second)
 		}
 
 		certSecret, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &corev1.Secret{})
@@ -377,6 +391,24 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Router{})
 	builder.Owns(&networkingv1.Ingress{})
+
+	builder.Watches(&certmanagerv1.Certificate{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+		var routersList crdsv1.RouterList
+		if err := r.List(ctx, &routersList, &client.ListOptions{
+			LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+				fmt.Sprintf("kloudlite.io/tls-cert.%s", fn.Md5([]byte(obj.GetName()))): "true",
+			}),
+		}); err != nil {
+			return nil
+		}
+
+		rr := make([]reconcile.Request, 0, len(routersList.Items))
+		for i := range routersList.Items {
+			rr = append(rr, reconcile.Request{NamespacedName: fn.NN(routersList.Items[i].GetNamespace(), routersList.Items[i].GetName())})
+		}
+
+		return rr
+	}))
 	// builder.Owns(&certmanagerv1.Certificate{})
 
 	builder.WithEventFilter(rApi.ReconcileFilter())

@@ -185,7 +185,7 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Lifecycle]) stepResul
 	check := rApi.NewRunningCheck(ApplyK8sJob, req)
 
 	if v, ok := obj.Status.Checks[ApplyK8sJob]; ok && v.Generation == obj.Generation && (v.State == rApi.CompletedState || v.State == rApi.ErroredState) {
-		return req.Next()
+		return check.Completed()
 	}
 
 	job := &batchv1.Job{}
@@ -243,21 +243,6 @@ func (r *Reconciler) applyK8sJob(req *rApi.Request[*crdsv1.Lifecycle]) stepResul
 
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
-
-	// pod, err := job_manager.GetLatestPod(ctx, r.Client, job.Namespace, job.Name)
-	// if err != nil {
-	// 	return req.CheckFailed(installOrUpgradeJob, check, "pod not found").Err(nil)
-	// }
-	//
-	// if pod != nil {
-	// 	for _, v := range pod.Status.ContainerStatuses {
-	// 		if (v.State.Waiting != nil && v.State.Waiting.Reason == "ImagePullBackOff") || (v.State.Waiting != nil && v.State.Waiting.Reason == "ErrImagePull") {
-	// 			if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-	// 				return req.CheckFailed(installOrUpgradeJob, check, err.Error())
-	// 			} return req.Done()
-	// 		}
-	// 	}
-	// }
 
 	if job.Status.Active > 0 {
 		obj.Status.Phase = crdsv1.JobPhaseRunning
@@ -338,26 +323,6 @@ func (r *Reconciler) deleteK8sJob(req *rApi.Request[*crdsv1.Lifecycle]) stepResu
 
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
-
-	// pod, err := job_manager.GetLatestPod(ctx, r.Client, job.Namespace, job.Name)
-	// if err != nil {
-	// 	return req.CheckFailed(installOrUpgradeJob, check, "pod not found").Err(nil)
-	// }
-	//
-	// if pod != nil {
-	// 	for _, v := range pod.Status.ContainerStatuses {
-	// 		if (v.State.Waiting != nil && v.State.Waiting.Reason == "ImagePullBackOff") || (v.State.Waiting != nil && v.State.Waiting.Reason == "ErrImagePull") {
-	// 			if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-	// 				return req.CheckFailed(installOrUpgradeJob, check, err.Error())
-	// 			}
-	// 			return req.Done()
-	// 		}
-	// 	}
-	// }
-
-	// if !job_manager.HasJobFinished(ctx, r.Client, job) {
-	// 	return check.StillRunning(fmt.Errorf("waiting for deletion job to finish execution"))
-	// }
 
 	if job.Status.Active > 0 {
 		obj.Status.Phase = crdsv1.JobPhaseRunning

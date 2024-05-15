@@ -20,8 +20,8 @@ const (
 	S3BucketJobTemplate       templateFile = "./s3-bucket-job.yml.tpl"
 	RBACForClusterJobTemplate templateFile = "./rbac-for-cluster-job.yml.tpl"
 
-	AwsVPCJob templateFile = "./aws-vpc-job.yml.tpl"
-	GcpVPCJob templateFile = "./gcp-vpc-job.yml.tpl"
+	AwsVPCJob       templateFile = "./aws-vpc-job.yml.tpl"
+	GcpVPCLifecycle templateFile = "./gcp-vpc-lifecycle.yml.tpl"
 )
 
 func Read(t templateFile) ([]byte, error) {
@@ -32,7 +32,7 @@ func ParseBytes(b []byte, values any) ([]byte, error) {
 	return templates.NewTextTemplate("clusters").ParseBytes(b, values)
 }
 
-type GcpVPCJobVars struct {
+type GcpVPCLifecycleVars struct {
 	JobMetadata metav1.ObjectMeta
 
 	JobImage           string

@@ -9,8 +9,8 @@ type StandaloneSvcOutput struct {
 	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
 	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
 
-	GlobalVPNHosts string `json:"GLOBAL_VPN_HOSTS"`
-	GlobalVpnURI   string `json:"GLOBAL_VPN_URI"`
+	GlobalVPNHosts string `json:"GLOBAL_VPN_HOSTS,omitempty"`
+	GlobalVpnURI   string `json:"GLOBAL_VPN_URI,omitempty"`
 
 	AuthSource string `json:"AUTH_SOURCE"`
 }
@@ -35,11 +35,11 @@ type ClusterSvcOutput struct {
 	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
 	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
 
-	GlobalVpnHosts string `json:"GLOBAL_VPN_HOSTS"`
-	GlobalVpnURI   string `json:"GLOBAL_VPN_URI"`
+	GlobalVpnHosts string `json:"GLOBAL_VPN_HOSTS,omitempty"`
+	GlobalVpnURI   string `json:"GLOBAL_VPN_URI,omitempty"`
 
-	ReplicasSetName string `json:"REPLICASET_NAME"`
-	ReplicaSetKey   string `json:"REPLICASET_KEY"`
+	ReplicasSetName string `json:"REPLICASET_NAME,omitempty"`
+	ReplicaSetKey   string `json:"REPLICASET_KEY,omitempty"`
 }
 
 func (cso ClusterSvcOutput) ToMap() (map[string]string, error) {
@@ -63,8 +63,8 @@ type DatabaseOutput struct {
 	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
 	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
 
-	GlobalVPNHosts string `json:"GLOBAL_VPN_HOSTS"`
-	GlobalVpnURI   string `json:"GLOBAL_VPN_URI"`
+	GlobalVPNHosts string `json:"GLOBAL_VPN_HOSTS,omitempty"`
+	GlobalVpnURI   string `json:"GLOBAL_VPN_URI,omitempty"`
 }
 
 func ExtractPVCLabelsFromStatefulSetLabels(m map[string]string) map[string]string {
