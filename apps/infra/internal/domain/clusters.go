@@ -373,12 +373,11 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 }
 
 /*
-TODO:
-  - create a specific device for each global VPN reserved for kloudlite
+syncKloudliteDeviceOnCluster:
+  - creates a specific device for each global VPN reserved for kloudlite internal use
   - need to use that device as a kube-proxy to all the clusters
   - we can read their logs, and everything on demand
 */
-
 func (d *domain) syncKloudliteDeviceOnCluster(ctx InfraContext, gvpnName string) error {
 	// 1. parse deployment template
 	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
@@ -672,46 +671,54 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, ucluster.Name, PublishUpdate)
 	if err := d.deleteK8sResource(ctx, &ucluster.Cluster); err != nil {
-		return errors.NewE(err)
-	}
-
-	if ucluster.GlobalVPN != nil {
-
-		if err := d.claimClusterSvcCIDRRepo.DeleteOne(ctx, repos.Filter{
-			fc.ClaimClusterSvcCIDRClaimedByCluster: ucluster.Name,
-			fc.AccountName:                         ctx.AccountName,
-			fc.ClaimClusterSvcCIDRGlobalVPNName:    ucluster.GlobalVPN,
-		}); err != nil {
+		if !apiErrors.IsNotFound(err) {
 			return errors.NewE(err)
 		}
 
-		if _, err := d.freeClusterSvcCIDRRepo.Create(ctx, &entities.FreeClusterSvcCIDR{
-			AccountName:    ctx.AccountName,
-			GlobalVPNName:  *ucluster.GlobalVPN,
-			ClusterSvcCIDR: ucluster.Spec.ClusterServiceCIDR,
-		}); err != nil {
-			return errors.NewE(err)
-		}
+		return d.OnClusterDeleteMessage(ctx, *ucluster)
 	}
 
 	return nil
 }
 
 func (d *domain) OnClusterDeleteMessage(ctx InfraContext, cluster entities.Cluster) error {
-	accNs, err := d.getAccNamespace(ctx)
-	if err != nil {
-		return errors.NewE(err)
-	}
-	err = d.clusterRepo.DeleteOne(ctx, repos.Filter{
-		fields.AccountName:       ctx.AccountName,
-		fields.MetadataName:      cluster.Name,
-		fields.MetadataNamespace: accNs,
-	})
+	xcluster, err := d.findCluster(ctx, cluster.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
+	if err = d.clusterRepo.DeleteById(ctx, xcluster.Id); err != nil {
+		return errors.NewE(err)
+	}
+
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, cluster.Name, PublishDelete)
+
+	if xcluster.GlobalVPN != nil {
+		if err := d.claimClusterSvcCIDRRepo.DeleteOne(ctx, repos.Filter{
+			fc.ClaimClusterSvcCIDRClaimedByCluster: xcluster.Name,
+			fc.AccountName:                         ctx.AccountName,
+			fc.ClaimClusterSvcCIDRGlobalVPNName:    xcluster.GlobalVPN,
+		}); err != nil {
+			return errors.NewE(err)
+		}
+
+		if _, err := d.freeClusterSvcCIDRRepo.Create(ctx, &entities.FreeClusterSvcCIDR{
+			AccountName:    ctx.AccountName,
+			GlobalVPNName:  *xcluster.GlobalVPN,
+			ClusterSvcCIDR: xcluster.Spec.ClusterServiceCIDR,
+		}); err != nil {
+			return errors.NewE(err)
+		}
+
+		gv, err := d.findGlobalVPNConnection(ctx, xcluster.Name, *xcluster.GlobalVPN)
+		if err != nil {
+			return errors.NewE(err)
+		}
+
+		if err := d.OnGlobalVPNConnectionDeleteMessage(ctx, xcluster.Name, *gv); err != nil {
+			return errors.NewE(err)
+		}
+	}
 
 	return nil
 }
@@ -771,10 +778,3 @@ func (d *domain) findCluster(ctx InfraContext, clusterName string) (*entities.Cl
 	}
 	return cluster, nil
 }
-
-// func (d *domain) ensureClusterKubeProxy(ctx InfraContext, clusterName string) error {
-// 	accNs, err := d.getAccNamespace(ctx)
-// 	if err != nil {
-// 		return err
-// 	}
-// }
