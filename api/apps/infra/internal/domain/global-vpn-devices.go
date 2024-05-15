@@ -117,8 +117,9 @@ func (d *domain) DeleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName
 
 func (d *domain) ListGlobalVPNDevice(ctx InfraContext, gvpn string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.GlobalVPNDevice], error) {
 	filter := d.gvpnDevicesRepo.MergeMatchFilters(repos.Filter{
-		fc.AccountName:                  ctx.AccountName,
-		fc.GlobalVPNDeviceGlobalVPNName: gvpn,
+		fc.AccountName:                   ctx.AccountName,
+		fc.GlobalVPNDeviceGlobalVPNName:  gvpn,
+		fc.GlobalVPNDeviceCreationMethod: map[string]any{"$ne": gvpnConnectionDeviceMethod},
 	}, search)
 	return d.gvpnDevicesRepo.FindPaginated(ctx, filter, pagination)
 }

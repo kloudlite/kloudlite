@@ -17,6 +17,10 @@ func (d *domain) CreateGlobalVPN(ctx InfraContext, gvpn entities.GlobalVPN) (*en
 	return d.createGlobalVPN(ctx, gvpn)
 }
 
+const (
+	kloudliteGlobalVPNDevice = "kloudlite-global-vpn-device"
+)
+
 func (d *domain) createGlobalVPN(ctx InfraContext, gvpn entities.GlobalVPN) (*entities.GlobalVPN, error) {
 	if gvpn.CIDR == "" {
 		gvpn.CIDR = d.env.BaseCIDR
@@ -41,7 +45,7 @@ func (d *domain) createGlobalVPN(ctx InfraContext, gvpn entities.GlobalVPN) (*en
 
 	device, err := d.createGlobalVPNDevice(ctx, entities.GlobalVPNDevice{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "kloudlite-platform-device",
+			Name: kloudliteGlobalVPNDevice,
 		},
 		ResourceMetadata: common.ResourceMetadata{
 			DisplayName:   "kloudlite-platform-device",
@@ -51,7 +55,7 @@ func (d *domain) createGlobalVPN(ctx InfraContext, gvpn entities.GlobalVPN) (*en
 		AccountName:    ctx.AccountName,
 		GlobalVPNName:  gv.Name,
 		PublicEndpoint: nil,
-		CreationMethod: "kloudlite-platform-auto-create",
+		CreationMethod: gvpnConnectionDeviceMethod,
 	})
 	if err != nil {
 		return nil, err
