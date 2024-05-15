@@ -471,6 +471,7 @@ func (r *Reconciler) trackNodePort(req *rApi.Request[*wgv1.GlobalVPN]) stepResul
 	}
 
 	wc.NodePort = fn.New(fmt.Sprintf("%d", *nodeport))
+	// wc.ExternalWgGatewayAddr = fn.New(fmt.Sprintf("%d", *nodeport))
 
 	m, err := fn.JsonConvert[map[string]string](wc)
 	if err != nil {

@@ -74,6 +74,10 @@ func ParseFromSecret[T any](secret *corev1.Secret) (*T, error) {
 	return &output, nil
 }
 
+func ParseFromSecretData[T any](m map[string][]byte) (*T, error) {
+	return ParseFromSecret[T](&corev1.Secret{Data: m})
+}
+
 type Restartable string
 
 const (

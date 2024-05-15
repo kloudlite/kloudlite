@@ -238,7 +238,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		return err
 	}
 
-	if r.Env.MsvcCredsSvcSharedSecret != "" && r.Env.MsvcCredsSvcHttpPort != 0 {
+	if r.Env.MsvcCredsSvcHttpPort != 0 {
 		server, err := http.NewServer(http.ServerArgs{
 			Addr:      fmt.Sprintf(":%d", r.Env.MsvcCredsSvcHttpPort),
 			K8sClient: r.Client,

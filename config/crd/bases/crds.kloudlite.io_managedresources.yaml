@@ -20,7 +20,7 @@ spec:
       name: Resource_GVK
       type: string
     - jsonPath: .status.lastReconcileTime
-      name: Last_Reconciled_At
+      name: Seen
       type: date
     - jsonPath: .metadata.annotations.kloudlite\.io\/checks
       name: Checks
@@ -108,7 +108,6 @@ spec:
                       sharedSecret:
                         type: string
                     required:
-                    - clusterName
                     - name
                     - namespace
                     type: object

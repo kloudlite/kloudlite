@@ -1,0 +1,39 @@
+name: Build Operators With Nix Flakes
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  operator-builds:
+    strategy:
+      matrix:
+        name:
+          # - platform
+          # - agent
+          # - wireguard
+          - helm-charts
+        include:
+          # - name: platform
+          #   build_dir: cmd/platform-operator
+          # - name: agent
+          #   build_dir: cmd/agent-operator
+          # - name: wireguard
+          #   build_dir: operators/wireguard
+          - name: helm-charts
+            build_dir: operators/helm-charts
+
+    runs-on: ubuntu-latest
+    name: build operator image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: ./.github/actions/build-operator-images/
+        id: build
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          build_directory: ${{matrix.build_dir}}

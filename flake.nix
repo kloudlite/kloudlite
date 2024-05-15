@@ -35,6 +35,7 @@
             kubectl
             kubernetes-helm
             velero
+            natscli
 
             # grpc tools
             protobuf
@@ -47,9 +48,9 @@
             upx
           ];
 
-          shellHook = ''
-            echo "You are using nix flakes"
-          '';
+          #shellHook = ''
+          #  echo "You are using nix flakes"
+          #'';
           };
         }
       );

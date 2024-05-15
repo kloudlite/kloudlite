@@ -5,9 +5,9 @@ kind: Lifecycle
 metadata:
   name: {{.JobMetadata.Name}}
   namespace: {{.JobMetadata.Namespace}}
-  labels: {{.JobMetadata.Labels}}
-  annotations: {{.JobMetadata.Annotations}}
-  ownerReferences: {{.JobMetadata.OwnerReferences}}
+  labels: {{.JobMetadata.Labels | toYAML | nindent 4}}
+  annotations: {{.JobMetadata.Annotations | toYAML | nindent 4}}
+  ownerReferences: {{.JobMetadata.OwnerReferences | toYAML | nindent 4}}
 spec:
   onApply:
     backOffLimit: 0

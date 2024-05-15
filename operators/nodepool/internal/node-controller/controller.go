@@ -8,7 +8,6 @@ import (
 	"github.com/kloudlite/operator/operators/nodepool/internal/env"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
-	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
@@ -290,10 +289,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Watches(
 		&corev1.Node{},
 		handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-			if v, ok := obj.GetLabels()[constants.NodeNameKey]; ok {
-				return []reconcile.Request{{NamespacedName: fn.NN("", v)}}
-			}
-			return nil
+			return []reconcile.Request{{NamespacedName: fn.NN("", obj.GetName())}}
 		}),
 	)
 
