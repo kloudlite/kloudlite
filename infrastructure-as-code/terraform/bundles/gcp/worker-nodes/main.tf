@@ -36,7 +36,7 @@ module "worker-nodes-firewall" {
   allow_incoming_http_traffic = var.allow_incoming_http_traffic
   allow_node_ports            = false
   name_prefix                 = "${var.name_prefix}-${var.nodepool_name}-fw"
-  allow_ssh                   = false
+  allow_ssh                   = var.allow_ssh
 }
 
 module "worker-nodes" {
@@ -59,18 +59,17 @@ module "worker-nodes" {
     kloudlite_config_directory = module.kloudlite-k3s-templates.kloudlite_config_directory
 
     vm_setup_script = templatefile(module.kloudlite-k3s-templates.k3s-vm-setup-template-path, {
-      kloudlite_release          = var.kloudlite_release
+      # kloudlite_release             = var.kloudlite_release
+      k3s_download_url              = var.k3s_download_url
+      kloudlite_runner_download_url = var.kloudlite_runner_download_url
+
       kloudlite_config_directory = module.kloudlite-k3s-templates.kloudlite_config_directory
     })
 
     tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
     tf_k3s_token            = var.k3s_join_token
     tf_node_taints          = []
-    #  tf_node_taints          = concat([],
-    #    var.node_taints != null ? var.node_taints : [],
-    #    var.nvidia_gpu_enabled == true ? module.constants.gpu_node_taints : [],
-    #  )
-    tf_node_labels = jsonencode(merge(var.node_labels, {
+    tf_node_labels = merge(var.node_labels, {
       (module.constants.node_labels.provider_az)   = var.availability_zone
       (module.constants.node_labels.node_has_role) = "agent"
       (module.constants.node_labels.nodepool_name) : var.nodepool_name
@@ -78,7 +77,7 @@ module "worker-nodes" {
       },
       var.provision_mode == "SPOT" ? { (module.constants.node_labels.node_is_spot) = "true" } : {},
       #            var.nvidia_gpu_enabled == true ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
-    ))
+    )
     tf_node_name                 = "${var.nodepool_name}-${each.key}"
     tf_use_cloudflare_nameserver = true
     tf_extra_agent_args          = var.k3s_extra_agent_args

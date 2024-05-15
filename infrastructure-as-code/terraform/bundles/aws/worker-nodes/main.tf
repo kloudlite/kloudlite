@@ -24,7 +24,7 @@ resource "null_resource" "variable_validations" {
 
     precondition {
       error_message = "either ec2_nodepool or spot_nodepool must be set"
-      condition     = anytrue([
+      condition = anytrue([
         var.ec2_nodepool == null || var.spot_nodepool != null,
         var.ec2_nodepool != null || var.spot_nodepool == null,
       ])
@@ -32,7 +32,7 @@ resource "null_resource" "variable_validations" {
 
     precondition {
       error_message = "a spot nodepool can only consist of one kind of node either cpu only or gpu only"
-      condition     = anytrue([
+      condition = anytrue([
         var.spot_nodepool == null,
         var.spot_nodepool == null ? false : var.spot_nodepool.cpu_node == null && var.spot_nodepool.gpu_node != null,
         var.spot_nodepool == null ? false : var.spot_nodepool.cpu_node != null && var.spot_nodepool.gpu_node == null,
@@ -117,7 +117,7 @@ module "aws-ec2-nodepool" {
   security_groups      = module.aws-security-groups.sg_for_k3s_agents_names
   ssh_key_name         = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
   tags                 = var.tags
-  vpc                  = {
+  vpc = {
     subnet_id              = var.vpc_subnet_id
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
   }
@@ -127,13 +127,14 @@ module "aws-ec2-nodepool" {
         kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
 
         vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
-          kloudlite_release          = var.kloudlite_release
+          # kloudlite_release          = var.kloudlite_release
           kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
+
         })
 
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
-        tf_node_taints          = concat([],
+        tf_node_taints = concat([],
           var.node_taints != null ? var.node_taints : [],
           var.nvidia_gpu_enabled == true ? module.constants.gpu_node_taints : [],
         )
@@ -157,7 +158,7 @@ module "aws-ec2-nodepool" {
 }
 
 module "aws-spot-nodepool" {
-  source     = "../../../modules/aws/aws-spot-nodepool"
+  source = "../../../modules/aws/aws-spot-nodepool"
   depends_on = [
     null_resource.variable_validations, module.aws-security-groups.sg_for_k3s_agents_ids
   ]
@@ -173,7 +174,7 @@ module "aws-spot-nodepool" {
   ssh_key_name                 = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
   cpu_node                     = var.spot_nodepool.cpu_node
   gpu_node                     = var.spot_nodepool.gpu_node
-  vpc                          = {
+  vpc = {
     subnet_id              = var.vpc_subnet_id
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
   }
@@ -183,17 +184,19 @@ module "aws-spot-nodepool" {
         kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
 
         vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
-          kloudlite_release          = var.kloudlite_release
-          kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
+          # kloudlite_release          = var.kloudlite_release
+          k3s_download_url              = var.k3s_download_url
+          kloudlite_runner_download_url = var.kloudlite_runner_download_url
+          kloudlite_config_directory    = module.k3s-templates.kloudlite_config_directory
         })
 
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
-        tf_node_taints          = concat([],
+        tf_node_taints = concat([],
           var.node_taints != null ? var.node_taints : [],
           var.spot_nodepool.gpu_node != null ? module.constants.gpu_node_taints : [],
         )
-        tf_node_labels = jsonencode(merge(
+        tf_node_labels = merge(
           local.common_node_labels,
           {
             (module.constants.node_labels.provider_az)                        = var.availability_zone
@@ -203,7 +206,7 @@ module "aws-spot-nodepool" {
             (module.constants.node_labels.provider_aws_instance_profile_name) = var.iam_instance_profile
           },
           var.spot_nodepool.gpu_node != null ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
-        ))
+        ),
         tf_node_name                 = "${var.nodepool_name}-${name}"
         tf_use_cloudflare_nameserver = true
         tf_extra_agent_args          = var.extra_agent_args

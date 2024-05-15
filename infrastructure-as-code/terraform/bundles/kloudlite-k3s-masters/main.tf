@@ -27,7 +27,7 @@ module "constants" {
 }
 
 module "k3s-masters" {
-  source       = "../../modules/kloudlite/k3s/k3s-master"
+  source = "../../modules/kloudlite/k3s/k3s-master"
   backup_to_s3 = {
     enabled = var.backup_to_s3.enabled
 
@@ -38,7 +38,7 @@ module "k3s-masters" {
   }
   cluster_internal_dns_host       = var.cluster_internal_dns_host
   restore_from_latest_s3_snapshot = var.restore_from_latest_snapshot
-  master_nodes                    = {
+  master_nodes = {
     for k, v in var.master_nodes : k => {
       role : v.role,
       public_ip : v.public_ip,
@@ -47,12 +47,13 @@ module "k3s-masters" {
     }
   }
   public_dns_host = var.public_dns_host
-  ssh_params      = {
+  ssh_params = {
     user        = var.ssh_username
     private_key = var.ssh_private_key
   }
   node_taints       = var.taint_master_nodes ? module.constants.master_node_taints : []
   extra_server_args = var.extra_server_args
+  k3s_service_cidr  = var.k3s_service_cidr
 }
 
 resource "null_resource" "save_kubeconfig" {
@@ -98,11 +99,11 @@ module "kloudlite-crds" {
   count             = var.kloudlite_params.install_crds ? 1 : 0
   source            = "../../modules/kloudlite/crds"
   kloudlite_release = var.kloudlite_params.release
-  depends_on        = [
+  depends_on = [
     module.k3s-masters.kubeconfig_with_public_host
   ]
   force_apply = var.force_apply_kloudlite_CRDs
-  ssh_params  = {
+  ssh_params = {
     public_ip   = module.k3s-masters.k3s_primary_public_ip
     username    = var.ssh_username
     private_key = var.ssh_private_key
@@ -114,11 +115,11 @@ locals {
 }
 
 module "kloudlite-namespace" {
-  source     = "../../modules/kloudlite/execute_command_over_ssh"
+  source = "../../modules/kloudlite/execute_command_over_ssh"
   depends_on = [
     module.k3s-masters.kubeconfig_with_public_host
   ]
-  command    = <<EOF
+  command = <<EOF
 kubectl apply -f - <<EOF2
 apiVersion: v1
 kind: Namespace
@@ -134,7 +135,7 @@ EOF
 }
 
 module "kloudlite-k3s-params" {
-  source     = "../../modules/kloudlite/execute_command_over_ssh"
+  source = "../../modules/kloudlite/execute_command_over_ssh"
   depends_on = [
     module.k3s-masters.kubeconfig_with_public_host
   ]
@@ -173,7 +174,7 @@ EOF
 }
 
 module "fix-k3s-coredns-missing-nodehosts" {
-  source     = "../../modules/kloudlite/execute_command_over_ssh"
+  source = "../../modules/kloudlite/execute_command_over_ssh"
   depends_on = [
     module.k3s-masters.kubeconfig_with_public_host
   ]
@@ -200,7 +201,7 @@ EOF
 }
 
 module "fix-k3s-metrics-server" {
-  source     = "../../modules/kloudlite/execute_command_over_ssh"
+  source = "../../modules/kloudlite/execute_command_over_ssh"
   depends_on = [
     module.k3s-masters.kubeconfig_with_public_host
   ]
@@ -221,12 +222,12 @@ EOF
 }
 
 module "nvidia-container-runtime" {
-  count      = var.enable_nvidia_gpu_support ? 1 : 0
-  source     = "../../modules/nvidia-container-runtime"
+  count  = var.enable_nvidia_gpu_support ? 1 : 0
+  source = "../../modules/nvidia-container-runtime"
   depends_on = [
     module.kloudlite-crds, module.kloudlite-namespace
   ]
-  ssh_params        = local.master_ssh_params
+  ssh_params = local.master_ssh_params
   gpu_node_selector = {
     (module.constants.node_labels.node_has_gpu) : "true"
   }
@@ -236,7 +237,7 @@ module "nvidia-container-runtime" {
 module "kloudlite-agent" {
   count  = var.kloudlite_params.install_agent ? 1 : 0
   source = "../../modules/kloudlite/deployments"
-  args   = {
+  args = {
     message_office_grpc_addr = var.kloudlite_params.agent_vars.message_office_grpc_addr
     cluster_token            = var.kloudlite_params.agent_vars.cluster_token
 
@@ -245,7 +246,7 @@ module "kloudlite-agent" {
   }
   kloudlite_release = var.kloudlite_params.release
   release_namespace = "kloudlite-tmp"
-  ssh_params        = {
+  ssh_params = {
     host        = local.master_ssh_params.public_ip
     user        = local.master_ssh_params.username
     private_key = local.master_ssh_params.private_key

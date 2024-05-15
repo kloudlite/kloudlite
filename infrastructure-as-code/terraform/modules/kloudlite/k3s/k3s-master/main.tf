@@ -41,6 +41,7 @@ locals {
         # [read more here](https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#system-reserved)
         "--kubelet-arg", "--system-reserved=cpu=100m,memory=200Mi,ephemeral-storage=1Gi,pid=1000"
       ],
+      var.k3s_service_cidr != "" ? ["--service-cidr", var.k3s_service_cidr] : [],
       var.backup_to_s3.enabled && v.role == "primary-master" ? [
         "--etcd-s3",
         "--etcd-s3-endpoint", var.backup_to_s3.endpoint,
@@ -58,8 +59,7 @@ locals {
 }
 
 resource "ssh_resource" "k3s_primary_master" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.primary_master_role}
-
+  for_each    = { for k, v in var.master_nodes : k => v if v.role == local.primary_master_role }
   host        = each.value.public_ip
   user        = var.ssh_params.user
   private_key = var.ssh_params.private_key
@@ -71,7 +71,8 @@ resource "ssh_resource" "k3s_primary_master" {
 
   triggers = {
     always_run = sha1(join(",", [
-      jsonencode(each.value.node_labels), jsonencode(local.k3s_server_extra_args[each.key])
+      jsonencode(each.value.node_labels),
+      jsonencode(local.k3s_server_extra_args[each.key]),
     ]))
   }
 
@@ -87,32 +88,47 @@ resource "ssh_resource" "k3s_primary_master" {
     permissions = 0755
   }
 
+  # runAs: primaryMaster
+  # primaryMaster:
+  #   publicIP: ${each.value.public_ip}
+  #   token: ${random_password.k3s_server_token.result}
+  #   nodeName: ${each.key}
+  #   labels: ${jsonencode(each.value.node_labels)}
+  #   SANs: ${jsonencode([var.public_dns_host, each.value.public_ip])}
+  #   taints: ${jsonencode(local.node_taints)}
+  #   extraServerArgs: ${jsonencode(concat(
+  #       local.k3s_server_extra_args[each.key],
+  #     )
+  # )}
+
   commands = [
     <<-EOT
     echo "setting up k3s on primary master"
     cat > /tmp/runner-config.yml <<EOF2
-runAs: primaryMaster
-primaryMaster:
-  publicIP: ${each.value.public_ip}
-  token: ${random_password.k3s_server_token.result}
-  nodeName: ${each.key}
-  labels: ${jsonencode(each.value.node_labels)}
-  SANs: ${jsonencode([var.public_dns_host, each.value.public_ip])}
-  taints: ${jsonencode(local.node_taints)}
-  extraServerArgs: ${jsonencode(concat(
-    local.k3s_server_extra_args[each.key],
-  )
+k3s_flags: ${jsonencode(
+    concat([
+      "server",
+      "--cluster-init",
+      "--flannel-backend", "wireguard-native",
+      "--write-kubeconfig-mode", "6444",
+      "--node-label", "kloudlite.io/node.public-ip=${each.value.public_ip}",
+      "--node-label", "kloudlite.io/node.name=${each.key}",
+      "--tls-san", var.public_dns_host,
+      "--tls-san", each.value.public_ip,
+      ],
+    local.k3s_server_extra_args[each.key])
 )}
 
 EOF2
-    sudo mv /tmp/runner-config.yml ${module.kloudlite-k3s-templates.kloudlite_config_directory}/runner-config.yml
-    sudo systemctl restart kloudlite-k3s.service
+
+  sudo mv /tmp/runner-config.yml ${module.kloudlite-k3s-templates.kloudlite_config_directory}/runner-config.yml
+  sudo systemctl restart kloudlite-k3s.service
 EOT
-  ]
+]
 }
 
 resource "ssh_resource" "k3s_primary_master_upgrade" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.primary_master_role}
+  for_each = { for k, v in var.master_nodes : k => v if v.role == local.primary_master_role }
 
   host        = each.value.public_ip
   user        = var.ssh_params.user
@@ -120,7 +136,7 @@ resource "ssh_resource" "k3s_primary_master_upgrade" {
 
   depends_on = [ssh_resource.k3s_primary_master]
 
-  when     = "create"
+  when = "create"
   triggers = {
     when_kloudlite_release_changes = each.value.kloudlite_release
   }
@@ -130,7 +146,7 @@ resource "ssh_resource" "k3s_primary_master_upgrade" {
 
   commands = [
     <<EOT
-sudo kloudlite-upgrade.sh ${each.value.kloudlite_release}
+sudo kloudlite-install-or-upgrade.sh
 sudo systemctl restart kloudlite-k3s.service
 EOT
   ]
@@ -144,7 +160,7 @@ locals {
 }
 
 resource "null_resource" "wait_till_k3s_primary_server_is_ready" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.primary_master_role}
+  for_each = { for k, v in var.master_nodes : k => v if v.role == local.primary_master_role }
 
   connection {
     type        = "ssh"
@@ -194,7 +210,7 @@ EOC
 }
 
 resource "ssh_resource" "create_revocable_kubeconfig" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.primary_master_role}
+  for_each = { for k, v in var.master_nodes : k => v if v.role == local.primary_master_role }
 
   host        = each.value.public_ip
   user        = var.ssh_params.user
@@ -215,7 +231,7 @@ EOT
 }
 
 resource "ssh_resource" "k3s_secondary_masters" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.secondary_master_role}
+  for_each = { for k, v in var.master_nodes : k => v if v.role == local.secondary_master_role }
 
   host        = each.value.public_ip
   user        = var.ssh_params.user
@@ -234,6 +250,17 @@ resource "ssh_resource" "k3s_secondary_masters" {
   timeout     = "2m"
   retry_delay = "2s"
 
+  # runAs: secondaryMaster
+  # secondaryMaster:
+  #   publicIP: ${each.value.public_ip}
+  #   serverIP: ${var.master_nodes[local.primary_master_node_name].public_ip}
+  #   token: ${random_password.k3s_server_token.result}
+  #   nodeName: ${each.key}
+  #   labels: ${jsonencode(each.value.node_labels)}
+  #   taints: ${jsonencode(local.node_taints)}
+  #   SANs: ${jsonencode([var.public_dns_host, each.value.public_ip])}
+  #   extraServerArgs: ${jsonencode(local.k3s_server_extra_args[each.key])}
+
   commands = [
     <<EOT
 if [ "${var.restore_from_latest_s3_snapshot}" == "true" ]; then
@@ -243,26 +270,25 @@ if [ "${var.restore_from_latest_s3_snapshot}" == "true" ]; then
 fi
 
 cat > /tmp/runner-config.yml<<EOF2
-runAs: secondaryMaster
-secondaryMaster:
-  publicIP: ${each.value.public_ip}
-  serverIP: ${var.master_nodes[local.primary_master_node_name].public_ip}
-  token: ${random_password.k3s_server_token.result}
-  nodeName: ${each.key}
-  labels: ${jsonencode(each.value.node_labels)}
-  taints: ${jsonencode(local.node_taints)}
-  SANs: ${jsonencode([var.public_dns_host, each.value.public_ip])}
-  extraServerArgs: ${jsonencode(local.k3s_server_extra_args[each.key])}
+k3s_flags: ${jsonencode(concat([
+    "server", "--server", "https://${var.master_nodes[local.primary_master_node_name].public_ip}:6443",
+    "--flannel-backend", "wireguard-native",
+    "--write-kubeconfig-mode", "6444",
+    "--node-label", "kloudlite.io/node.public-ip=${each.value.public_ip}",
+    "--node-label", "kloudlite.io/node.name=${each.key}",
+    "--tls-san", var.public_dns_host,
+    "--tls-san", each.value.public_ip,
+], local.k3s_server_extra_args[each.key]))}
 EOF2
 
 sudo mv /tmp/runner-config.yml ${module.kloudlite-k3s-templates.kloudlite_config_directory}/runner-config.yml
 sudo systemctl restart kloudlite-k3s.service
 EOT
-  ]
+]
 }
 
 resource "ssh_resource" "k3s_secondary_masters_upgrade" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.secondary_master_role}
+  for_each = { for k, v in var.master_nodes : k => v if v.role == local.secondary_master_role }
 
   host        = each.value.public_ip
   user        = var.ssh_params.user
@@ -270,7 +296,7 @@ resource "ssh_resource" "k3s_secondary_masters_upgrade" {
 
   depends_on = [ssh_resource.k3s_secondary_masters]
 
-  when     = "create"
+  when = "create"
   triggers = {
     when_kloudlite_release_changes = each.value.kloudlite_release
   }
@@ -280,7 +306,7 @@ resource "ssh_resource" "k3s_secondary_masters_upgrade" {
 
   commands = [
     <<EOT
-sudo kloudlite-upgrade.sh ${each.value.kloudlite_release}
+sudo kloudlite-install-or-upgrade.sh
 sudo systemctl restart kloudlite-k3s.service
 EOT
   ]
