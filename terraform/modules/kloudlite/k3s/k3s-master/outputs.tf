@@ -17,3 +17,4 @@ output "kubeconfig_with_public_ip" {
 output "kubeconfig_with_public_host" {
   value = base64encode(replace(base64decode(chomp(ssh_resource.create_revocable_kubeconfig[local.primary_master_node_name].result)), "https://127.0.0.1", "https://${var.public_dns_host}"))
 }
+
