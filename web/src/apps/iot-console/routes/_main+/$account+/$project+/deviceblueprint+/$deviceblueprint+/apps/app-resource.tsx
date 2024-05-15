@@ -53,7 +53,7 @@ const ExtraButton = ({ app }: { app: BaseType }) => {
 };
 
 const GridView = ({ items = [] }: { items: BaseType[] }) => {
-  const { account,  deviceblueprint } = useParams();
+  const { account, deviceblueprint } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
@@ -93,7 +93,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
 };
 
 const ListView = ({ items }: { items: BaseType[] }) => {
-  const { account,  deviceblueprint } = useParams();
+  const { account, deviceblueprint } = useParams();
   return (
     <ListV2.Root
       linkComponent={Link}

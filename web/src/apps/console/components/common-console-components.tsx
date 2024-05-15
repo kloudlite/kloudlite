@@ -4,7 +4,7 @@ import { cn } from '~/components/utils';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { toast } from '~/components/molecule/toast';
 import { Copy, Check } from '~/console/components/icons';
-import { ListBody } from './console-list-components';
+import { ListItem } from './console-list-components';
 
 interface IDeleteContainer {
   title: ReactNode;
@@ -60,10 +60,12 @@ export const CopyContentToClipboard = ({
   content,
   toastMessage,
   label,
+  toolTip = false,
 }: {
   content: string;
   toastMessage: string;
   label?: ReactNode;
+  toolTip?: boolean;
 }) => {
   const iconSize = 16;
   const { copy } = useClipboard({});
@@ -80,30 +82,44 @@ export const CopyContentToClipboard = ({
   };
 
   return (
-    <ListBody
-      data={
-        <div
-          className="cursor-pointer flex flex-row items-center gap-lg truncate hover:text-text-default"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!copied) {
-              handleCopy();
-            }
-          }}
-        >
-          <span className="truncate">{label || content}</span>
-          {copied ? (
-            <span>
-              <Check size={iconSize} />
-            </span>
-          ) : (
-            <span>
-              <Copy size={iconSize} />
-            </span>
-          )}
-        </div>
-      }
-    />
+    <div className="flex flex-row items-center truncate">
+      <ListItem
+        noTooltip={!toolTip}
+        data={
+          <span
+            className="cursor-pointer items-center gap-lg hover:text-text-default group-[.is-data]:truncate"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!copied) {
+                handleCopy();
+              }
+            }}
+          >
+            {label || content}
+          </span>
+        }
+      />
+      <div
+        className="shrink-0 ml-md"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!copied) {
+            handleCopy();
+          }
+        }}
+      >
+        {copied ? (
+          <span>
+            <Check size={iconSize} />
+          </span>
+        ) : (
+          <span>
+            <Copy size={iconSize} />
+          </span>
+        )}
+      </div>
+    </div>
   );
 };

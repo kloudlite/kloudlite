@@ -32,6 +32,7 @@ import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
+import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import HandleIntercept from './handle-intercept';
 import { IEnvironmentContext } from '../_layout';
 
@@ -121,6 +122,16 @@ interface IResource {
   onAction: OnAction;
 }
 
+const AppServiceView = ({ service }: { service: string }) => {
+  return (
+    <CopyContentToClipboard
+      toolTip
+      content={service}
+      toastMessage="App service url copied successfully."
+    />
+  );
+};
+
 const GridView = ({ items = [], onAction: _ }: IResource) => {
   const { account, environment } = useParams();
   return (
@@ -173,7 +184,8 @@ const GridView = ({ items = [], onAction: _ }: IResource) => {
 };
 
 const ListView = ({ items = [], onAction }: IResource) => {
-  const { account, environment } = useParams();
+  const { environment, cluster, account } =
+    useOutletContext<IEnvironmentContext>();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -185,14 +197,19 @@ const ListView = ({ items = [], onAction }: IResource) => {
             className: 'w-[180px]',
           },
           {
-            render: () => '',
+            render: () => 'Intercepted / Exposed ports',
             name: 'intercept',
-            className: 'w-[250px] truncate overflow-hidden flex-1',
+            className: 'w-[250px] truncate overflow-hidden',
           },
           {
             render: () => 'Status',
             name: 'status',
             className: 'w-[180px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Service',
+            name: 'service',
+            className: 'w-[180px] flex items-center justify-center flex-1',
           },
           {
             render: () => 'Updated',
@@ -214,23 +231,35 @@ const ListView = ({ items = [], onAction }: IResource) => {
               },
               intercept: {
                 render: () =>
-                  i.spec.intercept?.enabled && (
+                  i.spec.intercept?.enabled ? (
                     <ListItem
                       subtitle={
                         <div className="flex flex-col gap-lg">
-                          <div>
+                          <div className="truncate">
                             Intercepted to{' '}
                             <span className="bodyMd-medium text-text-strong">
                               {i.spec.intercept.toDevice}
                             </span>
                           </div>
-                          <div className="flex gap-lg">
+                          <div className="flex gap-lg ">
                             {i.spec.intercept?.portMappings?.map((d) => {
                               return (
                                 <Badge key={d.appPort}>
                                   {d.appPort} → {d.devicePort}
                                 </Badge>
                               );
+                            })}
+                          </div>
+                        </div>
+                      }
+                    />
+                  ) : (
+                    <ListItem
+                      subtitle={
+                        <div className="flex flex-col gap-lg">
+                          <div className="flex gap-lg">
+                            {i.spec.services?.map((d) => {
+                              return <Badge key={d.port}>{d.port}</Badge>;
                             })}
                           </div>
                         </div>
@@ -245,7 +274,17 @@ const ListView = ({ items = [], onAction }: IResource) => {
                   </div>
                 ),
               },
-              // provider: { render: () => <ListItem data={provider} /> },
+              service: {
+                render: () => (
+                  <div className="flex w-fit truncate">
+                    <AppServiceView
+                      service={`${parseName(i)}.${parseName(
+                        environment
+                      )}.svc.${parseName(cluster)}.local`}
+                    />
+                  </div>
+                ),
+              },
               updated: {
                 render: () => (
                   <ListItem
@@ -258,7 +297,9 @@ const ListView = ({ items = [], onAction }: IResource) => {
                 render: () => <ExtraButton onAction={onAction} item={i} />,
               },
             },
-            to: `/${account}/env/${environment}/app/${id}`,
+            to: `/${parseName(account)}/env/${parseName(
+              environment
+            )}/app/${id}`,
           };
         }),
       }}
