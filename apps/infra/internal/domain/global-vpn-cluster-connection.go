@@ -325,8 +325,10 @@ func (d *domain) OnGlobalVPNConnectionDeleteMessage(ctx InfraContext, clusterNam
 		return errors.NewE(err)
 	}
 
-	if err := d.deleteGlobalVPNDevice(ctx, currRecord.GlobalVPNName, fmt.Sprintf("%s-cluster-gateway", currRecord.ClusterName)); err != nil {
-		return errors.NewE(err)
+	if currRecord.DeviceRef.Name != "" {
+		if err := d.deleteGlobalVPNDevice(ctx, currRecord.GlobalVPNName, currRecord.DeviceRef.Name); err != nil {
+			return errors.NewE(err)
+		}
 	}
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeClusterConnection, gvpnConn.Name, PublishDelete)
