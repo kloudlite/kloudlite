@@ -28,6 +28,9 @@ type Database struct {
 	Spec   DatabaseSpec `json:"spec"`
 	Status rApi.Status  `json:"status,omitempty"`
 
+	// whether this database is enabled with globalVPN support
+	GlobalVPNEnabled *bool `json:"globalVPNEnabled,omitempty"`
+
 	Output ct.ManagedResourceOutput `json:"output"`
 }
 
@@ -55,6 +58,10 @@ func (d *Database) GetEnsuredAnnotations() map[string]string {
 		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Database").String(),
 		"kloudlite.io/msvc-gvk":                   d.Spec.MsvcRef.GroupVersionKind().String(),
 	}
+}
+
+func (d *Database) IsGlobalVPNEnabled() bool {
+	return d.GlobalVPNEnabled != nil && *d.GlobalVPNEnabled
 }
 
 // +kubebuilder:object:root=true

@@ -131,7 +131,11 @@ func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepRe
 
 	mctx, cancel := r.newMongoContext(ctx)
 	defer cancel()
-	mongoCli, err := libMongo.NewClient(mctx, msvcOutput.GlobalVpnURI)
+	uri := msvcOutput.ClusterLocalURI
+	if obj.IsGlobalVPNEnabled() {
+		uri = msvcOutput.GlobalVpnURI
+	}
+	mongoCli, err := libMongo.NewClient(mctx, uri)
 	if err != nil {
 		return check.Failed(err)
 	}
@@ -154,8 +158,16 @@ type MsvcOutput struct {
 	ReplicasSetName *string
 }
 
-func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMsvcv1.Database) (*MsvcOutput, error) {
-	svcURL := fmt.Sprintf("http://%s.%s.svc.%s.local", r.Env.MsvcCredsSvcName, r.Env.MsvcCredsSvcNamespace, obj.Spec.MsvcRef.ClusterName)
+func (r *Reconciler) getGlobalVPNConnParams(ctx context.Context, obj *mongodbMsvcv1.Database) (map[string][]byte, error) {
+	if !obj.IsGlobalVPNEnabled() {
+		return nil, fmt.Errorf("global VPN support is not enabled")
+	}
+
+	if obj.Spec.MsvcRef.ClusterName == nil {
+		return nil, fmt.Errorf(".spec.msvcRef.clusterName must be set")
+	}
+
+	svcURL := fmt.Sprintf("http://%s.%s.svc.%s.local", r.Env.MsvcCredsSvcName, r.Env.MsvcCredsSvcNamespace, *obj.Spec.MsvcRef.ClusterName)
 	svcURL, err := url.JoinPath(svcURL, r.Env.MsvcCredsSvcRequestPath)
 	if err != nil {
 		return nil, err
@@ -194,39 +206,51 @@ func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMs
 	m := map[string]string{}
 	err = json.Unmarshal(b, &m)
 	if err != nil {
-		// return nil, errors.NewEf(err, "unmarshalling msvc creds into map[string][]byte")
-		return nil, errors.NewEf(err, "unmarshalling %q msvc creds into map[string][]byte", b)
+		return nil, errors.NewEf(err, "unmarshalling %q msvc creds into map[string]string", b)
 	}
+
+	result := make(map[string][]byte, len(m))
 
 	for k := range m {
 		b, err := base64.StdEncoding.DecodeString(m[k])
 		if err != nil {
 			return nil, errors.NewEf(err, "base64 decoding %q", m[k])
 		}
-		m[k] = string(b)
+		result[k] = b
 	}
 
+	return result, nil
+}
+
+func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMsvcv1.Database) (*MsvcOutput, error) {
 	switch obj.Spec.MsvcRef.Kind {
 	case mongodbMsvcv1.StandaloneServiceKind:
 		{
-			sso, err := fn.JsonConvert[types.StandaloneSvcOutput](m)
+			m, err := func() (map[string][]byte, error) {
+				if obj.IsGlobalVPNEnabled() {
+					return r.getGlobalVPNConnParams(ctx, obj)
+				}
+
+				msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), &mongodbMsvcv1.StandaloneService{})
+				if err != nil {
+					return nil, err
+				}
+
+				s, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, msvc.Output.CredentialsRef.Name), &corev1.Secret{})
+				if err != nil {
+					return nil, err
+				}
+
+				return s.Data, nil
+			}()
+			if err != nil {
+				return nil, err
+			}
+
+			sso, err := fn.ParseFromSecretData[types.StandaloneSvcOutput](m)
 			if err != nil {
 				return nil, errors.NewEf(err, "unmarshalling msvc creds into types.StandaloneSvcOutput")
 			}
-			// msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), &mongodbMsvcv1.StandaloneService{})
-			// if err != nil {
-			// 	return "", "", err
-			// }
-			//
-			// s, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Output.CredentialsRef.Name), &corev1.Secret{})
-			// if err != nil {
-			// 	return "", "", err
-			// }
-			//
-			// cso, err := fn.ParseFromSecret[types.StandaloneSvcOutput](s)
-			// if err != nil {
-			// 	return "", "", err
-			// }
 
 			return &MsvcOutput{
 				ClusterLocalHosts: sso.ClusterLocalHosts,
@@ -237,25 +261,30 @@ func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMs
 		}
 	case mongodbMsvcv1.ClusterServiceKind:
 		{
+			m, err := func() (map[string][]byte, error) {
+				if obj.IsGlobalVPNEnabled() {
+					return r.getGlobalVPNConnParams(ctx, obj)
+				}
+
+				msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), &mongodbMsvcv1.ClusterService{})
+				if err != nil {
+					return nil, err
+				}
+
+				s, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Output.CredentialsRef.Name), &corev1.Secret{})
+				if err != nil {
+					return nil, err
+				}
+
+				return s.Data, nil
+			}()
+			if err != nil {
+				return nil, err
+			}
 			cso, err := fn.JsonConvert[types.ClusterSvcOutput](m)
 			if err != nil {
 				return nil, err
 			}
-
-			// msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), &mongodbMsvcv1.ClusterService{})
-			// if err != nil {
-			// 	return "", "", err
-			// }
-			//
-			// s, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Namespace, msvc.Output.CredentialsRef.Name), &corev1.Secret{})
-			// if err != nil {
-			// 	return "", "", err
-			// }
-			//
-			// cso, err := fn.ParseFromSecret[types.ClusterSvcOutput](s)
-			// if err != nil {
-			// 	return "", "", err
-			// }
 
 			return &MsvcOutput{
 				ClusterLocalHosts: cso.ClusterLocalHosts,
@@ -291,12 +320,18 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 	shouldGeneratePassword := scrt == nil
 
 	if scrt != nil {
+		shouldGeneratePassword = false
 		mresOutput, err := fn.ParseFromSecret[types.DatabaseOutput](scrt)
 		if err != nil {
 			return check.Failed(err).Err(nil)
 		}
 
-		err = libMongo.ConnectAndPing(ctx, mresOutput.GlobalVpnURI)
+		uri := mresOutput.ClusterLocalURI
+		if obj.IsGlobalVPNEnabled() {
+			uri = mresOutput.GlobalVpnURI
+		}
+
+		err = libMongo.ConnectAndPing(ctx, uri)
 		if err != nil {
 			if !libMongo.FailsWithAuthError(err) {
 				return check.Failed(err)
@@ -325,13 +360,15 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 				}
 				return baseURI
 			}(),
-			GlobalVpnURI: func() string {
+		}
+		if obj.IsGlobalVPNEnabled() {
+			mresOutput.GlobalVpnURI = func() string {
 				baseURI := fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=%s", obj.Name, dbPasswd, msvcOutput.GlobalVPNHosts, obj.Name, obj.Name)
 				if obj.Spec.MsvcRef.Kind == "ClusterService" {
 					return baseURI + fmt.Sprintf("&replicaSet=%s", *msvcOutput.ReplicasSetName)
 				}
 				return baseURI
-			}(),
+			}()
 		}
 
 		b2, err := templates.Parse(
@@ -352,7 +389,12 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 
 		mctx, cancel := r.newMongoContext(ctx)
 		defer cancel()
-		mongoCli, err := libMongo.NewClient(mctx, msvcOutput.GlobalVpnURI)
+
+		uri := msvcOutput.ClusterLocalURI
+		if obj.IsGlobalVPNEnabled() {
+			uri = msvcOutput.GlobalVpnURI
+		}
+		mongoCli, err := libMongo.NewClient(mctx, uri)
 		if err != nil {
 			return check.Failed(err)
 		}
