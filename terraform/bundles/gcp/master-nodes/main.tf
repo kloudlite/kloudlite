@@ -51,8 +51,10 @@ module "master-nodes" {
   labels       = var.labels
 
   startup_script = templatefile(module.kloudlite-k3s-templates.k3s-vm-setup-template-path, {
-    kloudlite_release          = var.kloudlite_params.release
-    kloudlite_config_directory = module.kloudlite-k3s-templates.kloudlite_config_directory
+    # kloudlite_release          = var.kloudlite_params.release
+    k3s_download_url              = var.k3s_download_url
+    kloudlite_runner_download_url = var.kloudlite_runner_download_url
+    kloudlite_config_directory    = module.kloudlite-k3s-templates.kloudlite_config_directory
   })
   bootvolume_size = each.value.bootvolume_size
   bootvolume_type = each.value.bootvolume_type
@@ -99,4 +101,5 @@ module "kloudlite-k3s-masters" {
   save_kubeconfig_to_path      = var.save_kubeconfig_to_path
   cloudprovider_name           = "gcp"
   cloudprovider_region         = ""
+  k3s_service_cidr             = var.k3s_service_cidr
 }

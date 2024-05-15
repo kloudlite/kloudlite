@@ -25,6 +25,16 @@ variable "kloudlite_release" {
   type        = string
 }
 
+variable "k3s_download_url" {
+  type        = string
+  description = "k3s download URL"
+}
+
+variable "kloudlite_runner_download_url" {
+  type        = string
+  description = "kloudlite runner download URL"
+}
+
 variable "vpc_id" {
   description = "vpc id"
   type        = string
@@ -48,7 +58,7 @@ variable "nvidia_gpu_enabled" {
 
 variable "node_taints" {
   description = "node taints on nodepool nodes"
-  type        = list(object({
+  type = list(object({
     key    = string
     value  = optional(string)
     effect = string
@@ -64,7 +74,7 @@ variable "iam_instance_profile" {
 
 variable "ec2_nodepool" {
   description = "EC2 nodepool spec"
-  type        = object({
+  type = object({
     instance_type = string
 
     root_volume_size = number
@@ -79,7 +89,7 @@ variable "ec2_nodepool" {
 
 variable "spot_nodepool" {
   description = "SPOT nodepool spec"
-  type        = object({
+  type = object({
     root_volume_size = number
     root_volume_type = string
 

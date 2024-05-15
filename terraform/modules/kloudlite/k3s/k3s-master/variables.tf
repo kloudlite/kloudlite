@@ -10,7 +10,7 @@ variable "cluster_internal_dns_host" {
 
 variable "ssh_params" {
   description = "The SSH parameters to use when connecting to k3s master node"
-  type        = object({
+  type = object({
     user        = string
     private_key = string
   })
@@ -18,11 +18,17 @@ variable "ssh_params" {
 
 variable "node_taints" {
   description = "Taints to be added to the nodes"
-  type        = list(object({
+  type = list(object({
     key    = string
     value  = optional(string)
     effect = string
   }))
+}
+
+variable "k3s_service_cidr" {
+  type        = string
+  description = "k3s service CIDR to use for this cluster, as specified in https://docs.k3s.io/networking/basic-network-options?_highlight=cidr#dual-stack-ipv4--ipv6-networking"
+  default     = ""
 }
 
 variable "extra_server_args" {
@@ -33,7 +39,7 @@ variable "extra_server_args" {
 
 variable "master_nodes" {
   description = "map of secondary master nodes to join the cluster"
-  type        = map(object({
+  type = map(object({
     role              = string
     public_ip         = string
     node_labels       = map(string)
@@ -48,7 +54,7 @@ variable "master_nodes" {
 
 variable "backup_to_s3" {
   description = "configuration to backup k3s etcd to s3"
-  type        = object({
+  type = object({
     enabled = bool
 
     endpoint      = optional(string, "s3.amazonaws.com")
@@ -59,7 +65,7 @@ variable "backup_to_s3" {
 
   validation {
     error_message = "when backup_to_s3 is enabled, all the following variables must be set: aws_access_key, aws_secret_key, bucket_name, bucket_region, bucket_folder and cron_schedule"
-    condition     = var.backup_to_s3.enabled == false || alltrue([
+    condition = var.backup_to_s3.enabled == false || alltrue([
       var.backup_to_s3.endpoint != "",
       var.backup_to_s3.bucket_name != "",
       var.backup_to_s3.bucket_region != "",
@@ -71,3 +77,4 @@ variable "backup_to_s3" {
 variable "restore_from_latest_s3_snapshot" {
   type = bool
 }
+

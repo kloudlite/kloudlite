@@ -4,10 +4,10 @@ gcp_credentials_json: ${GCP_CREDENTIALS_JSON}
 
 name_prefix: "example-test-cluster"
 provision_mode: "STANDARD"
-network: "example-vpc"
+network: "default"
 
 use_as_longhorn_storage_nodes: true
-machine_type: "e2-custom-1-1024"
+machine_type: "e2-medium"
 nodes:
   master-1:
     availability_zone: "asia-south1-a"
@@ -35,6 +35,19 @@ save_ssh_key_to_path: ".secrets/masters-ssh-key.pem"
 save_kubeconfig_to_path: ".secrets/masters.kubeconfig"
 
 public_dns_host: ${PUBLIC_DNS_HOST_MASTERS}
+
+labels:
+  create-for: "testing"
+
+# k3s_service_cidr: "100.64.0.0/18"
+k3s_service_cidr: "100.65.96.0/19"
+
+service_account:
+  enabled: false
+
+k3s_download_url: "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/k3s"
+kloudlite_runner_download_url: "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/runner-amd64"
+machine_state: "on"
 
 cloudflare:
   enabled: true

@@ -11,10 +11,12 @@ module "kl-worker-nodes-on-aws" {
   tags                 = var.tags
   kloudlite_release    = var.kloudlite_release
 
-  vpc_id            = var.vpc_id
-  availability_zone = var.availability_zone
-  ec2_nodepool      = var.ec2_nodepool
-  nodepool_name     = var.nodepool_name
-  spot_nodepool     = var.spot_nodepool
-  vpc_subnet_id     = var.vpc_subnet_id
+  vpc_id                        = var.vpc_id
+  availability_zone             = var.availability_zone
+  ec2_nodepool                  = var.ec2_nodepool
+  nodepool_name                 = var.nodepool_name
+  spot_nodepool                 = var.spot_nodepool
+  vpc_subnet_id                 = var.vpc_subnet_id
+  k3s_download_url              = var.k3s_download_url
+  kloudlite_runner_download_url = var.kloudlite_runner_download_url
 }

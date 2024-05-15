@@ -34,6 +34,12 @@ variable "machine_type" {
   type        = string
 }
 
+variable "k3s_service_cidr" {
+  type        = string
+  description = "k3s service CIDR to use for this cluster, as specified in https://docs.k3s.io/networking/basic-network-options?_highlight=cidr#dual-stack-ipv4--ipv6-networking"
+  default     = ""
+}
+
 variable "cluster_internal_dns_host" {
   type    = string
   default = "cluster.local"
@@ -117,6 +123,16 @@ variable "service_account" {
     email   = optional(string)
     scopes  = optional(list(string))
   })
+}
+
+variable "k3s_download_url" {
+  type        = string
+  description = "k3s download URL"
+}
+
+variable "kloudlite_runner_download_url" {
+  type        = string
+  description = "kloudlite runner download URL"
 }
 
 variable "machine_state" {

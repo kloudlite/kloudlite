@@ -73,6 +73,17 @@ variable "k3s_extra_agent_args" {
   type = list(string)
 }
 
+variable "k3s_download_url" {
+  type        = string
+  description = "k3s download URL"
+}
+
+variable "kloudlite_runner_download_url" {
+  type        = string
+  description = "kloudlite runner download URL"
+}
+
+
 variable "cluster_internal_dns_host" {
   type    = string
   default = "cluster.local"
@@ -116,4 +127,9 @@ variable "service_account" {
 
 variable "machine_state" {
   type = string
+}
+
+variable "allow_ssh" {
+  type    = bool
+  default = false
 }
