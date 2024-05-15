@@ -10,4 +10,5 @@ module "kl-master-nodes-on-aws" {
   extra_server_args         = var.extra_server_args
   tags                      = var.tags
   vpc_id                    = var.vpc_id
+  k3s_service_cidr          = var.k3s_service_cidr
 }
