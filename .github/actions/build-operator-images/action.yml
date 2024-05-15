@@ -1,0 +1,61 @@
+name: 'build kloudlite operator action'
+description: 'builds kloudlite Operators'
+
+inputs:
+  github_token:
+    description: 'GitHub Token'
+    required: true
+
+  build_directory:
+    description: "build directory"
+    default: ""
+
+runs:
+  using: 'composite'
+  steps:
+    - name: setup ENV Variables
+      shell: bash
+      run: |+
+        echo "GOMODCACHE=${{github.workspace}}/actions/go-mod-cache" >> $GITHUB_ENV
+        echo "GOCACHE=${{github.workspace}}/actions/go-cache" >> $GITHUB_ENV
+
+    - name: Setup Caches
+      uses: actions/cache@v4
+      env:
+        cache-name: go-cache-${{ github.repository_id }}
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: ${{ runner.os }}-${{github.repository_id}}-${{ inputs.build_directory }}-${{ hashFiles('./go.sum', './go.mod') }}
+        save-always: true
+        restore-keys: |
+          ${{ runner.os }}-${{github.repository_id}}-${{ inputs.build_directory }}-
+
+    - name: setup
+      id: setup
+      uses: ./.github/actions/setup/
+      with:
+        nix-develop-arguments: ".#default"
+        flake-lock: ./flake.lock
+
+    - name: Build & Push Image
+      if: ${{ startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/tags/') }}
+      working-directory: ${{ inputs.build_directory }}
+      env:
+        IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
+        OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
+      run: |
+        set +e
+        image_name="ghcr.io/${{ github.repository }}/${{matrix.name}}"
+
+        docker manifest inspect "$image_name:$IMAGE_TAG"
+        exit_status=$?
+        if [ $exit_status -eq 0 ]; then
+          [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+          echo "image exists, but override pushed image is set to true. proceeding with building image"
+        fi
+
+        set -e
+
+        task container:build-and-push Image=$image_name:$IMAGE_TAG
