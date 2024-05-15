@@ -1,7 +1,10 @@
 import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { DeleteContainer } from '~/console/components/common-console-components';
+import {
+  Box,
+  DeleteContainer,
+} from '~/console/components/common-console-components';
 import { useAppState } from '~/console/page-components/app-states';
 import { parseName } from '~/console/server/r-utils/common';
 import DeleteDialog from '~/console/components/delete-dialog';
@@ -11,7 +14,7 @@ import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/lib/utils/common';
 import Wrapper from '~/console/components/wrapper';
 import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
-import YamlEditor from '~/console/page-components/yaml-editor/yaml-editor';
+import YamlEditorOverlay from '~/console/components/yaml-editor-overlay';
 import { IAppContext } from '../../_layout';
 
 const SettingAdvance = () => {
@@ -22,6 +25,8 @@ const SettingAdvance = () => {
   const api = useConsoleApi();
   const navigate = useNavigate();
   const { setPerformAction, hasChanges, loading } = useUnsavedChanges();
+
+  const [showDialog, setShowDialog] = useState(false);
 
   return (
     <div>
@@ -46,7 +51,25 @@ const SettingAdvance = () => {
           ),
         }}
       >
-        <YamlEditor item={readOnlyApp} />
+        <Box title="Edit App as yaml">
+          <div className="flex flex-col gap-3xl">
+            <span className="bodyMd text-text-default">
+              You are allowed to edit your “{app.displayName}” as yaml. This
+              action will open an yaml editor where you can edit in yaml and
+              commit your changes.
+            </span>
+            <div>
+              <Button content="Edit Yaml" onClick={() => setShowDialog(true)} />
+              <YamlEditorOverlay
+                item={readOnlyApp}
+                showDialog={showDialog}
+                setShowDialog={() => {
+                  setShowDialog(false);
+                }}
+              />
+            </div>
+          </div>
+        </Box>
 
         {/* <div className="rounded border border-border-default bg-surface-basic-default shadow-button flex flex-col"> */}
         {/*   <div className="flex flex-col gap-3xl p-3xl"> */}

@@ -99,7 +99,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         ? cloudProvider.cloudProviderName
         : selectedProvider?.provider?.cloudProviderName || '',
       credentialsRef: cp || parseName(selectedProvider?.provider) || '',
-      availabilityMode: '',
+      availabilityMode: constDatas.availabilityModes[0].value,
       displayName: '',
       isNameError: false,
       selectedGcpRegion: '',
@@ -159,7 +159,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
               }
               break;
             case 'gcp':
-              console.log('gcp', val.cloudProvider);
               ensureAccountClientSide({ account: accountName });
               const { errors: err } = await api.createCluster({
                 cluster: {

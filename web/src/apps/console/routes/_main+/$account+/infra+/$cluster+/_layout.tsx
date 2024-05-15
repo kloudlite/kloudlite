@@ -67,10 +67,10 @@ const ClusterTabs = () => {
   const iconSize = 16;
   return (
     <CommonTabs
-      // backButton={{
-      //   to: `/${account}/infra`,
-      //   label: 'Infra',
-      // }}
+      backButton={{
+        to: `/${account}/infra`,
+        label: 'Infra',
+      }}
       tabs={[
         {
           label: (

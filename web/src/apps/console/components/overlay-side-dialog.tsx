@@ -1,0 +1,62 @@
+import * as Dialog from '@radix-ui/react-dialog';
+import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '~/components/utils';
+
+const OverlaySideDialog = ({
+  show = false,
+  onOpenChange = () => {},
+  children,
+  backdrop = true,
+  className = '',
+}) => {
+  return (
+    <Dialog.Root
+      open={show}
+      onOpenChange={(e) => {
+        if (e) {
+          onOpenChange(show);
+        } else {
+          onOpenChange(false);
+        }
+      }}
+    >
+      <AnimatePresence>
+        {show && (
+          <Dialog.Portal forceMount>
+            <Dialog.Overlay asChild forceMount>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'linear' }}
+                className={cn('fixed inset-0 z-[9999999]', {
+                  'bg-text-default/60': backdrop,
+                })}
+              />
+            </Dialog.Overlay>
+            <Dialog.Content asChild forceMount>
+              <motion.div
+                initial={{ x: '75%', y: '-50%', opacity: 1 }}
+                animate={{ x: '0%', y: '-50%', opacity: 1 }}
+                exit={{ x: '100%', y: '-50%', opacity: 1 }}
+                transition={{ duration: 0.3, ease: 'linear' }}
+                className={cn(
+                  'flex flex-col',
+                  'z-[99999999] outline-none transform overflow-hidden md:rounded bg-surface-basic-default shadow-modal',
+                  'fixed right-0 top-1/2',
+                  'w-full h-full md:w-3/4',
+                  'border border-border-default',
+                  className
+                )}
+              >
+                {children}
+              </motion.div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        )}
+      </AnimatePresence>
+    </Dialog.Root>
+  );
+};
+
+export default OverlaySideDialog;

@@ -1,4 +1,5 @@
 import { Editor, EditorProps } from '@monaco-editor/react';
+import { useEffect } from 'react';
 import { cn } from '~/components/utils';
 
 type codelang = 'yaml' | 'json';
@@ -10,6 +11,11 @@ const CodeEditorClient = (
   }
 ) => {
   const { lang, className } = props;
+
+  useEffect(() => {
+    console.log('aaa', props);
+  }, [props]);
+
   return (
     <Editor
       // className="h-full w-full border-text-soft rounded-sm"

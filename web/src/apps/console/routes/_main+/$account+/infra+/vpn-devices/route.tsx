@@ -1,6 +1,6 @@
 import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
 import { parseNodes } from '~/console/server/r-utils/common';
@@ -54,7 +54,10 @@ const Devices = () => {
         action: {
           content: 'Create new device',
           prefix: <Plus />,
-          // LinkComponent: Link,
+          onClick: () => {
+            setVisible(true);
+          },
+          LinkComponent: Link,
         },
       };
     }
@@ -68,7 +71,10 @@ const Devices = () => {
       action: {
         content: 'Create new device',
         prefix: <Plus />,
-        // LinkComponent: Link,
+        onClick: () => {
+          setVisible(true);
+        },
+        LinkComponent: Link,
       },
     };
   };

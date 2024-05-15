@@ -5771,6 +5771,17 @@ mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator
 
 query authCli_getEnvironment($name: String!) {
   core_getEnvironment(name: $name) {
+    status {
+      isReady
+      message {
+        RawMessage
+      }
+    }
+    metadata {
+      name
+    }
+    displayName
+    clusterName
     spec {
       targetNamespace
     }
@@ -5895,6 +5906,7 @@ query authCli_listEnvironments($pq: CursorPaginationIn) {
       node {
         displayName
         markedForDeletion
+        clusterName
         metadata {
           name
           namespace
