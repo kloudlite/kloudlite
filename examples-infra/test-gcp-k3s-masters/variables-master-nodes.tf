@@ -13,13 +13,26 @@ variable "provision_mode" {
   type = string
 }
 
+variable "network" {
+  description = "GCP Network"
+  type        = string
+}
+
 variable "nodes" {
   type = map(object({
     availability_zone = string
     k3s_role          = string
     kloudlite_release = string
+    bootvolume_size   = number
+    bootvolume_type   = string
+    node_labels       = optional(map(string))
   }))
   description = "map of node name to its availability_zone and k3s role"
+}
+
+variable "use_as_longhorn_storage_nodes" {
+  type    = bool
+  default = false
 }
 
 variable "machine_type" {
@@ -39,7 +52,7 @@ variable "public_dns_host" {
 
 variable "cloudflare" {
   description = "cloudflare related parameters"
-  type        = object({
+  type = object({
     enabled   = bool
     api_token = optional(string)
     zone_id   = optional(string)
@@ -48,7 +61,7 @@ variable "cloudflare" {
 
   validation {
     error_message = "if enabled, all mandatory Cloudflare bucket details are specified"
-    condition     = var.cloudflare == null || (var.cloudflare.enabled == true && alltrue([
+    condition = var.cloudflare == null || (var.cloudflare.enabled == true && alltrue([
       var.cloudflare.api_token != "",
       var.cloudflare.zone_id != "",
       var.cloudflare.domain != "",
@@ -58,7 +71,7 @@ variable "cloudflare" {
 
 variable "kloudlite_params" {
   description = "kloudlite related parameters"
-  type        = object({
+  type = object({
     release            = string
     install_crds       = optional(bool, true)
     install_csi_driver = optional(bool, false)
@@ -66,7 +79,7 @@ variable "kloudlite_params" {
 
     install_agent       = optional(bool, false)
     install_autoscalers = optional(bool, true)
-    agent_vars          = optional(object({
+    agent_vars = optional(object({
       account_name             = string
       cluster_name             = string
       cluster_token            = string
@@ -92,8 +105,36 @@ variable "save_kubeconfig_to_path" {
   default     = ""
 }
 
-variable "tags" {
+variable "label_cloudprovider_region" {
+  type        = string
+  description = "cloudprovider region"
+  default     = ""
+}
+
+variable "labels" {
   type        = map(string)
   description = "map of Key => Value to be tagged along created resources"
   default     = {}
+}
+
+variable "service_account" {
+  type = object({
+    enabled = bool
+    email   = optional(string)
+    scopes  = optional(list(string))
+  })
+}
+
+variable "k3s_download_url" {
+  type        = string
+  description = "k3s download URL"
+}
+
+variable "kloudlite_runner_download_url" {
+  type        = string
+  description = "kloudlite runner download URL"
+}
+
+variable "machine_state" {
+  type = string
 }

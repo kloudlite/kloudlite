@@ -41,8 +41,6 @@ metadata:
   namespace: ${namespace}
 EOF
 
-$KUBECTL apply -f svc-account.yaml
-
 svc_account_secret_name="${svc_account_name}-token-secret"
 
 # creating a new service account secret
@@ -56,8 +54,6 @@ metadata:
     kubernetes.io/service-account.name: ${svc_account_name}
 type: kubernetes.io/service-account-token
 EOF
-
-$KUBECTL apply -f svc-account-secret.yml
 
 # cluster role binding to this user
 cat >cluster-role-binding.yaml <<EOF
@@ -75,7 +71,23 @@ roleRef:
   apiGroup: "rbac.authorization.k8s.io"
 EOF
 
-$KUBECTL apply -f cluster-role-binding.yaml
+while true; do
+	$KUBECTL apply -f .
+
+	$KUBECTL get sa/${svc_account_name} -n ${namespace} >/dev/null 2>&1
+	exit_status=$?
+	if [ $exit_status -ne 0 ]; then
+		continue
+	fi
+
+	$KUBECTL get secret/${svc_account_name}-token-secret -n ${namespace} >/dev/null 2>&1
+	exit_status=$?
+	if [ $exit_status -ne 0 ]; then
+		continue
+	fi
+	break
+done
+
 popd || exit 1
 
 ### now generating a new kubeconfig from this generated service account token
@@ -97,8 +109,12 @@ function generate_kubeconfig() {
 }
 
 # Get service account token from secret
-# user_token=$($KUBECTL get secret "${svc_account_secret_name}" -n "${namespace}" -o json | jq -r '.data["token"]' | base64 -d)
-user_token=$($KUBECTL get secret "${svc_account_secret_name}" -n "${namespace}" -o jsonpath={.data."token"} | base64 -d)
+user_token=""
+while [ -z "$user_token" ]; do
+	# sometimes it takes time for kubernetes controllers to reconcile service account secret
+	user_token=$($KUBECTL get secret "${svc_account_secret_name}" -n "${namespace}" -o jsonpath={.data."token"} | base64 -d)
+done
+
 generate_kubeconfig "${user_token}" "${output_file}"
 
 cert=$($KUBECTL get secret "${svc_account_secret_name}" -n "${namespace}" -o jsonpath={.data."ca\.crt"} | base64 -d)

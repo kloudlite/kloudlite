@@ -26,6 +26,13 @@ save_kubeconfig_to_path: ".secrets/masters.kubeconfig"
 
 public_dns_host: ${PUBLIC_DNS_HOST_MASTERS}
 
+k3s_download_url: "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/k3s"
+kloudlite_runner_download_url: "https://github.com/kloudlite/infrastructure-as-code/releases/download/binaries/runner-amd64"
+machine_state: "on"
+network: "default"
+service_account:
+  enabled: false
+
 cloudflare:
   enabled: true
   api_token: ${CLOUDFLARE_API_TOKEN}

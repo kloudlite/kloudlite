@@ -15,7 +15,7 @@ variable "vpc_id" {
 
 variable "k3s_masters" {
   description = "k3s masters configuration"
-  type        = object({
+  type = object({
     instance_type        = string
     nvidia_gpu_enabled   = optional(bool)
     root_volume_size     = string
@@ -56,7 +56,7 @@ variable "k3s_masters" {
 
   validation {
     error_message = "when backup_to_s3 is enabled, all the following variables must be set: endpoint, bucket_name, bucket_region, bucket_folder"
-    condition     = var.k3s_masters.backup_to_s3.enabled == false || alltrue([
+    condition = var.k3s_masters.backup_to_s3.enabled == false || alltrue([
       var.k3s_masters.backup_to_s3.endpoint != "",
       var.k3s_masters.backup_to_s3.bucket_name != "",
       var.k3s_masters.backup_to_s3.bucket_region != "",
@@ -66,7 +66,7 @@ variable "k3s_masters" {
 
   validation {
     error_message = "if enabled, all mandatory Cloudflare bucket details are specified"
-    condition     = var.k3s_masters.cloudflare == null || (var.k3s_masters.cloudflare.enabled == true && alltrue([
+    condition = var.k3s_masters.cloudflare == null || (var.k3s_masters.cloudflare.enabled == true && alltrue([
       var.k3s_masters.cloudflare.api_token != "",
       var.k3s_masters.cloudflare.zone_id != "",
       var.k3s_masters.cloudflare.domain != "",
@@ -76,14 +76,14 @@ variable "k3s_masters" {
 
 variable "kloudlite_params" {
   description = "kloudlite related parameters"
-  type        = object({
+  type = object({
     release            = string
     install_crds       = optional(bool, true)
     install_csi_driver = optional(bool, false)
     install_operators  = optional(bool, false)
 
     install_agent = optional(bool, false)
-    agent_vars    = optional(object({
+    agent_vars = optional(object({
       account_name             = string
       cluster_name             = string
       cluster_token            = string
@@ -95,6 +95,12 @@ variable "kloudlite_params" {
     error_message = "description"
     condition     = var.kloudlite_params.install_agent == false || var.kloudlite_params.agent_vars != null
   }
+}
+
+variable "k3s_service_cidr" {
+  type        = string
+  description = "k3s service CIDR to use for this cluster, as specified in https://docs.k3s.io/networking/basic-network-options?_highlight=cidr#dual-stack-ipv4--ipv6-networking"
+  default     = ""
 }
 
 variable "extra_server_args" {
