@@ -25,7 +25,7 @@ func (c *client) Start() error {
 	// if c.spinner.Started() {
 	// 	defer c.spinner.UpdateMessage("initiating container please wait")()
 	// } else {
-	defer c.spinner.Start("initiating container please wait")
+	defer c.spinner.Start("initiating container please wait")()
 	// }
 
 	if c.verbose {
