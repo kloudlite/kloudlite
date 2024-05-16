@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Button, IconButton } from '~/components/atoms/button';
-import { NumberInput } from '~/components/atoms/input';
+import { IconButton } from '~/components/atoms/button';
+// import { NumberInput } from '~/components/atoms/input';
 import { usePagination } from '~/components/molecule/pagination';
 import { cn } from '~/components/utils';
 import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import { useAppState } from '~/console/page-components/app-states';
-import { BottomNavigation, InfoLabel } from '~/console/components/commons';
+import { BottomNavigation } from '~/console/components/commons';
 import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
 import {
   ChevronLeft,
@@ -14,7 +14,9 @@ import {
   SmileySad,
   X,
 } from '~/console/components/icons';
-import { FadeIn, parseValue } from '~/console/page-components/util';
+import { FadeIn } from '~/console/page-components/util';
+// import { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import Select from '~/components/atoms/select';
 
 interface IExposedPorts {
   port: number;
@@ -123,10 +125,15 @@ const ExposedPortList = ({
 };
 
 export const ExposedPorts = () => {
-  const [port, setPort] = useState<number | string>('');
+  // const [port, setPort] = useState<number | string>('');
+  // const [ports, setPorts] = useState<string[]>([]);
   const [portError, setPortError] = useState<string>('');
 
   const { services, setServices } = useAppState();
+
+  // useEffect(() => {
+  //   setPorts(services);
+  // }, [services]);
 
   // for updating
   const { hasChanges } = useUnsavedChanges();
@@ -134,7 +141,7 @@ export const ExposedPorts = () => {
   // for updating
   useEffect(() => {
     if (!hasChanges) {
-      setPort('');
+      // setPort('');
       setPortError('');
     }
   }, [hasChanges]);
@@ -144,7 +151,7 @@ export const ExposedPorts = () => {
       <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
         <div className="flex flex-row gap-3xl items-start">
           <div className="flex-1">
-            <NumberInput
+            {/* <NumberInput
               min={0}
               max={65534}
               label={
@@ -157,6 +164,29 @@ export const ExposedPorts = () => {
               onChange={({ target }) => {
                 setPort(parseValue(target.value, 0));
               }}
+            /> */}
+            <Select
+              creatable
+              size="lg"
+              label="Exposed ports"
+              multiple
+              value={services.map((s) => `${s.port}`)}
+              options={async () => []}
+              onChange={(val, v) => {
+                const r = /^\d+$/;
+                console.log(
+                  'here',
+                  v.every((c) => r.test(c))
+                );
+                if (v.every((c) => r.test(c))) {
+                  setServices([...v.map((vv) => ({ port: parseInt(vv, 10) }))]);
+                } else {
+                  setServices((prev) => [...prev]);
+                }
+              }}
+              error={!!portError}
+              message={portError}
+              disableWhileLoading
             />
           </div>
         </div>
@@ -165,10 +195,10 @@ export const ExposedPorts = () => {
             All network entries be mounted on the path specified in the
             container
           </div>
-          <Button
+          {/* <Button
             content="Expose port"
             variant="basic"
-            disabled={!port}
+            disabled={!ports}
             onClick={() => {
               if (services?.find((ep) => ep.port && ep.port === port)) {
                 setPortError('Port is already exposed.');
@@ -184,17 +214,17 @@ export const ExposedPorts = () => {
                 setPortError('');
               }
             }}
-          />
+          /> */}
         </div>
       </div>
-      <ExposedPortList
+      {/* <ExposedPortList
         exposedPorts={services}
         onDelete={(ep) => {
           setServices((s) => {
             return s.filter((v) => v.port !== ep.port);
           });
         }}
-      />
+      /> */}
     </>
   );
 };

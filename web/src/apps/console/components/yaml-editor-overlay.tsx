@@ -5,10 +5,12 @@ const YamlEditorOverlay = ({
   item,
   showDialog,
   setShowDialog,
+  onCommit,
 }: {
   item: any;
   showDialog: boolean;
   setShowDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  onCommit: ({ spec }: { spec: any }) => Promise<boolean>;
 }) => {
   return (
     <OverlaySideDialog show={showDialog} onOpenChange={() => {}}>
@@ -17,6 +19,7 @@ const YamlEditorOverlay = ({
         onCloseButtonClick={() => {
           setShowDialog(false);
         }}
+        onCommit={onCommit}
       />
     </OverlaySideDialog>
   );

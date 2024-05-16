@@ -199,17 +199,17 @@ const ListView = ({ items = [], onAction }: IResource) => {
           {
             render: () => 'Intercepted / Exposed ports',
             name: 'intercept',
-            className: 'w-[250px] truncate overflow-hidden',
+            className: 'w-[250px] ',
           },
           {
             render: () => 'Status',
             name: 'status',
-            className: 'w-[180px] flex items-center justify-center',
+            className: 'w-[180px] ',
           },
           {
             render: () => 'Service',
             name: 'service',
-            className: 'w-[180px] flex items-center justify-center flex-1',
+            className: 'w-[180px] flex flex-1',
           },
           {
             render: () => 'Updated',
@@ -235,20 +235,22 @@ const ListView = ({ items = [], onAction }: IResource) => {
                     <ListItem
                       subtitle={
                         <div className="flex flex-col gap-lg">
-                          <div className="truncate">
+                          <div className="w-fit truncate">
                             Intercepted to{' '}
                             <span className="bodyMd-medium text-text-strong">
                               {i.spec.intercept.toDevice}
                             </span>
                           </div>
-                          <div className="flex gap-lg ">
-                            {i.spec.intercept?.portMappings?.map((d) => {
-                              return (
-                                <Badge key={d.appPort}>
-                                  {d.appPort} → {d.devicePort}
-                                </Badge>
-                              );
-                            })}
+                          <div className="truncate">
+                            <span className="flex gap-lg">
+                              {i.spec.intercept?.portMappings?.map((d) => {
+                                return (
+                                  <Badge key={d.appPort}>
+                                    {d.appPort} → {d.devicePort}
+                                  </Badge>
+                                );
+                              })}
+                            </span>
                           </div>
                         </div>
                       }
@@ -256,13 +258,21 @@ const ListView = ({ items = [], onAction }: IResource) => {
                   ) : (
                     <ListItem
                       subtitle={
-                        <div className="flex flex-col gap-lg">
-                          <div className="flex gap-lg">
+                        <span>
+                          <span>
                             {i.spec.services?.map((d) => {
-                              return <Badge key={d.port}>{d.port}</Badge>;
+                              return (
+                                <span
+                                  key={d.port}
+                                  className="inline-block pr-lg bodyMd-medium text-text-strong"
+                                >
+                                  {d.port}:{d.port}
+                                </span>
+                                // <Badge key={d.port}>{d.port}</Badge>
+                              );
                             })}
-                          </div>
-                        </div>
+                          </span>
+                        </span>
                       }
                     />
                   ),

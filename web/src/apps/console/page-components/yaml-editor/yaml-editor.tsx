@@ -7,15 +7,17 @@ import { validateType } from '~/root/src/generated/gql/validator';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import Popup from '~/components/molecule/popup';
 import { X } from '~/console/components/icons';
+import { toast } from '~/components/molecule/toast';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 
 const YamlEditor = ({
   item,
   onCloseButtonClick,
-  onCommit = () => {},
+  onCommit,
 }: {
   item: any;
   onCloseButtonClick?: () => void;
-  onCommit?: () => Promise<null>;
+  onCommit?: ({ spec }: { spec: any }) => Promise<boolean>;
 }) => {
   const { setHasChanges, hasChanges } = useUnsavedChanges();
   const ymlSpec = useCallback(() => {
@@ -26,8 +28,10 @@ const YamlEditor = ({
     return yamlDump(item.spec);
   }, [item])();
 
+  const reload = useReload();
+
   const [initialState, setState] = useState(ymlSpec);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [closeEditor, setcloseEditor] = useState(false);
 
@@ -63,6 +67,11 @@ const YamlEditor = ({
     setHasChanges(initialState !== ymlSpec);
   }, [initialState]);
 
+  useEffect(() => {
+    console.log(errors.length);
+    console.log('init', yamlParse(initialState));
+  }, [errors, initialState]);
+
   return (
     <Box
       className="!shadow-none h-full !border-none"
@@ -84,19 +93,38 @@ const YamlEditor = ({
       }
     >
       <div className="flex gap-lg justify-end">
+        {hasChanges && (
+          <Button
+            disabled={!hasChanges || loading}
+            content="Discard Changes"
+            variant="outline"
+            onClick={() => {
+              setState(ymlSpec);
+            }}
+          />
+        )}
         <Button
-          disabled={!hasChanges}
-          content="Discard Changes"
-          variant="outline"
-          onClick={() => {
-            setState(ymlSpec);
-          }}
-        />
-        <Button
-          disabled={!hasChanges}
+          disabled={!hasChanges || (!!errors && errors.length > 0)}
           content={loading ? 'Committing changes.' : 'Commit Changes'}
-          // loading={loading}
-          // onClick={() => setPerformAction('view-changes')}
+          loading={loading}
+          onClick={async () => {
+            try {
+              const parseSpec = yamlParse(initialState);
+              if (!parseSpec.error) {
+                setLoading(true);
+                const res = await onCommit?.({ spec: parseSpec.data });
+                if (res) {
+                  setHasChanges(false);
+                  setLoading(false);
+                  reload();
+                }
+              } else {
+                throw new Error(parseSpec.error);
+              }
+            } catch (error) {
+              toast.error('error while parsing yaml');
+            }
+          }}
         />
       </div>
       <div className="h-full">

@@ -1,5 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ReactNode } from 'react';
 import { cn } from '~/components/utils';
 
 const OverlaySideDialog = ({
@@ -8,6 +9,12 @@ const OverlaySideDialog = ({
   children,
   backdrop = true,
   className = '',
+}: {
+  show?: boolean;
+  onOpenChange?: (val: any) => void;
+  backdrop?: boolean;
+  className?: string;
+  children?: ReactNode;
 }) => {
   return (
     <Dialog.Root

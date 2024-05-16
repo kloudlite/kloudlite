@@ -15,6 +15,7 @@ import { handleError } from '~/lib/utils/common';
 import Wrapper from '~/console/components/wrapper';
 import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
 import YamlEditorOverlay from '~/console/components/yaml-editor-overlay';
+import { getAppIn } from '~/console/server/r-utils/resource-getter';
 import { IAppContext } from '../../_layout';
 
 const SettingAdvance = () => {
@@ -27,6 +28,29 @@ const SettingAdvance = () => {
   const { setPerformAction, hasChanges, loading } = useUnsavedChanges();
 
   const [showDialog, setShowDialog] = useState(false);
+
+  const updateApp = async ({ spec }: { spec: any }) => {
+    try {
+      const { errors: e } = await api.updateApp({
+        app: {
+          ...getAppIn({
+            ...readOnlyApp,
+            spec,
+          }),
+        },
+        envName: parseName(environment),
+      });
+      if (e) {
+        throw e[0];
+      }
+      toast.success('App updated successfully');
+      // reload();
+      return true;
+    } catch (e) {
+      toast.error('error while updating app');
+      return false;
+    }
+  };
 
   return (
     <div>
@@ -66,6 +90,7 @@ const SettingAdvance = () => {
                 setShowDialog={() => {
                   setShowDialog(false);
                 }}
+                onCommit={updateApp}
               />
             </div>
           </div>
