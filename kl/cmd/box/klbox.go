@@ -14,6 +14,7 @@ func init() {
 	BoxCmd.AddCommand(stopCmd)
 	BoxCmd.AddCommand(sshCmd)
 	BoxCmd.AddCommand(execCmd)
+	BoxCmd.AddCommand(restartCmd)
 }
 
 func setBoxCommonFlags(cmd *cobra.Command) {

@@ -11,6 +11,7 @@ import (
 func (c *client) Stop() error {
 	defer c.spinner.Start("stopping container please wait")()
 
+
 	cr, err := c.getContainer(map[string]string{
 		CONT_MARK_KEY: "true",
 	})
@@ -28,7 +29,7 @@ func (c *client) Stop() error {
 		fn.Logf("stopping container of: %s", text.Blue(crPath))
 	}
 
-	if err := c.cli.ContainerStop(c.Context(), cr.Name, container.StopOptions{}); err != nil {
+	if err := c.cli.ContainerKill(c.Context(), cr.Name, "SIGKILL"); err != nil {
 		return fmt.Errorf("error stoping container: %s", err)
 	}
 

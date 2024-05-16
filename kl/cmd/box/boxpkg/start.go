@@ -46,21 +46,21 @@ func (c *client) Start() error {
 
 		fn.Logf("container %s already running in %s", text.Yellow(cr.Name), text.Blue(crPath))
 
-		if c.cwd != crPath {
-			fn.Printf("do you want to stop that and start here? [Y/n]")
-		} else {
-			fn.Printf("do you want to restart it? [y/N]")
-		}
+		// if c.cwd != crPath {
+		// 	fn.Printf("do you want to stop that and start here? [Y/n]")
+		// } else {
+		// 	fn.Printf("do you want to restart it? [y/N]")
+		// }
 
-		var response string
-		_, _ = fmt.Scanln(&response)
-		if c.cwd != crPath && response == "n" {
-			return containerNotStartedErr
-		}
-
-		if c.cwd == crPath && response != "y" {
-			return containerNotStartedErr
-		}
+		// var response string
+		// _, _ = fmt.Scanln(&response)
+		// if c.cwd != crPath && response == "n" {
+		// 	return containerNotStartedErr
+		// }
+		//
+		// if c.cwd == crPath && response != "y" {
+		// 	return containerNotStartedErr
+		// }
 
 		if err := c.Stop(); err != nil {
 			return err

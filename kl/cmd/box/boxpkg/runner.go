@@ -91,9 +91,9 @@ func (c *client) runContainer(config ContainerConfig) error {
 		return err
 	}
 
-	defer func() {
-		os.RemoveAll(td)
-	}()
+	// defer func() {
+	// 	os.RemoveAll(td)
+	// }()
 
 	stdErrPath := fmt.Sprintf("%s/stderr.log", td)
 	stdOutPath := fmt.Sprintf("%s/stdout.log", td)

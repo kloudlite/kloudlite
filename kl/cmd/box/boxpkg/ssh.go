@@ -55,5 +55,4 @@ func (c *client) Ssh() error {
 		return fmt.Errorf(("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start. %s"), err)
 	}
 	return nil
-
 }
