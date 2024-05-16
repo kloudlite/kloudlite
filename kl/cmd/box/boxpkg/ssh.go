@@ -46,7 +46,7 @@ func (c *client) Ssh() error {
 	c.spinner.Stop()
 	command := exec.Command("ssh", "kl@localhost", "-p", CONTAINER_PORT, "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
 
-	fn.Logf("%s %s", text.Bold("Running ssh command:"), text.Blue(command.String()))
+	fn.Logf("%s %s", text.Bold("command:"), text.Blue(command.String()))
 
 	// command.Stderr = os.Stderr
 	command.Stdin = os.Stdin

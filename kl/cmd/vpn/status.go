@@ -5,6 +5,8 @@ import (
 	"runtime"
 
 	"github.com/kloudlite/kl/domain/client"
+	proxy "github.com/kloudlite/kl/domain/dev-proxy"
+	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
@@ -20,7 +22,34 @@ Example:
   # show vpn status
   sudo kl vpn status
 	`,
-	Run: func(cmd *cobra.Command, _ []string) {
+	Run: func(_ *cobra.Command, _ []string) {
+
+		if euid := os.Geteuid(); euid != 0 {
+			if err := func() error {
+
+				if err := client.EnsureAppRunning(); err != nil {
+					return err
+				}
+
+				p, err := proxy.NewProxy(flags.IsDev(), true)
+				if err != nil {
+					return err
+				}
+
+				out, err := p.WgStatus()
+				if err != nil {
+					return err
+				}
+
+				fn.Log(string(out))
+				return nil
+			}(); err != nil {
+				fn.PrintError(err)
+				return
+			}
+
+			return
+		}
 
 		if runtime.GOOS != "windows" {
 			if euid := os.Geteuid(); euid != 0 {

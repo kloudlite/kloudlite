@@ -6,6 +6,7 @@ import (
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
+	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -31,12 +32,31 @@ sudo {cmd} vpn start`),
 				fn.PrintError(err)
 			}
 			return
+
 		}
 
 		if euid := os.Geteuid(); euid != 0 {
-			fn.Log(
-				text.Colored("make sure you are running command with sudo", 209),
-			)
+			if err := func() error {
+
+				if err := client.EnsureAppRunning(); err != nil {
+					return err
+				}
+
+				p, err := proxy.NewProxy(verbose, true)
+				if err != nil {
+					return err
+				}
+
+				if err := p.Start(); err != nil {
+					return err
+				}
+
+				return nil
+			}(); err != nil {
+				fn.PrintError(err)
+				return
+			}
+
 			return
 		}
 
@@ -99,12 +119,12 @@ sudo {cmd} vpn start`),
 
 		fn.Log("[#] connected")
 
-		_, err = wgc.Show(nil)
+		// _, err = wgc.Show(nil)
 
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
+		// if err != nil {
+		// 	fn.PrintError(err)
+		// 	return
+		// }
 
 		s, err := client.CurrentDeviceName()
 		if err != nil {

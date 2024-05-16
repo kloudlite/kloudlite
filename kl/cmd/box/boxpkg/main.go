@@ -22,7 +22,7 @@ type client struct {
 
 	containerName string
 
-	spinner *spinner.Sp
+	spinner *spinner.Spinner
 }
 
 func (c *client) Context() context.Context {
@@ -44,7 +44,7 @@ func NewClient(cmd *cobra.Command, args []string) (*client, error) {
 	hash.Write([]byte(cwd))
 	contName := fmt.Sprintf("kl-box-%x", hash.Sum(nil))
 
-	sp := spinner.NewSpinnerClient("loading please wait", !(foreground || verbose))
+	sp := spinner.NewSpinner2("loading please wait", (foreground || verbose))
 
 	return &client{
 		cli:           cli,

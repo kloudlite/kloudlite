@@ -33,7 +33,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 	// Define the custom DNS resolver
 	customResolver := &net.Resolver{
 		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+		Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
 			// Specify the address of your custom DNS server
 			dnsServer := "1.1.1.1:53"
 			d := net.Dialer{

@@ -62,13 +62,15 @@ type handler struct {
 	itemMap              map[ns.ItemName]*systray.MenuItem
 	projects             []project
 	projectRenderVersion string
+	bin                  string
 }
 
-func NewHandler(channel chan ChanelMsg) Handler {
+func NewHandler(channel chan ChanelMsg, binName string) Handler {
 	return &handler{
 		channel:  channel,
 		itemMap:  make(map[ns.ItemName]*systray.MenuItem),
 		projects: []project{},
+		bin:      binName,
 	}
 }
 

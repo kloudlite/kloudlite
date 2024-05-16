@@ -3,25 +3,32 @@ package app
 import (
 	"github.com/getlantern/systray"
 	"github.com/kloudlite/kl/app/handler"
+	"github.com/kloudlite/kl/app/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
-func RunApp() error {
+func RunApp(binName string) error {
 	onExit := func() {
 		fn.Log("Exiting...")
 		// now := time.Now()
 		// ioutil.WriteFile(fmt.Sprintf(`on_exit_%d.txt`, now.UnixNano()), []byte(now.String()), 0644)
 	}
 
-	systray.Run(onReady, onExit)
+	go func() {
+		s := server.New(binName)
+		s.Start()
+	}()
+
+	systray.Run(func() {
+		onReady(binName)
+	}, onExit)
 
 	return nil
 }
 
-func onReady() {
-
+func onReady(binName string) {
 	channel := make(chan handler.ChanelMsg)
-	h := handler.NewHandler(channel)
+	h := handler.NewHandler(channel, binName)
 
 	// setup logo and tooltip
 	h.ReconMeta()

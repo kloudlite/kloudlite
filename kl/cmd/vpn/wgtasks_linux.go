@@ -2,8 +2,6 @@ package vpn
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/server"
@@ -54,9 +52,9 @@ func connect(verbose bool, options ...fn.Option) error {
 		fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
 	}
 
-	if err := ensureAppRunning(); err != nil {
-		fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
-	}
+	// if err := ensureAppRunning(); err != nil {
+	// 	fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
+	// }
 
 	if err := startConfiguration(verbose, options...); err != nil {
 		return err
@@ -75,9 +73,9 @@ func connect(verbose bool, options ...fn.Option) error {
 }
 
 func disconnect(verbose bool) error {
-	if err := ensureAppRunning(); err != nil {
-		fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
-	}
+	// if err := ensureAppRunning(); err != nil {
+	// 	fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
+	// }
 
 	if err := wg_vpn.StopService(verbose); err != nil {
 		return err
@@ -96,33 +94,6 @@ func disconnect(verbose bool) error {
 		if err := wg_vpn.ResetDnsServers(ifName, verbose); err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-func ensureAppRunning() error {
-	configFolder, err := client.GetConfigFolder()
-	if err != nil {
-		return err
-	}
-
-	b, err := os.ReadFile(configFolder + "/apppid")
-
-	if err == nil {
-		pid := string(b)
-		if fn.ExecCmd(fmt.Sprintf("ps -p %s", pid), nil, false) == nil {
-			return nil
-		}
-	}
-
-	command := exec.Command(flags.CliName, "start-app")
-	_ = command.Start()
-
-	err = os.WriteFile(configFolder+"/apppid", []byte(fmt.Sprintf("%d", command.Process.Pid)), 0644)
-	if err != nil {
-		fn.PrintError(err)
-		return err
 	}
 
 	return nil

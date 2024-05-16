@@ -7,7 +7,7 @@
 #     sudo chown root /tmp/stdout.log
 # fi
 
-# sudo chown kl /tmp/stdout.log /tmp/stderr.log
+sudo chown kl /tmp/stdout.log /tmp/stderr.log
 
 
 (tail -f /tmp/stdout.log) &

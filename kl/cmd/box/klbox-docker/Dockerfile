@@ -15,7 +15,9 @@ RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq ip
 
 RUN mkdir /var/run/sshd
 
-RUN useradd -m kl && usermod -aG sudo kl && chsh -s /bin/bash kl && \
+RUN userdel ubuntu
+
+RUN groupadd -g 1000 kl && useradd -u 1000 -g 1000 -m kl && usermod -aG sudo kl && chsh -s /bin/bash kl && \
   echo "kl ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kl
 
 # Optionally change the SSH port and other settings
@@ -31,6 +33,8 @@ USER kl
 RUN curl -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-profile
 
 USER root
+
+RUN mkdir -p /home/kl/.config/nix && echo "experimental-features = nix-command flakes" > /home/kl/.config/nix/nix.conf
 RUN chmod -x /etc/update-motd.d/*
 RUN cat > /etc/motd <<'EOF'
 Welcome to KloudLite's Development Environment
@@ -48,4 +52,5 @@ COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /start.sh
 RUN chmod +x /entrypoint.sh
 
+USER kl
 ENTRYPOINT ["/entrypoint.sh"]

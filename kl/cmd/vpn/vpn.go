@@ -23,6 +23,7 @@ sudo {cmd} vpn status
 	  `)
 
 var Cmd = &cobra.Command{
+  Hidden: true,
 	Use:     "vpn",
 	Short:   "vpn related commands",
 	Example: Example,

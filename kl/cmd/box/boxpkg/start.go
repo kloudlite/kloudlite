@@ -1,7 +1,6 @@
 package boxpkg
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -12,16 +11,20 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/kloudlite/kl/constants"
 	cl "github.com/kloudlite/kl/domain/client"
+	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
-	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 )
 
 var containerNotStartedErr = fmt.Errorf("container not started")
 
 func (c *client) Start() error {
-	defer c.spinner.Update("initiating container please wait")()
+	// if c.spinner.Started() {
+	// 	defer c.spinner.UpdateMessage("initiating container please wait")()
+	// } else {
+	defer c.spinner.Start("initiating container please wait")
+	// }
 
 	if c.verbose {
 		fn.Logf("starting container in: %s", text.Blue(c.cwd))
@@ -84,39 +87,19 @@ func (c *client) Start() error {
 	}
 
 	c.spinner.Stop()
-	d, err := server.EnsureDevice()
+	if err := cl.EnsureAppRunning(); err != nil {
+		return err
+	}
+	c.spinner.Start()
+
+	p, err := proxy.NewProxy(c.verbose, false)
 	if err != nil {
 		return err
 	}
 
-	configuration, err := base64.StdEncoding.DecodeString(d.WireguardConfig.Value)
-	if err != nil {
+	if err := p.Start(); err != nil {
 		return err
 	}
-
-	cfg := wgc.Config{}
-	f := c.spinner.Update("[#] loading configuration")
-	err = cfg.UnmarshalText(configuration)
-	f()
-	if err != nil {
-		return err
-	}
-
-	le, err := cl.CurrentEnv()
-	if err != nil {
-		return err
-	}
-
-	e, err := server.GetEnv(le.Name)
-	if err != nil {
-		return err
-	}
-
-	if err := c.EnsureVpnRunning(configuration); err != nil {
-		return err
-	}
-
-	// kConf.WGConfig = string(configuration)
 
 	td, err := os.MkdirTemp("", "kl-tmp")
 	if err != nil {
@@ -155,13 +138,6 @@ func (c *client) Start() error {
 
 		args := []string{}
 
-		if len(cfg.DNS) > 0 {
-			args = append(args, []string{
-				"--dns", cfg.DNS[0].To4().String(),
-				"--dns-search", fmt.Sprintf("%s.svc.%s.local", e.Spec.TargetNamespace, e.ClusterName),
-			}...)
-		}
-
 		switch runtime.GOOS {
 		case constants.RuntimeWindows:
 			fn.Warn("docker support inside container not implemented yet")
@@ -174,7 +150,7 @@ func (c *client) Start() error {
 			"-v", "kl-home-cache:/home:rw",
 			"-v", "nix-store:/nix:rw",
 			// "--network", "host",
-			"-v", fmt.Sprintf("%s:/home/kl/workspace:rw", c.cwd),
+			"-v", fmt.Sprintf("%s:/home/kl/workspace:z", c.cwd),
 			"-p", "1729:22",
 			ImageName, "--", string(conf),
 		}...)

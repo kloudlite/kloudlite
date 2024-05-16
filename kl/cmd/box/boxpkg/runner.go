@@ -32,7 +32,7 @@ type Cntr struct {
 var notFoundErr = errors.New("not found")
 
 func (c *client) getContainer(labels map[string]string) (*Cntr, error) {
-	defer c.spinner.Update("fetching existing container")()
+	defer c.spinner.UpdateMessage("fetching existing container")()
 
 	labelArgs := make([]filters.KeyValuePair, 0)
 
@@ -80,7 +80,7 @@ func (c *client) getContainer(labels map[string]string) (*Cntr, error) {
 }
 
 func (c *client) runContainer(config ContainerConfig) error {
-	defer c.spinner.Update(fmt.Sprintf("trying to start container %s please wait", config.Name))()
+	defer c.spinner.UpdateMessage(fmt.Sprintf("trying to start container %s please wait", config.Name))()
 
 	if c.verbose {
 		fn.Logf("starting container %s", text.Blue(config.Name))
@@ -134,7 +134,6 @@ func (c *client) runContainer(config ContainerConfig) error {
 		}
 
 		dockerArgs = append(dockerArgs, labelArgs...)
-
 		dockerArgs = append(dockerArgs, config.args...)
 
 		command := exec.Command("docker", dockerArgs...)
@@ -213,7 +212,9 @@ func (c *client) runContainer(config ContainerConfig) error {
 				return errors.New("failed to start container")
 			}
 
-			fn.Log(text.Blue("container started successfully"))
+			if c.verbose {
+				fn.Log(text.Blue("container started successfully"))
+			}
 		}
 	}
 
@@ -234,12 +235,12 @@ func (c *client) readTillLine(ctx context.Context, file string, desiredLine, str
 		}
 
 		if l.Text == "kloudlite-entrypoint:INSTALLING_PACKAGES" {
-			c.spinner.Update("installing nix packages")
+			c.spinner.UpdateMessage("installing nix packages")
 			continue
 		}
 
 		if l.Text == "kloudlite-entrypoint:INSTALLING_PACKAGES_DONE" {
-			c.spinner.Update("loading please wait")
+			c.spinner.UpdateMessage("loading please wait")
 			continue
 		}
 

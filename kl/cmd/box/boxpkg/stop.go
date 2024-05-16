@@ -11,10 +11,6 @@ import (
 func (c *client) Stop() error {
 	defer c.spinner.Start("stopping container please wait")()
 
-	if err := c.StopVpn(); err != nil {
-		fn.Warn("[#] vpn stop error:", err.Error())
-	}
-
 	cr, err := c.getContainer(map[string]string{
 		CONT_MARK_KEY: "true",
 	})
