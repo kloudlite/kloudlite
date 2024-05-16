@@ -26,10 +26,10 @@ const ManagedServiceTabs = () => {
   return (
     <CommonTabs
       baseurl={`/${account}/msvc/${msv}`}
-      // backButton={{
-      //   to: `/${account}/managed-services`,
-      //   label: 'Managed Services',
-      // }}
+      backButton={{
+        to: `/${account}/managed-services`,
+        label: 'Managed Services',
+      }}
       tabs={[
         {
           label: 'Logs & Metrics',

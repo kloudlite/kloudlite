@@ -421,7 +421,7 @@ export const SyncStatusV2 = ({
           </div>
         }
       >
-        <div className="cursor-pointer">
+        <div className="cursor-pointer w-fit">
           {
             state({
               state: k,

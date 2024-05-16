@@ -7300,7 +7300,13 @@ export type AuthCli_GetEnvironmentQueryVariables = Exact<{
 }>;
 
 export type AuthCli_GetEnvironmentQuery = {
-  core_getEnvironment?: { spec?: { targetNamespace?: string } };
+  core_getEnvironment?: {
+    displayName: string;
+    clusterName: string;
+    status?: { isReady: boolean; message?: { RawMessage?: any } };
+    metadata?: { name: string };
+    spec?: { targetNamespace?: string };
+  };
 };
 
 export type AuthCli_GetSecretQueryVariables = Exact<{
@@ -7426,6 +7432,7 @@ export type AuthCli_ListEnvironmentsQuery = {
       node: {
         displayName: string;
         markedForDeletion?: boolean;
+        clusterName: string;
         metadata?: { name: string; namespace?: string };
         spec?: { targetNamespace?: string };
         status?: { isReady: boolean; message?: { RawMessage?: any } };

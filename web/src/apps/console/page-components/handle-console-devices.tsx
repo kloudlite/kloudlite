@@ -308,7 +308,7 @@ export const ShowWireguardConfig = ({
   const api = useConsoleApi();
 
   const { data: devData, isLoading } = useCustomSwr(
-    `device-${deviceName}`,
+    () => (deviceName ? `device-${deviceName}` : null),
     async () => api.getGlobalVpnDevice({ deviceName, gvpn: 'default' }),
     true
   );

@@ -2,11 +2,11 @@ import {
   BackingServices,
   CirclesFour,
   GearSix,
-  Plus,
-  Search,
+  // Plus,
+  // Search,
   File,
-  Check,
-  ChevronUpDown,
+  // Check,
+  // ChevronUpDown,
 } from '~/console/components/icons';
 import {
   Link,
@@ -15,24 +15,24 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { useRef, useState } from 'react';
-import OptionList from '~/components/atoms/option-list';
+import { useState } from 'react';
+// import OptionList from '~/components/atoms/option-list';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import HandleScope from '~/console/page-components/handle-environment';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import { parseName } from '~/console/server/r-utils/common';
 import {
-  ensureAccountClientSide,
+  // ensureAccountClientSide,
   ensureAccountSet,
 } from '~/console/server/utils/auth-utils';
 import { SubNavDataProvider } from '~/lib/client/hooks/use-create-subnav-action';
-import useDebounce from '~/lib/client/hooks/use-debounce';
+// import useDebounce from '~/lib/client/hooks/use-debounce';
 import { IRemixCtx, LoaderResult } from '~/lib/types/common';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
+// import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
 import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
-import { cn } from '~/components/utils';
-import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
+// import { cn } from '~/components/utils';
+// import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { ILoginUrls, ILogins } from '~/console/server/gql/queries/git-queries';
 import logger from '~/root/lib/client/helpers/log';
 import Breadcrum from '~/console/components/breadcrum';
@@ -130,10 +130,10 @@ const EnvironmentTabs = () => {
   const { account, environment } = useParams();
   return (
     <CommonTabs
-      // backButton={{
-      //   to: `/${account}/environments`,
-      //   label: 'Envs',
-      // }}
+      backButton={{
+        to: `/${account}/environments`,
+        label: 'Envs',
+      }}
       baseurl={`/${account}/env/${environment}`}
       tabs={tabs}
     />
@@ -145,37 +145,37 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
 
   const [showPopup, setShowPopup] = useState<any>(null);
 
-  const api = useConsoleApi();
-  const [search, setSearch] = useState('');
-  const [searchText, setSearchText] = useState('');
+  // const api = useConsoleApi();
+  // const [search, setSearch] = useState('');
+  // const [searchText, setSearchText] = useState('');
 
   const { account } = params;
 
-  const { data: environments, isLoading } = useCustomSwr(
-    () => `/environments/${searchText}`,
-    async () =>
-      api.listEnvironments({
-        search: {
-          text: {
-            matchType: 'regex',
-            regex: searchText,
-          },
-        },
-      })
-  );
+  // const { data: environments, isLoading } = useCustomSwr(
+  //   () => `/environments/${searchText}`,
+  //   async () =>
+  //     api.listEnvironments({
+  //       search: {
+  //         text: {
+  //           matchType: 'regex',
+  //           regex: searchText,
+  //         },
+  //       },
+  //     })
+  // );
 
-  useDebounce(
-    () => {
-      ensureAccountClientSide(params);
-      setSearchText(search);
-    },
-    300,
-    [search]
-  );
+  // useDebounce(
+  //   () => {
+  //     ensureAccountClientSide(params);
+  //     setSearchText(search);
+  //   },
+  //   300,
+  //   [search]
+  // );
 
-  const [open, setOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [isMouseOver, setIsMouseOver] = useState<boolean>(false);
+  // const [open, setOpen] = useState(false);
+  // const buttonRef = useRef<HTMLButtonElement>(null);
+  // const [isMouseOver, setIsMouseOver] = useState<boolean>(false);
 
   return (
     <>
@@ -202,7 +202,7 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
         to={`/${account}/env/${parseName(environment)}/apps`}
       />
 
-      <OptionList.Root open={open} onOpenChange={setOpen} modal={false}>
+      {/* <OptionList.Root open={open} onOpenChange={setOpen} modal={false}>
         <OptionList.Trigger>
           <button
             ref={buttonRef}
@@ -297,7 +297,7 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
             <Plus size={16} /> <span>New Environment</span>
           </OptionList.Item>
         </OptionList.Content>
-      </OptionList.Root>
+      </OptionList.Root> */}
       <HandleScope show={showPopup} setShow={setShowPopup} />
     </>
   );

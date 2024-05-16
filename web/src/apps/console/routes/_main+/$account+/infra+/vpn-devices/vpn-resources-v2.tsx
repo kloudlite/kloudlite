@@ -160,17 +160,17 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
           {
             render: () => 'Device Config',
             name: 'config',
-            className: 'flex items-center justify-center w-[150px]',
+            className: 'flex  w-[150px]',
           },
           {
             render: () => 'Host',
             name: 'host',
-            className: 'flex items-center justify-center w-[250px]',
+            className: 'flex  w-[240px]',
           },
           {
             render: () => 'IP',
             name: 'ip',
-            className: 'flex items-center justify-center w-[180px]',
+            className: 'flex  w-[150px]',
           },
           {
             render: () => 'Updated',

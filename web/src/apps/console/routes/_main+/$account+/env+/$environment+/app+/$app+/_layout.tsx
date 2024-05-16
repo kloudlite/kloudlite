@@ -25,10 +25,10 @@ const LocalTabs = () => {
   return (
     <CommonTabs
       baseurl={`/${account}/env/${environment}/app/${app}`}
-      // backButton={{
-      //   to: `/${account}/env/${environment}/apps`,
-      //   label: 'Apps',
-      // }}
+      backButton={{
+        to: `/${account}/env/${environment}/apps`,
+        label: 'Apps',
+      }}
       tabs={[
         {
           label: 'Logs & Metrics',

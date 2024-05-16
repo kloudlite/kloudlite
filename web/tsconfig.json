@@ -60,5 +60,6 @@
     "public",
     "./src/design-system/node_modules/**/*",
     "./src/design-system/dist/**/*",
+    "./src/design-system/dist/**/*"
   ]
 }
