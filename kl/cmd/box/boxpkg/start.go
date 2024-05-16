@@ -1,6 +1,7 @@
 package boxpkg
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -15,6 +16,7 @@ import (
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 )
 
 var containerNotStartedErr = fmt.Errorf("container not started")
@@ -90,6 +92,34 @@ func (c *client) Start() error {
 	if err := cl.EnsureAppRunning(); err != nil {
 		return err
 	}
+
+	c.spinner.Stop()
+	d, err := server.EnsureDevice()
+	if err != nil {
+		return err
+	}
+
+	localEnv, err := cl.CurrentEnv()
+	if err != nil {
+		return err
+	}
+
+	e, err := server.GetEnv(localEnv.Name)
+	if err != nil {
+		return err
+	}
+
+	configuration, err := base64.StdEncoding.DecodeString(d.WireguardConfig.Value)
+	if err != nil {
+		return err
+	}
+
+	cfg := wgc.Config{}
+	err = cfg.UnmarshalText(configuration)
+	if err != nil {
+		return err
+	}
+
 	c.spinner.Start()
 
 	p, err := proxy.NewProxy(c.verbose, false)
@@ -143,6 +173,13 @@ func (c *client) Start() error {
 			fn.Warn("docker support inside container not implemented yet")
 		default:
 			args = append(args, "-v", "/var/run/docker.sock:/var/run/docker.sock:ro")
+		}
+
+		if len(cfg.DNS) > 0 {
+			args = append(args, []string{
+				"--dns", cfg.DNS[0].To4().String(),
+				"--dns-search", fmt.Sprintf("%s.svc.%s.local", e.Spec.TargetNamespace, e.ClusterName),
+			}...)
 		}
 
 		args = append(args, []string{
