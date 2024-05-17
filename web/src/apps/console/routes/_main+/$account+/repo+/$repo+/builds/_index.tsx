@@ -61,7 +61,7 @@ const Builds = () => {
                     content="Create build"
                     variant="primary"
                     to="../new-build"
-                    LinkComponent={Link}
+                    linkComponent={Link}
                     prefix={<Plus />}
                   />
                 ),
@@ -73,7 +73,7 @@ const Builds = () => {
                   content: 'create build',
 
                   to: '../new-build',
-                  LinkComponent: Link,
+                  linkComponent: Link,
                   prefix: <Plus />,
                 },
                 content: (

@@ -215,10 +215,16 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
                     />
                   ) : (
                     <ListItem
+                      noTooltip
                       data={
-                        <span className="bodyMd-semibold">
-                          {i.creationMethod}
-                        </span>
+                        <div>
+                          <Button
+                            variant="plain"
+                            onClick={() => showWgConfig(i)}
+                            content="View"
+                            suffix={<Eye />}
+                          />
+                        </div>
                       }
                     />
                   ),
@@ -226,7 +232,7 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
               host: {
                 render: () => (
                   <div className="flex w-fit truncate">
-                    <DeviceHostView hostName={`${parseName(i)}.local`} />
+                    <DeviceHostView hostName={`${parseName(i)}.device.local`} />
                   </div>
                 ),
                 // render: () => (
@@ -350,6 +356,7 @@ const VPNResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
         setVisible={() => setShowWireguardConfig(null)}
         visible={!!showWireguardConfig}
         deviceName={parseName(showWireguardConfig)}
+        creationMethod={showWireguardConfig?.creationMethod || ''}
       />
     </>
   );

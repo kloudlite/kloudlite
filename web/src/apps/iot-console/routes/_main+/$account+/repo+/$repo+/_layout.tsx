@@ -26,7 +26,7 @@ const LocalBreadcrum = () => {
     <div className="flex flex-row items-center">
       <Breadcrum.Button
         to={`/${account}/packages`}
-        LinkComponent={Link}
+        linkComponent={Link}
         content={
           <div className="flex flex-row gap-md items-center">
             <ChevronRight size={14} />{' '}
@@ -39,7 +39,7 @@ const LocalBreadcrum = () => {
       />
       <Breadcrum.Button
         to={`/${account}/repo/${repo}`}
-        LinkComponent={Link}
+        linkComponent={Link}
         content={<span>{atob(repo || '')}</span>}
       />
     </div>

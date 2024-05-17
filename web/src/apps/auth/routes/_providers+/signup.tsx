@@ -164,7 +164,7 @@ const Signup = () => {
                   to={githubLoginUrl}
                   disabled={!githubLoginUrl}
                   block
-                  LinkComponent={Link}
+                  linkComponent={Link}
                 />
                 <Button
                   size="2xl"
@@ -176,7 +176,7 @@ const Signup = () => {
                   to={gitlabLoginUrl}
                   disabled={!gitlabLoginUrl}
                   block
-                  LinkComponent={Link}
+                  linkComponent={Link}
                 />
                 <Button
                   size="2xl"
@@ -188,7 +188,7 @@ const Signup = () => {
                   to={googleLoginUrl}
                   disabled={!googleLoginUrl}
                   block
-                  LinkComponent={Link}
+                  linkComponent={Link}
                 />
               </div>
             )}
@@ -203,7 +203,7 @@ const Signup = () => {
               prefix={<ArrowLeft />}
               to="/signup"
               block
-              LinkComponent={Link}
+              linkComponent={Link}
             />
           ) : (
             <Button
@@ -213,7 +213,7 @@ const Signup = () => {
               prefix={<Envelope />}
               to="/signup/?mode=email"
               block
-              LinkComponent={Link}
+              linkComponent={Link}
             />
           )}
         </div>

@@ -52,7 +52,7 @@ const KlOperatorServices = () => {
                   content="Create managed resource"
                   prefix={<Plus />}
                   to="../new-managed-resource"
-                  LinkComponent={Link}
+                  linkComponent={Link}
                 />
               ),
             }}
@@ -69,7 +69,7 @@ const KlOperatorServices = () => {
                 content: 'Create new managed resource',
                 prefix: <Plus />,
                 to: '../new-managed-resource',
-                LinkComponent: Link,
+                linkComponent: Link,
               },
             }}
             tools={<Tools />}

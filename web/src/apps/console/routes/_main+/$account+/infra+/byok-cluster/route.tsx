@@ -87,7 +87,7 @@ const ByocClusters = () => {
                   onClick: () => {
                     setVisible(true);
                   },
-                  LinkComponent: Link,
+                  linkComponent: Link,
                 },
               }}
               tools={<Tools />}

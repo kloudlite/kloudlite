@@ -23,7 +23,6 @@ export const loader = async (ctx: IRemixCtx) => {
 
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listIotApps({
-      
       deviceBlueprintName: deviceblueprint,
       pq: getPagination(ctx),
       search: getSearch(ctx),
@@ -69,7 +68,7 @@ const Apps = () => {
                     content="Create new app"
                     prefix={<Plus />}
                     to="../new-app"
-                    LinkComponent={Link}
+                    linkComponent={Link}
                   />
                 ),
               }}
@@ -82,7 +81,7 @@ const Apps = () => {
                 action: {
                   content: 'Create new app',
                   prefix: <Plus />,
-                  LinkComponent: Link,
+                  linkComponent: Link,
                   to: '../new-app',
                 },
               }}

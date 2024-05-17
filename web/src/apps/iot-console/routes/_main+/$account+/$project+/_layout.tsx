@@ -90,7 +90,7 @@ const CurrentBreadcrum = ({
         content={project.displayName}
         size="sm"
         variant="plain"
-        LinkComponent={Link}
+        linkComponent={Link}
         to={`/${account}/${project.name}`}
       />
     </>

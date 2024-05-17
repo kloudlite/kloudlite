@@ -30,7 +30,7 @@ const Container = ({ children, footer }: ContainerProps) => {
             variant="primary-plain"
             size="md"
             to={footer?.to}
-            LinkComponent={Link}
+            linkComponent={Link}
           />
         </div>
       )}

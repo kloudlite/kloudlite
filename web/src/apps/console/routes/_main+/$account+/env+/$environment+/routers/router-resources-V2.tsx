@@ -118,7 +118,7 @@ const GridView = ({ items, onAction }: IResource) => {
                     data={
                       <div className="flex flex-row items-center gap-md">
                         <Button
-                          LinkComponent={Link}
+                          linkComponent={Link}
                           target="_blank"
                           size="sm"
                           content={formatDomain(firstDomain).short}
@@ -135,7 +135,7 @@ const GridView = ({ items, onAction }: IResource) => {
                                   .map((d) => (
                                     <Button
                                       key={d}
-                                      LinkComponent={Link}
+                                      linkComponent={Link}
                                       target="_blank"
                                       size="sm"
                                       content={formatDomain(d).short}

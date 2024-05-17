@@ -87,7 +87,7 @@ const Nodepools = () => {
                 action: {
                   content: 'Create Nodepool',
                   prefix: <Plus />,
-                  LinkComponent: Link,
+                  linkComponent: Link,
                   onClick: () => {
                     setVisible(true);
                   },

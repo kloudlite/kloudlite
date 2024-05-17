@@ -51,7 +51,7 @@ function CliLogin() {
                   <Button
                     content="here"
                     to="https://github.com/kloudlite/kl"
-                    LinkComponent={Link}
+                    linkComponent={Link}
                     variant="primary-plain"
                     className="!inline"
                   />

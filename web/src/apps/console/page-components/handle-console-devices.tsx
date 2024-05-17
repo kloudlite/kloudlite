@@ -10,7 +10,7 @@ import {
   X,
 } from '~/console/components/icons';
 import { useEffect, useState } from 'react';
-import { IconButton } from '~/components/atoms/button';
+import { Button, IconButton } from '~/components/atoms/button';
 import { NumberInput } from '~/components/atoms/input';
 import { usePagination } from '~/components/molecule/pagination';
 import Popup from '~/components/molecule/popup';
@@ -35,9 +35,10 @@ import { NameIdView } from '~/console/components/name-id-view';
 import { IConsoleDevice } from '~/console/server/gql/queries/console-vpn-queries';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Select from '~/components/atoms/select';
+import { Link } from '@remix-run/react';
 import { ConsoleApiType } from '../server/gql/saved-queries';
 import ExtendedFilledTab from '../components/extended-filled-tab';
-import { LoadingIndicator, LoadingPlaceHolder } from '../components/loading';
+import { LoadingPlaceHolder } from '../components/loading';
 
 interface IExposedPorts {
   targetPort?: number;
@@ -292,11 +293,13 @@ export const ShowWireguardConfig = ({
   visible,
   setVisible,
   deviceName,
+  creationMethod,
 }: // data,
 {
   visible: boolean;
   setVisible: (visible: boolean) => void;
   deviceName: string;
+  creationMethod: string;
 }) => {
   const [mode, setMode] = useState<'config' | 'qr'>('qr');
 
@@ -346,7 +349,12 @@ export const ShowWireguardConfig = ({
               Please use the following configuration to set up your WireGuard
               client.
             </div>
-            <CodeView data={config} showShellPrompt={false} copy />
+            <CodeView
+              data={config}
+              showShellPrompt={false}
+              isMultilineData
+              copy
+            />
           </div>
         );
     }
@@ -355,47 +363,69 @@ export const ShowWireguardConfig = ({
   return (
     <Popup.Root show={visible} onOpenChange={setVisible}>
       <Popup.Header>
-        {mode === 'config' ? 'Wireguard Config' : 'Wireguard Config QR Code'}
+        {creationMethod === 'kl'
+          ? 'KL Managed Device'
+          : mode === 'config'
+          ? 'Wireguard Config'
+          : 'Wireguard Config QR Code'}
       </Popup.Header>
       <Popup.Content>
-        <div>
-          <ExtendedFilledTab
-            value={mode}
-            onChange={(v) => {
-              setMode(v as any);
-            }}
-            items={[
-              {
-                label: 'QR Code',
-                value: 'qr',
-              },
-              {
-                label: 'Config',
-                value: 'config',
-              },
-            ]}
-          />
-
-          {modeView()}
-        </div>
+        {creationMethod === 'kl' ? (
+          <div className="flex flex-col gap-2xl">
+            <div className="bodyLg-medium text-text-default">
+              This device is managed by Kloudlite command line.
+            </div>
+            <div className="flex flex-col gap-lg bodyMd text-text-default list-disc list-outside pl-2xl" />
+            <Button
+              to="https://github.com/kloudlite/kl"
+              content="You can install Kloudlite cli tool."
+              variant="plain"
+              linkComponent={Link}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-xl">
+            <ExtendedFilledTab
+              value={mode}
+              onChange={(v) => {
+                setMode(v as any);
+              }}
+              items={[
+                {
+                  label: 'QR Code',
+                  value: 'qr',
+                },
+                {
+                  label: 'Config',
+                  value: 'config',
+                },
+              ]}
+            />
+            {modeView()}
+          </div>
+        )}
       </Popup.Content>
       <Popup.Footer>
-        <Popup.Button
-          onClick={() => {
-            if (!data) {
-              toast.error('No wireguard config found.');
-              return;
-            }
+        {creationMethod === 'kl' ? (
+          <Popup.Button closable content="Close" />
+        ) : (
+          <Popup.Button
+            onClick={() => {
+              if (!data) {
+                toast.error('No wireguard config found.');
+                return;
+              }
 
-            downloadConfig({
-              filename: `wireguardconfig.yaml`,
-              data: decodeConfig(data),
-            });
-          }}
-          content="Export"
-          prefix={<ArrowLineDown />}
-          variant="primary"
-        />
+              downloadConfig({
+                filename: `wireguardconfig.yaml`,
+                data: decodeConfig(data),
+              });
+            }}
+            content="Export"
+            prefix={<ArrowLineDown />}
+            variant="primary"
+          />
+        )}
       </Popup.Footer>
     </Popup.Root>
   );

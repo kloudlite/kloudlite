@@ -81,7 +81,7 @@ const CloudProvidersIndex = () => {
                 action: {
                   content: 'Add Cloud Provider',
                   prefix: <Plus />,
-                  LinkComponent: Link,
+                  linkComponent: Link,
                   onClick: () => {
                     setVisible(true);
                   },

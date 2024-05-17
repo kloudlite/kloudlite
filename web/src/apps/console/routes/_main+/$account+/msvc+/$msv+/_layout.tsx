@@ -60,7 +60,7 @@ const LocalBreadcrum = ({ data }: { data: IClusterMSv }) => {
       <span className="mx-md" />
       <Breadcrum.Button
         to={`/${account}/managed-services`}
-        LinkComponent={Link}
+        linkComponent={Link}
         content={
           <div className="flex flex-row gap-md items-center">
             Msvc <ChevronRight size={14} />{' '}
@@ -69,7 +69,7 @@ const LocalBreadcrum = ({ data }: { data: IClusterMSv }) => {
       />
       <Breadcrum.Button
         to={`/${account}/msvc/${parseName(data)}/logs-n-metrics`}
-        LinkComponent={Link}
+        linkComponent={Link}
         content={<span>{displayName}</span>}
       />
     </div>

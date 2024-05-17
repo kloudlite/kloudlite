@@ -302,7 +302,7 @@ const Accounts = () => {
               content={
                 accounts.length ? 'Create another team' : 'Create new team'
               }
-              LinkComponent={Link}
+              linkComponent={Link}
               to="/new-team"
             />
           </div>
@@ -312,7 +312,7 @@ const Accounts = () => {
             </span>
             <Button
               to={`${authBaseUrl}/logout`}
-              LinkComponent={Link}
+              linkComponent={Link}
               variant="primary-plain"
               content="Try a different email"
             />

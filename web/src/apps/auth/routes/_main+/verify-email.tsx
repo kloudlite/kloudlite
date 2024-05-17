@@ -112,7 +112,7 @@ const VerifyEmail = () => {
             </div>
           </div>
           <Button
-            LinkComponent={Link}
+            linkComponent={Link}
             to="/logout"
             content="Go back to Login"
             size="2xl"

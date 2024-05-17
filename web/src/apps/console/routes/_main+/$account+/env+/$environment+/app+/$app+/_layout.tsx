@@ -57,7 +57,7 @@ const LocalBreadcrum = ({ data }: { data: IApp }) => {
       <span className="mx-md" />
       <Breadcrum.Button
         to={`/${account}/env/${environment}/apps`}
-        LinkComponent={Link}
+        linkComponent={Link}
         content="Apps"
       />
       <BreadcrumSlash />
@@ -65,7 +65,7 @@ const LocalBreadcrum = ({ data }: { data: IApp }) => {
         content={<Truncate length={15}>{displayName || ''}</Truncate>}
         size="sm"
         variant="plain"
-        LinkComponent={Link}
+        linkComponent={Link}
         to={`/${account}/env/${environment}/app/${parseName(
           data
         )}/logs-n-metrics`}
