@@ -2,10 +2,32 @@ package client
 
 import (
 	"errors"
+	"fmt"
+	"net"
 	"os"
 )
 
-func SelectEnv(envName Env) error {
+func CheckPortAvailable(port int) bool {
+	address := fmt.Sprintf(":%d", port)
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		return false
+	}
+	defer listener.Close()
+	return true
+}
+
+func GetAvailablePort() (int, error) {
+	for i := 61100; i <= 61300; i++ {
+		if CheckPortAvailable(i) {
+			return i, nil
+		}
+	}
+	// 61100, 61300
+	return 0, fmt.Errorf("no ports available to use")
+}
+
+func SelectEnv(ev Env) error {
 	k, err := GetExtraData()
 	if err != nil {
 		return err
@@ -20,7 +42,10 @@ func SelectEnv(envName Env) error {
 		k.SelectedEnvs = map[string]*Env{}
 	}
 
-	k.SelectedEnvs[dir] = &envName
+	if ev.SSHPort == 0 {
+	}
+
+	k.SelectedEnvs[dir] = &ev
 
 	return SaveExtraData(k)
 }

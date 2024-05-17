@@ -33,7 +33,7 @@ func (c *client) Start() error {
 	}
 
 	cr, err := c.getContainer(map[string]string{
-		// CONT_NAME_KEY: c.containerName,
+		CONT_NAME_KEY: c.containerName,
 		CONT_MARK_KEY: "true",
 	})
 	if err != nil && err != notFoundErr {
@@ -182,13 +182,23 @@ func (c *client) Start() error {
 			}...)
 		}
 
+		sshPort, err := cl.GetAvailablePort()
+		if err != nil {
+			return err
+		}
+
+		localEnv.SSHPort = sshPort
+
+		if err := cl.SelectEnv(*localEnv); err != nil {
+			return err
+		}
+
 		args = append(args, []string{
 			"-v", fmt.Sprintf("%s:/tmp/ssh2/authorized_keys:ro", akTmpPath),
 			"-v", "kl-home-cache:/home:rw",
 			"-v", "nix-store:/nix:rw",
-			// "--network", "host",
 			"-v", fmt.Sprintf("%s:/home/kl/workspace:z", c.cwd),
-			"-p", "1729:22",
+			"-p", fmt.Sprintf("%d:22", sshPort),
 			ImageName, "--", string(conf),
 		}...)
 
