@@ -50,6 +50,41 @@ func SelectEnv(ev Env) error {
 	return SaveExtraData(k)
 }
 
+func SelectEnvOnPath(ev Env, pth string) error {
+	k, err := GetExtraData()
+	if err != nil {
+		return err
+	}
+
+	if k.SelectedEnvs == nil {
+		k.SelectedEnvs = map[string]*Env{}
+	}
+
+	if ev.SSHPort == 0 {
+	}
+
+	k.SelectedEnvs[pth] = &ev
+
+	return SaveExtraData(k)
+}
+
+func EnvOfPath(pth string) (*Env, error) {
+	c, err := GetExtraData()
+	if err != nil {
+		return nil, err
+	}
+
+	if c.SelectedEnvs == nil {
+		return nil, errors.New("No selected environment")
+	}
+
+	if c.SelectedEnvs[pth] == nil {
+		return nil, errors.New("No selected environment")
+	}
+
+	return c.SelectedEnvs[pth], nil
+}
+
 func CurrentEnv() (*Env, error) {
 	c, err := GetExtraData()
 	if err != nil {

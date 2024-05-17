@@ -9,7 +9,6 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -126,32 +125,37 @@ func (h *handler) StartListener() {
 				case ns.Quit:
 					{
 
-						wgInterface, err := wgc.Show(&wgc.WgShowOptions{
-							Interface: "interfaces",
-						})
-
-						if err != nil {
+						if err := fn.ExecCmd(fmt.Sprintf("%s box stop-all", h.bin), nil, true); err != nil {
 							fn.PrintError(err)
-							fn.Notify("error:", err)
+							fn.Alert("Stop VPN failed", err.Error())
 						}
 
-						if len(wgInterface) > 0 {
-
-							cmd := "kl"
-
-							if !IsCmdExists(cmd, false) {
-								cmd = "kli"
-								if !IsCmdExists(cmd, true) {
-									systray.Quit()
-									continue
-								}
-							}
-
-							if err := fn.ExecCmd(fmt.Sprintf("%s vpn stop", cmd), nil, true); err != nil {
-								fn.PrintError(err)
-								fn.Alert("Stop VPN failed", err.Error())
-							}
-						}
+						// wgInterface, err := wgc.Show(&wgc.WgShowOptions{
+						// 	Interface: "interfaces",
+						// })
+						//
+						// if err != nil {
+						// 	fn.PrintError(err)
+						// 	fn.Notify("error:", err)
+						// }
+						//
+						// if len(wgInterface) > 0 {
+						//
+						// 	cmd := "kl"
+						//
+						// 	if !IsCmdExists(cmd, false) {
+						// 		cmd = "kli"
+						// 		if !IsCmdExists(cmd, true) {
+						// 			systray.Quit()
+						// 			continue
+						// 		}
+						// 	}
+						//
+						// 	if err := fn.ExecCmd(fmt.Sprintf("%s vpn stop", cmd), nil, true); err != nil {
+						// 		fn.PrintError(err)
+						// 		fn.Alert("Stop VPN failed", err.Error())
+						// 	}
+						// }
 
 						systray.Quit()
 					}

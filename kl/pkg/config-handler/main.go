@@ -9,11 +9,13 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+var KlFileNotExists = fmt.Errorf(text.Colored("please ensure kl.yaml file by running \"kl init\" command in your project root.", 0))
+
 func ReadConfig[T any](path string) (*T, error) {
 	var v T
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("%s, %s", err.Error(), text.Colored("please ensure kl.yaml file by running \"kl init\" command in your project root.", 0))
+		return nil, KlFileNotExists
 	}
 	if err := yaml.Unmarshal(b, &v); err != nil {
 		return nil, err

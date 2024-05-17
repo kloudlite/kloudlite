@@ -32,15 +32,16 @@ func onReady(binName string) {
 
 	// setup logo and tooltip
 	h.ReconMeta()
+
 	// systray.AddSeparator()
 
 	// handle actions releated to account
-	h.ReconAccount()
-	systray.AddSeparator()
+	// h.ReconAccount()
+	// systray.AddSeparator()
 
 	// handle actions releated to device
-	h.ReconDevice()
-	systray.AddSeparator()
+	// h.ReconDevice()
+	// systray.AddSeparator()
 
 	// handle actions releated to environment
 	// h.ReconEnv()

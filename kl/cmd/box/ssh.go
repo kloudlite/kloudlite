@@ -8,7 +8,7 @@ import (
 
 var sshCmd = &cobra.Command{
 	Use:   "ssh",
-	Short: "get ssh access to the container",
+	Short: "get ssh access to the box",
 	Run: func(cmd *cobra.Command, args []string) {
 		c, err := boxpkg.NewClient(cmd, args)
 		if err != nil {
@@ -25,4 +25,5 @@ var sshCmd = &cobra.Command{
 
 func init() {
 	setBoxCommonFlags(sshCmd)
+	sshCmd.Flags().StringP("name", "n", "", "container name")
 }

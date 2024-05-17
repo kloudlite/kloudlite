@@ -42,7 +42,7 @@ func NewClient(cmd *cobra.Command, args []string) (*client, error) {
 
 	hash := md5.New()
 	hash.Write([]byte(cwd))
-	contName := fmt.Sprintf("kl-box-%x", hash.Sum(nil))
+	contName := fmt.Sprintf("klbox-%s", fmt.Sprintf("%x", hash.Sum(nil))[:8])
 
 	sp := spinner.NewSpinner2("loading please wait", (foreground || verbose))
 

@@ -114,11 +114,11 @@ func (h *handler) ReconMeta() {
 }
 
 func (h *handler) ReconQuit() {
-	mQuitOrig := systray.AddMenuItem("Quit", "Quit client")
+	mQuitOrig := systray.AddMenuItem("Exit", "Quit client")
 	go func() {
 		<-mQuitOrig.ClickedCh
 		h.channel <- ChanelMsg{
-			Msg:    "Device clicked",
+			Msg:    "Exit clicked",
 			Item:   mQuitOrig,
 			Action: ns.Quit,
 		}

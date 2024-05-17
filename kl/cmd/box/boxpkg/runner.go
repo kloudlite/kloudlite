@@ -29,7 +29,61 @@ type Cntr struct {
 	Labels map[string]string
 }
 
-var notFoundErr = errors.New("not found")
+var notFoundErr = errors.New("container not found")
+
+func (c *client) listContainer(labels map[string]string) ([]Cntr, error) {
+	defer c.spinner.UpdateMessage("fetching existing container")()
+
+	labelArgs := make([]filters.KeyValuePair, 0)
+
+	for k, v := range labels {
+		labelArgs = append(labelArgs, filters.KeyValuePair{Key: "label", Value: fmt.Sprintf("%s=%s", k, v)})
+	}
+
+	crlist, err := c.cli.ContainerList(c.cmd.Context(), container.ListOptions{
+		Filters: filters.NewArgs(
+			labelArgs...,
+		),
+		All: true,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(crlist) == 0 {
+		return nil, notFoundErr
+	}
+
+	defCrs := make([]Cntr, 0)
+
+	for _, c2 := range crlist {
+		if len(c2.Names) == 0 {
+			defCr := Cntr{
+				Name:   crlist[0].ID,
+				Labels: crlist[0].Labels,
+			}
+			defCrs = append(defCrs, defCr)
+			continue
+		}
+
+		defCr := Cntr{
+			Name:   c2.Names[0],
+			Labels: c2.Labels,
+		}
+
+		if strings.Contains(defCr.Name, "/") {
+			s := strings.Split(defCr.Name, "/")
+			if len(s) >= 1 {
+				defCr.Name = s[1]
+			}
+		}
+
+		defCrs = append(defCrs, defCr)
+	}
+
+	return defCrs, nil
+}
 
 func (c *client) getContainer(labels map[string]string) (*Cntr, error) {
 	defer c.spinner.UpdateMessage("fetching existing container")()

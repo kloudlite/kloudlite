@@ -11,7 +11,7 @@ var imageName string
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "start the container",
+	Short: "start the box",
 	Run: func(cmd *cobra.Command, args []string) {
 		c, err := boxpkg.NewClient(cmd, args)
 		if err != nil {
@@ -23,6 +23,7 @@ var startCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
+
 	},
 }
 

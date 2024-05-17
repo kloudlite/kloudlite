@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path"
 	"runtime"
 
 	"github.com/adrg/xdg"
 	"github.com/kloudlite/kl/constants"
 	cl "github.com/kloudlite/kl/domain/client"
-	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -22,11 +22,7 @@ import (
 var containerNotStartedErr = fmt.Errorf("container not started")
 
 func (c *client) Start() error {
-	// if c.spinner.Started() {
-	// 	defer c.spinner.UpdateMessage("initiating container please wait")()
-	// } else {
-	defer c.spinner.Start("initiating container please wait")()
-	// }
+	defer c.spinner.UpdateMessage("initiating container please wait")()
 
 	if c.verbose {
 		fn.Logf("starting container in: %s", text.Blue(c.cwd))
@@ -45,22 +41,6 @@ func (c *client) Start() error {
 		crPath := cr.Labels[CONT_PATH_KEY]
 
 		fn.Logf("container %s already running in %s", text.Yellow(cr.Name), text.Blue(crPath))
-
-		// if c.cwd != crPath {
-		// 	fn.Printf("do you want to stop that and start here? [Y/n]")
-		// } else {
-		// 	fn.Printf("do you want to restart it? [y/N]")
-		// }
-
-		// var response string
-		// _, _ = fmt.Scanln(&response)
-		// if c.cwd != crPath && response == "n" {
-		// 	return containerNotStartedErr
-		// }
-		//
-		// if c.cwd == crPath && response != "y" {
-		// 	return containerNotStartedErr
-		// }
 
 		if err := c.Stop(); err != nil {
 			return err
@@ -93,7 +73,6 @@ func (c *client) Start() error {
 		return err
 	}
 
-	c.spinner.Stop()
 	d, err := server.EnsureDevice()
 	if err != nil {
 		return err
@@ -122,14 +101,7 @@ func (c *client) Start() error {
 
 	c.spinner.Start()
 
-	p, err := proxy.NewProxy(c.verbose, false)
-	if err != nil {
-		return err
-	}
-
-	if err := p.Start(); err != nil {
-		return err
-	}
+	c.ensureVpnConnected()
 
 	td, err := os.MkdirTemp("", "kl-tmp")
 	if err != nil {
@@ -214,6 +186,12 @@ func (c *client) Start() error {
 			args: args,
 		}); err != nil {
 			return err
+		}
+
+		if c.cmd.Name() == "start" {
+			command := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
+
+			fn.Logf("%s %s\n", text.Bold("command:"), text.Blue(command.String()))
 		}
 
 		return nil

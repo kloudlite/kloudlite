@@ -6,10 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var restartCmd = &cobra.Command{
+var stopAllCmd = &cobra.Command{
 	Hidden: true,
-	Use:    "reload",
-	Short:  "reload running box",
+	Use:    "stop-all",
+	Short:  "stop all running boxes",
 	Run: func(cmd *cobra.Command, args []string) {
 		c, err := boxpkg.NewClient(cmd, args)
 		if err != nil {
@@ -17,7 +17,7 @@ var restartCmd = &cobra.Command{
 			return
 		}
 
-		if err := c.Restart(); err != nil {
+		if err := c.StopAll(); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -25,6 +25,5 @@ var restartCmd = &cobra.Command{
 }
 
 func init() {
-	restartCmd.Aliases = append(restartCmd.Aliases, "restart")
-	setBoxCommonFlags(restartCmd)
+	setBoxCommonFlags(stopAllCmd)
 }

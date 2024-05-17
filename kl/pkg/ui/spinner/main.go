@@ -56,6 +56,11 @@ func (s *Spinner) Stop() {
 }
 
 func (s *Spinner) UpdateMessage(msg string) func() {
+	if !s.started {
+		s.started = true
+		return s.Start(msg)
+	}
+
 	om := s.message
 	s.message = msg
 	s.spinner.Suffix = fmt.Sprintf(" %s...", msg)

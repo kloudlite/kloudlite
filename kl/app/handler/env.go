@@ -102,6 +102,10 @@ func (h *handler) ReconEnv() {
 		envTitle.Disable()
 	}
 
+	// kt, err := client.GetKlFile()
+	// if err != nil {
+	// }
+
 	if h.itemMap[ns.EnvBtn] != nil {
 		envBtn = h.itemMap[ns.EnvBtn]
 		envBtn.SetTitle("...")
@@ -122,5 +126,4 @@ func (h *handler) ReconEnv() {
 	//
 	//	envBtn.SetTitle(fmt.Sprintf("%s/%s", d.ProjectName, d.EnvName))
 	//}()
-
 }
