@@ -240,6 +240,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - crdsv1
+  resources:
+  - external_apps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crdsv1
+  resources:
+  - external_apps/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crdsv1
+  resources:
+  - external_apps/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - distribution.kloudlite.io
   resources:
   - devices
