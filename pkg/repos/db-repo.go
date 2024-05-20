@@ -45,16 +45,19 @@ type Query struct {
 type MatchType string
 
 const (
-	MatchTypeExact = "exact"
-	MatchTypeArray = "array"
-	MatchTypeRegex = "regex"
+	MatchTypeExact      = "exact"
+	MatchTypeArray      = "array"
+	MatchTypeNotInArray = "not-in-array"
+	MatchTypeRegex      = "regex"
 )
 
 type MatchFilter struct {
-	MatchType MatchType `json:"matchType" graphql:"enum=exact;array;regex;"`
-	Exact     any       `json:"exact,omitempty"`
-	Array     []any     `json:"array,omitempty"`
-	Regex     *string   `json:"regex,omitempty"`
+	// MatchType  MatchType `json:"matchType" graphql:"enum=exact;array;regex;"`
+	MatchType  MatchType `json:"matchType"`
+	Exact      any       `json:"exact,omitempty"`
+	Array      []any     `json:"array,omitempty"`
+	NotInArray []any     `json:"notInArray,omitempty"`
+	Regex      *string   `json:"regex,omitempty"`
 }
 
 type ID string
@@ -113,7 +116,7 @@ type DbRepo[T Entity] interface {
 	DeleteOne(ctx context.Context, filter Filter) error
 
 	ErrAlreadyExists(err error) bool
-	MergeMatchFilters(filter Filter, matchFilters map[string]MatchFilter) Filter
+	MergeMatchFilters(filter Filter, matchFilters ...map[string]MatchFilter) Filter
 }
 
 type indexOrder bool
