@@ -87,13 +87,26 @@ const (
 	WorkspaceTargetNs ObservabilityLabel = "kl_workspace_target_ns"
 )
 
-func buildPromQuery(resType PromMetricsType, filters map[string]string) (string, error) {
+type PromOperator string
+
+const (
+	PromOperatorEqual         = PromOperator("=")
+	PromOperatorNotEqual      = PromOperator("!=")
+	PromOperatorMatchRegex    = PromOperator("=~")
+	PromOperatorNotMatchRegex = PromOperator("!~")
+)
+
+type PromValue struct {
+	Operator PromOperator
+	// Value must be a VALID prometheus value suitable for the specified PromOperator
+	Value any
+}
+
+func buildPromQuery(resType PromMetricsType, filters map[string]PromValue) (string, error) {
 	tags := make([]string, 0, len(filters))
 
 	for k, v := range filters {
-		if v != "" {
-			tags = append(tags, fmt.Sprintf(`%s=%q`, k, v))
-		}
+		tags = append(tags, fmt.Sprintf(`%s%s%q`, k, v.Operator, v.Value))
 	}
 
 	switch resType {
@@ -115,7 +128,7 @@ func buildPromQuery(resType PromMetricsType, filters map[string]string) (string,
 	}
 }
 
-func queryProm(promAddr string, resType PromMetricsType, filters map[string]string, startTime string, endTime string, step string, writer io.Writer) error {
+func queryProm(promAddr string, resType PromMetricsType, filters map[string]PromValue, startTime string, endTime string, step string, writer io.Writer) error {
 	promQuery, err := buildPromQuery(resType, filters)
 	if err != nil {
 		return errors.NewE(err)
