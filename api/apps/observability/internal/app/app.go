@@ -44,11 +44,7 @@ var Module = fx.Module(
 		return infra.NewInfraClient(conn)
 	}),
 
-	fx.Provide(func(cfg *rest.Config) (k8s.Client, error) {
-		return k8s.NewClient(cfg, nil)
-	}),
-
-	fx.Invoke(func(infraCli infra.InfraClient, kcli k8s.Client, iamCli iam.IAMClient, mux *http.ServeMux, sessStore SessionStore, ev *env.Env, logger logging.Logger) {
+	fx.Invoke(func(infraCli infra.InfraClient, kcfg *rest.Config, iamCli iam.IAMClient, mux *http.ServeMux, sessStore SessionStore, ev *env.Env, logger logging.Logger) {
 		sessionMiddleware := httpServer.NewReadSessionMiddlewareHandler(sessStore, constants.CookieName, constants.CacheSessionPrefix)
 
 		loggingMiddleware := httpServer.NewLoggingMiddleware(logger)
@@ -116,10 +112,41 @@ var Module = fx.Module(
 				step = "15s"
 			}
 
-			if err := queryProm(ev.PromHttpAddr, PromMetricsType(metricsType), map[string]string{
-				"kl_account_name": accountName,
-				"kl_cluster_name": clusterName,
-				"kl_tracking_id":  trackingId,
+			k8sCli, err := func() (k8s.Client, error) {
+				if strings.HasPrefix(trackingId, "clus-") {
+					return k8s.NewClient(kcfg, nil)
+				}
+
+				return k8s.NewClient(&rest.Config{
+					Host: fmt.Sprintf("http://kloudlite-device-proxy-%s.kl-account-%s.svc.cluster.local:8080/clusters/%s", "default", accountName, clusterName),
+					WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
+						return httpServer.NewRoundTripperWithHeaders(rt, map[string][]string{
+							"X-Kloudlite-Authz": {fmt.Sprintf("Bearer %s", ev.GlobalVPNAuthzSecret)},
+						})
+					},
+				}, nil)
+			}()
+			if err != nil {
+				http.Error(w, fmt.Sprintf("failed to create k8s client: %v", err), http.StatusInternalServerError)
+				return
+			}
+
+			pods, err := ListPods(r.Context(), k8sCli, map[string]string{constants.ObservabilityTrackingKey: trackingId})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			podNames := make([]string, 0, len(pods))
+			for _, pod := range pods {
+				podNames = append(podNames, pod.Name)
+			}
+
+			if err := queryProm(ev.PromHttpAddr, PromMetricsType(metricsType), map[string]PromValue{
+				"kl_account_name": {Operator: PromOperatorEqual, Value: accountName},
+				"kl_cluster_name": {Operator: PromOperatorEqual, Value: clusterName},
+				"kl_tracking_id":  {Operator: PromOperatorEqual, Value: trackingId},
+				"pod_name":        {Operator: PromOperatorMatchRegex, Value: fmt.Sprintf("^(%s)$", strings.Join(podNames, ","))},
 			}, st, et, step, w); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -147,40 +174,26 @@ var Module = fx.Module(
 			clusterName := r.URL.Query().Get("cluster_name")
 			trackingId := r.URL.Query().Get("tracking_id")
 
-			if !strings.HasPrefix(trackingId, "clus-") {
-				cfg := &rest.Config{
+			k8sCli, err := func() (k8s.Client, error) {
+				if strings.HasPrefix(trackingId, "clus-") {
+					return k8s.NewClient(kcfg, nil)
+				}
+
+				return k8s.NewClient(&rest.Config{
 					Host: fmt.Sprintf("http://kloudlite-device-proxy-%s.kl-account-%s.svc.cluster.local:8080/clusters/%s", "default", accountName, clusterName),
-					// Host: fmt.Sprintf("http://kube-access.test-kube-access-globalvpn.svc.cluster.local:8080/clusters/%s", clusterName),
-					// Host: fmt.Sprintf("http://kloudlite-device-proxy-default.kl-%s.svc.cluster.local:8080/clusters/%s", accountName, clusterName),
-				}
-
-				//out, err := infraCli.GetClusterKubeconfig(r.Context(), &infra.GetClusterIn{
-				//	UserId:      string(sess.UserId),
-				//	UserName:    sess.UserName,
-				//	UserEmail:   sess.UserEmail,
-				//	AccountName: accountName,
-				//	ClusterName: clusterName,
-				//})
-				//if err != nil {
-				//	http.Error(w, err.Error(), 500)
-				//	return
-				//}
-				//
-				//cfg, err := k8s.RestConfigFromKubeConfig(out.Kubeconfig)
-				//if err != nil {
-				//	http.Error(w, err.Error(), 500)
-				//	return
-				//}
-
-				var err error
-				kcli, err = k8s.NewClient(cfg, nil)
-				if err != nil {
-					http.Error(w, err.Error(), 500)
-					return
-				}
+					WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
+						return httpServer.NewRoundTripperWithHeaders(rt, map[string][]string{
+							"X-Kloudlite-Authz": {fmt.Sprintf("Bearer %s", ev.GlobalVPNAuthzSecret)},
+						})
+					},
+				}, nil)
+			}()
+			if err != nil {
+				http.Error(w, fmt.Sprintf("failed to create k8s client: %v", err), http.StatusInternalServerError)
+				return
 			}
 
-			pods, err := ListPods(r.Context(), kcli, map[string]string{constants.ObservabilityTrackingKey: trackingId})
+			pods, err := ListPods(r.Context(), k8sCli, map[string]string{constants.ObservabilityTrackingKey: trackingId})
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -212,7 +225,9 @@ var Module = fx.Module(
 					msg, err := b.ReadBytes('\n')
 					if err != nil {
 						if !errors.Is(err, io.EOF) {
-							http.Error(w, err.Error(), 500)
+							if !closed {
+								http.Error(w, err.Error(), 500)
+							}
 						}
 						return
 					}
@@ -221,7 +236,7 @@ var Module = fx.Module(
 				}
 			}()
 
-			if err := StreamLogs(r.Context(), kcli, pods, pw, logger); err != nil {
+			if err := StreamLogs(r.Context(), k8sCli, pods, pw, logger); err != nil {
 				http.Error(w, err.Error(), 500)
 			}
 		})))
