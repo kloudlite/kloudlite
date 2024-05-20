@@ -1,0 +1,12 @@
+apiVersion: crds.kloudlite.io/v1
+kind: ExternalApp
+metadata:
+  labels:
+    app.kubernetes.io/name: externalapp
+    app.kubernetes.io/instance: externalapp-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
+  name: externalapp-sample
+spec:
+  # TODO(user): Add fields here

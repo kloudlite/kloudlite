@@ -97,4 +97,5 @@ resources:
 - crds_v1_blueprint.yaml
 - clusters_v1_virtualmachine.yaml
 - crds_v1_refertomanagedresource.yaml
+- crds_v1_externalapp.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
