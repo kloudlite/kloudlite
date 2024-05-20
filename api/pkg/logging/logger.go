@@ -72,6 +72,7 @@ func New(options *Options) (Logger, error) {
 			return cfg
 		}
 		pcfg := zap.NewProductionEncoderConfig()
+		pcfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		pcfg.TimeKey = ""
 		pcfg.LineEnding = "\n"
 		return pcfg
@@ -100,9 +101,6 @@ func New(options *Options) (Logger, error) {
 	}
 
 	lgr := zap.New(zapcore.NewCore(zapcore.NewConsoleEncoder(cfg), os.Stdout, loglevel), zapOpts...)
-
-	cLogger := &logger{
-		zapLogger: lgr.Sugar(),
-	}
+	cLogger := &logger{zapLogger: lgr.Sugar()}
 	return cLogger, nil
 }
