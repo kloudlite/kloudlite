@@ -21,7 +21,8 @@ import (
 )
 
 const (
-	gvpnConnectionDeviceMethod = "gvpn-connection"
+	gvpnConnectionDeviceMethod     = "gvpn-connection"
+	kloudliteGlobalVPNDeviceMethod = "kloudlite-global-vpn-device"
 )
 
 func (d *domain) getGlobalVPNConnectionPeers(vpns []*entities.GlobalVPNConnection) ([]wgv1.Peer, error) {

@@ -19,6 +19,8 @@ type Env struct {
 	IsDev bool
 
 	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY"`
+
+	GlobalVPNAuthzSecret string `env:"GLOBAL_VPN_AUTHZ_SECRET" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {
