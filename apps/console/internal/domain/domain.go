@@ -53,6 +53,7 @@ type domain struct {
 	vpnDeviceRepo   repos.DbRepo[*entities.ConsoleVPNDevice]
 
 	appRepo         repos.DbRepo[*entities.App]
+	externalAppRepo repos.DbRepo[*entities.ExternalApp]
 	configRepo      repos.DbRepo[*entities.Config]
 	secretRepo      repos.DbRepo[*entities.Secret]
 	routerRepo      repos.DbRepo[*entities.Router]
@@ -492,6 +493,7 @@ var Module = fx.Module("domain",
 		environmentRepo repos.DbRepo[*entities.Environment],
 
 		appRepo repos.DbRepo[*entities.App],
+		externalAppRepo repos.DbRepo[*entities.ExternalApp],
 		configRepo repos.DbRepo[*entities.Config],
 		secretRepo repos.DbRepo[*entities.Secret],
 		routerRepo repos.DbRepo[*entities.Router],
@@ -520,6 +522,7 @@ var Module = fx.Module("domain",
 			// pmsRepo:             pmsRepo,
 			environmentRepo:     environmentRepo,
 			appRepo:             appRepo,
+			externalAppRepo:     externalAppRepo,
 			configRepo:          configRepo,
 			routerRepo:          routerRepo,
 			secretRepo:          secretRepo,

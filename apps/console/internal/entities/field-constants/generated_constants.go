@@ -84,6 +84,18 @@ const (
 	EnvironmentSpecTargetNamespace            = "spec.targetNamespace"
 )
 
+// constant vars generated for struct ExternalApp
+const (
+	ExternalAppSpec                          = "spec"
+	ExternalAppSpecIntercept                 = "spec.intercept"
+	ExternalAppSpecInterceptDeviceHostSuffix = "spec.intercept.deviceHostSuffix"
+	ExternalAppSpecInterceptEnabled          = "spec.intercept.enabled"
+	ExternalAppSpecInterceptPortMappings     = "spec.intercept.portMappings"
+	ExternalAppSpecInterceptToDevice         = "spec.intercept.toDevice"
+	ExternalAppSpecRecord                    = "spec.record"
+	ExternalAppSpecRecordType                = "spec.recordType"
+)
+
 // constant vars generated for struct ImagePullSecret
 const (
 	ImagePullSecretDockerConfigJson   = "dockerConfigJson"
