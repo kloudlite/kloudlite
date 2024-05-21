@@ -68,6 +68,7 @@ spec:
             capabilities:
               add:
                 - NET_ADMIN
+                - SYS_MODULE
             privileged: true
           volumeMounts:
             - mountPath: /config/wg_confs/wg0.conf
@@ -114,7 +115,6 @@ spec:
               memory: 100Mi
 
       dnsPolicy: ClusterFirst
-
       volumes:
         - name: wg-config
           secret:
