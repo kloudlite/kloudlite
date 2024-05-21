@@ -10,8 +10,6 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
-type projectMap map[string]map[string]string
-
 type ChanelMsg struct {
 	Msg       string
 	Item      *systray.MenuItem
@@ -31,8 +29,6 @@ type Handler interface {
 	StartListener()
 	Channel() chan ChanelMsg
 
-	RedrawEnvs(projectMap)
-
 	ItemMap() map[ns.ItemName]*systray.MenuItem
 	AddItem(ns.ItemName, *systray.MenuItem)
 	DeleteItem(ns.ItemName)
@@ -46,31 +42,17 @@ func (h *handler) DeleteItem(name ns.ItemName) {
 	delete(h.itemMap, name)
 }
 
-type env struct {
-	name   string
-	envBtn *systray.MenuItem
-}
-
-type project struct {
-	name       string
-	projectBtn *systray.MenuItem
-	envs       []env
-}
-
 type handler struct {
-	channel              chan ChanelMsg
-	itemMap              map[ns.ItemName]*systray.MenuItem
-	projects             []project
-	projectRenderVersion string
-	bin                  string
+	channel chan ChanelMsg
+	itemMap map[ns.ItemName]*systray.MenuItem
+	bin     string
 }
 
 func NewHandler(channel chan ChanelMsg, binName string) Handler {
 	return &handler{
-		channel:  channel,
-		itemMap:  make(map[ns.ItemName]*systray.MenuItem),
-		projects: []project{},
-		bin:      binName,
+		channel: channel,
+		itemMap: make(map[ns.ItemName]*systray.MenuItem),
+		bin:     binName,
 	}
 }
 

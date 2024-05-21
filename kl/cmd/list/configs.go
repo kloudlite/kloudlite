@@ -14,14 +14,12 @@ import (
 
 var configsCmd = &cobra.Command{
 	Use:   "configs",
-	Short: "Get list of configs in current project & selected environment",
+	Short: "Get list of configs in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		pName := fn.ParseStringFlag(cmd, "project")
 		envName := fn.ParseStringFlag(cmd, "env")
 
 		config, err := server.ListConfigs([]fn.Option{
-			fn.MakeOption("projectName", pName),
 			fn.MakeOption("envName", envName),
 		}...)
 
@@ -70,7 +68,6 @@ func init() {
 	configsCmd.Aliases = append(configsCmd.Aliases, "config")
 	configsCmd.Aliases = append(configsCmd.Aliases, "conf")
 
-	configsCmd.Flags().StringP("project", "p", "", "project name")
 	configsCmd.Flags().StringP("env", "e", "", "environment name")
 
 	fn.WithOutputVariant(configsCmd)

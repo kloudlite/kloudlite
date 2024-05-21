@@ -91,14 +91,13 @@ kl init
 
 ### Listing Resources
 
-With this CLI you can list accounts, projects, envs, devices, configs, secrets and apps.
+With this CLI you can list accounts, envs, devices, configs, secrets and apps.
 To list resources you can use the following commands.
 For more details visit [kl list](./docs/kl/kl_list.md)
 
 
 ```sh
 kl list accounts
-kl list projects
 kl list envs
 kl list devices
 kl list configs
