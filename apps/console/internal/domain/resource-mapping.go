@@ -17,6 +17,7 @@ type resource interface {
 // just a compile-time validation, that these types satisfies resource
 var (
 	_ resource = (*entities.App)(nil)
+	_ resource = (*entities.ExternalApp)(nil)
 	_ resource = (*entities.Config)(nil)
 	_ resource = (*entities.Secret)(nil)
 	_ resource = (*entities.Router)(nil)
