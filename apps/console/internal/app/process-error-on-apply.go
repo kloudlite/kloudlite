@@ -141,6 +141,24 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 
 				return d.OnAppDeleteMessage(rctx, app)
 			}
+		case externalAppsGVK.String():
+			{
+				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeExternalApp, errObj.ClusterName, obj)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				externalApp, err := fn.JsonConvert[entities.ExternalApp](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnExternalAppApplyError(rctx, errObj.Error, obj.GetName(), opts)
+				}
+
+				return d.OnExternalAppDeleteMessage(rctx, externalApp)
+			}
 		case configGVK.String():
 			{
 				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeConfig, errObj.ClusterName, obj)

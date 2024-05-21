@@ -42,6 +42,12 @@ input SearchApps {
 	markedForDeletion: MatchFilterIn
 }
 
+input SearchExternalApps {
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
+}
+
 input SearchConfigs {
 	text: MatchFilterIn
 	isReady: MatchFilterIn
@@ -101,6 +107,10 @@ type Query {
 	core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 	core_restartApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
+	core_listExternalApps(envName: String!, search: SearchExternalApps, pq: CursorPaginationIn): ExternalAppPaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getExternalApp(envName: String!, name: String!): ExternalApp @isLoggedInAndVerified @hasAccount
+	core_resyncExternalApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
 	core_getConfigValues(envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!] @isLoggedInAndVerified @hasAccount
 	core_listConfigs(envName: String!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getConfig(envName: String!, name: String!): Config @isLoggedInAndVerified @hasAccount
@@ -150,6 +160,11 @@ type Mutation {
 	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_deleteApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 	core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean! @isLoggedInAndVerified @hasAccount
+
+	core_createExternalApp(envName: String!, externalApp: ExternalAppIn!): ExternalApp @isLoggedInAndVerified @hasAccount
+	core_updateExternalApp(envName: String!, externalApp: ExternalAppIn!): ExternalApp @isLoggedInAndVerified @hasAccount
+	core_deleteExternalApp(envName: String!, externalAppName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_interceptExternalApp(envName: String!, externalAppName: String!, deviceName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
 	core_updateConfig(envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
