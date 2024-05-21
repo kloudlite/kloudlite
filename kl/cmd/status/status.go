@@ -14,7 +14,7 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:     "status",
-	Short:   "get status of your current context (user, account, project, environment, vpn status)",
+	Short:   "get status of your current context (user, account, environment, vpn status)",
 	Example: fn.Desc("{cmd} status"),
 	Run: func(_ *cobra.Command, _ []string) {
 

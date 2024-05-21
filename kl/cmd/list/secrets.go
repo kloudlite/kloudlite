@@ -13,15 +13,10 @@ import (
 
 var secretsCmd = &cobra.Command{
 	Use:   "secrets",
-	Short: "Get list of secrets in current project & selected environment",
+	Short: "Get list of secrets in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		pName := ""
-		if len(args) > 1 {
-			pName = args[0]
-		}
-
-		sec, err := server.ListSecrets(fn.MakeOption("projectName", pName))
+		sec, err := server.ListSecrets()
 		if err != nil {
 			fn.PrintError(err)
 			return

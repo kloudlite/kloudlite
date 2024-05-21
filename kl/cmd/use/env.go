@@ -45,6 +45,5 @@ func init() {
 	switchCmd.Aliases = append(switchCmd.Aliases, "switch")
 
 	switchCmd.Flags().StringP("envname", "e", "", "environment name")
-	switchCmd.Flags().StringP("projectname", "p", "", "project name")
 	switchCmd.Flags().StringP("account", "a", "", "account name")
 }
