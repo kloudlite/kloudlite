@@ -24,6 +24,6 @@ var psCmd = &cobra.Command{
 }
 
 func init() {
-	psCmd.Aliases = append(restartCmd.Aliases, "ls")
+	psCmd.Aliases = append(psCmd.Aliases, "ls")
 	setBoxCommonFlags(psCmd)
 }

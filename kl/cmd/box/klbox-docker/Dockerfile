@@ -1,4 +1,6 @@
 # Use the official Ubuntu base image
+FROM nixos/nix:latest AS nix
+
 FROM --platform=$TARGETPLATFORM golang:1.21 as builder
 
 WORKDIR /app
@@ -11,7 +13,8 @@ RUN go build -o mounter main.go
 
 FROM --platform=$TARGETPLATFORM ubuntu:latest
 
-RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2
+
+RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 libayatana-appindicator3-1 nano
 
 RUN mkdir /var/run/sshd
 
@@ -32,9 +35,18 @@ RUN mkdir -m 0755 /nix && chown kl /nix
 USER kl
 RUN curl -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-profile
 
+RUN curl -fsSL https://get.jetify.com/devbox > /tmp/devbox.sh && chmod +x /tmp/devbox.sh && sudo /tmp/devbox.sh -f && rm /tmp/devbox.sh && sudo chown kl:kl /usr/local/bin/devbox
+
+
 USER root
 
+COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
+
 RUN mkdir -p /home/kl/.config/nix && echo "experimental-features = nix-command flakes" > /home/kl/.config/nix/nix.conf
+RUN chown -R kl:kl /home/kl/.config
+
+RUN cp /etc/ssl/certs/ca-certificates.crt /no-cert-file.crt
+
 RUN chmod -x /etc/update-motd.d/*
 RUN cat > /etc/motd <<'EOF'
 Welcome to KloudLite's Development Environment
@@ -43,6 +55,7 @@ EOF
 COPY .bashrc .profile /tmp/
 
 COPY --from=builder /app/mounter /mounter
+
 
 SHELL ["/bin/bash", "-c"]
 

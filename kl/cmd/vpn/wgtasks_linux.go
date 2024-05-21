@@ -96,5 +96,6 @@ func disconnect(verbose bool) error {
 		}
 	}
 
+	client.SetDeviceDns("")
 	return nil
 }

@@ -1,14 +1,4 @@
-#! /usr/bin/env bash
-# if [ -f "/tmp/stderr.log" ]; then
-#     sudo chown root /tmp/stderr.log
-# fi
-#
-# if [ -f "/tmp/stdout.log" ]; then
-#     sudo chown root /tmp/stdout.log
-# fi
-
-# sudo chown kl /tmp/stdout.log /tmp/stderr.log
-
+#!/bin/bash
 
 (tail -f /tmp/stdout.log) &
 pid=$!

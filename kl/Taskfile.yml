@@ -5,6 +5,8 @@ tasks:
     cmds:
       - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task kl:build && echo '# build success' || exit"
   kl:build:
+    # env:
+    #   CGO_ENABLED: 1
     cmds:
       - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.BasePrefix=dev. -X github.com/kloudlite/kl/flags.CliName=kl -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kl main.go
 

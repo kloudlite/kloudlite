@@ -89,15 +89,24 @@ func (c *client) Ssh() error {
 	c.ensureVpnConnected()
 
 	count := 0
+
 	for {
-		if err := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no", "--", "exit 0").Run(); err == nil {
+
+		if !cl.CheckPortAvailable(localEnv.SSHPort) {
 			break
 		}
+		// err = exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no", "--", "exit 0").Run()
+		// if err == nil {
+		// 	break
+		// } else {
+		// 	fn.Warn(err)
+		// }
 
 		count++
 		if count == 10 {
-			return fmt.Errorf("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start. %s", err)
+			return fmt.Errorf("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start.")
 		}
+
 		time.Sleep(1 * time.Second)
 	}
 
@@ -159,7 +168,7 @@ func (c *client) doSSHWithCname(name string) error {
 
 	fn.Logf("%s %s\n", text.Bold("command:"), text.Blue(command.String()))
 
-	// command.Stderr = os.Stderr
+	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	if err := command.Run(); err != nil {

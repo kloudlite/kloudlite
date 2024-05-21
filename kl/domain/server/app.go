@@ -68,7 +68,7 @@ func SelectApp(options ...fn.Option) (*string, error) {
 	}
 
 	app, err := fzf.FindOne(a, func(item App) string {
-		return fmt.Sprintf("%s (%s) (%s)", item.DisplayName, item.Metadata.Name, item.Metadata.Namespace)
+		return fmt.Sprintf("%s (%s)", item.DisplayName, item.Metadata.Name)
 	}, fzf.WithPrompt("Select App>"))
 	if err != nil {
 		return nil, err

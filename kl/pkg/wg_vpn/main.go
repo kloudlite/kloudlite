@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -77,10 +78,9 @@ func Configure(
 	verbose bool,
 ) error {
 
-	s := spinner.NewSpinner()
+	stopSpinner := spinner.Client.UpdateMessage("validating configuration")
 	cfg := wgc.Config{}
 
-	s.Start()
 	if verbose {
 		fn.Log("[#] validating configuration")
 	}
@@ -88,7 +88,7 @@ func Configure(
 		return e
 	}
 
-	s.Stop()
+	stopSpinner()
 
 	if len(cfg.Address) == 0 {
 		return errors.New("device ip not found")
@@ -123,5 +123,13 @@ func Configure(
 		}
 	}
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	if len(cfg.DNS) > 0 {
+		return client.SetDeviceDns(cfg.DNS[0].To4().String())
+	}
+
+	return nil
 }

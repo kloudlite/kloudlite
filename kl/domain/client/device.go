@@ -24,7 +24,7 @@ func CurrentDeviceName() (string, error) {
 	return file.DeviceName, nil
 }
 
-func CurrentDeviceDNS() (*string, error) {
+func CurrentDeviceIp() (*string, error) {
 	dev, err := CurrentDeviceName()
 	if err != nil {
 		return nil, err

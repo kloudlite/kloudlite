@@ -4,6 +4,7 @@ import (
 	cl "github.com/kloudlite/kl/domain/client"
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 )
 
 func (c *client) ensureVpnConnected() error {
@@ -17,6 +18,7 @@ func (c *client) ensureVpnConnected() error {
 	}
 
 	if !server.CheckDeviceStatus() {
+		functions.Warn("starting vpn")
 		if err := p.Start(); err != nil {
 			return err
 		}

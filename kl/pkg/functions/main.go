@@ -3,7 +3,7 @@ package functions
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"io"
 	"os"
 	"os/exec"
 	"runtime"
@@ -38,7 +38,7 @@ func MakeOption(key, value string) Option {
 }
 
 func PrintError(err error) {
-	_, _ = os.Stderr.WriteString(fmt.Sprintf("[#] %s\n", text.Red(err.Error())))
+	_, _ = os.Stderr.WriteString(fmt.Sprintf("%s %s\n", text.Red("[error]:"), err.Error()))
 }
 
 func Log(str ...interface{}) {
@@ -46,11 +46,11 @@ func Log(str ...interface{}) {
 }
 
 func Warn(str ...interface{}) {
-	_, _ = fmt.Fprintf(os.Stderr, text.Yellow(fmt.Sprint(fmt.Sprint(str...), "\n")))
+	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprintf("%s %s", text.Yellow("[warn]:"), fmt.Sprint(fmt.Sprint(str...), "\n")))
 }
 
 func Warnf(format string, str ...interface{}) {
-	_, _ = fmt.Fprintf(os.Stderr, text.Yellow(fmt.Sprintf("%s", fmt.Sprintf(fmt.Sprint(format, "\n"), str...))))
+	Warn(fmt.Sprintf("%s", fmt.Sprintf(fmt.Sprint(format, "\n"), str...)))
 }
 
 func Logf(format string, str ...interface{}) {
@@ -158,6 +158,11 @@ func ParseStringFlag(cmd *cobra.Command, flag string) string {
 	return ""
 }
 
+func ParseIntFlag(cmd *cobra.Command, flag string) int {
+	v, _ := cmd.Flags().GetInt(flag)
+	return v
+}
+
 func ParseBoolFlag(cmd *cobra.Command, flag string) bool {
 	if cmd.Flags().Changed(flag) {
 		v, _ := cmd.Flags().GetBool(flag)
@@ -203,7 +208,7 @@ func Alert(name string, str ...interface{}) {
 	if runtime.GOOS == "linux" {
 		notification(name, fmt.Sprint(str...), "")
 		if err := exec.Command("paplay", "/usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga").Start(); err != nil {
-			log.Println("error playing alert sound:", err)
+			Println("error playing alert sound:", err)
 		}
 	}
 }
@@ -264,4 +269,65 @@ func RemoveFromArray(target string, arr []string) []string {
 
 func Ptr[T any](v T) *T {
 	return &v
+}
+
+func TrimePref(s string, length int) string {
+
+	if len(s) < length {
+		return s
+	}
+
+	return fmt.Sprintf("...%s", s[len(s)-length:])
+}
+
+func MultiLine(s string, length int) string {
+	resp := ""
+
+	needToBreak := false
+	for i, k := range s {
+		resp += string(k)
+
+		if (i+1)%length == 0 {
+			needToBreak = true
+		}
+
+		if needToBreak && string(k) == " " {
+			resp += "\n"
+			needToBreak = false
+		}
+
+	}
+
+	return resp
+}
+
+func CopyFile(src, dst string) error {
+
+	// Open the source file
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("Failed to open source file: %v", err)
+	}
+	defer sourceFile.Close()
+
+	// Create the destination file
+	destFile, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("Failed to create destination file: %v", err)
+	}
+	defer destFile.Close()
+
+	// Copy the contents from source file to destination file
+	_, err = io.Copy(destFile, sourceFile)
+	if err != nil {
+		return fmt.Errorf("Failed to copy file contents: %v", err)
+	}
+
+	// Flush file contents to disk
+	err = destFile.Sync()
+	if err != nil {
+		return fmt.Errorf("Failed to flush file contents: %v", err)
+	}
+
+	return nil
 }

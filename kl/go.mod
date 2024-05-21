@@ -12,7 +12,7 @@ require (
 	github.com/charmbracelet/gum v0.13.0
 	github.com/docker/docker v26.1.1+incompatible
 	github.com/getlantern/systray v1.2.2
-	github.com/gofiber/fiber/v2 v2.52.4
+	github.com/go-ping/ping v1.1.0
 	github.com/google/uuid v1.6.0
 	github.com/jedib0t/go-pretty/v6 v6.4.9
 	github.com/koki-develop/go-fzf v0.15.0
@@ -21,6 +21,7 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.40
 	github.com/nxadm/tail v1.4.11
+	github.com/peterldowns/nix-search-cli v0.0.0-20230912155051-f3f1c53c72da
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.8.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
@@ -32,7 +33,6 @@ require (
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v0.9.1 // indirect
@@ -43,7 +43,7 @@ require (
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/fatih/color v1.7.0 // indirect
+	github.com/fatih/color v1.14.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/getlantern/context v0.0.0-20190109183933-c447772a6520 // indirect
@@ -57,9 +57,10 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/native v1.1.0 // indirect
-	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -85,9 +86,6 @@ require (
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.51.0 // indirect
-	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.51.0 // indirect
 	go.opentelemetry.io/otel v1.26.0 // indirect

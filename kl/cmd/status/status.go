@@ -67,7 +67,7 @@ var Cmd = &cobra.Command{
 				}
 			}()))
 
-			ip, err := client.CurrentDeviceDNS()
+			ip, err := client.CurrentDeviceIp()
 			if err == nil {
 				fn.Logf("%s %s", text.Bold(text.Blue("Device IP:")), *ip)
 			}

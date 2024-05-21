@@ -19,7 +19,7 @@ Examples:
 
 	`,
 
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		app := fn.ParseStringFlag(cmd, "app")
 		maps, err := cmd.Flags().GetStringArray("port")
 		if err != nil {

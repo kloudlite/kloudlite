@@ -57,6 +57,7 @@ type InfraContexts struct {
 type ExtraData struct {
 	BaseUrl      string          `json:"baseUrl"`
 	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
+	DeviceDns    string          `json:"deviceDns"`
 	DNS          []string        `json:"dns"`
 	Loading      bool            `json:"loading"`
 	VpnConnected bool            `json:"vpnConnected"`
@@ -66,6 +67,31 @@ type ExtraData struct {
 	// SearchDomainAdded bool   `json:"searchDomainAdded"`
 	// DnsAdded          bool            `json:"dnsAdded"`
 	// DnsValues         []string        `json:"dnsValues"`
+}
+
+func GetDeviceDns() (string, error) {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return "", err
+	}
+
+	return extraData.DeviceDns, nil
+}
+
+func SetDeviceDns(dns string) error {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return err
+	}
+
+	extraData.DeviceDns = dns
+
+	file, err := yaml.Marshal(extraData)
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(ExtraDataFileName, file)
 }
 
 func GetActiveCluster() (string, error) {

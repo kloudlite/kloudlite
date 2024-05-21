@@ -165,12 +165,21 @@ func (c *client) Start() error {
 			return err
 		}
 
+		configFolder, err := cl.GetConfigFolder()
+		if err != nil {
+			return err
+		}
+
 		args = append(args, []string{
 			"-v", fmt.Sprintf("%s:/tmp/ssh2/authorized_keys:ro", akTmpPath),
 			"-v", "kl-home-cache:/home:rw",
 			"-v", "nix-store:/nix:rw",
+			"--network", "host",
 			"-v", fmt.Sprintf("%s:/home/kl/workspace:z", c.cwd),
-			"-p", fmt.Sprintf("%d:22", sshPort),
+			"-v", fmt.Sprintf("%s:/home/kl/.cache/.kl:z", configFolder),
+			"-e", fmt.Sprintf("SSH_PORT=%d", sshPort),
+			"--add-host=box:127.0.0.1",
+			// "-p", fmt.Sprintf("%d:22", sshPort),
 			ImageName, "--", string(conf),
 		}...)
 

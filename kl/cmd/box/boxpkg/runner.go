@@ -24,9 +24,16 @@ type ContainerConfig struct {
 	trackLogs bool
 }
 
+type ContState string
+
+const (
+	ContStateExited ContState = "exited"
+)
+
 type Cntr struct {
 	Name   string
 	Labels map[string]string
+	State  ContState
 }
 
 var notFoundErr = errors.New("container not found")
@@ -58,10 +65,12 @@ func (c *client) listContainer(labels map[string]string) ([]Cntr, error) {
 	defCrs := make([]Cntr, 0)
 
 	for _, c2 := range crlist {
+
 		if len(c2.Names) == 0 {
 			defCr := Cntr{
 				Name:   crlist[0].ID,
 				Labels: crlist[0].Labels,
+				State:  ContState(c2.State),
 			}
 			defCrs = append(defCrs, defCr)
 			continue
@@ -70,6 +79,7 @@ func (c *client) listContainer(labels map[string]string) ([]Cntr, error) {
 		defCr := Cntr{
 			Name:   c2.Names[0],
 			Labels: c2.Labels,
+			State:  ContState(c2.State),
 		}
 
 		if strings.Contains(defCr.Name, "/") {
@@ -113,6 +123,7 @@ func (c *client) getContainer(labels map[string]string) (*Cntr, error) {
 		defCr := Cntr{
 			Name:   crlist[0].Names[0],
 			Labels: crlist[0].Labels,
+			State:  ContState(crlist[0].State),
 		}
 
 		if strings.Contains(defCr.Name, "/") {
@@ -128,6 +139,7 @@ func (c *client) getContainer(labels map[string]string) (*Cntr, error) {
 	defCr := Cntr{
 		Name:   crlist[0].ID,
 		Labels: crlist[0].Labels,
+		State:  ContState(crlist[0].State),
 	}
 
 	return &defCr, nil

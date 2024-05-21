@@ -30,8 +30,10 @@ func (c *client) Stop() error {
 		fn.Logf("stopping container of: %s", text.Blue(crPath))
 	}
 
-	if err := c.cli.ContainerKill(c.Context(), cr.Name, "SIGKILL"); err != nil {
-		return fmt.Errorf("error stoping container: %s", err)
+	if cr.State != ContStateExited {
+		if err := c.cli.ContainerKill(c.Context(), cr.Name, "SIGKILL"); err != nil {
+			return fmt.Errorf("error stoping container: %s", err)
+		}
 	}
 
 	if err := c.cli.ContainerRemove(c.Context(), cr.Name, container.RemoveOptions{}); err != nil {
@@ -66,9 +68,11 @@ func (c *client) StopAll() error {
 			fn.Logf("stopping container of: %s", text.Blue(crPath))
 		}
 
-		if err := c.cli.ContainerKill(c.Context(), cr.Name, "SIGKILL"); err != nil {
-			fn.Warnf("error stoping container: %s", err)
-			continue
+		if cr.State != ContStateExited {
+			if err := c.cli.ContainerKill(c.Context(), cr.Name, "SIGKILL"); err != nil {
+				fn.Warnf("error stoping container: %s", err)
+				continue
+			}
 		}
 
 		if err := c.cli.ContainerRemove(c.Context(), cr.Name, container.RemoveOptions{}); err != nil {

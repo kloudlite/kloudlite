@@ -3,18 +3,10 @@ package boxpkg
 import (
 	"fmt"
 
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
-
-func trimePref(s string, length int) string {
-
-	if len(s) < length {
-		return s
-	}
-
-	return fmt.Sprintf("...%s", s[len(s)-length:])
-}
 
 func (c *client) ListBox() error {
 	conts, err := c.listContainer(map[string]string{
@@ -40,7 +32,7 @@ func (c *client) ListBox() error {
 				return a.Name
 			}(),
 			func() string {
-				pth := trimePref(a.Labels[CONT_PATH_KEY], 50)
+				pth := fn.TrimePref(a.Labels[CONT_PATH_KEY], 50)
 
 				if a.Name == c.containerName {
 					return text.Colored(pth, 2)
