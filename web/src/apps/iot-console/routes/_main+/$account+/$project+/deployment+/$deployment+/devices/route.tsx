@@ -25,7 +25,6 @@ export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listIotDevices(
       {
-        
         deploymentName: deployment,
         pq: getPagination(ctx),
         search: getSearch(ctx),
@@ -93,7 +92,7 @@ const Apps = () => {
                     onClick: () => {
                       setVisible(true);
                     },
-                    LinkComponent: Link,
+                    linkComponent: Link,
                   },
                 }}
                 tools={<Tools />}

@@ -89,7 +89,7 @@ const Deployments = () => {
                   onClick: () => {
                     setVisible(true);
                   },
-                  LinkComponent: Link,
+                  linkComponent: Link,
                 },
               }}
               tools={<Tools />}

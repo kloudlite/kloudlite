@@ -328,22 +328,22 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
           {
             render: () => '',
             name: 'logs',
-            className: 'min-w-[180px] flex-1 flex items-center justify-center',
+            className: 'min-w-[150px] flex-1 flex items-center justify-center',
           },
           {
-            render: () => 'Status',
-            name: 'status',
-            className: 'flex-1 min-w-[3s0px] flex items-center justify-center',
-          },
-          {
-            render: () => 'Provider (Region)',
+            render: () => 'Provider',
             name: 'provider',
-            className: 'flex w-[180px] items-center justify-center',
+            className: 'flex w-[100px]',
           },
           {
             render: () => 'Dns',
             name: 'dns',
-            className: 'flex w-[180px] items-center justify-center',
+            className: 'flex w-[180px]',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px]',
           },
           {
             render: () => 'Updated',
@@ -396,9 +396,6 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
                       )
                     : i.type === 'byok' && <ByokButton item={i} />,
               },
-              status: {
-                render: () => <SyncStatusV2 item={i} />,
-              },
               provider: { render: () => <ListItem data={provider} /> },
               dns: {
                 render: () => (
@@ -406,6 +403,9 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
                     <ClusterDnsView service={`${parseName(i)}.local`} />
                   </div>
                 ),
+              },
+              status: {
+                render: () => <SyncStatusV2 item={i} />,
               },
               updated: {
                 render: () => (

@@ -141,12 +141,17 @@ const ListView = ({
               </div>
             ),
             name: 'name',
-            className: 'w-[180px]',
+            className: 'w-[400px]',
+          },
+          {
+            render: () => 'Cluster',
+            name: 'cluster',
+            className: 'w-[300px]',
           },
           {
             render: () => 'Status',
             name: 'status',
-            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+            className: 'flex-1 min-w-[30px]',
           },
           {
             render: () => 'Updated',
@@ -175,6 +180,9 @@ const ListView = ({
                     }
                   />
                 ),
+              },
+              cluster: {
+                render: () => <ListItem data={i.clusterName} />,
               },
               status: {
                 render: () => <SyncStatusV2 item={i} />,

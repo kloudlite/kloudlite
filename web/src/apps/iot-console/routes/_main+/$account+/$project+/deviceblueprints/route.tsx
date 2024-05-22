@@ -91,7 +91,7 @@ const Workspaces = () => {
                 action: {
                   content: 'Create new device blueprint',
                   prefix: <Plus />,
-                  LinkComponent: Link,
+                  linkComponent: Link,
                   onClick: () => {
                     setVisible(true);
                   },

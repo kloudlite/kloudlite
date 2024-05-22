@@ -618,6 +618,45 @@ type EnvironmentPaginatedRecords {
   totalCount: Int!
 }
 
+type ExternalApp {
+  accountName: String!
+  apiVersion: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  environmentName: String!
+  id: ID!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ExternalAppEdge {
+  cursor: String!
+  node: ExternalApp!
+}
+
+input ExternalAppIn {
+  apiVersion: String
+  displayName: String!
+  kind: String
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpecIn
+  status: Github__com___kloudlite___operator___pkg___operator__StatusIn
+}
+
+type ExternalAppPaginatedRecords {
+  edges: [ExternalAppEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type GitBranch {
   name: String
   protected: Boolean
@@ -1149,7 +1188,7 @@ input Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn
 
 type Github__com___kloudlite___operator___apis___common____types__MsvcRef {
   apiVersion: String
-  clusterName: String!
+  clusterName: String
   kind: String
   name: String!
   namespace: String!
@@ -1157,7 +1196,7 @@ type Github__com___kloudlite___operator___apis___common____types__MsvcRef {
 
 input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
   apiVersion: String
-  clusterName: String!
+  clusterName: String
   kind: String
   name: String!
   namespace: String!
@@ -1409,6 +1448,23 @@ type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec {
 input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
   routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn
   targetNamespace: String
+}
+
+enum Github__com___kloudlite___operator___apis___crds___v1__ExternalAppRecordType {
+  CNAME
+  IPAddr
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec {
+  intercept: Github__com___kloudlite___operator___apis___crds___v1__Intercept
+  record: String!
+  recordType: Github__com___kloudlite___operator___apis___crds___v1__ExternalAppRecordType!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpecIn {
+  intercept: Github__com___kloudlite___operator___apis___crds___v1__InterceptIn
+  record: String!
+  recordType: Github__com___kloudlite___operator___apis___crds___v1__ExternalAppRecordType!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec {
@@ -1916,6 +1972,7 @@ type GlobalVPN {
   creationTime: Date!
   displayName: String!
   id: ID!
+  kloudliteDevice: GlobalVPNKloudliteDevice!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
@@ -1974,11 +2031,22 @@ input GlobalVPNIn {
   allocatableCIDRSuffix: Int!
   CIDR: String!
   displayName: String!
+  kloudliteDevice: GlobalVPNKloudliteDeviceIn!
   metadata: MetadataIn!
   numAllocatedClusterCIDRs: Int!
   numAllocatedDevices: Int!
   numReservedIPsForNonClusterUse: Int!
   wgInterface: String!
+}
+
+type GlobalVPNKloudliteDevice {
+  ipAddr: String!
+  name: String!
+}
+
+input GlobalVPNKloudliteDeviceIn {
+  ipAddr: String!
+  name: String!
 }
 
 type GlobalVPNPaginatedRecords {
@@ -3312,21 +3380,17 @@ scalar Map
 type MatchFilter {
   array: [Any!]
   exact: Any
-  matchType: MatchFilterMatchType!
+  matchType: String!
+  notInArray: [Any!]
   regex: String
 }
 
 input MatchFilterIn {
   array: [Any!]
   exact: Any
-  matchType: MatchFilterMatchType!
+  matchType: String!
+  notInArray: [Any!]
   regex: String
-}
-
-enum MatchFilterMatchType {
-  array
-  exact
-  regex
 }
 
 type Metadata {
@@ -3382,6 +3446,7 @@ type Mutation {
   core_createApp(app: AppIn!, envName: String!): App
   core_createConfig(config: ConfigIn!, envName: String!): Config
   core_createEnvironment(env: EnvironmentIn!): Environment
+  core_createExternalApp(envName: String!, externalApp: ExternalAppIn!): ExternalApp
   core_createImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret
   core_createManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource
   core_createRouter(envName: String!, router: RouterIn!): Router
@@ -3390,15 +3455,18 @@ type Mutation {
   core_deleteApp(appName: String!, envName: String!): Boolean!
   core_deleteConfig(configName: String!, envName: String!): Boolean!
   core_deleteEnvironment(envName: String!): Boolean!
+  core_deleteExternalApp(envName: String!, externalAppName: String!): Boolean!
   core_deleteImagePullSecret(name: String!): Boolean!
   core_deleteManagedResource(envName: String!, mresName: String!): Boolean!
   core_deleteRouter(envName: String!, routerName: String!): Boolean!
   core_deleteSecret(envName: String!, secretName: String!): Boolean!
   core_deleteVPNDevice(deviceName: String!): Boolean!
   core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
+  core_interceptExternalApp(deviceName: String!, envName: String!, externalAppName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_updateApp(app: AppIn!, envName: String!): App
   core_updateConfig(config: ConfigIn!, envName: String!): Config
   core_updateEnvironment(env: EnvironmentIn!): Environment
+  core_updateExternalApp(envName: String!, externalApp: ExternalAppIn!): ExternalApp
   core_updateImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret
   core_updateManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource
   core_updateRouter(envName: String!, router: RouterIn!): Router
@@ -3698,6 +3766,7 @@ type Query {
   core_getConfig(envName: String!, name: String!): Config
   core_getConfigValues(envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!]
   core_getEnvironment(name: String!): Environment
+  core_getExternalApp(envName: String!, name: String!): ExternalApp
   core_getImagePullSecret(name: String!): ImagePullSecret
   core_getManagedResouceOutputKeys(envName: String!, name: String!): [String!]!
   core_getManagedResouceOutputKeyValues(envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]!
@@ -3709,6 +3778,7 @@ type Query {
   core_listApps(envName: String!, pq: CursorPaginationIn, search: SearchApps): AppPaginatedRecords
   core_listConfigs(envName: String!, pq: CursorPaginationIn, search: SearchConfigs): ConfigPaginatedRecords
   core_listEnvironments(pq: CursorPaginationIn, search: SearchEnvironments): EnvironmentPaginatedRecords
+  core_listExternalApps(envName: String!, pq: CursorPaginationIn, search: SearchExternalApps): ExternalAppPaginatedRecords
   core_listImagePullSecrets(pq: CursorPaginationIn, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
   core_listManagedResources(envName: String!, pq: CursorPaginationIn, search: SearchManagedResources): ManagedResourcePaginatedRecords
   core_listRouters(envName: String!, pq: CursorPaginationIn, search: SearchRouters): RouterPaginatedRecords
@@ -3719,6 +3789,7 @@ type Query {
   core_resyncApp(envName: String!, name: String!): Boolean!
   core_resyncConfig(envName: String!, name: String!): Boolean!
   core_resyncEnvironment(name: String!): Boolean!
+  core_resyncExternalApp(envName: String!, name: String!): Boolean!
   core_resyncImagePullSecret(name: String!): Boolean!
   core_resyncManagedResource(envName: String!, name: String!): Boolean!
   core_resyncRouter(envName: String!, name: String!): Boolean!
@@ -3908,6 +3979,12 @@ input SearchDomainEntry {
 }
 
 input SearchEnvironments {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchExternalApps {
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
   text: MatchFilterIn

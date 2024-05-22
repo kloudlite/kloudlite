@@ -80,7 +80,7 @@ const ForgetPassword = () => {
                 suffix={<ArrowRight />}
                 block
                 type="submit"
-                LinkComponent={Link}
+                linkComponent={Link}
                 loading={isLoading}
               />
             </div>

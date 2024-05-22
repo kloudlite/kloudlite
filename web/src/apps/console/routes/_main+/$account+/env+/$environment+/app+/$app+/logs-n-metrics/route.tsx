@@ -19,7 +19,7 @@ const LogsAndMetrics = () => {
 
   type tData = {
     metric: {
-      exported_pod: string;
+      pod_name: string;
     };
     values: [number, string][];
   };
@@ -168,8 +168,8 @@ const LogsAndMetrics = () => {
             series: [
               ...data.cpu.map((d) => {
                 return {
-                  name: d.metric.exported_pod,
-                  color: generatePlainColor(d.metric.exported_pod),
+                  name: d.metric.pod_name,
+                  color: generatePlainColor(d.metric.pod_name),
                   data: d.values.map((v) => {
                     return [v[0], parseFloat(v[1])];
                   }),
@@ -213,8 +213,8 @@ const LogsAndMetrics = () => {
             series: [
               ...data.memory.map((d) => {
                 return {
-                  name: d.metric.exported_pod,
-                  color: generatePlainColor(d.metric.exported_pod),
+                  name: d.metric.pod_name,
+                  color: generatePlainColor(d.metric.pod_name),
                   data: d.values.map((v) => {
                     return [v[0], parseFloat(v[1])];
                   }),

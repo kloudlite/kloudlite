@@ -67,10 +67,10 @@ const ClusterTabs = () => {
   const iconSize = 16;
   return (
     <CommonTabs
-      // backButton={{
-      //   to: `/${account}/infra`,
-      //   label: 'Infra',
-      // }}
+      backButton={{
+        to: `/${account}/infra`,
+        label: 'Infra',
+      }}
       tabs={[
         {
           label: (
@@ -151,7 +151,7 @@ const NetworkBreadcrum = ({
       <span className="mx-md" />
       <Breadcrum.Button
         to={`/${account}/infra/clusters`}
-        LinkComponent={Link}
+        linkComponent={Link}
         content={
           <div className="flex flex-row gap-md items-center">
             Clusters <ChevronRight size={14} />{' '}
@@ -160,7 +160,7 @@ const NetworkBreadcrum = ({
       />
       <Breadcrum.Button
         to={`/${account}/infra/${parseName(cluster)}/overview/info`}
-        LinkComponent={Link}
+        linkComponent={Link}
         content={<span>{displayName}</span>}
       />
     </div>

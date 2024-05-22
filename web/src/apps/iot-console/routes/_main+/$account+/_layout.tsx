@@ -200,7 +200,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
         content={account.displayName}
         size="sm"
         variant="plain"
-        LinkComponent={Link}
+        linkComponent={Link}
         to={`/${account.metadata?.name}/environments`}
       />
       <OptionList.Root open={open} onOpenChange={setOpen} modal={false}>

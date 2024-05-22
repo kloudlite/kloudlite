@@ -160,17 +160,17 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
           {
             render: () => 'Device Config',
             name: 'config',
-            className: 'flex items-center justify-center w-[150px]',
+            className: 'flex  w-[150px]',
           },
           {
             render: () => 'Host',
             name: 'host',
-            className: 'flex items-center justify-center w-[250px]',
+            className: 'flex  w-[240px]',
           },
           {
             render: () => 'IP',
             name: 'ip',
-            className: 'flex items-center justify-center w-[180px]',
+            className: 'flex  w-[150px]',
           },
           {
             render: () => 'Updated',
@@ -215,10 +215,16 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
                     />
                   ) : (
                     <ListItem
+                      noTooltip
                       data={
-                        <span className="bodyMd-semibold">
-                          {i.creationMethod}
-                        </span>
+                        <div>
+                          <Button
+                            variant="plain"
+                            onClick={() => showWgConfig(i)}
+                            content="View"
+                            suffix={<Eye />}
+                          />
+                        </div>
                       }
                     />
                   ),
@@ -226,7 +232,7 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
               host: {
                 render: () => (
                   <div className="flex w-fit truncate">
-                    <DeviceHostView hostName={`${parseName(i)}.local`} />
+                    <DeviceHostView hostName={`${parseName(i)}.device.local`} />
                   </div>
                 ),
                 // render: () => (
@@ -350,6 +356,7 @@ const VPNResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
         setVisible={() => setShowWireguardConfig(null)}
         visible={!!showWireguardConfig}
         deviceName={parseName(showWireguardConfig)}
+        creationMethod={showWireguardConfig?.creationMethod || ''}
       />
     </>
   );

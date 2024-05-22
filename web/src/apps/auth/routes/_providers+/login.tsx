@@ -85,7 +85,7 @@ const LoginWithEmail = () => {
             variant="primary-plain"
             content="Forgot password"
             to="/forgot-password"
-            LinkComponent={Link}
+            linkComponent={Link}
             tabIndex={4}
           />
         }
@@ -140,7 +140,7 @@ const Login = () => {
                   to={githubLoginUrl}
                   disabled={!githubLoginUrl}
                   block
-                  LinkComponent={Link}
+                  linkComponent={Link}
                 />
                 <Button
                   size="2xl"
@@ -152,7 +152,7 @@ const Login = () => {
                   to={gitlabLoginUrl}
                   disabled={!gitlabLoginUrl}
                   block
-                  LinkComponent={Link}
+                  linkComponent={Link}
                 />
                 <Button
                   size="2xl"
@@ -164,7 +164,7 @@ const Login = () => {
                   to={googleLoginUrl}
                   disabled={!googleLoginUrl}
                   block
-                  LinkComponent={Link}
+                  linkComponent={Link}
                 />
               </div>
             )}
@@ -179,7 +179,7 @@ const Login = () => {
               suffix={<ArrowRight />}
               to="/login"
               block
-              LinkComponent={Link}
+              linkComponent={Link}
             />
           ) : (
             <Button
@@ -191,7 +191,7 @@ const Login = () => {
               prefix={<Envelope />}
               to="/login/?mode=email"
               block
-              LinkComponent={Link}
+              linkComponent={Link}
             />
           )}
         </div>

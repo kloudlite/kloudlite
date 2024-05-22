@@ -65,7 +65,7 @@ const Apps = () => {
                     content="Create new app"
                     prefix={<Plus />}
                     to="../new-app"
-                    LinkComponent={Link}
+                    linkComponent={Link}
                   />
                 ),
               }}
@@ -78,7 +78,7 @@ const Apps = () => {
                 action: {
                   content: 'Create new app',
                   prefix: <Plus />,
-                  LinkComponent: Link,
+                  linkComponent: Link,
                   to: '../new-app',
                 },
               }}

@@ -67,7 +67,7 @@ const Projects = () => {
                   content="Create Project"
                   prefix={<Plus />}
                   to={`/${account}/new-project`}
-                  LinkComponent={Link}
+                  linkComponent={Link}
                 />
               ),
             }}
@@ -82,7 +82,7 @@ const Projects = () => {
               action: {
                 content: 'Add Project',
                 prefix: <Plus />,
-                LinkComponent: Link,
+                linkComponent: Link,
                 to: `/${account}/new-project`,
               },
             }}

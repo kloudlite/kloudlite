@@ -33,6 +33,9 @@ import ListV2 from '~/console/components/listV2';
 import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
+import Tooltip from '~/components/atoms/tooltip';
+import { Button } from '~/components/atoms/button';
+import { NN } from '~/root/lib/types/common';
 import HandleIntercept from './handle-intercept';
 import { IEnvironmentContext } from '../_layout';
 
@@ -62,6 +65,59 @@ type OnAction = ({
 type IExtraButton = {
   onAction: OnAction;
   item: BaseType;
+};
+
+const InterceptPortView = ({
+  ports = [],
+  device,
+}: {
+  ports: NN<ExtractNodeType<IApps>['spec']['intercept']>['portMappings'];
+  device: string;
+}) => {
+  return (
+    <div className="flex flex-row items-center gap-md">
+      {/* {ports.slice(0, 2).map((port) => (
+        <Badge key={port.appPort}>
+          {port.appPort} → {port.devicePort}
+        </Badge>
+      ))} */}
+
+      {/* {ports.length > 2 && ( */}
+      <Tooltip.Root
+        align="start"
+        side="top"
+        className="!max-w-fit "
+        content={
+          <div className="flex flex-row gap-md py-md">
+            {ports?.map((d) => {
+              return (
+                <Badge className="shrink-0" key={d.appPort}>
+                  <div>
+                    {/* {d.appPort} → {d.devicePort} */}
+                    {`Env:${d.appPort}`} → {`${device}:${d.devicePort}`}
+                  </div>
+                </Badge>
+              );
+            })}
+          </div>
+        }
+      >
+        <div className="flex flex-row items-center gap-md shrink-0 truncate">
+          {/* <Button
+            content={`+${ports.length - 2} more`}
+            variant="plain"
+            size="sm"
+          /> */}
+          {ports.slice(0, 2).map((port) => (
+            <Badge key={port.appPort}>
+              {port.appPort} → {port.devicePort}
+            </Badge>
+          ))}
+        </div>
+      </Tooltip.Root>
+      {/* )} */}
+    </div>
+  );
 };
 
 const ExtraButton = ({ onAction, item }: IExtraButton) => {
@@ -197,19 +253,19 @@ const ListView = ({ items = [], onAction }: IResource) => {
             className: 'w-[180px]',
           },
           {
-            render: () => 'Intercepted / Exposed ports',
+            render: () => '',
             name: 'intercept',
-            className: 'w-[250px] truncate overflow-hidden',
-          },
-          {
-            render: () => 'Status',
-            name: 'status',
-            className: 'w-[180px] flex items-center justify-center',
+            className: 'w-[250px] truncate',
           },
           {
             render: () => 'Service',
             name: 'service',
-            className: 'w-[180px] flex items-center justify-center flex-1',
+            className: 'w-[180px] flex flex-1',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'w-[180px] ',
           },
           {
             render: () => 'Updated',
@@ -232,56 +288,45 @@ const ListView = ({ items = [], onAction }: IResource) => {
               intercept: {
                 render: () =>
                   i.spec.intercept?.enabled ? (
-                    <ListItem
-                      subtitle={
-                        <div className="flex flex-col gap-lg">
-                          <div className="truncate">
+                    <div className="flex flex-col gap-md">
+                      <ListItem
+                        subtitle={
+                          <span>
                             Intercepted to{' '}
                             <span className="bodyMd-medium text-text-strong">
                               {i.spec.intercept.toDevice}
                             </span>
-                          </div>
-                          <div className="flex gap-lg ">
-                            {i.spec.intercept?.portMappings?.map((d) => {
-                              return (
-                                <Badge key={d.appPort}>
-                                  {d.appPort} → {d.devicePort}
-                                </Badge>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      }
-                    />
-                  ) : (
-                    <ListItem
-                      subtitle={
-                        <div className="flex flex-col gap-lg">
-                          <div className="flex gap-lg">
-                            {i.spec.services?.map((d) => {
-                              return <Badge key={d.port}>{d.port}</Badge>;
-                            })}
-                          </div>
-                        </div>
-                      }
-                    />
-                  ),
-              },
-              status: {
-                render: () => (
-                  <div className="inline-block">
-                    <SyncStatusV2 item={i} />
-                  </div>
-                ),
+                          </span>
+                        }
+                      />
+                      <InterceptPortView
+                        ports={i.spec.intercept.portMappings || []}
+                        device={i.spec.intercept.toDevice}
+                      />
+                    </div>
+                  ) : null,
               },
               service: {
                 render: () => (
                   <div className="flex w-fit truncate">
                     <AppServiceView
-                      service={`${parseName(i)}.${parseName(
-                        environment
-                      )}.svc.${parseName(cluster)}.local`}
+                      service={
+                        environment?.spec?.targetNamespace
+                          ? `${parseName(i)}.${
+                              environment?.spec?.targetNamespace
+                            }.svc.${parseName(cluster)}.local`
+                          : `${parseName(i)}.${parseName(
+                              environment
+                            )}.svc.${parseName(cluster)}.local`
+                      }
                     />
+                  </div>
+                ),
+              },
+              status: {
+                render: () => (
+                  <div className="inline-block">
+                    <SyncStatusV2 item={i} />
                   </div>
                 ),
               },
@@ -341,7 +386,14 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
       if (errors) {
         throw errors[0];
       }
-      toast.success('app intercepted successfully');
+      // toast.success('app intercepted successfully');
+      toast.success(
+        `${
+          intercept
+            ? 'App Intercepted successfully'
+            : 'App Intercept removed successfully'
+        }`
+      );
       reload();
     } catch (error) {
       handleError(error);

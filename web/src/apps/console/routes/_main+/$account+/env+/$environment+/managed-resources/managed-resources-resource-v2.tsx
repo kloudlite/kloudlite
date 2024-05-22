@@ -129,17 +129,27 @@ const ListView = ({ items = [], onAction }: IResource) => {
           {
             render: () => 'Name',
             name: 'name',
-            className: 'w-[180px]',
+            className: 'w-[80px]',
           },
           {
             render: () => '',
             name: 'secret',
+            className: 'flex flex-1 w-[150px]',
+          },
+          {
+            render: () => 'Type',
+            name: 'type',
             className: 'w-[180px]',
+          },
+          {
+            render: () => 'Kind',
+            name: 'kind',
+            className: 'w-[240px]',
           },
           {
             render: () => 'Status',
             name: 'status',
-            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+            className: 'flex-1 min-w-[30px]',
           },
           {
             render: () => 'Updated',
@@ -170,6 +180,18 @@ const ListView = ({ items = [], onAction }: IResource) => {
                       }
                     />
                   ) : null,
+              },
+              type: {
+                render: () => (
+                  <ListItem data={`${i.spec?.resourceTemplate?.kind}`} />
+                ),
+              },
+              kind: {
+                render: () => (
+                  <ListItem
+                    data={`${i.spec?.resourceTemplate?.msvcRef?.kind}`}
+                  />
+                ),
               },
               status: {
                 render: () => <SyncStatusV2 item={i} />,

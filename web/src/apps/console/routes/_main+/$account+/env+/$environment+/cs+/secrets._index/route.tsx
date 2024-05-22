@@ -27,7 +27,6 @@ export const loader = async (ctx: IRemixCtx) => {
 
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listSecrets({
-      
       envName: environment,
       pq: getPagination(ctx),
       search: getSearch(ctx),
@@ -85,7 +84,7 @@ const Secrets = () => {
                 action: {
                   content: 'Create secret',
                   prefix: <Plus />,
-                  LinkComponent: Link,
+                  linkComponent: Link,
                   onClick: () => {
                     setHandleSecret({ type: DIALOG_TYPE.ADD, data: null });
                   },

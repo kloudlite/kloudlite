@@ -1,21 +1,31 @@
-import { useLoaderData } from '@remix-run/react';
+import { useState } from 'react';
+import CodeEditorClient from '~/root/lib/client/components/editor-client';
 
-export const loader = () => {
-  return {
-    data: Math.random(),
-  };
-};
+function App() {
+  const [code, setCode] = useState(`
+name: hello
+age: 30
+`);
 
-const App = () => {
-  // useWatch('account:newteam.cluster');
-  // res-updates.account.acc-ruwibp-pf5jvcsew2rnl54kriv59.cluster.*
-  // res-updates.account.accid.project.projid.env.envid.app.*
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-1">
+        <CodeEditorClient
+          className="flex-1"
+          lang="yaml"
+          onChange={(v) => {
+            setCode(v || '');
+          }}
+          value={`
+name: hello
+age: 30
+`}
+        />
+      </div>
 
-  const { data } = useLoaderData();
+      <pre className="px-xl flex-1">{code}</pre>
+    </div>
+  );
+}
 
-  return <div>{data}</div>;
-};
-
-export default () => {
-  return <App />;
-};
+export default App;

@@ -106,7 +106,7 @@ const ForgetPassword = () => {
           variant="primary-plain"
           size="md"
           to="/login"
-          LinkComponent={Link}
+          linkComponent={Link}
         />
       </div>
     </div>

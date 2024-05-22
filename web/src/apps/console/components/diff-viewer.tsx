@@ -3,10 +3,29 @@ import hljs from 'highlight.js';
 import yaml from 'js-yaml';
 import classNames from 'classnames';
 import { useEffect, useRef } from 'react';
-import ReactDiffViewerBase, { ReactDiffViewerProps } from 'react-diff-viewer';
+import ReactDiffViewerBase, {
+  ReactDiffViewerProps,
+} from 'react-diff-viewer-continued';
 
 export const yamlDump = (data: any) => {
   return yaml.dump(data);
+};
+
+export const yamlParse = (data: string) => {
+  let resp;
+  try {
+    resp = yaml.load(data) as any;
+  } catch (err) {
+    return {
+      data: null,
+      error: (err as Error).message,
+    };
+  }
+
+  return {
+    data: resp,
+    error: null,
+  };
 };
 const HighlightIt = ({
   language,

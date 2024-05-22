@@ -63,11 +63,9 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
     const checkApi = (() => {
       switch (resType) {
         case 'app':
-        case 'project':
         case 'config':
         case 'environment':
         case 'managed_service':
-        case 'project_managed_service':
         case 'managed_resource':
         case 'router':
         case 'console_vpn_device':
@@ -171,7 +169,6 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
                   'router',
                 ].includes(tempResType)
                   ? {
-                      
                       envName: environment,
                     }
                   : {}),

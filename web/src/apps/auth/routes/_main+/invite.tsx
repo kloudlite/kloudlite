@@ -49,7 +49,7 @@ const InvitePage = () => {
                   <span className="bodyLg-medium">Login to Kloudlite</span>
                 }
                 block
-                LinkComponent={Link}
+                linkComponent={Link}
                 to="/login"
               />
               <Button
@@ -59,7 +59,7 @@ const InvitePage = () => {
                   <span className="bodyLg-medium">Signup to Kloudlite</span>
                 }
                 block
-                LinkComponent={Link}
+                linkComponent={Link}
                 to="/signup"
               />
             </div>
