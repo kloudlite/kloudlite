@@ -1,9 +1,4 @@
-import {
-  GearSix,
-  LinkBreak,
-  Link as LinkIcon,
-  Repeat,
-} from '~/console/components/icons';
+import { GearSix, LinkBreak, Repeat } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
@@ -36,17 +31,19 @@ import { CopyContentToClipboard } from '~/console/components/common-console-comp
 import Tooltip from '~/components/atoms/tooltip';
 import { Button } from '~/components/atoms/button';
 import { NN } from '~/root/lib/types/common';
-import HandleIntercept from './handle-intercept';
+// import HandleIntercept from './handle-intercept';
+import { IExternalApps } from '~/console/server/gql/queries/external-app-queries';
 import { IEnvironmentContext } from '../_layout';
+import HandleExternalAppIntercept from './handle-external-app-intercept';
 
 const RESOURCE_NAME = 'app';
-type BaseType = ExtractNodeType<IApps>;
+type BaseType = ExtractNodeType<IExternalApps>;
 
-const parseItem = (item: ExtractNodeType<IApps>) => {
+const parseItem = (item: ExtractNodeType<IExternalApps>) => {
   return {
     name: item.displayName,
     id: pn(item),
-    intercept: item.spec.intercept,
+    intercept: item.spec?.intercept,
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
@@ -69,53 +66,45 @@ type IExtraButton = {
 
 const InterceptPortView = ({
   ports = [],
-  device,
 }: {
   ports: NN<ExtractNodeType<IApps>['spec']['intercept']>['portMappings'];
-  device: string;
 }) => {
   return (
     <div className="flex flex-row items-center gap-md">
-      {/* {ports.slice(0, 2).map((port) => (
+      {ports.slice(0, 2).map((port) => (
         <Badge key={port.appPort}>
           {port.appPort} → {port.devicePort}
         </Badge>
-      ))} */}
+      ))}
 
-      {/* {ports.length > 2 && ( */}
-      <Tooltip.Root
-        align="start"
-        side="top"
-        className="!max-w-fit "
-        content={
-          <div className="flex flex-row gap-md py-md">
-            {ports?.map((d) => {
-              return (
-                <Badge className="shrink-0" key={d.appPort}>
-                  <div>
-                    {/* {d.appPort} → {d.devicePort} */}
-                    {`Env:${d.appPort}`} → {`${device}:${d.devicePort}`}
-                  </div>
-                </Badge>
-              );
-            })}
+      {ports.length > 2 && (
+        <Tooltip.Root
+          align="start"
+          side="top"
+          className="!max-w-fit "
+          content={
+            <div className="flex flex-row gap-md py-md">
+              {ports?.map((d) => {
+                return (
+                  <Badge className="shrink-0" key={d.appPort}>
+                    <div>
+                      {d.appPort} → {d.devicePort}
+                    </div>
+                  </Badge>
+                );
+              })}
+            </div>
+          }
+        >
+          <div className="shrink-0">
+            <Button
+              content={`+${ports.length - 2} more`}
+              variant="plain"
+              size="sm"
+            />
           </div>
-        }
-      >
-        <div className="flex flex-row items-center gap-md shrink-0 truncate">
-          {/* <Button
-            content={`+${ports.length - 2} more`}
-            variant="plain"
-            size="sm"
-          /> */}
-          {ports.slice(0, 2).map((port) => (
-            <Badge key={port.appPort}>
-              {port.appPort} → {port.devicePort}
-            </Badge>
-          ))}
-        </div>
-      </Tooltip.Root>
-      {/* )} */}
+        </Tooltip.Root>
+      )}
     </div>
   );
 };
@@ -128,14 +117,14 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
       label: 'Settings',
       icon: <GearSix size={iconSize} />,
       type: 'item',
-      to: `/${account}/env/${environment}/app/${parseName(
+      to: `/${account}/env/${environment}/external-app/${parseName(
         item
       )}/settings/general`,
       key: 'settings',
     },
   ];
 
-  if (item.spec.intercept && item.spec.intercept.enabled) {
+  if (item.spec?.intercept && item.spec.intercept.enabled) {
     options = [
       {
         label: 'Remove intercept',
@@ -159,16 +148,16 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
     ];
   }
 
-  options = [
-    {
-      label: 'Restart',
-      icon: <LinkIcon size={iconSize} />,
-      type: 'item',
-      onClick: () => onAction({ action: 'restart', item }),
-      key: 'restart',
-    },
-    ...options,
-  ];
+  // options = [
+  //   {
+  //     label: 'Restart',
+  //     icon: <LinkIcon size={iconSize} />,
+  //     type: 'item',
+  //     onClick: () => onAction({ action: 'restart', item }),
+  //     key: 'restart',
+  //   },
+  //   ...options,
+  // ];
 
   return <ResourceExtraAction options={options} />;
 };
@@ -255,7 +244,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
           {
             render: () => '',
             name: 'intercept',
-            className: 'w-[250px] truncate',
+            className: 'w-[250px] ',
           },
           {
             render: () => 'Service',
@@ -287,21 +276,20 @@ const ListView = ({ items = [], onAction }: IResource) => {
               },
               intercept: {
                 render: () =>
-                  i.spec.intercept?.enabled ? (
+                  i.spec?.intercept?.enabled ? (
                     <div className="flex flex-col gap-md">
                       <ListItem
                         subtitle={
                           <span>
                             Intercepted to{' '}
                             <span className="bodyMd-medium text-text-strong">
-                              {i.spec.intercept.toDevice}
+                              {i.spec?.intercept.toDevice}
                             </span>
                           </span>
                         }
                       />
                       <InterceptPortView
-                        ports={i.spec.intercept.portMappings || []}
-                        device={i.spec.intercept.toDevice}
+                        ports={i.spec?.intercept.portMappings || []}
                       />
                     </div>
                   ) : null,
@@ -344,7 +332,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
             },
             to: `/${parseName(account)}/env/${parseName(
               environment
-            )}/app/${id}`,
+            )}/external-app/${id}`,
           };
         }),
       }}
@@ -352,13 +340,13 @@ const ListView = ({ items = [], onAction }: IResource) => {
   );
 };
 
-const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
+const ExternalNameResource = ({ items = [] }: Omit<IResource, 'onAction'>) => {
   const api = useConsoleApi();
   const { environment, account } = useOutletContext<IEnvironmentContext>();
   const reload = useReload();
 
   const [visible, setVisible] = useState(false);
-  const [mi, setItem] = useState<ExtractNodeType<IApps>>();
+  const [mi, setItem] = useState<ExtractNodeType<IExternalApps>>();
 
   useWatchReload(
     items.map((i) => {
@@ -368,7 +356,7 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
     })
   );
 
-  const interceptApp = async (item: BaseType, intercept: boolean) => {
+  const interceptExternalApp = async (item: BaseType, intercept: boolean) => {
     if (intercept) {
       setItem(item);
       setVisible(true);
@@ -376,9 +364,9 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
     }
 
     try {
-      const { errors } = await api.interceptApp({
-        appname: pn(item),
-        deviceName: item.spec.intercept?.toDevice || '',
+      const { errors } = await api.interceptExternalApp({
+        externalAppName: pn(item),
+        deviceName: item.spec?.intercept?.toDevice || '',
         envName: pn(environment),
         intercept,
       });
@@ -386,14 +374,7 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
       if (errors) {
         throw errors[0];
       }
-      // toast.success('app intercepted successfully');
-      toast.success(
-        `${
-          intercept
-            ? 'App Intercepted successfully'
-            : 'App Intercept removed successfully'
-        }`
-      );
+      toast.success('app intercepted removed successfully');
       reload();
     } catch (error) {
       handleError(error);
@@ -426,13 +407,13 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
     onAction: ({ action, item }) => {
       switch (action) {
         case 'intercept':
-          interceptApp(item, true);
+          interceptExternalApp(item, true);
           break;
         case 'restart':
           restartApp(item);
           break;
         case 'remove_intercept':
-          interceptApp(item, false);
+          interceptExternalApp(item, false);
           break;
         default:
       }
@@ -444,7 +425,7 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
         listView={<ListView {...props} />}
         gridView={<GridView {...props} />}
       />
-      <HandleIntercept
+      <HandleExternalAppIntercept
         {...{
           visible,
           setVisible,
@@ -455,4 +436,4 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
   );
 };
 
-export default AppsResourcesV2;
+export default ExternalNameResource;

@@ -8,6 +8,7 @@ import {
   Github__Com___Kloudlite___Api___Pkg___Types__SyncAction as SyncAction,
   Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncState,
   Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__PullSecretFormat as ImagePullSecretFormat,
+  Github__Com___Kloudlite___Operator___Apis___Crds___V1__ExternalAppRecordType as ExternalAppRecordType,
 } from '~/root/src/generated/gql/server';
 
 type IparseNodes<T> = {
@@ -236,5 +237,17 @@ export const validateImagePullSecretFormat = (
       return v as ImagePullSecretFormat;
     default:
       throw Error(`invalid image pull secret format ${v}`);
+  }
+};
+
+export const validateExternalAppRecordType = (
+  v: string
+): ExternalAppRecordType => {
+  switch (v as ExternalAppRecordType) {
+    case 'IPAddr':
+    case 'CNAME':
+      return v as ExternalAppRecordType;
+    default:
+      throw Error(`invalid external app record type ${v}`);
   }
 };

@@ -81,7 +81,7 @@ export const CopyButton = ({
   title,
   value,
 }: {
-  title: ReactNode;
+  title?: ReactNode;
   value: string;
 }) => {
   // const [_, setCopyIcon] = useState(<CopySimple />);
