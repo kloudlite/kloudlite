@@ -21,6 +21,9 @@ type WgConfigParams struct {
 	PrivateKey string
 	DNS        string
 
+	PostUp   []string
+	PostDown []string
+
 	PublicPeers  []PublicPeer
 	PrivatePeers []PrivatePeer
 }
@@ -32,6 +35,14 @@ func GenerateWireguardConfig(wgParams WgConfigParams) (string, error) {
 Address = {{.IPAddr}}/32
 PrivateKey = {{.PrivateKey}}
 DNS = {{.DNS}}
+
+{{- range .PostUp -}}
+PostUp = {{.}}
+{{- end -}}
+
+{{- range .PostDown -}}
+PostDown = {{.}}
+{{- end -}}
 
 {{- range .PublicPeers}}
 {{- with .}}

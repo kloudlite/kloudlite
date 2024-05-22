@@ -79,6 +79,17 @@ type EnvironmentPaginatedRecords struct {
 	TotalCount int                `json:"totalCount"`
 }
 
+type ExternalAppEdge struct {
+	Cursor string                `json:"cursor"`
+	Node   *entities.ExternalApp `json:"node"`
+}
+
+type ExternalAppPaginatedRecords struct {
+	Edges      []*ExternalAppEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount int                `json:"totalCount"`
+}
+
 type GithubComKloudliteAPIPkgTypesEncodedString struct {
 	Encoding string `json:"encoding"`
 	Value    string `json:"value"`
@@ -86,7 +97,7 @@ type GithubComKloudliteAPIPkgTypesEncodedString struct {
 
 type GithubComKloudliteOperatorApisCommonTypesMsvcRef struct {
 	APIVersion  *string `json:"apiVersion,omitempty"`
-	ClusterName string  `json:"clusterName"`
+	ClusterName *string `json:"clusterName,omitempty"`
 	Kind        *string `json:"kind,omitempty"`
 	Name        string  `json:"name"`
 	Namespace   string  `json:"namespace"`
@@ -94,7 +105,7 @@ type GithubComKloudliteOperatorApisCommonTypesMsvcRef struct {
 
 type GithubComKloudliteOperatorApisCommonTypesMsvcRefIn struct {
 	APIVersion  *string `json:"apiVersion,omitempty"`
-	ClusterName string  `json:"clusterName"`
+	ClusterName *string `json:"clusterName,omitempty"`
 	Kind        *string `json:"kind,omitempty"`
 	Name        string  `json:"name"`
 	Namespace   string  `json:"namespace"`
@@ -307,6 +318,18 @@ type GithubComKloudliteOperatorApisCrdsV1EnvironmentSpecIn struct {
 	TargetNamespace *string                                                   `json:"targetNamespace,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisCrdsV1ExternalAppSpec struct {
+	Intercept  *GithubComKloudliteOperatorApisCrdsV1Intercept            `json:"intercept,omitempty"`
+	Record     string                                                    `json:"record"`
+	RecordType GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType `json:"recordType"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ExternalAppSpecIn struct {
+	Intercept  *GithubComKloudliteOperatorApisCrdsV1InterceptIn          `json:"intercept,omitempty"`
+	Record     string                                                    `json:"record"`
+	RecordType GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType `json:"recordType"`
+}
+
 type GithubComKloudliteOperatorApisCrdsV1Hpa struct {
 	Enabled         bool `json:"enabled"`
 	MaxReplicas     *int `json:"maxReplicas,omitempty"`
@@ -517,7 +540,26 @@ type GithubComKloudliteOperatorPkgOperatorCheck struct {
 	Status     bool                                        `json:"status"`
 }
 
+type GithubComKloudliteOperatorPkgOperatorCheckIn struct {
+	Debug      *string                                     `json:"debug,omitempty"`
+	Error      *string                                     `json:"error,omitempty"`
+	Generation *int                                        `json:"generation,omitempty"`
+	Info       *string                                     `json:"info,omitempty"`
+	Message    *string                                     `json:"message,omitempty"`
+	StartedAt  *string                                     `json:"startedAt,omitempty"`
+	State      *GithubComKloudliteOperatorPkgOperatorState `json:"state,omitempty"`
+	Status     bool                                        `json:"status"`
+}
+
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
+	Debug       *bool   `json:"debug,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Name        string  `json:"name"`
+	Title       string  `json:"title"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorCheckMetaIn struct {
 	Debug       *bool   `json:"debug,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Hide        *bool   `json:"hide,omitempty"`
@@ -532,7 +574,28 @@ type GithubComKloudliteOperatorPkgOperatorResourceRef struct {
 	Namespace  string `json:"namespace"`
 }
 
+type GithubComKloudliteOperatorPkgOperatorResourceRefIn struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorStatusIn struct {
+	CheckList           []*GithubComKloudliteOperatorPkgOperatorCheckMetaIn   `json:"checkList,omitempty"`
+	Checks              map[string]interface{}                                `json:"checks,omitempty"`
+	IsReady             bool                                                  `json:"isReady"`
+	LastReadyGeneration *int                                                  `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                               `json:"lastReconcileTime,omitempty"`
+	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSONIn        `json:"message,omitempty"`
+	Resources           []*GithubComKloudliteOperatorPkgOperatorResourceRefIn `json:"resources,omitempty"`
+}
+
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
+	RawMessage interface{} `json:"RawMessage,omitempty"`
+}
+
+type GithubComKloudliteOperatorPkgRawJSONRawJSONIn struct {
 	RawMessage interface{} `json:"RawMessage,omitempty"`
 }
 
@@ -665,6 +728,12 @@ type SearchConfigs struct {
 }
 
 type SearchEnvironments struct {
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
+}
+
+type SearchExternalApps struct {
 	Text              *repos.MatchFilter `json:"text,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
 	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
@@ -811,6 +880,47 @@ func (e *GithubComKloudliteOperatorApisCrdsV1ConfigOrSecret) UnmarshalGQL(v inte
 }
 
 func (e GithubComKloudliteOperatorApisCrdsV1ConfigOrSecret) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType string
+
+const (
+	GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordTypeCname  GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType = "CNAME"
+	GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordTypeIPAddr GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType = "IPAddr"
+)
+
+var AllGithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType = []GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType{
+	GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordTypeCname,
+	GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordTypeIPAddr,
+}
+
+func (e GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType) IsValid() bool {
+	switch e {
+	case GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordTypeCname, GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordTypeIPAddr:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___operator___apis___crds___v1__ExternalAppRecordType", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
