@@ -74,7 +74,7 @@ var Module = fx.Module("app",
 		return parseTemplate(et, "welcome", "[Kloudlite] Welcome to Kloudlite")
 	}),
 	fx.Provide(func(et EmailTemplatesDir) (WaitingEmail, error) {
-		return parseTemplate(et, "welcome", "[Kloudlite] Welcome to Kloudlite")
+		return parseTemplate(et, "waiting", "[Kloudlite] Welcome to Kloudlite")
 	}),
 
 	fx.Provide(newCommsSvc),
