@@ -78,6 +78,8 @@ func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, 
 			switch resType {
 			case entities.ResourceTypeApp:
 				return checkResourceName(ctx, filter, d.appRepo)
+			case entities.ResourceTypeExternalApp:
+				return checkResourceName(ctx, filter, d.externalAppRepo)
 			case entities.ResourceTypeConfig:
 				return checkResourceName(ctx, filter, d.configRepo)
 			case entities.ResourceTypeSecret:

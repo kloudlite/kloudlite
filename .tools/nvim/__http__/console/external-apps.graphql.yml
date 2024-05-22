@@ -1,0 +1,127 @@
+---
+label: "Create External App"
+query: |+
+  mutation Core_createExternalApp($envName: String!, $externalApp: ExternalAppIn!) {
+    core_createExternalApp(envName: $envName, externalApp: $externalApp) {
+      id
+      metadata {
+        name
+        namespace
+      }
+      lastUpdatedBy {
+        userId
+        userEmail
+        userName
+      }
+    }
+  }
+variables:
+  {
+    "envName": "test-env",
+    "externalApp": {
+      "displayName": "test external app",
+      "metadata": {
+        "name": "test-external-app"
+      },
+      "spec": {
+        "recordType": "CNAME",
+        "record": "test"
+      }
+    }
+  }
+
+---
+
+label: "update External App"
+query: |+
+  mutation Core_updateExternalApp($envName: String!, $externalApp: ExternalAppIn!) {
+    core_updateExternalApp(envName: $envName, externalApp: $externalApp) {
+      id
+      metadata {
+        name
+        namespace
+      }
+      lastUpdatedBy {
+        userId
+        userEmail
+        userName
+      }
+    }
+  }
+variables:
+  {
+    "envName": "test-env",
+    "externalApp": {
+      "displayName": "test external app update",
+      "metadata": {
+        "name": "test-external-app"
+      },
+      "spec": {
+        "recordType": "CNAME",
+        "record": "test"
+      }
+    }
+  }
+
+---
+
+label: "delete External App"
+query: |+
+  mutation Core_deleteExternalApp($envName: String!, $externalAppName: String!) {
+    core_deleteExternalApp(envName: $envName, externalAppName: $externalAppName)
+  }
+variables:
+  {
+    "envName": "test-env",
+    "externalAppName": "test-external-app"
+  }
+
+---
+
+label: "get External App"
+query: |+
+  query Core_getExternalApp($envName: String!, $name: String!) {
+    core_getExternalApp(envName: $envName, name: $name) {
+      accountName
+      apiVersion
+      id
+      lastUpdatedBy {
+        userEmail
+        userId
+        userName
+      }
+      displayName
+    }
+  }
+variables:
+  {
+    "envName": "test-env",
+    "name": "test-external-app"
+  }
+
+---
+
+label: "list External App"
+query: |+
+  query Core_listExternalApps($envName: String!) {
+    core_listExternalApps(envName: $envName) {
+      totalCount
+      edges {
+        node {
+          accountName
+          displayName
+          id
+          kind
+          metadata {
+            name
+          }
+        }
+      }
+    }
+  }
+variables:
+  {
+    "envName": "test-env"
+  }
+
+---

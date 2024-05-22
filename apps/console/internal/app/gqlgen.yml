@@ -114,6 +114,10 @@ models:
     model: github.com/kloudlite/api/apps/console/internal/entities.App
   AppIn: *app-model
 
+  ExternalApp: &external-app-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.ExternalApp
+  ExternalAppIn: *external-app-model
+
   Router: &router-model
     model: github.com/kloudlite/api/apps/console/internal/entities.Router
   RouterIn: *router-model
