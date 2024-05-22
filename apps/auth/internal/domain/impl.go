@@ -623,7 +623,6 @@ func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId st
 	if err != nil {
 		return nil, errors.NewEf(err, "could not update access token")
 	}
-	// fmt.Println("accToken: ", accToken)
 	return accToken, nil
 }
 
