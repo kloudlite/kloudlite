@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"fmt"
-
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -144,6 +143,53 @@ func (r *mutationResolver) CoreInterceptApp(ctx context.Context, envName string,
 	}
 
 	return r.Domain.InterceptApp(newResourceContext(cc, envName), appname, deviceName, intercept, pmappings)
+}
+
+// CoreCreateExternalApp is the resolver for the core_createExternalApp field.
+func (r *mutationResolver) CoreCreateExternalApp(ctx context.Context, envName string, externalApp entities.ExternalApp) (*entities.ExternalApp, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.CreateExternalApp(newResourceContext(cc, envName), externalApp)
+}
+
+// CoreUpdateExternalApp is the resolver for the core_updateExternalApp field.
+func (r *mutationResolver) CoreUpdateExternalApp(ctx context.Context, envName string, externalApp entities.ExternalApp) (*entities.ExternalApp, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.UpdateExternalApp(newResourceContext(cc, envName), externalApp)
+}
+
+// CoreDeleteExternalApp is the resolver for the core_deleteExternalApp field.
+func (r *mutationResolver) CoreDeleteExternalApp(ctx context.Context, envName string, externalAppName string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.DeleteExternalApp(newResourceContext(cc, envName), externalAppName); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
+// CoreInterceptExternalApp is the resolver for the core_interceptExternalApp field.
+func (r *mutationResolver) CoreInterceptExternalApp(ctx context.Context, envName string, externalAppName string, deviceName string, intercept bool, portMappings []*v11.AppInterceptPortMappings) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	pmappings := make([]v11.AppInterceptPortMappings, 0, len(portMappings))
+	for i := range portMappings {
+		if portMappings[i] != nil {
+			pmappings = append(pmappings, *portMappings[i])
+		}
+	}
+
+	return r.Domain.InterceptExternalApp(newResourceContext(cc, envName), externalAppName, deviceName, intercept, pmappings)
 }
 
 // CoreCreateConfig is the resolver for the core_createConfig field.
@@ -527,6 +573,54 @@ func (r *queryResolver) CoreRestartApp(ctx context.Context, envName string, appN
 	return true, nil
 }
 
+// CoreListExternalApps is the resolver for the core_listExternalApps field.
+func (r *queryResolver) CoreListExternalApps(ctx context.Context, envName string, search *model.SearchExternalApps, pq *repos.CursorPagination) (*model.ExternalAppPaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
+		}
+	}
+
+	extApps, err := r.Domain.ListExternalApps(newResourceContext(cc, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return fn.JsonConvertP[model.ExternalAppPaginatedRecords](extApps)
+}
+
+// CoreGetExternalApp is the resolver for the core_getExternalApp field.
+func (r *queryResolver) CoreGetExternalApp(ctx context.Context, envName string, name string) (*entities.ExternalApp, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GetExternalApp(newResourceContext(cc, envName), name)
+}
+
+// CoreResyncExternalApp is the resolver for the core_resyncExternalApp field.
+func (r *queryResolver) CoreResyncExternalApp(ctx context.Context, envName string, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.ResyncExternalApp(newResourceContext(cc, envName), name); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
 // CoreGetConfigValues is the resolver for the core_getConfigValues field.
 func (r *queryResolver) CoreGetConfigValues(ctx context.Context, envName string, queries []*domain.ConfigKeyRef) ([]*domain.ConfigKeyValueRef, error) {
 	cc, err := toConsoleContext(ctx)
@@ -830,7 +924,5 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
