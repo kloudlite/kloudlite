@@ -30,6 +30,7 @@ func newResourceContext(ctx domain.ConsoleContext, environmentName string) domai
 
 var (
 	appsGVK                  = fn.GVK("crds.kloudlite.io/v1", "App")
+	externalAppsGVK          = fn.GVK("crds.kloudlite.io/v1", "ExternalApp")
 	environmentGVK           = fn.GVK("crds.kloudlite.io/v1", "Environment")
 	deviceGVK                = fn.GVK("wireguard.kloudlite.io/v1", "Device")
 	configGVK                = fn.GVK("v1", "ConfigMap")
@@ -215,6 +216,23 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return d.OnAppDeleteMessage(rctx, app)
 				}
 				return d.OnAppUpdateMessage(rctx, app, resStatus, opts)
+			}
+		case externalAppsGVK.String():
+			{
+				var extApp entities.ExternalApp
+				if err := fn.JsonConversion(ru.Object, &extApp); err != nil {
+					return errors.NewE(err)
+				}
+
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeExternalApp, ru.ClusterName, obj)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnExternalAppDeleteMessage(rctx, extApp)
+				}
+				return d.OnExternalAppUpdateMessage(rctx, extApp, resStatus, opts)
 			}
 		case configGVK.String():
 			{
