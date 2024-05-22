@@ -29,6 +29,7 @@ type ProjectInviteEmail *EmailTemplate
 type RestPasswordEmail *EmailTemplate
 type UserVerificationEmail *EmailTemplate
 type WelcomeEmail *EmailTemplate
+type WaitingEmail *EmailTemplate
 
 func parseTemplate(et EmailTemplatesDir, templateName string, subject string) (*EmailTemplate, error) {
 	txtFile, err := et.ReadFile(fmt.Sprintf("email-templates/%v/email.txt", templateName))
@@ -70,6 +71,9 @@ var Module = fx.Module("app",
 		return parseTemplate(et, "user-verification", "[Kloudlite] Verify Email")
 	}),
 	fx.Provide(func(et EmailTemplatesDir) (WelcomeEmail, error) {
+		return parseTemplate(et, "welcome", "[Kloudlite] Welcome to Kloudlite")
+	}),
+	fx.Provide(func(et EmailTemplatesDir) (WaitingEmail, error) {
 		return parseTemplate(et, "welcome", "[Kloudlite] Welcome to Kloudlite")
 	}),
 
