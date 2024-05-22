@@ -51,7 +51,9 @@ func SelectDevice(deviceName string) error {
 		return nil
 	}
 
-	err = WriteDeviceContext(deviceName)
+	err = WriteDeviceContext(&DeviceContext{
+		DeviceName: deviceName,
+	})
 	return err
 }
 

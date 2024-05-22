@@ -37,7 +37,6 @@ RUN curl -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-pro
 
 RUN curl -fsSL https://get.jetify.com/devbox > /tmp/devbox.sh && chmod +x /tmp/devbox.sh && sudo /tmp/devbox.sh -f && rm /tmp/devbox.sh && sudo chown kl:kl /usr/local/bin/devbox
 
-
 USER root
 
 COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt

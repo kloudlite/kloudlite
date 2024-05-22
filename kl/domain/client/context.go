@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"path"
 	"runtime"
@@ -40,6 +41,11 @@ type MainContext struct {
 
 type DeviceContext struct {
 	DeviceName string `json:"deviceName"`
+
+	PrivateKey []byte `json:"privateKey"`
+	DeviceIp   net.IP `json:"deviceIp"`
+
+	HostPublicKey []byte `json:"hostPublicKey"`
 }
 
 type InfraContext struct {
@@ -287,15 +293,8 @@ func DeleteDeviceContext(dName string) error {
 	return writeOnUserScope(DeviceFileName, b)
 }
 
-func WriteDeviceContext(dName string) error {
-	c, err := GetDeviceContext()
-	if err != nil {
-		return err
-	}
-
-	c.DeviceName = dName
-
-	file, err := yaml.Marshal(c)
+func WriteDeviceContext(dc *DeviceContext) error {
+	file, err := yaml.Marshal(dc)
 
 	if err != nil {
 		return err
