@@ -55,12 +55,14 @@ type ResolverRoot interface {
 	GithubSearchRepository() GithubSearchRepositoryResolver
 	Github__com___kloudlite___api___common__CreatedOrUpdatedBy() Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver
 	GitlabProject() GitlabProjectResolver
+	MatchFilter() MatchFilterResolver
 	Metadata() MetadataResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Repository() RepositoryResolver
 	BuildIn() BuildInResolver
 	CredentialIn() CredentialInResolver
+	MatchFilterIn() MatchFilterInResolver
 	MetadataIn() MetadataInResolver
 }
 
@@ -412,10 +414,11 @@ type ComplexityRoot struct {
 	}
 
 	MatchFilter struct {
-		Array     func(childComplexity int) int
-		Exact     func(childComplexity int) int
-		MatchType func(childComplexity int) int
-		Regex     func(childComplexity int) int
+		Array      func(childComplexity int) int
+		Exact      func(childComplexity int) int
+		MatchType  func(childComplexity int) int
+		NotInArray func(childComplexity int) int
+		Regex      func(childComplexity int) int
 	}
 
 	Metadata struct {
@@ -553,6 +556,9 @@ type GitlabProjectResolver interface {
 
 	LastActivityAt(ctx context.Context, obj *entities.GitlabProject) (*string, error)
 }
+type MatchFilterResolver interface {
+	MatchType(ctx context.Context, obj *repos.MatchFilter) (string, error)
+}
 type MetadataResolver interface {
 	Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error)
 	CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error)
@@ -602,6 +608,9 @@ type BuildInResolver interface {
 type CredentialInResolver interface {
 	Access(ctx context.Context, obj *entities.Credential, data model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess) error
 	Expiration(ctx context.Context, obj *entities.Credential, data *model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationIn) error
+}
+type MatchFilterInResolver interface {
+	MatchType(ctx context.Context, obj *repos.MatchFilter, data string) error
 }
 type MetadataInResolver interface {
 	Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error
@@ -2200,6 +2209,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MatchFilter.MatchType(childComplexity), true
 
+	case "MatchFilter.notInArray":
+		if e.complexity.MatchFilter.NotInArray == nil {
+			break
+		}
+
+		return e.complexity.MatchFilter.NotInArray(childComplexity), true
+
 	case "MatchFilter.regex":
 		if e.complexity.MatchFilter.Regex == nil {
 			break
@@ -3477,21 +3493,17 @@ directive @goField(
 	{Name: "../struct-to-graphql/matchfilter.graphqls", Input: `type MatchFilter @shareable {
   array: [Any!]
   exact: Any
-  matchType: MatchFilterMatchType!
+  matchType: String!
+  notInArray: [Any!]
   regex: String
 }
 
 input MatchFilterIn {
   array: [Any!]
   exact: Any
-  matchType: MatchFilterMatchType!
+  matchType: String!
+  notInArray: [Any!]
   regex: String
-}
-
-enum MatchFilterMatchType {
-  array
-  exact
-  regex
 }
 
 `, BuiltIn: false},
@@ -14396,7 +14408,7 @@ func (ec *executionContext) _MatchFilter_matchType(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MatchType, nil
+		return ec.resolvers.MatchFilter().MatchType(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14408,19 +14420,60 @@ func (ec *executionContext) _MatchFilter_matchType(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(repos.MatchType)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNMatchFilterMatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MatchFilter_matchType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MatchFilter",
 		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MatchFilter_notInArray(ctx context.Context, field graphql.CollectedField, obj *repos.MatchFilter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MatchFilter_notInArray(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NotInArray, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]any)
+	fc.Result = res
+	return ec.marshalOAny2ᚕinterfaceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MatchFilter_notInArray(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MatchFilter",
+		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type MatchFilterMatchType does not have child fields")
+			return nil, errors.New("field of type Any does not have child fields")
 		},
 	}
 	return fc, nil
@@ -20948,7 +21001,7 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"array", "exact", "matchType", "regex"}
+	fieldsInOrder := [...]string{"array", "exact", "matchType", "notInArray", "regex"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20977,11 +21030,22 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchType"))
-			data, err := ec.unmarshalNMatchFilterMatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.MatchType = data
+			if err = ec.resolvers.MatchFilterIn().MatchType(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "notInArray":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notInArray"))
+			data, err := ec.unmarshalOAny2ᚕinterfaceᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NotInArray = data
 		case "regex":
 			var err error
 
@@ -24248,10 +24312,43 @@ func (ec *executionContext) _MatchFilter(ctx context.Context, sel ast.SelectionS
 		case "exact":
 			out.Values[i] = ec._MatchFilter_exact(ctx, field, obj)
 		case "matchType":
-			out.Values[i] = ec._MatchFilter_matchType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MatchFilter_matchType(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "notInArray":
+			out.Values[i] = ec._MatchFilter_notInArray(ctx, field, obj)
 		case "regex":
 			out.Values[i] = ec._MatchFilter_regex(ctx, field, obj)
 		default:
@@ -26363,22 +26460,6 @@ func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNMatchFilterMatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx context.Context, v interface{}) (repos.MatchType, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := repos.MatchType(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMatchFilterMatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx context.Context, sel ast.SelectionSet, v repos.MatchType) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -26932,7 +27013,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -26940,7 +27021,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

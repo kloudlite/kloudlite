@@ -19,6 +19,7 @@ tasks:
       - go run ../../cmd/struct-to-graphql
         --struct github.com/kloudlite/api/apps/console/internal/entities.Environment
         --struct github.com/kloudlite/api/apps/console/internal/entities.App
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ExternalApp
         --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
         --struct github.com/kloudlite/api/apps/console/internal/entities.Config
         --struct github.com/kloudlite/api/apps/console/internal/entities.ConsoleVPNDevice
@@ -37,7 +38,7 @@ tasks:
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,Secret,Config,Router,ManagedResource,ImagePullSecret,ConsoleVPNDevice
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,ExternalApp,Secret,Config,Router,ManagedResource,ImagePullSecret,ConsoleVPNDevice
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 

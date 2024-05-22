@@ -630,24 +630,32 @@ func (repo *dbRepo[T]) ErrAlreadyExists(err error) bool {
 	return mongo.IsDuplicateKeyError(err)
 }
 
-func (repo *dbRepo[T]) MergeMatchFilters(filter Filter, mFilter map[string]MatchFilter) Filter {
+func (repo *dbRepo[T]) MergeMatchFilters(filter Filter, matchFilters ...map[string]MatchFilter) Filter {
 	if filter == nil {
 		filter = map[string]any{}
 	}
 
-	for k, v := range mFilter {
-		_, ok := filter[k]
-		if ok {
-			fmt.Printf("skipping search filter field %q, as it is already specified in filter", k)
-			continue
-		}
-		switch v.MatchType {
-		case MatchTypeExact:
-			filter[k] = v.Exact
-		case MatchTypeArray:
-			filter[k] = bson.M{"$in": v.Array}
-		case MatchTypeRegex:
-			filter[k] = bson.M{"$regex": primitive.Regex{Pattern: *v.Regex, Options: "i"}}
+	for _, mfilter := range matchFilters {
+		for k, v := range mfilter {
+			_, ok := filter[k]
+			if ok {
+				fmt.Printf("skipping search filter field %q, as it is already specified in filter", k)
+				continue
+			}
+			switch v.MatchType {
+			case MatchTypeExact:
+				filter[k] = v.Exact
+			case MatchTypeArray:
+				filter[k] = bson.M{"$in": v.Array}
+			case MatchTypeNotInArray:
+				filter[k] = bson.M{"$nin": v.NotInArray}
+			case MatchTypeRegex:
+				filter[k] = bson.M{"$regex": primitive.Regex{Pattern: *v.Regex, Options: "i"}}
+			default:
+				{
+					fmt.Printf("[WARN, repo, mongo]: unknown match type: %q, supported ones: %+v\n", v.MatchType, []string{MatchTypeExact, MatchTypeArray, MatchTypeNotInArray, MatchTypeRegex})
+				}
+			}
 		}
 	}
 	return filter

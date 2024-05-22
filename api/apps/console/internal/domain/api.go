@@ -216,6 +216,22 @@ type Domain interface {
 
 	ResyncManagedResource(ctx ResourceContext, name string) error
 
+	/// External Apps
+	ListExternalApps(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ExternalApp], error)
+	GetExternalApp(ctx ResourceContext, name string) (*entities.ExternalApp, error)
+
+	CreateExternalApp(ctx ResourceContext, externalApp entities.ExternalApp) (*entities.ExternalApp, error)
+	UpdateExternalApp(ctx ResourceContext, externalAppIn entities.ExternalApp) (*entities.ExternalApp, error)
+	DeleteExternalApp(ctx ResourceContext, name string) error
+
+	InterceptExternalApp(ctx ResourceContext, externalAppName string, deviceName string, intercept bool, portMappings []crdsv1.AppInterceptPortMappings) (bool, error)
+
+	OnExternalAppApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
+	OnExternalAppDeleteMessage(ctx ResourceContext, externalApp entities.ExternalApp) error
+	OnExternalAppUpdateMessage(ctx ResourceContext, externalApp entities.ExternalApp, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+
+	ResyncExternalApp(ctx ResourceContext, name string) error
+
 	// image pull secrets
 	ListImagePullSecrets(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error)
 	GetImagePullSecret(ctx ConsoleContext, name string) (*entities.ImagePullSecret, error)

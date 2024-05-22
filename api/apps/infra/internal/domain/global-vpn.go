@@ -48,14 +48,14 @@ func (d *domain) createGlobalVPN(ctx InfraContext, gvpn entities.GlobalVPN) (*en
 			Name: kloudliteGlobalVPNDevice,
 		},
 		ResourceMetadata: common.ResourceMetadata{
-			DisplayName:   "kloudlite-platform-device",
+			DisplayName:   kloudliteGlobalVPNDevice,
 			CreatedBy:     common.CreatedOrUpdatedByKloudlite,
 			LastUpdatedBy: common.CreatedOrUpdatedByKloudlite,
 		},
 		AccountName:    ctx.AccountName,
 		GlobalVPNName:  gv.Name,
 		PublicEndpoint: nil,
-		CreationMethod: gvpnConnectionDeviceMethod,
+		CreationMethod: kloudliteGlobalVPNDevice,
 	})
 	if err != nil {
 		return nil, err
