@@ -14,7 +14,7 @@ import {
   Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType as awsPoolType,
   Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpPoolType as gcpPoolType,
 } from '~/root/src/generated/gql/server';
-import { useOutletContext } from '@remix-run/react';
+import { Link, useOutletContext } from '@remix-run/react';
 import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
 import { awsRegions } from '~/console/dummy/consts';
 import { mapper } from '~/components/utils';
@@ -23,6 +23,8 @@ import { Switch } from '~/components/atoms/switch';
 import { NameIdView } from '~/console/components/name-id-view';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import KeyValuePair from '~/console/components/key-value-pair';
+import { InfoLabel } from '~/console/components/commons';
+import { Button } from '~/components/atoms/button';
 import { IClusterContext } from '../_layout';
 import {
   findNodePlan,
@@ -323,50 +325,122 @@ const Root = (props: IDialog) => {
 
           {cloudProvider === 'gcp' && (
             <>
-              <TextInput
-                label="Availability zone"
-                size="lg"
-                placeholder="Availability zone"
-                value={values.gcpAvailablityZone}
-                onChange={handleChange('gcpAvailablityZone')}
-                disabled={isUpdate}
-              />
+              <div className="flex flex-row gap-2xl">
+                <div className="flex-1">
+                  <TextInput
+                    // label="Availability zone"
+                    label={
+                      <InfoLabel
+                        title="Availability zone"
+                        info={
+                          <span>
+                            An availability zone is a distinct, isolated
+                            location within a region, providing redundancy and
+                            reliability for deploying resources{' '}
+                            {/* <span className="bodySm-semibold">
+                              single master
+                            </span>{' '} */}
+                            {/* <Button
+                              // linkComponent={Link}
+                              // target="_blank"
+                              onClick={() => {
+                                window.open(
+                                  'https://cloud.google.com/compute/docs/regions-zones',
+                                  '_blank'
+                                );
+                              }}
+                              size="sm"
+                              content="Click here"
+                              variant="primary-plain"
+                              className="!p-0"
+                              // to="https://cloud.google.com/compute/docs/regions-zones"
+                            /> */}
+                            <a
+                              className="text-text-primary hover:underline text-nowrap  cursor-pointer"
+                              // href="https://cloud.google.com/compute/docs/regions-zones"
+                              onClick={() => {
+                                window.open(
+                                  'https://cloud.google.com/compute/docs/regions-zones',
+                                  '_blank'
+                                );
+                              }}
+                            >
+                              Click here{' '}
+                            </a>
+                            to get availability zone list.
+                          </span>
+                        }
+                        label="Availability zone"
+                      />
+                    }
+                    size="lg"
+                    placeholder="Availability zone"
+                    value={values.gcpAvailablityZone}
+                    onChange={handleChange('gcpAvailablityZone')}
+                    disabled={isUpdate}
+                  />
+                </div>
 
-              <TextInput
-                label="Machine type"
-                size="lg"
-                placeholder="Machine type"
-                value={values.gcpMachineType}
-                onChange={handleChange('gcpMachineType')}
-                disabled={isUpdate}
-              />
+                <div className="flex-1">
+                  <TextInput
+                    label="Machine Type"
+                    size="lg"
+                    placeholder="Machine type"
+                    value={values.gcpMachineType}
+                    onChange={handleChange('gcpMachineType')}
+                    disabled={isUpdate}
+                  />
+                </div>
+              </div>
 
-              <Select
-                // eslint-disable-next-line react-hooks/rules-of-hooks
-                value={values.gcpPoolType}
-                label="Pool type"
-                options={async () => gcpPoolTypes}
-                onChange={(_, value) => {
-                  handleChange('gcpPoolType')(dummyEvent(value));
-                }}
-                disabled={isUpdate}
-              />
+              <div className="flex flex-row gap-2xl">
+                <div className="flex-1">
+                  <Select
+                    // eslint-disable-next-line react-hooks/rules-of-hooks
+                    value={values.gcpPoolType}
+                    label="Pool type"
+                    options={async () => gcpPoolTypes}
+                    onChange={(_, value) => {
+                      handleChange('gcpPoolType')(dummyEvent(value));
+                    }}
+                    disabled={isUpdate}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-md ">
+                  <div className="bodyMd-medium text-text-default">
+                    Stateful
+                  </div>
+                  <div className="flex items-center h-6xl">
+                    <Switch
+                      label=""
+                      disabled={isUpdate}
+                      checked={values.stateful}
+                      onChange={(val) => {
+                        handleChange('stateful')(dummyEvent(val));
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
             </>
           )}
 
-          <div className="flex flex-col gap-md ">
-            <div className="bodyMd-medium text-text-default">Stateful</div>
-            <div className="flex items-center h-6xl">
-              <Switch
-                label=""
-                disabled={isUpdate}
-                checked={values.stateful}
-                onChange={(val) => {
-                  handleChange('stateful')(dummyEvent(val));
-                }}
-              />
+          {cloudProvider === 'aws' && (
+            <div className="flex flex-col gap-md ">
+              <div className="bodyMd-medium text-text-default">Stateful</div>
+              <div className="flex items-center h-6xl">
+                <Switch
+                  label=""
+                  disabled={isUpdate}
+                  checked={values.stateful}
+                  onChange={(val) => {
+                    handleChange('stateful')(dummyEvent(val));
+                  }}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex flex-row gap-xl items-end">
             <div className="flex flex-row gap-xl items-end flex-1 ">

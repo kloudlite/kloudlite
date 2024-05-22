@@ -3,6 +3,7 @@ import { IGQLServerProps } from '~/root/lib/types/common';
 import { accessQueries } from './queries/access-queries';
 import { accountQueries } from './queries/account-queries';
 import { appQueries } from './queries/app-queries';
+import { externalAppQueries } from './queries/external-app-queries';
 import { baseQueries } from './queries/base-queries';
 import { buildQueries } from './queries/build-queries';
 import { buildRunQueries } from './queries/build-run-queries';
@@ -40,6 +41,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...nodepoolQueries(executor),
     ...environmentQueries(executor),
     ...appQueries(executor),
+    ...externalAppQueries(executor),
     ...routerQueries(executor),
     ...configQueries(executor),
     ...secretQueries(executor),

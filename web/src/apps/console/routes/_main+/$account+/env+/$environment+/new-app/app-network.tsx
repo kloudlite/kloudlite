@@ -17,6 +17,8 @@ import {
 import { FadeIn } from '~/console/page-components/util';
 // import { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Select from '~/components/atoms/select';
+import useClipboard from '~/root/lib/client/hooks/use-clipboard';
+import { toast } from '~/components/molecule/toast';
 
 interface IExposedPorts {
   port: number;
@@ -124,16 +126,51 @@ const ExposedPortList = ({
   );
 };
 
+const ExposedRoute = () => {
+  const { app, readOnlyApp, setApp } = useAppState();
+
+  useEffect(() => {
+    console.log('ddd', app, readOnlyApp);
+  }, [app]);
+  return (
+    <div className="flex-1">
+      <Select
+        creatable
+        size="lg"
+        label="Exposed Domains"
+        multiple
+        value={app.spec.router?.domains.map((s) => `${s}`)}
+        options={async () =>
+          (app.spec.router?.domains || []).map((s) => ({
+            label: `${s}`,
+            value: `${s}`,
+          }))
+        }
+        onChange={(val, v) => {
+          // const domains = app.spec.router?.domains || [];
+          setApp({
+            ...app,
+            spec: {
+              ...app.spec,
+              router: {
+                ...app.spec.router,
+                domains: [...v],
+              },
+            },
+          });
+        }}
+        // error={!!portError}
+        // message={portError}
+        disableWhileLoading
+      />
+    </div>
+  );
+};
+
 export const ExposedPorts = () => {
-  // const [port, setPort] = useState<number | string>('');
-  // const [ports, setPorts] = useState<string[]>([]);
   const [portError, setPortError] = useState<string>('');
 
   const { services, setServices } = useAppState();
-
-  // useEffect(() => {
-  //   setPorts(services);
-  // }, [services]);
 
   // for updating
   const { hasChanges } = useUnsavedChanges();
@@ -147,11 +184,10 @@ export const ExposedPorts = () => {
   }, [hasChanges]);
 
   return (
-    <>
-      <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
-        <div className="flex flex-row gap-3xl items-start">
-          <div className="flex-1">
-            {/* <NumberInput
+    <div className="flex flex-col gap-3xl ">
+      <div className="flex flex-row gap-3xl items-start">
+        <div className="flex-1">
+          {/* <NumberInput
               min={0}
               max={65534}
               label={
@@ -165,37 +201,36 @@ export const ExposedPorts = () => {
                 setPort(parseValue(target.value, 0));
               }}
             /> */}
-            <Select
-              creatable
-              size="lg"
-              label="Exposed ports"
-              multiple
-              value={services.map((s) => `${s.port}`)}
-              options={async () => []}
-              onChange={(val, v) => {
-                const r = /^\d+$/;
-                console.log(
-                  'here',
-                  v.every((c) => r.test(c))
-                );
-                if (v.every((c) => r.test(c))) {
-                  setServices([...v.map((vv) => ({ port: parseInt(vv, 10) }))]);
-                } else {
-                  setServices((prev) => [...prev]);
-                }
-              }}
-              error={!!portError}
-              message={portError}
-              disableWhileLoading
-            />
-          </div>
+          <Select
+            creatable
+            size="lg"
+            label="Exposed ports"
+            multiple
+            value={services.map((s) => `${s.port}`)}
+            options={async () => []}
+            onChange={(val, v) => {
+              const r = /^\d+$/;
+              console.log(
+                'here',
+                v.every((c) => r.test(c))
+              );
+              if (v.every((c) => r.test(c))) {
+                setServices([...v.map((vv) => ({ port: parseInt(vv, 10) }))]);
+              } else {
+                setServices((prev) => [...prev]);
+              }
+            }}
+            error={!!portError}
+            message={portError}
+            disableWhileLoading
+          />
         </div>
-        <div className="flex flex-row gap-md items-center">
-          <div className="bodySm text-text-soft flex-1">
-            All network entries be mounted on the path specified in the
-            container
-          </div>
-          {/* <Button
+      </div>
+      <div className="flex flex-row gap-md items-center">
+        <div className="bodySm text-text-soft flex-1">
+          All network entries be mounted on the path specified in the container
+        </div>
+        {/* <Button
             content="Expose port"
             variant="basic"
             disabled={!ports}
@@ -215,17 +250,17 @@ export const ExposedPorts = () => {
               }
             }}
           /> */}
-        </div>
       </div>
-      {/* <ExposedPortList
-        exposedPorts={services}
-        onDelete={(ep) => {
-          setServices((s) => {
-            return s.filter((v) => v.port !== ep.port);
-          });
-        }}
-      /> */}
-    </>
+    </div>
+  );
+};
+
+export const Network = () => {
+  return (
+    <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
+      <ExposedPorts />
+      <ExposedRoute />
+    </div>
   );
 };
 
@@ -236,8 +271,10 @@ const AppNetwork = () => {
       <div className="bodyMd text-text-soft">
         Expose service ports that need to be exposed from container
       </div>
+      <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
+        <ExposedPorts />
+      </div>
 
-      <ExposedPorts />
       <BottomNavigation
         primaryButton={{
           type: 'submit',

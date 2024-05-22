@@ -124,6 +124,9 @@ export const appQueries = (executor: IExecutor) => ({
             namespace
           }
           spec {
+            router {
+              domains
+            }
             containers {
               args
               command
@@ -311,6 +314,9 @@ export const appQueries = (executor: IExecutor) => ({
               }
               recordVersion
               spec {
+                router {
+                  domains
+                }
                 containers {
                   args
                   command

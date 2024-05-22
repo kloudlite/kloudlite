@@ -1016,6 +1016,9 @@ query consoleGetApp($envName: String!, $name: String!) {
       namespace
     }
     spec {
+      router {
+        domains
+      }
       containers {
         args
         command
@@ -1190,6 +1193,9 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
         }
         recordVersion
         spec {
+          router {
+            domains
+          }
           containers {
             args
             command
@@ -1274,6 +1280,196 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
             debug
             title
             name
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleCreateExternalApp($envName: String!, $externalApp: ExternalAppIn!) {
+  core_createExternalApp(envName: $envName, externalApp: $externalApp) {
+    id
+  }
+}
+
+mutation consoleUpdateExternalApp($envName: String!, $externalApp: ExternalAppIn!) {
+  core_updateExternalApp(envName: $envName, externalApp: $externalApp) {
+    id
+  }
+}
+
+mutation consoleInterceptExternalApp($envName: String!, $externalAppName: String!, $deviceName: String!, $intercept: Boolean!, $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]) {
+  core_interceptExternalApp(
+    envName: $envName
+    externalAppName: $externalAppName
+    deviceName: $deviceName
+    intercept: $intercept
+    portMappings: $portMappings
+  )
+}
+
+mutation consoleDeleteExternalApp($envName: String!, $externalAppName: String!) {
+  core_deleteExternalApp(envName: $envName, externalAppName: $externalAppName)
+}
+
+query consoleGetExternalApp($envName: String!, $name: String!) {
+  core_getExternalApp(envName: $envName, name: $name) {
+    accountName
+    apiVersion
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    environmentName
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    recordVersion
+    spec {
+      intercept {
+        enabled
+        portMappings {
+          appPort
+          devicePort
+        }
+        toDevice
+      }
+      record
+      recordType
+    }
+    status {
+      checkList {
+        debug
+        description
+        hide
+        name
+        title
+      }
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
+  }
+}
+
+query consoleListExternalApps($envName: String!, $search: SearchExternalApps, $pq: CursorPaginationIn) {
+  core_listExternalApps(envName: $envName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        apiVersion
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        environmentName
+        id
+        kind
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        spec {
+          intercept {
+            enabled
+            portMappings {
+              appPort
+              devicePort
+            }
+            toDevice
+          }
+          record
+          recordType
+        }
+        status {
+          checkList {
+            debug
+            description
+            hide
+            name
+            title
+          }
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
           }
         }
         syncStatus {

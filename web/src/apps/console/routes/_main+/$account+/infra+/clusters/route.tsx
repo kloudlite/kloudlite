@@ -65,22 +65,18 @@ const CreateClusterButton = () => {
     <>
       <OptionList.Root>
         <OptionList.Trigger>
-          <Button
-            content="Create cluster"
-            variant="primary"
-            prefix={<Plus />}
-          />
+          <Button content="Add cluster" variant="primary" prefix={<Plus />} />
         </OptionList.Trigger>
         <OptionList.Content>
           <OptionList.Link to={`/${account}/new-cluster`} LinkComponent={Link}>
-            Kloudlite Cluster
+            New Cluster
           </OptionList.Link>
           <OptionList.Item
             onClick={() => {
               setVisible(true);
             }}
           >
-            Byok Cluster
+            Attach existing cluster
           </OptionList.Item>
         </OptionList.Content>
       </OptionList.Root>

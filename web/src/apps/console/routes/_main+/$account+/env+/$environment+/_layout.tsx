@@ -5,6 +5,7 @@ import {
   // Plus,
   // Search,
   File,
+  TreeStructure,
   // Check,
   // ChevronUpDown,
 } from '~/console/components/icons';
@@ -79,6 +80,16 @@ const tabs = [
     to: '/apps',
     value: '/apps',
   },
+  {
+    label: (
+      <span className="flex flex-row items-center gap-lg">
+        <TreeStructure size={tabIconSize} />
+        External Apps
+      </span>
+    ),
+    to: '/external-apps',
+    value: '/external-apps',
+  },
   // {
   //   label: (
   //     <span className="flex flex-row items-center gap-lg">
@@ -132,7 +143,7 @@ const EnvironmentTabs = () => {
     <CommonTabs
       backButton={{
         to: `/${account}/environments`,
-        label: 'Envs',
+        label: 'Environments',
       }}
       baseurl={`/${account}/env/${environment}`}
       tabs={tabs}
