@@ -116,11 +116,19 @@ func (d *domain) DeleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName
 }
 
 func (d *domain) ListGlobalVPNDevice(ctx InfraContext, gvpn string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.GlobalVPNDevice], error) {
-	filter := d.gvpnDevicesRepo.MergeMatchFilters(repos.Filter{
-		fc.AccountName:                   ctx.AccountName,
-		fc.GlobalVPNDeviceGlobalVPNName:  gvpn,
-		fc.GlobalVPNDeviceCreationMethod: map[string]any{"$ne": gvpnConnectionDeviceMethod},
-	}, search)
+	filter := d.gvpnDevicesRepo.MergeMatchFilters(
+		repos.Filter{
+			fc.AccountName:                  ctx.AccountName,
+			fc.GlobalVPNDeviceGlobalVPNName: gvpn,
+		},
+		map[string]repos.MatchFilter{
+			fc.GlobalVPNDeviceCreationMethod: {
+				MatchType:  repos.MatchTypeNotInArray,
+				NotInArray: []any{gvpnConnectionDeviceMethod, kloudliteGlobalVPNDevice},
+			},
+		},
+		search,
+	)
 	return d.gvpnDevicesRepo.FindPaginated(ctx, filter, pagination)
 }
 
@@ -167,9 +175,11 @@ func (d *domain) createGlobalVPNDevice(ctx InfraContext, gvpnDevice entities.Glo
 func (d *domain) buildPeersFromGlobalVPNDevices(ctx InfraContext, gvpn string) (publicPeers []wgv1.Peer, privatePeers []wgv1.Peer, err error) {
 	devices, err := d.gvpnDevicesRepo.Find(ctx, repos.Query{
 		Filter: map[string]any{
-			fc.AccountName:                   ctx.AccountName,
-			fc.GlobalVPNDeviceGlobalVPNName:  gvpn,
-			fc.GlobalVPNDeviceCreationMethod: map[string]any{"$ne": gvpnConnectionDeviceMethod},
+			fc.AccountName:                  ctx.AccountName,
+			fc.GlobalVPNDeviceGlobalVPNName: gvpn,
+			fc.GlobalVPNDeviceCreationMethod: map[string]any{
+				"$ne": gvpnConnectionDeviceMethod,
+			},
 		},
 	})
 	if err != nil {
@@ -202,14 +212,18 @@ func (d *domain) buildPeersFromGlobalVPNDevices(ctx InfraContext, gvpn string) (
 }
 
 func (d *domain) GetGlobalVPNDevice(ctx InfraContext, gvpn string, gvpnDevice string) (*entities.GlobalVPNDevice, error) {
+	if gvpn == "" || gvpnDevice == "" {
+		return nil, errors.New("invalid global vpn or device")
+	}
+
 	return d.findGlobalVPNDevice(ctx, gvpn, gvpnDevice)
 }
 
 func (d *domain) GetGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnDevice string) (string, error) {
-	return d.getGlobalVPNDeviceWgConfig(ctx, gvpn, gvpnDevice)
+	return d.getGlobalVPNDeviceWgConfig(ctx, gvpn, gvpnDevice, nil)
 }
 
-func (d *domain) getGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnDevice string) (string, error) {
+func (d *domain) getGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnDevice string, postUp []string) (string, error) {
 	device, err := d.findGlobalVPNDevice(ctx, gvpn, gvpnDevice)
 	if err != nil {
 		return "", err
@@ -262,9 +276,13 @@ func (d *domain) getGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnD
 	}
 
 	config, err := wgutils.GenerateWireguardConfig(wgutils.WgConfigParams{
-		IPAddr:       device.IPAddr,
-		PrivateKey:   device.PrivateKey,
-		DNS:          dnsServer,
+		IPAddr:     device.IPAddr,
+		PrivateKey: device.PrivateKey,
+		DNS:        dnsServer,
+		PostUp:     postUp,
+		// PostUp: []string{
+		// 	"sudo iptables -A INPUT -i wg0 -j DROP",
+		// },
 		PublicPeers:  publicPeers,
 		PrivatePeers: privatePeers,
 	})

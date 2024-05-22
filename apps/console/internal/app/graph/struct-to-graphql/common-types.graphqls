@@ -20,7 +20,7 @@ type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
 
 type Github__com___kloudlite___operator___apis___common____types__MsvcRef @shareable {
   apiVersion: String
-  clusterName: String!
+  clusterName: String
   kind: String
   name: String!
   namespace: String!
@@ -131,6 +131,12 @@ type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting @
 type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec @shareable {
   routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting
   targetNamespace: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec @shareable {
+  intercept: Github__com___kloudlite___operator___apis___crds___v1__Intercept
+  record: String!
+  recordType: Github__com___kloudlite___operator___apis___crds___v1__ExternalAppRecordType!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HPA @shareable {
@@ -333,7 +339,7 @@ type PageInfo @shareable {
 
 input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
   apiVersion: String
-  clusterName: String!
+  clusterName: String
   kind: String
   name: String!
   namespace: String!
@@ -444,6 +450,12 @@ input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
   targetNamespace: String
 }
 
+input Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpecIn {
+  intercept: Github__com___kloudlite___operator___apis___crds___v1__InterceptIn
+  record: String!
+  recordType: Github__com___kloudlite___operator___apis___crds___v1__ExternalAppRecordType!
+}
+
 input Github__com___kloudlite___operator___apis___crds___v1__HPAIn {
   enabled: Boolean!
   maxReplicas: Int
@@ -542,6 +554,46 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
   targetPort: Int
 }
 
+input Github__com___kloudlite___operator___pkg___operator__CheckIn {
+  debug: String
+  error: String
+  generation: Int
+  info: String
+  message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___pkg___operator__State
+  status: Boolean!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn {
+  debug: Boolean
+  description: String
+  hide: Boolean
+  name: String!
+  title: String!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__StatusIn {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMetaIn!]
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRefIn!]
+}
+
+input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn {
+  RawMessage: Any
+}
+
 input K8s__io___api___core___v1__TolerationIn {
   effect: K8s__io___api___core___v1__TaintEffect
   key: String
@@ -608,6 +660,11 @@ enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret {
 enum Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode {
   private
   public
+}
+
+enum Github__com___kloudlite___operator___apis___crds___v1__ExternalAppRecordType {
+  CNAME
+  IPAddr
 }
 
 enum Github__com___kloudlite___operator___pkg___operator__State {
