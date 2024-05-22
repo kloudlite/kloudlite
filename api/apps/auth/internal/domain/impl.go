@@ -206,7 +206,6 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 		return nil, errors.NewE(err)
 	}
 
-	//TODO: Mohit: remove below
 	if _, err := d.commsClient.SendWaitingEmail(
 		ctx, &comms.WelcomeEmailInput{
 			Email: user.Email,
@@ -216,10 +215,10 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 		d.logger.Errorf(err)
 	}
 
-	err = d.generateAndSendVerificationToken(ctx, user)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
+	//err = d.generateAndSendVerificationToken(ctx, user)
+	//if err != nil {
+	//	return nil, errors.NewE(err)
+	//}
 
 	return newAuthSession(user.Id, user.Email, user.Name, user.Verified, "email/password"), nil
 }
