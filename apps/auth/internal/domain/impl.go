@@ -206,6 +206,16 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 		return nil, errors.NewE(err)
 	}
 
+	//TODO: Mohit: remove below
+	if _, err := d.commsClient.SendWaitingEmail(
+		ctx, &comms.WelcomeEmailInput{
+			Email: user.Email,
+			Name:  user.Name,
+		},
+	); err != nil {
+		d.logger.Errorf(err)
+	}
+
 	err = d.generateAndSendVerificationToken(ctx, user)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -264,7 +274,15 @@ func (d *domainI) VerifyEmail(ctx context.Context, token string) (*common.AuthSe
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	if _, err := d.commsClient.SendWelcomeEmail(
+	//if _, err := d.commsClient.SendWelcomeEmail(
+	//	ctx, &comms.WelcomeEmailInput{
+	//		Email: user.Email,
+	//		Name:  user.Name,
+	//	},
+	//); err != nil {
+	//	d.logger.Errorf(err)
+	//}
+	if _, err := d.commsClient.SendWaitingEmail(
 		ctx, &comms.WelcomeEmailInput{
 			Email: user.Email,
 			Name:  user.Name,
@@ -404,7 +422,15 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 		user = u
 		user.Joined = time.Now()
 		user, err = d.userRepo.Create(ctx, user)
-		if _, err := d.commsClient.SendWelcomeEmail(
+		//if _, err := d.commsClient.SendWelcomeEmail(
+		//	ctx, &comms.WelcomeEmailInput{
+		//		Email: user.Email,
+		//		Name:  user.Name,
+		//	},
+		//); err != nil {
+		//	d.logger.Errorf(err)
+		//}
+		if _, err := d.commsClient.SendWaitingEmail(
 			ctx, &comms.WelcomeEmailInput{
 				Email: user.Email,
 				Name:  user.Name,
