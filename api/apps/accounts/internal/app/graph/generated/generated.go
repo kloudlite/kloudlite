@@ -69,7 +69,7 @@ type ComplexityRoot struct {
 		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
-		ID                func(childComplexity int) int
+		Id                func(childComplexity int) int
 		IsActive          func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
 		Logo              func(childComplexity int) int
@@ -106,7 +106,7 @@ type ComplexityRoot struct {
 		Accepted          func(childComplexity int) int
 		AccountName       func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
-		ID                func(childComplexity int) int
+		Id                func(childComplexity int) int
 		InviteToken       func(childComplexity int) int
 		InvitedBy         func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
@@ -180,8 +180,6 @@ type ComplexityRoot struct {
 type AccountResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Account) (string, error)
 
-	ID(ctx context.Context, obj *entities.Account) (string, error)
-
 	UpdateTime(ctx context.Context, obj *entities.Account) (string, error)
 }
 type AccountMembershipResolver interface {
@@ -196,7 +194,6 @@ type Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver interfac
 }
 type InvitationResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Invitation) (string, error)
-	ID(ctx context.Context, obj *entities.Invitation) (string, error)
 
 	UpdateTime(ctx context.Context, obj *entities.Invitation) (string, error)
 }
@@ -295,11 +292,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Account.DisplayName(childComplexity), true
 
 	case "Account.id":
-		if e.complexity.Account.ID == nil {
+		if e.complexity.Account.Id == nil {
 			break
 		}
 
-		return e.complexity.Account.ID(childComplexity), true
+		return e.complexity.Account.Id(childComplexity), true
 
 	case "Account.isActive":
 		if e.complexity.Account.IsActive == nil {
@@ -454,11 +451,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Invitation.CreationTime(childComplexity), true
 
 	case "Invitation.id":
-		if e.complexity.Invitation.ID == nil {
+		if e.complexity.Invitation.Id == nil {
 			break
 		}
 
-		return e.complexity.Invitation.ID(childComplexity), true
+		return e.complexity.Invitation.Id(childComplexity), true
 
 	case "Invitation.inviteToken":
 		if e.complexity.Invitation.InviteToken == nil {
@@ -1090,7 +1087,7 @@ extend type User @key(fields: "id") {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   isActive: Boolean
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   logo: String
@@ -1174,7 +1171,7 @@ directive @goField(
   accepted: Boolean
   accountName: String!
   creationTime: Date!
-  id: String!
+  id: ID!
   invitedBy: String!
   inviteToken: String!
   markedForDeletion: Boolean
@@ -1966,7 +1963,7 @@ func (ec *executionContext) _Account_id(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Account().ID(rctx, obj)
+		return obj.Id, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1978,19 +1975,19 @@ func (ec *executionContext) _Account_id(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Account_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Account",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2964,7 +2961,7 @@ func (ec *executionContext) _Invitation_id(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Invitation().ID(rctx, obj)
+		return obj.Id, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2976,19 +2973,19 @@ func (ec *executionContext) _Invitation_id(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Invitation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Invitation",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8300,41 +8297,10 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "id":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Account_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Account_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "isActive":
 			out.Values[i] = ec._Account_isActive(ctx, field, obj)
 		case "lastUpdatedBy":
@@ -8770,41 +8736,10 @@ func (ec *executionContext) _Invitation(ctx context.Context, sel ast.SelectionSe
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "id":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Invitation_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Invitation_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "invitedBy":
 			out.Values[i] = ec._Invitation_invitedBy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
