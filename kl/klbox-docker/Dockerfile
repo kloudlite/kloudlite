@@ -1,6 +1,4 @@
-# Use the official Ubuntu base image
-FROM nixos/nix:latest AS nix
-
+# syntax=docker/dockerfile:1.4
 FROM --platform=$TARGETPLATFORM golang:1.21 as builder
 
 WORKDIR /app
@@ -11,10 +9,19 @@ RUN go mod init mounter.io
 
 RUN go build -o mounter main.go
 
+COPY --from=project ./go.sum ./go.mod /kl-app/
+
+WORKDIR /kl-app
+
+RUN go mod download -x
+
+COPY --from=project . /kl-app
+
+RUN go build --tags=box -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl main.go
+
 FROM --platform=$TARGETPLATFORM ubuntu:latest
 
-
-RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 libayatana-appindicator3-1 nano
+RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano
 
 RUN mkdir /var/run/sshd
 
@@ -41,7 +48,7 @@ RUN curl -fsSL https://get.jetify.com/devbox > /tmp/devbox.sh && chmod +x /tmp/d
 
 USER root
 
-COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
+# COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
 
 RUN mkdir -p /home/kl/.config/nix && echo "experimental-features = nix-command flakes" > /home/kl/.config/nix/nix.conf
 RUN chown -R kl:kl /home/kl/.config
@@ -56,6 +63,7 @@ EOF
 COPY .bashrc .profile /tmp/
 
 COPY --from=builder /app/mounter /mounter
+COPY --from=builder /kl-app/bin/kl /usr/local/bin/kl
 
 
 SHELL ["/bin/bash", "-c"]

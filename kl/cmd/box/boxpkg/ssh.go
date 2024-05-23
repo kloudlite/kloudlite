@@ -71,7 +71,7 @@ func (c *client) Ssh() error {
 	if err == notFoundErr || (err == nil && c.containerName != cr.Name) {
 		err := c.Start()
 
-		if err != nil && err != containerNotStartedErr {
+		if err != nil && err != errContainerNotStarted {
 			return err
 		}
 	}

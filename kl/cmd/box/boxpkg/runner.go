@@ -27,7 +27,8 @@ type ContainerConfig struct {
 type ContState string
 
 const (
-	ContStateExited ContState = "exited"
+	ContStateExited  ContState = "exited"
+	ContStateCreated ContState = "created"
 )
 
 type Cntr struct {

@@ -67,7 +67,7 @@ func ListApps(options ...fn.Option) ([]App, error) {
 	respData, err := klFetch("cli_listApps", map[string]any{
 		"pq":      PaginationDefault,
 		"envName": env.Name,
-	}, &cookie, true)
+	}, &cookie)
 
 	if err != nil {
 		return nil, err
@@ -114,17 +114,6 @@ func SelectApp(options ...fn.Option) (*App, error) {
 }
 
 func EnsureApp(options ...fn.Option) (*App, error) {
-	envName := fn.GetOption(options, "envName")
-
-	env, err := EnsureEnv(&client.Env{
-		Name: envName,
-	}, options...)
-
-	if err != nil {
-		return nil, err
-	}
-
-	envName = env.Name
 
 	s, err := SelectApp(options...)
 	if err != nil {
@@ -178,9 +167,7 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 		fn.Logf("%#v", s)
 
 		if len(s.Spec.Intercept.PortMappings) != 0 {
-			for _, ap := range s.Spec.Intercept.PortMappings {
-				ports = append(ports, ap)
-			}
+			ports = append(ports, s.Spec.Intercept.PortMappings...)
 		} else if len(s.Spec.Services) != 0 {
 			for _, v := range s.Spec.Services {
 				ports = append(ports, AppPort{

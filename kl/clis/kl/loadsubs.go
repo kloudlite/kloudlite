@@ -1,8 +1,7 @@
 package kl
 
 import (
-	"runtime"
-
+	apploader "github.com/kloudlite/kl/clis/app-loader"
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/box"
 	"github.com/kloudlite/kl/cmd/completion"
@@ -12,12 +11,10 @@ import (
 	"github.com/kloudlite/kl/cmd/runner"
 	"github.com/kloudlite/kl/cmd/runner/add"
 	set_base_url "github.com/kloudlite/kl/cmd/set-base-url"
-	app "github.com/kloudlite/kl/cmd/start-app"
 	"github.com/kloudlite/kl/cmd/status"
 	"github.com/kloudlite/kl/cmd/use"
 	"github.com/kloudlite/kl/cmd/vpn"
 	"github.com/kloudlite/kl/cmd/vpn/intercept"
-	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/flags"
 	"github.com/spf13/cobra"
 )
@@ -39,9 +36,7 @@ func init() {
 	rootCmd.AddCommand(vpn.Cmd)
 	rootCmd.AddCommand(box.BoxCmd)
 
-	if runtime.GOOS != constants.RuntimeWindows {
-		rootCmd.AddCommand(app.Cmd)
-	}
+	apploader.LoadStartApp(rootCmd)
 
 	rootCmd.AddCommand(use.Cmd)
 	rootCmd.AddCommand(runner.InitCommand)

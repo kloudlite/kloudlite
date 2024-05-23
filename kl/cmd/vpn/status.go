@@ -6,7 +6,6 @@ import (
 
 	"github.com/kloudlite/kl/domain/client"
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
-	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
@@ -31,7 +30,7 @@ Example:
 					return err
 				}
 
-				p, err := proxy.NewProxy(flags.IsDev())
+				p, err := proxy.NewProxy(true)
 				if err != nil {
 					return err
 				}

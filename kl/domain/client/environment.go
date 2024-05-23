@@ -18,7 +18,7 @@ func CheckPortAvailable(port int) bool {
 }
 
 func GetAvailablePort() (int, error) {
-	for i := 61100; i <= 61300; i++ {
+	for i := 12300; i <= 12400; i++ {
 		if CheckPortAvailable(i) {
 			return i, nil
 		}
@@ -42,9 +42,6 @@ func SelectEnv(ev Env) error {
 		k.SelectedEnvs = map[string]*Env{}
 	}
 
-	if ev.SSHPort == 0 {
-	}
-
 	k.SelectedEnvs[dir] = &ev
 
 	return SaveExtraData(k)
@@ -60,9 +57,6 @@ func SelectEnvOnPath(ev Env, pth string) error {
 		k.SelectedEnvs = map[string]*Env{}
 	}
 
-	if ev.SSHPort == 0 {
-	}
-
 	k.SelectedEnvs[pth] = &ev
 
 	return SaveExtraData(k)
@@ -75,11 +69,11 @@ func EnvOfPath(pth string) (*Env, error) {
 	}
 
 	if c.SelectedEnvs == nil {
-		return nil, errors.New("No selected environment")
+		return nil, errors.New("no selected environment")
 	}
 
 	if c.SelectedEnvs[pth] == nil {
-		return nil, errors.New("No selected environment")
+		return nil, errors.New("no selected environment")
 	}
 
 	return c.SelectedEnvs[pth], nil
@@ -97,11 +91,11 @@ func CurrentEnv() (*Env, error) {
 	}
 
 	if c.SelectedEnvs == nil {
-		return nil, errors.New("No selected environment")
+		return nil, errors.New("no selected environment")
 	}
 
 	if c.SelectedEnvs[dir] == nil {
-		return nil, errors.New("No selected environment")
+		return nil, errors.New("no selected environment")
 	}
 
 	return c.SelectedEnvs[dir], nil

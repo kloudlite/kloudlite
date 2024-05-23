@@ -19,14 +19,14 @@ import (
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 )
 
-var containerNotStartedErr = fmt.Errorf("container not started")
+var errContainerNotStarted = fmt.Errorf("container not started")
 
 func (c *client) Start() error {
 	defer c.spinner.UpdateMessage("initiating container please wait")()
 
-	if err := c.EnsureVpnCntRunning(); err != nil {
-		return err
-	}
+	// if err := c.EnsureVpnCntRunning(); err != nil {
+	// 	return err
+	// }
 
 	if c.verbose {
 		fn.Logf("starting container in: %s", text.Blue(c.cwd))
@@ -174,11 +174,11 @@ func (c *client) Start() error {
 			return err
 		}
 
-		if runtime.GOOS != constants.RuntimeLinux {
-			args = append(args, []string{
-				"-p", fmt.Sprintf("%d:%d", sshPort, sshPort),
-			}...)
-		}
+		// if runtime.GOOS != constants.RuntimeLinux {
+		// 	args = append(args, []string{
+		// 		"-p", fmt.Sprintf("%d:%d", sshPort, sshPort),
+		// 	}...)
+		// }
 
 		args = append(args, []string{
 			"-v", fmt.Sprintf("%s:/tmp/ssh2/authorized_keys:ro", akTmpPath),
@@ -205,6 +205,7 @@ func (c *client) Start() error {
 			},
 			args: args,
 		}); err != nil {
+			c.Stop()
 			return err
 		}
 

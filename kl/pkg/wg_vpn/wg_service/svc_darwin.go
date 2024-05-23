@@ -46,11 +46,8 @@ func installApp() error {
 
 	success := false
 
-	s := spinner.NewSpinner()
-	s.Start()
-
+	defer spinner.Client.Start()()
 	defer func() {
-		s.Stop()
 		if success {
 			fn.Log(fmt.Sprintf("[#] app version %s downloaded successfully", flags.Version))
 		} else {

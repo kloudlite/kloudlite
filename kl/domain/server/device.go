@@ -152,21 +152,20 @@ func getDeviceName(devName string) (*CheckName, error) {
 }
 
 func getVPNDevice(devName string, options ...fn.Option) (*Device, error) {
-	accountName := fn.GetOption(options, "accountName")
-	envName := fn.GetOption(options, "envName")
+	// envName := fn.GetOption(options, "envName")
 
 	accountName, err := EnsureAccount(options...)
 	if err != nil {
 		return nil, err
 	}
 
-	if envName == "" {
-		env, err := EnsureEnv(nil, options...)
-		if err != nil {
-			return nil, err
-		}
-		envName = env.Name
-	}
+	// if envName == "" {
+	// 	env, err := EnsureEnv(nil, options...)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	envName = env.Name
+	// }
 
 	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {

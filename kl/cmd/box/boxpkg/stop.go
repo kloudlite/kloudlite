@@ -14,9 +14,9 @@ import (
 func (c *client) Stop() error {
 	defer c.spinner.Start("stopping container please wait")()
 
-	if err := c.StopContVpn(); err != nil {
-		fn.Warnf("failed to stop vpn container: %s", err.Error())
-	}
+	// if err := c.StopContVpn(); err != nil {
+	// 	fn.Warnf("failed to stop vpn container: %s", err.Error())
+	// }
 
 	cr, err := c.getContainer(map[string]string{
 		CONT_MARK_KEY: "true",
@@ -37,7 +37,7 @@ func (c *client) Stop() error {
 		fn.Logf("stopping container of: %s", text.Blue(crPath))
 	}
 
-	if cr.State != ContStateExited {
+	if cr.State != ContStateExited && cr.State != ContStateCreated {
 		if err := c.cli.ContainerKill(c.Context(), cr.Name, "SIGKILL"); err != nil {
 			return fmt.Errorf("error stoping container: %s", err)
 		}
@@ -58,7 +58,9 @@ func (c *client) Stop() error {
 			return err
 		}
 
-		if _, err := p.RemoveAllFwd(fwd.StartCh{}); err != nil {
+		if _, err := p.RemoveAllFwd(fwd.StartCh{
+			SshPort: fmt.Sprint(localEnv.SSHPort),
+		}); err != nil {
 			return err
 		}
 	}
@@ -91,7 +93,7 @@ func (c *client) StopAll() error {
 			fn.Logf("stopping container of: %s", text.Blue(crPath))
 		}
 
-		if cr.State != ContStateExited {
+		if cr.State != ContStateExited && cr.State != ContStateCreated {
 			if err := c.cli.ContainerKill(c.Context(), cr.Name, "SIGKILL"); err != nil {
 				fn.Warnf("error stoping container: %s", err)
 				continue
