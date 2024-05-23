@@ -41,7 +41,12 @@ fi
 
 sudo /mounter --conf /tmp/sample.json
 
-export INSIDE_KL_BOX="true"
+mkdir -p /home/kl/.kl
+cat <<EOL > /home/kl/.kl/global-profile
+export SSH_PORT=$SSH_PORT
+export IN_DEV_BOX="true"
+export HOST_IP=$HOST_IP
+EOL
 
 # trap - EXIT SIGTERM SIGINT
 echo "kloudlite-entrypoint: SETUP_COMPLETE"

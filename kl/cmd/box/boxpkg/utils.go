@@ -1,15 +1,19 @@
 package boxpkg
 
 import (
+	"log"
+	"net"
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/volume"
+	"github.com/kloudlite/kl/constants"
 )
 
 type Container struct {
@@ -110,4 +114,21 @@ func (c *client) ensureCacheExist() error {
 	}
 
 	return nil
+}
+
+func GetDockerHostIp() string {
+
+	if runtime.GOOS != constants.RuntimeLinux {
+		return "host.docker.internal"
+	}
+
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddress := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddress.IP.To4().String()
 }

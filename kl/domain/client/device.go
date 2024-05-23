@@ -58,7 +58,7 @@ func SelectDevice(deviceName string) error {
 }
 
 func EnsureAppRunning() error {
-	p, err := proxy.NewProxy(flags.IsDev(), false)
+	p, err := proxy.NewProxy(flags.IsDev())
 	if err != nil {
 		return err
 	}

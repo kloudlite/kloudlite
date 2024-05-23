@@ -150,45 +150,44 @@ func SetDns(dns []string) error {
 	return writeOnUserScope(ExtraDataFileName, file)
 }
 
+func GetUserHomeDir() (string, error) {
+	if runtime.GOOS == "windows" {
+		return xdg.Home, nil
+	}
+
+	if euid := os.Geteuid(); euid == 0 {
+		username, ok := os.LookupEnv("SUDO_USER")
+		if !ok {
+			return "", errors.New("something went wrong")
+		}
+
+		oldPwd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+
+		sp := strings.Split(oldPwd, "/")
+
+		for i := range sp {
+			if sp[i] == username {
+				return path.Join("/", path.Join(sp[:i+1]...)), nil
+			}
+		}
+
+		return "", errors.New("something went wrong")
+	}
+
+	userHome, ok := os.LookupEnv("HOME")
+	if !ok {
+		return "", errors.New("something went wrong")
+	}
+
+	return userHome, nil
+}
+
 func GetConfigFolder() (configFolder string, err error) {
-	homePath := ""
-
-	// fetching homePath
-	if err := func() error {
-		if runtime.GOOS == "windows" {
-			homePath = xdg.CacheHome
-			return nil
-		}
-
-		if euid := os.Geteuid(); euid == 0 {
-			username, ok := os.LookupEnv("SUDO_USER")
-			if !ok {
-				return errors.New("something went wrong")
-			}
-
-			oldPwd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-
-			sp := strings.Split(oldPwd, "/")
-
-			for i := range sp {
-				if sp[i] == username {
-					homePath = path.Join("/", path.Join(sp[:i+1]...))
-				}
-			}
-		} else {
-			userHome, ok := os.LookupEnv("HOME")
-			if !ok {
-				return errors.New("something went wrong")
-			}
-
-			homePath = userHome
-		}
-
-		return nil
-	}(); err != nil {
+	homePath, err := GetUserHomeDir()
+	if err != nil {
 		return "", err
 	}
 

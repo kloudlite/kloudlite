@@ -28,6 +28,8 @@ RUN groupadd -g 1000 kl && useradd -u 1000 -g 1000 -m kl && usermod -aG sudo kl 
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
 
+RUN echo "GatewayPorts yes" >> /etc/ssh/sshd_config
+
 EXPOSE 22
 
 ENV HOSTNAME box

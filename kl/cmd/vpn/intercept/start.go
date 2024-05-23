@@ -2,11 +2,12 @@ package intercept
 
 import (
 	"errors"
+	"strconv"
+	"strings"
+
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
-	"strconv"
-	"strings"
 )
 
 var startCmd = &cobra.Command{

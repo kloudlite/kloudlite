@@ -42,7 +42,7 @@ sudo {cmd} vpn start`),
 					return err
 				}
 
-				p, err := proxy.NewProxy(verbose, true)
+				p, err := proxy.NewProxy(verbose)
 				if err != nil {
 					return err
 				}

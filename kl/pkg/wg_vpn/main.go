@@ -113,6 +113,8 @@ func Configure(
 			return nil
 		}
 
+		return nil
+
 		if len(cfg.Address) > 0 {
 			dc, err := client.GetDeviceContext()
 			if err != nil {

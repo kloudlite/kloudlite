@@ -184,12 +184,13 @@ func (c *client) Start() error {
 			"-v", fmt.Sprintf("%s:/tmp/ssh2/authorized_keys:ro", akTmpPath),
 			"-v", "kl-home-cache:/home:rw",
 			"-v", "nix-store:/nix:rw",
-			"--network", "host",
+			// "--network", "host",
 			"-v", fmt.Sprintf("%s:/home/kl/workspace:z", c.cwd),
 			"-v", fmt.Sprintf("%s:/home/kl/.cache/.kl:z", configFolder),
 			"-e", fmt.Sprintf("SSH_PORT=%d", sshPort),
+			"-e", fmt.Sprintf("HOST_IP=%s", GetDockerHostIp()),
 			"--add-host=box:127.0.0.1",
-			// "-p", fmt.Sprintf("%d:22", sshPort),
+			"-p", fmt.Sprintf("%d:%d", sshPort, sshPort),
 			ImageName, "--", string(conf),
 		}...)
 

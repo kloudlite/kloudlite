@@ -31,7 +31,7 @@ Example:
 					return err
 				}
 
-				p, err := proxy.NewProxy(flags.IsDev(), true)
+				p, err := proxy.NewProxy(flags.IsDev())
 				if err != nil {
 					return err
 				}

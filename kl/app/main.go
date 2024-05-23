@@ -16,7 +16,9 @@ func RunApp(binName string) error {
 
 	go func() {
 		s := server.New(binName)
-		s.Start()
+		if err := s.Start(); err != nil {
+			fn.PrintError(err)
+		}
 	}()
 
 	systray.Run(func() {

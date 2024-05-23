@@ -1,6 +1,7 @@
 package intercept
 
 import (
+	"github.com/kloudlite/kl/domain/client"
 	"github.com/spf13/cobra"
 )
 
@@ -18,9 +19,13 @@ Examples:
 }
 
 func init() {
-	Cmd.AddCommand(startCmd)
-	Cmd.AddCommand(stopCmd)
-	Cmd.Aliases = append(startCmd.Aliases, "inc")
 
+	client.OnlyInsideBox(startCmd)
+	Cmd.AddCommand(startCmd)
+
+	client.OnlyInsideBox(stopCmd)
+	Cmd.AddCommand(stopCmd)
+
+	Cmd.Aliases = append(startCmd.Aliases, "inc")
 	Cmd.Flags().StringP("app", "a", "", "app name")
 }

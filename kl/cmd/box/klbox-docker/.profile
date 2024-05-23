@@ -52,6 +52,9 @@ if [ -d "$HOME/.local/bin" ]; then
 	PATH="$HOME/.local/bin:$PATH"
 fi
 
-export IN_DEV_BOX="true"
+
+if [ -f "/home/kl/.kl/global-profile" ]; then
+  source /home/kl/.kl/global-profile
+fi
 
 cd /home/kl/workspace

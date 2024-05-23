@@ -24,8 +24,8 @@ func init() {
 	client.OnlyOutsideBox(sshCmd)
 	BoxCmd.AddCommand(sshCmd)
 
-	// client.OnlyOutsideBox(execCmd)
-	// BoxCmd.AddCommand(execCmd)
+	client.OnlyOutsideBox(execCmd)
+	BoxCmd.AddCommand(execCmd)
 
 	client.OnlyOutsideBox(psCmd)
 	BoxCmd.AddCommand(stopCmd)

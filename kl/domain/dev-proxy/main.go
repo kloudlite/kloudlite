@@ -5,26 +5,60 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	appconsts "github.com/kloudlite/kl/app-consts"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/fwd"
 )
 
 type Proxy struct {
-	verbose     bool
 	logResponse bool
 }
 
-func NewProxy(verbose, logResponse bool) (*Proxy, error) {
+func NewProxy(logResponse bool) (*Proxy, error) {
 	return &Proxy{
-		verbose:     verbose,
 		logResponse: logResponse,
 	}, nil
 }
+func InsideBox() bool {
+	s, ok := os.LookupEnv("IN_DEV_BOX")
+	if !ok {
+		return false
+	}
 
-func (p *Proxy) MakeRequest(path string) ([]byte, error) {
+	return s == "true"
+}
+
+func GetHostIp() (string, error) {
+	s, ok := os.LookupEnv("HOST_IP")
+
+	if !ok {
+		return "", fmt.Errorf("HOST_IP not set")
+	}
+
+	return s, nil
+}
+
+func (p *Proxy) MakeRequest(path string, params ...[]byte) ([]byte, error) {
 	url := fmt.Sprintf("http://localhost:%d%s", appconsts.AppPort, path)
+
+	if err := func() error {
+		if !InsideBox() {
+			return nil
+		}
+
+		hostIp, err := GetHostIp()
+		if err != nil {
+			return err
+		}
+
+		url = fmt.Sprintf("http://%s:%d%s", hostIp, appconsts.AppPort, path)
+		return nil
+	}(); err != nil {
+		return nil, err
+	}
 
 	marshal, err := json.Marshal(map[string]interface{}{}) // Use "interface{}" instead of "any"
 	if err != nil {
@@ -32,6 +66,9 @@ func (p *Proxy) MakeRequest(path string) ([]byte, error) {
 	}
 
 	payload := strings.NewReader(string(marshal))
+	if len(params) > 0 {
+		payload = strings.NewReader(string(params[0]))
+	}
 
 	client := &http.Client{}
 	req, err := http.NewRequest(http.MethodPost, url, payload)
@@ -102,6 +139,48 @@ func (p *Proxy) Stop() ([]byte, error) {
 
 func (p *Proxy) Restart() ([]byte, error) {
 	b, err := p.MakeRequest("/restart")
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func (p *Proxy) AddFwd(chMsg []fwd.StartCh) ([]byte, error) {
+	params, err := json.Marshal(chMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := p.MakeRequest("/add-proxy", params)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func (p *Proxy) RemoveFwd(chMsg []fwd.StartCh) ([]byte, error) {
+	params, err := json.Marshal(chMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := p.MakeRequest("/remove-proxy", params)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func (p *Proxy) RemoveAllFwd(chMsg fwd.StartCh) ([]byte, error) {
+	params, err := json.Marshal(chMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := p.MakeRequest("/remove-proxy-by-ssh", params)
 	if err != nil {
 		return nil, err
 	}

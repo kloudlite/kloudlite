@@ -4,7 +4,10 @@ import (
 	"fmt"
 
 	"github.com/docker/docker/api/types/container"
+	cl "github.com/kloudlite/kl/domain/client"
+	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/fwd"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
@@ -42,6 +45,22 @@ func (c *client) Stop() error {
 
 	if err := c.cli.ContainerRemove(c.Context(), cr.Name, container.RemoveOptions{}); err != nil {
 		return fmt.Errorf("failed to remove container: %s", err)
+	}
+
+	localEnv, err := cl.EnvOfPath(crPath)
+	if err != nil {
+		return err
+	}
+
+	if localEnv.SSHPort != 0 {
+		p, err := proxy.NewProxy(false)
+		if err != nil {
+			return err
+		}
+
+		if _, err := p.RemoveAllFwd(fwd.StartCh{}); err != nil {
+			return err
+		}
 	}
 
 	if c.verbose {

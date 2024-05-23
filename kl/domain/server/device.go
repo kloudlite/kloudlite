@@ -221,6 +221,7 @@ func CheckDeviceStatus() bool {
 	response, _, err := client.Exchange(message, dnsServer+":53")
 	if err != nil {
 		logF("Failed to get DNS response: %v\n", err)
+		return false
 	}
 
 	// Print the response
