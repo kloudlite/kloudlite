@@ -113,7 +113,7 @@ func newForwarder(localPort, remotePort, sshUser, sshHost, sshPort, keyPath stri
 
 func (pf *portFowarder) start(ctx context.Context) error {
 
-	l, err := net.Listen("tcp", "localhost:"+pf.LocalPort)
+	l, err := net.Listen("tcp", ":"+pf.LocalPort)
 	if err != nil {
 		return fmt.Errorf("failed to listen on %s: %v", pf.LocalPort, err)
 	}
