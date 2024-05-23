@@ -396,6 +396,10 @@ export const cliQueries = (executor: IExecutor) => ({
                 intercept {
                   enabled
                   toDevice
+                  portMappings {
+                    appPort
+                    devicePort
+                  }
                 }
                 nodeSelector
                 replicas

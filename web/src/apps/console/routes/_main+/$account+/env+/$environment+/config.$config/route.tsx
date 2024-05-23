@@ -37,7 +37,6 @@ export const loader = async (ctx: IRemixCtx) => {
     const { data, errors } = await GQLServerHandler(ctx.request).getConfig({
       name: config,
       envName: environment,
-      
     });
 
     if (errors) {
@@ -138,12 +137,12 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
                       },
                       {}
                     );
-                    if ( !environment) {
+                    if (!environment) {
                       throw new Error('Project and Environment is required!.');
                     }
                     await updateConfig({
                       api,
-                      
+
                       environment,
                       config,
                       data: k,
