@@ -59,6 +59,7 @@ type ResolverRoot interface {
 	GlobalVPN() GlobalVPNResolver
 	GlobalVPNDevice() GlobalVPNDeviceResolver
 	HelmRelease() HelmReleaseResolver
+	MatchFilter() MatchFilterResolver
 	Metadata() MetadataResolver
 	Mutation() MutationResolver
 	Namespace() NamespaceResolver
@@ -75,6 +76,7 @@ type ResolverRoot interface {
 	GlobalVPNDeviceIn() GlobalVPNDeviceInResolver
 	GlobalVPNIn() GlobalVPNInResolver
 	HelmReleaseIn() HelmReleaseInResolver
+	MatchFilterIn() MatchFilterInResolver
 	MetadataIn() MetadataInResolver
 	NamespaceIn() NamespaceInResolver
 	NodePoolIn() NodePoolInResolver
@@ -615,6 +617,7 @@ type ComplexityRoot struct {
 		CreationTime                   func(childComplexity int) int
 		DisplayName                    func(childComplexity int) int
 		ID                             func(childComplexity int) int
+		KloudliteDevice                func(childComplexity int) int
 		LastUpdatedBy                  func(childComplexity int) int
 		MarkedForDeletion              func(childComplexity int) int
 		NumAllocatedClusterCIDRs       func(childComplexity int) int
@@ -660,6 +663,11 @@ type ComplexityRoot struct {
 	GlobalVPNEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	GlobalVPNKloudliteDevice struct {
+		IPAddr func(childComplexity int) int
+		Name   func(childComplexity int) int
 	}
 
 	GlobalVPNPaginatedRecords struct {
@@ -1109,10 +1117,11 @@ type ComplexityRoot struct {
 	}
 
 	MatchFilter struct {
-		Array     func(childComplexity int) int
-		Exact     func(childComplexity int) int
-		MatchType func(childComplexity int) int
-		Regex     func(childComplexity int) int
+		Array      func(childComplexity int) int
+		Exact      func(childComplexity int) int
+		MatchType  func(childComplexity int) int
+		NotInArray func(childComplexity int) int
+		Regex      func(childComplexity int) int
 	}
 
 	Metadata struct {
@@ -1462,6 +1471,7 @@ type GlobalVPNResolver interface {
 	CreationTime(ctx context.Context, obj *entities.GlobalVPN) (string, error)
 
 	ID(ctx context.Context, obj *entities.GlobalVPN) (repos.ID, error)
+	KloudliteDevice(ctx context.Context, obj *entities.GlobalVPN) (*model.GlobalVPNKloudliteDevice, error)
 
 	UpdateTime(ctx context.Context, obj *entities.GlobalVPN) (string, error)
 }
@@ -1482,6 +1492,9 @@ type HelmReleaseResolver interface {
 	Status(ctx context.Context, obj *entities.HelmRelease) (*model.GithubComKloudliteOperatorApisCrdsV1HelmChartStatus, error)
 
 	UpdateTime(ctx context.Context, obj *entities.HelmRelease) (string, error)
+}
+type MatchFilterResolver interface {
+	MatchType(ctx context.Context, obj *repos.MatchFilter) (model.GithubComKloudliteAPIPkgReposMatchType, error)
 }
 type MetadataResolver interface {
 	Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error)
@@ -1574,7 +1587,7 @@ type QueryResolver interface {
 	InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error)
 	InfraListBYOKClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.BYOKClusterPaginatedRecords, error)
 	InfraGetBYOKCluster(ctx context.Context, name string) (*entities.BYOKCluster, error)
-	InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) (*string, error)
+	InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) ([]string, error)
 	InfraListGlobalVPNs(ctx context.Context, search *model.SearchGlobalVPNs, pagination *repos.CursorPagination) (*model.GlobalVPNPaginatedRecords, error)
 	InfraGetGlobalVpn(ctx context.Context, name string) (*entities.GlobalVPN, error)
 	InfraListGlobalVPNDevices(ctx context.Context, gvpn string, search *model.SearchGlobalVPNDevices, pagination *repos.CursorPagination) (*model.GlobalVPNDevicePaginatedRecords, error)
@@ -1634,11 +1647,15 @@ type GlobalVPNDeviceInResolver interface {
 	Metadata(ctx context.Context, obj *entities.GlobalVPNDevice, data *v1.ObjectMeta) error
 }
 type GlobalVPNInResolver interface {
+	KloudliteDevice(ctx context.Context, obj *entities.GlobalVPN, data *model.GlobalVPNKloudliteDeviceIn) error
 	Metadata(ctx context.Context, obj *entities.GlobalVPN, data *v1.ObjectMeta) error
 }
 type HelmReleaseInResolver interface {
 	Metadata(ctx context.Context, obj *entities.HelmRelease, data *v1.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.HelmRelease, data *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn) error
+}
+type MatchFilterInResolver interface {
+	MatchType(ctx context.Context, obj *repos.MatchFilter, data model.GithubComKloudliteAPIPkgReposMatchType) error
 }
 type MetadataInResolver interface {
 	Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error
@@ -4014,6 +4031,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GlobalVPN.ID(childComplexity), true
 
+	case "GlobalVPN.kloudliteDevice":
+		if e.complexity.GlobalVPN.KloudliteDevice == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.KloudliteDevice(childComplexity), true
+
 	case "GlobalVPN.lastUpdatedBy":
 		if e.complexity.GlobalVPN.LastUpdatedBy == nil {
 			break
@@ -4244,6 +4268,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GlobalVPNEdge.Node(childComplexity), true
+
+	case "GlobalVPNKloudliteDevice.ipAddr":
+		if e.complexity.GlobalVPNKloudliteDevice.IPAddr == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNKloudliteDevice.IPAddr(childComplexity), true
+
+	case "GlobalVPNKloudliteDevice.name":
+		if e.complexity.GlobalVPNKloudliteDevice.Name == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPNKloudliteDevice.Name(childComplexity), true
 
 	case "GlobalVPNPaginatedRecords.edges":
 		if e.complexity.GlobalVPNPaginatedRecords.Edges == nil {
@@ -6128,6 +6166,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MatchFilter.MatchType(childComplexity), true
 
+	case "MatchFilter.notInArray":
+		if e.complexity.MatchFilter.NotInArray == nil {
+			break
+		}
+
+		return e.complexity.MatchFilter.NotInArray(childComplexity), true
+
 	case "MatchFilter.regex":
 		if e.complexity.MatchFilter.Regex == nil {
 			break
@@ -7864,6 +7909,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn,
 		ec.unmarshalInputGlobalVPNDeviceIn,
 		ec.unmarshalInputGlobalVPNIn,
+		ec.unmarshalInputGlobalVPNKloudliteDeviceIn,
 		ec.unmarshalInputHelmReleaseIn,
 		ec.unmarshalInputK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn,
 		ec.unmarshalInputK8s__io___api___core___v1__AffinityIn,
@@ -8130,7 +8176,7 @@ type Query {
     # byok
     infra_listBYOKClusters(search: SearchCluster, pagination: CursorPaginationIn): BYOKClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getBYOKCluster(name: String!): BYOKCluster @isLoggedInAndVerified @hasAccount
-    infrat_getBYOKClusterSetupInstructions(name: String!): String @isLoggedInAndVerified @hasAccount
+    infrat_getBYOKClusterSetupInstructions(name: String!): [String!] @isLoggedInAndVerified @hasAccount
 
     # global VPN
     infra_listGlobalVPNs(search: SearchGlobalVPNs, pagination: CursorPaginationIn): GlobalVPNPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -9729,6 +9775,13 @@ input MetadataIn {
   namespace: String
 }
 
+enum Github__com___kloudlite___api___pkg___repos__MatchType {
+  array
+  exact
+  not_in_array
+  regex
+}
+
 enum Github__com___kloudlite___api___pkg___types__SyncAction {
   APPLY
   DELETE
@@ -9927,6 +9980,7 @@ input DomainEntryIn {
   creationTime: Date!
   displayName: String!
   id: ID!
+  kloudliteDevice: GlobalVPNKloudliteDevice!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
@@ -9943,6 +9997,11 @@ type GlobalVPNEdge @shareable {
   node: GlobalVPN!
 }
 
+type GlobalVPNKloudliteDevice @shareable {
+  ipAddr: String!
+  name: String!
+}
+
 type GlobalVPNPaginatedRecords @shareable {
   edges: [GlobalVPNEdge!]!
   pageInfo: PageInfo!
@@ -9953,11 +10012,17 @@ input GlobalVPNIn {
   allocatableCIDRSuffix: Int!
   CIDR: String!
   displayName: String!
+  kloudliteDevice: GlobalVPNKloudliteDeviceIn!
   metadata: MetadataIn!
   numAllocatedClusterCIDRs: Int!
   numAllocatedDevices: Int!
   numReservedIPsForNonClusterUse: Int!
   wgInterface: String!
+}
+
+input GlobalVPNKloudliteDeviceIn {
+  ipAddr: String!
+  name: String!
 }
 
 `, BuiltIn: false},
@@ -10041,21 +10106,17 @@ input HelmReleaseIn {
 	{Name: "../struct-to-graphql/matchfilter.graphqls", Input: `type MatchFilter @shareable {
   array: [Any!]
   exact: Any
-  matchType: MatchFilterMatchType!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
+  notInArray: [Any!]
   regex: String
 }
 
 input MatchFilterIn {
   array: [Any!]
   exact: Any
-  matchType: MatchFilterMatchType!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
+  notInArray: [Any!]
   regex: String
-}
-
-enum MatchFilterMatchType {
-  array
-  exact
-  regex
 }
 
 `, BuiltIn: false},
@@ -26907,6 +26968,56 @@ func (ec *executionContext) fieldContext_GlobalVPN_id(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _GlobalVPN_kloudliteDevice(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_kloudliteDevice(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.GlobalVPN().KloudliteDevice(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.GlobalVPNKloudliteDevice)
+	fc.Result = res
+	return ec.marshalNGlobalVPNKloudliteDevice2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNKloudliteDevice(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_kloudliteDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ipAddr":
+				return ec.fieldContext_GlobalVPNKloudliteDevice_ipAddr(ctx, field)
+			case "name":
+				return ec.fieldContext_GlobalVPNKloudliteDevice_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GlobalVPNKloudliteDevice", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GlobalVPN_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GlobalVPN_lastUpdatedBy(ctx, field)
 	if err != nil {
@@ -28467,6 +28578,8 @@ func (ec *executionContext) fieldContext_GlobalVPNEdge_node(ctx context.Context,
 				return ec.fieldContext_GlobalVPN_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_GlobalVPN_id(ctx, field)
+			case "kloudliteDevice":
+				return ec.fieldContext_GlobalVPN_kloudliteDevice(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_GlobalVPN_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -28487,6 +28600,94 @@ func (ec *executionContext) fieldContext_GlobalVPNEdge_node(ctx context.Context,
 				return ec.fieldContext_GlobalVPN_wgInterface(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type GlobalVPN", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNKloudliteDevice_ipAddr(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNKloudliteDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNKloudliteDevice_ipAddr(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IPAddr, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNKloudliteDevice_ipAddr(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNKloudliteDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GlobalVPNKloudliteDevice_name(ctx context.Context, field graphql.CollectedField, obj *model.GlobalVPNKloudliteDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPNKloudliteDevice_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPNKloudliteDevice_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPNKloudliteDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -40497,7 +40698,7 @@ func (ec *executionContext) _MatchFilter_matchType(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MatchType, nil
+		return ec.resolvers.MatchFilter().MatchType(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -40509,19 +40710,60 @@ func (ec *executionContext) _MatchFilter_matchType(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(repos.MatchType)
+	res := resTmp.(model.GithubComKloudliteAPIPkgReposMatchType)
 	fc.Result = res
-	return ec.marshalNMatchFilterMatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MatchFilter_matchType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MatchFilter",
 		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Github__com___kloudlite___api___pkg___repos__MatchType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MatchFilter_notInArray(ctx context.Context, field graphql.CollectedField, obj *repos.MatchFilter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MatchFilter_notInArray(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NotInArray, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]any)
+	fc.Result = res
+	return ec.marshalOAny2ᚕinterfaceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MatchFilter_notInArray(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MatchFilter",
+		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type MatchFilterMatchType does not have child fields")
+			return nil, errors.New("field of type Any does not have child fields")
 		},
 	}
 	return fc, nil
@@ -41407,6 +41649,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createGlobalVPN(ctx cont
 				return ec.fieldContext_GlobalVPN_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_GlobalVPN_id(ctx, field)
+			case "kloudliteDevice":
+				return ec.fieldContext_GlobalVPN_kloudliteDevice(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_GlobalVPN_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -41519,6 +41763,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateGlobalVPN(ctx cont
 				return ec.fieldContext_GlobalVPN_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_GlobalVPN_id(ctx, field)
+			case "kloudliteDevice":
+				return ec.fieldContext_GlobalVPN_kloudliteDevice(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_GlobalVPN_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -49627,10 +49873,10 @@ func (ec *executionContext) _Query_infrat_getBYOKClusterSetupInstructions(ctx co
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*string); ok {
+		if data, ok := tmp.([]string); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *string`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []string`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -49639,9 +49885,9 @@ func (ec *executionContext) _Query_infrat_getBYOKClusterSetupInstructions(ctx co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.([]string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_infrat_getBYOKClusterSetupInstructions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -49830,6 +50076,8 @@ func (ec *executionContext) fieldContext_Query_infra_getGlobalVPN(ctx context.Co
 				return ec.fieldContext_GlobalVPN_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_GlobalVPN_id(ctx, field)
+			case "kloudliteDevice":
+				return ec.fieldContext_GlobalVPN_kloudliteDevice(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_GlobalVPN_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -56648,7 +56896,7 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"allocatableCIDRSuffix", "CIDR", "displayName", "metadata", "numAllocatedClusterCIDRs", "numAllocatedDevices", "numReservedIPsForNonClusterUse", "wgInterface"}
+	fieldsInOrder := [...]string{"allocatableCIDRSuffix", "CIDR", "displayName", "kloudliteDevice", "metadata", "numAllocatedClusterCIDRs", "numAllocatedDevices", "numReservedIPsForNonClusterUse", "wgInterface"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -56682,6 +56930,17 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 				return it, err
 			}
 			it.DisplayName = data
+		case "kloudliteDevice":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kloudliteDevice"))
+			data, err := ec.unmarshalNGlobalVPNKloudliteDeviceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNKloudliteDeviceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.GlobalVPNIn().KloudliteDevice(ctx, &it, data); err != nil {
+				return it, err
+			}
 		case "metadata":
 			var err error
 
@@ -56729,6 +56988,44 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 				return it, err
 			}
 			it.WgInterface = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGlobalVPNKloudliteDeviceIn(ctx context.Context, obj interface{}) (model.GlobalVPNKloudliteDeviceIn, error) {
+	var it model.GlobalVPNKloudliteDeviceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"ipAddr", "name"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "ipAddr":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ipAddr"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IPAddr = data
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
 		}
 	}
 
@@ -60109,7 +60406,7 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"array", "exact", "matchType", "regex"}
+	fieldsInOrder := [...]string{"array", "exact", "matchType", "notInArray", "regex"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -60138,11 +60435,22 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchType"))
-			data, err := ec.unmarshalNMatchFilterMatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.MatchType = data
+			if err = ec.resolvers.MatchFilterIn().MatchType(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "notInArray":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notInArray"))
+			data, err := ec.unmarshalOAny2ᚕinterfaceᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NotInArray = data
 		case "regex":
 			var err error
 
@@ -65632,6 +65940,42 @@ func (ec *executionContext) _GlobalVPN(ctx context.Context, sel ast.SelectionSet
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "kloudliteDevice":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._GlobalVPN_kloudliteDevice(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "lastUpdatedBy":
 			out.Values[i] = ec._GlobalVPN_lastUpdatedBy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -66070,6 +66414,50 @@ func (ec *executionContext) _GlobalVPNEdge(ctx context.Context, sel ast.Selectio
 			}
 		case "node":
 			out.Values[i] = ec._GlobalVPNEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var globalVPNKloudliteDeviceImplementors = []string{"GlobalVPNKloudliteDevice"}
+
+func (ec *executionContext) _GlobalVPNKloudliteDevice(ctx context.Context, sel ast.SelectionSet, obj *model.GlobalVPNKloudliteDevice) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, globalVPNKloudliteDeviceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GlobalVPNKloudliteDevice")
+		case "ipAddr":
+			out.Values[i] = ec._GlobalVPNKloudliteDevice_ipAddr(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._GlobalVPNKloudliteDevice_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -69058,10 +69446,43 @@ func (ec *executionContext) _MatchFilter(ctx context.Context, sel ast.SelectionS
 		case "exact":
 			out.Values[i] = ec._MatchFilter_exact(ctx, field, obj)
 		case "matchType":
-			out.Values[i] = ec._MatchFilter_matchType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MatchFilter_matchType(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "notInArray":
+			out.Values[i] = ec._MatchFilter_notInArray(ctx, field, obj)
 		case "regex":
 			out.Values[i] = ec._MatchFilter_regex(ctx, field, obj)
 		default:
@@ -73228,6 +73649,16 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___api___common__Crea
 	return ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx, sel, &v)
 }
 
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIPkgReposMatchType, error) {
+	var res model.GithubComKloudliteAPIPkgReposMatchType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIPkgReposMatchType) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___types__SyncAction2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncAction(ctx context.Context, v interface{}) (types.SyncAction, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := types.SyncAction(tmp)
@@ -73680,6 +74111,30 @@ func (ec *executionContext) marshalNGlobalVPNEdge2ᚖgithubᚗcomᚋkloudliteᚋ
 func (ec *executionContext) unmarshalNGlobalVPNIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐGlobalVPN(ctx context.Context, v interface{}) (entities.GlobalVPN, error) {
 	res, err := ec.unmarshalInputGlobalVPNIn(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGlobalVPNKloudliteDevice2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNKloudliteDevice(ctx context.Context, sel ast.SelectionSet, v model.GlobalVPNKloudliteDevice) graphql.Marshaler {
+	return ec._GlobalVPNKloudliteDevice(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGlobalVPNKloudliteDevice2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNKloudliteDevice(ctx context.Context, sel ast.SelectionSet, v *model.GlobalVPNKloudliteDevice) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GlobalVPNKloudliteDevice(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGlobalVPNKloudliteDeviceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNKloudliteDeviceIn(ctx context.Context, v interface{}) (model.GlobalVPNKloudliteDeviceIn, error) {
+	res, err := ec.unmarshalInputGlobalVPNKloudliteDeviceIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNGlobalVPNKloudliteDeviceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNKloudliteDeviceIn(ctx context.Context, v interface{}) (*model.GlobalVPNKloudliteDeviceIn, error) {
+	res, err := ec.unmarshalInputGlobalVPNKloudliteDeviceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNHelmRelease2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐHelmRelease(ctx context.Context, sel ast.SelectionSet, v *entities.HelmRelease) graphql.Marshaler {
@@ -74145,22 +74600,6 @@ func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 	res := graphql.MarshalMap(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) unmarshalNMatchFilterMatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx context.Context, v interface{}) (repos.MatchType, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := repos.MatchType(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMatchFilterMatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx context.Context, sel ast.SelectionSet, v repos.MatchType) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -74991,7 +75430,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -74999,7 +75438,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

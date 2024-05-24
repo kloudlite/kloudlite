@@ -77,7 +77,7 @@ type Domain interface {
 	UpdateBYOKCluster(ctx InfraContext, clusterName string, displayName string) (*entities.BYOKCluster, error)
 	ListBYOKCluster(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BYOKCluster], error)
 	GetBYOKCluster(ctx InfraContext, name string) (*entities.BYOKCluster, error)
-	GetBYOKClusterSetupInstructions(ctx InfraContext, name string) (*string, error)
+	GetBYOKClusterSetupInstructions(ctx InfraContext, name string) ([]string, error)
 
 	DeleteBYOKCluster(ctx InfraContext, name string) error
 	UpsertBYOKClusterKubeconfig(ctx InfraContext, clusterName string, kubeconfig []byte) error
