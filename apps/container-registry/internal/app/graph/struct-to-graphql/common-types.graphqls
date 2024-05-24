@@ -282,6 +282,13 @@ enum Github__com___kloudlite___api___apps___container____registry___internal___d
   read_write
 }
 
+enum Github__com___kloudlite___api___pkg___repos__MatchType {
+  array
+  exact
+  not_in_array
+  regex
+}
+
 enum Github__com___kloudlite___api___pkg___types__SyncAction {
   APPLY
   DELETE
