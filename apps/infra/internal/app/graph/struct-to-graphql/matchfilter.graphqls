@@ -1,20 +1,16 @@
 type MatchFilter @shareable {
   array: [Any!]
   exact: Any
-  matchType: MatchFilterMatchType!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
+  notInArray: [Any!]
   regex: String
 }
 
 input MatchFilterIn {
   array: [Any!]
   exact: Any
-  matchType: MatchFilterMatchType!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
+  notInArray: [Any!]
   regex: String
-}
-
-enum MatchFilterMatchType {
-  array
-  exact
-  regex
 }
 
