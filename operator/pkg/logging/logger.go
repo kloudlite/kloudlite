@@ -91,7 +91,9 @@ func New(options *Options) (Logger, error) {
 			}
 			return cfg
 		}
-		return zap.NewProductionEncoderConfig()
+		ec := zap.NewProductionEncoderConfig()
+		ec.TimeKey = "" // because k8s logs will always have timestamps
+		return ec
 	}()
 
 	if !opts.Dev {
