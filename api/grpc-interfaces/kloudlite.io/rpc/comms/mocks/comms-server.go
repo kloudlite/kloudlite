@@ -16,6 +16,7 @@ type CommsServer struct {
 	MockSendProjectMemberInviteEmail func(ke context.Context, kf *comms.ProjectMemberInviteEmailInput) (*comms.Void, error)
 	MockSendVerificationEmail        func(kg context.Context, kh *comms.VerificationEmailInput) (*comms.Void, error)
 	MockSendWelcomeEmail             func(ki context.Context, kj *comms.WelcomeEmailInput) (*comms.Void, error)
+	MockSendWaitingEmail             func(ki context.Context, kj *comms.WaitingEmailInput) (*comms.Void, error)
 }
 
 func (m *CommsServer) registerCall(funcName string, args ...any) {
@@ -63,6 +64,14 @@ func (cMock *CommsServer) SendWelcomeEmail(ki context.Context, kj *comms.Welcome
 		return cMock.MockSendWelcomeEmail(ki, kj)
 	}
 	panic("method 'SendWelcomeEmail' not implemented, yet")
+}
+
+func (cMock *CommsServer) SendWaitingEmail(ki context.Context, kj *comms.WaitingEmailInput) (*comms.Void, error) {
+	if cMock.MockSendWaitingEmail != nil {
+		cMock.registerCall("SendWaitingEmail", ki, kj)
+		return cMock.MockSendWaitingEmail(ki, kj)
+	}
+	panic("method 'SendWaitingEmail' not implemented, yet")
 }
 
 func NewCommsServer() *CommsServer {

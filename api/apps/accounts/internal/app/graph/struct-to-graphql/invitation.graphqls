@@ -2,7 +2,7 @@ type Invitation @shareable {
   accepted: Boolean
   accountName: String!
   creationTime: Date!
-  id: String!
+  id: ID!
   invitedBy: String!
   inviteToken: String!
   markedForDeletion: Boolean
