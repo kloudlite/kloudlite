@@ -1,7 +1,7 @@
 type MatchFilter @shareable {
   array: [Any!]
   exact: Any
-  matchType: String!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
   notInArray: [Any!]
   regex: String
 }
@@ -9,7 +9,7 @@ type MatchFilter @shareable {
 input MatchFilterIn {
   array: [Any!]
   exact: Any
-  matchType: String!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
   notInArray: [Any!]
   regex: String
 }

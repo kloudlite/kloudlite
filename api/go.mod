@@ -42,11 +42,12 @@ require (
 
 require (
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
-	github.com/kloudlite/operator v1.0.4-0.20240520060449-53a58ea322db
+	github.com/kloudlite/operator v1.0.4-0.20240524130112-c32c133c28cc
 	github.com/nats-io/nats.go v1.31.0
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
 	github.com/seancfoley/ipaddress-go v1.5.4
+	github.com/shamaton/msgpack/v2 v2.2.0
 	github.com/stretchr/testify v1.9.0
 	github.com/ztrue/tracerr v0.4.0
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
