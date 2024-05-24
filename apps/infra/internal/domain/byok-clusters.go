@@ -171,12 +171,26 @@ func (d *domain) GetBYOKCluster(ctx InfraContext, name string) (*entities.BYOKCl
 	return c, nil
 }
 
-func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string) (*string, error) {
+func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string) ([]string, error) {
 	cluster, err := d.findBYOKCluster(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	return fn.New(fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set kloudliteRelease="%s" --set byok.enabled=true --set helmCharts.ingressNginx.enabled=true --set helmCharts.certManager.enabled=true`, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr, d.env.KloudliteRelease)), nil
+
+	return []string{
+		fmt.Sprintf(`helm repo add kloudlite https://kloudlite.github.io/helm-charts`),
+		fmt.Sprintf(`helm repo update kloudlite`),
+		fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --version %s --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set byok.enabled=true --set helmCharts.ingressNginx.enabled=true --set helmCharts.certManager.enabled=true`, d.env.KloudliteRelease, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr),
+	}, nil
+}
+
+func (d *domain) GetBYOKClusterSetupInstructions2(ctx InfraContext, name string) (*string, error) {
+	cluster, err := d.findBYOKCluster(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return fn.New(fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --version %s --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set byok.enabled=true --set helmCharts.ingressNginx.enabled=true --set helmCharts.certManager.enabled=true`, d.env.KloudliteRelease, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr)), nil
 }
 
 func (d *domain) DeleteBYOKCluster(ctx InfraContext, name string) error {
