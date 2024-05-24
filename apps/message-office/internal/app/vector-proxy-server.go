@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	proto_rpc "github.com/kloudlite/api/apps/message-office/internal/app/proto-rpc"
@@ -27,8 +28,8 @@ func (v *vectorProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.PushE
 
 	logger := v.logger.WithKV("accountName", accountName, "clusterName", clusterName)
 	v.pushEventsCounter++
-	logger.Infof("[%v] received push-events message", v.pushEventsCounter)
-	defer logger.Infof("[%v] dispatched push-events message to vector aggregator", v.pushEventsCounter)
+	logger.Debugf("[%v] received push-events message", v.pushEventsCounter)
+	defer logger.Debugf("[%v] dispatched push-events message to vector aggregator", v.pushEventsCounter)
 
 	per, err := v.realVectorClient.PushEvents(ctx, msg)
 	if err != nil {
@@ -46,8 +47,8 @@ func (v *vectorProxyServer) HealthCheck(ctx context.Context, msg *proto_rpc.Heal
 
 	logger := v.logger.WithKV("accountName", accountName, "clusterName", clusterName)
 	v.healthCheckCounter++
-	logger.Infof("[%v] received health-check message", v.healthCheckCounter)
-	defer logger.Infof("[%v] dispatched health-check message to vector aggregator", v.healthCheckCounter)
+	logger.Debugf("[%v] received health-check message", v.healthCheckCounter)
+	defer logger.Debugf("[%v] dispatched health-check message to vector aggregator", v.healthCheckCounter)
 
 	hcr, err := v.realVectorClient.HealthCheck(ctx, msg)
 	if err != nil {
