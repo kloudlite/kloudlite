@@ -11,19 +11,19 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-clusters-kloudlite-io-v1-cluster
+      path: /mutate-crds-kloudlite-io-v1-app
   failurePolicy: Fail
-  name: mcluster.kb.io
+  name: mapp.kb.io
   rules:
   - apiGroups:
-    - clusters.kloudlite.io
+    - crds.kloudlite.io
     apiVersions:
     - v1
     operations:
     - CREATE
     - UPDATE
     resources:
-    - clusters
+    - apps
   sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
@@ -38,17 +38,17 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-clusters-kloudlite-io-v1-cluster
+      path: /validate-crds-kloudlite-io-v1-app
   failurePolicy: Fail
-  name: vcluster.kb.io
+  name: vapp.kb.io
   rules:
   - apiGroups:
-    - clusters.kloudlite.io
+    - crds.kloudlite.io
     apiVersions:
     - v1
     operations:
     - CREATE
     - UPDATE
     resources:
-    - clusters
+    - apps
   sideEffects: None

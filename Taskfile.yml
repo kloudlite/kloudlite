@@ -22,6 +22,22 @@ tasks:
     cmds:
       - operator-sdk create api --group {{.Group}} --version v1 --resource --controller=false --kind "{{.Kind}}"
 
+  new-webhook:
+    summary: |+
+      [example usage]
+      task new-webhook Group=sample Kind=SampleKind
+
+    silent: true
+    preconditions:
+      - sh: '[ -n "{{.Group}}" ]'
+        msg: 'var Group must have a value'
+      - sh: '[ -n "{{.Kind}}" ]'
+        msg: 'var Kind must have a value'
+
+    cmds:
+      # operator-sdk create webhook --group cache --version v1alpha1 --kind Memcached --defaulting --programmatic-validation
+      - operator-sdk create webhook --group {{.Group}} --version v1 --kind "{{.Kind}}" --defaulting --programmatic-validation --force
+
   build:
     env:
       CGO_ENABLED: 0
