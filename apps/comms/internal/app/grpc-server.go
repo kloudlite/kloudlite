@@ -24,6 +24,7 @@ type commsSvc struct {
 	resetPasswordEmail    RestPasswordEmail
 	userVerificationEmail UserVerificationEmail
 	welcomeEmail          WelcomeEmail
+	waitingEmail          WaitingEmail
 }
 
 func (r *commsSvc) sendSupportEmail(ctx context.Context, subject string, toEmail string, toName string, plainText string, htmlContent string) error {
@@ -156,6 +157,32 @@ func (r *commsSvc) SendWelcomeEmail(ctx context.Context, input *comms.WelcomeEma
 	return &comms.Void{}, nil
 }
 
+func (r *commsSvc) SendWaitingEmail(ctx context.Context, input *comms.WelcomeEmailInput) (*comms.Void, error) {
+	plainText := new(bytes.Buffer)
+	args := map[string]any{
+		"Name": func() string {
+			if input.Name != "" {
+				return input.Name
+			}
+			return "there"
+		}(),
+	}
+
+	if err := r.waitingEmail.PlainText.Execute(plainText, args); err != nil {
+		return nil, errors.NewEf(err, "failed to execute plain text template")
+	}
+
+	html := new(bytes.Buffer)
+	if err := r.waitingEmail.Html.Execute(html, args); err != nil {
+		return nil, errors.NewEf(err, "failed to execute html template")
+	}
+
+	if err := r.sendSupportEmail(ctx, r.waitingEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return &comms.Void{}, nil
+}
+
 func (r *commsSvc) SendVerificationEmail(ctx context.Context, input *comms.VerificationEmailInput) (*comms.Void, error) {
 	plainText := new(bytes.Buffer)
 	args := map[string]any{
@@ -182,7 +209,7 @@ func (r *commsSvc) SendVerificationEmail(ctx context.Context, input *comms.Verif
 	}
 	return &comms.Void{}, nil
 }
-func newCommsSvc(mailer mail.Mailer, ev *env.Env, ai AccountInviteEmail, pi ProjectInviteEmail, rp RestPasswordEmail, uv UserVerificationEmail, wl WelcomeEmail) comms.CommsServer {
+func newCommsSvc(mailer mail.Mailer, ev *env.Env, ai AccountInviteEmail, pi ProjectInviteEmail, rp RestPasswordEmail, uv UserVerificationEmail, nwl WaitingEmail, wl WelcomeEmail) comms.CommsServer {
 	return &commsSvc{
 		mailer:                mailer,
 		supportEmail:          ev.SupportEmail,
@@ -192,5 +219,6 @@ func newCommsSvc(mailer mail.Mailer, ev *env.Env, ai AccountInviteEmail, pi Proj
 		resetPasswordEmail:    rp,
 		userVerificationEmail: uv,
 		welcomeEmail:          wl,
+		waitingEmail:          nwl,
 	}
 }
