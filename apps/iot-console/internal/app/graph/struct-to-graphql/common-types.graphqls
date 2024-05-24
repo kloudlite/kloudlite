@@ -451,6 +451,13 @@ enum Github__com___kloudlite___api___apps___iot____console___internal___entities
   singleton_blueprint
 }
 
+enum Github__com___kloudlite___api___pkg___repos__MatchType {
+  array
+  exact
+  not_in_array
+  regex
+}
+
 enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret {
   config
   pvc

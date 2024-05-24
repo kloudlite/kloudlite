@@ -12,8 +12,7 @@ type Env struct {
 	AccessTokenSecretName      string `env:"ACCESS_TOKEN_SECRET_NAME" required:"true"`
 	AccessTokenSecretNamespace string `env:"ACCESS_TOKEN_SECRET_NAMESPACE" required:"true"`
 
-	ClusterName string `env:"CLUSTER_NAME" required:"true"`
-	AccountName string `env:"ACCOUNT_NAME" required:"true"`
+	GrpcMessageProtocolVersion string `env:"GRPC_MESSAGE_PROTOCOL_VERSION" default:"1"`
 
 	VectorProxyGrpcServerAddr string `env:"VECTOR_PROXY_GRPC_SERVER_ADDR" required:"true"`
 	ResourceWatcherName       string `env:"RESOURCE_WATCHER_NAME" required:"true"`
