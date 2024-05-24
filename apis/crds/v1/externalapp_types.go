@@ -55,6 +55,10 @@ func (p *ExternalApp) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{}
 }
 
+func (app *ExternalApp) IsInterceptEnabled() bool {
+	return app.Spec.Intercept != nil && app.Spec.Intercept.Enabled
+}
+
 //+kubebuilder:object:root=true
 
 // ExternalAppList contains a list of ExternalApp
