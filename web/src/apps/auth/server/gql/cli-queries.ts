@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { AuthCli_ListAppsQuery } from '~/root/src/generated/gql/server';
 import { vpnQueries } from './queries/device-queries';
 
 export const cliQueries = (executor: IExecutor) => ({
@@ -272,20 +273,44 @@ export const cliQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
+
+  cli_intercepExternalApp: executor(
+    gql`
+      mutation Core_interceptExternalApp(
+        $envName: String!
+        $appName: String!
+        $deviceName: String!
+        $intercept: Boolean!
+        $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
+      ) {
+        core_interceptExternalApp(
+          envName: $envName
+          externalAppName: $appName
+          deviceName: $deviceName
+          intercept: $intercept
+          portMappings: $portMappings
+        )
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_interceptExternalApp,
+      vars: (_: any) => {},
+    }
+  ),
   cli_interceptApp: executor(
     gql`
       mutation Core_interceptApp(
         $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]
         $intercept: Boolean!
         $deviceName: String!
-        $appname: String!
+        $appName: String!
         $envName: String!
       ) {
         core_interceptApp(
           portMappings: $portMappings
           intercept: $intercept
           deviceName: $deviceName
-          appname: $appname
+          appname: $appName
           envName: $envName
         )
       }
@@ -361,9 +386,39 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_listApps: executor(
     gql`
       query Core_listApps($envName: String!) {
-        core_listApps(envName: $envName) {
+        apps: core_listExternalApps(envName: $envName) {
           edges {
-            cursor
+            node {
+              spec {
+                intercept {
+                  enabled
+                  portMappings {
+                    devicePort
+                    appPort
+                  }
+                  toDevice
+                }
+              }
+              displayName
+              environmentName
+              markedForDeletion
+              metadata {
+                name
+                annotations
+                namespace
+              }
+              status {
+                checks
+                isReady
+                message {
+                  RawMessage
+                }
+              }
+            }
+          }
+        }
+        mapps: core_listApps(envName: $envName) {
+          edges {
             node {
               displayName
               environmentName
@@ -375,35 +430,14 @@ export const cliQueries = (executor: IExecutor) => ({
               }
               spec {
                 displayName
-                containers {
-                  args
-                  command
-                  env {
-                    key
-                    optional
-                    refKey
-                    refName
-                    type
-                    value
-                  }
-                  envFrom {
-                    refName
-                    type
-                  }
-                  image
-                  name
-                }
                 intercept {
                   enabled
                   toDevice
                   portMappings {
-                    appPort
                     devicePort
+                    appPort
                   }
                 }
-                nodeSelector
-                replicas
-                serviceAccount
                 services {
                   port
                 }
@@ -421,7 +455,27 @@ export const cliQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: any) => data.core_listApps,
+      transformer: (data: AuthCli_ListAppsQuery) => {
+        if (data.apps) {
+          data.apps.edges = data.apps.edges.map((edge) => ({
+            node: {
+              ...edge.node,
+              mapp: false,
+            },
+          }));
+        }
+
+        if (data.mapps) {
+          data.mapps.edges = data.mapps.edges.map((edge) => ({
+            node: {
+              ...edge.node,
+              mapp: true,
+            },
+          }));
+        }
+        data.apps?.edges.push(...(data.mapps?.edges || []));
+        return data.apps;
+      },
       vars: (_: any) => {},
     }
   ),

@@ -878,6 +878,13 @@ type Github__com___kloudlite___api___common__CreatedOrUpdatedBy {
   userName: String!
 }
 
+enum Github__com___kloudlite___api___pkg___repos__MatchType {
+  array
+  exact
+  not_in_array
+  regex
+}
+
 type Github__com___kloudlite___api___pkg___types__EncodedString {
   encoding: String!
   value: String!
@@ -3380,7 +3387,7 @@ scalar Map
 type MatchFilter {
   array: [Any!]
   exact: Any
-  matchType: String!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
   notInArray: [Any!]
   regex: String
 }
@@ -3388,7 +3395,7 @@ type MatchFilter {
 input MatchFilterIn {
   array: [Any!]
   exact: Any
-  matchType: String!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
   notInArray: [Any!]
   regex: String
 }
@@ -3840,7 +3847,7 @@ type Query {
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
   infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
-  infrat_getBYOKClusterSetupInstructions(name: String!): String
+  infrat_getBYOKClusterSetupInstructions(name: String!): [String!]
   iot_getApp(deviceBlueprintName: String!, name: String!, projectName: String!): IOTApp
   iot_getDeployment(name: String!, projectName: String!): IOTDeployment
   iot_getDevice(deploymentName: String!, name: String!, projectName: String!): IOTDevice

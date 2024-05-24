@@ -136,7 +136,11 @@ const ByokInstructionsPopup = ({
               <CodeView
                 preClassName="!overflow-none text-wrap break-words"
                 copy
-                data={data || ''}
+                data={
+                  data.reduce((acc, curr) => {
+                    return `${acc}\n${curr}`;
+                  }, '') || ''
+                }
               />
             </div>
           )}

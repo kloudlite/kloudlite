@@ -141,10 +141,16 @@ export type SearchApps = {
 export type MatchFilterIn = {
   array?: InputMaybe<Array<Scalars['Any']['input']>>;
   exact?: InputMaybe<Scalars['Any']['input']>;
-  matchType: Scalars['String']['input'];
+  matchType: Github__Com___Kloudlite___Api___Pkg___Repos__MatchType;
   notInArray?: InputMaybe<Array<Scalars['Any']['input']>>;
   regex?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type Github__Com___Kloudlite___Api___Pkg___Repos__MatchType =
+  | 'array'
+  | 'exact'
+  | 'not_in_array'
+  | 'regex';
 
 export type SearchConfigs = {
   isReady?: InputMaybe<MatchFilterIn>;
@@ -4852,7 +4858,7 @@ export type ConsoleGetByokClusterInstructionsQueryVariables = Exact<{
 }>;
 
 export type ConsoleGetByokClusterInstructionsQuery = {
-  infrat_getBYOKClusterSetupInstructions?: string;
+  infrat_getBYOKClusterSetupInstructions?: Array<string>;
 };
 
 export type ConsoleGetByokClusterQueryVariables = Exact<{
@@ -7505,6 +7511,21 @@ export type AuthCli_GetConfigSecretMapQuery = {
   mreses: Array<{ key: string; mresName: string; value: string }>;
 };
 
+export type AuthCli_IntercepExternalAppMutationVariables = Exact<{
+  envName: Scalars['String']['input'];
+  appName: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+  intercept: Scalars['Boolean']['input'];
+  portMappings?: InputMaybe<
+    | Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn>
+    | Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn
+  >;
+}>;
+
+export type AuthCli_IntercepExternalAppMutation = {
+  core_interceptExternalApp: boolean;
+};
+
 export type AuthCli_InterceptAppMutationVariables = Exact<{
   portMappings?: InputMaybe<
     | Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppInterceptPortMappingsIn>
@@ -7512,7 +7533,7 @@ export type AuthCli_InterceptAppMutationVariables = Exact<{
   >;
   intercept: Scalars['Boolean']['input'];
   deviceName: Scalars['String']['input'];
-  appname: Scalars['String']['input'];
+  appName: Scalars['String']['input'];
   envName: Scalars['String']['input'];
 }>;
 
@@ -7563,9 +7584,30 @@ export type AuthCli_ListAppsQueryVariables = Exact<{
 }>;
 
 export type AuthCli_ListAppsQuery = {
-  core_listApps?: {
+  apps?: {
     edges: Array<{
-      cursor: string;
+      node: {
+        displayName: string;
+        environmentName: string;
+        markedForDeletion?: boolean;
+        spec?: {
+          intercept?: {
+            enabled: boolean;
+            toDevice: string;
+            portMappings?: Array<{ devicePort: number; appPort: number }>;
+          };
+        };
+        metadata?: { name: string; annotations?: any; namespace?: string };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          message?: { RawMessage?: any };
+        };
+      };
+    }>;
+  };
+  mapps?: {
+    edges: Array<{
       node: {
         displayName: string;
         environmentName: string;
@@ -7573,31 +7615,10 @@ export type AuthCli_ListAppsQuery = {
         metadata?: { annotations?: any; name: string; namespace?: string };
         spec: {
           displayName?: string;
-          nodeSelector?: any;
-          replicas?: number;
-          serviceAccount?: string;
-          containers: Array<{
-            args?: Array<string>;
-            command?: Array<string>;
-            image: string;
-            name: string;
-            env?: Array<{
-              key: string;
-              optional?: boolean;
-              refKey?: string;
-              refName?: string;
-              type?: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
-              value?: string;
-            }>;
-            envFrom?: Array<{
-              refName: string;
-              type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
-            }>;
-          }>;
           intercept?: {
             enabled: boolean;
             toDevice: string;
-            portMappings?: Array<{ appPort: number; devicePort: number }>;
+            portMappings?: Array<{ devicePort: number; appPort: number }>;
           };
           services?: Array<{ port: number }>;
         };
