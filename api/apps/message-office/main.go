@@ -21,7 +21,7 @@ func main() {
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 	flag.Parse()
 
-	logger, err := logging.New(&logging.Options{Name: "message-office", Dev: true})
+	logger, err := logging.New(&logging.Options{Name: "message-office", ShowDebugLog: isDev, ShowTime: true, HideCallerTrace: true})
 	if err != nil {
 		panic(err)
 	}
