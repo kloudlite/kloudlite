@@ -43,15 +43,14 @@ const OverlaySideDialog = ({
             </Dialog.Overlay>
             <Dialog.Content asChild forceMount>
               <motion.div
-                initial={{ x: '75%', y: '-50%', opacity: 1 }}
-                animate={{ x: '0%', y: '-50%', opacity: 1 }}
-                exit={{ x: '100%', y: '-50%', opacity: 1 }}
+                initial={{ x: '75%', opacity: 1 }}
+                animate={{ x: '0%', opacity: 1 }}
+                exit={{ x: '100%', opacity: 1 }}
                 transition={{ duration: 0.3, ease: 'linear' }}
                 className={cn(
                   'flex flex-col',
                   'z-[99999999] outline-none transform overflow-hidden md:rounded bg-surface-basic-default shadow-modal',
-                  'fixed right-0 top-1/2',
-                  'w-full h-full md:w-3/4',
+                  'fixed right-0 top-0 h-screen w-[80vw] max-w-screen-2xl',
                   'border border-border-default',
                   className
                 )}
