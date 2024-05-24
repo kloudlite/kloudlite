@@ -11,14 +11,14 @@ import (
 	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/kloudlite/operator/pkg/logging"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type grpcMsgSender struct {
-	logger         logging.Logger
-	accountName    string
-	clusterName    string
-	accessToken    string
-	msgDispatchCli messages.MessageDispatchServiceClient
+	logger                 logging.Logger
+	accessToken            string
+	msgDispatchCli         messages.MessageDispatchServiceClient
+	messageProtocolVersion string
 }
 
 func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx context.Context, stu t.ResourceUpdate) error {
@@ -30,14 +30,14 @@ func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx context.Con
 	dctx, cf := context.WithTimeout(ctx, 1*time.Second)
 	defer cf()
 
+	gctx := metadata.NewOutgoingContext(dctx, metadata.Pairs("authorization", g.accessToken))
+
 	errCh := make(chan error, 1)
 	execCh := make(chan struct{}, 1)
 	go func() {
-		if _, err := g.msgDispatchCli.ReceiveContainerRegistryUpdate(dctx, &messages.ResourceUpdate{
-			AccountName: g.accountName,
-			ClusterName: g.clusterName,
-			AccessToken: g.accessToken,
-			Message:     b,
+		if _, err := g.msgDispatchCli.ReceiveContainerRegistryUpdate(gctx, &messages.ResourceUpdate{
+			ProtocolVersion: g.messageProtocolVersion,
+			Message:         b,
 		}); err != nil {
 			errCh <- err
 			return
@@ -66,14 +66,14 @@ func (g *grpcMsgSender) DispatchInfraResourceUpdates(ctx context.Context, ru t.R
 	dctx, cf := context.WithTimeout(ctx, 1*time.Second)
 	defer cf()
 
+	gctx := metadata.NewOutgoingContext(dctx, metadata.Pairs("authorization", g.accessToken))
+
 	errCh := make(chan error, 1)
 	execCh := make(chan struct{}, 1)
 	go func() {
-		if _, err := g.msgDispatchCli.ReceiveInfraResourceUpdate(ctx, &messages.ResourceUpdate{
-			AccountName: g.accountName,
-			ClusterName: g.clusterName,
-			AccessToken: g.accessToken,
-			Message:     b,
+		if _, err := g.msgDispatchCli.ReceiveInfraResourceUpdate(gctx, &messages.ResourceUpdate{
+			ProtocolVersion: g.messageProtocolVersion,
+			Message:         b,
 		}); err != nil {
 			errCh <- err
 			return
@@ -102,15 +102,15 @@ func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx context.Context, ru t
 	dctx, cf := context.WithTimeout(ctx, 1*time.Second)
 	defer cf()
 
+	gctx := metadata.NewOutgoingContext(dctx, metadata.Pairs("authorization", g.accessToken))
+
 	errCh := make(chan error, 1)
 	execCh := make(chan struct{}, 1)
 
 	go func() {
-		if _, err = g.msgDispatchCli.ReceiveConsoleResourceUpdate(ctx, &messages.ResourceUpdate{
-			AccountName: g.accountName,
-			ClusterName: g.clusterName,
-			AccessToken: g.accessToken,
-			Message:     b,
+		if _, err = g.msgDispatchCli.ReceiveConsoleResourceUpdate(gctx, &messages.ResourceUpdate{
+			ProtocolVersion: g.messageProtocolVersion,
+			Message:         b,
 		}); err != nil {
 			errCh <- err
 			return
@@ -139,15 +139,15 @@ func (g *grpcMsgSender) DispatchIotConsoleResourceUpdates(ctx context.Context, r
 	dctx, cf := context.WithTimeout(ctx, 1*time.Second)
 	defer cf()
 
+	gctx := metadata.NewOutgoingContext(dctx, metadata.Pairs("authorization", g.accessToken))
+
 	errCh := make(chan error, 1)
 	execCh := make(chan struct{}, 1)
 
 	go func() {
-		if _, err = g.msgDispatchCli.ReceiveIotConsoleResourceUpdate(ctx, &messages.ResourceUpdate{
-			AccountName: g.accountName,
-			ClusterName: g.clusterName,
-			AccessToken: g.accessToken,
-			Message:     b,
+		if _, err = g.msgDispatchCli.ReceiveIotConsoleResourceUpdate(gctx, &messages.ResourceUpdate{
+			ProtocolVersion: g.messageProtocolVersion,
+			Message:         b,
 		}); err != nil {
 			errCh <- err
 			return
@@ -169,10 +169,10 @@ func (g *grpcMsgSender) DispatchIotConsoleResourceUpdates(ctx context.Context, r
 func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env, logger logging.Logger) (MessageSender, error) {
 	msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
 
-	validationOut, err := msgDispatchCli.ValidateAccessToken(ctx, &messages.ValidateAccessTokenIn{
-		AccountName: ev.AccountName,
-		ClusterName: ev.ClusterName,
-		AccessToken: ev.AccessToken,
+	authzGrpcCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", ev.AccessToken))
+
+	validationOut, err := msgDispatchCli.ValidateAccessToken(authzGrpcCtx, &messages.ValidateAccessTokenIn{
+		ProtocolVersion: ev.GrpcMessagesVersion,
 	})
 	if err != nil {
 		return nil, err
@@ -185,10 +185,9 @@ func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env,
 	}
 
 	return &grpcMsgSender{
-		logger:         logger,
-		msgDispatchCli: msgDispatchCli,
-		accountName:    ev.AccountName,
-		clusterName:    ev.ClusterName,
-		accessToken:    ev.AccessToken,
+		logger:                 logger,
+		msgDispatchCli:         msgDispatchCli,
+		accessToken:            ev.AccessToken,
+		messageProtocolVersion: ev.GrpcMessagesVersion,
 	}, nil
 }

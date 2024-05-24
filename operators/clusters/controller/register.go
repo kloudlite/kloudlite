@@ -18,6 +18,7 @@ import (
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
+	"github.com/shamaton/msgpack/v2"
 )
 
 func RegisterInto(mgr operator.Operator) {
@@ -100,10 +101,22 @@ func RegisterInto(mgr operator.Operator) {
 					}()
 				}
 
-				msg, err := json.Marshal(types.ResourceUpdate{
-					AccountName: accountName,
-					ClusterName: clusterName,
-					Object:      m,
+				ru, err := json.Marshal(types.ResourceUpdate{
+					Object: m,
+				})
+				if err != nil {
+					return err
+				}
+
+				// this struct is a look alike for messageOfficeT.ResourceUpdate
+				msg, err := msgpack.Marshal(struct {
+					AccountName   string
+					ClusterName   string
+					WatcherUpdate []byte
+				}{
+					AccountName:   accountName,
+					ClusterName:   clusterName,
+					WatcherUpdate: ru,
 				})
 				if err != nil {
 					return err
