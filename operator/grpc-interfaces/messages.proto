@@ -19,43 +19,49 @@ service MessageDispatchService {
 }
 
 message ValidateAccessTokenIn {
-  string accountName = 1;
-  string clusterName = 2;
-  string accessToken = 3;
+  string protocolVersion = 1;
+  // string accessToken = 2;
 }
 
 message ValidateAccessTokenOut {
-  bool valid = 1;
+  string protocolVersion = 1;
+
+  string accountName = 2;
+  string clusterName = 3;
+
+  bool valid = 4;
 }
 
 message GetAccessTokenIn {
-  string accountName = 1;
-  string clusterName = 2;
-  string clusterToken = 3;
+  string protocolVersion = 1;
+
+  string clusterToken = 2;
 }
 
 message GetAccessTokenOut {
-  string accessToken = 1;
+  string protocolVersion = 1;
+
+  string accountName = 2;
+  string clusterName = 3;
+  string accessToken = 4;
 }
 
 message Action {
-  bytes message = 1;
+  string protocolVersion = 1;
+
+  bytes message = 2;
 }
 
 message ErrorData {
-  string accountName = 1;
-  string clusterName = 2;
-  string accessToken = 3;
+  string protocolVersion = 1;
 
-  bytes message = 4;
+  bytes message = 2;
 }
 
 message ResourceUpdate {
-  string accountName = 1;
-  string clusterName = 2;
-  string accessToken = 3;
+  string protocolVersion = 1;
 
-  bytes message = 4;
+  bytes message = 2;
 }
 
 message PingOutput {
