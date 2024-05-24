@@ -15,7 +15,10 @@ type Env struct {
 
 	ExternalGrpcPort uint16 `env:"EXTERNAL_GRPC_PORT" required:"true"`
 	InternalGrpcPort uint16 `env:"INTERNAL_GRPC_PORT" required:"true"`
-	HttpPort         uint16 `env:"HTTP_PORT" required:"true"`
+
+	GrpcMessageProtocolVersion string `env:"GRPC_MESSAGE_PROTOCOL_VERSION" default:"1"`
+
+	HttpPort uint16 `env:"HTTP_PORT" required:"true"`
 
 	VectorGrpcAddr string `env:"VECTOR_GRPC_ADDR" required:"true"`
 
