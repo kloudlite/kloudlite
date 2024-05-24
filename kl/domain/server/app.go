@@ -41,6 +41,7 @@ type App struct {
 	Metadata    Metadata `json:"metadata"`
 	Spec        AppSpec  `json:"spec"`
 	Status      Status   `json:"status"`
+	IsMainApp   bool     `json:"mapp"`
 }
 
 type AppPort struct {
@@ -104,7 +105,13 @@ func SelectApp(options ...fn.Option) (*App, error) {
 	}
 
 	app, err := fzf.FindOne(a, func(item App) string {
-		return fmt.Sprintf("%s (%s)", item.DisplayName, item.Metadata.Name)
+		return fmt.Sprintf("%s (%s)%s", item.DisplayName, item.Metadata.Name, func() string {
+			if item.IsMainApp {
+				return ""
+			}
+
+			return " [external]"
+		}())
 	}, fzf.WithPrompt("Select App>"))
 	if err != nil {
 		return nil, err
@@ -152,7 +159,7 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 		devName = ctx.DeviceName
 	}
 
-	s, err := EnsureApp(options...)
+	app, err := EnsureApp(options...)
 	if err != nil {
 		return err
 	}
@@ -163,13 +170,10 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 	}
 
 	if len(ports) == 0 {
-
-		fn.Logf("%#v", s)
-
-		if len(s.Spec.Intercept.PortMappings) != 0 {
-			ports = append(ports, s.Spec.Intercept.PortMappings...)
-		} else if len(s.Spec.Services) != 0 {
-			for _, v := range s.Spec.Services {
+		if len(app.Spec.Intercept.PortMappings) != 0 {
+			ports = append(ports, app.Spec.Intercept.PortMappings...)
+		} else if len(app.Spec.Services) != 0 {
+			for _, v := range app.Spec.Services {
 				ports = append(ports, AppPort{
 					AppPort:    v.Port,
 					DevicePort: v.Port,
@@ -213,10 +217,17 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 		fn.PrintError(err)
 	}
 
-	fn.Logf("%#v", ports)
+	if len(ports) == 0 {
+		return fmt.Errorf("no ports provided to intercept")
+	}
 
-	respData, err := klFetch("cli_interceptApp", map[string]any{
-		"appname":      s.Metadata.Name,
+	query := "cli_interceptApp"
+	if !app.IsMainApp {
+		query = "cli_intercepExternalApp"
+	}
+
+	respData, err := klFetch(query, map[string]any{
+		"appName":      app.Metadata.Name,
 		"envName":      envName,
 		"deviceName":   devName,
 		"intercept":    status,

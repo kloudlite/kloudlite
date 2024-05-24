@@ -2,6 +2,7 @@ package intercept
 
 import (
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -20,10 +21,16 @@ Examples:
 
 func init() {
 
-	client.OnlyInsideBox(startCmd)
+	if !flags.IsDev() {
+		client.OnlyInsideBox(startCmd)
+	}
+
 	Cmd.AddCommand(startCmd)
 
-	client.OnlyInsideBox(stopCmd)
+	if !flags.IsDev() {
+		client.OnlyInsideBox(stopCmd)
+	}
+
 	Cmd.AddCommand(stopCmd)
 
 	Cmd.Aliases = append(startCmd.Aliases, "inc")
