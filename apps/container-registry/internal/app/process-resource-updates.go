@@ -16,6 +16,7 @@ import (
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	msgOfficeT "github.com/kloudlite/api/apps/message-office/types"
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,6 +35,12 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 	readMsg := func(msg *msgTypes.ConsumeMsg) error {
 		logger.Debugf("processing msg timestamp %s", msg.Timestamp.Format(time.RFC3339))
 
+		ru, err := msgOfficeT.UnmarshalResourceUpdate(msg.Payload)
+		if err != nil {
+			logger.Errorf(err, "unmarshaling resource update")
+			return nil
+		}
+
 		var su types.ResourceUpdate
 		if err := json.Unmarshal(msg.Payload, &su); err != nil {
 			logger.Errorf(err, "parsing into status update")
@@ -45,7 +52,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 			return nil
 		}
 
-		if len(strings.TrimSpace(su.AccountName)) == 0 {
+		if len(strings.TrimSpace(ru.AccountName)) == 0 {
 			logger.Infof("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}
@@ -53,7 +60,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 		obj := unstructured.Unstructured{Object: su.Object}
 		mLogger := logger.WithKV(
 			"gvk", obj.GetObjectKind().GroupVersionKind(),
-			"accountName/clusterName", fmt.Sprintf("%s/%s", su.AccountName, su.ClusterName),
+			"accountName/clusterName", fmt.Sprintf("%s/%s", ru.AccountName, ru.ClusterName),
 		)
 
 		resStatus, err := func() (types.ResourceStatus, error) {
@@ -79,7 +86,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 			mLogger.Infof("processed message")
 		}()
 
-		dctx := domain.RegistryContext{Context: context.TODO(), UserId: "sys-user-process-infra-updates", AccountName: su.AccountName}
+		dctx := domain.RegistryContext{Context: context.TODO(), UserId: "sys-user-process-infra-updates", AccountName: ru.AccountName}
 
 		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
 
@@ -91,8 +98,8 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 					return err
 				}
 
-				buildRun.AccountName = su.AccountName
-				buildRun.ClusterName = su.ClusterName
+				buildRun.AccountName = ru.AccountName
+				buildRun.ClusterName = ru.ClusterName
 
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnBuildRunDeleteMessage(dctx, buildRun)

@@ -49,9 +49,13 @@ func (c *logger) WithName(name string) Logger {
 }
 
 type Options struct {
-	Name        string
-	Dev         bool
-	CallerTrace bool
+	Name string
+
+	Dev bool // deprecated
+
+	ShowDebugLog    bool
+	ShowTime        bool
+	HideCallerTrace bool
 }
 
 var EmptyLogger *logger
@@ -63,17 +67,19 @@ func New(options *Options) (Logger, error) {
 	}
 
 	cfg := func() zapcore.EncoderConfig {
-		if opts.Dev {
-			cfg := zap.NewDevelopmentEncoderConfig()
-			cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
-			cfg.LineEnding = "\n"
-			cfg.TimeKey = ""
-
-			return cfg
-		}
+		// if opts.Dev {
+		// 	cfg := zap.NewDevelopmentEncoderConfig()
+		// 	cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		// 	cfg.LineEnding = "\n"
+		// 	cfg.TimeKey = ""
+		//
+		// 	return cfg
+		// }
 		pcfg := zap.NewProductionEncoderConfig()
 		pcfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		pcfg.TimeKey = ""
+		if !opts.ShowTime {
+			pcfg.TimeKey = ""
+		}
 		pcfg.LineEnding = "\n"
 		return pcfg
 	}()
@@ -85,18 +91,14 @@ func New(options *Options) (Logger, error) {
 	// }
 
 	loglevel := zapcore.InfoLevel
-	if opts.Dev {
+	if opts.ShowDebugLog {
 		loglevel = zapcore.DebugLevel
 	}
 
 	zapOpts := make([]zap.Option, 0, 3)
 	zapOpts = append(zapOpts, zap.AddStacktrace(zap.DPanicLevel))
 
-	if !opts.Dev {
-		opts.CallerTrace = true
-	}
-
-	if opts.CallerTrace {
+	if !opts.HideCallerTrace {
 		zapOpts = append(zapOpts, zap.AddCaller(), zap.AddCallerSkip(1))
 	}
 
