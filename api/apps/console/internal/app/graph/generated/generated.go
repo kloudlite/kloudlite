@@ -937,7 +937,7 @@ type ManagedResourceResolver interface {
 	UpdateTime(ctx context.Context, obj *entities.ManagedResource) (string, error)
 }
 type MatchFilterResolver interface {
-	MatchType(ctx context.Context, obj *repos.MatchFilter) (string, error)
+	MatchType(ctx context.Context, obj *repos.MatchFilter) (model.GithubComKloudliteAPIPkgReposMatchType, error)
 }
 type MetadataResolver interface {
 	Annotations(ctx context.Context, obj *v13.ObjectMeta) (map[string]interface{}, error)
@@ -1072,7 +1072,7 @@ type ManagedResourceInResolver interface {
 	Spec(ctx context.Context, obj *entities.ManagedResource, data *model.GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn) error
 }
 type MatchFilterInResolver interface {
-	MatchType(ctx context.Context, obj *repos.MatchFilter, data string) error
+	MatchType(ctx context.Context, obj *repos.MatchFilter, data model.GithubComKloudliteAPIPkgReposMatchType) error
 }
 type MetadataInResolver interface {
 	Annotations(ctx context.Context, obj *v13.ObjectMeta, data map[string]interface{}) error
@@ -6054,6 +6054,13 @@ enum Github__com___kloudlite___api___apps___console___internal___entities__PullS
   params
 }
 
+enum Github__com___kloudlite___api___pkg___repos__MatchType {
+  array
+  exact
+  not_in_array
+  regex
+}
+
 enum Github__com___kloudlite___api___pkg___types__SyncAction {
   APPLY
   DELETE
@@ -6460,7 +6467,7 @@ input ManagedResourceKeyValueRefIn {
 	{Name: "../struct-to-graphql/matchfilter.graphqls", Input: `type MatchFilter @shareable {
   array: [Any!]
   exact: Any
-  matchType: String!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
   notInArray: [Any!]
   regex: String
 }
@@ -6468,7 +6475,7 @@ input ManagedResourceKeyValueRefIn {
 input MatchFilterIn {
   array: [Any!]
   exact: Any
-  matchType: String!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
   notInArray: [Any!]
   regex: String
 }
@@ -25331,9 +25338,9 @@ func (ec *executionContext) _MatchFilter_matchType(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(model.GithubComKloudliteAPIPkgReposMatchType)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MatchFilter_matchType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25343,7 +25350,7 @@ func (ec *executionContext) fieldContext_MatchFilter_matchType(ctx context.Conte
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Github__com___kloudlite___api___pkg___repos__MatchType does not have child fields")
 		},
 	}
 	return fc, nil
@@ -40167,7 +40174,7 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchType"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -48852,6 +48859,16 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___api___common__Crea
 	return ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx, sel, &v)
 }
 
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIPkgReposMatchType, error) {
+	var res model.GithubComKloudliteAPIPkgReposMatchType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIPkgReposMatchType) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___types__SyncAction2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncAction(ctx context.Context, v interface{}) (types.SyncAction, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := types.SyncAction(tmp)
@@ -50264,7 +50281,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -50272,7 +50289,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

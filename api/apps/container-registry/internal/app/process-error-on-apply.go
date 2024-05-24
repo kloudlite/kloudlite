@@ -3,8 +3,10 @@ package app
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/kloudlite/api/apps/container-registry/internal/domain"
 
+	msgOfficeT "github.com/kloudlite/api/apps/message-office/types"
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
@@ -20,8 +22,13 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 	processMsg := func(msg *types.ConsumeMsg) error {
 		counter += 1
 
+		em, err := msgOfficeT.UnmarshalErrMessage(msg.Payload)
+		if err != nil {
+			return errors.NewE(err)
+		}
+
 		var errMsg t.AgentErrMessage
-		if err := json.Unmarshal(msg.Payload, &errMsg); err != nil {
+		if err := json.Unmarshal(em.Error, &errMsg); err != nil {
 			return errors.NewE(err)
 		}
 
@@ -44,13 +51,13 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 			UserId:      "sys-user:error-on-apply-worker",
 			UserEmail:   "",
 			UserName:    "",
-			AccountName: errMsg.AccountName,
+			AccountName: em.AccountName,
 		}
 
 		switch obj.GroupVersionKind().String() {
 		case buildRunGVK.String():
 			{
-				return d.OnBuildRunApplyErrorMessage(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error)
+				return d.OnBuildRunApplyErrorMessage(dctx, em.ClusterName, obj.GetName(), errMsg.Error)
 			}
 		default:
 			{
