@@ -61,6 +61,11 @@ func (s *Server) Start() error {
 			w.WriteHeader(http.StatusOK)
 			return
 
+		case "list-proxy-ports":
+			for _, sc := range lports {
+				fmt.Fprintf(w, "ssh [%s] %s\n", sc.SshPort, sc.GetId())
+			}
+
 		case "remove-proxy-by-ssh":
 			var chMsg fwd.StartCh
 			err := json.NewDecoder(req.Body).Decode(&chMsg)

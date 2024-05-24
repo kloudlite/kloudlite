@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/kl/cmd/get"
 	"github.com/kloudlite/kl/cmd/list"
 	"github.com/kloudlite/kl/cmd/packages"
+	"github.com/kloudlite/kl/cmd/port"
 	"github.com/kloudlite/kl/cmd/runner"
 	"github.com/kloudlite/kl/cmd/runner/add"
 	set_base_url "github.com/kloudlite/kl/cmd/set-base-url"
@@ -43,6 +44,8 @@ func init() {
 	rootCmd.AddCommand(set_base_url.Cmd)
 
 	rootCmd.AddCommand(intercept.Cmd)
+
+	rootCmd.AddCommand(port.Cmd)
 
 	rootCmd.AddCommand(add.Command)
 	rootCmd.AddCommand(status.Cmd)

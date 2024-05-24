@@ -187,3 +187,17 @@ func (p *Proxy) RemoveAllFwd(chMsg fwd.StartCh) ([]byte, error) {
 
 	return b, nil
 }
+
+func (p *Proxy) ListPorts(chMsg fwd.StartCh) ([]byte, error) {
+	params, err := json.Marshal(chMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := p.MakeRequest("/list-proxy-ports", params)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
