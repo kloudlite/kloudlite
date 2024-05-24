@@ -8,6 +8,7 @@ service Comms {
   rpc SendAccountMemberInviteEmail(AccountMemberInviteEmailInput) returns (Void);
   rpc SendProjectMemberInviteEmail(ProjectMemberInviteEmailInput) returns (Void);
   rpc SendWelcomeEmail(WelcomeEmailInput) returns (Void);
+  rpc SendWaitingEmail(WelcomeEmailInput) returns (Void);
 }
 
 message VerificationEmailInput{
