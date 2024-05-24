@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/pkg/errors"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
@@ -56,26 +57,28 @@ func (g *grpcHandler) handleErrorOnApply(ctx context.Context, err error, msg t.A
 	}
 
 	_, err = g.msgDispatchCli.ReceiveError(ctx, &messages.ErrorData{
-		AccountName: msg.AccountName,
-		ClusterName: msg.ClusterName,
-		AccessToken: g.ev.AccessToken,
-		Message:     b,
+		ProtocolVersion: g.ev.GrpcMessageProtocolVersion,
+		Message:         b,
 	})
 	return err
 }
 
-func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
+func NewAuthorizedGrpcContext(ctx context.Context, accessToken string) context.Context {
+	return metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", accessToken))
+}
+
+func (g *grpcHandler) handleMessage(gctx context.Context, msg t.AgentMessage) error {
 	g.inMemCounter++
 	ctx, cf := func() (context.Context, context.CancelFunc) {
 		if g.isDev {
-			return context.WithCancel(context.TODO())
+			return context.WithCancel(gctx)
 		}
-		return context.WithTimeout(context.TODO(), 3*time.Second)
+		return context.WithTimeout(gctx, 3*time.Second)
 	}()
 	defer cf()
 
 	if msg.Object == nil {
-		g.logger.Infof("msg.Object is nil, could not process anything out of this kafka message, ignoring ...")
+		g.logger.Infof("msg.Object is nil, could not process anything out of this message, ignoring ...")
 		return nil
 	}
 
@@ -96,8 +99,6 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 				ann = make(map[string]string, 2)
 			}
 
-			ann[constants.ObservabilityAccountNameKey] = g.ev.AccountName
-			ann[constants.ObservabilityClusterNameKey] = g.ev.ClusterName
 			obj.SetAnnotations(ann)
 
 			b, err := yaml.Marshal(msg.Object)
@@ -106,7 +107,6 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 			}
 
 			if _, err := g.yamlClient.ApplyYAML(ctx, b); err != nil {
-				// mLogger.Infof("[%d] [error-on-apply]: %s", g.inMemCounter, err.Error())
 				mLogger.Errorf(err, "[%d] [error-on-apply]: yaml: \n%s\n", g.inMemCounter, b)
 				mLogger.Infof("[%d] failed to process message", g.inMemCounter)
 				return g.handleErrorOnApply(ctx, err, msg)
@@ -152,20 +152,18 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 }
 
 func (g *grpcHandler) ensureAccessToken() error {
-	ctx, cf := context.WithTimeout(context.TODO(), 50*time.Second)
-	defer cf()
 	if g.ev.AccessToken == "" {
 		g.logger.Infof("waiting on clusterToken exchange for accessToken")
 	}
 
-	validationOut, err := g.msgDispatchCli.ValidateAccessToken(ctx, &messages.ValidateAccessTokenIn{
-		AccountName: g.ev.AccountName,
-		ClusterName: g.ev.ClusterName,
-		AccessToken: g.ev.AccessToken,
-	})
+	ctx := NewAuthorizedGrpcContext(context.TODO(), g.ev.AccessToken)
 
-	if err != nil || validationOut == nil || !validationOut.Valid {
-		g.logger.Infof("accessToken is invalid, requesting new accessToken ...")
+	validationOut, err := g.msgDispatchCli.ValidateAccessToken(ctx, &messages.ValidateAccessTokenIn{
+		ProtocolVersion: g.ev.GrpcMessageProtocolVersion,
+	})
+	if err != nil {
+		g.logger.Errorf(err, "validating access token")
+		validationOut = nil
 	}
 
 	if validationOut != nil && validationOut.Valid {
@@ -173,10 +171,11 @@ func (g *grpcHandler) ensureAccessToken() error {
 		return nil
 	}
 
+	g.logger.Infof("accessToken is invalid, requesting new accessToken ...")
+
 	out, err := g.msgDispatchCli.GetAccessToken(ctx, &messages.GetAccessTokenIn{
-		AccountName:  g.ev.AccountName,
-		ClusterName:  g.ev.ClusterName,
-		ClusterToken: g.ev.ClusterToken,
+		ProtocolVersion: g.ev.GrpcMessageProtocolVersion,
+		ClusterToken:    g.ev.ClusterToken,
 	})
 	if err != nil {
 		return errors.NewE(err)
@@ -193,6 +192,8 @@ func (g *grpcHandler) ensureAccessToken() error {
 		s.Data = make(map[string][]byte, 1)
 	}
 	s.Data["ACCESS_TOKEN"] = []byte(out.AccessToken)
+	s.Data["ACCOUNT_NAME"] = []byte(out.AccountName)
+	s.Data["CLUSTER_NAME"] = []byte(out.ClusterName)
 	_, err = g.yamlClient.Client().CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Update(context.TODO(), s, metav1.UpdateOptions{})
 	if err != nil {
 		return errors.NewE(err)
@@ -221,13 +222,10 @@ func (g *grpcHandler) ensureAccessToken() error {
 }
 
 func (g *grpcHandler) run() error {
-	ctx, cf := context.WithCancel(context.TODO())
-	defer cf()
-
-	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", g.ev.AccessToken))
+	ctx := NewAuthorizedGrpcContext(context.TODO(), g.ev.AccessToken)
 
 	g.logger.Infof("asking message office to start sending actions")
-	msgActionsCli, err := g.msgDispatchCli.SendActions(outgoingCtx, &messages.Empty{})
+	msgActionsCli, err := g.msgDispatchCli.SendActions(ctx, &messages.Empty{})
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -241,6 +239,10 @@ func (g *grpcHandler) run() error {
 		var msg t.AgentMessage
 		a, err := msgActionsCli.Recv()
 		if err != nil {
+			if status.Code(err) == codes.Unavailable {
+				g.logger.Infof("server unavailable, (may be, Gateway Timed Out 504), reconnecting ...")
+				return nil
+			}
 			g.logger.Errorf(err, "[ERROR] while receiving message")
 			return errors.NewE(err)
 		}
@@ -250,7 +252,7 @@ func (g *grpcHandler) run() error {
 			return errors.NewE(err)
 		}
 
-		if err := g.handleMessage(msg); err != nil {
+		if err := g.handleMessage(ctx, msg); err != nil {
 			g.logger.Errorf(err, "[ERROR] while handling message")
 			return errors.NewE(err)
 		}
@@ -292,8 +294,6 @@ func main() {
 		realVectorClient: nil,
 		logger:           logger,
 		accessToken:      ev.AccessToken,
-		accountName:      ev.AccountName,
-		clusterName:      ev.ClusterName,
 	}
 
 	gs := libGrpc.NewGrpcServer(libGrpc.GrpcServerOpts{Logger: logger})
