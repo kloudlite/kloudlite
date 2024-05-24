@@ -22,6 +22,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/profile v1.7.0
 	github.com/seancfoley/ipaddress-go v1.5.4
+	github.com/shamaton/msgpack/v2 v2.2.0
 	github.com/twmb/franz-go v1.14.4
 	github.com/urfave/cli/v2 v2.25.7
 	github.com/yext/yerrors v0.0.0-20230716030415-7ebf68e23868

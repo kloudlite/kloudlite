@@ -37,8 +37,12 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: App
-  path: github.com/kloudlite/operator/api/v1
+  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
+  webhooks:
+    defaulting: true
+    validation: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
