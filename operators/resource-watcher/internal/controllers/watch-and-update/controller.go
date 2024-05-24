@@ -81,12 +81,10 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 	gvk := newGVK(obj.GetAPIVersion(), obj.GetKind())
 
 	switch gvk.String() {
-	case ProjectGVK.String(), AppGVK.String(), EnvironmentGVK.String(), RouterGVK.String(), ConfigmapGVK.String():
+	case ProjectGVK.String(), AppGVK.String(), ExternalAppGVK.String(), EnvironmentGVK.String(), RouterGVK.String(), ConfigmapGVK.String():
 		{
 			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
+				Object: obj.Object,
 			})
 		}
 
@@ -95,25 +93,19 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			// we can also have BYOKCluster kubeconfig secret, which needs to be send to `kloudlite-infra`
 			if v, ok := obj.GetAnnotations()[DispatchToKloudliteInfra]; ok && v == "true" {
 				return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-					ClusterName: r.Env.ClusterName,
-					AccountName: r.Env.AccountName,
-					Object:      obj.Object,
+					Object: obj.Object,
 				})
 			}
 
 			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
+				Object: obj.Object,
 			})
 		}
 
 	case BlueprintGVK.String():
 		{
 			return r.MsgSender.DispatchIotConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
+				Object: obj.Object,
 			})
 		}
 
@@ -135,9 +127,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
+				Object: obj.Object,
 			})
 		}
 
@@ -159,9 +149,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
+				Object: obj.Object,
 			})
 		}
 
@@ -183,18 +171,14 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
+				Object: obj.Object,
 			})
 		}
 
 	case BuildRunGVK.String():
 		{
 			return r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
+				Object: obj.Object,
 			})
 		}
 
@@ -219,9 +203,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
+				Object: obj.Object,
 			})
 		}
 
@@ -247,9 +229,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
+				Object: obj.Object,
 			})
 		}
 
@@ -257,9 +237,9 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 		{
 			// dispatch to infra
 			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
+				// ClusterName: r.Env.ClusterName,
+				// AccountName: r.Env.AccountName,
+				Object: obj.Object,
 			})
 		}
 
@@ -378,8 +358,9 @@ func newGVK(apiVersion, kind string) GVK {
 }
 
 var (
-	ProjectGVK = newGVK("crds.kloudlite.io/v1", "Project")
-	AppGVK     = newGVK("crds.kloudlite.io/v1", "App")
+	ProjectGVK     = newGVK("crds.kloudlite.io/v1", "Project")
+	AppGVK         = newGVK("crds.kloudlite.io/v1", "App")
+	ExternalAppGVK = newGVK("crds.kloudlite.io/v1", "ExternalApp")
 
 	// ManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ManagedService")
 	BlueprintGVK             = newGVK("crds.kloudlite.io/v1", "Blueprint")
@@ -409,7 +390,7 @@ var (
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name).WithKV("accountName", r.Env.AccountName).WithKV("clusterName", r.Env.ClusterName)
+	r.logger = logger.WithName(r.Name)
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&corev1.Node{})
@@ -417,6 +398,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	watchList := []GVK{
 		ProjectGVK,
 		AppGVK,
+		ExternalAppGVK,
 		ManagedResourceGVK,
 		EnvironmentGVK,
 		RouterGVK,
