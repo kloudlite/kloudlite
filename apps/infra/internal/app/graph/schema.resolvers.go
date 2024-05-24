@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -491,7 +490,7 @@ func (r *queryResolver) InfraGetBYOKCluster(ctx context.Context, name string) (*
 }
 
 // InfratGetBYOKClusterSetupInstructions is the resolver for the infrat_getBYOKClusterSetupInstructions field.
-func (r *queryResolver) InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) (*string, error) {
+func (r *queryResolver) InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) ([]string, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -1104,17 +1103,5 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *queryResolver) InfratGetBYOKSetupInstructions(ctx context.Context, name string) (*string, error) {
-	panic(fmt.Errorf("not implemented: InfratGetBYOKSetupInstructions - infrat_getBYOKSetupInstructions"))
-}
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

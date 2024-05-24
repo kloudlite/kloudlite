@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/pkg/errors"
 	"go.uber.org/fx"
 
@@ -47,6 +48,17 @@ func (d *domain) getClusterToken(ctx context.Context, accountName string, cluste
 		return "", nil
 	}
 	return mot.Token, nil
+}
+
+func (d *domain) FindClusterToken(ctx context.Context, clusterToken string) (*MessageOfficeToken, error) {
+	if clusterToken == "" {
+		return nil, errors.Newf("clusterToken cannot be empty")
+	}
+	mot, err := d.moRepo.FindOne(ctx, repos.Filter{"token": clusterToken})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return mot, nil
 }
 
 func (d *domain) GetClusterToken(ctx context.Context, accountName string, clusterName string) (string, error) {

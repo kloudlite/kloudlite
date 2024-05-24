@@ -1336,6 +1336,13 @@ input MetadataIn {
   namespace: String
 }
 
+enum Github__com___kloudlite___api___pkg___repos__MatchType {
+  array
+  exact
+  not_in_array
+  regex
+}
+
 enum Github__com___kloudlite___api___pkg___types__SyncAction {
   APPLY
   DELETE

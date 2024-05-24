@@ -9,16 +9,17 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
 // MatchType is the resolver for the matchType field.
-func (r *matchFilterResolver) MatchType(ctx context.Context, obj *repos.MatchFilter) (string, error) {
+func (r *matchFilterResolver) MatchType(ctx context.Context, obj *repos.MatchFilter) (model.GithubComKloudliteAPIPkgReposMatchType, error) {
 	panic(fmt.Errorf("not implemented: MatchType - matchType"))
 }
 
 // MatchType is the resolver for the matchType field.
-func (r *matchFilterInResolver) MatchType(ctx context.Context, obj *repos.MatchFilter, data string) error {
+func (r *matchFilterInResolver) MatchType(ctx context.Context, obj *repos.MatchFilter, data model.GithubComKloudliteAPIPkgReposMatchType) error {
 	panic(fmt.Errorf("not implemented: MatchType - matchType"))
 }
 
