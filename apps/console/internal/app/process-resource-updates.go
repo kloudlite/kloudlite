@@ -8,6 +8,7 @@ import (
 
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	msgOfficeT "github.com/kloudlite/api/apps/message-office/types"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/logging"
@@ -61,18 +62,24 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		counter += 1
 		logger.Debugf("[%d] received message", counter)
 
-		var ru types.ResourceUpdate
-		if err := json.Unmarshal(msg.Payload, &ru); err != nil {
-			logger.Errorf(err, "parsing into status update")
+		ru, err := msgOfficeT.UnmarshalResourceUpdate(msg.Payload)
+		if err != nil {
+			logger.Errorf(err, "unmarshaling resource update")
 			return nil
 		}
 
-		if ru.Object == nil {
+		var rwu types.ResourceUpdate
+		if err := json.Unmarshal(ru.WatcherUpdate, &rwu); err != nil {
+			logger.Errorf(err, "unmarshaling into resource watcher update")
+			return nil
+		}
+
+		if rwu.Object == nil {
 			logger.Infof("msg.Object is nil, so could not extract any info from message, ignoring ...")
 			return nil
 		}
 
-		obj := unstructured.Unstructured{Object: ru.Object}
+		obj := unstructured.Unstructured{Object: rwu.Object}
 
 		mLogger := logger.WithKV(
 			"gvk", obj.GetObjectKind().GroupVersionKind(),
@@ -101,7 +108,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
 
 		resStatus, err := func() (types.ResourceStatus, error) {
-			v, ok := ru.Object[types.ResourceStatusKey]
+			v, ok := rwu.Object[types.ResourceStatusKey]
 			if !ok {
 				return "", errors.NewE(fmt.Errorf("field %s not found in object", types.ResourceStatusKey))
 			}
@@ -122,12 +129,12 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		case deviceGVK.String():
 			{
 
-				dev, err := fn.JsonConvert[entities.ConsoleVPNDevice](ru.Object)
+				dev, err := fn.JsonConvert[entities.ConsoleVPNDevice](rwu.Object)
 				if err != nil {
 					return errors.NewE(err)
 				}
 
-				if v, ok := ru.Object[types.KeyVPNDeviceConfig]; ok {
+				if v, ok := rwu.Object[types.KeyVPNDeviceConfig]; ok {
 					b, err := json.Marshal(v)
 					if err != nil {
 						return errors.NewE(err)
@@ -191,7 +198,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		case environmentGVK.String():
 			{
 				var ws entities.Environment
-				if err := fn.JsonConversion(ru.Object, &ws); err != nil {
+				if err := fn.JsonConversion(rwu.Object, &ws); err != nil {
 					return errors.NewE(err)
 				}
 
@@ -203,7 +210,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		case appsGVK.String():
 			{
 				var app entities.App
-				if err := fn.JsonConversion(ru.Object, &app); err != nil {
+				if err := fn.JsonConversion(rwu.Object, &app); err != nil {
 					return errors.NewE(err)
 				}
 
@@ -220,7 +227,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		case externalAppsGVK.String():
 			{
 				var extApp entities.ExternalApp
-				if err := fn.JsonConversion(ru.Object, &extApp); err != nil {
+				if err := fn.JsonConversion(rwu.Object, &extApp); err != nil {
 					return errors.NewE(err)
 				}
 
@@ -237,7 +244,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		case configGVK.String():
 			{
 				var config entities.Config
-				if err := fn.JsonConversion(ru.Object, &config); err != nil {
+				if err := fn.JsonConversion(rwu.Object, &config); err != nil {
 					return errors.NewE(err)
 				}
 
@@ -254,7 +261,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		case secretGVK.String():
 			{
 				var secret entities.Secret
-				if err := fn.JsonConversion(ru.Object, &secret); err != nil {
+				if err := fn.JsonConversion(rwu.Object, &secret); err != nil {
 					return errors.NewE(err)
 				}
 
@@ -283,7 +290,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		case routerGVK.String():
 			{
 				var router entities.Router
-				if err := fn.JsonConversion(ru.Object, &router); err != nil {
+				if err := fn.JsonConversion(rwu.Object, &router); err != nil {
 					return errors.NewE(err)
 				}
 
@@ -300,7 +307,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		case managedResourceGVK.String():
 			{
 				var mres entities.ManagedResource
-				if err := fn.JsonConversion(ru.Object, &mres); err != nil {
+				if err := fn.JsonConversion(rwu.Object, &mres); err != nil {
 					return errors.NewE(err)
 				}
 
@@ -309,7 +316,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				if v, ok := ru.Object[types.KeyManagedResSecret]; ok {
+				if v, ok := rwu.Object[types.KeyManagedResSecret]; ok {
 					s, err := fn.JsonConvertP[corev1.Secret](v)
 					if err != nil {
 						mLogger.Infof("managed resource, invalid output secret received")
