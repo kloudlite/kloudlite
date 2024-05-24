@@ -6042,6 +6042,10 @@ query authCli_listApps($envName: String!) {
           intercept {
             enabled
             toDevice
+            portMappings {
+              appPort
+              devicePort
+            }
           }
           nodeSelector
           replicas

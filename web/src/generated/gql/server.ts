@@ -7594,7 +7594,11 @@ export type AuthCli_ListAppsQuery = {
               type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
             }>;
           }>;
-          intercept?: { enabled: boolean; toDevice: string };
+          intercept?: {
+            enabled: boolean;
+            toDevice: string;
+            portMappings?: Array<{ appPort: number; devicePort: number }>;
+          };
           services?: Array<{ port: number }>;
         };
         status?: {
