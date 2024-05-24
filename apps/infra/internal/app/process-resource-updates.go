@@ -22,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	msgOfficeT "github.com/kloudlite/api/apps/message-office/types"
 	networkingv1 "k8s.io/api/networking/v1"
 )
 
@@ -34,8 +35,6 @@ func gvk(obj client.Object) string {
 
 var (
 	clusterGVK = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
-	// clusterConnGVK      = fn.GVK("wireguard.kloudlite.io/v1", "ClusterConnection")
-	// globalVpnGVK        = fn.GVK("wireguard.kloudlite.io/v1", "GlobalVPNConnection")
 	globalVpnGVK        = fn.GVK("wireguard.kloudlite.io/v1", "GlobalVPN")
 	nodepoolGVK         = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
 	helmreleaseGVK      = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
@@ -52,8 +51,14 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 	readMsg := func(msg *msgTypes.ConsumeMsg) error {
 		logger.Debugf("processing msg timestamp %s", msg.Timestamp.Format(time.RFC3339))
 
+		ru, err := msgOfficeT.UnmarshalResourceUpdate(msg.Payload)
+		if err != nil {
+			logger.Errorf(err, "unmarshaling resource update")
+			return nil
+		}
+
 		var su types.ResourceUpdate
-		if err := json.Unmarshal(msg.Payload, &su); err != nil {
+		if err := json.Unmarshal(ru.WatcherUpdate, &su); err != nil {
 			logger.Errorf(err, "parsing into status update")
 			return nil
 		}
@@ -63,12 +68,12 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 			return nil
 		}
 
-		if len(strings.TrimSpace(su.AccountName)) == 0 {
+		if len(strings.TrimSpace(ru.AccountName)) == 0 {
 			logger.Infof("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}
 
-		dctx := domain.InfraContext{Context: context.TODO(), UserId: "sys-user-process-infra-updates", AccountName: su.AccountName}
+		dctx := domain.InfraContext{Context: context.TODO(), UserId: "sys-user-process-infra-updates", AccountName: ru.AccountName}
 
 		obj := unstructured.Unstructured{Object: su.Object}
 		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
@@ -93,7 +98,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 			"gvk", obj.GetObjectKind().GroupVersionKind(),
 			"NN", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
 			"resource-status", resStatus,
-			"accountName/clusterName", fmt.Sprintf("%s/%s", su.AccountName, su.ClusterName),
+			"accountName/clusterName", fmt.Sprintf("%s/%s", ru.AccountName, ru.ClusterName),
 		)
 
 		mLogger.Infof("received message")
@@ -130,9 +135,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnGlobalVPNConnectionDeleteMessage(dctx, su.ClusterName, gvpn)
+					return d.OnGlobalVPNConnectionDeleteMessage(dctx, ru.ClusterName, gvpn)
 				}
-				return d.OnGlobalVPNConnectionUpdateMessage(dctx, su.ClusterName, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnGlobalVPNConnectionUpdateMessage(dctx, ru.ClusterName, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case nodepoolGVK.String():
 			{
@@ -142,9 +147,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnNodePoolDeleteMessage(dctx, su.ClusterName, np)
+					return d.OnNodePoolDeleteMessage(dctx, ru.ClusterName, np)
 				}
-				return d.OnNodePoolUpdateMessage(dctx, su.ClusterName, np, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnNodePoolUpdateMessage(dctx, ru.ClusterName, np, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case pvcGVK.String():
 			{
@@ -154,9 +159,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnPVCDeleteMessage(dctx, su.ClusterName, pvc)
+					return d.OnPVCDeleteMessage(dctx, ru.ClusterName, pvc)
 				}
-				return d.OnPVCUpdateMessage(dctx, su.ClusterName, pvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnPVCUpdateMessage(dctx, ru.ClusterName, pvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		case pvGVK.String():
@@ -167,9 +172,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnPVDeleteMessage(dctx, su.ClusterName, pv)
+					return d.OnPVDeleteMessage(dctx, ru.ClusterName, pv)
 				}
-				return d.OnPVUpdateMessage(dctx, su.ClusterName, pv, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnPVUpdateMessage(dctx, ru.ClusterName, pv, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		case volumeAttachmentGVK.String():
@@ -180,9 +185,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnVolumeAttachmentDeleteMessage(dctx, su.ClusterName, volatt)
+					return d.OnVolumeAttachmentDeleteMessage(dctx, ru.ClusterName, volatt)
 				}
-				return d.OnVolumeAttachmentUpdateMessage(dctx, su.ClusterName, volatt, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnVolumeAttachmentUpdateMessage(dctx, ru.ClusterName, volatt, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		case helmreleaseGVK.String():
@@ -193,9 +198,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnHelmReleaseDeleteMessage(dctx, su.ClusterName, hr)
+					return d.OnHelmReleaseDeleteMessage(dctx, ru.ClusterName, hr)
 				}
-				return d.OnHelmReleaseUpdateMessage(dctx, su.ClusterName, hr, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnHelmReleaseUpdateMessage(dctx, ru.ClusterName, hr, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		case namespaceGVK.String():
@@ -207,9 +212,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnNamespaceDeleteMessage(dctx, su.ClusterName, ns)
+					return d.OnNamespaceDeleteMessage(dctx, ru.ClusterName, ns)
 				}
-				return d.OnNamespaceUpdateMessage(dctx, su.ClusterName, ns, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnNamespaceUpdateMessage(dctx, ru.ClusterName, ns, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		case clusterMsvcGVK.String():
@@ -226,9 +231,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnClusterManagedServiceDeleteMessage(dctx, su.ClusterName, cmsvc)
+					return d.OnClusterManagedServiceDeleteMessage(dctx, ru.ClusterName, cmsvc)
 				}
-				return d.OnClusterManagedServiceUpdateMessage(dctx, su.ClusterName, cmsvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnClusterManagedServiceUpdateMessage(dctx, ru.ClusterName, cmsvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		case ingressGVK.String():
@@ -239,9 +244,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnIngressDeleteMessage(dctx, su.ClusterName, ingress)
+					return d.OnIngressDeleteMessage(dctx, ru.ClusterName, ingress)
 				}
-				return d.OnIngressUpdateMessage(dctx, su.ClusterName, ingress, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnIngressUpdateMessage(dctx, ru.ClusterName, ingress, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		case secretGVK.String():
@@ -259,7 +264,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 					// FIXME: not implemented for now
 					return nil
 				}
-				return d.UpsertBYOKClusterKubeconfig(dctx, su.ClusterName, secret.Data["kubeconfig"])
+				return d.UpsertBYOKClusterKubeconfig(dctx, ru.ClusterName, secret.Data["kubeconfig"])
 			}
 		default:
 			{

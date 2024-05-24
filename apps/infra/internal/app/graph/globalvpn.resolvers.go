@@ -6,10 +6,12 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
@@ -32,12 +34,22 @@ func (r *globalVPNResolver) ID(ctx context.Context, obj *entities.GlobalVPN) (re
 	return obj.Id, nil
 }
 
+// KloudliteDevice is the resolver for the kloudliteDevice field.
+func (r *globalVPNResolver) KloudliteDevice(ctx context.Context, obj *entities.GlobalVPN) (*model.GlobalVPNKloudliteDevice, error) {
+	panic(fmt.Errorf("not implemented: KloudliteDevice - kloudliteDevice"))
+}
+
 // UpdateTime is the resolver for the updateTime field.
 func (r *globalVPNResolver) UpdateTime(ctx context.Context, obj *entities.GlobalVPN) (string, error) {
 	if obj == nil {
 		return "", errors.Newf("cluster is nil")
 	}
 	return obj.UpdateTime.Format(time.RFC3339), nil
+}
+
+// KloudliteDevice is the resolver for the kloudliteDevice field.
+func (r *globalVPNInResolver) KloudliteDevice(ctx context.Context, obj *entities.GlobalVPN, data *model.GlobalVPNKloudliteDeviceIn) error {
+	panic(fmt.Errorf("not implemented: KloudliteDevice - kloudliteDevice"))
 }
 
 // Metadata is the resolver for the metadata field.
