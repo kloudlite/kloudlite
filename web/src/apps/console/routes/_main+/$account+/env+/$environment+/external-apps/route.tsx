@@ -11,6 +11,7 @@ import { IRemixCtx } from '~/lib/types/common';
 import { clearAppState } from '~/console/page-components/app-states';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
+import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
 import ExternalNameResource from './external-app-resource';
 import HandleExternalApp from './handle-external-app';
@@ -49,9 +50,10 @@ const ExternalApp = () => {
     <>
       <LoadingComp
         data={promise}
-        // skeletonData={{
-        //   externalAppsData: fake.ConsoleListAppsQuery.core_listApps as any,
-        // }}
+        skeletonData={{
+          externalAppsData: fake.ConsoleListExternalAppsQuery
+            .core_listExternalApps as any,
+        }}
       >
         {({ externalAppsData }) => {
           const externalApps = parseNodes(externalAppsData);

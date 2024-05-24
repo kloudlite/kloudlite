@@ -1,14 +1,15 @@
 import { ReactNode, useEffect, useState } from 'react';
 import AnimateHide from '~/components/atoms/animate-hide';
 import { Button, IconButton } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
+import { NumberInput, TextInput } from '~/components/atoms/input';
 import { cn, uuid } from '~/components/utils';
 import { MinusCircle, Plus } from '~/console/components/icons';
 
 interface IKeyValuePair {
   onChange?(
     itemArray: Array<Record<string, any>>,
-    itemObject: Record<string, any>
+    itemObject: Record<string, any>,
+    itemArrayWithoutId: Array<Record<string, any>>
   ): void;
   value?: Array<Record<string, any>>;
   label?: ReactNode;
@@ -16,6 +17,9 @@ interface IKeyValuePair {
   error?: boolean;
   size?: 'lg' | 'md';
   addText?: string;
+  keyLabel?: string;
+  valueLabel?: string;
+  type?: 'number' | 'text';
 }
 const KeyValuePair = ({
   onChange,
@@ -25,42 +29,62 @@ const KeyValuePair = ({
   error,
   size,
   addText,
+  keyLabel = 'key',
+  valueLabel = 'value',
+  type = 'text',
 }: IKeyValuePair) => {
-  const newItem = [{ key: '', value: '', id: uuid() }];
+  const newItem = [{ [keyLabel]: '', [valueLabel]: '', id: uuid() }];
   const [items, setItems] = useState<Array<Record<string, any>>>(newItem);
 
-  const handleChange = (_value = '', id = '', target = {}) => {
-    setItems(
-      items.map((i) => {
-        if (i.id === id) {
-          switch (target) {
-            case 'key':
-              return { ...i, key: _value };
-            case 'value':
-            default:
-              return { ...i, value: _value };
-          }
-        }
-        return i;
-      })
-    );
-  };
+  const handleChange = (
+    _value: string | number,
+    id: string | number,
+    target = {}
+  ) => {
+    console.log(typeof _value, id);
 
-  useEffect(() => {
-    const formatItems = items.reduce((acc, curr) => {
+    const tempItems = items.map((i) => {
+      if (i.id === id) {
+        switch (target) {
+          case 'key':
+            return { ...i, [keyLabel]: _value };
+
+          case 'value':
+          default:
+            return { ...i, [valueLabel]: _value };
+        }
+      }
+      return i;
+    });
+
+    const formatItems = tempItems.reduce((acc, curr) => {
       if (curr.key && curr.value) {
         acc[curr.key] = curr.value;
       }
       return acc;
     }, {});
-    if (onChange) onChange(Array.from(items), formatItems);
-  }, [items]);
+
+    const x = JSON.parse(JSON.stringify(tempItems));
+    const withoutId = x.map((i: any) => {
+      delete i.id;
+      return i;
+    });
+
+    if (onChange) onChange(Array.from(tempItems), formatItems, withoutId);
+  };
 
   useEffect(() => {
-    if (value.length > 0) {
-      setItems(Array.from(value).map((v) => ({ ...v, id: uuid() })));
+    if (value && value.length === 0) {
+      setItems(newItem);
+      return;
     }
-  }, []);
+    setItems(
+      Array.from(value || newItem).map((v) => ({
+        ...v,
+        id: v.id ? v.id : uuid(),
+      }))
+    );
+  }, [value]);
 
   return (
     <div className="flex flex-col">
@@ -72,26 +96,52 @@ const KeyValuePair = ({
           {items.map((item) => (
             <div key={item.id} className="flex flex-row gap-xl items-start">
               <div className="flex-1">
-                <TextInput
-                  size={size || 'md'}
-                  error={error}
-                  placeholder="Key"
-                  value={item.key}
-                  onChange={({ target }) =>
-                    handleChange(target.value, item.id, 'key')
-                  }
-                />
+                {type === 'text' && (
+                  <TextInput
+                    size={size || 'md'}
+                    error={error}
+                    placeholder="Key"
+                    value={item[keyLabel]}
+                    onChange={({ target }) =>
+                      handleChange(target.value, item.id, 'key')
+                    }
+                  />
+                )}
+                {type === 'number' && (
+                  <NumberInput
+                    size={size || 'md'}
+                    error={error}
+                    placeholder="Key"
+                    value={item[keyLabel]}
+                    onChange={({ target }) =>
+                      handleChange(parseInt(target.value, 10), item.id, 'key')
+                    }
+                  />
+                )}
               </div>
               <div className="flex-1">
-                <TextInput
-                  size={size || 'md'}
-                  error={error}
-                  placeholder="Value"
-                  value={item.value}
-                  onChange={({ target }) =>
-                    handleChange(target.value, item.id, 'value')
-                  }
-                />
+                {type === 'text' && (
+                  <TextInput
+                    size={size || 'md'}
+                    error={error}
+                    placeholder="Value"
+                    value={item[valueLabel]}
+                    onChange={({ target }) =>
+                      handleChange(target.value, item.id, 'value')
+                    }
+                  />
+                )}
+                {type === 'number' && (
+                  <NumberInput
+                    size={size || 'md'}
+                    error={error}
+                    placeholder="Value"
+                    value={item[valueLabel]}
+                    onChange={({ target }) =>
+                      handleChange(parseInt(target.value, 10), item.id, 'value')
+                    }
+                  />
+                )}
               </div>
               <div className="self-center">
                 <IconButton

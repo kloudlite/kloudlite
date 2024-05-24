@@ -11,7 +11,7 @@ import {
 } from '~/console/server/r-utils/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import Select from '~/components/atoms/select';
 import { mapper } from '~/components/utils';
 import { useOutletContext } from '@remix-run/react';
@@ -19,9 +19,7 @@ import { ISetState } from '~/console/page-components/app-states';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { IExternalApps } from '~/console/server/gql/queries/external-app-queries';
 import { IEnvironmentContext } from '../_layout';
-import ExposedExternalAppPortList, {
-  exposedExternalAppPortsType,
-} from './external-app-network';
+import ExposedExternalAppPortList from './external-app-network';
 // import ExposedPortList, { exposedPortsType } from './network';
 
 type IDialog = {
@@ -49,86 +47,51 @@ const Root = (props: IDialog) => {
 
   const devices = useCallback(() => parseNodes(dData), [dData])();
 
-  const [ports, setPorts] = useState<exposedExternalAppPortsType[]>([]);
-
-  useEffect(() => {
-    if (app) {
-      setPorts(
-        app.spec?.intercept?.portMappings?.map((s) => {
-          return {
-            appPort: s.appPort,
-            devicePort: s.devicePort,
-          };
-        }) || []
-        // app.spec?.services?.map((s) => {
-        //   return {
-        //     appPort: s.port,
-        //     devicePort:
-        //       app.spec.intercept?.portMappings?.find(
-        //         (v) => v.appPort === s.port
-        //       )?.devicePort || s.port,
-        //   };
-        // }) || []
-      );
-    }
-  }, [app]);
-
   const reloadPage = useReload();
 
-  const {
-    values,
-    errors,
-    handleSubmit,
-    handleChange,
-    isLoading,
-    resetValues,
-    setValues,
-  } = useForm({
-    initialValues: app
-      ? {
-          deviceName: app.spec?.intercept?.toDevice || '',
-        }
-      : {},
-    validationSchema: Yup.object({
-      deviceName: Yup.string().required(),
-    }),
+  const { values, errors, handleSubmit, handleChange, isLoading, resetValues } =
+    useForm({
+      initialValues: app
+        ? {
+            deviceName: app.spec?.intercept?.toDevice || '',
+            appPorts: [],
+            appPortsTemp: [],
+          }
+        : {},
+      validationSchema: Yup.object({
+        deviceName: Yup.string().required(),
+      }),
 
-    onSubmit: async (val) => {
-      if (!val.deviceName) {
-        return;
-      }
-
-      const appName = parseName(app);
-      if (!appName) {
-        toast.error('app is not provided');
-        return;
-      }
-      try {
-        const { errors: e } = await api.interceptExternalApp({
-          deviceName: val.deviceName,
-          intercept: true,
-          envName: parseName(environment),
-          externalAppName: parseName(app),
-          portMappings: ports,
-        });
-        if (e) {
-          throw e[0];
+      onSubmit: async (val) => {
+        if (!val.deviceName) {
+          return;
         }
 
-        reloadPage();
-        setVisible(false);
-        toast.success('External App Intercepted successfully');
-      } catch (err) {
-        handleError(err);
-      }
-    },
-  });
+        const appName = parseName(app);
+        if (!appName) {
+          toast.error('app is not provided');
+          return;
+        }
+        try {
+          const { errors: e } = await api.interceptExternalApp({
+            deviceName: val.deviceName,
+            intercept: true,
+            envName: parseName(environment),
+            externalAppName: parseName(app),
+            portMappings: val.appPorts,
+          });
+          if (e) {
+            throw e[0];
+          }
 
-  useEffect(() => {
-    if (devices.length) {
-      setValues((v) => ({ ...v, deviceName: parseName(devices[0]) }));
-    }
-  }, [dData]);
+          reloadPage();
+          setVisible(false);
+          toast.success('External App Intercepted successfully');
+        } catch (err) {
+          handleError(err);
+        }
+      },
+    });
 
   useEffect(() => {
     resetValues();
@@ -162,8 +125,8 @@ const Root = (props: IDialog) => {
           />
 
           <ExposedExternalAppPortList
-            setExposedPorts={setPorts}
-            exposedPorts={ports}
+            values={values}
+            handleChange={handleChange}
           />
         </div>
       </Popup.Content>

@@ -69,6 +69,17 @@ const Root = (props: IDialog) => {
       validationSchema: Yup.object({
         name: Yup.string().required('id is required'),
         displayName: Yup.string().required('name is required'),
+        record: Yup.string()
+          .required()
+          .when(['recordType'], ([recordType], schema) => {
+            if (recordType === 'IPAddr') {
+              return schema.matches(
+                /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+                'Please enter valid ip address'
+              );
+            }
+            return schema;
+          }),
       }),
       onSubmit: async (val) => {
         try {
@@ -146,6 +157,8 @@ const Root = (props: IDialog) => {
             placeholder="record"
             value={values.record}
             onChange={handleChange('record')}
+            error={!!errors.record}
+            message={errors.record}
           />
         </div>
       </Popup.Content>
