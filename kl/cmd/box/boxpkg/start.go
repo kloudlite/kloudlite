@@ -191,11 +191,11 @@ func (c *client) Start() error {
 			"-e", fmt.Sprintf("HOST_IP=%s", GetDockerHostIp()),
 			"--add-host=box:127.0.0.1",
 			"-p", fmt.Sprintf("%d:%d", sshPort, sshPort),
-			ImageName, "--", string(conf),
+			GetImageName(), "--", string(conf),
 		}...)
 
 		if err := c.runContainer(ContainerConfig{
-			imageName: ImageName,
+			imageName: GetImageName(),
 			Name:      c.containerName,
 			trackLogs: true,
 			labels: map[string]string{

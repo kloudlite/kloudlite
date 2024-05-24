@@ -75,7 +75,7 @@ func init() {
 	startCmd.Flags().StringP("app", "a", "", "app name")
 	startCmd.Flags().StringArrayP(
 		"port", "p", []string{},
-		"expose port <server_port>:<local_port>",
+		"expose port <server_port>:<local_port> while intercepting app",
 	)
 
 	startCmd.Aliases = append(startCmd.Aliases, "add", "begin", "connect")

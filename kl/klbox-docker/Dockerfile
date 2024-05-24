@@ -44,14 +44,16 @@ RUN mkdir -m 0755 /nix && chown kl /nix
 USER kl
 RUN curl -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-profile
 
-RUN curl -fsSL https://get.jetify.com/devbox > /tmp/devbox.sh && chmod +x /tmp/devbox.sh && sudo /tmp/devbox.sh -f && rm /tmp/devbox.sh && sudo chown kl:kl /usr/local/bin/devbox
-
 USER root
+
+RUN curl -fsSL https://get.jetify.com/devbox > /tmp/devbox.sh && chmod +x /tmp/devbox.sh 
+RUN /tmp/devbox.sh -f && rm /tmp/devbox.sh && sudo chown kl:kl /usr/local/bin/devbox
 
 # COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
 
-RUN mkdir -p /home/kl/.config/nix && echo "experimental-features = nix-command flakes" > /home/kl/.config/nix/nix.conf
-RUN chown -R kl:kl /home/kl/.config
+# RUN mkdir -p /home/kl/.config/nix
+# && echo "experimental-features = nix-command flakes" > /home/kl/.config/nix/nix.conf
+# RUN chown -R kl:kl /home/kl/.config
 
 RUN cp /etc/ssl/certs/ca-certificates.crt /no-cert-file.crt
 
