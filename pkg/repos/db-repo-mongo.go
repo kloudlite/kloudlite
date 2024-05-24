@@ -653,7 +653,7 @@ func (repo *dbRepo[T]) MergeMatchFilters(filter Filter, matchFilters ...map[stri
 				filter[k] = bson.M{"$regex": primitive.Regex{Pattern: *v.Regex, Options: "i"}}
 			default:
 				{
-					fmt.Printf("[WARN, repo, mongo]: unknown match type: %q, supported ones: %+v\n", v.MatchType, []string{MatchTypeExact, MatchTypeArray, MatchTypeNotInArray, MatchTypeRegex})
+					fmt.Printf("[WARN, repo, mongo]: unknown match type: %q, supported ones: %+v\n", v.MatchType, []MatchType{MatchTypeExact, MatchTypeArray, MatchTypeNotInArray, MatchTypeRegex})
 				}
 			}
 		}

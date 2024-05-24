@@ -45,14 +45,13 @@ type Query struct {
 type MatchType string
 
 const (
-	MatchTypeExact      = "exact"
-	MatchTypeArray      = "array"
-	MatchTypeNotInArray = "not-in-array"
-	MatchTypeRegex      = "regex"
+	MatchTypeExact      MatchType = "exact"
+	MatchTypeArray      MatchType = "array"
+	MatchTypeNotInArray MatchType = "not_in_array"
+	MatchTypeRegex      MatchType = "regex"
 )
 
 type MatchFilter struct {
-	// MatchType  MatchType `json:"matchType" graphql:"enum=exact;array;regex;"`
 	MatchType  MatchType `json:"matchType"`
 	Exact      any       `json:"exact,omitempty"`
 	Array      []any     `json:"array,omitempty"`
