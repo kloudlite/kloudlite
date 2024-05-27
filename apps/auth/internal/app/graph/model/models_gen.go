@@ -37,6 +37,7 @@ type User struct {
 	Avatar         *string                `json:"avatar,omitempty"`
 	Invite         string                 `json:"invite"`
 	Verified       bool                   `json:"verified"`
+	Approved       bool                   `json:"approved"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 	Joined         string                 `json:"joined"`
 	ProviderGitlab map[string]interface{} `json:"providerGitlab,omitempty"`
