@@ -73,6 +73,7 @@ type User @key(fields: "id") {
   avatar: String
   invite: String!
   verified: Boolean!
+  approved: Boolean!
   metadata: Json
   joined: Date!
   providerGitlab: ProviderDetail
