@@ -21,8 +21,6 @@ import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
 import { ArrowLeft } from '~/components/icons';
-import Cookies from 'js-cookie';
-import { useEffect, useState } from 'react';
 import Container from '../../components/container';
 import { IProviderContext } from './_layout';
 
@@ -33,50 +31,38 @@ const CustomGoogleIcon = (props: any) => {
 const SignUpWithEmail = () => {
   const api = useAPIClient();
   const navigate = useNavigate();
-
-  const [waitingEmail, setWaitlistEmail] = useState<string | null | undefined>(
-    null
-  );
-
-  const { values, errors, setValues, handleChange, handleSubmit, isLoading } =
-    useForm({
-      initialValues: {
-        name: '',
-        email: '',
-        password: '',
-        c_password: '',
-      },
-      validationSchema: Yup.object({
-        email: Yup.string().required().email(),
-        name: Yup.string().trim().required(),
-        password: Yup.string().trim().required(),
-        c_password: Yup.string()
-          .oneOf([Yup.ref('password'), ''], 'passwords must match')
-          .required('confirm password is required'),
-      }),
-      onSubmit: async (v) => {
-        try {
-          const { errors: _errors } = await api.signUpWithEmail({
-            email: v.email,
-            name: v.name,
-            password: v.password,
-          });
-          if (_errors) {
-            throw _errors[0];
-          }
-          toast.success('signed up successfully');
-          navigate('/');
-        } catch (err) {
-          handleError(err);
+  const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
+    initialValues: {
+      name: '',
+      email: '',
+      password: '',
+      c_password: '',
+    },
+    validationSchema: Yup.object({
+      email: Yup.string().required().email(),
+      name: Yup.string().trim().required(),
+      password: Yup.string().trim().required(),
+      c_password: Yup.string()
+        .oneOf([Yup.ref('password'), ''], 'passwords must match')
+        .required('confirm password is required'),
+    }),
+    onSubmit: async (v) => {
+      try {
+        const { errors: _errors } = await api.signUpWithEmail({
+          email: v.email,
+          name: v.name,
+          password: v.password,
+        });
+        if (_errors) {
+          throw _errors[0];
         }
-      },
-    });
-
-  useEffect(() => {
-    const we = Cookies.get('waitingEmail');
-    setWaitlistEmail(we);
-    setValues((val) => ({ ...val, email: we || '' }));
-  }, []);
+        toast.success('signed up successfully');
+        navigate('/');
+      } catch (err) {
+        handleError(err);
+      }
+    },
+  });
 
   return (
     <form
@@ -103,7 +89,6 @@ const SignUpWithEmail = () => {
           label="Email"
           placeholder="ex: john@company.com"
           size="lg"
-          disabled={!!waitingEmail}
         />
         <PasswordInput
           name="password"
