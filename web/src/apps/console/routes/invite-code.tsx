@@ -1,6 +1,5 @@
 import { redirect } from '@remix-run/node';
 import { useNavigate } from '@remix-run/react';
-import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -11,6 +10,7 @@ import getQueries from '~/root/lib/server/helpers/get-queries';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
+import { GQLServerHandler } from '~/lib/server/gql/saved-queries';
 
 const InviteCode = () => {
   const api = useConsoleApi();

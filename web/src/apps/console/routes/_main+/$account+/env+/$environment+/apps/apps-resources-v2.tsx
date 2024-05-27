@@ -68,8 +68,10 @@ type IExtraButton = {
 
 const InterceptPortView = ({
   ports = [],
+  devName = '',
 }: {
   ports: NN<ExtractNodeType<IApps>['spec']['intercept']>['portMappings'];
+  devName: string;
 }) => {
   return (
     <div className="flex flex-row items-center gap-md">
@@ -78,21 +80,39 @@ const InterceptPortView = ({
         side="top"
         className="!max-w-fit "
         content={
-          <div className="flex flex-row gap-md py-md">
-            {ports?.map((d) => {
-              return (
-                <Badge className="shrink-0" key={d.appPort}>
-                  <div>
-                    {d.appPort} → {d.devicePort}
-                  </div>
-                </Badge>
-              );
-            })}
+          <div>
+            <span className="bodyMd-medium text-text-soft">
+              {' '}
+              intercepted to{' '}
+              <span className="bodyMd-medium text-text-strong">{devName}</span>
+            </span>
+            <div className="flex flex-row gap-md py-md">
+              {ports?.map((d) => {
+                return (
+                  <Badge className="shrink-0" key={d.appPort}>
+                    <div>
+                      {d.appPort} → {d.devicePort}
+                    </div>
+                  </Badge>
+                );
+              })}
+            </div>
           </div>
         }
       >
-        <div className="bodyMd-medium text-text-strong">
-          <span>{ports.length} ports</span>
+        <div className="bodyMd-medium text-text-strong w-fit truncate">
+          {ports?.length === 1 ? (
+            <span>{ports.length} port</span>
+          ) : (
+            <span>{ports.length} ports</span>
+          )}
+          <span className="text-text-soft">
+            {' '}
+            intercepted to{' '}
+            <span className="bodyMd-medium text-text-strong truncate">
+              {devName}
+            </span>
+          </span>
         </div>
       </Tooltip.Root>
     </div>
@@ -277,19 +297,10 @@ const ListView = ({ items = [], onAction }: IResource) => {
               intercept: {
                 render: () =>
                   i.spec.intercept?.enabled ? (
-                    <div className="flex flex-row gap-md">
+                    <div>
                       <InterceptPortView
                         ports={i.spec.intercept.portMappings || []}
-                      />
-                      <ListItem
-                        subtitle={
-                          <span>
-                            Intercepted by{' '}
-                            <span className="bodyMd-medium text-text-strong">
-                              {i.spec.intercept.toDevice}
-                            </span>
-                          </span>
-                        }
+                        devName={i.spec.intercept.toDevice || ''}
                       />
                     </div>
                   ) : null,

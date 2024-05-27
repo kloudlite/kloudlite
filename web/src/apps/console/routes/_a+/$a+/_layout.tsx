@@ -16,7 +16,6 @@ export const loader = async (ctx: IRemixCtx) => {
   const { data, errors } = await GQLServerHandler(ctx.request).getAccount({
     accountName: account,
   });
-  console.log('aa', data);
   if (errors) {
     return redirect('/teams');
   }
