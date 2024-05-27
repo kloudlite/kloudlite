@@ -77,6 +77,12 @@ const Root = (props: IDialog) => {
               props.data.spec.aws?.ec2Pool?.instanceType || 'c6a.large',
 
             labels: filterLabels([keyconstants.nodepoolStateType]),
+            labelsTemp: Object.entries(
+              filterLabels([keyconstants.nodepoolStateType]) || {}
+            ).map(([key, value]) => ({
+              key,
+              value,
+            })),
             autoScale: props.data.spec.minCount !== props.data.spec.maxCount,
             isNameError: false,
             stateful:
@@ -101,6 +107,7 @@ const Root = (props: IDialog) => {
             instanceType: 'c6a.large',
 
             labels: {},
+            labelsTemp: [],
             isNameError: false,
             stateful: false,
           },
@@ -488,14 +495,10 @@ const Root = (props: IDialog) => {
               addText="Add new"
               label="Labels"
               size="lg"
-              value={Object.entries(values.labels || {}).map(
-                ([key, value]) => ({
-                  key,
-                  value,
-                })
-              )}
-              onChange={(_, v) => {
+              value={values.labelsTemp}
+              onChange={(val, v) => {
                 handleChange('labels')(dummyEvent(v));
+                handleChange('labelsTemp')(dummyEvent(val));
               }}
             />
           )}

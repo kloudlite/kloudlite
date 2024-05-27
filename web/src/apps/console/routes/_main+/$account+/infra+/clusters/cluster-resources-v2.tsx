@@ -119,25 +119,26 @@ const ByokInstructionsPopup = ({
     });
   });
 
-  console.log('data', data);
-
-  // const [isLoading, setIsLoading] = useState(false);
-
   return (
     <Popup.Root onOpenChange={onClose} show={show} className="!w-[800px]">
       <Popup.Header>{`${clusterName} setup instructions:`}</Popup.Header>
       <Popup.Content>
         <form className="flex flex-col gap-2xl">
           {data && (
-            <div className="flex flex-col gap-xl text-start ">
-              <span className="flex flex-wrap items-center gap-md">
+            <div className="flex flex-col gap-sm text-start ">
+              <span className="flex flex-wrap items-center gap-md py-lg">
                 Please follow below instruction for further steps
               </span>
-              <CodeView
-                preClassName="!overflow-none text-wrap break-words"
-                copy
-                data={data || ''}
-              />
+              {data.map((d) => {
+                return (
+                  <CodeView
+                    key={d}
+                    preClassName="!overflow-none text-wrap break-words"
+                    copy
+                    data={d || ''}
+                  />
+                );
+              })}
             </div>
           )}
         </form>

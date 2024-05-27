@@ -9,7 +9,7 @@ type Account {
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  id: String!
+  id: ID!
   isActive: Boolean
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   logo: String
@@ -876,6 +876,13 @@ type Github__com___kloudlite___api___common__CreatedOrUpdatedBy {
   userEmail: String!
   userId: String!
   userName: String!
+}
+
+enum Github__com___kloudlite___api___pkg___repos__MatchType {
+  array
+  exact
+  not_in_array
+  regex
 }
 
 type Github__com___kloudlite___api___pkg___types__EncodedString {
@@ -2139,7 +2146,7 @@ type Invitation {
   accepted: Boolean
   accountName: String!
   creationTime: Date!
-  id: String!
+  id: ID!
   invitedBy: String!
   inviteToken: String!
   markedForDeletion: Boolean
@@ -2155,6 +2162,12 @@ input InvitationIn {
   userEmail: String
   userName: String
   userRole: Github__com___kloudlite___api___apps___iam___types__Role!
+}
+
+type InviteCode {
+  id: ID!
+  inviteCode: String!
+  name: String!
 }
 
 type IOTApp {
@@ -3380,7 +3393,7 @@ scalar Map
 type MatchFilter {
   array: [Any!]
   exact: Any
-  matchType: String!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
   notInArray: [Any!]
   regex: String
 }
@@ -3388,7 +3401,7 @@ type MatchFilter {
 input MatchFilterIn {
   array: [Any!]
   exact: Any
-  matchType: String!
+  matchType: Github__com___kloudlite___api___pkg___repos__MatchType!
   notInArray: [Any!]
   regex: String
 }
@@ -3432,7 +3445,9 @@ type Mutation {
   auth_changeEmail(email: String!): Boolean!
   auth_changePassword(currentPassword: String!, newPassword: String!): Boolean!
   auth_clearMetadata: User!
+  auth_createInviteCode(inviteCode: String!, name: String!): InviteCode!
   auth_createRemoteLogin(secret: String): String!
+  auth_deleteInviteCode(inviteCodeId: String!): Boolean!
   auth_login(email: String!, password: String!): Session
   auth_logout: Boolean!
   auth_requestResetPassword(email: String!): Boolean!
@@ -3442,6 +3457,7 @@ type Mutation {
   auth_setRemoteAuthHeader(authHeader: String, loginId: String!): Boolean!
   auth_signup(email: String!, name: String!, password: String!): Session
   auth_verifyEmail(token: String!): Session!
+  auth_verifyInviteCode(invitationCode: String!): Boolean!
   core_cloneEnvironment(destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!, sourceEnvName: String!): Environment
   core_createApp(app: AppIn!, envName: String!): App
   core_createConfig(config: ConfigIn!, envName: String!): Config
@@ -3840,7 +3856,7 @@ type Query {
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
   infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
-  infrat_getBYOKClusterSetupInstructions(name: String!): String
+  infrat_getBYOKClusterSetupInstructions(name: String!): [String!]
   iot_getApp(deviceBlueprintName: String!, name: String!, projectName: String!): IOTApp
   iot_getDeployment(name: String!, projectName: String!): IOTDeployment
   iot_getDevice(deploymentName: String!, name: String!, projectName: String!): IOTDevice
@@ -4180,6 +4196,7 @@ scalar URL
 type User {
   accountInvitations(onlyPending: Boolean!): [Invitation!]
   accounts: [AccountMembership!]
+  approved: Boolean!
   avatar: String
   email: String!
   id: ID!

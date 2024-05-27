@@ -19,6 +19,8 @@ interface IKeyValuePair {
   addText?: string;
   keyLabel?: string;
   valueLabel?: string;
+  keyPlaceholder?: string;
+  valuePlaceholder?: string;
   type?: 'number' | 'text';
 }
 const KeyValuePair = ({
@@ -31,6 +33,8 @@ const KeyValuePair = ({
   addText,
   keyLabel = 'key',
   valueLabel = 'value',
+  keyPlaceholder = 'key',
+  valuePlaceholder = 'value',
   type = 'text',
 }: IKeyValuePair) => {
   const newItem = [{ [keyLabel]: '', [valueLabel]: '', id: uuid() }];
@@ -58,7 +62,7 @@ const KeyValuePair = ({
     });
 
     const formatItems = tempItems.reduce((acc, curr) => {
-      if (curr.key && curr.value) {
+      if (curr.key) {
         acc[curr.key] = curr.value;
       }
       return acc;
@@ -100,7 +104,7 @@ const KeyValuePair = ({
                   <TextInput
                     size={size || 'md'}
                     error={error}
-                    placeholder="Key"
+                    placeholder={keyPlaceholder}
                     value={item[keyLabel]}
                     onChange={({ target }) =>
                       handleChange(target.value, item.id, 'key')
@@ -111,7 +115,7 @@ const KeyValuePair = ({
                   <NumberInput
                     size={size || 'md'}
                     error={error}
-                    placeholder="Key"
+                    placeholder={keyPlaceholder}
                     value={item[keyLabel]}
                     onChange={({ target }) =>
                       handleChange(parseInt(target.value, 10), item.id, 'key')
@@ -124,7 +128,7 @@ const KeyValuePair = ({
                   <TextInput
                     size={size || 'md'}
                     error={error}
-                    placeholder="Value"
+                    placeholder={valuePlaceholder}
                     value={item[valueLabel]}
                     onChange={({ target }) =>
                       handleChange(target.value, item.id, 'value')
@@ -135,7 +139,7 @@ const KeyValuePair = ({
                   <NumberInput
                     size={size || 'md'}
                     error={error}
-                    placeholder="Value"
+                    placeholder={valuePlaceholder}
                     value={item[valueLabel]}
                     onChange={({ target }) =>
                       handleChange(parseInt(target.value, 10), item.id, 'value')

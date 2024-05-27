@@ -141,10 +141,16 @@ export type SearchApps = {
 export type MatchFilterIn = {
   array?: InputMaybe<Array<Scalars['Any']['input']>>;
   exact?: InputMaybe<Scalars['Any']['input']>;
-  matchType: Scalars['String']['input'];
+  matchType: Github__Com___Kloudlite___Api___Pkg___Repos__MatchType;
   notInArray?: InputMaybe<Array<Scalars['Any']['input']>>;
   regex?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type Github__Com___Kloudlite___Api___Pkg___Repos__MatchType =
+  | 'array'
+  | 'exact'
+  | 'not_in_array'
+  | 'regex';
 
 export type SearchConfigs = {
   isReady?: InputMaybe<MatchFilterIn>;
@@ -4852,7 +4858,7 @@ export type ConsoleGetByokClusterInstructionsQueryVariables = Exact<{
 }>;
 
 export type ConsoleGetByokClusterInstructionsQuery = {
-  infrat_getBYOKClusterSetupInstructions?: string;
+  infrat_getBYOKClusterSetupInstructions?: Array<string>;
 };
 
 export type ConsoleGetByokClusterQueryVariables = Exact<{
@@ -7791,6 +7797,12 @@ export type AuthVerifyEmailMutationVariables = Exact<{
 
 export type AuthVerifyEmailMutation = { auth_verifyEmail: { id: string } };
 
+export type AuthVerifyInviteCodeMutationVariables = Exact<{
+  invitationCode: Scalars['String']['input'];
+}>;
+
+export type AuthVerifyInviteCodeMutation = { auth_verifyInviteCode: boolean };
+
 export type AuthLoginPageInitUrlsQueryVariables = Exact<{
   [key: string]: never;
 }>;
@@ -7823,7 +7835,7 @@ export type AuthSignUpWithEmailMutation = { auth_signup?: { id: string } };
 export type AuthWhoAmIQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AuthWhoAmIQuery = {
-  auth_me?: { id: string; email: string; verified: boolean };
+  auth_me?: { id: string; email: string; verified: boolean; approved: boolean };
 };
 
 export type LibWhoAmIQueryVariables = Exact<{ [key: string]: never }>;
@@ -7834,6 +7846,7 @@ export type LibWhoAmIQuery = {
     name: string;
     id: string;
     email: string;
+    approved: boolean;
     providerGitlab?: any;
     providerGithub?: any;
     providerGoogle?: any;

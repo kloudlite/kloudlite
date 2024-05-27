@@ -29,6 +29,8 @@ const ExposedExternalAppPortList = ({
         size="lg"
         keyLabel="appPort"
         valueLabel="devicePort"
+        keyPlaceholder="App Port"
+        valuePlaceholder="Device Port"
         value={values.appPortsTemp}
         onChange={(val, __, v) => {
           handleChange('appPorts')(dummyEvent(v));

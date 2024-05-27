@@ -6223,6 +6223,10 @@ mutation authVerifyEmail($token: String!) {
   }
 }
 
+mutation authVerifyInviteCode($invitationCode: String!) {
+  auth_verifyInviteCode(invitationCode: $invitationCode)
+}
+
 query authLoginPageInitUrls {
   githubLoginUrl: oAuth_requestLogin(provider: "github")
   gitlabLoginUrl: oAuth_requestLogin(provider: "gitlab")
@@ -6250,6 +6254,7 @@ query authWhoAmI {
     id
     email
     verified
+    approved
   }
 }
 
@@ -6259,6 +6264,7 @@ query libWhoAmI {
     name
     id
     email
+    approved
     providerGitlab
     providerGithub
     providerGoogle
