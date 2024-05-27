@@ -30,3 +30,11 @@ func userModelFromEntity(userEntity *entities.User) *model.User {
 		ProviderGoogle: mapFromProviderDetail(userEntity.ProviderGoogle),
 	}
 }
+
+func inviteCodeModelFromEntity(inviteCodeEntity *entities.InviteCode) *model.InviteCode {
+	return &model.InviteCode{
+		ID:         inviteCodeEntity.Id,
+		Name:       inviteCodeEntity.Name,
+		InviteCode: inviteCodeEntity.InviteCode,
+	}
+}
