@@ -30,6 +30,7 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.User]("users", "usr", entities.UserIndexes),
 	repos.NewFxMongoRepo[*entities.AccessToken]("access_tokens", "tkn", entities.AccessTokenIndexes),
 	repos.NewFxMongoRepo[*entities.RemoteLogin]("remote_logins", "rlgn", entities.RemoteTokenIndexes),
+	repos.NewFxMongoRepo[*entities.InviteCode]("invite_codes", "invcode", entities.InviteCodeIndexes),
 	fx.Provide(
 		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*entities.VerifyToken], error) {
 			cxt := context.TODO()

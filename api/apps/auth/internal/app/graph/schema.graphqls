@@ -46,6 +46,10 @@ type Mutation {
   auth_changeEmail(email: String!): Boolean! @isLoggedInAndVerified
   auth_resendVerificationEmail: Boolean! @isLoggedIn
   auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! @isLoggedInAndVerified
+
+  auth_createInviteCode(name: String!, inviteCode: String!): InviteCode!
+  auth_deleteInviteCode(inviteCodeId: String!): Boolean!
+  auth_verifyInviteCode(invitationCode: String!): Boolean! @isLoggedIn
 }
 
 type Session {
@@ -54,6 +58,12 @@ type Session {
   userEmail: String!
   loginMethod: String!
   userVerified: Boolean!
+}
+
+type InviteCode {
+  id: ID!
+  name: String!
+  inviteCode: String!
 }
 
 type User @key(fields: "id") {
