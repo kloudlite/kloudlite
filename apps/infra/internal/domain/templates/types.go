@@ -6,4 +6,5 @@ type GVPNKloudliteDeviceTemplateVars struct {
 	WgConfig  string
 
 	KubeReverseProxyImage string
+	AuthzToken            string
 }
