@@ -45,6 +45,7 @@ type User struct {
 	Metadata         UserMetadata     `json:"metadata"`
 	Joined           time.Time        `json:"joined"`
 	PasswordSalt     string           `json:"password_salt" graphql:"ignore"`
+	Approved         bool             `json:"approved" graphql:"noinput"`
 }
 
 var UserIndexes = []repos.IndexField{
@@ -119,6 +120,21 @@ type RemoteLogin struct {
 }
 
 var RemoteTokenIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+}
+
+type InviteCode struct {
+	repos.BaseEntity `bson:",inline"`
+	Name             string `json:"name"`
+	InviteCode       string `json:"inviteCode"`
+}
+
+var InviteCodeIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
