@@ -1910,6 +1910,10 @@ mutation consoleDeleteAccountMembership($accountName: String!, $memberId: ID!) {
   accounts_removeAccountMembership(accountName: $accountName, memberId: $memberId)
 }
 
+mutation consoleVerifyInviteCode($invitationCode: String!) {
+  auth_verifyInviteCode(invitationCode: $invitationCode)
+}
+
 query consoleGetCredToken($username: String!) {
   cr_getCredToken(username: $username)
 }
@@ -6240,10 +6244,6 @@ mutation authVerifyEmail($token: String!) {
   auth_verifyEmail(token: $token) {
     id
   }
-}
-
-mutation authVerifyInviteCode($invitationCode: String!) {
-  auth_verifyInviteCode(invitationCode: $invitationCode)
 }
 
 query authLoginPageInitUrls {

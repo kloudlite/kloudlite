@@ -25,8 +25,6 @@ import {
   AuthCheckOauthEnabledQueryVariables,
   AuthSetRemoteAuthHeaderMutation,
   AuthSetRemoteAuthHeaderMutationVariables,
-  AuthVerifyInviteCodeMutation,
-  AuthVerifyInviteCodeMutationVariables,
 } from '~/root/src/generated/gql/server';
 import { cliQueries } from './cli-queries';
 
@@ -137,19 +135,6 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
       {
         transformer: (data: AuthVerifyEmailMutation) => data.auth_verifyEmail,
         vars(_: AuthVerifyEmailMutationVariables) {},
-      }
-    ),
-
-    verifyInviteCode: executor(
-      gql`
-        mutation Auth_verifyInviteCode($invitationCode: String!) {
-          auth_verifyInviteCode(invitationCode: $invitationCode)
-        }
-      `,
-      {
-        transformer: (data: AuthVerifyInviteCodeMutation) =>
-          data.auth_verifyInviteCode,
-        vars(_: AuthVerifyInviteCodeMutationVariables) {},
       }
     ),
 
