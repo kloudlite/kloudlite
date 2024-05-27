@@ -34,7 +34,6 @@ import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import Tooltip from '~/components/atoms/tooltip';
-import { Button } from '~/components/atoms/button';
 import { NN } from '~/root/lib/types/common';
 import HandleIntercept from './handle-intercept';
 import { IEnvironmentContext } from '../_layout';
@@ -69,53 +68,53 @@ type IExtraButton = {
 
 const InterceptPortView = ({
   ports = [],
-  device,
+  devName = '',
 }: {
   ports: NN<ExtractNodeType<IApps>['spec']['intercept']>['portMappings'];
-  device: string;
+  devName: string;
 }) => {
   return (
     <div className="flex flex-row items-center gap-md">
-      {/* {ports.slice(0, 2).map((port) => (
-        <Badge key={port.appPort}>
-          {port.appPort} → {port.devicePort}
-        </Badge>
-      ))} */}
-
-      {/* {ports.length > 2 && ( */}
       <Tooltip.Root
         align="start"
         side="top"
         className="!max-w-fit "
         content={
-          <div className="flex flex-row gap-md py-md">
-            {ports?.map((d) => {
-              return (
-                <Badge className="shrink-0" key={d.appPort}>
-                  <div>
-                    {/* {d.appPort} → {d.devicePort} */}
-                    {`Env:${d.appPort}`} → {`${device}:${d.devicePort}`}
-                  </div>
-                </Badge>
-              );
-            })}
+          <div>
+            <span className="bodyMd-medium text-text-soft">
+              {' '}
+              intercepted to{' '}
+              <span className="bodyMd-medium text-text-strong">{devName}</span>
+            </span>
+            <div className="flex flex-row gap-md py-md">
+              {ports?.map((d) => {
+                return (
+                  <Badge className="shrink-0" key={d.appPort}>
+                    <div>
+                      {d.appPort} → {d.devicePort}
+                    </div>
+                  </Badge>
+                );
+              })}
+            </div>
           </div>
         }
       >
-        <div className="flex flex-row items-center gap-md shrink-0 truncate">
-          {/* <Button
-            content={`+${ports.length - 2} more`}
-            variant="plain"
-            size="sm"
-          /> */}
-          {ports.slice(0, 2).map((port) => (
-            <Badge key={port.appPort}>
-              {port.appPort} → {port.devicePort}
-            </Badge>
-          ))}
+        <div className="bodyMd-medium text-text-strong w-fit truncate">
+          {ports?.length === 1 ? (
+            <span>{ports.length} port</span>
+          ) : (
+            <span>{ports.length} ports</span>
+          )}
+          <span className="text-text-soft">
+            {' '}
+            intercepted to{' '}
+            <span className="bodyMd-medium text-text-strong truncate">
+              {devName}
+            </span>
+          </span>
         </div>
       </Tooltip.Root>
-      {/* )} */}
     </div>
   );
 };
@@ -258,9 +257,19 @@ const ListView = ({ items = [], onAction }: IResource) => {
             className: 'w-[250px] truncate',
           },
           {
+            render: () => '',
+            name: 'flex-pre',
+            className: 'flex-1',
+          },
+          {
             render: () => 'Service',
             name: 'service',
-            className: 'w-[180px] flex flex-1',
+            className: 'w-[240px] flex',
+          },
+          {
+            render: () => '',
+            name: 'flex-post',
+            className: 'flex-1',
           },
           {
             render: () => 'Status',
@@ -288,20 +297,10 @@ const ListView = ({ items = [], onAction }: IResource) => {
               intercept: {
                 render: () =>
                   i.spec.intercept?.enabled ? (
-                    <div className="flex flex-col gap-md">
-                      <ListItem
-                        subtitle={
-                          <span>
-                            Intercepted to{' '}
-                            <span className="bodyMd-medium text-text-strong">
-                              {i.spec.intercept.toDevice}
-                            </span>
-                          </span>
-                        }
-                      />
+                    <div>
                       <InterceptPortView
                         ports={i.spec.intercept.portMappings || []}
-                        device={i.spec.intercept.toDevice}
+                        devName={i.spec.intercept.toDevice || ''}
                       />
                     </div>
                   ) : null,

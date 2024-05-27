@@ -139,12 +139,22 @@ const ListView = ({ items = [], onAction }: IResource) => {
           {
             render: () => 'Type',
             name: 'type',
-            className: 'w-[180px]',
+            className: 'w-[100px]',
+          },
+          {
+            render: () => '',
+            name: 'flex-pre',
+            className: 'flex-1',
           },
           {
             render: () => 'Kind',
             name: 'kind',
-            className: 'w-[240px]',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'flex-post',
+            className: 'flex-1',
           },
           {
             render: () => 'Status',

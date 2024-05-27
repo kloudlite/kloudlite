@@ -20,6 +20,8 @@ import {
   ConsoleRejectInvitationMutationVariables,
   ConsoleDeleteAccountMembershipMutation,
   ConsoleDeleteAccountMembershipMutationVariables,
+  ConsoleVerifyInviteCodeMutation,
+  ConsoleVerifyInviteCodeMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IInvites = NN<
@@ -206,6 +208,19 @@ export const accessQueries = (executor: IExecutor) => ({
         return data.accounts_removeAccountMembership;
       },
       vars(_: ConsoleDeleteAccountMembershipMutationVariables) {},
+    }
+  ),
+
+  verifyInviteCode: executor(
+    gql`
+      mutation Auth_verifyInviteCode($invitationCode: String!) {
+        auth_verifyInviteCode(invitationCode: $invitationCode)
+      }
+    `,
+    {
+      transformer: (data: ConsoleVerifyInviteCodeMutation) =>
+        data.auth_verifyInviteCode,
+      vars(_: ConsoleVerifyInviteCodeMutationVariables) {},
     }
   ),
 });
