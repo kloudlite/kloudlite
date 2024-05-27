@@ -23,7 +23,7 @@ const Container = ({ children, footer }: ContainerProps) => {
         {children}
       </div>
       {footer && (
-        <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch border-t border-border-default sticky bottom-0 bg-surface-basic-default">
+        <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch border-t border-border-default sticky bottom-0 bg-surface-basic-default z-50">
           <div className="bodyMd text-text-default">{footer?.message}</div>
           <Button
             content={footer?.buttonText}
