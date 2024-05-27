@@ -73,7 +73,7 @@ spec:
         - name: CONFIG_PATH
           value: /tmp/server-config.yml
         - name: ENDPOINT
-          value: {{ $name }}-external.{{ $namespace }}.svc.cluster.local:51820
+          value: {{ $name }}-external.{{ $namespace }}.svc.cluster.local:31820
         name: gateway
         ports:
         - containerPort: 51820
@@ -182,9 +182,11 @@ metadata:
   namespace: {{ $namespace }}
 spec:
   ports:
-  - port: 51820
+  - port: 31820
     protocol: UDP
+    name: "wireguard"
     targetPort: 51820
     {{- /* nodePort: {{ $nodeport }} */}}
   selector: *labels
-  type: NodePort
+  {{- /* type: NodePort */}}
+  type: LoadBalancer
