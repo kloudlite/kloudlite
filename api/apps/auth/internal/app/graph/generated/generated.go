@@ -55,11 +55,19 @@ type ComplexityRoot struct {
 		FindUserByID func(childComplexity int, id repos.ID) int
 	}
 
+	InviteCode struct {
+		ID         func(childComplexity int) int
+		InviteCode func(childComplexity int) int
+		Name       func(childComplexity int) int
+	}
+
 	Mutation struct {
 		AuthChangeEmail             func(childComplexity int, email string) int
 		AuthChangePassword          func(childComplexity int, currentPassword string, newPassword string) int
 		AuthClearMetadata           func(childComplexity int) int
+		AuthCreateInviteCode        func(childComplexity int, name string, inviteCode string) int
 		AuthCreateRemoteLogin       func(childComplexity int, secret *string) int
+		AuthDeleteInviteCode        func(childComplexity int, inviteCodeID string) int
 		AuthLogin                   func(childComplexity int, email string, password string) int
 		AuthLogout                  func(childComplexity int) int
 		AuthRequestResetPassword    func(childComplexity int, email string) int
@@ -69,6 +77,7 @@ type ComplexityRoot struct {
 		AuthSetRemoteAuthHeader     func(childComplexity int, loginID string, authHeader *string) int
 		AuthSignup                  func(childComplexity int, name string, email string, password string) int
 		AuthVerifyEmail             func(childComplexity int, token string) int
+		AuthVerifyInviteCode        func(childComplexity int, invitationCode string) int
 		OAuthAddLogin               func(childComplexity int, provider string, state string, code string) int
 		OAuthLogin                  func(childComplexity int, provider string, code string, state *string) int
 	}
@@ -139,6 +148,9 @@ type MutationResolver interface {
 	AuthChangeEmail(ctx context.Context, email string) (bool, error)
 	AuthResendVerificationEmail(ctx context.Context) (bool, error)
 	AuthChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error)
+	AuthCreateInviteCode(ctx context.Context, name string, inviteCode string) (*model.InviteCode, error)
+	AuthDeleteInviteCode(ctx context.Context, inviteCodeID string) (bool, error)
+	AuthVerifyInviteCode(ctx context.Context, invitationCode string) (bool, error)
 }
 type QueryResolver interface {
 	AuthMe(ctx context.Context) (*model.User, error)
@@ -179,6 +191,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Entity.FindUserByID(childComplexity, args["id"].(repos.ID)), true
 
+	case "InviteCode.id":
+		if e.complexity.InviteCode.ID == nil {
+			break
+		}
+
+		return e.complexity.InviteCode.ID(childComplexity), true
+
+	case "InviteCode.inviteCode":
+		if e.complexity.InviteCode.InviteCode == nil {
+			break
+		}
+
+		return e.complexity.InviteCode.InviteCode(childComplexity), true
+
+	case "InviteCode.name":
+		if e.complexity.InviteCode.Name == nil {
+			break
+		}
+
+		return e.complexity.InviteCode.Name(childComplexity), true
+
 	case "Mutation.auth_changeEmail":
 		if e.complexity.Mutation.AuthChangeEmail == nil {
 			break
@@ -210,6 +243,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AuthClearMetadata(childComplexity), true
 
+	case "Mutation.auth_createInviteCode":
+		if e.complexity.Mutation.AuthCreateInviteCode == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_auth_createInviteCode_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AuthCreateInviteCode(childComplexity, args["name"].(string), args["inviteCode"].(string)), true
+
 	case "Mutation.auth_createRemoteLogin":
 		if e.complexity.Mutation.AuthCreateRemoteLogin == nil {
 			break
@@ -221,6 +266,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AuthCreateRemoteLogin(childComplexity, args["secret"].(*string)), true
+
+	case "Mutation.auth_deleteInviteCode":
+		if e.complexity.Mutation.AuthDeleteInviteCode == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_auth_deleteInviteCode_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AuthDeleteInviteCode(childComplexity, args["inviteCodeId"].(string)), true
 
 	case "Mutation.auth_login":
 		if e.complexity.Mutation.AuthLogin == nil {
@@ -319,6 +376,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AuthVerifyEmail(childComplexity, args["token"].(string)), true
+
+	case "Mutation.auth_verifyInviteCode":
+		if e.complexity.Mutation.AuthVerifyInviteCode == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_auth_verifyInviteCode_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AuthVerifyInviteCode(childComplexity, args["invitationCode"].(string)), true
 
 	case "Mutation.oAuth_addLogin":
 		if e.complexity.Mutation.OAuthAddLogin == nil {
@@ -712,6 +781,10 @@ type Mutation {
   auth_changeEmail(email: String!): Boolean! @isLoggedInAndVerified
   auth_resendVerificationEmail: Boolean! @isLoggedIn
   auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! @isLoggedInAndVerified
+
+  auth_createInviteCode(name: String!, inviteCode: String!): InviteCode!
+  auth_deleteInviteCode(inviteCodeId: String!): Boolean!
+  auth_verifyInviteCode(invitationCode: String!): Boolean! @isLoggedIn
 }
 
 type Session {
@@ -720,6 +793,12 @@ type Session {
   userEmail: String!
   loginMethod: String!
   userVerified: Boolean!
+}
+
+type InviteCode {
+  id: ID!
+  name: String!
+  inviteCode: String!
 }
 
 type User @key(fields: "id") {
@@ -825,6 +904,30 @@ func (ec *executionContext) field_Mutation_auth_changePassword_args(ctx context.
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_auth_createInviteCode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["inviteCode"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inviteCode"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["inviteCode"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_auth_createRemoteLogin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -837,6 +940,21 @@ func (ec *executionContext) field_Mutation_auth_createRemoteLogin_args(ctx conte
 		}
 	}
 	args["secret"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_auth_deleteInviteCode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["inviteCodeId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inviteCodeId"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["inviteCodeId"] = arg0
 	return args, nil
 }
 
@@ -987,6 +1105,21 @@ func (ec *executionContext) field_Mutation_auth_verifyEmail_args(ctx context.Con
 		}
 	}
 	args["token"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_auth_verifyInviteCode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["invitationCode"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invitationCode"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["invitationCode"] = arg0
 	return args, nil
 }
 
@@ -1262,6 +1395,138 @@ func (ec *executionContext) fieldContext_Entity_findUserByID(ctx context.Context
 	if fc.Args, err = ec.field_Entity_findUserByID_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteCode_id(ctx context.Context, field graphql.CollectedField, obj *model.InviteCode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteCode_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteCode_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteCode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteCode_name(ctx context.Context, field graphql.CollectedField, obj *model.InviteCode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteCode_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteCode_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteCode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteCode_inviteCode(ctx context.Context, field graphql.CollectedField, obj *model.InviteCode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteCode_inviteCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InviteCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteCode_inviteCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteCode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -2262,6 +2527,199 @@ func (ec *executionContext) fieldContext_Mutation_auth_changePassword(ctx contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_auth_changePassword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_auth_createInviteCode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_auth_createInviteCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AuthCreateInviteCode(rctx, fc.Args["name"].(string), fc.Args["inviteCode"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.InviteCode)
+	fc.Result = res
+	return ec.marshalNInviteCode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐInviteCode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_auth_createInviteCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_InviteCode_id(ctx, field)
+			case "name":
+				return ec.fieldContext_InviteCode_name(ctx, field)
+			case "inviteCode":
+				return ec.fieldContext_InviteCode_inviteCode(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type InviteCode", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_auth_createInviteCode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_auth_deleteInviteCode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_auth_deleteInviteCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AuthDeleteInviteCode(rctx, fc.Args["inviteCodeId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_auth_deleteInviteCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_auth_deleteInviteCode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_auth_verifyInviteCode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_auth_verifyInviteCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().AuthVerifyInviteCode(rctx, fc.Args["invitationCode"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_auth_verifyInviteCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_auth_verifyInviteCode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5585,6 +6043,55 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 	return out
 }
 
+var inviteCodeImplementors = []string{"InviteCode"}
+
+func (ec *executionContext) _InviteCode(ctx context.Context, sel ast.SelectionSet, obj *model.InviteCode) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, inviteCodeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InviteCode")
+		case "id":
+			out.Values[i] = ec._InviteCode_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._InviteCode_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "inviteCode":
+			out.Values[i] = ec._InviteCode_inviteCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -5699,6 +6206,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "auth_changePassword":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_auth_changePassword(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "auth_createInviteCode":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_auth_createInviteCode(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "auth_deleteInviteCode":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_auth_deleteInviteCode(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "auth_verifyInviteCode":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_auth_verifyInviteCode(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -6542,6 +7070,20 @@ func (ec *executionContext) marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋre
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNInviteCode2githubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐInviteCode(ctx context.Context, sel ast.SelectionSet, v model.InviteCode) graphql.Marshaler {
+	return ec._InviteCode(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNInviteCode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐInviteCode(ctx context.Context, sel ast.SelectionSet, v *model.InviteCode) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._InviteCode(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNJson2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
