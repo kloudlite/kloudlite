@@ -6,6 +6,12 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 )
 
+type InviteCode struct {
+	ID         repos.ID `json:"id"`
+	Name       string   `json:"name"`
+	InviteCode string   `json:"inviteCode"`
+}
+
 type OAuthProviderStatus struct {
 	Provider string `json:"provider"`
 	Enabled  bool   `json:"enabled"`

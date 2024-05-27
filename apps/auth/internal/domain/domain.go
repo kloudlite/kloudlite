@@ -32,6 +32,16 @@ type Domain interface {
 	OauthRequestLogin(ctx context.Context, provider string, state string) (string, error)
 	OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error)
 	OauthAddLogin(ctx context.Context, userId repos.ID, provider string, state string, code string) (bool, error)
+
+	/// Invite code
+	//ListInviteCodes(ctx context.Context) ([]*entities.InviteCode, error)
+	//GetInviteCode(ctx context.Context, name string) (*entities.InviteCode, error)
+
+	CreateInviteCode(ctx context.Context, name string, inviteCode string) (*entities.InviteCode, error)
+	DeleteInviteCode(ctx context.Context, invCodeId string) error
+	//UpdateInviteCode(ctx context.Context, invCode entities.InviteCode) (*entities.InviteCode, error)
+
+	VerifyInviteCode(ctx context.Context, userId repos.ID, invitationCode string) (bool, error)
 }
 
 type Messenger interface {

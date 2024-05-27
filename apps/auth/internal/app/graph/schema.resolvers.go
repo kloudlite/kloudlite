@@ -6,10 +6,11 @@ package graph
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
+
 	"github.com/kloudlite/api/apps/auth/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/auth/internal/app/graph/model"
 	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/repos"
@@ -180,6 +181,33 @@ func (r *mutationResolver) AuthChangePassword(ctx context.Context, currentPasswo
 	}
 
 	return r.d.ChangePassword(ctx, sess.UserId, currentPassword, newPassword)
+}
+
+// AuthCreateInviteCode is the resolver for the auth_createInviteCode field.
+func (r *mutationResolver) AuthCreateInviteCode(ctx context.Context, name string, inviteCode string) (*model.InviteCode, error) {
+	inv, err := r.d.CreateInviteCode(ctx, name, inviteCode)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return inviteCodeModelFromEntity(inv), nil
+}
+
+// AuthDeleteInviteCode is the resolver for the auth_deleteInviteCode field.
+func (r *mutationResolver) AuthDeleteInviteCode(ctx context.Context, inviteCodeID string) (bool, error) {
+	if err := r.d.DeleteInviteCode(ctx, inviteCodeID); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
+// AuthVerifyInviteCode is the resolver for the auth_verifyInviteCode field.
+func (r *mutationResolver) AuthVerifyInviteCode(ctx context.Context, invitationCode string) (bool, error) {
+	sess, err := GetUserSession(ctx)
+	if err != nil {
+		return false, errors.NewEf(err, "while getting user session")
+	}
+
+	return r.d.VerifyInviteCode(ctx, sess.UserId, invitationCode)
 }
 
 // AuthMe is the resolver for the auth_me field.
