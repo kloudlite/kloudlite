@@ -81,6 +81,9 @@ func (d *domain) UpdateGlobalVPNDevice(ctx InfraContext, device entities.GlobalV
 func (d *domain) deleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName string) error {
 	device, err := d.findGlobalVPNDevice(ctx, gvpn, deviceName)
 	if err != nil {
+		if errors.OfType[errors.ErrNotFound](err) {
+			return nil
+		}
 		return err
 	}
 
@@ -234,7 +237,7 @@ func (d *domain) getGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnD
 		return "", err
 	}
 
-	gvpnConnPeers, err := d.getGlobalVPNConnectionPeers(gvpnConns)
+	gvpnConnPeers, err := d.getGlobalVPNConnectionPeers(ctx, gvpnConns)
 	if err != nil {
 		return "", err
 	}
@@ -304,7 +307,7 @@ func (d *domain) findGlobalVPNDevice(ctx InfraContext, gvpn string, gvpnDevice s
 	}
 
 	if device == nil {
-		return nil, errors.Newf("no global vpn device (name=%s) found", gvpnDevice)
+		return nil, errors.ErrNotFound{Message: fmt.Sprintf("no global vpn device with name=%s", gvpnDevice)}
 	}
 	return device, nil
 }
