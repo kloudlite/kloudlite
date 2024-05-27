@@ -23,6 +23,7 @@ func userModelFromEntity(userEntity *entities.User) *model.User {
 		Avatar:         userEntity.Avatar,
 		Invite:         string(userEntity.InvitationStatus),
 		Verified:       userEntity.Verified,
+		Approved:       userEntity.Approved,
 		Metadata:       userEntity.Metadata,
 		Joined:         userEntity.Joined.String(),
 		ProviderGitlab: mapFromProviderDetail(userEntity.ProviderGitlab),
