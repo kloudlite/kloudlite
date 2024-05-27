@@ -40,71 +40,42 @@ spec:
         "secret-ref": "{{.WgConfig | b64enc | sha256sum}}"
     spec:
       initContainers:
-        - name: init
-          image: busybox:1.32.0
-          command:
-            - sh
-            - -c
-            - sysctl -w net.ipv4.ip_forward=1 && sysctl -w net.ipv4.conf.all.forwarding=1
-          securityContext:
-            privileged: true
-            capabilities:
-              add:
-                - NET_ADMIN
-                - SYS_MODULE
-
-      containers:
         - image: linuxserver/wireguard
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           name: wg
-          resources:
-            limits:
-              cpu: 80m
-              memory: 100Mi
-            requests:
-              cpu: 50m
-              memory: 75Mi
+          {{- /* resources: */}}
+          {{- /*   limits: */}}
+          {{- /*     cpu: 80m */}}
+          {{- /*     memory: 100Mi */}}
+          {{- /*   requests: */}}
+          {{- /*     cpu: 50m */}}
+          {{- /*     memory: 75Mi */}}
           securityContext:
             capabilities:
               add:
                 - NET_ADMIN
-                - SYS_MODULE
-            privileged: true
+                {{- /* - SYS_MODULE */}}
+            {{- /* privileged: true */}}
+          command:
+            - wg-quick
+            - up
+            - wg0
           volumeMounts:
             - mountPath: /config/wg_confs/wg0.conf
               name: wg-config
               subPath: wg0.conf
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
-
-        {{- /* - name: debug */}}
-        {{- /*   image: ghcr.io/kloudlite/hub/socat:latest */}}
-        {{- /*   imagePullPolicy: Always */}}
-        {{- /*   resources: */}}
-        {{- /*     limits: */}}
-        {{- /*       cpu: 100m */}}
-        {{- /*       memory: 100Mi */}}
-        {{- /*     requests: */}}
-        {{- /*       cpu: 100m */}}
-        {{- /*       memory: 100Mi
-        {{- /*   command: */}}
-        {{- /*     - sh */}}
-        {{- /*     - -c */}}
-        {{- /*     - |+ */}}
-        {{- /*       (socat -dd tcp4-listen:8080,fork,reuseaddr tcp4:kubectl-proxy.{{.Namespace}}.svc.example-test.local:8080 2>&1 | grep -iE --line-buffered 'listening|exiting') & */}}
-        {{- /*       pid=$! */}}
-        {{- /**/}}
-        {{- /*       trap "kill -9 $pid" EXIT SIGINT SIGTERM */}}
-        {{- /*       wait $pid */}}
-
+      containers:
         - name: kube-reverse-proxy
           image: {{.KubeReverseProxyImage}}
           args:
             - --addr
             - ":8080"
             - --proxy-addr
-            # this %s will be replaced with real cluster name by reverse proxy
             - {{ printf "kubectl-proxy.kloudlite.svc.{{.CLUSTER_NAME}}.local:8080" }}
+            - "--authz"
+            - {{.AuthzToken}}
           imagePullPolicy: "IfNotPresent"
           resources:
             limits:

@@ -25,7 +25,7 @@ const (
 	kloudliteGlobalVPNDeviceMethod = "kloudlite-global-vpn-device"
 )
 
-func (d *domain) getGlobalVPNConnectionPeers(vpns []*entities.GlobalVPNConnection) ([]wgv1.Peer, error) {
+func (d *domain) getGlobalVPNConnectionPeers(ctx InfraContext, vpns []*entities.GlobalVPNConnection) ([]wgv1.Peer, error) {
 	peers := make([]wgv1.Peer, 0, len(vpns))
 	for _, c := range vpns {
 		if c.ParsedWgParams != nil {
@@ -33,17 +33,27 @@ func (d *domain) getGlobalVPNConnectionPeers(vpns []*entities.GlobalVPNConnectio
 				continue
 			}
 
-			if c.ParsedWgParams.NodePort == nil {
+			// if c.ParsedWgParams.NodePort == nil {
+			// 	d.logger.Infof("nodeport not available for gvpn %s", c.Name)
+			// 	continue
+			// }
+			if c.ParsedWgParams.PublicGatewayPort == nil || c.ParsedWgParams.PublicGatewayHosts == nil {
 				d.logger.Infof("nodeport not available for gvpn %s", c.Name)
 				continue
+			}
+
+			endpoint := fmt.Sprintf("%s:%s", c.ClusterPublicEndpoint, *c.ParsedWgParams.PublicGatewayPort)
+			if d.isBYOKCluster(ctx, c.ClusterName) {
+				endpoint = fmt.Sprintf("%s:%s", *c.ParsedWgParams.PublicGatewayHosts, *c.ParsedWgParams.PublicGatewayPort)
 			}
 
 			peers = append(peers, wgv1.Peer{
 				ClusterName: c.ClusterName,
 				IP:          c.ParsedWgParams.IP,
 				PublicKey:   c.ParsedWgParams.WgPublicKey,
-				Endpoint:    fmt.Sprintf("%s:%s", c.ClusterPublicEndpoint, *c.ParsedWgParams.NodePort),
-				AllowedIPs:  []string{c.ClusterSvcCIDR},
+				// Endpoint:    fmt.Sprintf("%s:%s", c.ClusterPublicEndpoint, *c.ParsedWgParams.NodePort),
+				Endpoint:   endpoint,
+				AllowedIPs: []string{c.ClusterSvcCIDR},
 			})
 		}
 	}
@@ -66,7 +76,7 @@ func (d *domain) reconGlobalVPNConnections(ctx InfraContext, vpnName string) err
 		return errors.NewE(err)
 	}
 
-	peers, err := d.getGlobalVPNConnectionPeers(vpns)
+	peers, err := d.getGlobalVPNConnectionPeers(ctx, vpns)
 	if err != nil {
 		return err
 	}
@@ -181,6 +191,13 @@ func (d *domain) createGlobalVPNConnection(ctx InfraContext, gvpnConn entities.G
 
 	gvpnConn.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
+	clusterSvcCIDR, err := d.claimNextClusterSvcCIDR(ctx, gvpnConn.ClusterName, gvpn.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	gvpnConn.ClusterSvcCIDR = clusterSvcCIDR
+
 	gvpnDevice, err := d.createGlobalVPNDevice(ctx, entities.GlobalVPNDevice{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("cluster-gateway-%s", gvpnConn.ClusterName),
@@ -211,26 +228,25 @@ func (d *domain) createGlobalVPNConnection(ctx InfraContext, gvpnConn entities.G
 }
 
 func (d *domain) deleteGlobalVPNConnection(ctx InfraContext, clusterName string, gvpnName string) error {
-	gvpnConn, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
-		fields.AccountName:  ctx.AccountName,
-		fields.ClusterName:  clusterName,
-		fields.MetadataName: gvpnName,
-	})
+	gv, err := d.findGlobalVPNConnection(ctx, clusterName, gvpnName)
 	if err != nil {
-		return errors.NewE(err)
-	}
-	if gvpnConn == nil {
-		return errors.Newf("no global vpn connection with name (%s) not found, for cluster (%s)", gvpnName, clusterName)
+		if !errors.OfType[errors.ErrNotFound](err) {
+			return errors.NewE(err)
+		}
 	}
 
-	if err := d.deleteGlobalVPNDevice(ctx, gvpnName, gvpnConn.DeviceRef.Name); err != nil {
+	if err := d.deleteGlobalVPNDevice(ctx, gvpnName, gv.DeviceRef.Name); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.gvpnConnRepo.DeleteById(ctx, gv.Id); err != nil {
 		return errors.NewE(err)
 	}
 
 	return nil
 }
 
-func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string, clusterSvcCIDR string, groupName string, clusterPublicEndpoint string) (*entities.GlobalVPNConnection, error) {
+func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string, groupName string, clusterPublicEndpoint string) (*entities.GlobalVPNConnection, error) {
 	gvpn, err := d.gvpnConnRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName:  ctx.AccountName,
 		fields.ClusterName:  clusterName,
@@ -269,7 +285,6 @@ func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string,
 		AccountName:           ctx.AccountName,
 		ClusterName:           clusterName,
 		ClusterPublicEndpoint: clusterPublicEndpoint,
-		ClusterSvcCIDR:        clusterSvcCIDR,
 		ParsedWgParams:        nil,
 	})
 }
@@ -326,7 +341,7 @@ func (d *domain) OnGlobalVPNConnectionDeleteMessage(ctx InfraContext, clusterNam
 		return errors.NewE(err)
 	}
 
-	if currRecord.DeviceRef.Name != "" {
+	if currRecord != nil && currRecord.DeviceRef.Name != "" {
 		if err := d.deleteGlobalVPNDevice(ctx, currRecord.GlobalVPNName, currRecord.DeviceRef.Name); err != nil {
 			return errors.NewE(err)
 		}
