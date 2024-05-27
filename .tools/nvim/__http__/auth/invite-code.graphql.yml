@@ -1,0 +1,41 @@
+---
+label: "Create Invite code"
+query: |+
+  mutation Auth_createInviteCode($name: String!, $inviteCode: String!) {
+    auth_createInviteCode(name: $name, inviteCode: $inviteCode) {
+      id
+      name
+      inviteCode
+    }
+  }
+variables:
+  {
+    "name": "kl-inv-test",
+    "inviteCode": "kl-simple-1234"
+  }
+
+---
+
+label: "Delete Invite Code"
+query: |+
+  mutation Auth_deleteInviteCode($inviteCodeId: String!) {
+    auth_deleteInviteCode(inviteCodeId: $inviteCodeId)
+  }
+variables:
+  {
+    "inviteCodeId": "null"
+  }
+
+---
+
+label: "Verify Invite Code"
+query: |+
+  mutation Auth_verifyInviteCode($invitationCode: String!) {
+    auth_verifyInviteCode(invitationCode: $invitationCode)
+  }
+variables:
+  {
+    "invitationCode": "kl-simple-1234"
+  }
+
+---
