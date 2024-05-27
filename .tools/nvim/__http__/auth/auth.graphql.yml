@@ -81,6 +81,8 @@ query: |
       id
       email
       name
+      approved
+      verified
       # providerGitlab
       # providerGithub
       # verified
