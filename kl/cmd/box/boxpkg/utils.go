@@ -82,7 +82,7 @@ func (c *client) ensureCacheExist() error {
 			Labels: map[string]string{
 				"kl-box-nix-store": "true",
 			},
-			Name: "nix-store",
+			Name: "kl-nix-cache",
 		}); err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func (c *client) ensureCacheExist() error {
 			Labels: map[string]string{
 				"kl-box-nix-home-cache": "true",
 			},
-			Name: "nix-home-cache",
+			Name: "kl-nix-cache",
 		}); err != nil {
 			return err
 		}

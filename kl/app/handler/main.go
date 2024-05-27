@@ -70,25 +70,28 @@ func (h *handler) ReconMeta() {
 
 	go func() {
 		for {
-			b, err := client.IsLoading()
-			if err != nil {
-				fn.PrintError(err)
-				fn.Alert("Error", err.Error())
-			}
 
-			if b {
-				systray.SetTemplateIcon(icons.Loading, icons.Loading)
-			} else {
-				data, err := client.GetExtraData()
+			func() {
+				b, err := client.IsLoading()
 				if err != nil {
-					data.VpnConnected = false
+					fn.PrintError(err)
+					fn.Alert("Error", err.Error())
 				}
-				if data.VpnConnected {
-					systray.SetTemplateIcon(icons.Logo, icons.Logo)
+
+				if b {
+					systray.SetTemplateIcon(icons.Loading, icons.Loading)
 				} else {
-					systray.SetIcon(icons.DisabledLogo)
+					data, err := client.GetExtraData()
+					if err != nil {
+						data.VpnConnected = false
+					}
+					if data.VpnConnected {
+						systray.SetTemplateIcon(icons.Logo, icons.Logo)
+					} else {
+						systray.SetIcon(icons.DisabledLogo)
+					}
 				}
-			}
+			}()
 
 			<-time.After(time.Millisecond * 500)
 		}

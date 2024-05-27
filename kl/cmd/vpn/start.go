@@ -27,6 +27,12 @@ sudo {cmd} vpn start`),
 
 		verbose := fn.ParseBoolFlag(cmd, "verbose")
 		if runtime.GOOS == constants.RuntimeWindows {
+
+			if err := client.EnsureAppRunning(); err != nil {
+				fn.Notify("Error:", err.Error())
+				fn.PrintError(err)
+			}
+
 			if err := connect(verbose); err != nil {
 				fn.Notify("Error:", err.Error())
 				fn.PrintError(err)
@@ -118,13 +124,6 @@ sudo {cmd} vpn start`),
 		}
 
 		fn.Log("[#] connected")
-
-		// _, err = wgc.Show(nil)
-
-		// if err != nil {
-		// 	fn.PrintError(err)
-		// 	return
-		// }
 
 		s, err := client.CurrentDeviceName()
 		if err != nil {

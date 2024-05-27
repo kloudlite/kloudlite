@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
+	"runtime"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/kloudlite/kl/constants"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/nxadm/tail"
@@ -162,19 +165,16 @@ func (c *client) runContainer(config ContainerConfig) error {
 	// 	os.RemoveAll(td)
 	// }()
 
-	stdErrPath := fmt.Sprintf("%s/stderr.log", td)
-	stdOutPath := fmt.Sprintf("%s/stdout.log", td)
+	stdErrPath := path.Join(td, "stderr.log")
+	stdOutPath := path.Join(td, "stdout.log")
 
 	if err := func() error {
 
 		dockerArgs := []string{"run"}
 		if !c.foreground {
 			dockerArgs = append(dockerArgs, "-d")
-			dockerArgs = append(dockerArgs, "--name", config.Name)
 		}
-
-		stdErrPath := fmt.Sprintf("%s/stderr.log", td)
-		stdOutPath := fmt.Sprintf("%s/stdout.log", td)
+		dockerArgs = append(dockerArgs, "--name", config.Name)
 
 		if err := os.WriteFile(stdOutPath, []byte(""), os.ModePerm); err != nil {
 			return err
@@ -290,7 +290,7 @@ func (c *client) runContainer(config ContainerConfig) error {
 
 func (c *client) readTillLine(ctx context.Context, file string, desiredLine, stream string, follow bool) (bool, error) {
 
-	t, err := tail.TailFile(file, tail.Config{Follow: follow, ReOpen: follow, Logger: tail.DiscardingLogger})
+	t, err := tail.TailFile(file, tail.Config{Follow: follow, ReOpen: follow, Poll: runtime.GOOS == constants.RuntimeWindows})
 
 	if err != nil {
 		return false, err

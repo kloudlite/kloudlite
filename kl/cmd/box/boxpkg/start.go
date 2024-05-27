@@ -176,10 +176,6 @@ func (c *client) Start() error {
 			return err
 		}
 
-		if err != nil {
-			return err
-		}
-
 		s, err := proxy.GetHostIp()
 		if err != nil {
 			return err
@@ -188,7 +184,7 @@ func (c *client) Start() error {
 		args = append(args, []string{
 			"-v", fmt.Sprintf("%s:/tmp/ssh2/authorized_keys:ro", akTmpPath),
 			"-v", "kl-home-cache:/home:rw",
-			"-v", "nix-store:/nix:rw",
+			"-v", "kl-nix-cache:/nix:rw",
 			// "--network", "host",
 			"-v", fmt.Sprintf("%s:/home/kl/workspace:z", c.cwd),
 			"-v", fmt.Sprintf("%s:/home/kl/.cache/.kl:z", configFolder),

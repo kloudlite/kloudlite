@@ -1,3 +1,5 @@
+//go:build others
+
 package app
 
 import (

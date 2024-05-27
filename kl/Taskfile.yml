@@ -22,7 +22,7 @@ tasks:
       - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task kl:build:win && echo '# build success' || exit"
   kl:build:win:
     cmds:
-      - go build --tags main -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.0-nightly -X github.com/kloudlite/kl/flags.CliName=kl -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kl.exe main.go
+      - go build --tags="main,windows" -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.0-nightly -X github.com/kloudlite/kl/flags.CliName=kl -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kl.exe main.go
 
   kli:dev:win:
     cmds:
@@ -34,6 +34,14 @@ tasks:
   gen:icons:
     cmds:
       - go install github.com/cratonica/2goarray
-      - 2goarray Loading icons < app/handler/icons/loading.png > app/handler/icons/loading.go
-      - 2goarray Logo icons < app/handler/icons/logo.png > app/handler/icons/logo.go
-      - 2goarray DisabledLogo icons < app/handler/icons/disabled-logo.png > app/handler/icons/disabled-logo.go
+      - 2goarray Loading icons < app/handler/icons/loading.png > app/handler/icons/loading_linux.go
+      - 2goarray Loading icons < app/handler/icons/loading.png > app/handler/icons/loading_darwin.go
+      - 2goarray Loading icons < app/handler/icons/loading.ico > app/handler/icons/loading_windows.go
+      
+      - 2goarray DisabledLogo icons < app/handler/icons/disabled-logo.png > app/handler/icons/disabled-logo_linux.go
+      - 2goarray DisabledLogo icons < app/handler/icons/disabled-logo.png > app/handler/icons/disabled-logo_darwin.go
+      - 2goarray DisabledLogo icons < app/handler/icons/disabled-logo.ico > app/handler/icons/disabled-logo_windows.go
+
+      - 2goarray Logo icons < app/handler/icons/logo.png > app/handler/icons/logo_linux.go
+      - 2goarray Logo icons < app/handler/icons/logo.png > app/handler/icons/logo_darwin.go
+      - 2goarray Logo icons < app/handler/icons/logo.ico > app/handler/icons/logo_windows.go

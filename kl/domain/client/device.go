@@ -6,7 +6,10 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"runtime"
+	"syscall"
 	"time"
+	"unsafe"
 
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/flags"
@@ -69,39 +72,24 @@ func EnsureAppRunning() error {
 			return nil
 		}
 
-		// configFolder, err := client.GetConfigFolder()
-		// if err != nil {
-		// 	return err
-		// }
-		//
-		// b, err := os.ReadFile(configFolder + "/apppid")
-		//
-		// if err == nil {
-		// 	pid := string(b)
-		// 	if fn.ExecCmd(fmt.Sprintf("ps -p %s", pid), nil, false) == nil {
-		// 		return nil
-		// 	}
-		// }
+		if runtime.GOOS != "windows" {
+			cmd := exec.Command("sudo", "echo", "")
+			cmd.Stdin = os.Stdin
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
 
-		cmd := exec.Command("sudo", "echo", "")
-		cmd.Stdin = os.Stdin
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
+			err := cmd.Run()
+			if err != nil {
+				return err
+			}
+			command := exec.Command("sudo", flags.CliName, "start-app")
+			_ = command.Start()
 
-		err := cmd.Run()
-		if err != nil {
-			return err
+		} else {
+			command := exec.Command(flags.CliName, "start-app")
+
+			_ = command.Start()
 		}
-
-		command := exec.Command("sudo", flags.CliName, "start-app")
-
-		_ = command.Start()
-
-		// err = os.WriteFile(configFolder+"/apppid", []byte(fmt.Sprintf("%d", command.Process.Pid)), 0644)
-		// if err != nil {
-		// 	fn.PrintError(err)
-		// 	return err
-		// }
 
 		count++
 		if count >= 10 {
@@ -110,4 +98,40 @@ func EnsureAppRunning() error {
 
 		time.Sleep(2 * time.Second)
 	}
+}
+
+var (
+	shell32           = syscall.NewLazyDLL("shell32.dll")
+	procShellExecuteW = shell32.NewProc("ShellExecuteW")
+)
+
+func ShellExecute(operation, file, parameters, directory string, showCmd int) error {
+	op, err := syscall.UTF16PtrFromString(operation)
+	if err != nil {
+		return err
+	}
+	f, err := syscall.UTF16PtrFromString(file)
+	if err != nil {
+		return err
+	}
+	p, err := syscall.UTF16PtrFromString(parameters)
+	if err != nil {
+		return err
+	}
+	d, err := syscall.UTF16PtrFromString(directory)
+	if err != nil {
+		return err
+	}
+	ret, _, _ := procShellExecuteW.Call(
+		0,
+		uintptr(unsafe.Pointer(op)),
+		uintptr(unsafe.Pointer(f)),
+		uintptr(unsafe.Pointer(p)),
+		uintptr(unsafe.Pointer(d)),
+		uintptr(showCmd),
+	)
+	if ret <= 32 {
+		return syscall.GetLastError()
+	}
+	return nil
 }

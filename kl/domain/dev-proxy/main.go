@@ -221,6 +221,11 @@ func (p *Proxy) RemoveFwd(chMsg []fwd.StartCh) ([]byte, error) {
 }
 
 func (p *Proxy) RemoveAllFwd(chMsg fwd.StartCh) ([]byte, error) {
+
+	if !p.Status() {
+		return nil, nil
+	}
+
 	params, err := json.Marshal(chMsg)
 	if err != nil {
 		return nil, err

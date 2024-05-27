@@ -49,11 +49,10 @@ func installApp() error {
 
 	success := false
 
-	s := spinner.NewSpinner()
-	s.Start()
+	spinnerStop := spinner.Client.Start()
 
 	defer func() {
-		s.Stop()
+		spinnerStop()
 		if success {
 			fn.Log(fmt.Sprintf("[#] app version %s downloaded successfully", flags.Version))
 		} else {
@@ -200,10 +199,10 @@ func ShellExecute(operation, file, parameters, directory string, showCmd int) er
 	return nil
 }
 
-func main() {
-	// Attempt to open Notepad as an Administrator.
-	err := ShellExecute("runas", "notepad.exe", "", "", 1)
-	if err != nil {
-		panic(err)
-	}
-}
+// func main() {
+// 	// Attempt to open Notepad as an Administrator.
+// 	err := ShellExecute("runas", "notepad.exe", "", "", 1)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }
