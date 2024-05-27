@@ -261,8 +261,13 @@ func (in *WgParams) DeepCopyInto(out *WgParams) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.NodePort != nil {
-		in, out := &in.NodePort, &out.NodePort
+	if in.PublicGatewayHosts != nil {
+		in, out := &in.PublicGatewayHosts, &out.PublicGatewayHosts
+		*out = new(string)
+		**out = **in
+	}
+	if in.PublicGatewayPort != nil {
+		in, out := &in.PublicGatewayPort, &out.PublicGatewayPort
 		*out = new(string)
 		**out = **in
 	}

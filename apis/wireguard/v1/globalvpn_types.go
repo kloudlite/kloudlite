@@ -28,28 +28,14 @@ type WgParams struct {
 
 	DNSServer *string `json:"dnsServer"`
 
-	// should default to NodePort service, if not specified
-	// K8sServiceType string `json:"k8sServiceType,omitempty"`
-	//
-	// ExternalWgGatewayAddr *string `json:"externalWgGatewayAddr,omitempty"`
-
-	// must be a valid nodeport
-	NodePort *string `json:"nodeport,omitempty"`
+	PublicGatewayHosts *string `json:"publicGatewayHosts,omitempty"`
+	PublicGatewayPort  *string `json:"publicGatewayPort,omitempty"`
 
 	VirtualCidr string `json:"virtualCidr"`
 }
 
 // ConnectionSpec defines the desired state of Connect
 type GlobVPNSpec struct {
-	// Id int `json:"id"`
-	//
-	// // PrivateKey *string `json:"privateKey,omitempty"`
-	// Interface *string `json:"interface,omitempty"`
-	// Nodeport  *int    `json:"nodeport,omitempty"`
-	// IpAddress *string `json:"ipAddress,omitempty"`
-	// DnsServer *string `json:"dnsServer,omitempty"`
-	// PublicKey *string `json:"publicKey,omitempty"`
-
 	// This secret is unmarshalled into WgParams
 	WgRef ct.SecretRef `json:"wg"`
 
