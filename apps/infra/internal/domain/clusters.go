@@ -138,8 +138,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		cluster.GlobalVPN = fn.New(DefaultGlobalVPNName)
 	}
 
-	gvpn, err := d.ensureGlobalVPN(ctx, *cluster.GlobalVPN)
-	if err != nil {
+	if _, err := d.ensureGlobalVPN(ctx, *cluster.GlobalVPN); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -336,16 +335,12 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	cluster.Spec.AccountName = ctx.AccountName
 	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
-	clusterSvcCIDR, err := d.claimNextClusterSvcCIDR(ctx, cluster.Name, gvpn.Name)
+	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, *cluster.GlobalVPN, cluster.Spec.PublicDNSHost)
 	if err != nil {
-		return nil, err
-	}
-
-	if _, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, clusterSvcCIDR, *cluster.GlobalVPN, cluster.Spec.PublicDNSHost); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	cluster.Spec.ClusterServiceCIDR = clusterSvcCIDR
+	cluster.Spec.ClusterServiceCIDR = gvpnConn.ClusterSvcCIDR
 
 	if err := d.k8sClient.ValidateObject(ctx, &cluster.Cluster); err != nil {
 		return nil, errors.NewE(err)
@@ -409,6 +404,7 @@ func (d *domain) syncKloudliteDeviceOnCluster(ctx InfraContext, gvpnName string)
 		Namespace:             accNs,
 		WgConfig:              wgConfig,
 		KubeReverseProxyImage: d.env.GlobalVPNKubeReverseProxyImage,
+		AuthzToken:            d.env.GlobalVPNKubeReverseProxyAuthzToken,
 	})
 	if err != nil {
 		return err
