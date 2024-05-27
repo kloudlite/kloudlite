@@ -16,7 +16,7 @@ tasks:
         fi
 
         docker volume rm kl-home-cache || echo "kl-home-cache already removed"
-        docker volume rm nix-store || echo "nix-store already removed"
+        docker volume rm kl-nix-cache || echo "nix-store already removed"
 
   # ssh:
   #   cmds:
@@ -46,18 +46,15 @@ tasks:
       - go build -o bin/mounter main.go
 
   container:build:
-    preconditions:
-      - sh: '[[ -n "{{.tag}}" ]]'
-        msg: "var tag must have a value, of format '1.0.0' or '1.0.0-nightly'"
     cmds:
-      - docker build -t {{.ImageRegistry}}:{{.tag}} .
+      - docker buildx build --build-context project=.. --load -t {{.ImageRegistry}}:v1.0.0-nightly .
 
   container:push:
     preconditions:
       - sh: '[[ -n "{{.tag}}" ]]'
-        msg: "var tag must have a value, of format '1.0.0' or '1.0.0-nightly'"
+        msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmds:
-      - docker buildx build --platform linux/amd64,linux/arm64 -t {{.ImageRegistry}}:{{.tag}} . --push
+      - docker buildx build --platform linux/amd64,linux/arm64 -t {{.ImageRegistry}}:{{.tag}} --build-context project=.. . --push
       # - docker buildx build -t {{.ImageRegistry}}:{{.tag}} . --push
 
   setup:
@@ -66,11 +63,3 @@ tasks:
       - docker buildx rm builder
       - docker buildx create --name builder --driver docker-container --use
       - docker buildx inspect --bootstrap
-
-  # container:push:
-  #   preconditions:
-  #     - sh: '[[ -n "{{.tag}}" ]]'
-  #       msg: "var tag must have a value, of format '1.0.0' or '1.0.0-nightly'"
-  #   cmds:
-  #     - task container:build:multi tag={{.tag}}
-  #     - docker push {{.ImageRegistry}}:{{.tag}}

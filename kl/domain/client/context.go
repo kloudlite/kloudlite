@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"path"
 	"runtime"
@@ -26,6 +27,7 @@ const (
 type Env struct {
 	Name     string `json:"name"`
 	TargetNs string `json:"targetNamespace"`
+	SSHPort  int    `json:"sshPort"`
 }
 
 type Session struct {
@@ -39,6 +41,11 @@ type MainContext struct {
 
 type DeviceContext struct {
 	DeviceName string `json:"deviceName"`
+
+	PrivateKey []byte `json:"privateKey"`
+	DeviceIp   net.IP `json:"deviceIp"`
+
+	HostPublicKey []byte `json:"hostPublicKey"`
 }
 
 type InfraContext struct {
@@ -56,6 +63,7 @@ type InfraContexts struct {
 type ExtraData struct {
 	BaseUrl      string          `json:"baseUrl"`
 	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
+	DeviceDns    string          `json:"deviceDns"`
 	DNS          []string        `json:"dns"`
 	Loading      bool            `json:"loading"`
 	VpnConnected bool            `json:"vpnConnected"`
@@ -65,6 +73,31 @@ type ExtraData struct {
 	// SearchDomainAdded bool   `json:"searchDomainAdded"`
 	// DnsAdded          bool            `json:"dnsAdded"`
 	// DnsValues         []string        `json:"dnsValues"`
+}
+
+func GetDeviceDns() (string, error) {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return "", err
+	}
+
+	return extraData.DeviceDns, nil
+}
+
+func SetDeviceDns(dns string) error {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return err
+	}
+
+	extraData.DeviceDns = dns
+
+	file, err := yaml.Marshal(extraData)
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(ExtraDataFileName, file)
 }
 
 func GetActiveCluster() (string, error) {
@@ -117,45 +150,44 @@ func SetDns(dns []string) error {
 	return writeOnUserScope(ExtraDataFileName, file)
 }
 
+func GetUserHomeDir() (string, error) {
+	if runtime.GOOS == "windows" {
+		return xdg.Home, nil
+	}
+
+	if euid := os.Geteuid(); euid == 0 {
+		username, ok := os.LookupEnv("SUDO_USER")
+		if !ok {
+			return "", errors.New("something went wrong")
+		}
+
+		oldPwd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+
+		sp := strings.Split(oldPwd, "/")
+
+		for i := range sp {
+			if sp[i] == username {
+				return path.Join("/", path.Join(sp[:i+1]...)), nil
+			}
+		}
+
+		return "", errors.New("something went wrong")
+	}
+
+	userHome, ok := os.LookupEnv("HOME")
+	if !ok {
+		return "", errors.New("something went wrong")
+	}
+
+	return userHome, nil
+}
+
 func GetConfigFolder() (configFolder string, err error) {
-	homePath := ""
-
-	// fetching homePath
-	if err := func() error {
-		if runtime.GOOS == "windows" {
-			homePath = xdg.CacheHome
-			return nil
-		}
-
-		if euid := os.Geteuid(); euid == 0 {
-			username, ok := os.LookupEnv("SUDO_USER")
-			if !ok {
-				return errors.New("something went wrong")
-			}
-
-			oldPwd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-
-			sp := strings.Split(oldPwd, "/")
-
-			for i := range sp {
-				if sp[i] == username {
-					homePath = path.Join("/", path.Join(sp[:i+1]...))
-				}
-			}
-		} else {
-			userHome, ok := os.LookupEnv("HOME")
-			if !ok {
-				return errors.New("something went wrong")
-			}
-
-			homePath = userHome
-		}
-
-		return nil
-	}(); err != nil {
+	homePath, err := GetUserHomeDir()
+	if err != nil {
 		return "", err
 	}
 
@@ -260,15 +292,8 @@ func DeleteDeviceContext(dName string) error {
 	return writeOnUserScope(DeviceFileName, b)
 }
 
-func WriteDeviceContext(dName string) error {
-	c, err := GetDeviceContext()
-	if err != nil {
-		return err
-	}
-
-	c.DeviceName = dName
-
-	file, err := yaml.Marshal(c)
+func WriteDeviceContext(dc *DeviceContext) error {
+	file, err := yaml.Marshal(dc)
 
 	if err != nil {
 		return err

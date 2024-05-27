@@ -11,10 +11,9 @@ type EnvironmentVariable struct {
 }
 
 type KLConfigType struct {
-	Packages []string              `yaml:"packages" json:"packages"`
-	EnvVars  []EnvironmentVariable `yaml:"envVars" json:"envVars"`
-	Mounts   map[string]string     `yaml:"mounts" json:"mounts"`
-	WGConfig string                `yaml:"wgConfig" json:"wgConfig"`
+	Packages []string          `yaml:"packages" json:"packages"`
+	Env      map[string]string `yaml:"envVars" json:"env"`
+	Mounts   map[string]string `yaml:"mounts" json:"mounts"`
 }
 
 func (*client) loadConfig(mm server.MountMap, envs map[string]string) (*KLConfigType, error) {
@@ -46,20 +45,16 @@ func (*client) loadConfig(mm server.MountMap, envs map[string]string) (*KLConfig
 
 	// return fm, nil
 
-	var ev []EnvironmentVariable
+	ev := map[string]string{}
 	for k, v := range envs {
-		ev = append(ev, EnvironmentVariable{k, v})
+		ev[k] = v
 	}
 
 	for _, ne := range kf.EnvVars.GetEnvs() {
-		ev = append(ev, EnvironmentVariable{ne.Key, ne.Value})
+		ev[ne.Key] = ne.Value
 	}
 
-	klConfig.EnvVars = ev
-	if klConfig.EnvVars == nil {
-		klConfig.EnvVars = []EnvironmentVariable{}
-	}
-
+	klConfig.Env = ev
 	klConfig.Mounts = fm
 
 	return klConfig, nil

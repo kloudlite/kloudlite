@@ -4,14 +4,42 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/kloudlite/kl/constants"
+	cl "github.com/kloudlite/kl/domain/client"
+	proxy "github.com/kloudlite/kl/domain/dev-proxy"
+	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
-func (c *client) EnsureVpnRunning(configuration []byte) error {
-	defer c.spinner.Update("starting vpn container")()
+func (c *client) ensureVpnConnected() error {
+	if err := cl.EnsureAppRunning(); err != nil {
+		return err
+	}
+
+	p, err := proxy.NewProxy(c.verbose)
+	if err != nil {
+		return err
+	}
+
+	if !server.CheckDeviceStatus() {
+		if err := p.Start(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *client) EnsureVpnCntRunning() error {
+	if runtime.GOOS == constants.RuntimeLinux {
+		return nil
+	}
+
+	defer c.spinner.UpdateMessage("starting vpn container")()
 
 	if c.verbose {
 		fn.Logf("starting container in: %s", text.Blue(c.cwd))
@@ -36,11 +64,27 @@ func (c *client) EnsureVpnRunning(configuration []byte) error {
 		return err
 	}
 
-	// c.spinner.Stop()
-	// d, err := server.EnsureDevice()
-	// if err != nil {
-	// 	return err
-	// }
+	c.spinner.Stop()
+
+	dc, err := cl.GetDeviceContext()
+	if err != nil {
+		return err
+	}
+
+	if dc.PrivateKey == nil {
+		return fmt.Errorf("something went wrong, wireguard private key not found")
+	}
+
+	configuration := fmt.Sprintf(`
+[Interface]
+ListenPort = 51820
+Address = %s/32
+PrivateKey = %s 
+
+[Peer]
+PublicKey = %s
+AllowedIPs = 100.64.0.0/10
+	`, dc.DeviceIp.To4().String(), dc.PrivateKey, dc.HostPublicKey)
 
 	// configuration, err := base64.StdEncoding.DecodeString(d.WireguardConfig.Value)
 	// if err != nil {
@@ -54,7 +98,7 @@ func (c *client) EnsureVpnRunning(configuration []byte) error {
 
 	confPath := path.Join(td, "klboxvpn.conf")
 
-	if err := os.WriteFile(confPath, configuration, os.ModePerm); err != nil {
+	if err := os.WriteFile(confPath, []byte(configuration), os.ModePerm); err != nil {
 		return err
 	}
 
@@ -67,6 +111,7 @@ func (c *client) EnsureVpnRunning(configuration []byte) error {
 			"--network", "host",
 			"--privileged",
 			"-v", fmt.Sprintf("%s:/config/wg_confs/klboxvpn.conf", confPath),
+			"-p", fmt.Sprintf("%d:51820/udp", constants.ContainerVpnPort),
 			VpnImageName,
 		}
 
@@ -90,8 +135,12 @@ func (c *client) EnsureVpnRunning(configuration []byte) error {
 
 }
 
-func (c *client) StopVpn() error {
-	defer c.spinner.Update("stoping vpn container")()
+func (c *client) StopContVpn() error {
+	if runtime.GOOS == constants.RuntimeLinux {
+		return nil
+	}
+
+	defer c.spinner.UpdateMessage("stoping vpn container")()
 
 	cr, err := c.getContainer(map[string]string{
 		// CONT_NAME_KEY: c.containerName,

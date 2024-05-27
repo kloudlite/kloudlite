@@ -2,11 +2,12 @@ package intercept
 
 import (
 	"errors"
+	"strconv"
+	"strings"
+
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
-	"strconv"
-	"strings"
 )
 
 var startCmd = &cobra.Command{
@@ -19,7 +20,7 @@ Examples:
 
 	`,
 
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		app := fn.ParseStringFlag(cmd, "app")
 		maps, err := cmd.Flags().GetStringArray("port")
 		if err != nil {
@@ -74,7 +75,7 @@ func init() {
 	startCmd.Flags().StringP("app", "a", "", "app name")
 	startCmd.Flags().StringArrayP(
 		"port", "p", []string{},
-		"expose port <server_port>:<local_port>",
+		"expose port <server_port>:<local_port> while intercepting app",
 	)
 
 	startCmd.Aliases = append(startCmd.Aliases, "add", "begin", "connect")

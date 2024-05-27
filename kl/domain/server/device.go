@@ -2,10 +2,11 @@ package server
 
 import (
 	"fmt"
-	"net"
 	"os"
+	"time"
 
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/miekg/dns"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
@@ -151,21 +152,20 @@ func getDeviceName(devName string) (*CheckName, error) {
 }
 
 func getVPNDevice(devName string, options ...fn.Option) (*Device, error) {
-	accountName := fn.GetOption(options, "accountName")
-	envName := fn.GetOption(options, "envName")
+	// envName := fn.GetOption(options, "envName")
 
 	accountName, err := EnsureAccount(options...)
 	if err != nil {
 		return nil, err
 	}
 
-	if envName == "" {
-		env, err := EnsureEnv(nil, options...)
-		if err != nil {
-			return nil, err
-		}
-		envName = env.Name
-	}
+	// if envName == "" {
+	// 	env, err := EnsureEnv(nil, options...)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	envName = env.Name
+	// }
 
 	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
@@ -185,85 +185,53 @@ func getVPNDevice(devName string, options ...fn.Option) (*Device, error) {
 	return GetFromResp[Device](respData)
 }
 
-// func ListVPNDevice(options ...fn.Option) ([]Device, error) {
-// 	accountName := fn.GetOption(options, "accountName")
-//
-// 	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	respData, err := klFetch("cli_listGlobalVpnDevices", map[string]any{
-// 		"gvpn": Default_GVPN,
-// 		"pq": map[string]any{
-// 			"orderBy":       "name",
-// 			"sortDirection": "ASC",
-// 			"first":         99999999,
-// 		},
-// 	}, &cookie)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	if fromResp, err := GetFromRespForEdge[Device](respData); err != nil {
-// 		return nil, err
-// 	} else {
-// 		if len(fromResp) < 1 {
-// 			return nil, errors.New("No Global VPN devices found. Please create one from dashboard.")
-// 		}
-// 		return fromResp, nil
-// 	}
-// }
-
-// func SelectDevice(devName string, options ...fn.Option) (*Device, error) {
-// 	persistSelectedDevice := func(devName string) error {
-// 		err := client.SelectDevice(devName)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		return nil
-// 	}
-//
-// 	devices, err := ListVPNDevice(options...)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	if devName != "" {
-// 		for _, d := range devices {
-// 			if d.Metadata.Name == devName {
-// 				if err := persistSelectedDevice(d.Metadata.Name); err != nil {
-// 					return nil, err
-// 				}
-// 				return &d, nil
-// 			}
-// 		}
-// 		return nil, errors.New("you don't have access to this device")
-// 	}
-//
-// 	dev, err := fzf.FindOne(
-// 		devices,
-// 		func(dev Device) string {
-// 			return fmt.Sprintf("%s (%s)", dev.DisplayName, dev.Metadata.Name)
-// 		},
-// 		fzf.WithPrompt("Select Environment > "),
-// 	)
-//
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	if err := persistSelectedDevice(dev.Metadata.Name); err != nil {
-// 		return nil, err
-// 	}
-//
-// 	return dev, nil
-// }
-
 func CheckDeviceStatus() bool {
-	_, err := net.ResolveIPAddr("", "kube-dns.kube-system.svc.cluster.local")
+	verbose := false
+
+	logF := func(format string, v ...interface{}) {
+		if verbose {
+			fn.Logf(format, v)
+		}
+	}
+
+	s, err := client.GetDeviceDns()
 	if err != nil {
+		logF(err.Error())
 		return false
+	}
+
+	if s == "" {
+		logF("No DNS record found for device")
+		return false
+	}
+
+	dnsServer := s
+
+	client := new(dns.Client)
+
+	client.Timeout = 2 * time.Second
+
+	// Create a new DNS message
+	message := new(dns.Msg)
+	message.SetQuestion(dns.Fqdn("kube-dns.kube-system.svc.cluster.local"), dns.TypeA)
+	message.RecursionDesired = true
+
+	// Send the DNS query
+	response, _, err := client.Exchange(message, dnsServer+":53")
+	if err != nil {
+		logF("Failed to get DNS response: %v\n", err)
+		return false
+	}
+
+	// Print the response
+	if response.Rcode != dns.RcodeSuccess {
+		logF("Query failed: %s\n", dns.RcodeToString[response.Rcode])
+		return false
+	} else {
+		for _, answer := range response.Answer {
+			logF("%s\n", answer.String())
+		}
+
 	}
 
 	return true

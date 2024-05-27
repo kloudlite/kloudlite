@@ -5,6 +5,15 @@ set -o pipefail
 
 trap "echo kloudlite-entrypoint:CRASHED >&2" EXIT SIGINT SIGTERM
 
+KL_DEVBOX_PATH=/home/kl/.kl/devbox
+mkdir -p $KL_DEVBOX_PATH
+
+
+if [ -f "/home/kl/workspace/kl.lock" ]; then
+    cp /home/kl/workspace/kl.lock $KL_DEVBOX_PATH/devbox.lock
+fi
+
+
 entrypoint_executed="/home/kl/.kloudlite_entrypoint_executed"
 if [ ! -f "$entrypoint_executed" ]; then
     cp /tmp/.bashrc /home/kl/.bashrc
@@ -13,31 +22,31 @@ if [ ! -f "$entrypoint_executed" ]; then
 fi
 
 shift
-# Read the JSON file into a variable
-echo $@ | jq -r | jq -r '.packages | join(" ")'> /home/kl/.nix-shell-args
 echo "$@" | jq -r > /tmp/sample.json
-chown -R kl /tmp/sample.json
 
-echo $@ | jq -r | jq -r '.envVars | map_values(. = "export \(.key)=\(.value)") | .[]' > /home/kl/.env-vars
-chown -R kl /home/kl/.env-vars
+PATH=$PATH:$HOME/.nix-profile/bin
+mkdir -p $KL_DEVBOX_PATH
+cp /tmp/sample.json $KL_DEVBOX_PATH/devbox.json
+cd $KL_DEVBOX_PATH
 
 echo "kloudlite-entrypoint:INSTALLING_PACKAGES"
-sudo -u kl bash -c "/home/kl/.nix-profile/bin/nix-shell -p $(cat /home/kl/.nix-shell-args) --run 'echo kloudlite-entrypoint:INSTALLING_PACKAGES_DONE'"
-
-chown -R kl /home/kl/.nix-shell-args
+devbox install && devbox update && echo 'echo kloudlite-entrypoint:INSTALLING_PACKAGES_DONE'
 
 if [ -d "/tmp/ssh2" ]; then
     mkdir -p /home/kl/.ssh
-    chown -R kl /home/kl/.ssh
     cp /tmp/ssh2/authorized_keys /home/kl/.ssh/authorized_keys
     chmod 600 /home/kl/.ssh/authorized_keys
-    chown kl /home/kl/.ssh/authorized_keys
     echo "successfully copied ssh credentials"
 fi 
 
-sudo chown -R kl /home/kl/workspace
 sudo /mounter --conf /tmp/sample.json
 
-trap - EXIT SIGTERM SIGINT
+mkdir -p /home/kl/.kl
+cat <<EOL > /home/kl/.kl/global-profile
+export SSH_PORT=$SSH_PORT
+export IN_DEV_BOX="true"
+EOL
+
+# trap - EXIT SIGTERM SIGINT
 echo "kloudlite-entrypoint: SETUP_COMPLETE"
-/usr/sbin/sshd -D
+sudo /usr/sbin/sshd -D -p $SSH_PORT

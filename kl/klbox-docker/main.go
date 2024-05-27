@@ -41,12 +41,19 @@ func Run() error {
 	}
 
 	for k, v := range c.Mounts {
-
 		if err := os.MkdirAll(filepath.Dir(k), fs.ModePerm); err != nil {
 			return err
 		}
 
+		if err := os.Chown(filepath.Dir(k), 1000, 1000); err != nil {
+			return err
+		}
+
 		if err := os.WriteFile(k, []byte(v), fs.ModePerm); err != nil {
+			return err
+		}
+
+		if err := os.Chown(k, 1000, 1000); err != nil {
 			return err
 		}
 	}

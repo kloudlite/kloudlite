@@ -1,6 +1,7 @@
 package boxpkg
 
 import (
+	"net"
 	"os"
 	"os/exec"
 	"path"
@@ -81,7 +82,7 @@ func (c *client) ensureCacheExist() error {
 			Labels: map[string]string{
 				"kl-box-nix-store": "true",
 			},
-			Name: "nix-store",
+			Name: "kl-nix-cache",
 		}); err != nil {
 			return err
 		}
@@ -103,11 +104,28 @@ func (c *client) ensureCacheExist() error {
 			Labels: map[string]string{
 				"kl-box-nix-home-cache": "true",
 			},
-			Name: "nix-home-cache",
+			Name: "kl-nix-cache",
 		}); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func GetDockerHostIp() (string, error) {
+
+	// if runtime.GOOS != constants.RuntimeLinux {
+	// 	return "host.docker.internal"
+	// }
+
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
+	localAddress := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddress.IP.To4().String(), nil
 }

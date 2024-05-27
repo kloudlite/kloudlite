@@ -18,6 +18,8 @@ const (
 	NetworkService              = "Wi-Fi"
 	LocalSearchDomains          = ".local"
 	NoExistingSearchDomainError = "There aren't any Search Domains set on Wi-Fi."
+
+	ContainerVpnPort = 1729
 )
 
 var (

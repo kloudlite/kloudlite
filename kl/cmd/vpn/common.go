@@ -55,5 +55,6 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 			return err
 		}
 	}
+
 	return nil
 }

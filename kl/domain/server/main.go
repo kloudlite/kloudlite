@@ -79,10 +79,9 @@ func Login(loginId string) error {
 			return errors.New("remote login failed")
 		}
 		if loginStatusResponse.RemoteLogin.Status == "pending" {
-			s := spinner.NewSpinner("waiting for login to complete")
-			s.Start()
+			spinner.Client.Start("waiting for login to complete")
 			time.Sleep(time.Second * 2)
-			s.Stop()
+			spinner.Client.Stop()
 			continue
 		}
 	}

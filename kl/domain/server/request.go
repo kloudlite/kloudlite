@@ -17,7 +17,7 @@ import (
 	"github.com/kloudlite/kl/constants"
 )
 
-func klFetch(method string, variables map[string]any, cookie *string) ([]byte, error) {
+func klFetch(method string, variables map[string]any, cookie *string, verbose ...bool) ([]byte, error) {
 	url := constants.ServerURL
 
 	marshal, err := json.Marshal(map[string]any{
@@ -33,7 +33,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 	// Define the custom DNS resolver
 	customResolver := &net.Resolver{
 		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+		Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
 			// Specify the address of your custom DNS server
 			dnsServer := "1.1.1.1:53"
 			d := net.Dialer{
@@ -73,10 +73,9 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 		req.Header.Add("cookie", *cookie)
 	}
 
-	s := spinner.NewSpinner()
-	s.Start()
+	spinner.Client.Start()
 	res, err := client.Do(req)
-	s.Stop()
+	spinner.Client.Stop()
 	if err != nil || res.StatusCode != 200 {
 		if err != nil {
 			return nil, err
@@ -101,6 +100,10 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 		Errors []struct {
 			Message string `json:"message"`
 		} `json:"errors"`
+	}
+
+	if len(verbose) > 0 && verbose[0] {
+		fn.Println(string(body))
 	}
 
 	var respData RespData

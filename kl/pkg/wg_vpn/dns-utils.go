@@ -9,6 +9,7 @@ import (
 )
 
 func ResetDnsServers(devName string, verbose bool) error {
+	return nil
 
 	bkDns, err := client.BackupDns()
 	if err != nil {
@@ -37,6 +38,8 @@ func ResetDnsServers(devName string, verbose bool) error {
 }
 
 func SetDnsServers(dnsServers []net.IP, devName string, verbose bool) error {
+
+	return nil
 
 	warn := func(str ...interface{}) {
 		if verbose {

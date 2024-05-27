@@ -1,7 +1,6 @@
 package vpn
 
 import (
-	"github.com/kloudlite/kl/cmd/vpn/intercept"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
@@ -23,6 +22,7 @@ sudo {cmd} vpn status
 	  `)
 
 var Cmd = &cobra.Command{
+	Hidden:  true,
 	Use:     "vpn",
 	Short:   "vpn related commands",
 	Example: Example,
@@ -44,7 +44,7 @@ func init() {
 	Cmd.AddCommand(restartCmd)
 	Cmd.AddCommand(stopCmd)
 	Cmd.AddCommand(statusCmd)
-	Cmd.AddCommand(intercept.Cmd)
+	// Cmd.AddCommand(intercept.Cmd)
 
 	InfraCmd.Aliases = append(InfraCmd.Aliases, "dev")
 	InfraCmd.AddCommand(startCmd)

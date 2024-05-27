@@ -2,26 +2,30 @@ package app
 
 import (
 	"os"
+	"runtime"
 
 	"github.com/kloudlite/kl/app"
+	"github.com/kloudlite/kl/constants"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
 )
 
 var Cmd = &cobra.Command{
-	Hidden: true,
+	Hidden: false,
 	Use:    "start-app",
 	Short:  "start the kloudlite app",
 	Long:   `This is internal command`,
-	Run: func(_ *cobra.Command, _ []string) {
+	Run: func(c *cobra.Command, _ []string) {
 
-		if euid := os.Geteuid(); euid != 0 {
-			fn.Log(text.Colored("make sure you are running command with sudo", 209))
-			return
+		if runtime.GOOS != constants.RuntimeWindows {
+			if euid := os.Geteuid(); euid != 0 {
+				fn.Log(text.Colored("make sure you are running command with sudo", 209))
+				return
+			}
 		}
 
-		if err := app.RunApp(); err != nil {
+		if err := app.RunApp(c.Parent().Name()); err != nil {
 			fn.PrintError(err)
 		}
 	},

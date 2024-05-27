@@ -14,7 +14,7 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:     "status",
-	Short:   "get status of your current context (user, account, project, environment, vpn status)",
+	Short:   "get status of your current context (user, account, environment, vpn status)",
 	Example: fn.Desc("{cmd} status"),
 	Run: func(_ *cobra.Command, _ []string) {
 
@@ -67,7 +67,7 @@ var Cmd = &cobra.Command{
 				}
 			}()))
 
-			ip, err := client.CurrentDeviceDNS()
+			ip, err := client.CurrentDeviceIp()
 			if err == nil {
 				fn.Logf("%s %s", text.Bold(text.Blue("Device IP:")), *ip)
 			}

@@ -87,6 +87,9 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 	}
 
 	env, err := EnsureEnv(nil)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	cookie, err := getCookie()
 	if err != nil {

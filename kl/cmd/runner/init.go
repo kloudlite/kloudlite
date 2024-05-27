@@ -35,7 +35,7 @@ Examples:
 				return
 			}
 
-			packages := []string{"vim", "git", "go"}
+			packages := []string{"vim", "git"}
 
 			defEnv := ""
 			if len(envs) != 0 {

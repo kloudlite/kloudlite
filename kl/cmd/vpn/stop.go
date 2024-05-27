@@ -6,6 +6,7 @@ import (
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
+	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
@@ -33,11 +34,38 @@ Example:
 		}
 
 		if euid := os.Geteuid(); euid != 0 {
-			fn.Log(
-				text.Colored("make sure you are running command with sudo", 209),
-			)
+			if err := func() error {
+
+				if err := client.EnsureAppRunning(); err != nil {
+					return err
+				}
+
+				p, err := proxy.NewProxy(true)
+				if err != nil {
+					return err
+				}
+
+				out, err := p.Stop()
+				if err != nil {
+					return err
+				}
+
+				fn.Log(string(out))
+				return nil
+			}(); err != nil {
+				fn.PrintError(err)
+				return
+			}
+
 			return
 		}
+
+		// if euid := os.Geteuid(); euid != 0 {
+		// 	fn.Log(
+		// 		text.Colored("make sure you are running command with sudo", 209),
+		// 	)
+		// 	return
+		// }
 
 		wgInterface, err := wgc.Show(&wgc.WgShowOptions{
 			Interface: "interfaces",

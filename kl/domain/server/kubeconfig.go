@@ -14,7 +14,6 @@ import (
 func SyncKubeConfig(options ...fn.Option) (*string, error) {
 
 	accountName := fn.GetOption(options, "accountName")
-	clusterName := fn.GetOption(options, "clusterName")
 
 	accountName, err := EnsureAccount([]fn.Option{
 		fn.MakeOption("accountName", accountName),
@@ -23,7 +22,7 @@ func SyncKubeConfig(options ...fn.Option) (*string, error) {
 		return nil, err
 	}
 
-	clusterName, err = EnsureCluster(options...)
+	clusterName, err := EnsureCluster(options...)
 	if err != nil {
 		return nil, err
 	}
@@ -31,6 +30,10 @@ func SyncKubeConfig(options ...fn.Option) (*string, error) {
 	tmpDir := os.TempDir()
 
 	td, err := os.MkdirTemp(tmpDir, fmt.Sprintf("kl-kubeconfig-%s-", accountName))
+	if err != nil {
+		return nil, err
+	}
+
 	tmpFile := path.Join(td, clusterName)
 
 	fn.Logf("%s \"%s\"", text.Bold("kubeconfig file saved at:"), text.Yellow(tmpFile))
@@ -58,7 +61,6 @@ func SyncKubeConfig(options ...fn.Option) (*string, error) {
 func getKubeConfig(options ...fn.Option) (*string, error) {
 
 	accountName := fn.GetOption(options, "accountName")
-	clusterName := fn.GetOption(options, "clusterName")
 
 	_, err := EnsureAccount([]fn.Option{
 		fn.MakeOption("accountName", accountName),
@@ -67,7 +69,7 @@ func getKubeConfig(options ...fn.Option) (*string, error) {
 		return nil, err
 	}
 
-	clusterName, err = EnsureCluster(options...)
+	clusterName, err := EnsureCluster(options...)
 	if err != nil {
 		return nil, err
 	}

@@ -12,7 +12,7 @@ import (
 
 var appsCmd = &cobra.Command{
 	Use:   "apps",
-	Short: "Get list of apps in current project & selected environment",
+	Short: "Get list of apps in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := listapps(cmd, args); err != nil {
 			fn.PrintError(err)

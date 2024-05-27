@@ -2,8 +2,12 @@ package server
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/kloudlite/kl/domain/client"
+	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/fwd"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
@@ -13,10 +17,31 @@ var PaginationDefault = map[string]any{
 	"first":         99999999,
 }
 
+// intercept {
+//   enabled
+//   toDevice
+//   portMappings {
+//     appPort
+//     devicePort
+//   }
+// }
+//
+
+type AppSpec struct {
+	Services []struct {
+		Port int `json:"port"`
+	} `json:"services"`
+	Intercept struct {
+		PortMappings []AppPort `json:"portMappings"`
+	} `json:"intercept"`
+}
+
 type App struct {
 	DisplayName string   `json:"displayName"`
 	Metadata    Metadata `json:"metadata"`
+	Spec        AppSpec  `json:"spec"`
 	Status      Status   `json:"status"`
+	IsMainApp   bool     `json:"mapp"`
 }
 
 type AppPort struct {
@@ -56,7 +81,9 @@ func ListApps(options ...fn.Option) ([]App, error) {
 	}
 }
 
-func SelectApp(options ...fn.Option) (*string, error) {
+func SelectApp(options ...fn.Option) (*App, error) {
+
+	appName := fn.GetOption(options, "appName")
 
 	a, err := ListApps(options...)
 	if err != nil {
@@ -67,46 +94,44 @@ func SelectApp(options ...fn.Option) (*string, error) {
 		return nil, fmt.Errorf("no app found")
 	}
 
+	if appName != "" {
+		for i, a2 := range a {
+			if a2.Metadata.Name == appName {
+				return &a[i], nil
+			}
+		}
+
+		return nil, fmt.Errorf("app not found")
+	}
+
 	app, err := fzf.FindOne(a, func(item App) string {
-		return fmt.Sprintf("%s (%s) (%s)", item.DisplayName, item.Metadata.Name, item.Metadata.Namespace)
+		return fmt.Sprintf("%s (%s)%s", item.DisplayName, item.Metadata.Name, func() string {
+			if item.IsMainApp {
+				return ""
+			}
+
+			return " [external]"
+		}())
 	}, fzf.WithPrompt("Select App>"))
 	if err != nil {
 		return nil, err
 	}
 
-	return &app.Metadata.Name, nil
+	return app, nil
 }
 
-func EnsureApp(options ...fn.Option) (*string, error) {
+func EnsureApp(options ...fn.Option) (*App, error) {
 
-	appName := fn.GetOption(options, "appName")
-	envName := fn.GetOption(options, "envName")
-
-	env, err := EnsureEnv(&client.Env{
-		Name: envName,
-	}, options...)
-
+	s, err := SelectApp(options...)
 	if err != nil {
 		return nil, err
 	}
 
-	envName = env.Name
-
-	if appName == "" {
-		s, err := SelectApp(options...)
-		if err != nil {
-			return nil, err
-		}
-
-		appName = *s
-	}
-
-	return &appName, nil
+	return s, nil
 }
 
 func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 
-	appName := fn.GetOption(options, "appName")
 	devName := fn.GetOption(options, "deviceName")
 	envName := fn.GetOption(options, "envName")
 
@@ -134,13 +159,9 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 		devName = ctx.DeviceName
 	}
 
-	if appName == "" {
-		s, err := EnsureApp(options...)
-		if err != nil {
-			return err
-		}
-
-		appName = *s
+	app, err := EnsureApp(options...)
+	if err != nil {
+		return err
 	}
 
 	cookie, err := getCookie()
@@ -148,8 +169,65 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 		return err
 	}
 
-	respData, err := klFetch("cli_interceptApp", map[string]any{
-		"appname":      appName,
+	if len(ports) == 0 {
+		if len(app.Spec.Intercept.PortMappings) != 0 {
+			ports = append(ports, app.Spec.Intercept.PortMappings...)
+		} else if len(app.Spec.Services) != 0 {
+			for _, v := range app.Spec.Services {
+				ports = append(ports, AppPort{
+					AppPort:    v.Port,
+					DevicePort: v.Port,
+				})
+			}
+		}
+	}
+
+	if err := func() error {
+		sshPort, ok := os.LookupEnv("SSH_PORT")
+		if ok {
+			var prs []fwd.StartCh
+
+			for _, v := range ports {
+				prs = append(prs, fwd.StartCh{
+					SshPort:    sshPort,
+					RemotePort: fmt.Sprint(v.DevicePort),
+					LocalPort:  fmt.Sprint(v.DevicePort),
+				})
+			}
+
+			p, err := proxy.NewProxy(false)
+			if err != nil {
+				return err
+			}
+
+			if status {
+				if _, err := p.AddFwd(prs); err != nil {
+					fn.PrintError(err)
+					return err
+				}
+				return nil
+			}
+
+			if _, err := p.RemoveFwd(prs); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		fn.PrintError(err)
+	}
+
+	if len(ports) == 0 {
+		return fmt.Errorf("no ports provided to intercept")
+	}
+
+	query := "cli_interceptApp"
+	if !app.IsMainApp {
+		query = "cli_intercepExternalApp"
+	}
+
+	respData, err := klFetch(query, map[string]any{
+		"appName":      app.Metadata.Name,
 		"envName":      envName,
 		"deviceName":   devName,
 		"intercept":    status,
