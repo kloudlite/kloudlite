@@ -67,6 +67,10 @@ func (d *domain) CreateBYOKCluster(ctx InfraContext, cluster entities.BYOKCluste
 		cluster.GlobalVPN = DefaultGlobalVPNName
 	}
 
+	if _, err := d.ensureGlobalVPN(ctx, cluster.GlobalVPN); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	ctoken, err := d.generateClusterToken(ctx, cluster.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -76,21 +80,12 @@ func (d *domain) CreateBYOKCluster(ctx InfraContext, cluster entities.BYOKCluste
 
 	cluster.MessageQueueTopicName = common.GetTenantClusterMessagingTopic(ctx.AccountName, cluster.Name)
 
-	gvpn, err := d.ensureGlobalVPN(ctx, cluster.GlobalVPN)
+	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, cluster.GlobalVPN, cluster.ClusterPublicEndpoint)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	clusterSvcCIDR, err := d.claimNextClusterSvcCIDR(ctx, cluster.Name, gvpn.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, clusterSvcCIDR, cluster.GlobalVPN, cluster.ClusterPublicEndpoint); err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	cluster.ClusterSvcCIDR = clusterSvcCIDR
+	cluster.ClusterSvcCIDR = gvpnConn.ClusterSvcCIDR
 
 	existing, err := d.clusterRepo.FindOne(ctx, repos.Filter{
 		fields.MetadataName:      cluster.Name,
@@ -178,8 +173,8 @@ func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string) 
 	}
 
 	return []string{
-		fmt.Sprintf(`helm repo add kloudlite https://kloudlite.github.io/helm-charts`),
-		fmt.Sprintf(`helm repo update kloudlite`),
+		`helm repo add kloudlite https://kloudlite.github.io/helm-charts`,
+		`helm repo update kloudlite`,
 		fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --version %s --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set byok.enabled=true --set helmCharts.ingressNginx.enabled=true --set helmCharts.certManager.enabled=true`, d.env.KloudliteRelease, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr),
 	}, nil
 }
@@ -203,29 +198,14 @@ func (d *domain) DeleteBYOKCluster(ctx InfraContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	if err := d.byokClusterRepo.DeleteOne(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, name)); err != nil {
-		return errors.NewE(err)
-	}
-
 	if cluster.GlobalVPN != "" {
 		if err := d.deleteGlobalVPNConnection(ctx, cluster.Name, cluster.GlobalVPN); err != nil {
 			return errors.NewE(err)
 		}
-		if err := d.claimClusterSvcCIDRRepo.DeleteOne(ctx, repos.Filter{
-			fc.ClaimClusterSvcCIDRClaimedByCluster: cluster.Name,
-			fc.AccountName:                         ctx.AccountName,
-			fc.ClaimClusterSvcCIDRGlobalVPNName:    cluster.GlobalVPN,
-		}); err != nil {
-			return errors.NewE(err)
-		}
+	}
 
-		if _, err := d.freeClusterSvcCIDRRepo.Create(ctx, &entities.FreeClusterSvcCIDR{
-			AccountName:    ctx.AccountName,
-			GlobalVPNName:  cluster.GlobalVPN,
-			ClusterSvcCIDR: cluster.ClusterSvcCIDR,
-		}); err != nil {
-			return errors.NewE(err)
-		}
+	if err := d.byokClusterRepo.DeleteOne(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, name)); err != nil {
+		return errors.NewE(err)
 	}
 
 	return nil
