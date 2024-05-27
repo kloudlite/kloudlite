@@ -6,11 +6,10 @@ package graph
 
 import (
 	"context"
-	"github.com/kloudlite/api/pkg/errors"
-
 	"github.com/kloudlite/api/apps/auth/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/auth/internal/app/graph/model"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/repos"
