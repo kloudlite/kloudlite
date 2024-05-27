@@ -60,18 +60,20 @@ const (
 	AgtReady                  string = "agent-ready"
 	SpecReady                 string = "spec-ready"
 	TrackNodePort             string = "track-node-port"
+	TrackLoadBalancer         string = "track-load-balancer"
 	UpdateCustomCoreDNSConfig string = "update-custom-coredns-config"
 
 	// ConnectDeleted string = "connect-deleted"
 )
 
-var CONN_CHECKLIST = []rApi.CheckMeta{
-	{Name: NSReady, Title: "making sure namespace is ready"},
-	{Name: SpecReady, Title: "making sure spec data is ready"},
-	{Name: GWReady, Title: "making sure gateway is ready"},
-	{Name: AgtReady, Title: "making sure agent is ready"},
-	{Name: TrackNodePort, Title: "making sure agent is ready", Debug: true},
-	{Name: UpdateCustomCoreDNSConfig, Title: "updates coredns config to acknowledge gateway"},
+var ApplyChecklist = []rApi.CheckMeta{
+	{Name: NSReady, Title: "GlobalVPN Namespace Ready"},
+	{Name: SpecReady, Title: "making sure spec data is ready", Debug: true},
+	{Name: GWReady, Title: "GlobalVPN Gateway Ready"},
+	{Name: AgtReady, Title: "GlobalVPN Agent Ready"},
+	// {Name: TrackNodePort, Title: "making sure agent is ready"},
+	{Name: TrackLoadBalancer, Title: "GlobalVPN Gateway LoadBalancer ready"},
+	{Name: UpdateCustomCoreDNSConfig, Title: "CoreDNS config updated"},
 }
 
 // CONN_DESTROY_CHECKLIST = []rApi.CheckMeta{
@@ -103,7 +105,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(CONN_CHECKLIST); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(ApplyChecklist); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -136,7 +138,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.trackNodePort(req); !step.ShouldProceed() {
+	// if step := r.trackNodePort(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
+
+	if step := r.trackLoadBalanacer(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -375,7 +381,6 @@ func (r *Reconciler) reconGateway(req *rApi.Request[*wgv1.GlobalVPN]) stepResult
 		"ownerRefs":      []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		"interface":      obj.Spec.WgInterface,
 		"coredns-svc-ip": wc.DNSServer,
-		// "nodeport":     wc.NodePort,
 	})
 	if err != nil {
 		return check.Failed(err).NoRequeue()
@@ -439,24 +444,83 @@ func (r *Reconciler) finalize(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Res
 	return req.Finalize()
 }
 
-func (r *Reconciler) trackNodePort(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Result {
+// func (r *Reconciler) trackNodePort(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Result {
+// 	ctx, obj := req.Context(), req.Object
+// 	check := rApi.NewRunningCheck(TrackNodePort, req)
+//
+// 	svc, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, fmt.Sprintf("%s-gateway-external", obj.Name)), &corev1.Service{})
+// 	if err != nil {
+// 		return check.Failed(err)
+// 	}
+//
+// 	var nodeport *int32
+//
+// 	for i := range svc.Spec.Ports {
+// 		if svc.Spec.Type == corev1.ServiceTypeNodePort {
+// 			nodeport = &svc.Spec.Ports[i].NodePort
+// 		}
+// 	}
+//
+// 	if nodeport == nil {
+// 		return check.Failed(fmt.Errorf("failed to find a nodeport for our gateway service"))
+// 	}
+//
+// 	wgCreds, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.WgRef.Namespace, obj.Spec.WgRef.Name), &corev1.Secret{})
+// 	if err != nil {
+// 		return check.Failed(err)
+// 	}
+//
+// 	wc, err := fn.ParseFromSecret[wgv1.WgParams](wgCreds)
+// 	if err != nil {
+// 		return check.Failed(err)
+// 	}
+//
+// 	// wc.NodePort = fn.New(fmt.Sprintf("%d", *nodeport))
+// 	// wc.ExternalWgGatewayAddr = fn.New(fmt.Sprintf("%d", *nodeport))
+//
+// 	m, err := fn.JsonConvert[map[string]string](wc)
+// 	if err != nil {
+// 		return check.Failed(err)
+// 	}
+//
+// 	wgCreds.StringData = m
+// 	if err := r.Update(ctx, wgCreds); err != nil {
+// 		return check.StillRunning(err)
+// 	}
+//
+// 	return check.Completed()
+// }
+
+func (r *Reconciler) trackLoadBalanacer(req *rApi.Request[*wgv1.GlobalVPN]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.NewRunningCheck(TrackNodePort, req)
+	check := rApi.NewRunningCheck(TrackLoadBalancer, req)
 
 	svc, err := rApi.Get(ctx, r.Client, fn.NN(ResourceNamespace, fmt.Sprintf("%s-gateway-external", obj.Name)), &corev1.Service{})
 	if err != nil {
 		return check.Failed(err)
 	}
 
-	var nodeport *int32
-
-	for i := range svc.Spec.Ports {
-		if svc.Spec.Type == corev1.ServiceTypeNodePort {
-			nodeport = &svc.Spec.Ports[i].NodePort
-		}
+	if svc.Spec.Type != corev1.ServiceTypeLoadBalancer {
+		return check.Failed(fmt.Errorf("failed to find a loadbalancer service"))
 	}
 
-	if nodeport == nil {
+	hosts := make([]string, 0, len(svc.Status.LoadBalancer.Ingress))
+	for _, ingress := range svc.Status.LoadBalancer.Ingress {
+		hosts = append(hosts, ingress.IP)
+	}
+
+	var port *int32
+
+	for i := range svc.Spec.Ports {
+		if svc.Spec.Ports[i].Name == "wireguard" {
+			port = &svc.Spec.Ports[i].Port
+		}
+		// if svc.Spec.Type == corev1.ServiceTypeNodePort {
+		// 	port = &svc.Spec.Ports[i].NodePort
+		// }
+	}
+
+	if port == nil {
 		return check.Failed(fmt.Errorf("failed to find a nodeport for our gateway service"))
 	}
 
@@ -470,8 +534,8 @@ func (r *Reconciler) trackNodePort(req *rApi.Request[*wgv1.GlobalVPN]) stepResul
 		return check.Failed(err)
 	}
 
-	wc.NodePort = fn.New(fmt.Sprintf("%d", *nodeport))
-	// wc.ExternalWgGatewayAddr = fn.New(fmt.Sprintf("%d", *nodeport))
+	wc.PublicGatewayHosts = fn.New(strings.Join(hosts, ","))
+	wc.PublicGatewayPort = fn.New(fmt.Sprintf("%d", *port))
 
 	m, err := fn.JsonConvert[map[string]string](wc)
 	if err != nil {
