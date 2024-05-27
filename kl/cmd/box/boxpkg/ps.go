@@ -17,7 +17,8 @@ func (c *client) ListBox() error {
 	}
 
 	if err == notFoundErr {
-		return fmt.Errorf("no running container found")
+		fn.Logf("no running container found")
+		return nil
 	}
 
 	header := table.Row{table.HeaderText("container name"), table.HeaderText("path")}

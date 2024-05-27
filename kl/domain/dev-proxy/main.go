@@ -3,15 +3,54 @@ package proxy
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"path"
+	"runtime"
 	"strings"
 
+	"github.com/adrg/xdg"
 	appconsts "github.com/kloudlite/kl/app-consts"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/fwd"
 )
+
+func GetUserHomeDir() (string, error) {
+	if runtime.GOOS == "windows" {
+		return xdg.Home, nil
+	}
+
+	if euid := os.Geteuid(); euid == 0 {
+		username, ok := os.LookupEnv("SUDO_USER")
+		if !ok {
+			return "", errors.New("something went wrong")
+		}
+
+		oldPwd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+
+		sp := strings.Split(oldPwd, "/")
+
+		for i := range sp {
+			if sp[i] == username {
+				return path.Join("/", path.Join(sp[:i+1]...)), nil
+			}
+		}
+
+		return "", errors.New("something went wrong")
+	}
+
+	userHome, ok := os.LookupEnv("HOME")
+	if !ok {
+		return "", errors.New("something went wrong")
+	}
+
+	return userHome, nil
+}
 
 type Proxy struct {
 	logResponse bool
@@ -32,13 +71,20 @@ func InsideBox() bool {
 }
 
 func GetHostIp() (string, error) {
-	s, ok := os.LookupEnv("HOST_IP")
 
-	if !ok {
-		return "", fmt.Errorf("HOST_IP not set")
+	configFolder, err := GetUserHomeDir()
+	if err != nil {
+		return "", err
 	}
 
-	return s, nil
+	ipPath := path.Join(configFolder, ".cache", ".kl", "host_ip")
+
+	b, err := os.ReadFile(ipPath)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
 }
 
 func (p *Proxy) MakeRequest(path string, params ...[]byte) ([]byte, error) {

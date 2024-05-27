@@ -1,7 +1,6 @@
 package boxpkg
 
 import (
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -114,7 +113,7 @@ func (c *client) ensureCacheExist() error {
 	return nil
 }
 
-func GetDockerHostIp() string {
+func GetDockerHostIp() (string, error) {
 
 	// if runtime.GOOS != constants.RuntimeLinux {
 	// 	return "host.docker.internal"
@@ -122,11 +121,11 @@ func GetDockerHostIp() string {
 
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	defer conn.Close()
 
 	localAddress := conn.LocalAddr().(*net.UDPAddr)
 
-	return localAddress.IP.To4().String()
+	return localAddress.IP.To4().String(), nil
 }

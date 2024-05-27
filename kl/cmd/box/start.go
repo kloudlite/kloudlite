@@ -23,7 +23,6 @@ var startCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-
 	},
 }
 

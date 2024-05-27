@@ -13,6 +13,7 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/kloudlite/kl/constants"
 	cl "github.com/kloudlite/kl/domain/client"
+	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -151,9 +152,15 @@ func (c *client) Start() error {
 			args = append(args, "-v", "/var/run/docker.sock:/var/run/docker.sock:ro")
 		}
 
+		configFolder, err := cl.GetConfigFolder()
+		if err != nil {
+			return err
+		}
+
 		if len(cfg.DNS) > 0 {
 			args = append(args, []string{
 				"--dns", cfg.DNS[0].To4().String(),
+				"--dns", "1.1.1.1",
 				"--dns-search", fmt.Sprintf("%s.svc.%s.local", e.Spec.TargetNamespace, e.ClusterName),
 			}...)
 		}
@@ -169,16 +176,14 @@ func (c *client) Start() error {
 			return err
 		}
 
-		configFolder, err := cl.GetConfigFolder()
 		if err != nil {
 			return err
 		}
 
-		// if runtime.GOOS != constants.RuntimeLinux {
-		// 	args = append(args, []string{
-		// 		"-p", fmt.Sprintf("%d:%d", sshPort, sshPort),
-		// 	}...)
-		// }
+		s, err := proxy.GetHostIp()
+		if err != nil {
+			return err
+		}
 
 		args = append(args, []string{
 			"-v", fmt.Sprintf("%s:/tmp/ssh2/authorized_keys:ro", akTmpPath),
@@ -188,8 +193,8 @@ func (c *client) Start() error {
 			"-v", fmt.Sprintf("%s:/home/kl/workspace:z", c.cwd),
 			"-v", fmt.Sprintf("%s:/home/kl/.cache/.kl:z", configFolder),
 			"-e", fmt.Sprintf("SSH_PORT=%d", sshPort),
-			"-e", fmt.Sprintf("HOST_IP=%s", GetDockerHostIp()),
 			"--add-host=box:127.0.0.1",
+			fmt.Sprintf("--add-host=%s.device.local:%s", d.Metadata.Name, s),
 			"-p", fmt.Sprintf("%d:%d", sshPort, sshPort),
 			GetImageName(), "--", string(conf),
 		}...)
