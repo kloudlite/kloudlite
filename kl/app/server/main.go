@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
 	appconsts "github.com/kloudlite/kl/app-consts"
-	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/fwd"
@@ -121,12 +120,7 @@ func (s *Server) Start() error {
 
 		case "start", "stop", "status", "restart":
 
-			if runtime.GOOS == constants.RuntimeWindows {
-				http.Error(w, "this command not supported for windows", http.StatusBadRequest)
-				return
-			}
-
-			go fn.StreamOutput(fmt.Sprintf("%s vpn %s", s.bin, command), nil, outputCh, errCh)
+			go fn.StreamOutput(fmt.Sprintf("%s vpn %s", s.bin, command), map[string]string{"KL_APP": "true", "PATH": os.Getenv("PATH")}, outputCh, errCh)
 
 			for {
 				select {

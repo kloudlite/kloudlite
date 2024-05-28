@@ -4,20 +4,17 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 
-	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 	"golang.zx2c4.com/wireguard/wgctrl"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 func IsSystemdReslov() bool {
@@ -108,71 +105,71 @@ func Configure(
 		fn.Log("[#] setting up connection")
 	}
 
-	if err := func() error {
-		if runtime.GOOS != constants.RuntimeLinux {
-			return nil
-		}
+	// if err := func() error {
+	// 	if runtime.GOOS != constants.RuntimeLinux {
+	// 		return nil
+	// 	}
 
-		return nil
+	// 	return nil
 
-		if len(cfg.Address) > 0 {
-			dc, err := client.GetDeviceContext()
-			if err != nil {
-				return err
-			}
+	// 	if len(cfg.Address) > 0 {
+	// 		dc, err := client.GetDeviceContext()
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			priv := dc.PrivateKey
+	// 		priv := dc.PrivateKey
 
-			if priv == nil {
-				_, priv, err = GenerateWgKeys()
-				if err != nil {
-					return err
-				}
+	// 		if priv == nil {
+	// 			_, priv, err = GenerateWgKeys()
+	// 			if err != nil {
+	// 				return err
+	// 			}
 
-				dc.PrivateKey = priv
-			}
+	// 			dc.PrivateKey = priv
+	// 		}
 
-			pub, err := GeneratePublicKey(string(priv))
-			if err != nil {
-				return err
-			}
+	// 		pub, err := GeneratePublicKey(string(priv))
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-			if len(pub) < 32 {
-				fmt.Println("wrong public key length")
-			}
-			var pubBuff [32]byte
-			copy(pubBuff[:], pub[:32])
+	// 		if len(pub) < 32 {
+	// 			fmt.Println("wrong public key length")
+	// 		}
+	// 		var pubBuff [32]byte
+	// 		copy(pubBuff[:], pub[:32])
 
-			hostPublicKey, err := GeneratePublicKey(cfg.PrivateKey.String())
-			if err != nil {
-				return err
-			}
-			dc.HostPublicKey = hostPublicKey
+	// 		hostPublicKey, err := GeneratePublicKey(cfg.PrivateKey.String())
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		dc.HostPublicKey = hostPublicKey
 
-			cfg.Peers = append(cfg.Peers, wgtypes.PeerConfig{
-				PublicKey: pubBuff,
-				Endpoint: &net.UDPAddr{
-					IP:   net.ParseIP("127.0.0.1"),
-					Port: constants.ContainerVpnPort,
-				},
-				AllowedIPs: []net.IPNet{{
-					IP:   cfg.Address[0].IP,
-					Mask: net.CIDRMask(32, 32),
-				}},
-			})
+	// 		cfg.Peers = append(cfg.Peers, wgtypes.PeerConfig{
+	// 			PublicKey: pubBuff,
+	// 			Endpoint: &net.UDPAddr{
+	// 				IP:   net.ParseIP("127.0.0.1"),
+	// 				Port: constants.ContainerVpnPort,
+	// 			},
+	// 			AllowedIPs: []net.IPNet{{
+	// 				IP:   cfg.Address[0].IP,
+	// 				Mask: net.CIDRMask(32, 32),
+	// 			}},
+	// 		})
 
-			dc.DeviceIp = cfg.Address[0].IP
-			cfg.Address = []net.IPNet{}
+	// 		dc.DeviceIp = cfg.Address[0].IP
+	// 		cfg.Address = []net.IPNet{}
 
-			if err := client.WriteDeviceContext(dc); err != nil {
-				return err
-			}
-		}
+	// 		if err := client.WriteDeviceContext(dc); err != nil {
+	// 			return err
+	// 		}
+	// 	}
 
-		return nil
-	}(); err != nil {
-		return err
-	}
+	// 	return nil
+	// }(); err != nil {
+	// 	return err
+	// }
 
 	// fn.Log(cfg.PrivateKey.String(), cfg.Address[0].IP.To4().String())
 

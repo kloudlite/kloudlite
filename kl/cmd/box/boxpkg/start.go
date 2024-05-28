@@ -25,10 +25,6 @@ var errContainerNotStarted = fmt.Errorf("container not started")
 func (c *client) Start() error {
 	defer c.spinner.UpdateMessage("initiating container please wait")()
 
-	// if err := c.EnsureVpnCntRunning(); err != nil {
-	// 	return err
-	// }
-
 	if c.verbose {
 		fn.Logf("starting container in: %s", text.Blue(c.cwd))
 	}
@@ -147,7 +143,7 @@ func (c *client) Start() error {
 
 		switch runtime.GOOS {
 		case constants.RuntimeWindows:
-			fn.Warn("docker support inside container not implemented yet")
+			// fn.Warn("docker support inside container not implemented yet")
 		default:
 			args = append(args, "-v", "/var/run/docker.sock:/var/run/docker.sock:ro")
 		}

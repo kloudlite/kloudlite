@@ -77,7 +77,7 @@ func createDevice(devName string) (*Device, error) {
 		},
 	}, &cookie)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create vpn: %s", err.Error())
 	}
 
 	d, err := GetFromResp[Device](respData)
@@ -111,6 +111,7 @@ func EnsureDevice(options ...fn.Option) (*Device, error) {
 	if err != nil {
 		fn.Warnf("Failed to get VPN device: %s", err)
 		return createDevice(hostName)
+
 	}
 
 	return d, nil

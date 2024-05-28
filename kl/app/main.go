@@ -1,5 +1,3 @@
-//go:build others
-
 package app
 
 import (
@@ -17,6 +15,8 @@ import (
 )
 
 func RunApp(binName string) error {
+	fn.Log("Kl Server")
+
 	onExit := func() {
 		fn.Log("Exiting...")
 		// now := time.Now()

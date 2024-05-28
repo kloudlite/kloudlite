@@ -7,12 +7,11 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"syscall"
 	"time"
-	"unsafe"
 
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/flags"
+	"github.com/kloudlite/kl/pkg/functions"
 )
 
 func CurrentDeviceName() (string, error) {
@@ -86,9 +85,10 @@ func EnsureAppRunning() error {
 			_ = command.Start()
 
 		} else {
-			command := exec.Command(flags.CliName, "start-app")
-
-			_ = command.Start()
+			_, err = functions.WinSudoExec(fmt.Sprintf("%s start-app", flags.CliName), nil)
+			if err != nil {
+				functions.PrintError(err)
+			}
 		}
 
 		count++
@@ -98,40 +98,4 @@ func EnsureAppRunning() error {
 
 		time.Sleep(2 * time.Second)
 	}
-}
-
-var (
-	shell32           = syscall.NewLazyDLL("shell32.dll")
-	procShellExecuteW = shell32.NewProc("ShellExecuteW")
-)
-
-func ShellExecute(operation, file, parameters, directory string, showCmd int) error {
-	op, err := syscall.UTF16PtrFromString(operation)
-	if err != nil {
-		return err
-	}
-	f, err := syscall.UTF16PtrFromString(file)
-	if err != nil {
-		return err
-	}
-	p, err := syscall.UTF16PtrFromString(parameters)
-	if err != nil {
-		return err
-	}
-	d, err := syscall.UTF16PtrFromString(directory)
-	if err != nil {
-		return err
-	}
-	ret, _, _ := procShellExecuteW.Call(
-		0,
-		uintptr(unsafe.Pointer(op)),
-		uintptr(unsafe.Pointer(f)),
-		uintptr(unsafe.Pointer(p)),
-		uintptr(unsafe.Pointer(d)),
-		uintptr(showCmd),
-	)
-	if ret <= 32 {
-		return syscall.GetLastError()
-	}
-	return nil
 }

@@ -95,12 +95,6 @@ func (c *client) Ssh() error {
 		if !cl.CheckPortAvailable(localEnv.SSHPort) {
 			break
 		}
-		// err = exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no", "--", "exit 0").Run()
-		// if err == nil {
-		// 	break
-		// } else {
-		// 	fn.Warn(err)
-		// }
 
 		count++
 		if count == 10 {

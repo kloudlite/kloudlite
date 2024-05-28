@@ -2,9 +2,7 @@ package vpn
 
 import (
 	"os"
-	"runtime"
 
-	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -25,39 +23,41 @@ Example:
 
 		verbose := fn.ParseBoolFlag(cmd, "verbose")
 
-		if runtime.GOOS == constants.RuntimeWindows {
-			if err := disconnect(verbose); err != nil {
-				fn.Notify("Error:", err.Error())
-				fn.PrintError(err)
-			}
-			return
-		}
+		// if runtime.GOOS == constants.RuntimeWindows {
+		// 	if err := disconnect(verbose); err != nil {
+		// 		fn.Notify("Error:", err.Error())
+		// 		fn.PrintError(err)
+		// 	}
+		// 	return
+		// }
 
 		if euid := os.Geteuid(); euid != 0 {
-			if err := func() error {
+			if os.Getenv("KL_APP") != "true" {
+				if err := func() error {
 
-				if err := client.EnsureAppRunning(); err != nil {
-					return err
+					if err := client.EnsureAppRunning(); err != nil {
+						return err
+					}
+
+					p, err := proxy.NewProxy(true)
+					if err != nil {
+						return err
+					}
+
+					out, err := p.Stop()
+					if err != nil {
+						return err
+					}
+
+					fn.Log(string(out))
+					return nil
+				}(); err != nil {
+					fn.PrintError(err)
+					return
 				}
 
-				p, err := proxy.NewProxy(true)
-				if err != nil {
-					return err
-				}
-
-				out, err := p.Stop()
-				if err != nil {
-					return err
-				}
-
-				fn.Log(string(out))
-				return nil
-			}(); err != nil {
-				fn.PrintError(err)
 				return
 			}
-
-			return
 		}
 
 		// if euid := os.Geteuid(); euid != 0 {
@@ -87,17 +87,14 @@ Example:
 			return
 		}
 
-		fn.Log("[#] disconnected")
-
 		s, err := client.CurrentDeviceName()
 		if err != nil {
+			fn.Logf(text.Bold("\n [#] disconnected device"), text.Blue(s))
 			fn.PrintError(err)
 			return
 		}
 
-		fn.Log(text.Bold(text.Green("\n[#]Selected Device: ")),
-			text.Red(s),
-		)
+		fn.Logf(text.Bold("\n[#] disconnected device %s"), text.Blue(s))
 	},
 }
 

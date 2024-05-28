@@ -1,6 +1,7 @@
 package vpn
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 
@@ -24,30 +25,32 @@ Example:
 	Run: func(_ *cobra.Command, _ []string) {
 
 		if euid := os.Geteuid(); euid != 0 {
-			if err := func() error {
+			if os.Getenv("KL_APP") != "true" {
+				if err := func() error {
 
-				if err := client.EnsureAppRunning(); err != nil {
-					return err
+					if err := client.EnsureAppRunning(); err != nil {
+						return err
+					}
+
+					p, err := proxy.NewProxy(true)
+					if err != nil {
+						return err
+					}
+
+					out, err := p.WgStatus()
+					if err != nil {
+						return err
+					}
+
+					fn.Log(string(out))
+					return nil
+				}(); err != nil {
+					fn.PrintError(err)
+					return
 				}
 
-				p, err := proxy.NewProxy(true)
-				if err != nil {
-					return err
-				}
-
-				out, err := p.WgStatus()
-				if err != nil {
-					return err
-				}
-
-				fn.Log(string(out))
-				return nil
-			}(); err != nil {
-				fn.PrintError(err)
 				return
 			}
-
-			return
 		}
 
 		if runtime.GOOS != "windows" {
@@ -59,20 +62,27 @@ Example:
 			}
 		}
 
-		_, err := wgc.Show(nil)
+		res, err := wgc.Show(nil)
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		s, err := client.CurrentDeviceName()
-		if err != nil {
-			fn.PrintError(err)
-			return
+		print := func(devName string) {
+			d := ""
+			if devName != "" {
+				d = fmt.Sprintf("%s ", devName)
+			}
+			n := ""
+
+			if len(res) == 0 {
+				n = "not "
+			}
+			fn.Logf(text.Bold("\n[#] device %s%s"), text.Red(d), text.Bold(fmt.Sprintf("is %sconnected", n)))
 		}
-		if err == nil {
-			fn.Log(text.Bold(text.Green("\n[#]Selected Device: ")), text.Red(s), "\n")
-		}
+
+		s, _ := client.CurrentDeviceName()
+		print(s)
 	},
 }
 

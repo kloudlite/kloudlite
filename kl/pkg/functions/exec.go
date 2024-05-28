@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 )
 
 // StreamOutput executes a command and streams its output line by line.
@@ -24,10 +25,8 @@ func StreamOutput(cmdString string, env map[string]string, outputCh chan<- strin
 
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 
-	if env != nil {
-		for k, v := range env {
-			cmd.Env = append(cmd.Env, k+"="+v)
-		}
+	for k, v := range env {
+		cmd.Env = append(cmd.Env, k+"="+v)
 	}
 
 	stdoutPipe, err := cmd.StdoutPipe()
@@ -108,31 +107,6 @@ func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
 	return err
 }
 
-// func ExecCmdOut(cmdString string, env map[string]string) ([]byte, error) {
-// 	r := csv.NewReader(strings.NewReader(cmdString))
-// 	r.Comma = ' '
-// 	cmdArr, err := r.Read()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
-//
-// 	if env == nil {
-// 		env = map[string]string{}
-// 	}
-//
-// 	for k, v := range env {
-// 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
-// 	}
-//
-// 	cmd.Stderr = os.Stderr
-// 	out, err := cmd.Output()
-//
-// 	fmt.Println(string(out), err)
-//
-// 	return out, err
-// }
-
 func ExecCmdOut(cmdString string, env map[string]string) ([]byte, error) {
 	r := csv.NewReader(strings.NewReader(cmdString))
 	r.Comma = ' '
@@ -173,6 +147,10 @@ func Exec(cmdString string, env map[string]string) ([]byte, error) {
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 
+	// fmt.Println(cmd.String())
+	cmd.Stderr = os.Stderr
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
 	if env == nil {
 		env = map[string]string{}
 	}
@@ -185,4 +163,30 @@ func Exec(cmdString string, env map[string]string) ([]byte, error) {
 	out, err := cmd.Output()
 
 	return out, err
+}
+
+// isAdmin checks if the current user has administrative privileges.
+func isAdmin() bool {
+	cmd := exec.Command("net", "session")
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	err := cmd.Run()
+	return err == nil
+}
+
+func WinSudoExec(cmdString string, env map[string]string) ([]byte, error) {
+	if isAdmin() {
+		return Exec(cmdString, env)
+	}
+
+	r := csv.NewReader(strings.NewReader(cmdString))
+	r.Comma = ' '
+	cmdArr, err := r.Read()
+	if err != nil {
+		return nil, err
+	}
+	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
+
+	quotedArgs := strings.Join(cmdArr[1:], " ")
+
+	return Exec(fmt.Sprintf("powershell -Command Start-Process -WindowStyle Hidden -FilePath %s -ArgumentList %q -Verb RunAs", cmd.Path, quotedArgs), map[string]string{"PATH": os.Getenv("PATH")})
 }

@@ -2,10 +2,8 @@ package vpn
 
 import (
 	"os"
-	"runtime"
 	"time"
 
-	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 
@@ -23,47 +21,34 @@ sudo {cmd} vpn start`),
 	Run: func(cmd *cobra.Command, _ []string) {
 
 		verbose := fn.ParseBoolFlag(cmd, "verbose")
+		if os.Getenv("KL_APP") != "true" {
 
-		if runtime.GOOS == constants.RuntimeWindows {
-			if err := connect(verbose); err != nil {
-				fn.Notify("Error:", err.Error())
-				fn.PrintError(err)
-			}
-			return
-		}
+			if euid := os.Geteuid(); euid != 0 {
+				if err := func() error {
 
-		if euid := os.Geteuid(); euid != 0 {
-			if err := func() error {
+					if err := client.EnsureAppRunning(); err != nil {
+						return err
+					}
 
-				if err := client.EnsureAppRunning(); err != nil {
-					return err
+					p, err := proxy.NewProxy(true)
+					if err != nil {
+						return err
+					}
+
+					out, err := p.Restart()
+					if err != nil {
+						return err
+					}
+
+					fn.Log(string(out))
+					return nil
+				}(); err != nil {
+					fn.PrintError(err)
+					return
 				}
 
-				p, err := proxy.NewProxy(true)
-				if err != nil {
-					return err
-				}
-
-				out, err := p.Restart()
-				if err != nil {
-					return err
-				}
-
-				fn.Log(string(out))
-				return nil
-			}(); err != nil {
-				fn.PrintError(err)
 				return
 			}
-
-			return
-		}
-
-		if euid := os.Geteuid(); euid != 0 {
-			fn.Log(
-				text.Colored("make sure you are running command with sudo", 209),
-			)
-			return
 		}
 
 		wgInterface, err := wgc.Show(&wgc.WgShowOptions{
