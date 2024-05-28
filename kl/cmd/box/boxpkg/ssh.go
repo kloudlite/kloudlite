@@ -38,7 +38,7 @@ func (c *client) Ssh() error {
 
 	_, err := cl.GetKlFile("")
 	if err != nil {
-		if err == confighandler.KlFileNotExists {
+		if err == confighandler.ErrKlFileNotExists {
 			conts, err := c.listContainer(map[string]string{
 				CONT_MARK_KEY: "true",
 			})
@@ -98,7 +98,7 @@ func (c *client) Ssh() error {
 
 		count++
 		if count == 10 {
-			return fmt.Errorf("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start.")
+			return fmt.Errorf("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start")
 		}
 
 		time.Sleep(1 * time.Second)
@@ -107,7 +107,7 @@ func (c *client) Ssh() error {
 	c.spinner.Stop()
 	command := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
 
-	fn.Logf("%s %s\n", text.Bold("command:"), text.Blue(command.String()))
+	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
 
 	// command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
@@ -160,7 +160,7 @@ func (c *client) doSSHWithCname(name string) error {
 	c.spinner.Stop()
 	command := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(pth)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
 
-	fn.Logf("%s %s\n", text.Bold("command:"), text.Blue(command.String()))
+	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(pth)), "-p", fmt.Sprint(localEnv.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
 
 	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin

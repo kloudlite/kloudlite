@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path"
 	"runtime"
+	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/kloudlite/kl/constants"
@@ -207,9 +207,7 @@ func (c *client) Start() error {
 		}
 
 		if c.cmd.Name() == "start" {
-			command := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
-
-			fn.Logf("%s %s\n", text.Bold("command:"), text.Blue(command.String()))
+			fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
 		}
 
 		return nil

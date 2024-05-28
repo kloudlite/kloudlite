@@ -74,7 +74,7 @@ sudo {cmd} vpn start`),
 				return
 			}
 
-			time.Sleep(2 * time.Second)
+			time.Sleep(1 * time.Second)
 
 			if err := startConnecting(verbose, options...); err != nil {
 				fn.PrintError(err)
