@@ -83,6 +83,25 @@ variables:
 
 ---
 
+label: Import Managed Resource
+query: |+
+  mutation Core_importManagedResource($envName: String!, $msvcName: String!, $mresName: String!) {
+    core_importManagedResource(envName: $envName, msvcName: $msvcName, mresName: $mresName) {
+      id
+      mresRef
+      accountName
+      isImported
+    }
+  }
+variables:
+  {
+    "envName": "test-env",
+    "msvcName": "test-msvc",
+    "mresName": "test-mres"
+  }
+
+---
+
 label: Get ManagedService
 query: |+
   query Core_getManagedResource($namespace: String!, $name: String!) {

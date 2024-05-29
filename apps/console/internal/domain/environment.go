@@ -327,13 +327,13 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	managedResources, err := d.mresRepo.Find(ctx, repos.Query{
-		Filter: filters,
-		Sort:   nil,
-	})
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
+	// managedResources, err := d.mresRepo.Find(ctx, repos.Query{
+	// 	Filter: filters,
+	// 	Sort:   nil,
+	// })
+	// if err != nil {
+	// 	return nil, errors.NewE(err)
+	// }
 
 	resourceMetadata := func(dn string) common.ResourceMetadata {
 		return common.ResourceMetadata{
@@ -423,22 +423,22 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 		}
 	}
 
-	for i := range managedResources {
-		spec := managedResources[i].Spec
-		if _, err := d.createAndApplyManagedResource(resCtx, &entities.ManagedResource{
-			ManagedResource: crdsv1.ManagedResource{
-				TypeMeta:   managedResources[i].TypeMeta,
-				ObjectMeta: objectMeta(managedResources[i].ObjectMeta, destEnv.Spec.TargetNamespace),
-				Spec:       spec,
-				Enabled:    managedResources[i].Enabled,
-			},
-			AccountName:      ctx.AccountName,
-			EnvironmentName:  destEnv.Name,
-			ResourceMetadata: resourceMetadata(managedResources[i].DisplayName),
-		}); err != nil {
-			return nil, err
-		}
-	}
+	// for i := range managedResources {
+	// 	spec := managedResources[i].Spec
+	// 	if _, err := d.createAndApplyManagedResource(resCtx, &entities.ManagedResource{
+	// 		ManagedResource: crdsv1.ManagedResource{
+	// 			TypeMeta:   managedResources[i].TypeMeta,
+	// 			ObjectMeta: objectMeta(managedResources[i].ObjectMeta, destEnv.Spec.TargetNamespace),
+	// 			Spec:       spec,
+	// 			Enabled:    managedResources[i].Enabled,
+	// 		},
+	// 		AccountName:      ctx.AccountName,
+	// 		EnvironmentName:  destEnv.Name,
+	// 		ResourceMetadata: resourceMetadata(managedResources[i].DisplayName),
+	// 	}); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
 	if err := d.syncImagePullSecretsToEnvironment(ctx, destinationEnvName); err != nil {
 		return nil, err

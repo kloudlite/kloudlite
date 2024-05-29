@@ -14,13 +14,17 @@ type ManagedResource struct {
 	repos.BaseEntity       `json:",inline" graphql:"noinput"`
 	crdsv1.ManagedResource `json:",inline"`
 
-	AccountName     string `json:"accountName" graphql:"noinput"`
-	EnvironmentName string `json:"environmentName" graphql:"noinput"`
+	AccountName        string `json:"accountName" graphql:"noinput"`
+	EnvironmentName    string `json:"environmentName" graphql:"noinput"`
+	ManagedServiceName string `json:"managedServiceName" graphql:"noinput"`
 
 	SyncedOutputSecretRef *corev1.Secret `json:"syncedOutputSecretRef" graphql:"noinput"`
 
 	common.ResourceMetadata `json:",inline"`
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+
+	IsImported bool   `json:"isImported" graphql:"noinput"`
+	MresRef    string `json:"mresRef" graphql:"noinput"`
 }
 
 func (m *ManagedResource) GetDisplayName() string {
