@@ -640,9 +640,12 @@ type ComplexityRoot struct {
 		Enabled               func(childComplexity int) int
 		EnvironmentName       func(childComplexity int) int
 		Id                    func(childComplexity int) int
+		IsImported            func(childComplexity int) int
 		Kind                  func(childComplexity int) int
 		LastUpdatedBy         func(childComplexity int) int
+		ManagedServiceName    func(childComplexity int) int
 		MarkedForDeletion     func(childComplexity int) int
+		MresRef               func(childComplexity int) int
 		ObjectMeta            func(childComplexity int) int
 		RecordVersion         func(childComplexity int) int
 		Spec                  func(childComplexity int) int
@@ -699,7 +702,7 @@ type ComplexityRoot struct {
 		CoreCreateEnvironment     func(childComplexity int, env entities.Environment) int
 		CoreCreateExternalApp     func(childComplexity int, envName string, externalApp entities.ExternalApp) int
 		CoreCreateImagePullSecret func(childComplexity int, pullSecret entities.ImagePullSecret) int
-		CoreCreateManagedResource func(childComplexity int, envName string, mres entities.ManagedResource) int
+		CoreCreateManagedResource func(childComplexity int, envName *string, msvcName string, mres entities.ManagedResource) int
 		CoreCreateRouter          func(childComplexity int, envName string, router entities.Router) int
 		CoreCreateSecret          func(childComplexity int, envName string, secret entities.Secret) int
 		CoreCreateVPNDevice       func(childComplexity int, vpnDevice entities.ConsoleVPNDevice) int
@@ -712,6 +715,7 @@ type ComplexityRoot struct {
 		CoreDeleteRouter          func(childComplexity int, envName string, routerName string) int
 		CoreDeleteSecret          func(childComplexity int, envName string, secretName string) int
 		CoreDeleteVPNDevice       func(childComplexity int, deviceName string) int
+		CoreImportManagedResource func(childComplexity int, envName string, msvcName string, mresName string) int
 		CoreInterceptApp          func(childComplexity int, envName string, appname string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
 		CoreInterceptExternalApp  func(childComplexity int, envName string, externalAppName string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
 		CoreUpdateApp             func(childComplexity int, envName string, app entities.App) int
@@ -971,7 +975,8 @@ type MutationResolver interface {
 	CoreCreateRouter(ctx context.Context, envName string, router entities.Router) (*entities.Router, error)
 	CoreUpdateRouter(ctx context.Context, envName string, router entities.Router) (*entities.Router, error)
 	CoreDeleteRouter(ctx context.Context, envName string, routerName string) (bool, error)
-	CoreCreateManagedResource(ctx context.Context, envName string, mres entities.ManagedResource) (*entities.ManagedResource, error)
+	CoreCreateManagedResource(ctx context.Context, envName *string, msvcName string, mres entities.ManagedResource) (*entities.ManagedResource, error)
+	CoreImportManagedResource(ctx context.Context, envName string, msvcName string, mresName string) (*entities.ManagedResource, error)
 	CoreUpdateManagedResource(ctx context.Context, envName string, mres entities.ManagedResource) (*entities.ManagedResource, error)
 	CoreDeleteManagedResource(ctx context.Context, envName string, mresName string) (bool, error)
 	CoreCreateVPNDevice(ctx context.Context, vpnDevice entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
@@ -3543,6 +3548,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ManagedResource.Id(childComplexity), true
 
+	case "ManagedResource.isImported":
+		if e.complexity.ManagedResource.IsImported == nil {
+			break
+		}
+
+		return e.complexity.ManagedResource.IsImported(childComplexity), true
+
 	case "ManagedResource.kind":
 		if e.complexity.ManagedResource.Kind == nil {
 			break
@@ -3557,12 +3569,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ManagedResource.LastUpdatedBy(childComplexity), true
 
+	case "ManagedResource.managedServiceName":
+		if e.complexity.ManagedResource.ManagedServiceName == nil {
+			break
+		}
+
+		return e.complexity.ManagedResource.ManagedServiceName(childComplexity), true
+
 	case "ManagedResource.markedForDeletion":
 		if e.complexity.ManagedResource.MarkedForDeletion == nil {
 			break
 		}
 
 		return e.complexity.ManagedResource.MarkedForDeletion(childComplexity), true
+
+	case "ManagedResource.mresRef":
+		if e.complexity.ManagedResource.MresRef == nil {
+			break
+		}
+
+		return e.complexity.ManagedResource.MresRef(childComplexity), true
 
 	case "ManagedResource.metadata":
 		if e.complexity.ManagedResource.ObjectMeta == nil {
@@ -3849,7 +3875,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateManagedResource(childComplexity, args["envName"].(string), args["mres"].(entities.ManagedResource)), true
+		return e.complexity.Mutation.CoreCreateManagedResource(childComplexity, args["envName"].(*string), args["msvcName"].(string), args["mres"].(entities.ManagedResource)), true
 
 	case "Mutation.core_createRouter":
 		if e.complexity.Mutation.CoreCreateRouter == nil {
@@ -3994,6 +4020,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CoreDeleteVPNDevice(childComplexity, args["deviceName"].(string)), true
+
+	case "Mutation.core_importManagedResource":
+		if e.complexity.Mutation.CoreImportManagedResource == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_importManagedResource_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreImportManagedResource(childComplexity, args["envName"].(string), args["msvcName"].(string), args["mresName"].(string)), true
 
 	case "Mutation.core_interceptApp":
 		if e.complexity.Mutation.CoreInterceptApp == nil {
@@ -5346,7 +5384,8 @@ type Mutation {
 	core_updateRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
 	core_deleteRouter(envName: String!, routerName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-	core_createManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
+	core_createManagedResource(envName: String, msvcName: String! ,mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
+	core_importManagedResource(envName: String!, msvcName: String! ,mresName: String!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_updateManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_deleteManagedResource(envName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
@@ -6407,10 +6446,13 @@ input ImagePullSecretIn {
   enabled: Boolean
   environmentName: String!
   id: ID!
+  isImported: Boolean!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  managedServiceName: String!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
+  mresRef: String!
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -6839,24 +6881,33 @@ func (ec *executionContext) field_Mutation_core_createImagePullSecret_args(ctx c
 func (ec *executionContext) field_Mutation_core_createManagedResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 *string
 	if tmp, ok := rawArgs["envName"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["envName"] = arg0
-	var arg1 entities.ManagedResource
-	if tmp, ok := rawArgs["mres"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mres"))
-		arg1, err = ec.unmarshalNManagedResourceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, tmp)
+	var arg1 string
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["mres"] = arg1
+	args["msvcName"] = arg1
+	var arg2 entities.ManagedResource
+	if tmp, ok := rawArgs["mres"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mres"))
+		arg2, err = ec.unmarshalNManagedResourceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["mres"] = arg2
 	return args, nil
 }
 
@@ -7109,6 +7160,39 @@ func (ec *executionContext) field_Mutation_core_deleteVPNDevice_args(ctx context
 		}
 	}
 	args["deviceName"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_importManagedResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["envName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["msvcName"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["mresName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mresName"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["mresName"] = arg2
 	return args, nil
 }
 
@@ -24235,6 +24319,50 @@ func (ec *executionContext) fieldContext_ManagedResource_id(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _ManagedResource_isImported(ctx context.Context, field graphql.CollectedField, obj *entities.ManagedResource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ManagedResource_isImported(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsImported, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ManagedResource_isImported(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ManagedResource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ManagedResource_kind(ctx context.Context, field graphql.CollectedField, obj *entities.ManagedResource) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ManagedResource_kind(ctx, field)
 	if err != nil {
@@ -24323,6 +24451,50 @@ func (ec *executionContext) fieldContext_ManagedResource_lastUpdatedBy(ctx conte
 				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ManagedResource_managedServiceName(ctx context.Context, field graphql.CollectedField, obj *entities.ManagedResource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ManagedResource_managedServiceName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ManagedServiceName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ManagedResource_managedServiceName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ManagedResource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -24421,6 +24593,50 @@ func (ec *executionContext) fieldContext_ManagedResource_metadata(ctx context.Co
 				return ec.fieldContext_Metadata_namespace(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ManagedResource_mresRef(ctx context.Context, field graphql.CollectedField, obj *entities.ManagedResource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ManagedResource_mresRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MresRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ManagedResource_mresRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ManagedResource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -24835,14 +25051,20 @@ func (ec *executionContext) fieldContext_ManagedResourceEdge_node(ctx context.Co
 				return ec.fieldContext_ManagedResource_environmentName(ctx, field)
 			case "id":
 				return ec.fieldContext_ManagedResource_id(ctx, field)
+			case "isImported":
+				return ec.fieldContext_ManagedResource_isImported(ctx, field)
 			case "kind":
 				return ec.fieldContext_ManagedResource_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_ManagedResource_lastUpdatedBy(ctx, field)
+			case "managedServiceName":
+				return ec.fieldContext_ManagedResource_managedServiceName(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_ManagedResource_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ManagedResource_metadata(ctx, field)
+			case "mresRef":
+				return ec.fieldContext_ManagedResource_mresRef(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ManagedResource_recordVersion(ctx, field)
 			case "spec":
@@ -28194,7 +28416,7 @@ func (ec *executionContext) _Mutation_core_createManagedResource(ctx context.Con
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateManagedResource(rctx, fc.Args["envName"].(string), fc.Args["mres"].(entities.ManagedResource))
+			return ec.resolvers.Mutation().CoreCreateManagedResource(rctx, fc.Args["envName"].(*string), fc.Args["msvcName"].(string), fc.Args["mres"].(entities.ManagedResource))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28257,14 +28479,20 @@ func (ec *executionContext) fieldContext_Mutation_core_createManagedResource(ctx
 				return ec.fieldContext_ManagedResource_environmentName(ctx, field)
 			case "id":
 				return ec.fieldContext_ManagedResource_id(ctx, field)
+			case "isImported":
+				return ec.fieldContext_ManagedResource_isImported(ctx, field)
 			case "kind":
 				return ec.fieldContext_ManagedResource_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_ManagedResource_lastUpdatedBy(ctx, field)
+			case "managedServiceName":
+				return ec.fieldContext_ManagedResource_managedServiceName(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_ManagedResource_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ManagedResource_metadata(ctx, field)
+			case "mresRef":
+				return ec.fieldContext_ManagedResource_mresRef(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ManagedResource_recordVersion(ctx, field)
 			case "spec":
@@ -28289,6 +28517,128 @@ func (ec *executionContext) fieldContext_Mutation_core_createManagedResource(ctx
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_core_createManagedResource_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_core_importManagedResource(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_importManagedResource(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreImportManagedResource(rctx, fc.Args["envName"].(string), fc.Args["msvcName"].(string), fc.Args["mresName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.ManagedResource); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/entities.ManagedResource`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.ManagedResource)
+	fc.Result = res
+	return ec.marshalOManagedResource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_importManagedResource(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_ManagedResource_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_ManagedResource_apiVersion(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_ManagedResource_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_ManagedResource_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_ManagedResource_displayName(ctx, field)
+			case "enabled":
+				return ec.fieldContext_ManagedResource_enabled(ctx, field)
+			case "environmentName":
+				return ec.fieldContext_ManagedResource_environmentName(ctx, field)
+			case "id":
+				return ec.fieldContext_ManagedResource_id(ctx, field)
+			case "isImported":
+				return ec.fieldContext_ManagedResource_isImported(ctx, field)
+			case "kind":
+				return ec.fieldContext_ManagedResource_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_ManagedResource_lastUpdatedBy(ctx, field)
+			case "managedServiceName":
+				return ec.fieldContext_ManagedResource_managedServiceName(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_ManagedResource_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_ManagedResource_metadata(ctx, field)
+			case "mresRef":
+				return ec.fieldContext_ManagedResource_mresRef(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_ManagedResource_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_ManagedResource_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_ManagedResource_status(ctx, field)
+			case "syncedOutputSecretRef":
+				return ec.fieldContext_ManagedResource_syncedOutputSecretRef(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_ManagedResource_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_ManagedResource_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ManagedResource", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_core_importManagedResource_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -28373,14 +28723,20 @@ func (ec *executionContext) fieldContext_Mutation_core_updateManagedResource(ctx
 				return ec.fieldContext_ManagedResource_environmentName(ctx, field)
 			case "id":
 				return ec.fieldContext_ManagedResource_id(ctx, field)
+			case "isImported":
+				return ec.fieldContext_ManagedResource_isImported(ctx, field)
 			case "kind":
 				return ec.fieldContext_ManagedResource_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_ManagedResource_lastUpdatedBy(ctx, field)
+			case "managedServiceName":
+				return ec.fieldContext_ManagedResource_managedServiceName(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_ManagedResource_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ManagedResource_metadata(ctx, field)
+			case "mresRef":
+				return ec.fieldContext_ManagedResource_mresRef(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ManagedResource_recordVersion(ctx, field)
 			case "spec":
@@ -32024,14 +32380,20 @@ func (ec *executionContext) fieldContext_Query_core_getManagedResource(ctx conte
 				return ec.fieldContext_ManagedResource_environmentName(ctx, field)
 			case "id":
 				return ec.fieldContext_ManagedResource_id(ctx, field)
+			case "isImported":
+				return ec.fieldContext_ManagedResource_isImported(ctx, field)
 			case "kind":
 				return ec.fieldContext_ManagedResource_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_ManagedResource_lastUpdatedBy(ctx, field)
+			case "managedServiceName":
+				return ec.fieldContext_ManagedResource_managedServiceName(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_ManagedResource_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ManagedResource_metadata(ctx, field)
+			case "mresRef":
+				return ec.fieldContext_ManagedResource_mresRef(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ManagedResource_recordVersion(ctx, field)
 			case "spec":
@@ -45629,6 +45991,11 @@ func (ec *executionContext) _ManagedResource(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "isImported":
+			out.Values[i] = ec._ManagedResource_isImported(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "kind":
 			out.Values[i] = ec._ManagedResource_kind(ctx, field, obj)
 		case "lastUpdatedBy":
@@ -45636,10 +46003,20 @@ func (ec *executionContext) _ManagedResource(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "managedServiceName":
+			out.Values[i] = ec._ManagedResource_managedServiceName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "markedForDeletion":
 			out.Values[i] = ec._ManagedResource_markedForDeletion(ctx, field, obj)
 		case "metadata":
 			out.Values[i] = ec._ManagedResource_metadata(ctx, field, obj)
+		case "mresRef":
+			out.Values[i] = ec._ManagedResource_mresRef(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "recordVersion":
 			out.Values[i] = ec._ManagedResource_recordVersion(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -46339,6 +46716,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "core_createManagedResource":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_createManagedResource(ctx, field)
+			})
+		case "core_importManagedResource":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_importManagedResource(ctx, field)
 			})
 		case "core_updateManagedResource":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -50281,7 +50662,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -50289,7 +50670,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

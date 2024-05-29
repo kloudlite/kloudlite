@@ -206,7 +206,8 @@ type Domain interface {
 	GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error)
 	GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error)
 
-	CreateManagedResource(ctx ResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
+	CreateManagedResource(ctx ConsoleContext, msvcName string, mres entities.ManagedResource) (*entities.ManagedResource, error)
+	ImportManagedResource(ctx ResourceContext, msvcName string, mresName string) (*entities.ManagedResource, error)
 	UpdateManagedResource(ctx ResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
 	DeleteManagedResource(ctx ResourceContext, name string) error
 
