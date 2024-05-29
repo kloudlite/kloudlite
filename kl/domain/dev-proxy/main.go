@@ -25,7 +25,7 @@ func GetUserHomeDir() (string, error) {
 	if euid := os.Geteuid(); euid == 0 {
 		username, ok := os.LookupEnv("SUDO_USER")
 		if !ok {
-			return "", errors.New("something went wrong")
+			return "", errors.New("failed to get sudo user name")
 		}
 
 		oldPwd, err := os.Getwd()
@@ -41,12 +41,12 @@ func GetUserHomeDir() (string, error) {
 			}
 		}
 
-		return "", errors.New("something went wrong")
+		return "", errors.New("failed to get home path of sudo user")
 	}
 
 	userHome, ok := os.LookupEnv("HOME")
 	if !ok {
-		return "", errors.New("something went wrong")
+		return "", errors.New("failed to get home path of user")
 	}
 
 	return userHome, nil
@@ -167,6 +167,15 @@ func (p *Proxy) WgStatus() ([]byte, error) {
 
 func (p *Proxy) Start() error {
 	_, err := p.MakeRequest("/start")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Proxy) Exit() error {
+	_, err := p.MakeRequest("/exit")
 	if err != nil {
 		return err
 	}

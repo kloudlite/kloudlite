@@ -11,11 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Cmd = &cobra.Command{
-	Hidden: false,
-	Use:    "start-app",
-	Short:  "start the kloudlite app",
-	Long:   `This is internal command`,
+var startCmd = &cobra.Command{
+	Use:   "start",
+	Short: "start the kloudlite controller app",
+	Long:  `This is internal command`,
 	Run: func(c *cobra.Command, _ []string) {
 
 		if runtime.GOOS != constants.RuntimeWindows {

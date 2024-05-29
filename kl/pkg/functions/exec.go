@@ -24,6 +24,8 @@ func StreamOutput(cmdString string, env map[string]string, outputCh chan<- strin
 
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 
+	cmd.Env = os.Environ()
+
 	for k, v := range env {
 		cmd.Env = append(cmd.Env, k+"="+v)
 	}

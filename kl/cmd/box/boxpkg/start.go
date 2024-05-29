@@ -135,20 +135,43 @@ func (c *client) Start() error {
 			ak += fmt.Sprint("\n", string(akByte))
 		}
 
-    // TODO: wsl logics
-		// if err := func() error {
-		// 	fi, err := os.Stat("/mnt/c/Users")
-		// 	if err != nil {
-		// 		return nil
-		// 	}
-		//
-		// 	fmt.Println(fi)
-		//
-		// 	return nil
-		// }(); err != nil {
-		// 	// fmt.Println("here")
-		// 	return err
-		// }
+		// for wsl
+		if err := func() error {
+
+			if runtime.GOOS != constants.RuntimeLinux {
+				return nil
+			}
+
+			usersPath := "/mnt/c/Users"
+			_, err := os.Stat(usersPath)
+			if err != nil {
+				return nil
+			}
+
+			de, err := os.ReadDir(usersPath)
+			if err != nil {
+				fn.PrintError(err)
+				return nil
+			}
+
+			for _, de2 := range de {
+				pth := path.Join(usersPath, de2.Name(), ".ssh", "id_rsa.pub")
+				if _, err := os.Stat(pth); err != nil {
+					continue
+				}
+
+				b, err := os.ReadFile(pth)
+				if err != nil {
+					return err
+				}
+
+				ak += fmt.Sprint("\n", string(b))
+			}
+
+			return nil
+		}(); err != nil {
+			return err
+		}
 
 		if err := os.WriteFile(akTmpPath, []byte(ak), fs.ModePerm); err != nil {
 			return err

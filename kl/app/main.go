@@ -1,12 +1,11 @@
 package app
 
 import (
-	"fmt"
+	"context"
 	"os"
 	"path"
 	"time"
 
-	"github.com/getlantern/systray"
 	"github.com/kloudlite/kl/app/handler"
 	"github.com/kloudlite/kl/app/server"
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
@@ -15,58 +14,73 @@ import (
 )
 
 func RunApp(binName string) error {
-	fn.Log("Kl Server")
+	fn.Log("kl vpn and proxy controller")
 
-	onExit := func() {
-		fn.Log("Exiting...")
-		// now := time.Now()
-		// ioutil.WriteFile(fmt.Sprintf(`on_exit_%d.txt`, now.UnixNano()), []byte(now.String()), 0644)
-	}
+	// onExit := func() {
+	// 	fn.Log("Exiting...")
+	// }
+
+	ctx, cf := context.WithCancel(context.Background())
+
+	ch := make(chan error, 0)
 
 	go func() {
-		configFolder, err := client.GetConfigFolder()
-		if err != nil {
-			fmt.Println(err)
-			fn.Alert("Error", err.Error())
-			return
-		}
-		ipPath := path.Join(configFolder, "host_ip")
-		for {
-			if err := func() error {
-				s, err := boxpkg.GetDockerHostIp()
-				if err != nil {
-					return err
-				}
-				b, err := os.ReadFile(ipPath)
-				if err == nil {
-					if string(b) == s {
-						return nil
-					}
-				}
-
-				return os.WriteFile(ipPath, []byte(s), os.ModePerm)
-			}(); err != nil {
-				fn.Alert("Error", err.Error())
-				time.Sleep(1 * time.Second)
-				continue
+		if err := func() error {
+			configFolder, err := client.GetConfigFolder()
+			if err != nil {
+				return err
 			}
 
-			time.Sleep(10 * time.Second)
+			ipPath := path.Join(configFolder, "host_ip")
+			for {
+				if ctx.Err() != nil {
+					return err
+				}
+
+				if err := func() error {
+					s, err := boxpkg.GetDockerHostIp()
+					if err != nil {
+						return err
+					}
+
+					b, err := os.ReadFile(ipPath)
+					if err == nil {
+						if string(b) == s {
+							return nil
+						}
+					}
+
+					return os.WriteFile(ipPath, []byte(s), os.ModePerm)
+				}(); err != nil {
+					fn.Alert("Error", err.Error())
+					time.Sleep(1 * time.Second)
+					continue
+				}
+
+				time.Sleep(10 * time.Second)
+			}
+		}(); err != nil {
+			ch <- err
+			return
 		}
 	}()
 
 	go func() {
 		s := server.New(binName)
-		if err := s.Start(); err != nil {
-			fn.PrintError(err)
-		}
+		ch <- s.Start(ctx)
 	}()
 
-	systray.Run(func() {
-		onReady(binName)
-	}, onExit)
+	// systray.Run(func() {
+	// 	onReady(binName)
+	// }, onExit)
 
-	return nil
+	select {
+	case i := <-ch:
+		cf()
+
+		return i
+	}
+
 }
 
 func onReady(binName string) {

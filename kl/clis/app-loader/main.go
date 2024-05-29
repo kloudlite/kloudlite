@@ -3,7 +3,7 @@
 package apploader
 
 import (
-	app "github.com/kloudlite/kl/cmd/start-app"
+	"github.com/kloudlite/kl/cmd/app"
 	"github.com/spf13/cobra"
 )
 

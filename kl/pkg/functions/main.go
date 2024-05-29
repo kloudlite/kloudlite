@@ -38,6 +38,9 @@ func MakeOption(key, value string) Option {
 }
 
 func PrintError(err error) {
+	if err == nil {
+		return
+	}
 	_, _ = os.Stderr.WriteString(fmt.Sprintf("%s %s\n", text.Red("[error]:"), err.Error()))
 }
 

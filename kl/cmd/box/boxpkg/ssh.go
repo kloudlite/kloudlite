@@ -17,7 +17,10 @@ import (
 )
 
 func getDomainFromPath(pth string) string {
+
 	s := strings.ToLower(pth)
+
+	s = strings.ReplaceAll(s, xdg.Home, "")
 	s = strings.ReplaceAll(s, ":\\", "/")
 	s = strings.ReplaceAll(s, " ", "-")
 	s = strings.ReplaceAll(s, "/", ".")

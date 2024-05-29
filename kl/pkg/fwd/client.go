@@ -21,12 +21,22 @@ func GetController(sshUser, sshHost, keyPath string) (startCh, cancelCh chan Sta
 	return startCh, cancelCh, exitCh, lports, func() {
 		ctxs := make(map[string]context.CancelFunc)
 
-		// cf := func() {}
-
 		for {
 			select {
 			case <-exitCh:
-				fmt.Println("Exiting...")
+				fmt.Println("closing all port proxy...")
+
+				for _, sc := range lports {
+					if cancel, exists := ctxs[sc.GetId()]; exists {
+						cancel()
+						delete(ctxs, sc.GetId())
+						delete(lports, sc.LocalPort)
+						fmt.Printf("[-] %s\n", sc.GetId())
+					}
+				}
+
+				fmt.Println("closing ports done")
+
 				return
 			case i := <-startCh:
 

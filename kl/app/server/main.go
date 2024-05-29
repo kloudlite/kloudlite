@@ -1,11 +1,11 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -35,7 +35,10 @@ func portAvailable(port string) bool {
 	return true
 }
 
-func (s *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
+
+	ch := make(chan error)
+
 	hdir, err := client.GetUserHomeDir()
 	if err != nil {
 		return err
@@ -47,7 +50,7 @@ func (s *Server) Start() error {
 	go runner()
 
 	defer func() {
-		exitCh <- struct{}{}
+		ctx.Done()
 	}()
 
 	app := http.NewServeMux()
@@ -60,6 +63,12 @@ func (s *Server) Start() error {
 		switch command {
 		case "healthy":
 			w.WriteHeader(http.StatusOK)
+			return
+
+		case "exit":
+			w.WriteHeader(http.StatusOK)
+			exitCh <- struct{}{}
+			ch <- nil
 			return
 
 		case "list-proxy-ports":
@@ -120,7 +129,7 @@ func (s *Server) Start() error {
 
 		case "start", "stop", "status", "restart":
 
-			go fn.StreamOutput(fmt.Sprintf("%s vpn %s", s.bin, command), map[string]string{"KL_APP": "true", "PATH": os.Getenv("PATH")}, outputCh, errCh)
+			go fn.StreamOutput(fmt.Sprintf("%s vpn %s", s.bin, command), map[string]string{"KL_APP": "true"}, outputCh, errCh)
 
 			for {
 				select {
@@ -139,7 +148,24 @@ func (s *Server) Start() error {
 			return
 		}
 	})
-	http.ListenAndServe(fmt.Sprintf(":%d", appconsts.AppPort), app)
 
-	return nil
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%d", appconsts.AppPort),
+		Handler: app,
+	}
+
+	fn.Logf("starting server at :%d", appconsts.AppPort)
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			ch <- err
+		}
+	}()
+
+	err = <-ch
+
+	if err2 := server.Shutdown(ctx); err2 != nil {
+		return err2
+	}
+
+	return err
 }

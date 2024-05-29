@@ -92,20 +92,28 @@ func PortActions(cmd *cobra.Command, _ []string) error {
 		})
 	}
 
+	if len(ports) == 0 {
+		fn.PrintError(fmt.Errorf("no ports specified"))
+		cmd.Help()
+
+		return nil
+	}
+
 	if isDelete {
 		_, err := p.RemoveFwd(chMsg)
 		if err != nil {
 			return err
 		}
+
+		fn.Log("removed ports from forwarding")
 	} else {
 		_, err := p.AddFwd(chMsg)
 		if err != nil {
 			return err
 		}
-	}
 
-	fn.Log("intercept app started successfully\n")
-	fn.Log("Please check if vpn is connected to your device, if not please connect it using sudo kl vpn start. Ignore this message if already connected.")
+		fn.Log("added ports ot forwarding")
+	}
 
 	return nil
 }
