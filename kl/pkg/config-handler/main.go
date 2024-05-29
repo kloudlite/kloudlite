@@ -5,11 +5,10 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/kloudlite/kl/pkg/ui/text"
 	yaml "gopkg.in/yaml.v2"
 )
 
-var ErrKlFileNotExists = fmt.Errorf(text.Colored("please ensure kl.yaml file by running \"kl init\" command in your workspace root.", 0))
+var ErrKlFileNotExists = fmt.Errorf("please ensure kl.yaml file by running \"kl init\" command in your workspace root.")
 
 func ReadConfig[T any](path string) (*T, error) {
 	var v T

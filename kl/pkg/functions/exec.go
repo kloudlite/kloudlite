@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
 )
 
 // StreamOutput executes a command and streams its output line by line.
@@ -149,7 +148,6 @@ func Exec(cmdString string, env map[string]string) ([]byte, error) {
 
 	// fmt.Println(cmd.String())
 	cmd.Stderr = os.Stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
 	if env == nil {
 		env = map[string]string{}
@@ -168,7 +166,6 @@ func Exec(cmdString string, env map[string]string) ([]byte, error) {
 // isAdmin checks if the current user has administrative privileges.
 func isAdmin() bool {
 	cmd := exec.Command("net", "session")
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	err := cmd.Run()
 	return err == nil
 }

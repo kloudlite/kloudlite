@@ -135,6 +135,21 @@ func (c *client) Start() error {
 			ak += fmt.Sprint("\n", string(akByte))
 		}
 
+    // TODO: wsl logics
+		// if err := func() error {
+		// 	fi, err := os.Stat("/mnt/c/Users")
+		// 	if err != nil {
+		// 		return nil
+		// 	}
+		//
+		// 	fmt.Println(fi)
+		//
+		// 	return nil
+		// }(); err != nil {
+		// 	// fmt.Println("here")
+		// 	return err
+		// }
+
 		if err := os.WriteFile(akTmpPath, []byte(ak), fs.ModePerm); err != nil {
 			return err
 		}
