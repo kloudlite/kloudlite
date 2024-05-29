@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -16,7 +17,7 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	v11 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/apis/wireguard/v1"
+	v1 "github.com/kloudlite/operator/apis/wireguard/v1"
 )
 
 // Build is the resolver for the build field.
@@ -283,12 +284,21 @@ func (r *mutationResolver) CoreDeleteRouter(ctx context.Context, envName string,
 }
 
 // CoreCreateManagedResource is the resolver for the core_createManagedResource field.
-func (r *mutationResolver) CoreCreateManagedResource(ctx context.Context, envName string, mres entities.ManagedResource) (*entities.ManagedResource, error) {
+func (r *mutationResolver) CoreCreateManagedResource(ctx context.Context, envName *string, msvcName string, mres entities.ManagedResource) (*entities.ManagedResource, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.CreateManagedResource(newResourceContext(cc, envName), mres)
+	return r.Domain.CreateManagedResource(cc, msvcName, mres)
+}
+
+// CoreImportManagedResource is the resolver for the core_importManagedResource field.
+func (r *mutationResolver) CoreImportManagedResource(ctx context.Context, envName string, msvcName string, mresName string) (*entities.ManagedResource, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.ImportManagedResource(newResourceContext(cc, envName), msvcName, mresName)
 }
 
 // CoreUpdateManagedResource is the resolver for the core_updateManagedResource field.
