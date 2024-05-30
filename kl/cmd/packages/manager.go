@@ -27,7 +27,7 @@ func execPackageCommand(cmd string) error {
 		return err
 	}
 
-	if err := os.WriteFile("/home/.kl/devbox/devbox.json", b2, os.ModePerm); err != nil {
+	if err := os.WriteFile("/home/kl/.kl/devbox/devbox.json", b2, os.ModePerm); err != nil {
 		return err
 	}
 
