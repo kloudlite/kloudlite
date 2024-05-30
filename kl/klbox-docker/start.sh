@@ -22,11 +22,11 @@ if [ ! -f "$entrypoint_executed" ]; then
 fi
 
 shift
-echo "$@" | jq -r > /tmp/sample.json
+echo "$@" | jq -r > /tmp/kl-file.json
 
 PATH=$PATH:$HOME/.nix-profile/bin
 mkdir -p $KL_DEVBOX_PATH
-cp /tmp/sample.json $KL_DEVBOX_PATH/devbox.json
+cp /tmp/kl-file.json $KL_DEVBOX_PATH/devbox.json
 cd $KL_DEVBOX_PATH
 
 echo "kloudlite-entrypoint:INSTALLING_PACKAGES"
@@ -39,7 +39,7 @@ if [ -d "/tmp/ssh2" ]; then
     echo "successfully copied ssh credentials"
 fi 
 
-sudo /mounter --conf /tmp/sample.json
+sudo /mounter --conf /tmp/kl-file.json
 
 mkdir -p /home/kl/.kl
 cat <<EOL > /home/kl/.kl/global-profile

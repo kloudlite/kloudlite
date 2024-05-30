@@ -29,7 +29,7 @@ func (c *client) Reload() error {
 		return err
 	}
 
-	if err := os.WriteFile("/tmp/sample.json", conf, os.ModePerm); err != nil {
+	if err := os.WriteFile("/tmp/kl-file.json", conf, os.ModePerm); err != nil {
 		return err
 	}
 
