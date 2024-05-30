@@ -7,68 +7,51 @@ global:
 
 label: List Managed Resources
 query: |+ #graphql
-  query Core_listManagedResources($projectName: String!, $envName: String!) {
-    core_listManagedResources(projectName: $projectName, envName: $envName) {
+  query Core_listManagedResources($msvcName: String!) {
+    core_listManagedResources(msvcName: $msvcName) {
       edges {
         node {
           accountName
-          spec {
-            # resourceName
-            resourceTemplate {
-              msvcRef {
-                apiVersion
-                kind
-                name
-                namespace
-              }
-            }
-          }
-          status {
-            isReady
-          }
-          metadata {
-            annotations
-          }
-          syncStatus {
-            state
-            recordVersion
-          }
+          displayName
+          enabled
+          environmentName
         }
       }
     }
   }
 variables:
-  projectName: "{{.projectName}}"
-  envName: "{{.environmentName}}"
+  msvcName: "msvc-one"
 ---
 
 label: Create Managed Resource
 query: |+ #graphql
-  mutation Core_createManagedResource($projectName: String!, $envName: String!, $mres: ManagedResourceIn!) {
-    core_createManagedResource(projectName: $projectName, envName: $envName, mres: $mres) {
+  mutation Core_createManagedResource($msvcName: String!, $mres: ManagedResourceIn!) {
+    core_createManagedResource(msvcName: $msvcName, mres: $mres) {
+      id
+      apiVersion
+      accountName
+      mresRef
       spec {
-        # resourceName
         resourceTemplate {
           apiVersion
           kind
           msvcRef {
-            apiVersion
-            kind
             name
             namespace
+            clusterName
           }
-          spec
         }
       }
     }
   }
 variables:
-  projectName: "{{.projectName}}"
-  envName: "{{.environmentName}}"
+  #   projectName: "{{.projectName}}"
+  #   envName: "{{.environmentName}}"
+  msvcName: "msvc-one"
   mres:
-    displayName: "Test Managed Resource"
+    displayName: "test mres"
     metadata:
-      name: "{{.name}}"
+      name: "test-mres"
     spec:
       resourceTemplate:
         apiVersion: mongodb.msvc.kloudlite.io/v1
@@ -76,48 +59,24 @@ variables:
         msvcRef:
           apiVersion: mongodb.msvc.kloudlite.io/v1
           kind: StandaloneService
-          name: sample
-          namespace: "{{.projectNamespace}}"
+          name: "msvc-one"
+          namespace: "cmsvc-msvc-one"
+          clusterName: "test-cluster1"
         spec: {}
         #   resourceName: "sample"
 
 ---
 
-label: Import Managed Resource
+label: Get Managed resource
 query: |+
-  mutation Core_importManagedResource($envName: String!, $msvcName: String!, $mresName: String!) {
-    core_importManagedResource(envName: $envName, msvcName: $msvcName, mresName: $mresName) {
+  query Core_getManagedResource($msvcName: String!, $name: String!) {
+    core_getManagedResource(msvcName: $msvcName, name: $name) {
       id
-      mresRef
-      accountName
-      isImported
     }
   }
 variables:
-  {
-    "envName": "test-env",
-    "msvcName": "test-msvc",
-    "mresName": "test-mres"
-  }
-
----
-
-label: Get ManagedService
-query: |+
-  query Core_getManagedResource($namespace: String!, $name: String!) {
-    core_getManagedResource(namespace: $namespace, name: $name) {
-      metadata {
-        name
-      }
-      kind
-      spec {
-        inputs
-      }
-    }
-  }
-variables:
-  name: '{{.name}}'
-  namespace: '{{.namespace}}'
+  msvcName: 'msvc-one'
+  name: 'test-mres'
 
 ---
 
@@ -157,6 +116,67 @@ variables:
 
 ---
 
+label: Import Managed Resource
+query: |+
+  mutation Core_importManagedResource($envName: String!, $msvcName: String!, $mresName: String!) {
+    core_importManagedResource(envName: $envName, msvcName: $msvcName, mresName: $mresName) {
+      id
+      mresRef
+      accountName
+      isImported
+    }
+  }
+variables:
+  {
+    "envName": "test-env",
+    "msvcName": "msvc-one",
+    "mresName": "test-mres"
+  }
+
+---
+
+label: Delete Imported ManagedResource
+query: |+
+  mutation Core_deleteImportedManagedResource($envName: String!, $mresName: String!) {
+    core_deleteImportedManagedResource(envName: $envName, mresName: $mresName)
+  }
+variables:
+  envName: 'test-env'
+  mresName: "test-mres"
+
+---
+
+label: get Imported ManagedResource
+query: |+
+  query Core_getImportedManagedResource($envName: String!, $name: String!) {
+    core_getImportedManagedResource(envName: $envName, name: $name) {
+      id
+    }
+  }
+variables:
+  envName: 'test-env'
+  name: "test-mres"
+
+---
+
+label: List Imported ManagedResource
+query: |+
+  query Core_listImportedManagedResources($envName: String!) {
+    core_listImportedManagedResources(envName: $envName) {
+      totalCount
+      edges {
+        node {
+          environmentName
+          id
+        }
+      }
+    }
+  }
+variables:
+  envName: 'test-env'
+
+---
+
 label: Get Managed Resource Output Keys
 query: |+ #graphql
   mutation Core_deleteManagedResource($projectName: String!, $envName: String!, $mresName: String!) {
@@ -184,7 +204,6 @@ query: |+ #graphql
 variables:
   # projectName: "{{.projectName}}"
   # envName: "{{.envName}}"
-  projectName: "demo-project"
   # envName: "public-environment"
   projectName: "demo-project"
   envName: "private-environment"

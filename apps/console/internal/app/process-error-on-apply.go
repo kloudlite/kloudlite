@@ -219,10 +219,10 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case managedResourceGVK.String():
 			{
-				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeManagedResource, em.ClusterName, obj)
-				if err != nil {
-					return errors.NewE(err)
-				}
+				//rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeManagedResource, em.ClusterName, obj)
+				//if err != nil {
+				//	return errors.NewE(err)
+				//}
 
 				mres, err := fn.JsonConvert[entities.ManagedResource](obj.Object)
 				if err != nil {
@@ -230,9 +230,9 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 				}
 
 				if errObj.Action == t.ActionApply {
-					return d.OnManagedResourceApplyError(rctx, errObj.Error, obj.GetName(), opts)
+					return d.OnManagedResourceApplyError(dctx, errObj.Error, mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.Name, obj.GetName(), opts)
 				}
-				return d.OnManagedResourceDeleteMessage(rctx, mres)
+				return d.OnManagedResourceDeleteMessage(dctx, mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.Name, mres)
 			}
 
 		default:
