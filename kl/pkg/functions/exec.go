@@ -148,7 +148,7 @@ func Exec(cmdString string, env map[string]string) ([]byte, error) {
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 
-	// fmt.Println(cmd.String())
+	// fmt.Println(cmd.String(), cmdString)
 	cmd.Stderr = os.Stderr
 
 	if env == nil {
@@ -185,7 +185,7 @@ func WinSudoExec(cmdString string, env map[string]string) ([]byte, error) {
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 
-	quotedArgs := strings.Join(cmdArr[1:], " ")
+	quotedArgs := strings.Join(cmdArr[1:], ",")
 
 	return Exec(fmt.Sprintf("powershell -Command Start-Process -WindowStyle Hidden -FilePath %s -ArgumentList %q -Verb RunAs", cmd.Path, quotedArgs), map[string]string{"PATH": os.Getenv("PATH")})
 }

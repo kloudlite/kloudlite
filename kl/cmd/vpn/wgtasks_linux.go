@@ -3,10 +3,6 @@ package vpn
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/domain/server"
-
-	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
@@ -32,29 +28,10 @@ func connect(verbose bool, options ...fn.Option) error {
 
 	}()
 
-	if !skipCheck {
-		switch flags.CliName {
-		case constants.CoreCliName:
-			_, err := server.EnsureEnv(nil, options...)
-			if err != nil {
-				return err
-			}
-		case constants.InfraCliName:
-			_, err := server.EnsureAccount()
-			if err != nil {
-				return err
-			}
-		}
-	}
-
 	// TODO: handle this error later
 	if err := wg_vpn.StartService(ifName, verbose); err != nil {
 		fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
 	}
-
-	// if err := ensureAppRunning(); err != nil {
-	// 	fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
-	// }
 
 	if err := startConfiguration(verbose, options...); err != nil {
 		return err
@@ -73,10 +50,6 @@ func connect(verbose bool, options ...fn.Option) error {
 }
 
 func disconnect(verbose bool) error {
-	// if err := ensureAppRunning(); err != nil {
-	// 	fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
-	// }
-
 	if err := wg_vpn.StopService(verbose); err != nil {
 		return err
 	}

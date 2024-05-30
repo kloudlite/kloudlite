@@ -17,7 +17,9 @@ RUN go mod download -x
 
 COPY --from=project . /kl-app
 
-RUN go build --tags=box -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl main.go
+ARG VERSION
+
+RUN go build --tags=box -ldflags="-X github.com/kloudlite/kl/flags.Version=${VERSION} -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl main.go
 
 FROM --platform=$TARGETPLATFORM ubuntu:latest
 

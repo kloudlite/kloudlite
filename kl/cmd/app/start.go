@@ -24,7 +24,7 @@ var startCmd = &cobra.Command{
 			}
 		}
 
-		if err := app.RunApp(c.Parent().Name()); err != nil {
+		if err := app.RunApp(c.Parent().Parent().Name()); err != nil {
 			fn.PrintError(err)
 		}
 	},

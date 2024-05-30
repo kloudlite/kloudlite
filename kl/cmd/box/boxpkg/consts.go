@@ -17,5 +17,5 @@ const (
 )
 
 func GetImageName() string {
-	return fmt.Sprintf("ghcr.io/kloudlite/operator/components/kl-box:%s", flags.Version)
+	return fmt.Sprintf("ghcr.io/kloudlite/kl/box:%s", flags.Version)
 }
