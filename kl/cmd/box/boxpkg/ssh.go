@@ -149,14 +149,16 @@ func (c *client) doSSHWithCname(name string) error {
 
 	count := 0
 	for {
-		if err := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(pth)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no", "--", "exit 0").Run(); err == nil {
+
+		if !cl.CheckPortAvailable(localEnv.SSHPort) {
 			break
 		}
 
 		count++
 		if count == 10 {
-			return fmt.Errorf("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start. %s", err)
+			return fmt.Errorf("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start")
 		}
+
 		time.Sleep(1 * time.Second)
 	}
 
