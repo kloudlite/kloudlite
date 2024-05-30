@@ -311,10 +311,10 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeManagedResource, ru.ClusterName, obj)
-				if err != nil {
-					return errors.NewE(err)
-				}
+				//rctx, err := getResourceContext(dctx, entities.ResourceTypeManagedResource, ru.ClusterName, obj)
+				//if err != nil {
+				//	return errors.NewE(err)
+				//}
 
 				if v, ok := rwu.Object[types.KeyManagedResSecret]; ok {
 					s, err := fn.JsonConvertP[corev1.Secret](v)
@@ -328,9 +328,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnManagedResourceDeleteMessage(rctx, mres)
+					return d.OnManagedResourceDeleteMessage(dctx, mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.Name, mres)
 				}
-				return d.OnManagedResourceUpdateMessage(rctx, mres, resStatus, opts)
+				return d.OnManagedResourceUpdateMessage(dctx, mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.Name, mres, resStatus, opts)
 			}
 
 		}
