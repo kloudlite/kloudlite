@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"fmt"
-
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -17,7 +16,7 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	v11 "github.com/kloudlite/operator/apis/crds/v1"
-	v1 "github.com/kloudlite/operator/apis/wireguard/v1"
+	"github.com/kloudlite/operator/apis/wireguard/v1"
 )
 
 // Build is the resolver for the build field.
@@ -284,12 +283,33 @@ func (r *mutationResolver) CoreDeleteRouter(ctx context.Context, envName string,
 }
 
 // CoreCreateManagedResource is the resolver for the core_createManagedResource field.
-func (r *mutationResolver) CoreCreateManagedResource(ctx context.Context, envName *string, msvcName string, mres entities.ManagedResource) (*entities.ManagedResource, error) {
+func (r *mutationResolver) CoreCreateManagedResource(ctx context.Context, msvcName string, mres entities.ManagedResource) (*entities.ManagedResource, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.CreateManagedResource(cc, msvcName, mres)
+	return r.Domain.CreateManagedResource(newMresContext(cc, msvcName), mres)
+}
+
+// CoreUpdateManagedResource is the resolver for the core_updateManagedResource field.
+func (r *mutationResolver) CoreUpdateManagedResource(ctx context.Context, msvcName string, mres entities.ManagedResource) (*entities.ManagedResource, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.UpdateManagedResource(newMresContext(cc, msvcName), mres)
+}
+
+// CoreDeleteManagedResource is the resolver for the core_deleteManagedResource field.
+func (r *mutationResolver) CoreDeleteManagedResource(ctx context.Context, msvcName string, mresName string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.DeleteManagedResource(newMresContext(cc, msvcName), mresName); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
 }
 
 // CoreImportManagedResource is the resolver for the core_importManagedResource field.
@@ -298,25 +318,16 @@ func (r *mutationResolver) CoreImportManagedResource(ctx context.Context, envNam
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.ImportManagedResource(newResourceContext(cc, envName), msvcName, mresName)
+	return r.Domain.ImportManagedResource(newMresContext(cc, msvcName), mresName, envName)
 }
 
-// CoreUpdateManagedResource is the resolver for the core_updateManagedResource field.
-func (r *mutationResolver) CoreUpdateManagedResource(ctx context.Context, envName string, mres entities.ManagedResource) (*entities.ManagedResource, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	return r.Domain.UpdateManagedResource(newResourceContext(cc, envName), mres)
-}
-
-// CoreDeleteManagedResource is the resolver for the core_deleteManagedResource field.
-func (r *mutationResolver) CoreDeleteManagedResource(ctx context.Context, envName string, mresName string) (bool, error) {
+// CoreDeleteImportedManagedResource is the resolver for the core_deleteImportedManagedResource field.
+func (r *mutationResolver) CoreDeleteImportedManagedResource(ctx context.Context, envName string, mresName string) (bool, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return false, errors.NewE(err)
 	}
-	if err := r.Domain.DeleteManagedResource(newResourceContext(cc, envName), mresName); err != nil {
+	if err := r.Domain.DeleteImportedManagedResource(newResourceContext(cc, envName), mresName); err != nil {
 		return false, errors.NewE(err)
 	}
 	return true, nil
@@ -807,16 +818,16 @@ func (r *queryResolver) CoreResyncRouter(ctx context.Context, envName string, na
 }
 
 // CoreGetManagedResouceOutputKeys is the resolver for the core_getManagedResouceOutputKeys field.
-func (r *queryResolver) CoreGetManagedResouceOutputKeys(ctx context.Context, envName string, name string) ([]string, error) {
+func (r *queryResolver) CoreGetManagedResouceOutputKeys(ctx context.Context, msvcName string, name string) ([]string, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.GetManagedResourceOutputKeys(newResourceContext(cc, envName), name)
+	return r.Domain.GetManagedResourceOutputKeys(newMresContext(cc, msvcName), name)
 }
 
 // CoreGetManagedResouceOutputKeyValues is the resolver for the core_getManagedResouceOutputKeyValues field.
-func (r *queryResolver) CoreGetManagedResouceOutputKeyValues(ctx context.Context, envName string, keyrefs []*domain.ManagedResourceKeyRef) ([]*domain.ManagedResourceKeyValueRef, error) {
+func (r *queryResolver) CoreGetManagedResouceOutputKeyValues(ctx context.Context, msvcName string, keyrefs []*domain.ManagedResourceKeyRef) ([]*domain.ManagedResourceKeyValueRef, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -827,11 +838,11 @@ func (r *queryResolver) CoreGetManagedResouceOutputKeyValues(ctx context.Context
 		m[i] = *keyrefs[i]
 	}
 
-	return r.Domain.GetManagedResourceOutputKVs(newResourceContext(cc, envName), m)
+	return r.Domain.GetManagedResourceOutputKVs(newMresContext(cc, msvcName), m)
 }
 
 // CoreListManagedResources is the resolver for the core_listManagedResources field.
-func (r *queryResolver) CoreListManagedResources(ctx context.Context, envName string, search *model.SearchManagedResources, pq *repos.CursorPagination) (*model.ManagedResourcePaginatedRecords, error) {
+func (r *queryResolver) CoreListManagedResources(ctx context.Context, msvcName string, search *model.SearchManagedResources, pq *repos.CursorPagination) (*model.ManagedResourcePaginatedRecords, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -853,7 +864,7 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, envName st
 		}
 	}
 
-	pmsvcs, err := r.Domain.ListManagedResources(newResourceContext(cc, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pmsvcs, err := r.Domain.ListManagedResources(newMresContext(cc, msvcName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -862,24 +873,64 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, envName st
 }
 
 // CoreGetManagedResource is the resolver for the core_getManagedResource field.
-func (r *queryResolver) CoreGetManagedResource(ctx context.Context, envName string, name string) (*entities.ManagedResource, error) {
+func (r *queryResolver) CoreGetManagedResource(ctx context.Context, msvcName string, name string) (*entities.ManagedResource, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.GetManagedResource(newResourceContext(cc, envName), name)
+	return r.Domain.GetManagedResource(newMresContext(cc, msvcName), name)
 }
 
 // CoreResyncManagedResource is the resolver for the core_resyncManagedResource field.
-func (r *queryResolver) CoreResyncManagedResource(ctx context.Context, envName string, name string) (bool, error) {
+func (r *queryResolver) CoreResyncManagedResource(ctx context.Context, msvcName string, name string) (bool, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return false, errors.NewE(err)
 	}
-	if err := r.Domain.ResyncManagedResource(newResourceContext(cc, envName), name); err != nil {
+	if err := r.Domain.ResyncManagedResource(cc, msvcName, name); err != nil {
 		return false, errors.NewE(err)
 	}
 	return true, nil
+}
+
+// CoreListImportedManagedResources is the resolver for the core_listImportedManagedResources field.
+func (r *queryResolver) CoreListImportedManagedResources(ctx context.Context, envName string, search *model.SearchManagedResources, pq *repos.CursorPagination) (*model.ManagedResourcePaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
+		}
+
+		if search.ManagedServiceName != nil {
+			filter["spec.msvcRef.name"] = *search.ManagedServiceName
+		}
+	}
+
+	pmsvcs, err := r.Domain.ListImportedManagedResources(newResourceContext(cc, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return fn.JsonConvertP[model.ManagedResourcePaginatedRecords](pmsvcs)
+}
+
+// CoreGetImportedManagedResource is the resolver for the core_getImportedManagedResource field.
+func (r *queryResolver) CoreGetImportedManagedResource(ctx context.Context, envName string, name string) (*entities.ManagedResource, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GetImportedManagedResource(newResourceContext(cc, envName), name)
 }
 
 // CoreListVPNDevices is the resolver for the core_listVPNDevices field.

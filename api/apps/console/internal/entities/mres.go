@@ -17,6 +17,7 @@ type ManagedResource struct {
 	AccountName        string `json:"accountName" graphql:"noinput"`
 	EnvironmentName    string `json:"environmentName" graphql:"noinput"`
 	ManagedServiceName string `json:"managedServiceName" graphql:"noinput"`
+	ClusterName        string `json:"clusterName" graphql:"noinput"`
 
 	SyncedOutputSecretRef *corev1.Secret `json:"syncedOutputSecretRef" graphql:"noinput"`
 
