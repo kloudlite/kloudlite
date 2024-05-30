@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"time"
 
 	"github.com/kloudlite/api/common/fields"
@@ -46,6 +47,18 @@ type ResourceContext struct {
 	EnvironmentName string
 }
 
+type ManagedResourceContext struct {
+	ConsoleContext
+	ManagedServiceName string
+}
+
+func (m ManagedResourceContext) MresDBFilters() repos.Filter {
+	return repos.Filter{
+		fields.AccountName:                   m.AccountName,
+		fc.ManagedResourceManagedServiceName: m.ManagedServiceName,
+	}
+}
+
 func (r ResourceContext) DBFilters() repos.Filter {
 	return repos.Filter{
 		fields.AccountName:     r.AccountName,
@@ -65,6 +78,13 @@ func NewConsoleContext(parent context.Context, userId repos.ID, accountName stri
 		UserId:  userId,
 
 		AccountName: accountName,
+	}
+}
+
+func NewManagedResourceContext(ctx ConsoleContext, msvcName string) ManagedResourceContext {
+	return ManagedResourceContext{
+		ConsoleContext:     ctx,
+		ManagedServiceName: msvcName,
 	}
 }
 
@@ -200,22 +220,27 @@ type Domain interface {
 
 	ResyncRouter(ctx ResourceContext, name string) error
 
-	ListManagedResources(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
-	GetManagedResource(ctx ResourceContext, name string) (*entities.ManagedResource, error)
+	ListManagedResources(ctx ManagedResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
+	GetManagedResource(ctx ManagedResourceContext, name string) (*entities.ManagedResource, error)
 
-	GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error)
-	GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error)
+	ListImportedManagedResources(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
+	GetImportedManagedResource(ctx ResourceContext, name string) (*entities.ManagedResource, error)
 
-	CreateManagedResource(ctx ConsoleContext, msvcName string, mres entities.ManagedResource) (*entities.ManagedResource, error)
-	ImportManagedResource(ctx ResourceContext, msvcName string, mresName string) (*entities.ManagedResource, error)
-	UpdateManagedResource(ctx ResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
-	DeleteManagedResource(ctx ResourceContext, name string) error
+	GetManagedResourceOutputKeys(ctx ManagedResourceContext, name string) ([]string, error)
+	GetManagedResourceOutputKVs(ctx ManagedResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error)
 
-	OnManagedResourceApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
-	OnManagedResourceDeleteMessage(ctx ResourceContext, mres entities.ManagedResource) error
-	OnManagedResourceUpdateMessage(ctx ResourceContext, mres entities.ManagedResource, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	CreateManagedResource(ctx ManagedResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
+	UpdateManagedResource(ctx ManagedResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
+	DeleteManagedResource(ctx ManagedResourceContext, name string) error
 
-	ResyncManagedResource(ctx ResourceContext, name string) error
+	ImportManagedResource(ctx ManagedResourceContext, mresName string, envName string) (*entities.ManagedResource, error)
+	DeleteImportedManagedResource(ctx ResourceContext, mresName string) error
+
+	OnManagedResourceApplyError(ctx ConsoleContext, errMsg string, msvcName string, name string, opts UpdateAndDeleteOpts) error
+	OnManagedResourceDeleteMessage(ctx ConsoleContext, msvcName string, mres entities.ManagedResource) error
+	OnManagedResourceUpdateMessage(ctx ConsoleContext, msvcName string, mres entities.ManagedResource, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+
+	ResyncManagedResource(ctx ConsoleContext, msvcName string, name string) error
 
 	/// External Apps
 	ListExternalApps(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ExternalApp], error)
