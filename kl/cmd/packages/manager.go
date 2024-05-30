@@ -71,5 +71,5 @@ func execPackageCommand(cmd string) error {
 		fn.Warn(err)
 	}
 
-	return nil
+	return client.UpdateDevboxEnvs()
 }

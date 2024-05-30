@@ -2,6 +2,8 @@ package client
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -205,4 +207,20 @@ func (e *EnvVars) AddResTypes(rt []ResType, rtype resType) {
 			}
 		}
 	}
+}
+
+func UpdateDevboxEnvs() error {
+	if !InsideBox() {
+		return nil
+	}
+
+	command := exec.Command("devbox", "shellenv")
+	command.Dir = "/home/kl/.kl/devbox"
+
+	out, err := command.Output()
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile("/tmp/devbox.sh", out, os.ModePerm)
 }

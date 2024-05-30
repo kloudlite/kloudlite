@@ -112,3 +112,46 @@ func (c *client) StopAll() error {
 
 	return nil
 }
+
+func (c *client) StopCont(cr *Cntr) error {
+	defer c.spinner.Start("stopping container please wait")()
+
+	crPath := cr.Labels[CONT_PATH_KEY]
+
+	if c.verbose {
+		fn.Logf("stopping container of: %s", text.Blue(crPath))
+	}
+
+	if cr.State != ContStateExited && cr.State != ContStateCreated {
+		if err := c.cli.ContainerKill(c.Context(), cr.Name, "SIGKILL"); err != nil {
+			return fmt.Errorf("error stoping container: %s", err)
+		}
+	}
+
+	if err := c.cli.ContainerRemove(c.Context(), cr.Name, container.RemoveOptions{}); err != nil {
+		return fmt.Errorf("failed to remove container: %s", err)
+	}
+
+	localEnv, err := cl.EnvOfPath(crPath)
+	if err != nil {
+		return err
+	}
+
+	if localEnv.SSHPort != 0 {
+		p, err := proxy.NewProxy(false)
+		if err != nil {
+			return err
+		}
+
+		if _, err := p.RemoveAllFwd(fwd.StartCh{
+			SshPort: fmt.Sprint(localEnv.SSHPort),
+		}); err != nil {
+			return err
+		}
+	}
+
+	if c.verbose {
+		fn.Logf("stopped container of: %s", text.Blue(crPath))
+	}
+	return nil
+}

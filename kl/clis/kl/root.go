@@ -2,10 +2,13 @@ package kl
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
 
 	domain_util "github.com/kloudlite/kl/domain/util"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/spf13/cobra"
 )
 
@@ -13,6 +16,22 @@ import (
 var rootCmd = &cobra.Command{
 	Use:                flags.CliName,
 	DisableFlagParsing: true,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		sigChan := make(chan os.Signal, 1)
+
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			<-sigChan
+
+			spinner.Client.Stop()
+			os.Exit(1)
+		}()
+	},
+
+	PostRun: func(cmd *cobra.Command, args []string) {
+		spinner.Client.Stop()
+	},
+
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if (len(args) != 0) && (args[0] == "--version" || args[0] == "-v") {

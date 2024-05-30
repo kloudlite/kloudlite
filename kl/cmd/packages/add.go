@@ -48,6 +48,7 @@ func addPackages(cmd *cobra.Command, args []string) error {
 	}
 
 	fn.Logf("added package %s", name)
+
 	return nil
 }
 

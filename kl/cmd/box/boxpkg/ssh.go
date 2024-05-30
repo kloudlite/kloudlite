@@ -72,7 +72,7 @@ func (c *client) Ssh() error {
 		return err
 	}
 
-	if err == notFoundErr || (err == nil && c.containerName != cr.Name) {
+	if err == notFoundErr || (err == nil && c.containerName != cr.Name) || (cr.State == ContStateExited || cr.State == ContStateCreated) {
 		err := c.Start()
 
 		if err != nil && err != errContainerNotStarted {
@@ -133,6 +133,15 @@ func (c *client) doSSHWithCname(name string) error {
 
 	if err != nil {
 		return err
+	}
+
+	if cr.State == ContStateExited || cr.State == ContStateCreated {
+		if err := c.StopCont(cr); err != nil {
+			return err
+		}
+
+		fn.PrintError(fmt.Errorf("container was not in running, stopped it, please try again"))
+		return nil
 	}
 
 	pth := cr.Labels[CONT_PATH_KEY]

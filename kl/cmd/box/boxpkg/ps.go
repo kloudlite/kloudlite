@@ -2,13 +2,21 @@ package boxpkg
 
 import (
 	"fmt"
+	"time"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 func (c *client) ListBox() error {
+
+	time.Sleep(20 * time.Second)
+	spinner.Client.Start("sample")
+
+	time.Sleep(20 * time.Second)
+
 	conts, err := c.listContainer(map[string]string{
 		CONT_MARK_KEY: "true",
 	})

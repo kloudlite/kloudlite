@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
+	cl "github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
@@ -33,5 +34,5 @@ func (c *client) Reload() error {
 
 	fn.Warn("configuration changes have been applied. To ensure these changes take effect, please restart your SSH/IDE sessions.")
 
-	return nil
+	return cl.UpdateDevboxEnvs()
 }
