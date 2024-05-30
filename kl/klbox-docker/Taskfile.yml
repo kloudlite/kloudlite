@@ -2,7 +2,7 @@ version: 3
 
 
 vars:
-  ImageRegistry: "ghcr.io/kloudlite/operator/components/kl-box"
+  ImageRegistry: "ghcr.io/kloudlite/kl/box"
 
 tasks:
   clean:
@@ -54,7 +54,7 @@ tasks:
       - sh: '[[ -n "{{.tag}}" ]]'
         msg: "var tag must have a value, of format 'v1.0.0-nightly'"
     cmds:
-      - docker buildx build --platform linux/amd64,linux/arm64 -t {{.ImageRegistry}}:{{.tag}} --build-context project=.. . --push
+      - docker buildx build --platform linux/amd64,linux/arm64 -t {{.ImageRegistry}}:{{.tag}} --build-arg VERSION={{.tag}} --build-context project=.. . --push
       # - docker buildx build -t {{.ImageRegistry}}:{{.tag}} . --push
 
   setup:

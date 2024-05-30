@@ -3,7 +3,6 @@ package vpn
 import (
 	"fmt"
 	"os"
-	"runtime"
 
 	"github.com/kloudlite/kl/domain/client"
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
@@ -49,15 +48,6 @@ Example:
 					return
 				}
 
-				return
-			}
-		}
-
-		if runtime.GOOS != "windows" {
-			if euid := os.Geteuid(); euid != 0 {
-				fn.Log(
-					text.Colored("make sure you are running command with sudo", 209),
-				)
 				return
 			}
 		}

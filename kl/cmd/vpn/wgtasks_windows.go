@@ -26,7 +26,7 @@ func connect(verbose bool, options ...fn.Option) error {
 
 	if err := func() error {
 
-		td, err := os.MkdirTemp("", "kl-tmp")
+		f, err := client.GetConfigFolder()
 		if err != nil {
 			return err
 		}
@@ -45,7 +45,7 @@ func connect(verbose bool, options ...fn.Option) error {
 			return err
 		}
 
-		pth := path.Join(td, fmt.Sprintf("%s.conf", ifName))
+		pth := path.Join(f, fmt.Sprintf("%s.conf", ifName))
 
 		if err := os.WriteFile(pth, configuration, os.ModePerm); err != nil {
 			return err

@@ -2,8 +2,10 @@ package vpn
 
 import (
 	"os"
+	"runtime"
 	"time"
 
+	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -72,6 +74,10 @@ sudo {cmd} vpn start`),
 			if err := disconnect(verbose); err != nil {
 				fn.PrintError(err)
 				return
+			}
+
+			if runtime.GOOS == constants.RuntimeWindows {
+				time.Sleep(3 * time.Second)
 			}
 
 			time.Sleep(1 * time.Second)

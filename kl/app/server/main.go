@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -14,6 +16,7 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/fwd"
+	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 type Server struct {
@@ -150,8 +153,9 @@ func (s *Server) Start(ctx context.Context) error {
 	})
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", appconsts.AppPort),
-		Handler: app,
+		Addr:     fmt.Sprintf(":%d", appconsts.AppPort),
+		Handler:  app,
+		ErrorLog: log.New(os.Stderr, text.Red("ERROR: "), log.Ldate|log.Ltime|log.Lshortfile),
 	}
 
 	fn.Logf("starting server at :%d", appconsts.AppPort)
