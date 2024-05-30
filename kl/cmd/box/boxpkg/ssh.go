@@ -18,9 +18,10 @@ import (
 
 func getDomainFromPath(pth string) string {
 
-	s := strings.ToLower(pth)
+	s := strings.ReplaceAll(pth, xdg.Home, "")
 
-	s = strings.ReplaceAll(s, xdg.Home, "")
+	s = strings.ToLower(s)
+
 	s = strings.ReplaceAll(s, ":\\", "/")
 	s = strings.ReplaceAll(s, " ", "-")
 	s = strings.ReplaceAll(s, "/", ".")
@@ -167,7 +168,7 @@ func (c *client) doSSHWithCname(name string) error {
 
 	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(pth)), "-p", fmt.Sprint(localEnv.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
 
-	command.Stderr = os.Stderr
+	// command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	if err := command.Run(); err != nil {

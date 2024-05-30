@@ -1,6 +1,8 @@
 package client
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 
 	confighandler "github.com/kloudlite/kl/pkg/config-handler"
@@ -16,6 +18,14 @@ type KLFileType struct {
 	// Secrets    []ResType `json:"secrets"`
 	EnvVars EnvVars `json:"envVars" yaml:"envVars"`
 	Mounts  Mounts  `json:"mounts" yaml:"mounts"`
+}
+
+func (k *KLFileType) ToJson() ([]byte, error) {
+	if k == nil {
+		return nil, fmt.Errorf("kl file is nil")
+	}
+
+	return json.Marshal(*k)
 }
 
 const (

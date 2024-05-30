@@ -12,6 +12,25 @@ import (
 )
 
 func execPackageCommand(cmd string) error {
+
+	if err := fn.CopyFile("/home/kl/workspace/kl.lock", "/home/kl/.kl/devbox/devbox.lock"); err != nil {
+		fn.Warn(err)
+	}
+
+	kt, err := client.GetKlFile("")
+	if err != nil {
+		return err
+	}
+
+	b2, err := kt.ToJson()
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile("/home/.kl/devbox/devbox.json", b2, os.ModePerm); err != nil {
+		return err
+	}
+
 	r := csv.NewReader(strings.NewReader(cmd))
 	r.Comma = ' '
 	cmdArr, err := r.Read()
@@ -25,12 +44,6 @@ func execPackageCommand(cmd string) error {
 	command.Dir = "/home/kl/.kl/devbox"
 
 	if err = command.Run(); err != nil {
-		return err
-	}
-
-	kt, err := client.GetKlFile("")
-
-	if err != nil {
 		return err
 	}
 

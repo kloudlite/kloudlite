@@ -32,6 +32,8 @@ func init() {
 
 	client.OnlyOutsideBox(psCmd)
 	BoxCmd.AddCommand(psCmd)
+
+	BoxCmd.AddCommand(infoCmd)
 }
 
 func setBoxCommonFlags(cmd *cobra.Command) {

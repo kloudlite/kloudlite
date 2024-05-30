@@ -31,10 +31,17 @@ func addPackages(cmd *cobra.Command, args []string) error {
 		return errors.New("name is required")
 	}
 
+	verbose := fn.ParseBoolFlag(cmd, "verbose")
+
 	stopSp := spinner.Client.Start(fmt.Sprintf("adding package %s", name))
 	defer stopSp()
 
-	err := execPackageCommand(fmt.Sprintf("devbox add %s -q", name))
+	err := execPackageCommand(fmt.Sprintf("devbox add %s%s", name, func() string {
+		if verbose {
+			return ""
+		}
+		return " -q"
+	}()))
 	stopSp()
 	if err != nil {
 		return err
@@ -46,4 +53,5 @@ func addPackages(cmd *cobra.Command, args []string) error {
 
 func init() {
 	addCmd.Flags().StringP("name", "n", "", "name of the package to install")
+	addCmd.Flags().BoolP("verbose", "v", false, "name of the package to install")
 }
