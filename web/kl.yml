@@ -1,0 +1,12 @@
+version: v1
+defaultEnv: test-env
+packages:
+- nodejs@latest
+- nodePackages.pnpm@latest
+- git@latest
+- go-task@latest
+- go@latest
+envVars:
+- key: PNPM_STORE_PATH
+  value: ~/.pnpm/store
+mounts: []
