@@ -2,6 +2,7 @@ package boxpkg
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	cl "github.com/kloudlite/kl/domain/client"
@@ -32,7 +33,16 @@ func (c *client) Reload() error {
 		return err
 	}
 
+	if err := os.WriteFile("/home/.kl/devbox/devbox.json", conf, os.ModePerm); err != nil {
+		return err
+	}
+
 	fn.Warn("configuration changes have been applied. To ensure these changes take effect, please restart your SSH/IDE sessions.")
 
-	return cl.UpdateDevboxEnvs()
+	return cl.ExecPackageCommand(fmt.Sprintf("devbox install%s", func() string {
+		if c.verbose {
+			return ""
+		}
+		return " -q"
+	}()))
 }

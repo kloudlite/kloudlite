@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 
@@ -36,7 +37,7 @@ func rmPackages(cmd *cobra.Command, args []string) error {
 	stopSp := spinner.Client.Start(fmt.Sprintf("removing package %s", name))
 	defer stopSp()
 
-	err := execPackageCommand(fmt.Sprintf("devbox rm %s%s", name, func() string {
+	err := client.ExecPackageCommand(fmt.Sprintf("devbox rm %s%s", name, func() string {
 		if verbose {
 			return ""
 		}
