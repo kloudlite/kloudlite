@@ -110,6 +110,9 @@ const (
 // constant vars generated for struct ManagedResource
 const (
 	ManagedResourceEnabled                                                 = "enabled"
+	ManagedResourceIsImported                                              = "isImported"
+	ManagedResourceManagedServiceName                                      = "managedServiceName"
+	ManagedResourceMresRef                                                 = "mresRef"
 	ManagedResourceOutput                                                  = "output"
 	ManagedResourceOutputCredentialsRef                                    = "output.credentialsRef"
 	ManagedResourceOutputCredentialsRefName                                = "output.credentialsRef.name"
