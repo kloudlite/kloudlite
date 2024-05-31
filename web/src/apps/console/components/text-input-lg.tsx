@@ -1,4 +1,3 @@
-import { ChangeEventHandler } from 'react';
 import { ITextInput, TextInput } from '~/components/atoms/input';
 import { IconButton } from '~/components/atoms/button';
 import { ArrowRight } from '~/components/icons';
@@ -31,9 +30,13 @@ const TextInputLg = ({
             // e.preventDefault();
           }
         }}
-        suffix={<IconButton variant="outline" icon={<ArrowRight />} 
-        onClick={onEnter}
-        />}
+        suffix={
+          <IconButton
+            variant="outline"
+            icon={<ArrowRight />}
+            onClick={onEnter}
+          />
+        }
         focusRing={false}
         textFieldClassName="!bodyLg"
         {...props}

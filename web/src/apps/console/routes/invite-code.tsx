@@ -1,6 +1,5 @@
 import { redirect } from '@remix-run/node';
 import { useNavigate } from '@remix-run/react';
-import { useState } from 'react';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { toast } from '~/components/molecule/toast';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -8,7 +7,6 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { handleError } from '~/root/lib/utils/common';
 import { GQLServerHandler } from '~/lib/server/gql/saved-queries';
 import { Badge } from '~/components/atoms/badge';
 import TextInputLg from '~/console/components/text-input-lg';
@@ -16,9 +14,8 @@ import TextInputLg from '~/console/components/text-input-lg';
 const InviteCode = () => {
   const api = useConsoleApi();
   const navigate = useNavigate();
-  const [apiError, setApiError] = useState('');
 
-  const { values, errors, handleChange, submit, handleSubmit } = useForm({
+  const { values, handleChange, submit, handleSubmit } = useForm({
     initialValues: {
       inviteCode: '',
     },
@@ -40,7 +37,6 @@ const InviteCode = () => {
           err instanceof Error
             ? err.message
             : 'An error occurred. Please try again.';
-        setApiError(errorMessage);
         toast.error(errorMessage);
       }
     },
@@ -70,9 +66,6 @@ const InviteCode = () => {
             value={values.inviteCode}
             onChange={handleChange('inviteCode')}
             onEnter={submit}
-            
-            // error={!!(errors.inviteCode || apiError)}
-            // message={errors.inviteCode || apiError}
           />
         </div>
       </form>
