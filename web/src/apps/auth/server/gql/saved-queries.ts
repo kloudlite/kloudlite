@@ -203,6 +203,8 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
             id
             email
             verified
+            name
+            approved
           }
         }
       `,

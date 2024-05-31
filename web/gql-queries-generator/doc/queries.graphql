@@ -6246,6 +6246,8 @@ query authWhoAmI {
     id
     email
     verified
+    name
+    approved
   }
 }
 
