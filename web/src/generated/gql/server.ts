@@ -177,6 +177,7 @@ export type SearchImagePullSecrets = {
 };
 
 export type SearchManagedResources = {
+  envName?: InputMaybe<MatchFilterIn>;
   isReady?: InputMaybe<MatchFilterIn>;
   managedServiceName?: InputMaybe<MatchFilterIn>;
   markedForDeletion?: InputMaybe<MatchFilterIn>;
@@ -5060,36 +5061,96 @@ export type ConsoleListMSvTemplatesQuery = {
 };
 
 export type ConsoleGetManagedResourceQueryVariables = Exact<{
-  envName: Scalars['String']['input'];
   name: Scalars['String']['input'];
+  msvcName?: InputMaybe<Scalars['String']['input']>;
+  envName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type ConsoleGetManagedResourceQuery = {
   core_getManagedResource?: {
+    accountName: string;
+    apiVersion?: string;
+    clusterName: string;
+    creationTime: any;
     displayName: string;
     enabled?: boolean;
     environmentName: string;
+    id: string;
+    isImported: boolean;
+    kind?: string;
+    managedServiceName: string;
     markedForDeletion?: boolean;
+    mresRef: string;
+    recordVersion: number;
     updateTime: any;
-    metadata?: { name: string; namespace?: string };
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
     spec: {
+      resourceNamePrefix?: string;
       resourceTemplate: {
         apiVersion: string;
         kind: string;
         spec: any;
         msvcRef: {
           apiVersion?: string;
+          clusterName?: string;
           kind?: string;
           name: string;
           namespace: string;
         };
       };
     };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReadyGeneration?: number;
+      lastReconcileTime?: any;
+      checkList?: Array<{
+        debug?: boolean;
+        description?: string;
+        hide?: boolean;
+        name: string;
+        title: string;
+      }>;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion: string;
+        kind: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+    syncedOutputSecretRef?: {
+      apiVersion?: string;
+      data?: any;
+      immutable?: boolean;
+      kind?: string;
+      stringData?: any;
+      type?: K8s__Io___Api___Core___V1__SecretType;
+      metadata?: { name: string };
+    };
+    syncStatus: {
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+      syncScheduledAt?: any;
+    };
   };
 };
 
 export type ConsoleCreateManagedResourceMutationVariables = Exact<{
-  envName: Scalars['String']['input'];
+  msvcName: Scalars['String']['input'];
   mres: ManagedResourceIn;
 }>;
 
@@ -5098,7 +5159,7 @@ export type ConsoleCreateManagedResourceMutation = {
 };
 
 export type ConsoleUpdateManagedResourceMutationVariables = Exact<{
-  envName: Scalars['String']['input'];
+  msvcName: Scalars['String']['input'];
   mres: ManagedResourceIn;
 }>;
 
@@ -5107,7 +5168,6 @@ export type ConsoleUpdateManagedResourceMutation = {
 };
 
 export type ConsoleListManagedResourcesQueryVariables = Exact<{
-  envName: Scalars['String']['input'];
   search?: InputMaybe<SearchManagedResources>;
   pq?: InputMaybe<CursorPaginationIn>;
 }>;
@@ -5118,9 +5178,19 @@ export type ConsoleListManagedResourcesQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        accountName: string;
+        apiVersion?: string;
+        clusterName: string;
         creationTime: any;
         displayName: string;
+        enabled?: boolean;
+        environmentName: string;
+        id: string;
+        isImported: boolean;
+        kind?: string;
+        managedServiceName: string;
         markedForDeletion?: boolean;
+        mresRef: string;
         recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
@@ -5135,16 +5205,17 @@ export type ConsoleListManagedResourcesQuery = {
           namespace?: string;
         };
         spec: {
+          resourceNamePrefix?: string;
           resourceTemplate: {
             apiVersion: string;
             kind: string;
             spec: any;
             msvcRef: {
               apiVersion?: string;
+              clusterName?: string;
               kind?: string;
               name: string;
               namespace: string;
-              clusterName?: string;
             };
           };
         };
@@ -5154,8 +5225,9 @@ export type ConsoleListManagedResourcesQuery = {
           lastReadyGeneration?: number;
           lastReconcileTime?: any;
           checkList?: Array<{
-            description?: string;
             debug?: boolean;
+            description?: string;
+            hide?: boolean;
             name: string;
             title: string;
           }>;
@@ -5168,7 +5240,13 @@ export type ConsoleListManagedResourcesQuery = {
           }>;
         };
         syncedOutputSecretRef?: {
-          metadata?: { name: string; namespace?: string };
+          apiVersion?: string;
+          data?: any;
+          immutable?: boolean;
+          kind?: string;
+          stringData?: any;
+          type?: K8s__Io___Api___Core___V1__SecretType;
+          metadata?: { name: string };
         };
         syncStatus: {
           action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
@@ -5190,12 +5268,31 @@ export type ConsoleListManagedResourcesQuery = {
 };
 
 export type ConsoleDeleteManagedResourceMutationVariables = Exact<{
-  envName: Scalars['String']['input'];
+  msvcName: Scalars['String']['input'];
   mresName: Scalars['String']['input'];
 }>;
 
 export type ConsoleDeleteManagedResourceMutation = {
   core_deleteManagedResource: boolean;
+};
+
+export type ConsoleImportManagedResourceMutationVariables = Exact<{
+  envName: Scalars['String']['input'];
+  msvcName: Scalars['String']['input'];
+  mresName: Scalars['String']['input'];
+}>;
+
+export type ConsoleImportManagedResourceMutation = {
+  core_importManagedResource?: { id: string };
+};
+
+export type ConsoleDeleteImportedManagedResourceMutationVariables = Exact<{
+  envName: Scalars['String']['input'];
+  mresName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteImportedManagedResourceMutation = {
+  core_deleteImportedManagedResource: boolean;
 };
 
 export type ConsoleGetHelmChartQueryVariables = Exact<{
@@ -7387,7 +7484,7 @@ export type AuthCli_CreateGlobalVpnDeviceMutation = {
 };
 
 export type AuthCli_GetMresOutputKeyValuesQueryVariables = Exact<{
-  envName: Scalars['String']['input'];
+  msvcName: Scalars['String']['input'];
   keyrefs?: InputMaybe<
     | Array<InputMaybe<ManagedResourceKeyRefIn>>
     | InputMaybe<ManagedResourceKeyRefIn>
@@ -7448,7 +7545,7 @@ export type AuthCli_CoreCheckNameAvailabilityQuery = {
 };
 
 export type AuthCli_GetMresKeysQueryVariables = Exact<{
-  envName: Scalars['String']['input'];
+  msvcName: Scalars['String']['input'];
   name: Scalars['String']['input'];
 }>;
 
@@ -7457,7 +7554,6 @@ export type AuthCli_GetMresKeysQuery = {
 };
 
 export type AuthCli_ListMresesQueryVariables = Exact<{
-  envName: Scalars['String']['input'];
   pq?: InputMaybe<CursorPaginationIn>;
 }>;
 
@@ -7477,7 +7573,7 @@ export type AuthCli_GetMresConfigsValuesQueryVariables = Exact<{
     | Array<InputMaybe<ManagedResourceKeyRefIn>>
     | InputMaybe<ManagedResourceKeyRefIn>
   >;
-  envName: Scalars['String']['input'];
+  msvcName: Scalars['String']['input'];
 }>;
 
 export type AuthCli_GetMresConfigsValuesQuery = {
@@ -7511,6 +7607,7 @@ export type AuthCli_GetConfigSecretMapQueryVariables = Exact<{
     | Array<InputMaybe<ManagedResourceKeyRefIn>>
     | InputMaybe<ManagedResourceKeyRefIn>
   >;
+  msvcName: Scalars['String']['input'];
 }>;
 
 export type AuthCli_GetConfigSecretMapQuery = {

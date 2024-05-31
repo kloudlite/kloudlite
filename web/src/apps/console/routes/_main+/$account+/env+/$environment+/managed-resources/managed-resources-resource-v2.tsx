@@ -1,4 +1,4 @@
-import { PencilSimple, Trash } from '~/console/components/icons';
+import { Trash } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -12,7 +12,6 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import DeleteDialog from '~/console/components/delete-dialog';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -21,12 +20,13 @@ import { useState } from 'react';
 import { handleError } from '~/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useParams } from '@remix-run/react';
-import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
+import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
+import { ViewSecret } from './handle-managed-resource-v2';
+// import { ViewSecret } from './handle-managed-resource';
 
 const RESOURCE_NAME = 'managed resource';
 type BaseType = ExtractNodeType<IManagedResources>;
@@ -59,13 +59,13 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
-        {
-          label: 'Edit',
-          icon: <PencilSimple size={16} />,
-          type: 'item',
-          onClick: () => onAction({ action: 'edit', item }),
-          key: 'edit',
-        },
+        // {
+        //   label: 'Edit',
+        //   icon: <PencilSimple size={16} />,
+        //   type: 'item',
+        //   onClick: () => onAction({ action: 'edit', item }),
+        //   key: 'edit',
+        // },
         {
           label: 'Delete',
           icon: <Trash size={16} />,
@@ -225,18 +225,11 @@ const ListView = ({ items = [], onAction }: IResource) => {
   );
 };
 
-const ManagedResourceResourcesV2 = ({
-  items = [],
-  templates = [],
-}: {
-  items: BaseType[];
-  templates: IMSvTemplates;
-}) => {
+const ManagedResourceResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
   const [showSecret, setShowSecret] = useState<BaseType | null>(null);
-  const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
   const params = useParams();
@@ -258,9 +251,6 @@ const ManagedResourceResourcesV2 = ({
         case 'delete':
           setShowDeleteDialog(item);
           break;
-        case 'edit':
-          setVisible(item);
-          break;
         case 'view_secret':
           setShowSecret(item);
           break;
@@ -281,11 +271,11 @@ const ManagedResourceResourcesV2 = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          // if (!params.project || !params.environment) {
-          //   throw new Error('Project and Environment is required!.');
-          // }
+          if (!params.environment) {
+            throw new Error('Environment is required!.');
+          }
           try {
-            const { errors } = await api.deleteManagedResource({
+            const { errors } = await api.deleteImportedManagedResource({
               mresName: parseName(showDeleteDialog),
               envName: environment || '',
             });
@@ -299,15 +289,6 @@ const ManagedResourceResourcesV2 = ({
           } catch (err) {
             handleError(err);
           }
-        }}
-      />
-      <HandleManagedResources
-        {...{
-          isUpdate: true,
-          visible: !!visible,
-          setVisible: () => setVisible(null),
-          data: visible!,
-          templates: templates || [],
         }}
       />
 

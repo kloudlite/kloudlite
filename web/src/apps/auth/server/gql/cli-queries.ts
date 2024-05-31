@@ -59,11 +59,11 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_getMresOutputKeyValues: executor(
     gql`
       query Core_getManagedResouceOutputKeyValues(
-        $envName: String!
+        $msvcName: String!
         $keyrefs: [ManagedResourceKeyRefIn]
       ) {
         core_getManagedResouceOutputKeyValues(
-          envName: $envName
+          msvcName: $msvcName
           keyrefs: $keyrefs
         ) {
           key
@@ -146,10 +146,10 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_getMresKeys: executor(
     gql`
       query Core_getManagedResouceOutputKeyValues(
-        $envName: String!
+        $msvcName: String!
         $name: String!
       ) {
-        core_getManagedResouceOutputKeys(envName: $envName, name: $name)
+        core_getManagedResouceOutputKeys(msvcName: $msvcName, name: $name)
       }
     `,
     {
@@ -160,11 +160,8 @@ export const cliQueries = (executor: IExecutor) => ({
 
   cli_listMreses: executor(
     gql`
-      query Core_listManagedResources(
-        $envName: String!
-        $pq: CursorPaginationIn
-      ) {
-        core_listManagedResources(envName: $envName, pq: $pq) {
+      query Core_listManagedResources($pq: CursorPaginationIn) {
+        core_listManagedResources(pq: $pq) {
           edges {
             node {
               displayName
@@ -187,11 +184,11 @@ export const cliQueries = (executor: IExecutor) => ({
     gql`
       query Core_getManagedResouceOutputKeyValues(
         $keyrefs: [ManagedResourceKeyRefIn]
-        $envName: String!
+        $msvcName: String!
       ) {
         core_getManagedResouceOutputKeyValues(
           keyrefs: $keyrefs
-          envName: $envName
+          msvcName: $msvcName
         ) {
           key
           mresName
@@ -235,6 +232,7 @@ export const cliQueries = (executor: IExecutor) => ({
         $configQueries: [ConfigKeyRefIn]
         $secretQueries: [SecretKeyRefIn!]
         $mresQueries: [ManagedResourceKeyRefIn]
+        $msvcName: String!
       ) {
         configs: core_getConfigValues(
           envName: $envName
@@ -254,7 +252,7 @@ export const cliQueries = (executor: IExecutor) => ({
         }
         mreses: core_getManagedResouceOutputKeyValues(
           keyrefs: $mresQueries
-          envName: $envName
+          msvcName: $msvcName
         ) {
           key
           mresName
