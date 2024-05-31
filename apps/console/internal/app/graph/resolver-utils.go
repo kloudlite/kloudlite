@@ -102,3 +102,7 @@ var (
 func newResourceContext(ctx domain.ConsoleContext, environmentName string) domain.ResourceContext {
 	return domain.ResourceContext{ConsoleContext: ctx, EnvironmentName: environmentName}
 }
+
+func newMresContext(ctx domain.ConsoleContext, msvcName string) domain.ManagedResourceContext {
+	return domain.ManagedResourceContext{ConsoleContext: ctx, ManagedServiceName: msvcName}
+}

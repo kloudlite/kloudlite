@@ -96,6 +96,13 @@ const (
 	GetNodepool    Action = "get-nodepool"
 	UpdateNodepool Action = "update-nodepool"
 
+	// managed resource
+	CreateManagedResource Action = "create-managed-resource"
+	DeleteManagedResource Action = "delete-managed-resource"
+	ListManagedResources  Action = "list-managed-resources"
+	GetManagedResource    Action = "get-managed-resource"
+	UpdateManagedResource Action = "update-managed-resource"
+
 	CreateCloudProviderSecret Action = "create-cloud-provider-secret"
 	UpdateCloudProviderSecret Action = "update-cloud-provider-secret"
 	DeleteCloudProviderSecret Action = "delete-cloud-provider-secret"

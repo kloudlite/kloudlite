@@ -67,6 +67,13 @@ var roleBindings RoleBindingMap = RoleBindingMap{
 	t.ListNodepools:  []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember, t.RoleProjectAdmin, t.RoleProjectMember},
 	t.GetNodepool:    []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember, t.RoleProjectAdmin, t.RoleProjectMember},
 
+	// for managed resource
+	t.CreateManagedResource: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
+	t.UpdateManagedResource: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
+	t.DeleteManagedResource: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
+	t.ListManagedResources:  []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember, t.RoleProjectAdmin, t.RoleProjectMember},
+	t.GetManagedResource:    []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember, t.RoleProjectAdmin, t.RoleProjectMember},
+
 	// for cloud provider secrets
 	t.CreateCloudProviderSecret: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
 	t.UpdateCloudProviderSecret: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},

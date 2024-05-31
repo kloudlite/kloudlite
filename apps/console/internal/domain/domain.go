@@ -46,9 +46,6 @@ type domain struct {
 	iamClient   iam.IAMClient
 	infraClient infra.InfraClient
 
-	// projectRepo repos.DbRepo[*entities.Project]
-	// pmsRepo     repos.DbRepo[*entities.ProjectManagedService]
-
 	environmentRepo repos.DbRepo[*entities.Environment]
 	vpnDeviceRepo   repos.DbRepo[*entities.ConsoleVPNDevice]
 
@@ -304,6 +301,23 @@ func (d *domain) resyncK8sResource(ctx K8sContext, environmentName string, actio
 	}
 }
 
+func (d *domain) resyncK8sResourceToCluster(ctx K8sContext, clusterName string, action types.SyncAction, obj client.Object, rv int) error {
+	switch action {
+	case types.SyncActionApply:
+		{
+			return d.applyK8sResourceOnCluster(ctx, clusterName, obj, rv)
+		}
+	case types.SyncActionDelete:
+		{
+			return d.deleteK8sResourceOfCluster(ctx, clusterName, obj)
+		}
+	default:
+		{
+			return errors.Newf("unknown sync action %q", action)
+		}
+	}
+}
+
 func (d *domain) parseRecordVersionFromAnnotations(annotations map[string]string) (int, error) {
 	annotatedVersion, ok := annotations[constants.RecordVersionKey]
 	if !ok {
@@ -406,7 +420,6 @@ func (d *domain) checkEnvironmentAccess(ctx ResourceContext, action iamT.Action)
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-			//iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, ctx.ProjectName),
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, ctx.EnvironmentName),
 		},
 		Action: string(action),
@@ -488,8 +501,6 @@ var Module = fx.Module("domain",
 		iamClient iam.IAMClient,
 		infraClient infra.InfraClient,
 
-		// projectRepo repos.DbRepo[*entities.Project],
-		// pmsRepo repos.DbRepo[*entities.ProjectManagedService],
 		environmentRepo repos.DbRepo[*entities.Environment],
 
 		appRepo repos.DbRepo[*entities.App],
@@ -518,8 +529,6 @@ var Module = fx.Module("domain",
 			infraClient: infraClient,
 			logger:      logger,
 
-			// projectRepo:         projectRepo,
-			// pmsRepo:             pmsRepo,
 			environmentRepo:     environmentRepo,
 			appRepo:             appRepo,
 			externalAppRepo:     externalAppRepo,

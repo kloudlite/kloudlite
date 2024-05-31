@@ -279,10 +279,6 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 		return nil, errors.NewE(err)
 	}
 
-	// if err := d.syncAccountLevelImagePullSecrets(ctx, destEnv.Name, destEnv.Spec.TargetNamespace); err != nil {
-	// 	return nil, errors.NewE(err)
-	// }
-
 	if err := d.applyK8sResource(ctx, sourceEnv.Name, &destEnv.Environment, destEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -321,13 +317,6 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 		return nil, errors.NewE(err)
 	}
 	routers, err := d.routerRepo.Find(ctx, repos.Query{
-		Filter: filters,
-		Sort:   nil,
-	})
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	managedResources, err := d.mresRepo.Find(ctx, repos.Query{
 		Filter: filters,
 		Sort:   nil,
 	})
@@ -423,23 +412,6 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 		}
 	}
 
-	for i := range managedResources {
-		spec := managedResources[i].Spec
-		if _, err := d.createAndApplyManagedResource(resCtx, &entities.ManagedResource{
-			ManagedResource: crdsv1.ManagedResource{
-				TypeMeta:   managedResources[i].TypeMeta,
-				ObjectMeta: objectMeta(managedResources[i].ObjectMeta, destEnv.Spec.TargetNamespace),
-				Spec:       spec,
-				Enabled:    managedResources[i].Enabled,
-			},
-			AccountName:      ctx.AccountName,
-			EnvironmentName:  destEnv.Name,
-			ResourceMetadata: resourceMetadata(managedResources[i].DisplayName),
-		}); err != nil {
-			return nil, err
-		}
-	}
-
 	if err := d.syncImagePullSecretsToEnvironment(ctx, destinationEnvName); err != nil {
 		return nil, err
 	}
@@ -449,9 +421,6 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 
 func (d *domain) getEnvironmentTargetNamespace(envName string) string {
 	return fmt.Sprintf("env-%s", envName)
-	// envNamespace := fmt.Sprintf("env-%s", envName)
-	// hash := md5.Sum([]byte(envNamespace))
-	// return fmt.Sprintf("env-%s", hex.EncodeToString(hash[:]))
 }
 
 func (d *domain) UpdateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error) {
