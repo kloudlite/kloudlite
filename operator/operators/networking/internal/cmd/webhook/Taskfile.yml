@@ -1,0 +1,28 @@
+version: 3
+
+includes:
+  go: ../../../../../.tools/taskfiles/go-build.Taskfile.yml
+
+vars:
+  app: mutation-webhook
+
+tasks:
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          Out: "./bin/{{.app}}"
+
+  run:
+    env:
+      GATEWAY_ADMIN_API_ADDR: "http://gateway.kl-gateway.svc.cluster.local:8080"
+    cmds:
+      - go run ./main.go
+
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+      - docker buildx build -t {{.Image}} . --build-arg BINARY=./bin/{{.app}} --push
