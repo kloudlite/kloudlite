@@ -8,13 +8,7 @@ tasks:
   clean:
     cmds:
       - |+
-        item=$(docker ps | grep -i kl-run | awk '{print $1}')
-
-        if [ ! -z "$item" ]; then
-          docker stop $item
-          docker rm $item
-        fi
-
+        docker rmi -f {{.ImageRegistry}}:v1.0.0-nightly || echo "image already removed"
         docker volume rm kl-home-cache || echo "kl-home-cache already removed"
         docker volume rm kl-nix-cache || echo "nix-store already removed"
 

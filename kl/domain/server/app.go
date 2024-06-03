@@ -7,7 +7,7 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/fwd"
+	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
@@ -185,10 +185,10 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 	if err := func() error {
 		sshPort, ok := os.LookupEnv("SSH_PORT")
 		if ok {
-			var prs []fwd.StartCh
+			var prs []sshclient.StartCh
 
 			for _, v := range ports {
-				prs = append(prs, fwd.StartCh{
+				prs = append(prs, sshclient.StartCh{
 					SshPort:    sshPort,
 					RemotePort: fmt.Sprint(v.DevicePort),
 					LocalPort:  fmt.Sprint(v.DevicePort),

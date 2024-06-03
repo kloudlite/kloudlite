@@ -1,4 +1,4 @@
-package fwd
+package sshclient
 
 import (
 	"context"

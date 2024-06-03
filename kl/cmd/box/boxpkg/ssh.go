@@ -2,8 +2,6 @@ package boxpkg
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -12,7 +10,9 @@ import (
 	cl "github.com/kloudlite/kl/domain/client"
 	confighandler "github.com/kloudlite/kl/pkg/config-handler"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
@@ -33,19 +33,24 @@ func getDomainFromPath(pth string) string {
 }
 
 func (c *client) Ssh() error {
-	defer c.spinner.Start("preparing to ssh")()
+	defer spinner.Client.Start("preparing to ssh")()
 
 	cname := fn.ParseStringFlag(c.cmd, "name")
 	if cname != "" {
 		return c.doSSHWithCname(cname)
 	}
 
-	_, err := cl.GetKlFile("")
-	if err != nil {
-		if err == confighandler.ErrKlFileNotExists {
+	_, err2 := cl.GetKlFile("")
+	if err2 != nil {
+		if err2 == confighandler.ErrKlFileNotExists {
 			conts, err := c.listContainer(map[string]string{
 				CONT_MARK_KEY: "true",
 			})
+
+			if err != nil && err == notFoundErr {
+				return fmt.Errorf("kl.yml in current dir not found, and also no any running container found")
+			}
+
 			if err != nil {
 				return err
 			}
@@ -61,7 +66,7 @@ func (c *client) Ssh() error {
 
 		}
 
-		return err
+		return err2
 	}
 
 	cr, err := c.getContainer(map[string]string{
@@ -89,7 +94,7 @@ func (c *client) Ssh() error {
 		return fmt.Errorf("container not running")
 	}
 
-	c.spinner.Stop()
+	spinner.Client.Stop()
 	c.ensureVpnConnected()
 
 	count := 0
@@ -108,17 +113,26 @@ func (c *client) Ssh() error {
 		time.Sleep(1 * time.Second)
 	}
 
-	c.spinner.Stop()
-	command := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
+	spinner.Client.Stop()
+	// command := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
 
 	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
 
-	// command.Stderr = os.Stderr
-	command.Stdin = os.Stdin
-	command.Stdout = os.Stdout
-	if err := command.Run(); err != nil {
-		return fmt.Errorf(("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start. %s"), err.Error())
+	if err := sshclient.DoSSH(sshclient.SSHConfig{
+		Host:    getDomainFromPath(c.cwd),
+		User:    "kl",
+		KeyPath: path.Join(xdg.Home, ".ssh", "id_rsa"),
+		SSHPort: localEnv.SSHPort,
+	}); err != nil {
+		return err
 	}
+
+	// // command.Stderr = os.Stderr
+	// command.Stdin = os.Stdin
+	// command.Stdout = os.Stdout
+	// if err := command.Run(); err != nil {
+	// 	return fmt.Errorf(("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start. %s"), err.Error())
+	// }
 	return nil
 }
 
@@ -154,7 +168,7 @@ func (c *client) doSSHWithCname(name string) error {
 		return fmt.Errorf("container not running")
 	}
 
-	c.spinner.Stop()
+	spinner.Client.Stop()
 	c.ensureVpnConnected()
 
 	count := 0
@@ -172,16 +186,25 @@ func (c *client) doSSHWithCname(name string) error {
 		time.Sleep(1 * time.Second)
 	}
 
-	c.spinner.Stop()
-	command := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(pth)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
+	spinner.Client.Stop()
+	// command := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(pth)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
 
 	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(pth)), "-p", fmt.Sprint(localEnv.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
 
-	// command.Stderr = os.Stderr
-	command.Stdin = os.Stdin
-	command.Stdout = os.Stdout
-	if err := command.Run(); err != nil {
-		return fmt.Errorf(("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start. %s"), err.Error())
+	if err := sshclient.DoSSH(sshclient.SSHConfig{
+		Host:    getDomainFromPath(pth),
+		User:    "kl",
+		KeyPath: path.Join(xdg.Home, ".ssh", "id_rsa"),
+		SSHPort: localEnv.SSHPort,
+	}); err != nil {
+		return err
 	}
+
+	// command.Stderr = os.Stderr
+	// command.Stdin = os.Stdin
+	// command.Stdout = os.Stdout
+	// if err := command.Run(); err != nil {
+	// 	return fmt.Errorf(("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start. %s"), err.Error())
+	// }
 	return nil
 }

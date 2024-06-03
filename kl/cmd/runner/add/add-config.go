@@ -213,6 +213,14 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 
 	fn.Log(fmt.Sprintf("added config %s/%s to your kl-file\n", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key))
 
+	if err := server.SyncDevboxJsonFile(); err != nil {
+		return err
+	}
+
+	if err := client.SyncDevboxShellEnvFile(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

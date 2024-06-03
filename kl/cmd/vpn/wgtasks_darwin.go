@@ -3,10 +3,7 @@ package vpn
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
-	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
@@ -24,19 +21,6 @@ func connect(verbose bool, options ...fn.Option) error {
 
 		_ = client.SetLoading(false)
 	}()
-
-	switch flags.CliName {
-	case constants.CoreCliName:
-		_, err := server.EnsureEnv(nil, options...)
-		if err != nil {
-			return err
-		}
-	case constants.InfraCliName:
-		_, err := server.EnsureAccount()
-		if err != nil {
-			return err
-		}
-	}
 
 	configFolder, err := client.GetConfigFolder()
 	if err != nil {

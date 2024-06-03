@@ -9,7 +9,7 @@ import (
 )
 
 type Mres struct {
-	DisplayName string   `json:"display_name"`
+	DisplayName string   `json:"displayName"`
 	Metadata    Metadata `json:"metadata"`
 }
 
@@ -26,7 +26,13 @@ func ListMreses(options ...fn.Option) ([]Mres, error) {
 
 	respData, err := klFetch("cli_listMreses", map[string]any{
 		"envName": env.Name,
-		"pq":      PaginationDefault,
+		"search": map[string]any{
+			"envName": map[string]any{
+				"matchType": "exact",
+				"exact":     env.Name,
+			},
+		},
+		"pq": PaginationDefault,
 	}, &cookie)
 	if err != nil {
 		return nil, err

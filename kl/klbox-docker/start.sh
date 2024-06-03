@@ -5,12 +5,16 @@ set -o pipefail
 
 trap "echo kloudlite-entrypoint:CRASHED >&2" EXIT SIGINT SIGTERM
 
+KL_LOCK_PATH=/home/kl/workspace/kl.lock
+
 KL_DEVBOX_PATH=/home/kl/.kl/devbox
+KL_DEVBOX_JSON_PATH=$KL_DEVBOX_PATH/devbox.json
+KL_DEVBOX_LOCK_PATH=$KL_DEVBOX_PATH/devbox.lock
 mkdir -p $KL_DEVBOX_PATH
 
 
-if [ -f "/home/kl/workspace/kl.lock" ]; then
-    cp /home/kl/workspace/kl.lock $KL_DEVBOX_PATH/devbox.lock
+if [ -f "$KL_LOCK_PATH" ]; then
+    cp $KL_LOCK_PATH $KL_DEVBOX_LOCK_PATH
 fi
 
 
@@ -22,11 +26,9 @@ if [ ! -f "$entrypoint_executed" ]; then
 fi
 
 shift
-echo "$@" | jq -r > /tmp/kl-file.json
+echo "$@" | jq -r > $KL_DEVBOX_JSON_PATH
 
 PATH=$PATH:$HOME/.nix-profile/bin
-mkdir -p $KL_DEVBOX_PATH
-cp /tmp/kl-file.json $KL_DEVBOX_PATH/devbox.json
 cd $KL_DEVBOX_PATH
 
 echo "kloudlite-entrypoint:INSTALLING_PACKAGES"
@@ -39,9 +41,8 @@ if [ -d "/tmp/ssh2" ]; then
     echo "successfully copied ssh credentials"
 fi 
 
-sudo /mounter --conf /tmp/kl-file.json
+# sudo /mounter --conf $KL_DEVBOX_JSON_PATH
 
-mkdir -p /home/kl/.kl
 cat <<EOL > /home/kl/.kl/global-profile
 export SSH_PORT=$SSH_PORT
 export IN_DEV_BOX="true"
@@ -49,4 +50,4 @@ EOL
 
 # trap - EXIT SIGTERM SIGINT
 echo "kloudlite-entrypoint: SETUP_COMPLETE"
-sudo /usr/sbin/sshd -D -p $SSH_PORT
+sudo /usr/sbin/sshd -D -p "$SSH_PORT" 

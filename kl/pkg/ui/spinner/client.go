@@ -1,3 +1,3 @@
 package spinner
 
-var Client = NewSpinner2("", false)
+var Client = newSpinner("", false)

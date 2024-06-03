@@ -2,7 +2,6 @@ package boxpkg
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -16,6 +15,7 @@ import (
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 )
@@ -23,7 +23,7 @@ import (
 var errContainerNotStarted = fmt.Errorf("container not started")
 
 func (c *client) Start() error {
-	defer c.spinner.UpdateMessage("initiating container please wait")()
+	defer spinner.Client.UpdateMessage("initiating container please wait")()
 
 	if c.verbose {
 		fn.Logf("starting container in: %s", text.Blue(c.cwd))
@@ -38,7 +38,7 @@ func (c *client) Start() error {
 	}
 
 	if err == nil {
-		c.spinner.Stop()
+		spinner.Client.Stop()
 		crPath := cr.Labels[CONT_PATH_KEY]
 
 		fn.Logf("container %s already running in %s", text.Yellow(cr.Name), text.Blue(crPath))
@@ -58,18 +58,13 @@ func (c *client) Start() error {
 		return err
 	}
 
-	envs, mmap, err := server.GetLoadMaps()
-	if err != nil {
-		return err
-	}
-
 	// local setup
-	kConf, err := c.loadConfig(mmap, envs)
+	kConf, err := server.LoadDevboxConfig()
 	if err != nil {
 		return err
 	}
 
-	c.spinner.Stop()
+	spinner.Client.Stop()
 	if err := cl.EnsureAppRunning(); err != nil {
 		return err
 	}
@@ -100,7 +95,7 @@ func (c *client) Start() error {
 		return err
 	}
 
-	c.spinner.Start()
+	spinner.Client.Start()
 
 	c.ensureVpnConnected()
 
@@ -114,7 +109,7 @@ func (c *client) Start() error {
 	}()
 
 	if err := func() error {
-		conf, err := json.Marshal(kConf)
+		conf, err := kConf.ToJson()
 		if err != nil {
 			return err
 		}

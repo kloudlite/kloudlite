@@ -1,39 +1,18 @@
 package boxpkg
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 
 	cl "github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
 
 func (c *client) Reload() error {
-	defer c.spinner.Start("Reloading environments please wait")()
+	defer spinner.Client.Start("Reloading environments please wait")()
 
-	envs, mmap, err := server.GetLoadMaps()
-	if err != nil {
-		return err
-	}
-
-	// local setup
-	kConf, err := c.loadConfig(mmap, envs)
-	if err != nil {
-		return err
-	}
-
-	conf, err := json.Marshal(kConf)
-	if err != nil {
-		return err
-	}
-
-	if err := os.WriteFile("/tmp/kl-file.json", conf, os.ModePerm); err != nil {
-		return err
-	}
-
-	if err := os.WriteFile("/home/.kl/devbox/devbox.json", conf, os.ModePerm); err != nil {
+	if err := server.SyncDevboxJsonFile(); err != nil {
 		return err
 	}
 

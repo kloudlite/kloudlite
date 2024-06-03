@@ -11,7 +11,7 @@ import (
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/fwd"
+	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +43,7 @@ func PortActions(cmd *cobra.Command, _ []string) error {
 	list := fn.ParseBoolFlag(cmd, "list")
 
 	if list {
-		p.ListPorts(fwd.StartCh{})
+		p.ListPorts(sshclient.StartCh{})
 		return nil
 	}
 
@@ -82,10 +82,10 @@ func PortActions(cmd *cobra.Command, _ []string) error {
 		return errors.New("SSH_PORT not set")
 	}
 
-	var chMsg []fwd.StartCh
+	var chMsg []sshclient.StartCh
 
 	for _, ap := range ports {
-		chMsg = append(chMsg, fwd.StartCh{
+		chMsg = append(chMsg, sshclient.StartCh{
 			RemotePort: fmt.Sprint(ap.DevicePort),
 			SshPort:    sshPort,
 			LocalPort:  fmt.Sprint(ap.DevicePort),

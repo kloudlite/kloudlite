@@ -15,6 +15,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/kloudlite/kl/constants"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/nxadm/tail"
 )
@@ -43,7 +44,7 @@ type Cntr struct {
 var notFoundErr = errors.New("container not found")
 
 func (c *client) listContainer(labels map[string]string) ([]Cntr, error) {
-	defer c.spinner.UpdateMessage("fetching existing container")()
+	defer spinner.Client.UpdateMessage("fetching existing container")()
 
 	labelArgs := make([]filters.KeyValuePair, 0)
 
@@ -100,7 +101,7 @@ func (c *client) listContainer(labels map[string]string) ([]Cntr, error) {
 }
 
 func (c *client) getContainer(labels map[string]string) (*Cntr, error) {
-	defer c.spinner.UpdateMessage("fetching existing container")()
+	defer spinner.Client.UpdateMessage("fetching existing container")()
 
 	labelArgs := make([]filters.KeyValuePair, 0)
 
@@ -150,7 +151,7 @@ func (c *client) getContainer(labels map[string]string) (*Cntr, error) {
 }
 
 func (c *client) runContainer(config ContainerConfig) error {
-	defer c.spinner.UpdateMessage(fmt.Sprintf("trying to start container %s please wait", config.Name))()
+	defer spinner.Client.UpdateMessage(fmt.Sprintf("trying to start container %s please wait", config.Name))()
 
 	if c.verbose {
 		fn.Logf("starting container %s", text.Blue(config.Name))
@@ -268,7 +269,7 @@ func (c *client) runContainer(config ContainerConfig) error {
 	select {
 	case exitCode := <-status:
 		{
-			c.spinner.Stop()
+			spinner.Client.Stop()
 			cancelFn()
 			if exitCode != 0 {
 				_ = c.Stop()
@@ -302,12 +303,12 @@ func (c *client) readTillLine(ctx context.Context, file string, desiredLine, str
 		}
 
 		if l.Text == "kloudlite-entrypoint:INSTALLING_PACKAGES" {
-			c.spinner.UpdateMessage("installing nix packages")
+			spinner.Client.UpdateMessage("installing nix packages")
 			continue
 		}
 
 		if l.Text == "kloudlite-entrypoint:INSTALLING_PACKAGES_DONE" {
-			c.spinner.UpdateMessage("loading please wait")
+			spinner.Client.UpdateMessage("loading please wait")
 			continue
 		}
 

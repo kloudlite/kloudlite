@@ -2,8 +2,13 @@ package server
 
 import (
 	"encoding/json"
+	"io/fs"
+	"os"
+	"path/filepath"
 
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/klbox-docker/devboxfile"
+	"github.com/kloudlite/kl/pkg/functions"
 )
 
 type SecretEnv struct {
@@ -275,4 +280,96 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 	}
 
 	return result, mountMap, nil
+}
+
+// this function will fetch real envs from api and return DevboxKlfile with real envs
+func LoadDevboxConfig() (*devboxfile.DevboxConfig, error) {
+	envs, mm, err := GetLoadMaps()
+	if err != nil {
+		return nil, err
+	}
+
+	kf, err := client.GetKlFile("")
+	if err != nil {
+		return nil, err
+	}
+
+	// read kl.yml into struct
+	klConfig := &devboxfile.DevboxConfig{
+		Packages: kf.Packages,
+	}
+
+	kt, err := client.GetKlFile("")
+	if err != nil {
+		return nil, err
+	}
+
+	fm := map[string]string{}
+
+	for _, fe := range kt.Mounts.GetMounts() {
+		pth := fe.Path
+		if pth == "" {
+			pth = fe.Key
+		}
+
+		fm[pth] = mm[pth]
+	}
+
+	ev := map[string]string{}
+	for k, v := range envs {
+		ev[k] = v
+	}
+
+	for _, ne := range kf.EnvVars.GetEnvs() {
+		ev[ne.Key] = ne.Value
+	}
+
+	klConfig.Env = ev
+	klConfig.KlConfig.Mounts = fm
+
+	// klConfig.KlConfig.InitScripts = kt.InitScripts
+
+	return klConfig, nil
+}
+
+func SyncDevboxJsonFile() error {
+	if !client.InsideBox() {
+		return nil
+	}
+
+	kConf, err := LoadDevboxConfig()
+	if err != nil {
+		return err
+	}
+
+	b, err := kConf.ToJson()
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(client.DEVBOX_JSON_PATH, b, os.ModePerm); err != nil {
+		return err
+	}
+
+	if err := MountEnvs(kConf.KlConfig); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func MountEnvs(c devboxfile.KlConfig) error {
+	for k, v := range c.Mounts {
+		if err := os.MkdirAll(filepath.Dir(k), fs.ModePerm); err != nil {
+			functions.Warnf("failed to create dir %s", filepath.Dir(k))
+			continue
+		}
+
+		if err := os.WriteFile(k, []byte(v), fs.ModePerm); err != nil {
+			functions.Warnf("failed to write file %s", k)
+			continue
+		}
+	}
+
+	return nil
 }

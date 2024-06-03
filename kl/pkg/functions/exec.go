@@ -93,6 +93,8 @@ func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
 		cmd.Stdout = os.Stdout
 	}
 
+	// cmd.Env = os.Environ()
+
 	if env == nil {
 		env = map[string]string{}
 	}

@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck source=/dev/null
 
 # ~/.profile: executed by the command interpreter for login shells.
 # This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
@@ -10,29 +11,34 @@
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
 
+KL_LOCK_PATH=/home/kl/workspace/kl.lock
+
 KL_DEVBOX_PATH=/home/kl/.kl/devbox
+KL_DEVBOX_JSON_PATH=$KL_DEVBOX_PATH/devbox.json
+KL_DEVBOX_LOCK_PATH=$KL_DEVBOX_PATH/devbox.lock
+KL_DEVBOX_ENV_PATH=/home/kl/.kl/devbox-env.sh
 
 mkdir -p $KL_DEVBOX_PATH
 
-cp /tmp/sample.json $KL_DEVBOX_PATH/devbox.json
-
-if [ -f "/home/kl/workspace/kl.lock" ]; then
-    cp /home/kl/workspace/kl.lock $KL_DEVBOX_PATH/devbox.lock
+if [ -f "$KL_LOCK_PATH" ]; then
+    cp $KL_LOCK_PATH $KL_DEVBOX_LOCK_PATH
 fi
 
-if [ ! -f "/tmp/devbox.sh" ]; then
-    cd "$KL_DEVBOX_PATH" 
-    devbox shellenv > /tmp/devbox.sh
+if [ ! -f "$KL_DEVBOX_ENV_PATH" ]; then
+    cd  $KL_DEVBOX_PATH || return
+    devbox shellenv > $KL_DEVBOX_ENV_PATH
 fi
 
-source /tmp/devbox.sh
-cd $HOME
 
-if [ -f "$KL_DEVBOX_PATH/devbox.lock" ]; then
-  cp "$KL_DEVBOX_PATH/devbox.lock" /home/kl/workspace/kl.lock
+source "$KL_DEVBOX_ENV_PATH"
+
+cd "$HOME" || return
+
+if [ -f "$KL_DEVBOX_LOCK_PATH" ]; then
+  cp $KL_DEVBOX_LOCK_PATH $KL_LOCK_PATH
 fi
 
-sudo /mounter --conf /tmp/sample.json
+sudo /mounter --conf $KL_DEVBOX_JSON_PATH
 
 # if running bash
 if [ -n "$BASH_VERSION" ]; then
@@ -57,4 +63,4 @@ if [ -f "/home/kl/.kl/global-profile" ]; then
   source /home/kl/.kl/global-profile
 fi
 
-cd /home/kl/workspace
+cd /home/kl/workspace || return

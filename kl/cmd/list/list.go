@@ -24,6 +24,8 @@ func init() {
 	Cmd.AddCommand(accCmd)
 	Cmd.AddCommand(envCmd)
 
+	Cmd.AddCommand(mresCmd)
+
 	Cmd.Aliases = append(Cmd.Aliases, "ls")
 
 	InfraCmd.AddCommand(accCmd)

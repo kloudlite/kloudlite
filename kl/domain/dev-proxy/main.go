@@ -14,7 +14,7 @@ import (
 	"github.com/adrg/xdg"
 	appconsts "github.com/kloudlite/kl/app-consts"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/fwd"
+	"github.com/kloudlite/kl/pkg/sshclient"
 )
 
 func GetUserHomeDir() (string, error) {
@@ -201,7 +201,7 @@ func (p *Proxy) Restart() ([]byte, error) {
 	return b, nil
 }
 
-func (p *Proxy) AddFwd(chMsg []fwd.StartCh) ([]byte, error) {
+func (p *Proxy) AddFwd(chMsg []sshclient.StartCh) ([]byte, error) {
 	params, err := json.Marshal(chMsg)
 	if err != nil {
 		return nil, err
@@ -215,7 +215,7 @@ func (p *Proxy) AddFwd(chMsg []fwd.StartCh) ([]byte, error) {
 	return b, nil
 }
 
-func (p *Proxy) RemoveFwd(chMsg []fwd.StartCh) ([]byte, error) {
+func (p *Proxy) RemoveFwd(chMsg []sshclient.StartCh) ([]byte, error) {
 	params, err := json.Marshal(chMsg)
 	if err != nil {
 		return nil, err
@@ -229,7 +229,7 @@ func (p *Proxy) RemoveFwd(chMsg []fwd.StartCh) ([]byte, error) {
 	return b, nil
 }
 
-func (p *Proxy) RemoveAllFwd(chMsg fwd.StartCh) ([]byte, error) {
+func (p *Proxy) RemoveAllFwd(chMsg sshclient.StartCh) ([]byte, error) {
 
 	if !p.Status() {
 		return nil, nil
@@ -248,7 +248,7 @@ func (p *Proxy) RemoveAllFwd(chMsg fwd.StartCh) ([]byte, error) {
 	return b, nil
 }
 
-func (p *Proxy) ListPorts(chMsg fwd.StartCh) ([]byte, error) {
+func (p *Proxy) ListPorts(chMsg sshclient.StartCh) ([]byte, error) {
 	params, err := json.Marshal(chMsg)
 	if err != nil {
 		return nil, err

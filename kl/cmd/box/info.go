@@ -1,8 +1,6 @@
 package box
 
 import (
-	"fmt"
-
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
@@ -19,12 +17,7 @@ var infoCmd = &cobra.Command{
 		}
 
 		s := fn.ParseStringFlag(cmd, "name")
-		if s == "" {
-			if len(args) == 0 {
-				fn.PrintError(fmt.Errorf("container name is required"))
-				return
-			}
-
+		if s == "" && len(args) > 0 {
 			s = args[0]
 		}
 

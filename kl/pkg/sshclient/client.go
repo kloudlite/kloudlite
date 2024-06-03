@@ -1,4 +1,4 @@
-package fwd
+package sshclient
 
 import (
 	"context"
@@ -12,7 +12,7 @@ type StartCh struct {
 	LocalPort  string `json:"localPort"`
 }
 
-func GetController(sshUser, sshHost, keyPath string) (startCh, cancelCh chan StartCh, exitCh chan struct{}, lports map[string]StartCh, runner func()) {
+func GetForwardController(sshUser, sshHost, keyPath string) (startCh, cancelCh chan StartCh, exitCh chan struct{}, lports map[string]StartCh, runner func()) {
 	startCh = make(chan StartCh)
 	cancelCh = make(chan StartCh)
 	exitCh = make(chan struct{})

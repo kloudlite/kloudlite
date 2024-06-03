@@ -2,12 +2,14 @@ package client
 
 import (
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
 	"strings"
 
+	"github.com/kloudlite/kl/klbox-docker/devboxfile"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
@@ -211,39 +213,53 @@ func (e *EnvVars) AddResTypes(rt []ResType, rtype resType) {
 	}
 }
 
-func UpdateDevboxEnvs() error {
+func SyncDevboxShellEnvFile() error {
 	if !InsideBox() {
 		return nil
 	}
 
+	devBoxDir := filepath.Dir(DEVBOX_JSON_PATH)
+
 	command := exec.Command("devbox", "shellenv")
-	command.Dir = "/home/kl/.kl/devbox"
+	command.Dir = devBoxDir
 
 	out, err := command.Output()
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile("/tmp/devbox.sh", out, os.ModePerm)
+	return os.WriteFile(path.Join(devBoxDir, "devbox-env.sh"), out, os.ModePerm)
 }
 
+/*
+Steps performed in ExecPackageCommand:
+1. Sync devbox.lock with kl.lock
+2. Update devbox.json by combining kl.json
+3. Run devbox command
+4. Copy devbox.json to workspace/kl.json
+5. Update workspace/kl.lock
+*/
+
 func ExecPackageCommand(cmd string) error {
-
-	if err := fn.CopyFile("/home/kl/workspace/kl.lock", "/home/kl/.kl/devbox/devbox.lock"); err != nil {
-		fn.Warn(err)
+	if !InsideBox() {
+		return nil
 	}
+	defer syncDevboxLock()()
 
-	kt, err := GetKlFile("")
+	klContext, err := GetKlFile("")
 	if err != nil {
 		return err
 	}
 
-	b2, err := kt.ToJson()
+	devboxContext := devboxfile.DevboxConfig{}
+	devboxContext.Packages = klContext.Packages
+
+	devboxConfig, err := devboxContext.ToJson()
 	if err != nil {
 		return err
 	}
 
-	if err := os.WriteFile("/home/kl/.kl/devbox/devbox.json", b2, os.ModePerm); err != nil {
+	if err := os.WriteFile(DEVBOX_JSON_PATH, devboxConfig, os.ModePerm); err != nil {
 		return err
 	}
 
@@ -257,35 +273,38 @@ func ExecPackageCommand(cmd string) error {
 	command := exec.Command(cmdArr[0], cmdArr[1:]...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-	command.Dir = "/home/kl/.kl/devbox"
+	command.Dir = filepath.Dir(DEVBOX_JSON_PATH)
 
 	if err = command.Run(); err != nil {
 		return err
 	}
 
-	b, err := os.ReadFile("/home/kl/.kl/devbox/devbox.json")
+	b, err := os.ReadFile(DEVBOX_JSON_PATH)
 	if err != nil {
 		return err
 	}
 
-	type KLConfigType struct {
-		Packages []string `yaml:"packages" json:"packages"`
-	}
-
-	devbox := &KLConfigType{}
-	if err := json.Unmarshal(b, devbox); err != nil {
+	if err := devboxContext.ParseJson(b); err != nil {
 		return err
 	}
 
-	kt.Packages = devbox.Packages
+	klContext.Packages = devboxContext.Packages
 
-	if err := WriteKLFile(*kt); err != nil {
+	if err := WriteKLFile(*klContext); err != nil {
 		return err
 	}
 
-	if err := fn.CopyFile("/home/kl/.kl/devbox/devbox.lock", "/home/kl/workspace/kl.lock"); err != nil {
+	return SyncDevboxShellEnvFile()
+}
+
+func syncDevboxLock() func() {
+	if err := fn.CopyFile(KL_LOCK_PATH, DEVBOX_LOCK_PATH); err != nil {
 		fn.Warn(err)
 	}
 
-	return UpdateDevboxEnvs()
+	return func() {
+		if err := fn.CopyFile(DEVBOX_LOCK_PATH, KL_LOCK_PATH); err != nil {
+			fn.Warn(err)
+		}
+	}
 }

@@ -86,23 +86,7 @@ func (s *Spinner) UpdateMessage(msg string) func() {
 	}
 }
 
-// func NewSpinner(msg ...string) *Spinner {
-// 	sp := spinner.CharSets[11]
-//
-// 	s := spinner.New(sp, 100*time.Millisecond)
-//
-// 	s.Suffix = " loading please wait..."
-// 	if len(msg) > 0 {
-// 		s.Suffix = fmt.Sprintf(" %s...", msg[0])
-// 	}
-//
-// 	return &Spinner{
-// 		spinner: s,
-// 		verbose: false,
-// 	}
-// }
-
-func NewSpinner2(msg string, verbose bool) *Spinner {
+func newSpinner(msg string, verbose bool) *Spinner {
 	sp := spinner.CharSets[11]
 
 	s := spinner.New(sp, 100*time.Millisecond)

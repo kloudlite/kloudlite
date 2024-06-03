@@ -12,6 +12,7 @@ import (
 	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
@@ -39,7 +40,7 @@ func (c *client) EnsureVpnCntRunning() error {
 		return nil
 	}
 
-	defer c.spinner.UpdateMessage("starting vpn container")()
+	defer spinner.Client.UpdateMessage("starting vpn container")()
 
 	if c.verbose {
 		fn.Logf("starting container in: %s", text.Blue(c.cwd))
@@ -64,7 +65,7 @@ func (c *client) EnsureVpnCntRunning() error {
 		return err
 	}
 
-	c.spinner.Stop()
+	spinner.Client.Stop()
 
 	dc, err := cl.GetDeviceContext()
 	if err != nil {
@@ -140,7 +141,7 @@ func (c *client) StopContVpn() error {
 		return nil
 	}
 
-	defer c.spinner.UpdateMessage("stoping vpn container")()
+	defer spinner.Client.UpdateMessage("stoping vpn container")()
 
 	cr, err := c.getContainer(map[string]string{
 		// CONT_NAME_KEY: c.containerName,

@@ -1,14 +1,6 @@
 # syntax=docker/dockerfile:1.4
 FROM --platform=$TARGETPLATFORM golang:1.21 as builder
 
-WORKDIR /app
-
-COPY main.go main.go
-
-RUN go mod init mounter.io
-
-RUN go build -o mounter main.go
-
 COPY --from=project ./go.sum ./go.mod /kl-app/
 
 WORKDIR /kl-app
@@ -19,7 +11,10 @@ COPY --from=project . /kl-app
 
 ARG VERSION
 
+RUN cd klbox-docker && go build -o ../bin/mounter main.go
+
 RUN go build --tags=box -ldflags="-X github.com/kloudlite/kl/flags.Version=${VERSION} -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl main.go
+
 
 FROM --platform=$TARGETPLATFORM ubuntu:latest
 
@@ -51,6 +46,10 @@ USER root
 RUN curl -fsSL https://get.jetify.com/devbox > /tmp/devbox.sh && chmod +x /tmp/devbox.sh 
 RUN /tmp/devbox.sh -f && rm /tmp/devbox.sh && sudo chown kl:kl /usr/local/bin/devbox
 
+RUN cd /tmp
+RUN devbox init
+# RUN rm /tmp/devbox.lock /tmp/devbox.json
+
 # COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
 
 # RUN mkdir -p /home/kl/.config/nix
@@ -66,7 +65,7 @@ EOF
 
 COPY .bashrc .profile /tmp/
 
-COPY --from=builder /app/mounter /mounter
+COPY --from=builder /kl-app/bin/mounter /mounter
 COPY --from=builder /kl-app/bin/kl /usr/local/bin/kl
 
 

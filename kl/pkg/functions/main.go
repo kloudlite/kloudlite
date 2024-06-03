@@ -53,7 +53,7 @@ func Warn(str ...interface{}) {
 }
 
 func Warnf(format string, str ...interface{}) {
-	Warn(fmt.Sprintf("%s", fmt.Sprintf(fmt.Sprint(format, "\n"), str...)))
+	Warn(fmt.Sprintf("%s", fmt.Sprintf(format, str...)))
 }
 
 func Logf(format string, str ...interface{}) {

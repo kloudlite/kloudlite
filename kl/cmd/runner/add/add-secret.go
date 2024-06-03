@@ -198,6 +198,14 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	}
 
 	fn.Log(fmt.Sprintf("added secret %s/%s to your kl-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key))
+
+	if err := server.SyncDevboxJsonFile(); err != nil {
+		return err
+	}
+
+	if err := client.SyncDevboxShellEnvFile(); err != nil {
+		return err
+	}
 	return nil
 }
 

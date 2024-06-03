@@ -15,7 +15,7 @@ import (
 	appconsts "github.com/kloudlite/kl/app-consts"
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/fwd"
+	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
@@ -49,7 +49,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 	keyPath := filepath.Join(hdir, ".ssh", "id_rsa")
 
-	startCh, cancelCh, exitCh, lports, runner := fwd.GetController("kl", "localhost", keyPath)
+	startCh, cancelCh, exitCh, lports, runner := sshclient.GetForwardController("kl", "localhost", keyPath)
 	go runner()
 
 	defer func() {
@@ -80,7 +80,7 @@ func (s *Server) Start(ctx context.Context) error {
 			}
 
 		case "remove-proxy-by-ssh":
-			var chMsg fwd.StartCh
+			var chMsg sshclient.StartCh
 			err := json.NewDecoder(req.Body).Decode(&chMsg)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
@@ -94,7 +94,7 @@ func (s *Server) Start(ctx context.Context) error {
 			}
 
 		case "add-proxy", "remove-proxy":
-			var chMsg []fwd.StartCh
+			var chMsg []sshclient.StartCh
 			err := json.NewDecoder(req.Body).Decode(&chMsg)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
