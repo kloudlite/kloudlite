@@ -43,21 +43,14 @@ import { IAccountContext } from '../../_layout';
 
 const Environment = () => {
   const rootContext = useOutletContext<IAccountContext>();
-  const {
-    environment,
-    managedTemplates,
-    loginUrls,
-    logins,
-    msvtemplates,
-    cluster,
-  } = useLoaderData();
+  const { environment, managedTemplates, loginUrls, logins, cluster } =
+    useLoaderData();
 
   return (
     <SubNavDataProvider>
       <Outlet
         context={{
           ...rootContext,
-          msvtemplates,
           environment,
           managedTemplates,
           loginUrls,
@@ -364,21 +357,12 @@ export const loader = async (ctx: IRemixCtx) => {
       throw dErrors[0];
     }
 
-    const { data: msvTemplates, errors: msvError } = await GQLServerHandler(
-      ctx.request
-    ).listMSvTemplates({});
-
-    if (msvError) {
-      throw msvError[0];
-    }
-
     envData = data;
     return {
       loginUrls,
       logins,
       environment: envData,
       cluster: cData,
-      msvtemplates: msvTemplates || {},
     };
   } catch (err) {
     logger.error(err);

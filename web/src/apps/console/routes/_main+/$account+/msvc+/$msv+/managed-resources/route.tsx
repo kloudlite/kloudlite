@@ -12,12 +12,17 @@ import Tools from './tools';
 import ManagedResourceResourcesV2 from './managed-resources-resource-v2';
 
 export const loader = (ctx: IRemixCtx) => {
-  const { environment } = ctx.params;
+  const { msv } = ctx.params;
   const promise = pWrapper(async () => {
     const { data: mData, errors: mErrors } = await GQLServerHandler(
       ctx.request
     ).listManagedResources({
-      envName: environment,
+      search: {
+        managedServiceName: {
+          matchType: 'exact',
+          exact: msv,
+        },
+      },
     });
 
     if (mErrors) {
@@ -30,7 +35,6 @@ export const loader = (ctx: IRemixCtx) => {
 
 const KlOperatorServices = () => {
   const { promise } = useLoaderData<typeof loader>();
-
   return (
     <LoadingComp
       data={promise}

@@ -1,6 +1,6 @@
 /* eslint-disable guard-for-in */
 /* eslint-disable react/destructuring-assignment */
-import { useOutletContext, useParams } from '@remix-run/react';
+import { useParams } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
@@ -20,14 +20,14 @@ import { Switch } from '~/components/atoms/switch';
 import { getManagedTemplate } from '~/console/utils/commons';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
-import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
-import { toast } from '~/components/molecule/toast';
-import MultiStep, { useMultiStep } from '~/console/components/multi-step';
-import ListV2 from '~/console/components/listV2';
-import { ListItem } from '~/console/components/console-list-components';
-import { CopyContentToClipboard } from '~/console/components/common-console-components';
-import { LoadingPlaceHolder } from '~/console/components/loading';
-import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$environment+/_layout';
+// import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
+// import { toast } from '~/components/molecule/toast';
+// import MultiStep, { useMultiStep } from '~/console/components/multi-step';
+// import ListV2 from '~/console/components/listV2';
+// import { ListItem } from '~/console/components/console-list-components';
+// import { CopyContentToClipboard } from '~/console/components/common-console-components';
+// import { LoadingPlaceHolder } from '~/console/components/loading';
+// import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$environment+/_layout';
 
 type BaseType = ExtractNodeType<IManagedResources>;
 type IDialog = IDialogBase<BaseType> & {
@@ -233,18 +233,17 @@ const Root = (props: IDialog) => {
   const api = useConsoleApi();
   const reload = useReload();
 
-  // TODO: nxtcoder36: remvove env once api is updated
-  // const { environment } = useParams();
-  const environment = 'need to remove it';
+  const { msv } = useParams();
 
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
     initialValues: isUpdate
       ? {
           name: parseName(props.data),
           displayName: props.data.displayName,
+          namespace: props.data.metadata?.namespace,
           isNameError: false,
           res: {
-            ...props.data.spec?.resourceTemplate.spec,
+            ...props.data.spec?.resourceTemplate.msvcRef,
           },
         }
       : {
@@ -252,20 +251,22 @@ const Root = (props: IDialog) => {
           displayName: '',
           res: {},
           isNameError: false,
+          namespace: '',
         },
     validationSchema: Yup.object({}),
     onSubmit: async (val) => {
       if (isUpdate) {
         try {
-          if (!environment) {
-            throw new Error('Project and environment is required!.');
+          if (!msv) {
+            throw new Error('Managed Service is required!.');
           }
           const { errors: e } = await api.updateManagedResource({
-            envName: environment,
+            msvcName: msv,
             mres: {
               displayName: val.displayName,
               metadata: {
                 name: val.name,
+                namespace: val.namespace,
               },
 
               spec: {
@@ -355,119 +356,119 @@ const HandleManagedResources = (props: IDialog) => {
 
 export default HandleManagedResources;
 
-export const ViewSecret = ({
-  show,
-  setShow,
-  item,
-}: {
-  show: boolean;
-  setShow: () => void;
-  item: BaseType;
-}) => {
-  const api = useConsoleApi();
-  const { environment } = useOutletContext<IEnvironmentContext>();
-  const { data, isLoading, error } = useCustomSwr(
-    () => `secret _${item.syncedOutputSecretRef?.metadata?.name}`,
-    async () => {
-      if (!item.syncedOutputSecretRef?.metadata?.name) {
-        toast.error('Secret not found');
-        throw new Error('Secret not found');
-      } else {
-        return api.getSecret({
-          envName: parseName(environment),
+// export const ViewSecret = ({
+//   show,
+//   setShow,
+//   item,
+// }: {
+//   show: boolean;
+//   setShow: () => void;
+//   item: BaseType;
+// }) => {
+//   const api = useConsoleApi();
+//   const { environment } = useOutletContext<IEnvironmentContext>();
+//   const { data, isLoading, error } = useCustomSwr(
+//     () => `secret _${item.syncedOutputSecretRef?.metadata?.name}`,
+//     async () => {
+//       if (!item.syncedOutputSecretRef?.metadata?.name) {
+//         toast.error('Secret not found');
+//         throw new Error('Secret not found');
+//       } else {
+//         return api.getSecret({
+//           envName: parseName(environment),
 
-          name: item.syncedOutputSecretRef?.metadata?.name,
-        });
-      }
-    }
-  );
+//           name: item.syncedOutputSecretRef?.metadata?.name,
+//         });
+//       }
+//     }
+//   );
 
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-  }, [error]);
+//   useEffect(() => {
+//     if (error) {
+//       toast.error(error);
+//     }
+//   }, [error]);
 
-  const { onNext, currentStep } = useMultiStep({
-    defaultStep: 0,
-    totalSteps: 2,
-  });
-  return (
-    <Popup.Root show={show} onOpenChange={setShow}>
-      <Popup.Header>
-        {currentStep === 0 ? <div>Confirmation</div> : <div>Secrets</div>}
-      </Popup.Header>
-      <Popup.Content>
-        <MultiStep.Root currentStep={currentStep}>
-          <MultiStep.Step step={0}>
-            {data && (
-              <div>
-                <p>{`Are you sure you want to view the secrets of '${data.displayName}'?`}</p>
-              </div>
-            )}
-          </MultiStep.Step>
-          <MultiStep.Step step={1}>
-            {isLoading ? (
-              <LoadingPlaceHolder />
-            ) : (
-              data && (
-                <ListV2.Root
-                  data={{
-                    headers: [
-                      {
-                        render: () => 'Key',
-                        name: 'key',
-                        className: 'min-w-[170px]',
-                      },
-                      {
-                        render: () => '',
-                        name: 'copy',
-                        className: 'max-w-[120px]',
-                      },
-                      {
-                        render: () => 'Value',
-                        name: 'value',
-                        className: 'flex-1',
-                      },
-                    ],
-                    rows: Object.entries(data.stringData).map(
-                      ([key, value]) => {
-                        const v = value as string;
-                        return {
-                          columns: {
-                            key: {
-                              render: () => <ListItem data={key} />,
-                            },
-                            value: {
-                              render: () => (
-                                <ListItem data={v} className="w-[220px]" />
-                              ),
-                            },
-                            copy: {
-                              render: () => (
-                                <CopyContentToClipboard
-                                  content={v}
-                                  toastMessage={`${key} copied`}
-                                  label="Copy Secret"
-                                />
-                              ),
-                            },
-                          },
-                        };
-                      }
-                    ),
-                  }}
-                />
-              )
-            )}
-          </MultiStep.Step>
-        </MultiStep.Root>
-      </Popup.Content>
-      <Popup.Footer>
-        {currentStep === 0 ? (
-          <Popup.Button content="Yes" onClick={() => onNext()} />
-        ) : null}
-      </Popup.Footer>
-    </Popup.Root>
-  );
-};
+//   const { onNext, currentStep } = useMultiStep({
+//     defaultStep: 0,
+//     totalSteps: 2,
+//   });
+//   return (
+//     <Popup.Root show={show} onOpenChange={setShow}>
+//       <Popup.Header>
+//         {currentStep === 0 ? <div>Confirmation</div> : <div>Secrets</div>}
+//       </Popup.Header>
+//       <Popup.Content>
+//         <MultiStep.Root currentStep={currentStep}>
+//           <MultiStep.Step step={0}>
+//             {data && (
+//               <div>
+//                 <p>{`Are you sure you want to view the secrets of '${data.displayName}'?`}</p>
+//               </div>
+//             )}
+//           </MultiStep.Step>
+//           <MultiStep.Step step={1}>
+//             {isLoading ? (
+//               <LoadingPlaceHolder />
+//             ) : (
+//               data && (
+//                 <ListV2.Root
+//                   data={{
+//                     headers: [
+//                       {
+//                         render: () => 'Key',
+//                         name: 'key',
+//                         className: 'min-w-[170px]',
+//                       },
+//                       {
+//                         render: () => '',
+//                         name: 'copy',
+//                         className: 'max-w-[120px]',
+//                       },
+//                       {
+//                         render: () => 'Value',
+//                         name: 'value',
+//                         className: 'flex-1',
+//                       },
+//                     ],
+//                     rows: Object.entries(data.stringData).map(
+//                       ([key, value]) => {
+//                         const v = value as string;
+//                         return {
+//                           columns: {
+//                             key: {
+//                               render: () => <ListItem data={key} />,
+//                             },
+//                             value: {
+//                               render: () => (
+//                                 <ListItem data={v} className="w-[220px]" />
+//                               ),
+//                             },
+//                             copy: {
+//                               render: () => (
+//                                 <CopyContentToClipboard
+//                                   content={v}
+//                                   toastMessage={`${key} copied`}
+//                                   label="Copy Secret"
+//                                 />
+//                               ),
+//                             },
+//                           },
+//                         };
+//                       }
+//                     ),
+//                   }}
+//                 />
+//               )
+//             )}
+//           </MultiStep.Step>
+//         </MultiStep.Root>
+//       </Popup.Content>
+//       <Popup.Footer>
+//         {currentStep === 0 ? (
+//           <Popup.Button content="Yes" onClick={() => onNext()} />
+//         ) : null}
+//       </Popup.Footer>
+//     </Popup.Root>
+//   );
+// };

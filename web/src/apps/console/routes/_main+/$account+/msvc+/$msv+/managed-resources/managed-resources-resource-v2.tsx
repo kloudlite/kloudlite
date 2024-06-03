@@ -26,7 +26,8 @@ import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
+// import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
+import HandleManagedResources from './handle-managed-resource';
 
 const RESOURCE_NAME = 'managed resource';
 type BaseType = ExtractNodeType<IManagedResources>;
@@ -240,14 +241,11 @@ const ManagedResourceResourcesV2 = ({
   const api = useConsoleApi();
   const reloadPage = useReload();
 
-  // TODO: nxtcoder36: remvove env once api is updated
-  // const { environment, account } = useParams();
-  const { account } = useParams();
-  const environment = 'need to remove it';
+  const { msv, account } = useParams();
 
   useWatchReload(
     items.map((i) => {
-      return `account:${account}.environment:${environment}.managed_resource:${parseName(
+      return `account:${account}.managed_service:${msv}.managed_resource:${parseName(
         i
       )}`;
     })
@@ -283,13 +281,10 @@ const ManagedResourceResourcesV2 = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          // if (!params.project || !params.environment) {
-          //   throw new Error('Project and Environment is required!.');
-          // }
           try {
             const { errors } = await api.deleteManagedResource({
               mresName: parseName(showDeleteDialog),
-              envName: environment || '',
+              msvcName: msv || '',
             });
 
             if (errors) {
@@ -313,7 +308,7 @@ const ManagedResourceResourcesV2 = ({
         }}
       />
 
-      {showSecret && (
+      {/* {showSecret && (
         <ViewSecret
           show={!!showSecret}
           setShow={() => {
@@ -321,7 +316,7 @@ const ManagedResourceResourcesV2 = ({
           }}
           item={showSecret!}
         />
-      )}
+      )} */}
     </>
   );
 };

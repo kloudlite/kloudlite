@@ -1,5 +1,5 @@
 import { redirect } from '@remix-run/node';
 
 export const loader = async () => {
-  return redirect(`/logs-n-metrics`);
+  return redirect(`/managed-resources`);
 };
