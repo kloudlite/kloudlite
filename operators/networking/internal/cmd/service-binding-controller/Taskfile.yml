@@ -1,0 +1,28 @@
+version: 3
+
+includes:
+  go: ../../../../../.tools/taskfiles/go-build.Taskfile.yml
+
+vars:
+  binary: service-binding-controller
+
+tasks:
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          Out: "./bin/{{.binary}}"
+
+  run:
+    env:
+      GATEWAY_ADMIN_API_ADDR: "http://gateway.kl-gateway.svc.cluster.local:8080"
+    cmds:
+      - go run .
+
+  container:build:
+    preconditions: 
+      - sh: '[ -n "{{.image}}" ]'
+        msg: "image must be set"
+    cmds:
+      - task: build
+      - docker buildx build --build-arg BINARY=./bin/{{.binary}} --output=type=image,compression=zstd,compression-level=10,force-compression=true,push=true -t {{.image}} .

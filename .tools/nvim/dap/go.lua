@@ -266,4 +266,50 @@ dap.configurations.go = {
       vim.g.nxt.project_root_dir .. "/operators/nodepool" .. "/.secrets/env",
     },
   },
+
+  {
+    type = "go",
+    name = "Debug networking operator",
+    request = "launch",
+    program = vim.g.nxt.project_root_dir .. "/operators/networking",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.nxt.project_root_dir .. "/operators/networking" .. "/.secrets/env",
+    },
+  },
+
+  {
+    type = "go",
+    name = "[networking/cmd] Debug ip-manager",
+    request = "launch",
+    program = vim.g.nxt.project_root_dir .. "/operators/networking/internal/cmd/ip-manager",
+    args = { "--dev", "--addr", ":8090" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.nxt.project_root_dir .. "/operators/networking/internal/cmd/ip-manager" .. "/.secrets/env",
+    },
+    env = {
+      ["GATEWAY_ADMIN_API_ADDR"] = "http://gateway.kl-gateway.svc.cluster.local:8080",
+    },
+  },
+
+  {
+    type = "go",
+    name = "[networking/cmd] Debug webhook server",
+    request = "launch",
+    program = vim.g.nxt.project_root_dir .. "/operators/networking/internal/cmd/webhook",
+    -- args = { "--dev", "--debug" },
+    args = { "--debug" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    -- envFile = {
+    --   vim.g.nxt.project_root_dir .. "/operators/networking/webhooks/mutation-webhook" .. "/.secrets/env",
+    -- },
+    env = {
+      ["GATEWAY_ADMIN_API_ADDR"] = "http://gateway.kl-gateway.svc.cluster.local:8080",
+    },
+  },
 }
