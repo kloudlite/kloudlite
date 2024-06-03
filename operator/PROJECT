@@ -437,4 +437,36 @@ resources:
   kind: ExternalApp
   path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: networking
+  kind: IPBind
+  path: github.com/kloudlite/operator/apis/networking/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: networking
+  kind: PodBinding
+  path: github.com/kloudlite/operator/apis/networking/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: networking
+  kind: ServiceBinding
+  path: github.com/kloudlite/operator/apis/networking/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: networking
+  kind: Gateway
+  path: github.com/kloudlite/operator/apis/networking/v1
+  version: v1
 version: "3"
