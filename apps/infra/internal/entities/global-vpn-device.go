@@ -45,6 +45,7 @@ var GlobalVPNDeviceIndices = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
+			{Key: fc.AccountName, Value: repos.IndexAsc},
 			{Key: fc.GlobalVPNDeviceGlobalVPNName, Value: repos.IndexAsc},
 			{Key: fc.GlobalVPNDeviceIpAddr, Value: repos.IndexAsc},
 		},
