@@ -16,20 +16,24 @@ type genNginxStreamArgs struct {
 	ToAddr   string
 }
 
-func genNginxStreamConfig(fromAddr string, toAddr string) string {
+func genNginxStreamConfig(protocol string, fromAddr string, toAddr string) string {
+	protocol = strings.ToLower(protocol)
+	if protocol == "tcp" {
+		protocol = ""
+	}
 	return strings.TrimSpace(fmt.Sprintf(`
 server {
-  listen %s;
+  listen %s %s;
   proxy_pass %s;
 }
-`, fromAddr, toAddr))
+`, fromAddr, protocol, toAddr))
 }
 
 func RegisterNginxStreamConfig(svcBinding *networkingv1.ServiceBinding) []string {
 	result := make([]string, 0, len(svcBinding.Spec.Ports))
 	for _, port := range svcBinding.Spec.Ports {
 		addr := fmt.Sprintf("%s:%d", svcBinding.Spec.GlobalIP, port.Port)
-		result = append(result, genNginxStreamConfig(addr, fmt.Sprintf("%s.%s.svc.cluster.local:%d", svcBinding.Spec.ServiceRef.Name, svcBinding.Spec.ServiceRef.Namespace, port.Port)))
+		result = append(result, genNginxStreamConfig(strings.ToLower(string(port.Protocol)), addr, fmt.Sprintf("%s.%s.svc.cluster.local:%d", svcBinding.Spec.ServiceRef.Name, svcBinding.Spec.ServiceRef.Namespace, port.Port)))
 	}
 
 	return result
@@ -59,18 +63,18 @@ func (m *Manager) RegisterAndSyncNginxStreams(ctx context.Context, svcBindingNam
 	}
 
 	m.svcNginxStreams[svcBinding.Spec.GlobalIP] = RegisterNginxStreamConfig(&svcBinding)
-	// if err := m.RestartWireguard(); err != nil {
-	// 	return err
-	// }
+	if err := m.RestartWireguard(); err != nil {
+		return err
+	}
 
 	return m.SyncNginxStreams()
 }
 
 func (m *Manager) DeregisterAndSyncNginxStreams(ctx context.Context, svcBindingIP string) error {
 	delete(m.svcNginxStreams, svcBindingIP)
-	// if err := m.RestartWireguard(); err != nil {
-	// 	return err
-	// }
+	if err := m.RestartWireguard(); err != nil {
+		return err
+	}
 	return m.SyncNginxStreams()
 }
 
