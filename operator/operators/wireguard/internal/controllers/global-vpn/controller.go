@@ -62,8 +62,6 @@ const (
 	TrackNodePort             string = "track-node-port"
 	TrackLoadBalancer         string = "track-load-balancer"
 	UpdateCustomCoreDNSConfig string = "update-custom-coredns-config"
-
-	// ConnectDeleted string = "connect-deleted"
 )
 
 var ApplyChecklist = []rApi.CheckMeta{
