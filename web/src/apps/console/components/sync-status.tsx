@@ -222,12 +222,16 @@ const parseOverallState = (item: IStatusMetaV2): OverallStates => {
   return (mainStatus?.value as OverallStates) || 'idle';
 };
 
+type IResourceType = 'byok' | 'normal';
+
 export const SyncStatusV2 = ({
   item,
   type,
+  resourceType,
 }: {
   item: IStatusMetaV2;
   type?: IStatusViewType;
+  resourceType?: IResourceType;
 }) => {
   const parseStage = (check: OverallStates) => {
     const iconSize = 12;
@@ -387,44 +391,59 @@ export const SyncStatusV2 = ({
   const k = parseOverallState(item);
   const ic = getProgressItems(item);
 
+  const isByok =
+    resourceType === 'byok' && item.syncStatus.state === 'UPDATED_AT_AGENT';
+
   return (
     <div>
       <Tooltip.Root
         align="center"
         className="!max-w-[300px]"
         content={
-          <div className="p-md flex flex-col gap-lg">
-            <div className="bodyMd-medium">
-              {state({ state: k, type: type || 'full' }).text}
-            </div>
-            <div className="flex flex-col gap-lg">
-              {k === 'idle' && (
-                <div className="bodySm">
-                  Please wait while we are operating on this resource
+          isByok ? (
+            <div className="p-md flex flex-col gap-lg">
+              <div className="bodyMd-medium">Ready</div>
+              <div className="flex flex-col gap-lg">
+                <div className="bodySm flex flex-row gap-xl items-center">
+                  <span>{parseStage('ready').icon}</span>
+                  <span>Updated at agent</span>
                 </div>
-              )}
-
-              {ic?.map((cl) => (
-                <div key={cl.name} className="flex flex-col">
-                  <div className="bodySm flex flex-row gap-xl items-center">
-                    <span>{parseStage(cl.result).icon}</span>
-                    <span>{cl.title}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="p-md flex flex-col gap-lg">
+              <div className="bodyMd-medium">
+                {state({ state: k, type: type || 'full' }).text}
+              </div>
+              <div className="flex flex-col gap-lg">
+                {k === 'idle' && (
+                  <div className="bodySm">
+                    Please wait while we are operating on this resource
                   </div>
-                  {cl.message && (
-                    <div className="bodySm max-w-full break-words overflow-x-auto hljs rounded-md my-md p-lg">
-                      {cl.message}
+                )}
+
+                {ic?.map((cl) => (
+                  <div key={cl.name} className="flex flex-col">
+                    <div className="bodySm flex flex-row gap-xl items-center">
+                      <span>{parseStage(cl.result).icon}</span>
+                      <span>{cl.title}</span>
                     </div>
-                  )}
-                </div>
-              ))}
+                    {cl.message && (
+                      <div className="bodySm max-w-full break-words overflow-x-auto hljs rounded-md my-md p-lg">
+                        {cl.message}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )
         }
       >
         <div className="cursor-pointer w-fit">
           {
             state({
-              state: k,
+              state: isByok ? 'ready' : k,
               type: type || 'full',
             }).component
           }
