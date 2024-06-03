@@ -406,7 +406,7 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
                 ),
               },
               status: {
-                render: () => <SyncStatusV2 item={i} />,
+                render: () => <SyncStatusV2 item={i} resourceType={i.type} />,
               },
               updated: {
                 render: () => (
