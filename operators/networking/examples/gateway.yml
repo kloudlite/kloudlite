@@ -1,0 +1,11 @@
+apiVersion: networking.kloudlite.io/v1
+kind: Gateway
+metadata:
+  name: gateway
+spec:
+  globalIP: "100.160.0.1/24"
+  clusterCIDR: "100.160.0.0/18"
+  svcCIDR: "100.160.0.0/20"
+  wireguardKeysRef:
+    name: gateway-wg
+    namespace: kloudlite
