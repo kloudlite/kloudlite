@@ -16,7 +16,11 @@ import Breadcrum from '~/console/components/breadcrum';
 import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
 import { IClusterMSv } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import fake from '~/root/fake-data-generator/fake';
-import { ChevronRight, GearSix } from '~/console/components/icons';
+import {
+  BackingServices,
+  ChevronRight,
+  GearSix,
+} from '~/console/components/icons';
 import { parseName } from '~/console/server/r-utils/common';
 import { IAccountContext } from '../../_layout';
 
@@ -31,6 +35,16 @@ const ManagedServiceTabs = () => {
         label: 'Managed Services',
       }}
       tabs={[
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <BackingServices size={tabIconSize} />
+              Managed resources
+            </span>
+          ),
+          to: '/managed-resources',
+          value: '/managed-resources',
+        },
         {
           label: 'Logs & Metrics',
           to: '/logs-n-metrics',

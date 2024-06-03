@@ -199,7 +199,7 @@ const ListView = ({
                 render: () => <ExtraButton managedService={i} />,
               },
             },
-            to: `/${parseName(account)}/msvc/${id}/logs-n-metrics`,
+            to: `/${parseName(account)}/msvc/${id}/managed-resources`,
           };
         }),
       }}
