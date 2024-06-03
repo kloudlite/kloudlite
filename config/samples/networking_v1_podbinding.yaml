@@ -1,0 +1,12 @@
+apiVersion: networking.kloudlite.io/v1
+kind: PodBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: podbinding
+    app.kubernetes.io/instance: podbinding-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
+  name: podbinding-sample
+spec:
+  # TODO(user): Add fields here
