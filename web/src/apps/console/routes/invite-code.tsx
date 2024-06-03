@@ -50,7 +50,7 @@ const InviteCode = () => {
         <span className="bodyMd-semibold text-text-strong">Open-Source</span>{' '}
         remote local envs
       </Badge>
-      <span className="heading5xl-marketing text-text-strong">
+      <span className="heading4xl-marketing text-text-strong">
         Unlock early access now!
       </span>
       <span className="text-center bodyXl">
