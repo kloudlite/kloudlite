@@ -10,7 +10,6 @@ import (
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/iputils"
 	jp "github.com/kloudlite/operator/pkg/json-patch"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/types"
@@ -48,22 +47,14 @@ func (m *Manager) RegisterService(ctx context.Context, namespace, name string) (
 		return nil, Error{Err: err, Message: "while generating svc IP"}
 	}
 
-	key, err := wgtypes.GenerateKey()
-	if err != nil {
-		return nil, Error{Err: err, Message: "while generating wireguard key-pair"}
-	}
-
 	svcBinding := &networkingv1.ServiceBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: sanitizeSvcIP(svcIP),
 		},
 		Spec: networkingv1.ServiceBindingSpec{
-			GlobalIP:     svcIP,
-			ServiceIP:    new(string),
-			ServiceRef:   ct.NamespacedResourceRef{Name: name, Namespace: namespace},
-			WgPrivateKey: key.String(),
-			WgPublicKey:  key.PublicKey().String(),
-			AllowedIPs:   []string{svcIP},
+			GlobalIP:   svcIP,
+			ServiceIP:  new(string),
+			ServiceRef: ct.NamespacedResourceRef{Name: name, Namespace: namespace},
 		},
 	}
 
@@ -81,9 +72,9 @@ func (m *Manager) RegisterService(ctx context.Context, namespace, name string) (
 		return nil, NewError(err, "patching configmap")
 	}
 
-	if err := m.WgAddAddr(svcIP); err != nil {
-		return nil, NewError(err, "adding svc ip to wg")
-	}
+	// if err := m.WgAddAddr(svcIP); err != nil {
+	// 	return nil, NewError(err, "adding svc ip to wg")
+	// }
 
 	if !isFreeIP {
 		m.SvcIPCounter++

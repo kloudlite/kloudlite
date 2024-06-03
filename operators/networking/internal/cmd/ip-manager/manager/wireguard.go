@@ -20,14 +20,6 @@ AllowedIPs = %s/32
 `, podbinding.Spec.WgPublicKey, podbinding.Spec.GlobalIP))
 }
 
-func genGatewayWgServicePeer(serviceBinding *networkingv1.ServiceBinding) string {
-	return strings.TrimSpace(fmt.Sprintf(`
-[Peer]
-PublicKey = %s
-AllowedIPs = strings.Join(serviceBinding.AllowedIPs,", "),
-`, serviceBinding.Spec.WgPublicKey))
-}
-
 func (m *Manager) genGatewayWGConfig() string {
 	postUps := make([]string, 0, len(m.svcNginxStreams))
 	postDowns := make([]string, 0, len(m.svcNginxStreams))

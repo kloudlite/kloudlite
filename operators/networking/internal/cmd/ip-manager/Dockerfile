@@ -9,7 +9,8 @@ RUN cat >> /entrypoint.sh <<EOF
 #!/usr/bin/env sh
 nginx &
 pid1=$!
-ip-manager $@ &
+echo "[#] ip-manager \$@"
+ip-manager \$@ &
 pid2=$!
 
 trap "eval kill $pid1 $pid2" SIGINT SIGTERM
@@ -17,3 +18,4 @@ wait $pid1 $pid2
 EOF
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/entrypoint.sh"]

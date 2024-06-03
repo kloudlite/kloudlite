@@ -45,10 +45,6 @@ spec:
           spec:
             description: ServiceBindingSpec defines the desired state of ServiceBinding
             properties:
-              allowedIPs:
-                items:
-                  type: string
-                type: array
               globalIP:
                 type: string
               ports:
@@ -129,16 +125,9 @@ spec:
                 - name
                 - namespace
                 type: object
-              wgPrivateKey:
-                type: string
-              wgPublicKey:
-                type: string
             required:
-            - allowedIPs
             - globalIP
             - serviceRef
-            - wgPrivateKey
-            - wgPublicKey
             type: object
           status:
             properties:
