@@ -4,7 +4,11 @@ import { Link, useLoaderData, useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
 import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
-import { getPagination, getSearch } from '~/console/server/utils/common';
+import {
+  base64Encrypt,
+  getPagination,
+  getSearch,
+} from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
@@ -32,7 +36,7 @@ export const loader = async (ctx: IRemixCtx) => {
       throw errors[0];
     }
 
-    if (!data.clusters?.totalCount && !data.byok_clusters?.totalCount) {
+    if (!data.clusters?.totalCount) {
       const { data: secrets, errors: sErrors } = await GQLServerHandler(
         ctx.request
       ).listProviderSecrets({});
@@ -46,7 +50,6 @@ export const loader = async (ctx: IRemixCtx) => {
         secretsCount: secrets.edges.length,
       };
     }
-
     return {
       clustersData: data,
       secretsCount: -1,
@@ -56,7 +59,11 @@ export const loader = async (ctx: IRemixCtx) => {
   return defer({ promise });
 };
 
-const CreateClusterButton = () => {
+const CreateClusterButton = ({
+  cpSecretsCount,
+}: {
+  cpSecretsCount?: number;
+}) => {
   const { account } = useParams();
 
   const [visible, setVisible] = useState(false);
@@ -65,11 +72,30 @@ const CreateClusterButton = () => {
     <>
       <OptionList.Root>
         <OptionList.Trigger>
-          <Button content="Add cluster" variant="primary" prefix={<Plus />} />
+          <Button
+            content={
+              cpSecretsCount === 0
+                ? 'setup cloud provider and cluster'
+                : 'Add cluster'
+            }
+            variant="primary"
+            prefix={<Plus />}
+          />
         </OptionList.Trigger>
         <OptionList.Content>
-          <OptionList.Link to={`/${account}/new-cluster`} LinkComponent={Link}>
-            New Cluster
+          <OptionList.Link
+            to={
+              cpSecretsCount === 0
+                ? `/onboarding/${account}/new-cloud-provider?f=${base64Encrypt(
+                    'infra'
+                  )}`
+                : `/${account}/new-cluster`
+            }
+            LinkComponent={Link}
+          >
+            {cpSecretsCount === 0
+              ? 'Setup cloud provider and cluster'
+              : 'New Cluster'}
           </OptionList.Link>
           <OptionList.Item
             onClick={() => {
@@ -106,8 +132,6 @@ const ClusterComponent = ({
 }) => {
   const [clusterType, setClusterType] = useState('All');
 
-  const { account } = useParams();
-
   const getEmptyState = ({
     clustersCount,
     byokClustersCount,
@@ -117,22 +141,29 @@ const ClusterComponent = ({
     byokClustersCount: number;
     cloudProviderSecretsCount: number;
   }) => {
+    if (byokClustersCount > 0 || clustersCount > 0) {
+      return {
+        is: false,
+        title: '',
+        content: null,
+        action: null,
+      };
+    }
+
     if (cloudProviderSecretsCount === 0) {
       return {
         is: true,
-        title: 'please setup your cloud provider first',
+        title:
+          'please setup your cloud provider first or attach your own cluster',
         content: (
           <p>
-            you need to setup your add at least one cloud provider first, before
-            starting working with clusters
+            you need to setup your add at least one cloud provider first or
+            attch your own cluster, before starting working with clusters
           </p>
         ),
-        action: {
-          content: 'Setup Cloud Provider and Cluster',
-          prefix: <Plus />,
-          LinkComponent: Link,
-          to: `/onboarding/${account}/new-cloud-provider`,
-        },
+        action: (
+          <CreateClusterButton cpSecretsCount={cloudProviderSecretsCount} />
+        ),
       };
     }
 
@@ -166,7 +197,7 @@ const ClusterComponent = ({
       secondaryHeader={{
         title: 'Clusters',
         action: (clusters.length > 0 || byokClusters.length > 0) && (
-          <CreateClusterButton />
+          <CreateClusterButton cpSecretsCount={secretsCount} />
         ),
       }}
       empty={getEmptyState({

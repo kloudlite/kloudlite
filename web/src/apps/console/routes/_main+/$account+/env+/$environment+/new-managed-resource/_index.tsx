@@ -518,7 +518,7 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
               throw new Error('Service apiversion or kind error.');
             }
             const { errors: e } = await api.createManagedResource({
-              envName: environment,
+              msvcName: environment,
               mres: {
                 displayName: val.displayName,
                 metadata: {
