@@ -59,10 +59,10 @@ func (c *client) Start() error {
 	}
 
 	// local setup
-	kConf, err := server.LoadDevboxConfig()
-	if err != nil {
-		return err
-	}
+	// kConf, err := server.LoadDevboxConfig()
+	// if err != nil {
+	// 	return err
+	// }
 
 	spinner.Client.Stop()
 	if err := cl.EnsureAppRunning(); err != nil {
@@ -109,10 +109,10 @@ func (c *client) Start() error {
 	}()
 
 	if err := func() error {
-		conf, err := kConf.ToJson()
-		if err != nil {
-			return err
-		}
+		// conf, err := kConf.ToJson()
+		// if err != nil {
+		// 	return err
+		// }
 
 		sshPath := path.Join(xdg.Home, ".ssh", "id_rsa.pub")
 
@@ -221,7 +221,7 @@ func (c *client) Start() error {
 			"--add-host=box:127.0.0.1",
 			fmt.Sprintf("--add-host=%s.device.local:%s", d.Metadata.Name, s),
 			"-p", fmt.Sprintf("%d:%d", sshPort, sshPort),
-			GetImageName(), "--", string(conf),
+			GetImageName(), "--",
 		}...)
 
 		if err := c.runContainer(ContainerConfig{

@@ -6,7 +6,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/kloudlite/kl/app/handler"
+	// "github.com/kloudlite/kl/app/handler"
 	"github.com/kloudlite/kl/app/server"
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/domain/client"
@@ -83,30 +83,30 @@ func RunApp(binName string) error {
 
 }
 
-func onReady(binName string) {
-	channel := make(chan handler.ChanelMsg)
-	h := handler.NewHandler(channel, binName)
-
-	// setup logo and tooltip
-	h.ReconMeta()
-
-	// systray.AddSeparator()
-
-	// handle actions releated to account
-	// h.ReconAccount()
-	// systray.AddSeparator()
-
-	// handle actions releated to device
-	// h.ReconDevice()
-	// systray.AddSeparator()
-
-	// handle actions releated to environment
-	// h.ReconEnv()
-	// systray.AddSeparator()
-
-	// h.ReconUser()
-	// h.ReconAuth()
-
-	h.ReconQuit()
-	h.StartListener()
-}
+// func onReady(binName string) {
+// 	channel := make(chan handler.ChanelMsg)
+// 	h := handler.NewHandler(channel, binName)
+//
+// 	// setup logo and tooltip
+// 	h.ReconMeta()
+//
+// 	// systray.AddSeparator()
+//
+// 	// handle actions releated to account
+// 	// h.ReconAccount()
+// 	// systray.AddSeparator()
+//
+// 	// handle actions releated to device
+// 	// h.ReconDevice()
+// 	// systray.AddSeparator()
+//
+// 	// handle actions releated to environment
+// 	// h.ReconEnv()
+// 	// systray.AddSeparator()
+//
+// 	// h.ReconUser()
+// 	// h.ReconAuth()
+//
+// 	h.ReconQuit()
+// 	h.StartListener()
+// }

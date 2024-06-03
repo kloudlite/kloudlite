@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -299,14 +300,9 @@ func LoadDevboxConfig() (*devboxfile.DevboxConfig, error) {
 		Packages: kf.Packages,
 	}
 
-	kt, err := client.GetKlFile("")
-	if err != nil {
-		return nil, err
-	}
-
 	fm := map[string]string{}
 
-	for _, fe := range kt.Mounts.GetMounts() {
+	for _, fe := range kf.Mounts.GetMounts() {
 		pth := fe.Path
 		if pth == "" {
 			pth = fe.Key
@@ -327,8 +323,6 @@ func LoadDevboxConfig() (*devboxfile.DevboxConfig, error) {
 	klConfig.Env = ev
 	klConfig.KlConfig.Mounts = fm
 
-	// klConfig.KlConfig.InitScripts = kt.InitScripts
-
 	return klConfig, nil
 }
 
@@ -346,6 +340,8 @@ func SyncDevboxJsonFile() error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(string(b), client.DEVBOX_JSON_PATH)
 
 	if err := os.WriteFile(client.DEVBOX_JSON_PATH, b, os.ModePerm); err != nil {
 		return err

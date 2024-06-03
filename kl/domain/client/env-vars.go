@@ -246,12 +246,18 @@ func ExecPackageCommand(cmd string) error {
 	}
 	defer syncDevboxLock()()
 
+	devboxContext := devboxfile.DevboxConfig{}
+
+	devboxJsonConfig, err := os.ReadFile(DEVBOX_JSON_PATH)
+	if err == nil {
+		devboxContext.ParseJson(devboxJsonConfig)
+	}
+
 	klContext, err := GetKlFile("")
 	if err != nil {
 		return err
 	}
 
-	devboxContext := devboxfile.DevboxConfig{}
 	devboxContext.Packages = klContext.Packages
 
 	devboxConfig, err := devboxContext.ToJson()

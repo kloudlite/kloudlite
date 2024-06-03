@@ -13,7 +13,7 @@ type KlConfig struct {
 
 type DevboxConfig struct {
 	Packages []string          `yaml:"packages" json:"packages"`
-	Env      map[string]string `yaml:"envVars" json:"env"`
+	Env      map[string]string `yaml:"env" json:"env"`
 	KlConfig KlConfig          `yaml:"kloudliteConfig" json:"kloudliteConfig"`
 }
 

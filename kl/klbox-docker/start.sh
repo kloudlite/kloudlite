@@ -1,22 +1,18 @@
 #!/bin/bash
+# shellcheck source=/dev/null
 
 set -o errexit
 set -o pipefail
 
 trap "echo kloudlite-entrypoint:CRASHED >&2" EXIT SIGINT SIGTERM
 
-KL_LOCK_PATH=/home/kl/workspace/kl.lock
+# KL_LOCK_PATH=/home/kl/workspace/kl.lock
+#
+KL_DEVBOX_PATH=$HOME/.kl/devbox
 
-KL_DEVBOX_PATH=/home/kl/.kl/devbox
-KL_DEVBOX_JSON_PATH=$KL_DEVBOX_PATH/devbox.json
-KL_DEVBOX_LOCK_PATH=$KL_DEVBOX_PATH/devbox.lock
-mkdir -p $KL_DEVBOX_PATH
+mkdir -p "$KL_DEVBOX_PATH"
 
-
-if [ -f "$KL_LOCK_PATH" ]; then
-    cp $KL_LOCK_PATH $KL_DEVBOX_LOCK_PATH
-fi
-
+chown kl:kl "$HOME/.kl"
 
 entrypoint_executed="/home/kl/.kloudlite_entrypoint_executed"
 if [ ! -f "$entrypoint_executed" ]; then
@@ -26,13 +22,16 @@ if [ ! -f "$entrypoint_executed" ]; then
 fi
 
 shift
-echo "$@" | jq -r > $KL_DEVBOX_JSON_PATH
+# echo "$@" | jq -r > $KL_DEVBOX_JSON_PATH
 
 PATH=$PATH:$HOME/.nix-profile/bin
-cd $KL_DEVBOX_PATH
+# cd $KL_DEVBOX_PATH
+export IN_DEV_BOX="true"
 
+pushd "$HOME/workspace"
 echo "kloudlite-entrypoint:INSTALLING_PACKAGES"
-devbox install && devbox update && echo 'echo kloudlite-entrypoint:INSTALLING_PACKAGES_DONE'
+kl box reload && echo 'echo kloudlite-entrypoint:INSTALLING_PACKAGES_DONE'
+popd
 
 if [ -d "/tmp/ssh2" ]; then
     mkdir -p /home/kl/.ssh
@@ -42,7 +41,6 @@ if [ -d "/tmp/ssh2" ]; then
 fi 
 
 # sudo /mounter --conf $KL_DEVBOX_JSON_PATH
-
 cat <<EOL > /home/kl/.kl/global-profile
 export SSH_PORT=$SSH_PORT
 export IN_DEV_BOX="true"
