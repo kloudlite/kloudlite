@@ -5,8 +5,6 @@ import (
 	"encoding"
 	"encoding/base64"
 	"fmt"
-	common_util "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/text"
 	"net"
 	"strconv"
 	"strings"
@@ -272,21 +270,23 @@ func parsePeerLine(peerCfg *wgtypes.PeerConfig, lhs string, rhs string) error {
 
 		udpAddr, err2 := func() (*net.UDPAddr, error) {
 			var dig dnsutil.Dig
-			_ = dig.At("1.1.1.1") //or ns.xxx.com
+			err := dig.At("1.1.1.1")
+			if err != nil {
+				fmt.Println("error", err)
+				return nil, err
+			}
 			strings.Split(rhs, ":")
-			a, err := dig.A(strings.Split(rhs, ":")[0]) // dig google.com @8.8.8.8
+			a, err := dig.A(strings.Split(rhs, ":")[0])
 			if err != nil {
 				return nil, err
 			}
 
 			if len(a) == 0 {
-				common_util.Log(text.Colored("defering to net.ResolveUDPAddr", 209))
 				return net.ResolveUDPAddr("", rhs)
 			}
 
 			port, err := strconv.ParseInt(strings.Split(rhs, ":")[1], 10, 32)
 			if err != nil {
-				common_util.Log(text.Colored("defering to net.ResolveUDPAddr", 209))
 				return net.ResolveUDPAddr("", rhs)
 			}
 

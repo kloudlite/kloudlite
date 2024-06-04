@@ -3,10 +3,11 @@ package vpn
 import (
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/flags"
+	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
@@ -14,8 +15,6 @@ import (
 )
 
 // not required in linux
-
-var connectVerbose bool
 
 var skipCheck bool
 
@@ -26,44 +25,37 @@ var startCmd = &cobra.Command{
 sudo {cmd} vpn start`),
 	Run: func(cmd *cobra.Command, _ []string) {
 
-		if runtime.GOOS == constants.RuntimeWindows {
-			if err := connect(connectVerbose); err != nil {
-				fn.Notify("Error:", err.Error())
-				fn.PrintError(err)
-			}
-			return
-		}
+		verbose := fn.ParseBoolFlag(cmd, "verbose")
 
-		if euid := os.Geteuid(); euid != 0 {
-			fn.Log(
-				text.Colored("make sure you are running command with sudo", 209),
-			)
-			return
-		}
+		if os.Getenv("KL_APP") != "true" {
+			if euid := os.Geteuid(); euid != 0 {
 
-		options := []fn.Option{}
+				if err := func() error {
 
-		switch flags.CliName {
-		case constants.CoreCliName:
-			envName := fn.ParseStringFlag(cmd, "env")
-			if envName == "" {
-				klFile, err := client.GetKlFile("")
-				if err != nil && !os.IsNotExist(err) {
+					if err := client.EnsureAppRunning(); err != nil {
+						return err
+					}
+
+					p, err := proxy.NewProxy(true)
+					if err != nil {
+						return err
+					}
+
+					if err := p.Start(); err != nil {
+						return err
+					}
+
+					return nil
+				}(); err != nil {
 					fn.PrintError(err)
 					return
 				}
-				if !os.IsNotExist(err) {
-					envName = klFile.DefaultEnv
-				}
-			}
-			projectName := fn.ParseStringFlag(cmd, "project")
-			options = append(options, fn.MakeOption("projectName", projectName))
-			options = append(options, fn.MakeOption("envName", envName))
 
-		case constants.InfraCliName:
-			clusterName := fn.ParseStringFlag(cmd, "cluster")
-			options = append(options, fn.MakeOption("clusterName", clusterName))
+				return
+			}
 		}
+
+		options := []fn.Option{}
 
 		wgInterface, err := wgc.Show(&wgc.WgShowOptions{
 			Interface: "interfaces",
@@ -79,54 +71,42 @@ sudo {cmd} vpn start`),
 
 			fn.Log("\n[#] reconnecting")
 
-			if err := disconnect(connectVerbose); err != nil {
+			if err := disconnect(verbose); err != nil {
 				fn.PrintError(err)
 				return
 			}
 
-			if err := startConnecting(connectVerbose, options...); err != nil {
+			if runtime.GOOS == constants.RuntimeWindows {
+				time.Sleep(3 * time.Second)
+			}
+
+			time.Sleep(1 * time.Second)
+
+			if err := startConnecting(verbose, options...); err != nil {
 				fn.PrintError(err)
 				return
 			}
 
-			fn.Log("[#] connected")
-			fn.Log("[#] reconnection done")
-
-			return
-		}
-
-		if err := startConnecting(connectVerbose, options...); err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		fn.Log("[#] connected")
-
-		_, err = wgc.Show(nil)
-
-		if err != nil {
-			fn.PrintError(err)
-			return
+		} else {
+			if err := startConnecting(verbose, options...); err != nil {
+				fn.PrintError(err)
+				return
+			}
 		}
 
 		s, err := client.CurrentDeviceName()
 		if err != nil {
+			fn.Logf(text.Bold("\n[#] connection to device done"))
 			fn.PrintError(err)
 			return
 		}
 
-		fn.Log(text.Bold(text.Green("\n[#]Selected Device:")),
-			text.Red(s),
-		)
+		fn.Logf(text.Bold("\n[#] connection to device %s%s\n"), text.Blue(s), text.Bold(" done"))
 	},
 }
 
 func startConnecting(verbose bool, options ...fn.Option) error {
-
 	if err := connect(verbose, options...); err != nil {
-		if skipCheck {
-			fn.Notify("Error: ", err.Error())
-		}
 		return err
 	}
 
@@ -134,20 +114,7 @@ func startConnecting(verbose bool, options ...fn.Option) error {
 }
 
 func init() {
-	startCmd.Flags().BoolVarP(&connectVerbose, "verbose", "v", false, "show verbose")
+	startCmd.Flags().BoolP("verbose", "v", false, "run in debug mode")
 	startCmd.Flags().BoolVarP(&skipCheck, "skipCheck", "s", false, "skip checks of env and cluster")
 	startCmd.Aliases = append(stopCmd.Aliases, "connect")
-
-	switch flags.CliName {
-	case constants.CoreCliName:
-		{
-			startCmd.Flags().StringP("project", "p", "", "project name")
-			startCmd.Flags().StringP("env", "e", "", "environment name")
-		}
-	case constants.InfraCliName:
-		{
-			startCmd.Flags().StringP("cluster", "c", "", "cluster name")
-		}
-	}
-
 }

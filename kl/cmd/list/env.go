@@ -14,7 +14,7 @@ import (
 
 var envCmd = &cobra.Command{
 	Use:   "envs",
-	Short: "Get list of environments in current project",
+	Short: "Get list of environments",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := listEnvironments(cmd, args)
 		if err != nil {
@@ -26,18 +26,8 @@ var envCmd = &cobra.Command{
 
 func listEnvironments(cmd *cobra.Command, args []string) error {
 
-	pName := ""
-	if len(args) >= 1 {
-		pName = args[0]
-	}
 	var err error
-	if pName == "" {
-		pName, err = client.CurrentProjectName()
-		if err != nil {
-			return err
-		}
-	}
-	envs, err := server.ListEnvs(fn.MakeOption("projectName", pName))
+	envs, err := server.ListEnvs()
 	if err != nil {
 		return err
 	}

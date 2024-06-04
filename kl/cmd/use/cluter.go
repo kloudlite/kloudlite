@@ -53,11 +53,6 @@ var clusterCmd = &cobra.Command{
 			return
 		}
 
-		if err := server.UpdateDeviceClusterName(c.Metadata.Name); err != nil {
-			fn.PrintError(err)
-			return
-		}
-
 		if deviceRunning {
 			fn.Log(text.Yellow("[#] vpn also switched to diffrent cluster, please restart vpn manually"))
 		}

@@ -1,16 +1,15 @@
 package kli
 
 import (
+	apploader "github.com/kloudlite/kl/clis/app-loader"
+	"github.com/kloudlite/kl/cmd/completion"
 	"github.com/kloudlite/kl/cmd/shell"
-	"runtime"
 
 	"github.com/kloudlite/kl/flags"
 
 	"github.com/kloudlite/kl/cmd/auth"
 	set_base_url "github.com/kloudlite/kl/cmd/set-base-url"
-	app "github.com/kloudlite/kl/cmd/start-app"
 	"github.com/kloudlite/kl/cmd/status"
-	"github.com/kloudlite/kl/constants"
 	"github.com/spf13/cobra"
 
 	"github.com/kloudlite/kl/cmd/use"
@@ -37,11 +36,11 @@ func init() {
 	rootCmd.AddCommand(use.InfraCmd)
 	rootCmd.AddCommand(status.Cmd)
 
-	if runtime.GOOS != constants.RuntimeWindows {
-		rootCmd.AddCommand(app.Cmd)
-	}
+	apploader.LoadStartApp(rootCmd)
 
 	rootCmd.AddCommand(set_base_url.Cmd)
 
 	rootCmd.AddCommand(shell.ShellCmd)
+
+	rootCmd.AddCommand(completion.AutoCompletion)
 }

@@ -92,9 +92,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 
 		selectedGroup, e := fzf.FindOne(
 			configs,
-			func(item server.Config) string {
-				return item.Metadata.Name
-			},
+			func(item server.Config) string { return item.Metadata.Name },
 			fzf.WithPrompt("Select Config Group >"),
 		)
 		if e != nil {
@@ -144,7 +142,6 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 						Value: v,
 					})
 				}
-
 				return kvs
 			}(),
 			func(val KV) string {
@@ -158,17 +155,19 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	}
 
 	matchedGroupIndex := -1
-	for i, rt := range klFile.Configs {
+	for i, rt := range klFile.EnvVars.GetConfigs() {
 		if rt.Name == selectedConfigGroup.Metadata.Name {
 			matchedGroupIndex = i
 			break
 		}
 	}
 
+	currConfigs := klFile.EnvVars.GetConfigs()
+
 	if matchedGroupIndex != -1 {
 		matchedKeyIndex := -1
 
-		for i, ret := range klFile.Configs[matchedGroupIndex].Env {
+		for i, ret := range currConfigs[matchedGroupIndex].Env {
 			if ret.RefKey == selectedConfigKey.Key {
 				matchedKeyIndex = i
 				break
@@ -176,7 +175,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		}
 
 		if matchedKeyIndex == -1 {
-			klFile.Configs[matchedGroupIndex].Env = append(klFile.Configs[matchedGroupIndex].Env, client.ResEnvType{
+			currConfigs[matchedGroupIndex].Env = append(currConfigs[matchedGroupIndex].Env, client.ResEnvType{
 				Key: RenameKey(func() string {
 					if m != "" {
 						kk := strings.Split(m, "=")
@@ -188,7 +187,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 			})
 		}
 	} else {
-		klFile.Configs = append(klFile.Configs, client.ResType{
+		currConfigs = append(currConfigs, client.ResType{
 			Name: selectedConfigGroup.Metadata.Name,
 			Env: []client.ResEnvType{
 				{
@@ -205,12 +204,22 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		})
 	}
 
+	klFile.EnvVars.AddResTypes(currConfigs, client.Res_config)
+
 	err = client.WriteKLFile(*klFile)
 	if err != nil {
 		return err
 	}
 
 	fn.Log(fmt.Sprintf("added config %s/%s to your kl-file\n", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key))
+
+	if err := server.SyncDevboxJsonFile(); err != nil {
+		return err
+	}
+
+	if err := client.SyncDevboxShellEnvFile(); err != nil {
+		return err
+	}
 
 	return nil
 }

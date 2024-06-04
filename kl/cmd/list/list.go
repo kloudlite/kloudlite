@@ -6,11 +6,9 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "list",
-	Short: "List [accounts | projects | envs | configs | secrets | apps]",
+	Short: "List [accounts | envs | configs | secrets | apps]",
 	Long: `Use this command to list resources like,
-  account resources like projects & accounts,
-  project resources like environments & manged-services,
-  environment resources like configs secrets, managed-resources & apps`,
+  account, environments, configs, secrets and apps`,
 }
 
 var InfraCmd = &cobra.Command{
@@ -20,12 +18,13 @@ var InfraCmd = &cobra.Command{
 }
 
 func init() {
-	Cmd.AddCommand(projectsCmd)
 	Cmd.AddCommand(configsCmd)
 	Cmd.AddCommand(secretsCmd)
 	Cmd.AddCommand(appsCmd)
 	Cmd.AddCommand(accCmd)
 	Cmd.AddCommand(envCmd)
+
+	Cmd.AddCommand(mresCmd)
 
 	Cmd.Aliases = append(Cmd.Aliases, "ls")
 

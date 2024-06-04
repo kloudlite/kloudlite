@@ -3,7 +3,6 @@ package server
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -14,6 +13,7 @@ type Env struct {
 	DisplayName string   `json:"displayName"`
 	Metadata    Metadata `json:"metadata"`
 	Status      Status   `json:"status"`
+	ClusterName string   `json:"clusterName"`
 	Spec        struct {
 		TargetNamespace string `json:"targetNamespace"`
 	} `json:"spec"`
@@ -57,12 +57,10 @@ type EnvList struct {
 
 func ListEnvs(options ...fn.Option) ([]Env, error) {
 	var err error
-	projectName, err := EnsureProject(options...)
+
+	_, err = EnsureAccount(options...)
 	if err != nil {
 		return nil, err
-	}
-	if projectName == "" {
-		return nil, fmt.Errorf("Please select a project using 'kl init'")
 	}
 
 	cookie, err := getCookie()
@@ -71,7 +69,6 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 	}
 
 	respData, err := klFetch("cli_listEnvironments", map[string]any{
-		"projectName": strings.TrimSpace(projectName),
 		"pq": map[string]any{
 			"orderBy":       "name",
 			"sortDirection": "ASC",
@@ -142,7 +139,11 @@ func SelectEnv(envName string, options ...fn.Option) (*Env, error) {
 }
 
 func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
-	if _, err := EnsureProject(options...); err != nil {
+
+	accountName := fn.GetOption(options, "accountName")
+	if _, err := EnsureAccount(
+		fn.MakeOption("accountName", accountName),
+	); err != nil {
 		return nil, err
 	}
 
@@ -156,22 +157,19 @@ func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
 		return env, nil
 	}
 
-	kt, err := client.GetKlFile("")
+	kl, err := client.GetKlFile("")
 	if err != nil {
 		return nil, err
 	}
-
-	if kt.DefaultEnv != "" {
-		rEnv := client.Env{
-			Name: kt.DefaultEnv,
-		}
-		err := client.SelectEnv(rEnv)
-		if err != nil {
-			return nil, err
-		}
-
-		return &rEnv, nil
+	if kl.DefaultEnv == "" {
+		return nil, errors.New("please select an environment using 'kl use env'")
 	}
-
-	return nil, errors.New("please select an environment using 'kl use env'")
+	selectedEnv, err := SelectEnv(kl.DefaultEnv)
+	if err != nil {
+		return nil, err
+	}
+	return &client.Env{
+		Name:     selectedEnv.DisplayName,
+		TargetNs: selectedEnv.Metadata.Namespace,
+	}, nil
 }

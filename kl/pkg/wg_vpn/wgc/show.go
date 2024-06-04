@@ -2,9 +2,6 @@ package wgc
 
 import (
 	"fmt"
-	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/table"
-	"github.com/kloudlite/kl/pkg/ui/text"
 	"math"
 	"net"
 	"os"
@@ -12,6 +9,10 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -62,7 +63,10 @@ func Show(opts *WgShowOptions) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		for _, dev := range devices {
+			res = append(res, dev.Name)
+
 			err := showDevice(*dev, opts)
 			if err != nil {
 				return nil, err
@@ -70,6 +74,8 @@ func Show(opts *WgShowOptions) ([]string, error) {
 		}
 	default:
 		dev, err := client.Device(opts.Interface)
+		res = append(res, dev.Name)
+
 		if err != nil {
 			return nil, err
 		}
@@ -86,12 +92,12 @@ func Show(opts *WgShowOptions) ([]string, error) {
 func showDevice(dev wgtypes.Device, opts *WgShowOptions) error {
 	if opts.Option == "" {
 		showKeys := opts.ShowKeys
-		fn.Println("")
-		fn.Println(text.Bold(text.Green("Interface:")), text.Red(fmt.Sprintf("%s (%s)", dev.Name, dev.Type.String())))
+		fn.Log("")
+		fn.Log(text.Bold(text.Green("Interface:")), text.Red(fmt.Sprintf("%s (%s)", dev.Name, dev.Type.String())))
 		table.KVOutput("  public key:", text.Colored(dev.PublicKey.String(), 4), true)
 		table.KVOutput("  private key:", formatKey(dev.PrivateKey, showKeys), true)
 		table.KVOutput("  listening port:", text.Colored(dev.ListenPort, 2), true)
-		fn.Println("")
+		fn.Log("")
 
 		for _, peer := range dev.Peers {
 			err := showPeers(peer, showKeys)
@@ -106,45 +112,45 @@ func showDevice(dev wgtypes.Device, opts *WgShowOptions) error {
 		}
 		switch opts.Option {
 		case "public-key":
-			fn.Printf("%s%s\n", deviceName, dev.PublicKey.String())
+			fn.Logf("%s%s\n", deviceName, dev.PublicKey.String())
 		case "private-key":
-			fn.Printf("%s%s\n", deviceName, dev.PrivateKey.String())
+			fn.Logf("%s%s\n", deviceName, dev.PrivateKey.String())
 		case "listen-port":
-			fn.Printf("%s%d\n", deviceName, dev.ListenPort)
+			fn.Logf("%s%d\n", deviceName, dev.ListenPort)
 		case "fwmark":
-			fn.Printf("%s%d\n", deviceName, dev.FirewallMark)
+			fn.Logf("%s%d\n", deviceName, dev.FirewallMark)
 		case "peers":
 			for _, peer := range dev.Peers {
-				fn.Printf("%s%s\n", deviceName, peer.PublicKey.String())
+				fn.Logf("%s%s\n", deviceName, peer.PublicKey.String())
 			}
 		case "preshared-keys":
 			for _, peer := range dev.Peers {
-				fn.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), formatPSK(peer.PresharedKey, "(none)"))
+				fn.Logf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), formatPSK(peer.PresharedKey, "(none)"))
 			}
 		case "endpoints":
 			for _, peer := range dev.Peers {
-				fn.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), formatEndpoint(peer.Endpoint))
+				fn.Logf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), formatEndpoint(peer.Endpoint))
 			}
 		case "allowed-ips":
 			for _, peer := range dev.Peers {
-				fn.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), joinIPs(peer.AllowedIPs))
+				fn.Logf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), joinIPs(peer.AllowedIPs))
 			}
 		case "latest-handshakes":
 			for _, peer := range dev.Peers {
-				fn.Printf("%s%s\t%d\n", deviceName, peer.PublicKey.String(), peer.LastHandshakeTime.Unix())
+				fn.Logf("%s%s\t%d\n", deviceName, peer.PublicKey.String(), peer.LastHandshakeTime.Unix())
 			}
 		case "transfer":
 			for _, peer := range dev.Peers {
-				fn.Printf("%s%s\t%d\t%d\n", deviceName, peer.PublicKey.String(), peer.ReceiveBytes, peer.TransmitBytes)
+				fn.Logf("%s%s\t%d\t%d\n", deviceName, peer.PublicKey.String(), peer.ReceiveBytes, peer.TransmitBytes)
 			}
 		case "persistent-keepalive":
 			for _, peer := range dev.Peers {
-				fn.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), zeroToOff(strconv.FormatFloat(peer.PersistentKeepaliveInterval.Seconds(), 'g', 0, 64)))
+				fn.Logf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), zeroToOff(strconv.FormatFloat(peer.PersistentKeepaliveInterval.Seconds(), 'g', 0, 64)))
 			}
 		case "dump":
-			fn.Printf("%s%s\t%s\t%d\t%s\n", deviceName, dev.PrivateKey.String(), dev.PublicKey.String(), dev.ListenPort, zeroToOff(strconv.FormatInt(int64(dev.FirewallMark), 10)))
+			fn.Logf("%s%s\t%s\t%d\t%s\n", deviceName, dev.PrivateKey.String(), dev.PublicKey.String(), dev.ListenPort, zeroToOff(strconv.FormatInt(int64(dev.FirewallMark), 10)))
 			for _, peer := range dev.Peers {
-				fn.Printf("%s%s\t%s\t%s\t%s\t%d\t%d\t%d\t%s\n",
+				fn.Logf("%s%s\t%s\t%s\t%s\t%d\t%d\t%d\t%s\n",
 					deviceName,
 					peer.PublicKey.String(),
 					formatPSK(peer.PresharedKey, "(none)"),

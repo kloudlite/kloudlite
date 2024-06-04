@@ -1,6 +1,6 @@
 package client
 
-func ActiveDns() ([]string, error) {
+func BackupDns() ([]string, error) {
 
 	ed, err := GetExtraData()
 	if err != nil {
@@ -10,7 +10,7 @@ func ActiveDns() ([]string, error) {
 	return ed.DNS, nil
 }
 
-func SetActiveDns(dns []string) error {
+func SetBackupDns(dns []string) error {
 
 	ed, err := GetExtraData()
 	if err != nil {

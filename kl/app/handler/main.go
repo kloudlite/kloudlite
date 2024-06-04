@@ -10,8 +10,6 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
-type projectMap map[string]map[string]string
-
 type ChanelMsg struct {
 	Msg       string
 	Item      *systray.MenuItem
@@ -31,8 +29,6 @@ type Handler interface {
 	StartListener()
 	Channel() chan ChanelMsg
 
-	RedrawEnvs(projectMap)
-
 	ItemMap() map[ns.ItemName]*systray.MenuItem
 	AddItem(ns.ItemName, *systray.MenuItem)
 	DeleteItem(ns.ItemName)
@@ -46,29 +42,17 @@ func (h *handler) DeleteItem(name ns.ItemName) {
 	delete(h.itemMap, name)
 }
 
-type env struct {
-	name   string
-	envBtn *systray.MenuItem
-}
-
-type project struct {
-	name       string
-	projectBtn *systray.MenuItem
-	envs       []env
-}
-
 type handler struct {
-	channel              chan ChanelMsg
-	itemMap              map[ns.ItemName]*systray.MenuItem
-	projects             []project
-	projectRenderVersion string
+	channel chan ChanelMsg
+	itemMap map[ns.ItemName]*systray.MenuItem
+	bin     string
 }
 
-func NewHandler(channel chan ChanelMsg) Handler {
+func NewHandler(channel chan ChanelMsg, binName string) Handler {
 	return &handler{
-		channel:  channel,
-		itemMap:  make(map[ns.ItemName]*systray.MenuItem),
-		projects: []project{},
+		channel: channel,
+		itemMap: make(map[ns.ItemName]*systray.MenuItem),
+		bin:     binName,
 	}
 }
 
@@ -86,25 +70,28 @@ func (h *handler) ReconMeta() {
 
 	go func() {
 		for {
-			b, err := client.IsLoading()
-			if err != nil {
-				fn.PrintError(err)
-				fn.Alert("Error", err.Error())
-			}
 
-			if b {
-				systray.SetTemplateIcon(icons.Loading, icons.Loading)
-			} else {
-				data, err := client.GetExtraData()
+			func() {
+				b, err := client.IsLoading()
 				if err != nil {
-					data.VpnConnected = false
+					fn.PrintError(err)
+					fn.Alert("Error", err.Error())
 				}
-				if data.VpnConnected {
-					systray.SetTemplateIcon(icons.Logo, icons.Logo)
+
+				if b {
+					systray.SetTemplateIcon(icons.Loading, icons.Loading)
 				} else {
-					systray.SetIcon(icons.DisabledLogo)
+					data, err := client.GetExtraData()
+					if err != nil {
+						data.VpnConnected = false
+					}
+					if data.VpnConnected {
+						systray.SetTemplateIcon(icons.Logo, icons.Logo)
+					} else {
+						systray.SetIcon(icons.DisabledLogo)
+					}
 				}
-			}
+			}()
 
 			<-time.After(time.Millisecond * 500)
 		}
@@ -112,11 +99,11 @@ func (h *handler) ReconMeta() {
 }
 
 func (h *handler) ReconQuit() {
-	mQuitOrig := systray.AddMenuItem("Quit", "Quit client")
+	mQuitOrig := systray.AddMenuItem("Exit", "Quit client")
 	go func() {
 		<-mQuitOrig.ClickedCh
 		h.channel <- ChanelMsg{
-			Msg:    "Device clicked",
+			Msg:    "Exit clicked",
 			Item:   mQuitOrig,
 			Action: ns.Quit,
 		}

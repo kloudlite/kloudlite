@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
@@ -28,8 +27,6 @@ func ListConfigs(options ...fn.Option) ([]Config, error) {
 		return nil, err
 	}
 
-	projectName, err := client.CurrentProjectName()
-
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
@@ -41,8 +38,7 @@ func ListConfigs(options ...fn.Option) ([]Config, error) {
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},
-		"projectName": strings.TrimSpace(projectName),
-		"envName":     strings.TrimSpace(env.Name),
+		"envName": strings.TrimSpace(env.Name),
 	}, &cookie)
 
 	if err != nil {
@@ -114,18 +110,14 @@ func GetConfig(options ...fn.Option) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	projectName, err := client.CurrentProjectName()
-
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
 	respData, err := klFetch("cli_getConfig", map[string]any{
-		"name":        configName,
-		"envName":     strings.TrimSpace(env.Name),
-		"projectName": strings.TrimSpace(projectName),
+		"name":    configName,
+		"envName": strings.TrimSpace(env.Name),
 	}, &cookie)
 
 	if err != nil {

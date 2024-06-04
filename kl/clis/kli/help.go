@@ -12,7 +12,7 @@ func GetRootHelp(cmd *cobra.Command) string {
 These are common kl commands used in various situatiions:
 
 Manage Context:
-      status                      - get status of your current context (user, account, project, environment, vpn status)
+      status                      - get status of your current context (user, account, environment, vpn status)
 
       list account                - list all accounts
       switch account              - switch between kloudlite accounts
@@ -28,8 +28,8 @@ Working inside environment:
       -- <command>                - execute any command with loaded env variables
                                     Example: kl -- npm start
 
-      list env                    - list all environments in current project
-      switch environment          - inside the current project context you can switch between environments
+      list env                    - list all environments
+      switch environment          - you can switch between environments
 
 VPN management:
       vpn connect                 - connect/switch your device to current working environment (requires sudo)
@@ -39,7 +39,7 @@ VPN management:
 
 Fetch resources of current environment:
       get [config | secret | mres] <name>    - get config entries
-      list [configs | secrets | mres]        - list all configs,secrets,mres in current environment of project
+      list [configs | secrets | mres]        - list all configs,secrets,mres in current environment
 
 Other Available Commands:
       auth                        - login, logout, whoami

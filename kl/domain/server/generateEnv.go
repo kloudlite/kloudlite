@@ -1,10 +1,15 @@
 package server
 
 import (
-	// "encoding/json"
 	"encoding/json"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
 
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/klbox-docker/devboxfile"
+	"github.com/kloudlite/kl/pkg/functions"
 )
 
 type SecretEnv struct {
@@ -51,14 +56,8 @@ func GenerateEnv() (*GeneratedEnvs, error) {
 		return nil, err
 	}
 
-	projectId, err := client.CurrentProjectName()
-	if err != nil {
-		return nil, err
-	}
-
 	respData, err := klFetch("cli_generateEnv", map[string]any{
-		"projectId": projectId,
-		"klConfig":  klFile,
+		"klConfig": klFile,
 	}, &cookie)
 
 	if err != nil {
@@ -84,32 +83,36 @@ type Kv struct {
 }
 
 type CSResp map[string]map[string]*Kv
+type MountMap map[string]string
 
-func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
+func GetLoadMaps() (map[string]string, MountMap, error) {
 
 	kt, err := client.GetKlFile("")
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	env, err := EnsureEnv(nil)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	projectName, err := client.CurrentProjectName()
-	if err != nil {
-		return nil, nil, nil, err
-	}
+	currMreses := kt.EnvVars.GetMreses()
+	currSecs := kt.EnvVars.GetSecrets()
+	currConfs := kt.EnvVars.GetConfigs()
+
+	currMounts := kt.Mounts.GetMounts()
 
 	respData, err := klFetch("cli_getConfigSecretMap", map[string]any{
-		"projectName": projectName,
-		"envName":     env.Name,
+		"envName": env.Name,
 		"configQueries": func() []any {
 			var queries []any
-			for _, v := range kt.Configs {
+			for _, v := range currConfs {
 				for _, vv := range v.Env {
 					queries = append(queries, map[string]any{
 						"configName": v.Name,
@@ -118,7 +121,7 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 				}
 			}
 
-			for _, fe := range kt.FileMount.Mounts {
+			for _, fe := range currMounts {
 				if fe.Type == client.ConfigType {
 					queries = append(queries, map[string]any{
 						"configName": fe.Name,
@@ -130,31 +133,9 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 			return queries
 		}(),
 
-		"secretQueries": func() []any {
-			var queries []any
-			for _, v := range kt.Secrets {
-				for _, vv := range v.Env {
-					queries = append(queries, map[string]any{
-						"secretName": v.Name,
-						"key":        vv.RefKey,
-					})
-				}
-			}
-
-			for _, fe := range kt.FileMount.Mounts {
-				if fe.Type == client.SecretType {
-					queries = append(queries, map[string]any{
-						"secretName": fe.Name,
-						"key":        fe.Key,
-					})
-				}
-			}
-			return queries
-		}(),
 		"mresQueries": func() []any {
-
 			var queries []any
-			for _, rt := range kt.Mres {
+			for _, rt := range currMreses {
 				for _, v := range rt.Env {
 					queries = append(queries, map[string]any{
 						"mresName": rt.Name,
@@ -165,22 +146,46 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 
 			return queries
 		}(),
+
+		"secretQueries": func() []any {
+			var queries []any
+			for _, v := range currSecs {
+				for _, vv := range v.Env {
+					queries = append(queries, map[string]any{
+						"secretName": v.Name,
+						"key":        vv.RefKey,
+					})
+				}
+			}
+
+			for _, fe := range currMounts {
+				if fe.Type == client.SecretType {
+					queries = append(queries, map[string]any{
+						"secretName": fe.Name,
+						"key":        fe.Key,
+					})
+				}
+			}
+			return queries
+		}(),
 	}, &cookie)
 
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
+
 	}
 
 	fromResp, err := GetFromResp[EnvRsp](respData)
+
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	result := map[string]string{}
 
 	cmap := CSResp{}
 
-	for _, rt := range kt.Configs {
+	for _, rt := range currConfs {
 		cmap[rt.Name] = map[string]*Kv{}
 		for _, v := range rt.Env {
 			cmap[rt.Name][v.RefKey] = &Kv{
@@ -191,7 +196,7 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 
 	smap := CSResp{}
 
-	for _, rt := range kt.Secrets {
+	for _, rt := range currSecs {
 		smap[rt.Name] = map[string]*Kv{}
 		for _, v := range rt.Env {
 			smap[rt.Name][v.RefKey] = &Kv{
@@ -201,8 +206,7 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 	}
 
 	mmap := CSResp{}
-
-	for _, rt := range kt.Mres {
+	for _, rt := range currMreses {
 		mmap[rt.Name] = map[string]*Kv{}
 		for _, v := range rt.Env {
 			mmap[rt.Name][v.RefKey] = &Kv{
@@ -211,13 +215,17 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 		}
 	}
 
+	// ************************[ adding to result|env ]***************************
 	for _, v := range fromResp.Configs {
 		ent := cmap[v.ConfigName][v.Key]
 		if ent != nil {
 			result[ent.Key] = v.Value
 		}
 
-		cmap[v.ConfigName][v.Key].Value = v.Value
+		if cmap[v.ConfigName][v.Key] != nil {
+			cmap[v.ConfigName][v.Key].Value = v.Value
+		}
+
 	}
 
 	for _, v := range fromResp.Secrets {
@@ -226,7 +234,9 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 			result[ent.Key] = v.Value
 		}
 
-		smap[v.SecretName][v.Key].Value = v.Value
+		if smap[v.SecretName][v.Key] != nil {
+			smap[v.SecretName][v.Key].Value = v.Value
+		}
 	}
 
 	for _, v := range fromResp.Mreses {
@@ -234,8 +244,131 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 		if ent != nil {
 			result[ent.Key] = v.Value
 		}
-		mmap[v.MresName][v.Key].Value = v.Value
+
+		if mmap[v.MresName][v.Key] != nil {
+			mmap[v.MresName][v.Key].Value = v.Value
+		}
 	}
 
-	return result, cmap, smap, nil
+	// ************************[ handling mounts ]****************************
+	mountMap := map[string]string{}
+
+	for _, fe := range currMounts {
+		pth := fe.Path
+		if pth == "" {
+			pth = fe.Key
+		}
+
+		if fe.Type == client.ConfigType {
+			mountMap[pth] = func() string {
+				for _, ce := range fromResp.Configs {
+					if ce.ConfigName == fe.Name && ce.Key == fe.Key {
+						return ce.Value
+					}
+				}
+				return ""
+			}()
+		} else {
+			mountMap[pth] = func() string {
+				for _, ce := range fromResp.Secrets {
+					if ce.SecretName == fe.Name && ce.Key == fe.Key {
+						return ce.Value
+					}
+				}
+				return ""
+			}()
+		}
+	}
+
+	return result, mountMap, nil
+}
+
+// this function will fetch real envs from api and return DevboxKlfile with real envs
+func LoadDevboxConfig() (*devboxfile.DevboxConfig, error) {
+	envs, mm, err := GetLoadMaps()
+	if err != nil {
+		return nil, err
+	}
+
+	kf, err := client.GetKlFile("")
+	if err != nil {
+		return nil, err
+	}
+
+	// read kl.yml into struct
+	klConfig := &devboxfile.DevboxConfig{
+		Packages: kf.Packages,
+	}
+
+	fm := map[string]string{}
+
+	for _, fe := range kf.Mounts.GetMounts() {
+		pth := fe.Path
+		if pth == "" {
+			pth = fe.Key
+		}
+
+		fm[pth] = mm[pth]
+	}
+
+	ev := map[string]string{}
+	for k, v := range envs {
+		ev[k] = v
+	}
+
+	for _, ne := range kf.EnvVars.GetEnvs() {
+		ev[ne.Key] = ne.Value
+	}
+
+	e, err := client.CurrentEnv()
+	if err == nil {
+		ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", e.Name, "❯")
+	}
+
+	klConfig.Env = ev
+	klConfig.KlConfig.Mounts = fm
+
+	return klConfig, nil
+}
+
+func SyncDevboxJsonFile() error {
+	if !client.InsideBox() {
+		return nil
+	}
+
+	kConf, err := LoadDevboxConfig()
+	if err != nil {
+		return err
+	}
+
+	b, err := kConf.ToJson()
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(client.DEVBOX_JSON_PATH, b, os.ModePerm); err != nil {
+		return err
+	}
+
+	if err := MountEnvs(kConf.KlConfig); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func MountEnvs(c devboxfile.KlConfig) error {
+	for k, v := range c.Mounts {
+		if err := os.MkdirAll(filepath.Dir(k), fs.ModePerm); err != nil {
+			functions.Warnf("failed to create dir %s", filepath.Dir(k))
+			continue
+		}
+
+		if err := os.WriteFile(k, []byte(v), fs.ModePerm); err != nil {
+			functions.Warnf("failed to write file %s", k)
+			continue
+		}
+	}
+
+	return nil
 }

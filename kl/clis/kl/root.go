@@ -2,13 +2,13 @@ package kl
 
 import (
 	"os"
-	"path"
+	"os/signal"
+	"syscall"
 
-	"github.com/kloudlite/kl/cmd/runner/mounter"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	domain_util "github.com/kloudlite/kl/domain/util"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +16,22 @@ import (
 var rootCmd = &cobra.Command{
 	Use:                flags.CliName,
 	DisableFlagParsing: true,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		sigChan := make(chan os.Signal, 1)
+
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			<-sigChan
+
+			spinner.Client.Stop()
+			os.Exit(1)
+		}()
+	},
+
+	PostRun: func(cmd *cobra.Command, args []string) {
+		spinner.Client.Stop()
+	},
+
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if (len(args) != 0) && (args[0] == "--version" || args[0] == "-v") {
@@ -33,50 +49,10 @@ var rootCmd = &cobra.Command{
 			return
 		}
 
-		klfile, err := client.GetKlFile("")
-		if err != nil {
+		if err := domain_util.MountEnv(args); err != nil {
 			fn.PrintError(err)
 			return
 		}
-
-		envs, cmap, smap, err := server.GetLoadMaps()
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		mountfiles := map[string]string{}
-
-		for _, fe := range klfile.FileMount.Mounts {
-			pth := fe.Path
-			if pth == "" {
-				pth = fe.Key
-			}
-
-			if fe.Type == client.ConfigType {
-				mountfiles[pth] = cmap[fe.Name][fe.Key].Value
-			} else {
-				mountfiles[pth] = smap[fe.Name][fe.Key].Value
-			}
-		}
-
-		if err = mounter.Mount(mountfiles, klfile.FileMount.MountBasePath); err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		cwd, err := os.Getwd()
-		if err != nil {
-			cwd = "."
-		}
-
-		envs["KL_MOUNT_PATH"] = path.Join(cwd, klfile.FileMount.MountBasePath)
-
-		if err = mounter.Load(envs, args[1:]); err != nil {
-			fn.PrintError(err)
-			return
-		}
-
 	},
 }
 

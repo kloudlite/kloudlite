@@ -8,12 +8,12 @@ import (
 	"path"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 func SyncKubeConfig(options ...fn.Option) (*string, error) {
 
 	accountName := fn.GetOption(options, "accountName")
-	clusterName := fn.GetOption(options, "clusterName")
 
 	accountName, err := EnsureAccount([]fn.Option{
 		fn.MakeOption("accountName", accountName),
@@ -22,13 +22,21 @@ func SyncKubeConfig(options ...fn.Option) (*string, error) {
 		return nil, err
 	}
 
-	clusterName, err = EnsureCluster(options...)
+	clusterName, err := EnsureCluster(options...)
 	if err != nil {
 		return nil, err
 	}
 
 	tmpDir := os.TempDir()
-	tmpFile := path.Join(tmpDir, clusterName)
+
+	td, err := os.MkdirTemp(tmpDir, fmt.Sprintf("kl-kubeconfig-%s-", accountName))
+	if err != nil {
+		return nil, err
+	}
+
+	tmpFile := path.Join(td, clusterName)
+
+	fn.Logf("%s \"%s\"", text.Bold("kubeconfig file saved at:"), text.Yellow(tmpFile))
 
 	_, err = os.Stat(tmpFile)
 	if err == nil {
@@ -53,7 +61,6 @@ func SyncKubeConfig(options ...fn.Option) (*string, error) {
 func getKubeConfig(options ...fn.Option) (*string, error) {
 
 	accountName := fn.GetOption(options, "accountName")
-	clusterName := fn.GetOption(options, "clusterName")
 
 	_, err := EnsureAccount([]fn.Option{
 		fn.MakeOption("accountName", accountName),
@@ -62,7 +69,7 @@ func getKubeConfig(options ...fn.Option) (*string, error) {
 		return nil, err
 	}
 
-	clusterName, err = EnsureCluster(options...)
+	clusterName, err := EnsureCluster(options...)
 	if err != nil {
 		return nil, err
 	}

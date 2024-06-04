@@ -2,17 +2,14 @@ package vpn
 
 import (
 	"os"
-	"runtime"
 
-	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
+	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 	"github.com/spf13/cobra"
 )
-
-var disconnectVerbose bool
 
 var stopCmd = &cobra.Command{
 	Use:   "stop",
@@ -22,22 +19,53 @@ Example:
   # stop vpn device
   sudo kl vpn stop
 	`,
-	Run: func(_ *cobra.Command, _ []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 
-		if runtime.GOOS == constants.RuntimeWindows {
-			if err := disconnect(connectVerbose); err != nil {
-				fn.Notify("Error:", err.Error())
-				fn.PrintError(err)
-			}
-			return
-		}
+		verbose := fn.ParseBoolFlag(cmd, "verbose")
+
+		// if runtime.GOOS == constants.RuntimeWindows {
+		// 	if err := disconnect(verbose); err != nil {
+		// 		fn.Notify("Error:", err.Error())
+		// 		fn.PrintError(err)
+		// 	}
+		// 	return
+		// }
 
 		if euid := os.Geteuid(); euid != 0 {
-			fn.Log(
-				text.Colored("make sure you are running command with sudo", 209),
-			)
-			return
+			if os.Getenv("KL_APP") != "true" {
+				if err := func() error {
+
+					if err := client.EnsureAppRunning(); err != nil {
+						return err
+					}
+
+					p, err := proxy.NewProxy(true)
+					if err != nil {
+						return err
+					}
+
+					out, err := p.Stop()
+					if err != nil {
+						return err
+					}
+
+					fn.Log(string(out))
+					return nil
+				}(); err != nil {
+					fn.PrintError(err)
+					return
+				}
+
+				return
+			}
 		}
+
+		// if euid := os.Geteuid(); euid != 0 {
+		// 	fn.Log(
+		// 		text.Colored("make sure you are running command with sudo", 209),
+		// 	)
+		// 	return
+		// }
 
 		wgInterface, err := wgc.Show(&wgc.WgShowOptions{
 			Interface: "interfaces",
@@ -53,28 +81,25 @@ Example:
 			return
 		}
 
-		err = disconnect(disconnectVerbose)
+		err = disconnect(verbose)
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
-
-		fn.Log("[#] disconnected")
 
 		s, err := client.CurrentDeviceName()
 		if err != nil {
+			fn.Logf(text.Bold("\n [#] disconnected device"), text.Blue(s))
 			fn.PrintError(err)
 			return
 		}
 
-		fn.Log(text.Bold(text.Green("\n[#]Selected Device: ")),
-			text.Red(s),
-		)
+		fn.Logf(text.Bold("\n[#] disconnected device %s"), text.Blue(s))
 	},
 }
 
 func init() {
-	stopCmd.Flags().BoolVarP(&disconnectVerbose, "verbose", "v", false, "show verbose")
+	stopCmd.Flags().BoolP("verbose", "v", false, "run in debug mode")
 
 	stopCmd.Aliases = append(stopCmd.Aliases, "disconnect")
 }

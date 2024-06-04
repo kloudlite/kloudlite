@@ -32,6 +32,9 @@ var mountCommand = &cobra.Command{
 
 		if len(args) > 0 {
 			path = args[0]
+		} else {
+			fn.PrintError(fmt.Errorf("please specify the path of the config you want to add, example: kl add config-mount /tmp/sample"))
+			return
 		}
 
 		err = selectConfigMount(path, *klFile, cmd)
@@ -146,7 +149,7 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 	}
 
 	matchedIndex := -1
-	for i, fe := range klFile.FileMount.Mounts {
+	for i, fe := range klFile.Mounts {
 		if fe.Path == path {
 			matchedIndex = i
 		}
@@ -166,15 +169,17 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 		return err
 	}
 
+	fe := klFile.Mounts.GetMounts()
+
 	if matchedIndex == -1 {
-		klFile.FileMount.Mounts = append(klFile.FileMount.Mounts, client.FileEntry{
+		fe = append(fe, client.FileEntry{
 			Type: cOrs,
 			Path: path,
 			Name: selectedItem.Name,
 			Key:  *key,
 		})
 	} else {
-		klFile.FileMount.Mounts[matchedIndex] = client.FileEntry{
+		fe[matchedIndex] = client.FileEntry{
 			Type: cOrs,
 			Path: path,
 			Name: selectedItem.Name,
@@ -182,11 +187,13 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 		}
 	}
 
+	klFile.Mounts.AddMounts(fe)
 	if err := client.WriteKLFile(klFile); err != nil {
 		return err
 	}
 
 	fn.Log("added mount to your kl-file")
+
 	return nil
 }
 

@@ -2,12 +2,7 @@ package vpn
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/domain/server"
-	"os"
-	"os/exec"
 
-	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
@@ -23,39 +18,18 @@ func connect(verbose bool, options ...fn.Option) error {
 	defer func() {
 		if !success {
 			_ = wg_vpn.StopService(verbose)
+
+			if !wg_vpn.IsSystemdReslov() {
+				wg_vpn.ResetDnsServers(ifName, verbose)
+			}
 		}
 
 		client.SetLoading(false)
+
 	}()
 
-	if !skipCheck {
-		switch flags.CliName {
-		case constants.CoreCliName:
-			_, err := server.EnsureProject()
-			if err != nil {
-				return err
-			}
-		case constants.InfraCliName:
-			_, err := server.EnsureAccount()
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	devName, err := client.CurrentDeviceName()
-	if err != nil {
-		return err
-	}
-
 	// TODO: handle this error later
-	if err = wg_vpn.StartService(devName, verbose); err != nil {
-		if verbose {
-			fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
-		}
-	}
-
-	if err := ensureAppRunning(); err != nil {
+	if err := wg_vpn.StartService(ifName, verbose); err != nil {
 		fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
 	}
 
@@ -76,10 +50,6 @@ func connect(verbose bool, options ...fn.Option) error {
 }
 
 func disconnect(verbose bool) error {
-	if err := ensureAppRunning(); err != nil {
-		fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
-	}
-
 	if err := wg_vpn.StopService(verbose); err != nil {
 		return err
 	}
@@ -93,32 +63,12 @@ func disconnect(verbose bool) error {
 		return err
 	}
 
-	return nil
-}
-
-func ensureAppRunning() error {
-	configFolder, err := client.GetConfigFolder()
-	if err != nil {
-		return err
-	}
-
-	b, err := os.ReadFile(configFolder + "/apppid")
-
-	if err == nil {
-		pid := string(b)
-		if fn.ExecCmd(fmt.Sprintf("ps -p %s", pid), nil, false) == nil {
-			return nil
+	if !wg_vpn.IsSystemdReslov() {
+		if err := wg_vpn.ResetDnsServers(ifName, verbose); err != nil {
+			return err
 		}
 	}
 
-	command := exec.Command(flags.CliName, "start-app")
-	_ = command.Start()
-
-	err = os.WriteFile(configFolder+"/apppid", []byte(fmt.Sprintf("%d", command.Process.Pid)), 0644)
-	if err != nil {
-		fn.PrintError(err)
-		return err
-	}
-
+	client.SetDeviceDns("")
 	return nil
 }

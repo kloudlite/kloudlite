@@ -9,7 +9,6 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -84,72 +83,79 @@ func (h *handler) StartListener() {
 
 				case ns.ToggleDevice:
 					{
-						cmd := constants.InfraCliName
-						if s, err := client.CurrentClusterName(); err != nil || s == "" {
-							kt, err := client.GetKlFile("")
-							defEnv := ""
-							if err == nil && kt.DefaultEnv != "" {
-								defEnv = kt.DefaultEnv
+						func() {
+
+							err := client.SetLoading(true)
+							if err == nil {
+								defer client.SetLoading(false)
 							}
 
-							if e, err := client.CurrentEnv(); (err != nil || e == nil || e.Name == "") && (defEnv == "") {
-								fn.Println(err)
-								fn.Alert("No Cluster or Environment Selected", "Please select a cluster or environment")
-								continue
+							// if s, err := client.CurrentClusterName(); err != nil || s == "" {
+							// 	kt, err := client.GetKlFile("")
+							// 	defEnv := ""
+							// 	if err == nil && kt.DefaultEnv != "" {
+							// 		defEnv = kt.DefaultEnv
+							// 	}
+							//
+							// 	if e, err := client.CurrentEnv(); (err != nil || e == nil || e.Name == "") && (defEnv == "") {
+							// 		fn.Println(err)
+							// 		fn.Alert("No Cluster or Environment Selected", "Please select a cluster or environment")
+							// 		return
+							// 	}
+							//
+							// }
+
+							if !server.CheckDeviceStatus() {
+								if err := fn.ExecCmd(fmt.Sprintf("%s vpn start", h.bin), nil, true); err != nil {
+									fn.PrintError(err)
+									fn.Alert("Start VPN failed", err.Error())
+								}
+								fn.Notify("Info", "Kloudlite VPN Connected")
+								return
 							}
 
-							cmd = constants.CoreCliName
-						}
-
-						if !IsCmdExists(cmd, true) {
-							continue
-						}
-
-						if !server.CheckDeviceStatus() {
-							if err := fn.ExecCmd(fmt.Sprintf("%s vpn start -s", cmd), nil, true); err != nil {
+							if err := fn.ExecCmd(fmt.Sprintf("%s vpn stop", h.bin), nil, true); err != nil {
 								fn.PrintError(err)
-								fn.Alert("Start VPN failed", err.Error())
+								fn.Alert("Stop VPN failed", err.Error())
 							}
-							fn.Notify("Info", "Kloudlite VPN Connected")
-							continue
-						}
-
-						if err := fn.ExecCmd(fmt.Sprintf("%s vpn stop", cmd), nil, true); err != nil {
-							fn.PrintError(err)
-							fn.Alert("Stop VPN failed", err.Error())
-						}
-						fn.Notify("Info", "Kloudlite VPN Disconnected")
+							fn.Notify("Info", "Kloudlite VPN Disconnected")
+						}()
 					}
 
 				case ns.Quit:
 					{
 
-						wgInterface, err := wgc.Show(&wgc.WgShowOptions{
-							Interface: "interfaces",
-						})
-
-						if err != nil {
+						if err := fn.ExecCmd(fmt.Sprintf("%s box stop-all", h.bin), nil, true); err != nil {
 							fn.PrintError(err)
-							fn.Notify("error:", err)
+							fn.Alert("Stop VPN failed", err.Error())
 						}
 
-						if len(wgInterface) > 0 {
-
-							cmd := "kl"
-
-							if !IsCmdExists(cmd, false) {
-								cmd = "kli"
-								if !IsCmdExists(cmd, true) {
-									systray.Quit()
-									continue
-								}
-							}
-
-							if err := fn.ExecCmd(fmt.Sprintf("%s vpn stop", cmd), nil, true); err != nil {
-								fn.PrintError(err)
-								fn.Alert("Stop VPN failed", err.Error())
-							}
-						}
+						// wgInterface, err := wgc.Show(&wgc.WgShowOptions{
+						// 	Interface: "interfaces",
+						// })
+						//
+						// if err != nil {
+						// 	fn.PrintError(err)
+						// 	fn.Notify("error:", err)
+						// }
+						//
+						// if len(wgInterface) > 0 {
+						//
+						// 	cmd := "kl"
+						//
+						// 	if !IsCmdExists(cmd, false) {
+						// 		cmd = "kli"
+						// 		if !IsCmdExists(cmd, true) {
+						// 			systray.Quit()
+						// 			continue
+						// 		}
+						// 	}
+						//
+						// 	if err := fn.ExecCmd(fmt.Sprintf("%s vpn stop", cmd), nil, true); err != nil {
+						// 		fn.PrintError(err)
+						// 		fn.Alert("Stop VPN failed", err.Error())
+						// 	}
+						// }
 
 						systray.Quit()
 					}

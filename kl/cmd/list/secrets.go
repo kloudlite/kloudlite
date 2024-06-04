@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
@@ -14,15 +13,10 @@ import (
 
 var secretsCmd = &cobra.Command{
 	Use:   "secrets",
-	Short: "Get list of secrets in current project & selected environment",
+	Short: "Get list of secrets in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		pName := ""
-		if len(args) > 1 {
-			pName = args[0]
-		}
-
-		sec, err := server.ListSecrets(fn.MakeOption("projectName", pName))
+		sec, err := server.ListSecrets()
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -35,7 +29,7 @@ var secretsCmd = &cobra.Command{
 	},
 }
 
-func printSecrets(cmd *cobra.Command, secrets []server.Secret) error {
+func printSecrets(_ *cobra.Command, secrets []server.Secret) error {
 	if len(secrets) == 0 {
 		return errors.New("no secrets found")
 	}
@@ -53,16 +47,6 @@ func printSecrets(cmd *cobra.Command, secrets []server.Secret) error {
 	}
 
 	fmt.Println(table.Table(&header, rows))
-
-	pName, _ := client.CurrentProjectName()
-
-	if pName != "" {
-		table.KVOutput("secrets of", pName, true)
-	}
-
-	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
-		table.KVOutput("secret of", pName, true)
-	}
 	table.TotalResults(len(secrets), true)
 	return nil
 }

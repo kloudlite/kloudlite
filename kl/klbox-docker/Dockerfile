@@ -1,0 +1,92 @@
+# syntax=docker/dockerfile:1.4
+FROM --platform=$TARGETPLATFORM golang:1.21 as builder
+
+COPY --from=project ./go.sum ./go.mod /kl-app/
+
+WORKDIR /kl-app
+
+RUN go mod download -x
+
+COPY --from=project . /kl-app
+
+ARG VERSION
+
+RUN cd klbox-docker && go build -o ../bin/mounter main.go
+
+RUN go build --tags=box -ldflags="-X github.com/kloudlite/kl/flags.Version=${VERSION} -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl main.go
+
+
+FROM --platform=$TARGETPLATFORM ubuntu:latest
+
+RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano zsh git
+
+
+RUN mkdir /var/run/sshd
+
+RUN userdel ubuntu
+
+RUN groupadd -g 1000 kl && useradd -u 1000 -g 1000 -m kl && usermod -aG sudo kl && chsh -s /bin/bash kl && \
+  echo "kl ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kl
+
+# Optionally change the SSH port and other settings
+#RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+# SSH login fix. Otherwise user is kicked off after login
+RUN sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
+
+RUN echo "GatewayPorts yes" >> /etc/ssh/sshd_config
+
+EXPOSE 22
+
+ENV HOSTNAME box
+RUN mkdir -m 0755 /nix && chown kl /nix
+USER kl
+RUN curl -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-profile
+
+USER root
+
+RUN curl -fsSL https://get.jetify.com/devbox > /tmp/devbox.sh && chmod +x /tmp/devbox.sh 
+RUN /tmp/devbox.sh -f && rm /tmp/devbox.sh && sudo chown kl:kl /usr/local/bin/devbox
+
+RUN cd /tmp
+RUN devbox init
+
+RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git  "/usr/share/zsh/plugins/zsh-syntax-highlighting"
+
+# RUN rm /tmp/devbox.lock /tmp/devbox.json
+
+# COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
+
+# RUN mkdir -p /home/kl/.config/nix
+# && echo "experimental-features = nix-command flakes" > /home/kl/.config/nix/nix.conf
+# RUN chown -R kl:kl /home/kl/.config
+
+RUN cp /etc/ssl/certs/ca-certificates.crt /no-cert-file.crt
+
+RUN chmod -x /etc/update-motd.d/*
+RUN cat > /etc/motd <<'EOF'
+Welcome to KloudLite's Development Environment
+EOF
+
+COPY .bashrc .profile .zshrc aliasrc /tmp/
+
+COPY --from=builder /kl-app/bin/mounter /mounter
+COPY --from=builder /kl-app/bin/kl /usr/local/bin/kl
+
+
+SHELL ["/bin/zsh", "-c"]
+
+RUN chsh -s /bin/zsh kl
+
+COPY ./start.sh /start.sh
+COPY ./entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /start.sh
+RUN chmod +x /entrypoint.sh
+
+USER kl
+
+RUN mkdir -p "/home/kl/.config/zsh"
+RUN git clone https://github.com/sindresorhus/pure.git "/home/kl/.config/zsh/pure"
+
+
+ENTRYPOINT ["/entrypoint.sh"]

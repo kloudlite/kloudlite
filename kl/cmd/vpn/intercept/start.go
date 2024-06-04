@@ -1,6 +1,10 @@
 package intercept
 
 import (
+	"errors"
+	"strconv"
+	"strings"
+
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
@@ -12,13 +16,48 @@ var startCmd = &cobra.Command{
 	Long: `start intercept app to tunnel trafic to your device
 Examples:
 	# intercept app with selected vpn device
-  kl vpn intercept start --app <app_name>
+  kl vpn intercept start --app <app_name> --port <port>:<your_local_port>
+
 	`,
 
 	Run: func(cmd *cobra.Command, _ []string) {
 		app := fn.ParseStringFlag(cmd, "app")
+		maps, err := cmd.Flags().GetStringArray("port")
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
-		err := server.InterceptApp(true, []fn.Option{
+		ports := make([]server.AppPort, 0)
+
+		for _, v := range maps {
+			mp := strings.Split(v, ":")
+			if len(mp) != 2 {
+				fn.PrintError(
+					errors.New("wrong map format use <server_port>:<local_port> eg: 80:3000"),
+				)
+				return
+			}
+
+			pp, err := strconv.ParseInt(mp[0], 10, 32)
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+
+			tp, err := strconv.ParseInt(mp[1], 10, 32)
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+
+			ports = append(ports, server.AppPort{
+				AppPort:    int(pp),
+				DevicePort: int(tp),
+			})
+		}
+
+		err = server.InterceptApp(true, ports, []fn.Option{
 			fn.MakeOption("appName", app),
 		}...)
 
@@ -34,6 +73,10 @@ Examples:
 
 func init() {
 	startCmd.Flags().StringP("app", "a", "", "app name")
+	startCmd.Flags().StringArrayP(
+		"port", "p", []string{},
+		"expose port <server_port>:<local_port> while intercepting app",
+	)
 
 	startCmd.Aliases = append(startCmd.Aliases, "add", "begin", "connect")
 }

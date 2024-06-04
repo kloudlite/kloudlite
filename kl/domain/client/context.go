@@ -3,6 +3,8 @@ package client
 import (
 	"errors"
 	"fmt"
+	"io"
+	"net"
 	"os"
 	"path"
 	"runtime"
@@ -19,11 +21,13 @@ const (
 	MainCtxFileName   string = "kl-main-contexts.yaml"
 	ExtraDataFileName string = "kl-extra-data.yaml"
 	DeviceFileName    string = "kl-device.yaml"
+	CompleteFileName  string = "kl-completion"
 )
 
 type Env struct {
 	Name     string `json:"name"`
 	TargetNs string `json:"targetNamespace"`
+	SSHPort  int    `json:"sshPort"`
 }
 
 type Session struct {
@@ -37,6 +41,11 @@ type MainContext struct {
 
 type DeviceContext struct {
 	DeviceName string `json:"deviceName"`
+
+	PrivateKey []byte `json:"privateKey"`
+	DeviceIp   net.IP `json:"deviceIp"`
+
+	HostPublicKey []byte `json:"hostPublicKey"`
 }
 
 type InfraContext struct {
@@ -54,28 +63,59 @@ type InfraContexts struct {
 type ExtraData struct {
 	BaseUrl      string          `json:"baseUrl"`
 	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
+	DeviceDns    string          `json:"deviceDns"`
 	DNS          []string        `json:"dns"`
 	Loading      bool            `json:"loading"`
 	VpnConnected bool            `json:"vpnConnected"`
-	DevInfo      string          `json:"devInfo"`
+
+	// TODO: don't have any idea about this field, needs to remove if not required
+	ActiveCluster string `json:"activeCluster"`
+	// SearchDomainAdded bool   `json:"searchDomainAdded"`
+	// DnsAdded          bool            `json:"dnsAdded"`
+	// DnsValues         []string        `json:"dnsValues"`
 }
 
-func GetDevInfo() (string, error) {
+func GetDeviceDns() (string, error) {
 	extraData, err := GetExtraData()
 	if err != nil {
 		return "", err
 	}
 
-	return extraData.DevInfo, nil
+	return extraData.DeviceDns, nil
 }
 
-func SetDevInfo(devCluster string) error {
+func SetDeviceDns(dns string) error {
 	extraData, err := GetExtraData()
 	if err != nil {
 		return err
 	}
 
-	extraData.DevInfo = devCluster
+	extraData.DeviceDns = dns
+
+	file, err := yaml.Marshal(extraData)
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(ExtraDataFileName, file)
+}
+
+func GetActiveCluster() (string, error) {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return "", err
+	}
+
+	return extraData.ActiveCluster, nil
+}
+
+func SetActiveCluster(devCluster string) error {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return err
+	}
+
+	extraData.ActiveCluster = devCluster
 
 	file, err := yaml.Marshal(extraData)
 	if err != nil {
@@ -110,45 +150,44 @@ func SetDns(dns []string) error {
 	return writeOnUserScope(ExtraDataFileName, file)
 }
 
+func GetUserHomeDir() (string, error) {
+	if runtime.GOOS == "windows" {
+		return xdg.Home, nil
+	}
+
+	if euid := os.Geteuid(); euid == 0 {
+		username, ok := os.LookupEnv("SUDO_USER")
+		if !ok {
+			return "", errors.New("failed to get sudo user name")
+		}
+
+		oldPwd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+
+		sp := strings.Split(oldPwd, "/")
+
+		for i := range sp {
+			if sp[i] == username {
+				return path.Join("/", path.Join(sp[:i+1]...)), nil
+			}
+		}
+
+		return "", errors.New("failed to get home path of sudo user")
+	}
+
+	userHome, ok := os.LookupEnv("HOME")
+	if !ok {
+		return "", errors.New("failed to get home path of user")
+	}
+
+	return userHome, nil
+}
+
 func GetConfigFolder() (configFolder string, err error) {
-	homePath := ""
-
-	// fetching homePath
-	if err := func() error {
-		if runtime.GOOS == "windows" {
-			homePath = xdg.CacheHome
-			return nil
-		}
-
-		if euid := os.Geteuid(); euid == 0 {
-			username, ok := os.LookupEnv("SUDO_USER")
-			if !ok {
-				return errors.New("something went wrong")
-			}
-
-			oldPwd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-
-			sp := strings.Split(oldPwd, "/")
-
-			for i := range sp {
-				if sp[i] == username {
-					homePath = path.Join("/", path.Join(sp[:i+1]...))
-				}
-			}
-		} else {
-			userHome, ok := os.LookupEnv("HOME")
-			if !ok {
-				return errors.New("something went wrong")
-			}
-
-			homePath = userHome
-		}
-
-		return nil
-	}(); err != nil {
+	homePath, err := GetUserHomeDir()
+	if err != nil {
 		return "", err
 	}
 
@@ -230,7 +269,7 @@ func GetMainCtx() (*MainContext, error) {
 
 func DeleteDeviceContext(dName string) error {
 	if dName == "" {
-		return fmt.Errorf("Device Name is required")
+		return fmt.Errorf("device Name is required")
 	}
 
 	c, err := GetDeviceContext()
@@ -240,7 +279,7 @@ func DeleteDeviceContext(dName string) error {
 	}
 
 	if c.DeviceName != dName {
-		return fmt.Errorf("Device %s not found", dName)
+		return fmt.Errorf("device %s not found", dName)
 	}
 
 	c.DeviceName = ""
@@ -253,21 +292,40 @@ func DeleteDeviceContext(dName string) error {
 	return writeOnUserScope(DeviceFileName, b)
 }
 
-func WriteDeviceContext(dName string) error {
-	c, err := GetDeviceContext()
-	if err != nil {
-		return err
-	}
-
-	c.DeviceName = dName
-
-	file, err := yaml.Marshal(c)
+func WriteDeviceContext(dc *DeviceContext) error {
+	file, err := yaml.Marshal(dc)
 
 	if err != nil {
 		return err
 	}
 
 	return writeOnUserScope(DeviceFileName, file)
+}
+
+func WriteCompletionContext() (io.Writer, error) {
+	dir, err := GetConfigFolder()
+	if err != nil {
+		return nil, err
+	}
+
+	filePath := path.Join(dir, CompleteFileName)
+
+	file, err := os.Create(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
+func GetCompletionContext() (string, error) {
+	dir, err := GetConfigFolder()
+	if err != nil {
+		return "", err
+	}
+
+	filePath := path.Join(dir, CompleteFileName)
+	return filePath, nil
 }
 
 func GetDeviceContext() (*DeviceContext, error) {
