@@ -490,13 +490,26 @@ func (r *queryResolver) InfraGetBYOKCluster(ctx context.Context, name string) (*
 }
 
 // InfratGetBYOKClusterSetupInstructions is the resolver for the infrat_getBYOKClusterSetupInstructions field.
-func (r *queryResolver) InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) ([]string, error) {
+func (r *queryResolver) InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) ([]*model.BYOKSetupInstruction, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	return r.Domain.GetBYOKClusterSetupInstructions(ictx, name)
+	bcsi, err := r.Domain.GetBYOKClusterSetupInstructions(ictx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	m := make([]*model.BYOKSetupInstruction, len(bcsi))
+	for i, v := range bcsi {
+		m[i], err  = fn.JsonConvertP[model.BYOKSetupInstruction](v)
+if err != nil {
+        return nil, err
+      }
+	}
+
+	return m, nil
 }
 
 // InfraListGlobalVPNs is the resolver for the infra_listGlobalVPNs field.
