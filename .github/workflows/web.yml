@@ -42,7 +42,7 @@ jobs:
         if: "!startsWith(github.ref, 'refs/heads/release-') && !startsWith(github.ref, 'refs/tags/')"
         run: |
           image_name="ghcr.io/${{ github.repository }}/web/${{matrix.app}}"
-          docker buildx build --build-arg APP=${{matrix.app}} -f web/${{matrix.dockerFile}} web -t "$image_name:test" --cache-from="type=registry,ref=$image_name:buildcache" --cache-to="type=registry,ref=$image_name:buildcache,mode=max"
+          docker buildx build --platform linux/amd64,linux/arm64 --build-arg APP=${{matrix.app}} -f web/${{matrix.dockerFile}} web -t "$image_name:test" --cache-from="type=registry,ref=$image_name:buildcache" --cache-to="type=registry,ref=$image_name:buildcache,mode=max"
 
       - name: Build & Push Image
         if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
@@ -62,4 +62,4 @@ jobs:
 
           set -e
           
-          docker buildx build --build-arg APP=${{matrix.app}} -f web/${{matrix.dockerFile}} web -t "$image_name:$IMAGE_TAG" --push --cache-from="type=registry,ref=$image_name:buildcache" --cache-to="type=registry,ref=$image_name:buildcache,mode=max"
+          docker buildx build --platform linux/amd64,linux/arm64 --build-arg APP=${{matrix.app}} -f web/${{matrix.dockerFile}} web -t "$image_name:$IMAGE_TAG" --push --cache-from="type=registry,ref=$image_name:buildcache" --cache-to="type=registry,ref=$image_name:buildcache,mode=max"
