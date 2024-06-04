@@ -146,10 +146,10 @@ export const cliQueries = (executor: IExecutor) => ({
   cli_getMresKeys: executor(
     gql`
       query Core_getManagedResouceOutputKeyValues(
-        $msvcName: String!
         $name: String!
+        $envName: String
       ) {
-        core_getManagedResouceOutputKeys(msvcName: $msvcName, name: $name)
+        core_getManagedResouceOutputKeys(name: $name, envName: $envName)
       }
     `,
     {
@@ -160,8 +160,11 @@ export const cliQueries = (executor: IExecutor) => ({
 
   cli_listMreses: executor(
     gql`
-      query Core_listManagedResources($pq: CursorPaginationIn) {
-        core_listManagedResources(pq: $pq) {
+      query Core_listManagedResources(
+        $pq: CursorPaginationIn
+        $search: SearchManagedResources
+      ) {
+        core_listManagedResources(pq: $pq, search: $search) {
           edges {
             node {
               displayName
@@ -184,11 +187,11 @@ export const cliQueries = (executor: IExecutor) => ({
     gql`
       query Core_getManagedResouceOutputKeyValues(
         $keyrefs: [ManagedResourceKeyRefIn]
-        $msvcName: String!
+        $envName: String
       ) {
         core_getManagedResouceOutputKeyValues(
           keyrefs: $keyrefs
-          msvcName: $msvcName
+          envName: $envName
         ) {
           key
           mresName
@@ -232,7 +235,6 @@ export const cliQueries = (executor: IExecutor) => ({
         $configQueries: [ConfigKeyRefIn]
         $secretQueries: [SecretKeyRefIn!]
         $mresQueries: [ManagedResourceKeyRefIn]
-        $msvcName: String!
       ) {
         configs: core_getConfigValues(
           envName: $envName
@@ -252,7 +254,7 @@ export const cliQueries = (executor: IExecutor) => ({
         }
         mreses: core_getManagedResouceOutputKeyValues(
           keyrefs: $mresQueries
-          msvcName: $msvcName
+          envName: $envName
         ) {
           key
           mresName
