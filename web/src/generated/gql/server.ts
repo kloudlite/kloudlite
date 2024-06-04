@@ -7553,8 +7553,8 @@ export type AuthCli_CoreCheckNameAvailabilityQuery = {
 };
 
 export type AuthCli_GetMresKeysQueryVariables = Exact<{
-  msvcName: Scalars['String']['input'];
   name: Scalars['String']['input'];
+  envName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type AuthCli_GetMresKeysQuery = {
@@ -7563,6 +7563,7 @@ export type AuthCli_GetMresKeysQuery = {
 
 export type AuthCli_ListMresesQueryVariables = Exact<{
   pq?: InputMaybe<CursorPaginationIn>;
+  search?: InputMaybe<SearchManagedResources>;
 }>;
 
 export type AuthCli_ListMresesQuery = {
@@ -7581,7 +7582,7 @@ export type AuthCli_GetMresConfigsValuesQueryVariables = Exact<{
     | Array<InputMaybe<ManagedResourceKeyRefIn>>
     | InputMaybe<ManagedResourceKeyRefIn>
   >;
-  msvcName: Scalars['String']['input'];
+  envName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type AuthCli_GetMresConfigsValuesQuery = {
@@ -7615,7 +7616,6 @@ export type AuthCli_GetConfigSecretMapQueryVariables = Exact<{
     | Array<InputMaybe<ManagedResourceKeyRefIn>>
     | InputMaybe<ManagedResourceKeyRefIn>
   >;
-  msvcName: Scalars['String']['input'];
 }>;
 
 export type AuthCli_GetConfigSecretMapQuery = {

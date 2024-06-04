@@ -21,7 +21,7 @@ import { LoadingPlaceHolder } from '~/console/components/loading';
 import ListV2 from '~/console/components/listV2';
 import { ListItem } from '~/console/components/console-list-components';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { IEnvironmentContext } from '../_layout';
 
@@ -226,8 +226,12 @@ export const ViewSecret = ({
 }) => {
   const api = useConsoleApi();
   const { environment } = useOutletContext<IEnvironmentContext>();
+  const [onYesClick, setOnYesClick] = useState(false);
   const { data, isLoading, error } = useCustomSwr(
-    () => `secret _${item.syncedOutputSecretRef?.metadata?.name}`,
+    () =>
+      onYesClick
+        ? `secret _${item.syncedOutputSecretRef?.metadata?.name}`
+        : null,
     async () => {
       if (!item.syncedOutputSecretRef?.metadata?.name) {
         toast.error('Secret not found');
@@ -260,11 +264,9 @@ export const ViewSecret = ({
       <Popup.Content>
         <MultiStep.Root currentStep={currentStep}>
           <MultiStep.Step step={0}>
-            {data && (
-              <div>
-                <p>{`Are you sure you want to view the secrets of '${data.displayName}'?`}</p>
-              </div>
-            )}
+            <div>
+              <p>{`Are you sure you want to view the secrets of '${item.syncedOutputSecretRef?.metadata?.name}'?`}</p>
+            </div>
           </MultiStep.Step>
           <MultiStep.Step step={1}>
             {isLoading ? (
@@ -325,7 +327,13 @@ export const ViewSecret = ({
       </Popup.Content>
       <Popup.Footer>
         {currentStep === 0 ? (
-          <Popup.Button content="Yes" onClick={() => onNext()} />
+          <Popup.Button
+            content="Yes"
+            onClick={() => {
+              onNext();
+              setOnYesClick(true);
+            }}
+          />
         ) : null}
       </Popup.Footer>
     </Popup.Root>
