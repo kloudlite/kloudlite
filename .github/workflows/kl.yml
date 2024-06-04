@@ -67,7 +67,7 @@ jobs:
 
           set -e
 
-          docker buildx build --platform linux/amd64,linux/arm64 -t "$image_name:$IMAGE_TAG" --build-arg VERSION=$IMAGE_TAG --build-context project=. klbox-docker --push --cache-from="type=registry,ref=$image_name:buildcache" --cache-to="type=registry,ref=$image_name:buildcache,mode=max"
+          docker buildx build --platform linux/amd64,linux/arm64 -t "$image_name:$IMAGE_TAG" --build-arg VERSION=$IMAGE_TAG --build-context project=. kl/klbox-docker --push --cache-from="type=registry,ref=$image_name:buildcache" --cache-to="type=registry,ref=$image_name:buildcache,mode=max"
 
   build:
     name: Build ${{ matrix.app }}-${{ matrix.platform }}-${{ matrix.arch }}
