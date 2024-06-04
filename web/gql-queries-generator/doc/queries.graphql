@@ -3292,7 +3292,10 @@ mutation consoleUpdateByokCluster($clusterName: String!, $displayName: String!) 
 }
 
 query consoleGetBYOKClusterInstructions($name: String!) {
-  infrat_getBYOKClusterSetupInstructions(name: $name)
+  infrat_getBYOKClusterSetupInstructions(name: $name) {
+    title
+    command
+  }
 }
 
 query consoleGetByokCluster($name: String!) {

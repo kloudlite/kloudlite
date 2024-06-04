@@ -50,17 +50,9 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
-            // displayName: props.data.displayName,
-            // name: parseName(props.data),
-            // recordType: props.data.spec?.recordType,
-            // record: props.data.spec?.record,
             isNameError: false,
           }
         : {
-            // name: '',
-            // displayName: '',
-            // recordType: recordTypes[0].value,
-            // record: '',
             isNameError: false,
             managedServiceName: '',
             managedResourceName: '',
@@ -80,18 +72,6 @@ const Root = (props: IDialog) => {
               envName: parseName(environment),
               msvcName: val.managedServiceName || '',
               mresName: val.managedResourceName || '',
-              //   externalApp: {
-              //     displayName: val.displayName,
-              //     metadata: {
-              //       name: val.name,
-              //     },
-              //     spec: {
-              //       recordType: validateExternalAppRecordType(
-              //         val.recordType || ''
-              //       ),
-              //       record: val.record || '',
-              //     },
-              //   },
             });
             if (e) {
               throw e[0];
@@ -120,6 +100,7 @@ const Root = (props: IDialog) => {
     return {
       label: item.displayName,
       value: parseName(item),
+      ready: item.status?.isReady,
       render: () => (
         <SelectItem label={item.displayName} value={parseName(item)} />
       ),
@@ -144,6 +125,7 @@ const Root = (props: IDialog) => {
     return {
       label: item.displayName,
       value: parseName(item),
+      ready: item.status?.isReady,
       render: () => (
         <SelectItem label={item.displayName} value={parseName(item)} />
       ),
@@ -168,7 +150,13 @@ const Root = (props: IDialog) => {
             value={values.managedServiceName}
             disabled={msvcIsLoading}
             placeholder="Select a Managed Service"
-            options={async () => msvcList}
+            options={async () => [
+              ...((msvcList &&
+                msvcList.filter((msvc) => {
+                  return msvc.ready;
+                })) ||
+                []),
+            ]}
             onChange={({ value }) => {
               handleChange('managedServiceName')(dummyEvent(value));
             }}
@@ -183,7 +171,13 @@ const Root = (props: IDialog) => {
             value={values.managedResourceName}
             disabled={mresIsLoading}
             placeholder="Select a Managed Resource"
-            options={async () => mresList}
+            options={async () => [
+              ...((mresList &&
+                mresList.filter((mres) => {
+                  return mres.ready;
+                })) ||
+                []),
+            ]}
             onChange={({ value }) => {
               handleChange('managedResourceName')(dummyEvent(value));
             }}

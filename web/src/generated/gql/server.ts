@@ -1270,6 +1270,11 @@ export type BuildRunIn = {
   displayName: Scalars['String']['input'];
 };
 
+export type ByokSetupInstructionIn = {
+  command: Scalars['String']['input'];
+  title: Scalars['String']['input'];
+};
+
 export type ConfigKeyValueRefIn = {
   configName: Scalars['String']['input'];
   key: Scalars['String']['input'];
@@ -4867,7 +4872,10 @@ export type ConsoleGetByokClusterInstructionsQueryVariables = Exact<{
 }>;
 
 export type ConsoleGetByokClusterInstructionsQuery = {
-  infrat_getBYOKClusterSetupInstructions?: Array<string>;
+  infrat_getBYOKClusterSetupInstructions?: Array<{
+    title: string;
+    command: string;
+  }>;
 };
 
 export type ConsoleGetByokClusterQueryVariables = Exact<{

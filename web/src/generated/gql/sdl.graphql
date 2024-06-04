@@ -198,6 +198,16 @@ type BYOKClusterPaginatedRecords {
   totalCount: Int!
 }
 
+type BYOKSetupInstruction {
+  command: String!
+  title: String!
+}
+
+input BYOKSetupInstructionIn {
+  command: String!
+  title: String!
+}
+
 type CheckAwsAccessOutput {
   installationUrl: String
   result: Boolean!
@@ -3862,7 +3872,7 @@ type Query {
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
   infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
-  infrat_getBYOKClusterSetupInstructions(name: String!): [String!]
+  infrat_getBYOKClusterSetupInstructions(name: String!): [BYOKSetupInstruction!]
   iot_getApp(deviceBlueprintName: String!, name: String!, projectName: String!): IOTApp
   iot_getDeployment(name: String!, projectName: String!): IOTDeployment
   iot_getDevice(deploymentName: String!, name: String!, projectName: String!): IOTDevice

@@ -129,14 +129,18 @@ const ByokInstructionsPopup = ({
               <span className="flex flex-wrap items-center gap-md py-lg">
                 Please follow below instruction for further steps
               </span>
-              {data.map((d) => {
+              {data.map((d, index) => {
                 return (
-                  <CodeView
-                    key={d}
-                    preClassName="!overflow-none text-wrap break-words"
-                    copy
-                    data={d || ''}
-                  />
+                  <div key={d.title} className="flex flex-col gap-lg pb-2xl">
+                    <span className="bodyMd-medium text-text-strong font-bold">
+                      Step {`${index + 1}: ${d.title}`}
+                    </span>
+                    <CodeView
+                      preClassName="!overflow-none text-wrap break-words"
+                      copy
+                      data={d.command || ''}
+                    />
+                  </div>
                 );
               })}
             </div>
