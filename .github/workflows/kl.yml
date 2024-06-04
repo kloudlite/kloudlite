@@ -167,7 +167,7 @@ jobs:
           mkdir bin
           mkdir out
           cd kl
-          go build --main -o bin/${{ matrix.app }} -ldflags "${{ env.FLAGS }}" main.go
+          go build --tags main -o bin/${{ matrix.app }} -ldflags "${{ env.FLAGS }}" main.go
 
       - name: Build Windows
         if: matrix.goos == 'windows'
