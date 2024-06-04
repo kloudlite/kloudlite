@@ -95,8 +95,8 @@ jobs:
             arch: amd64
           - os: macos-13
             arch: arm64
-          - os: ubuntu-latest
-            arch: arm64
+          # - os: ubuntu-latest
+          #   arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
