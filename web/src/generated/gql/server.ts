@@ -1270,6 +1270,11 @@ export type BuildRunIn = {
   displayName: Scalars['String']['input'];
 };
 
+export type ByokSetupInstructionIn = {
+  command: Scalars['String']['input'];
+  title: Scalars['String']['input'];
+};
+
 export type ConfigKeyValueRefIn = {
   configName: Scalars['String']['input'];
   key: Scalars['String']['input'];
@@ -4867,7 +4872,10 @@ export type ConsoleGetByokClusterInstructionsQueryVariables = Exact<{
 }>;
 
 export type ConsoleGetByokClusterInstructionsQuery = {
-  infrat_getBYOKClusterSetupInstructions?: Array<string>;
+  infrat_getBYOKClusterSetupInstructions?: Array<{
+    title: string;
+    command: string;
+  }>;
 };
 
 export type ConsoleGetByokClusterQueryVariables = Exact<{
@@ -7545,8 +7553,8 @@ export type AuthCli_CoreCheckNameAvailabilityQuery = {
 };
 
 export type AuthCli_GetMresKeysQueryVariables = Exact<{
-  msvcName: Scalars['String']['input'];
   name: Scalars['String']['input'];
+  envName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type AuthCli_GetMresKeysQuery = {
@@ -7555,6 +7563,7 @@ export type AuthCli_GetMresKeysQuery = {
 
 export type AuthCli_ListMresesQueryVariables = Exact<{
   pq?: InputMaybe<CursorPaginationIn>;
+  search?: InputMaybe<SearchManagedResources>;
 }>;
 
 export type AuthCli_ListMresesQuery = {
@@ -7573,7 +7582,7 @@ export type AuthCli_GetMresConfigsValuesQueryVariables = Exact<{
     | Array<InputMaybe<ManagedResourceKeyRefIn>>
     | InputMaybe<ManagedResourceKeyRefIn>
   >;
-  msvcName: Scalars['String']['input'];
+  envName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type AuthCli_GetMresConfigsValuesQuery = {
@@ -7607,7 +7616,6 @@ export type AuthCli_GetConfigSecretMapQueryVariables = Exact<{
     | Array<InputMaybe<ManagedResourceKeyRefIn>>
     | InputMaybe<ManagedResourceKeyRefIn>
   >;
-  msvcName: Scalars['String']['input'];
 }>;
 
 export type AuthCli_GetConfigSecretMapQuery = {

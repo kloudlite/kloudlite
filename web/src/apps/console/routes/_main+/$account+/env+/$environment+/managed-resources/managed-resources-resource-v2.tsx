@@ -26,7 +26,6 @@ import ListV2 from '~/console/components/listV2';
 import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { ViewSecret } from './handle-managed-resource-v2';
-// import { ViewSecret } from './handle-managed-resource';
 
 const RESOURCE_NAME = 'managed resource';
 type BaseType = ExtractNodeType<IManagedResources>;

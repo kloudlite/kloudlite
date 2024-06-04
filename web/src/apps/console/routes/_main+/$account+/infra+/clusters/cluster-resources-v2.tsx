@@ -51,6 +51,7 @@ import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
+import { LoadingPlaceHolder } from '~/console/components/loading';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
@@ -110,36 +111,53 @@ const ByokInstructionsPopup = ({
 }) => {
   const api = useConsoleApi();
 
-  const { data } = useCustomSwr(item.metadata?.name || null, async () => {
-    if (!item.metadata?.name) {
-      throw new Error('Invalid cluster name');
+  const { data, isLoading, error } = useCustomSwr(
+    item.metadata?.name || null,
+    async () => {
+      if (!item.metadata?.name) {
+        throw new Error('Invalid cluster name');
+      }
+      return api.getBYOKClusterInstructions({
+        name: item.metadata.name,
+      });
     }
-    return api.getBYOKClusterInstructions({
-      name: item.metadata.name,
-    });
-  });
+  );
 
   return (
     <Popup.Root onOpenChange={onClose} show={show} className="!w-[800px]">
       <Popup.Header>{`${clusterName} setup instructions:`}</Popup.Header>
       <Popup.Content>
         <form className="flex flex-col gap-2xl">
-          {data && (
-            <div className="flex flex-col gap-sm text-start ">
-              <span className="flex flex-wrap items-center gap-md py-lg">
-                Please follow below instruction for further steps
-              </span>
-              {data.map((d) => {
-                return (
-                  <CodeView
-                    key={d}
-                    preClassName="!overflow-none text-wrap break-words"
-                    copy
-                    data={d || ''}
-                  />
-                );
-              })}
-            </div>
+          {error && (
+            <span className="bodyMd-medium text-text-strong">
+              Error while fetching instructions
+            </span>
+          )}
+          {isLoading ? (
+            <LoadingPlaceHolder />
+          ) : (
+            data && (
+              <div className="flex flex-col gap-sm text-start ">
+                <span className="flex flex-wrap items-center gap-md py-lg">
+                  Please follow below instruction for further steps
+                </span>
+
+                {data.map((d, index) => {
+                  return (
+                    <div key={d.title} className="flex flex-col gap-lg pb-2xl">
+                      <span className="bodyMd-medium text-text-strong font-bold">
+                        Step {`${index + 1}: ${d.title}`}
+                      </span>
+                      <CodeView
+                        preClassName="!overflow-none text-wrap break-words"
+                        copy
+                        data={d.command || ''}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )
           )}
         </form>
       </Popup.Content>

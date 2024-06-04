@@ -3292,7 +3292,10 @@ mutation consoleUpdateByokCluster($clusterName: String!, $displayName: String!) 
 }
 
 query consoleGetBYOKClusterInstructions($name: String!) {
-  infrat_getBYOKClusterSetupInstructions(name: $name)
+  infrat_getBYOKClusterSetupInstructions(name: $name) {
+    title
+    command
+  }
 }
 
 query consoleGetByokCluster($name: String!) {
@@ -6000,12 +6003,12 @@ query authCli_coreCheckNameAvailability($resType: ConsoleResType!, $name: String
   }
 }
 
-query authCli_getMresKeys($msvcName: String!, $name: String!) {
-  core_getManagedResouceOutputKeys(msvcName: $msvcName, name: $name)
+query authCli_getMresKeys($name: String!, $envName: String) {
+  core_getManagedResouceOutputKeys(name: $name, envName: $envName)
 }
 
-query authCli_listMreses($pq: CursorPaginationIn) {
-  core_listManagedResources(pq: $pq) {
+query authCli_listMreses($pq: CursorPaginationIn, $search: SearchManagedResources) {
+  core_listManagedResources(pq: $pq, search: $search) {
     edges {
       node {
         displayName
@@ -6018,8 +6021,8 @@ query authCli_listMreses($pq: CursorPaginationIn) {
   }
 }
 
-query authCli_getMresConfigsValues($keyrefs: [ManagedResourceKeyRefIn], $msvcName: String!) {
-  core_getManagedResouceOutputKeyValues(keyrefs: $keyrefs, msvcName: $msvcName) {
+query authCli_getMresConfigsValues($keyrefs: [ManagedResourceKeyRefIn], $envName: String) {
+  core_getManagedResouceOutputKeyValues(keyrefs: $keyrefs, envName: $envName) {
     key
     mresName
     value
@@ -6037,7 +6040,7 @@ query authCli_infraCheckNameAvailability($resType: ResType!, $name: String!, $cl
   }
 }
 
-query authCli_getConfigSecretMap($envName: String!, $configQueries: [ConfigKeyRefIn], $secretQueries: [SecretKeyRefIn!], $mresQueries: [ManagedResourceKeyRefIn], $msvcName: String!) {
+query authCli_getConfigSecretMap($envName: String!, $configQueries: [ConfigKeyRefIn], $secretQueries: [SecretKeyRefIn!], $mresQueries: [ManagedResourceKeyRefIn]) {
   configs: core_getConfigValues(envName: $envName, queries: $configQueries) {
     configName
     key
@@ -6050,7 +6053,7 @@ query authCli_getConfigSecretMap($envName: String!, $configQueries: [ConfigKeyRe
   }
   mreses: core_getManagedResouceOutputKeyValues(
     keyrefs: $mresQueries
-    msvcName: $msvcName
+    envName: $envName
   ) {
     key
     mresName

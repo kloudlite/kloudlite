@@ -21,7 +21,7 @@ import { LoadingPlaceHolder } from '~/console/components/loading';
 import ListV2 from '~/console/components/listV2';
 import { ListItem } from '~/console/components/console-list-components';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { IEnvironmentContext } from '../_layout';
 
@@ -50,17 +50,9 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
-            // displayName: props.data.displayName,
-            // name: parseName(props.data),
-            // recordType: props.data.spec?.recordType,
-            // record: props.data.spec?.record,
             isNameError: false,
           }
         : {
-            // name: '',
-            // displayName: '',
-            // recordType: recordTypes[0].value,
-            // record: '',
             isNameError: false,
             managedServiceName: '',
             managedResourceName: '',
@@ -80,18 +72,6 @@ const Root = (props: IDialog) => {
               envName: parseName(environment),
               msvcName: val.managedServiceName || '',
               mresName: val.managedResourceName || '',
-              //   externalApp: {
-              //     displayName: val.displayName,
-              //     metadata: {
-              //       name: val.name,
-              //     },
-              //     spec: {
-              //       recordType: validateExternalAppRecordType(
-              //         val.recordType || ''
-              //       ),
-              //       record: val.record || '',
-              //     },
-              //   },
             });
             if (e) {
               throw e[0];
@@ -120,6 +100,7 @@ const Root = (props: IDialog) => {
     return {
       label: item.displayName,
       value: parseName(item),
+      ready: item.status?.isReady,
       render: () => (
         <SelectItem label={item.displayName} value={parseName(item)} />
       ),
@@ -144,6 +125,7 @@ const Root = (props: IDialog) => {
     return {
       label: item.displayName,
       value: parseName(item),
+      ready: item.status?.isReady,
       render: () => (
         <SelectItem label={item.displayName} value={parseName(item)} />
       ),
@@ -168,7 +150,13 @@ const Root = (props: IDialog) => {
             value={values.managedServiceName}
             disabled={msvcIsLoading}
             placeholder="Select a Managed Service"
-            options={async () => msvcList}
+            options={async () => [
+              ...((msvcList &&
+                msvcList.filter((msvc) => {
+                  return msvc.ready;
+                })) ||
+                []),
+            ]}
             onChange={({ value }) => {
               handleChange('managedServiceName')(dummyEvent(value));
             }}
@@ -183,7 +171,13 @@ const Root = (props: IDialog) => {
             value={values.managedResourceName}
             disabled={mresIsLoading}
             placeholder="Select a Managed Resource"
-            options={async () => mresList}
+            options={async () => [
+              ...((mresList &&
+                mresList.filter((mres) => {
+                  return mres.ready;
+                })) ||
+                []),
+            ]}
             onChange={({ value }) => {
               handleChange('managedResourceName')(dummyEvent(value));
             }}
@@ -232,8 +226,12 @@ export const ViewSecret = ({
 }) => {
   const api = useConsoleApi();
   const { environment } = useOutletContext<IEnvironmentContext>();
+  const [onYesClick, setOnYesClick] = useState(false);
   const { data, isLoading, error } = useCustomSwr(
-    () => `secret _${item.syncedOutputSecretRef?.metadata?.name}`,
+    () =>
+      onYesClick
+        ? `secret _${item.syncedOutputSecretRef?.metadata?.name}`
+        : null,
     async () => {
       if (!item.syncedOutputSecretRef?.metadata?.name) {
         toast.error('Secret not found');
@@ -266,11 +264,9 @@ export const ViewSecret = ({
       <Popup.Content>
         <MultiStep.Root currentStep={currentStep}>
           <MultiStep.Step step={0}>
-            {data && (
-              <div>
-                <p>{`Are you sure you want to view the secrets of '${data.displayName}'?`}</p>
-              </div>
-            )}
+            <div>
+              <p>{`Are you sure you want to view the secrets of '${item.syncedOutputSecretRef?.metadata?.name}'?`}</p>
+            </div>
           </MultiStep.Step>
           <MultiStep.Step step={1}>
             {isLoading ? (
@@ -331,7 +327,13 @@ export const ViewSecret = ({
       </Popup.Content>
       <Popup.Footer>
         {currentStep === 0 ? (
-          <Popup.Button content="Yes" onClick={() => onNext()} />
+          <Popup.Button
+            content="Yes"
+            onClick={() => {
+              onNext();
+              setOnYesClick(true);
+            }}
+          />
         ) : null}
       </Popup.Footer>
     </Popup.Root>
