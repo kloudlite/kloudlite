@@ -3,8 +3,6 @@ package sshclient
 import (
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -57,30 +55,7 @@ func DoSSH(sc SSHConfig) error {
 	session.Stderr = os.Stderr
 	session.Stdin = os.Stdin
 
-	updateSize := func() {
-		width, height, err := term.GetSize(int(os.Stdin.Fd()))
-		if err != nil {
-			width, height = 100, 30
-		}
-
-		session.WindowChange(height, width)
-	}
-
-	go func() {
-		// Set up channel on which to send signal notifications.
-		sigCh := make(chan os.Signal, 1)
-		// Notify on SIGWINCH (window size change)
-		signal.Notify(sigCh, syscall.SIGWINCH)
-
-		// Get the initial terminal size.
-
-		go func() {
-			for range sigCh {
-				updateSize()
-			}
-		}()
-
-	}()
+	go handleResize(session)
 
 	width, height, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
