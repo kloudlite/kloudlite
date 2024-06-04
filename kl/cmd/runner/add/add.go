@@ -6,8 +6,8 @@ import (
 
 var Command = &cobra.Command{
 	Use:   "add",
-	Short: "Add environment resources to your kl-config file",
-	Long:  "Add secrets, configs, managed-resources and config-mounts to your kl-config file",
+	Short: "add environment resources to your kl-config file",
+	Long:  "This command will add the environment resources to your kl-config file",
 }
 
 func init() {

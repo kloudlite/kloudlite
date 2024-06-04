@@ -13,11 +13,9 @@ import (
 )
 
 var configCmd = &cobra.Command{
-	Use:   "config",
-	Short: "Get config entries",
-	Example: fn.Desc(`  {cmd} get config <configname> 		# list config entries
-  {cmd}  get config <configname> -o <format>	# get config entries in yaml/json format
-`),
+	Use:   "config [name]",
+	Short: "list config entries",
+	Long:  "use this command to list entries of specific config",
 	Run: func(cmd *cobra.Command, args []string) {
 		configName := ""
 

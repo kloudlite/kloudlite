@@ -8,7 +8,7 @@ import (
 
 var sshCmd = &cobra.Command{
 	Use:   "ssh",
-	Short: "get ssh access to the box",
+	Short: "SSH into the running box",
 	Run: func(cmd *cobra.Command, args []string) {
 		c, err := boxpkg.NewClient(cmd, args)
 		if err != nil {

@@ -11,20 +11,14 @@ import (
 
 var authStatusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "user logged in to kloudlite",
-	Long:  `This command provides details of the user logged in to kloudlite.`,
-	Example: `# Login to kloudlite
-{cmd} auth status 
-
-when you execute the above command it will print the user name associated with the current effective user ID.
-	`,
+	Short: "get the current user's name and email",
 	Run: func(_ *cobra.Command, _ []string) {
 		if u, err := server.GetCurrentUser(); err != nil {
 			fn.PrintError(err)
 			return
 		} else {
 			fmt.Printf("You are logged in as %s (%s)\n",
-				text.Blue(u.Name),
+				text.Bold(text.Green(u.Name)),
 				text.Blue(u.Email),
 			)
 			return

@@ -66,7 +66,7 @@ func Load(envs map[string]string, args []string) error {
 
 	for k, v := range envs {
 		if len(args) == 0 {
-			fn.Log("%s=%q\n", k, v)
+			fn.Logf("%s=%q\n", k, v)
 		} else {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 		}

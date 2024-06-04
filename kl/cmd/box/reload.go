@@ -8,7 +8,7 @@ import (
 
 var reloadCmd = &cobra.Command{
 	Use:   "reload",
-	Short: "reload running box",
+	Short: "reload the box according to the current kl.yml configuration",
 	Run: func(cmd *cobra.Command, args []string) {
 		c, err := boxpkg.NewClient(cmd, args)
 		if err != nil {

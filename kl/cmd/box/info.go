@@ -7,8 +7,8 @@ import (
 )
 
 var infoCmd = &cobra.Command{
-	Use:   "info",
-	Short: "info of running box",
+	Use:   "info [name]",
+	Short: "get info about a container",
 	Run: func(cmd *cobra.Command, args []string) {
 		c, err := boxpkg.NewClient(cmd, args)
 		if err != nil {
@@ -16,7 +16,8 @@ var infoCmd = &cobra.Command{
 			return
 		}
 
-		s := fn.ParseStringFlag(cmd, "name")
+		// s := fn.ParseStringFlag(cmd, "name")
+		s := ""
 		if s == "" && len(args) > 0 {
 			s = args[0]
 		}
@@ -29,5 +30,5 @@ var infoCmd = &cobra.Command{
 }
 
 func init() {
-	infoCmd.Flags().StringP("name", "n", "", "container name")
+	// infoCmd.Flags().StringP("name", "n", "", "container name")
 }

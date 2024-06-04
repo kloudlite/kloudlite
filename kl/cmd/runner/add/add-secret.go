@@ -14,18 +14,12 @@ import (
 )
 
 var secCmd = &cobra.Command{
-	Use:   "secret",
-	Short: "Add secret references to your kl-config",
-	Long: `
-This command will add secret entry references from current environement to your kl-config file.
-	`,
+	Use:   "secret [name]",
+	Short: "add secret references to your kl-config",
+	Long:  `This command will add secret entry references from current environement to your kl-config file.`,
 	Example: `
-  kl add secret 		# add secret and entry by selecting from list
-  kl add secret --name <name> 	# add entry by providing secret name
-  kl add secret <name>		# add all entries of config by providing secret name
-  
-  # Customise your mapping to local keys
-  kl add secret <name> -m <ref_key>=<your_local_key>
+  kl add secret 		# add secret and entry by selecting from list (default)
+  kl add secret [name] 	# add entry by providing secret name
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := selectAndAddSecret(cmd, args)
@@ -37,11 +31,11 @@ This command will add secret entry references from current environement to your 
 }
 
 func selectAndAddSecret(cmd *cobra.Command, args []string) error {
-	m := fn.ParseStringFlag(cmd, "map")
-	name := fn.ParseStringFlag(cmd, "name")
+	// m := fn.ParseStringFlag(cmd, "map")
 	filePath := fn.ParseKlFile(cmd)
 
-	if name == "" && len(args) >= 1 {
+	name := ""
+	if len(args) >= 1 {
 		name = args[0]
 	}
 
@@ -97,6 +91,8 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	}
 
 	selectedSecretKey := &KV{}
+
+	m := ""
 
 	if m != "" {
 		kk := strings.Split(m, "=")
@@ -210,8 +206,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 }
 
 func init() {
-	secCmd.Flags().StringP("map", "m", "", "secret_key=your_var_key")
-	secCmd.Flags().StringP("name", "n", "", "secret name")
+	// secCmd.Flags().StringP("map", "m", "", "secret_key=your_var_key")
 
 	secCmd.Aliases = append(secCmd.Aliases, "sec")
 	fn.WithKlFile(secCmd)

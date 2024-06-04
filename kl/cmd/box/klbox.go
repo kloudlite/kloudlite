@@ -7,7 +7,7 @@ import (
 
 var BoxCmd = &cobra.Command{
 	Use:   "box",
-	Short: "box [start | stop | ssh | reload | ps]",
+	Short: "start, stop, reload, ssh and get running box info",
 }
 
 func init() {

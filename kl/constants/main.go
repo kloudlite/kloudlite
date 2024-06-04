@@ -42,7 +42,7 @@ var (
 	}()
 
 	UpdateURL = func() string {
-		return "https://kl.kloudlite.io/kloudlite/kl"
+		return "https://kl.kloudlite.io/kloudlite"
 	}()
 )
 

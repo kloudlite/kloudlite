@@ -16,7 +16,7 @@ KL_LOCK_PATH=/home/kl/workspace/kl.lock
 KL_DEVBOX_PATH=/home/kl/.kl/devbox
 KL_DEVBOX_JSON_PATH=$KL_DEVBOX_PATH/devbox.json
 KL_DEVBOX_LOCK_PATH=$KL_DEVBOX_PATH/devbox.lock
-KL_DEVBOX_ENV_PATH=/home/kl/.kl/devbox-env.sh
+KL_DEVBOX_ENV_PATH=/home/kl/.kl/devbox/devbox-env.sh
 
 mkdir -p $KL_DEVBOX_PATH
 
