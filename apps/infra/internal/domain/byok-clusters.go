@@ -166,16 +166,22 @@ func (d *domain) GetBYOKCluster(ctx InfraContext, name string) (*entities.BYOKCl
 	return c, nil
 }
 
-func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string) ([]string, error) {
+type BYOKSetupInstruction struct {
+	Title   string `json:"title"`
+	Command string `json:"command"`
+}
+
+func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string) ([]BYOKSetupInstruction, error) {
 	cluster, err := d.findBYOKCluster(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
-	return []string{
-		`helm repo add kloudlite https://kloudlite.github.io/helm-charts`,
-		`helm repo update kloudlite`,
-		fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --version %s --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set byok.enabled=true --set helmCharts.ingressNginx.enabled=true --set helmCharts.certManager.enabled=true`, d.env.KloudliteRelease, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr),
+	return []BYOKSetupInstruction{
+		{Title: "Add Helm Repo", Command: "helm repo add kloudlite https://kloudlite.github.io/helm-charts"},
+		{Title: "Update Kloudlite Repo", Command: "helm repo update kloudlite"},
+		{Title: "Install kloudlite CRDs", Command: fmt.Sprintf("kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/%s/crds-all.yml", d.env.KloudliteRelease)},
+		{Title: "Install Kloudlite Agent", Command: fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --version %s --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set byok.enabled=true --set helmCharts.ingressNginx.enabled=true --set helmCharts.certManager.enabled=true`, d.env.KloudliteRelease, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr)},
 	}, nil
 }
 
