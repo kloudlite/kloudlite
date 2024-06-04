@@ -28,7 +28,6 @@ import { asyncPopupWindow, renderCloudProvider } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { Button, IconButton } from '~/components/atoms/button';
-import Pulsable from '~/console/components/pulsable';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
@@ -38,6 +37,7 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import { Badge } from '~/components/atoms/badge';
 import ListV2 from '~/console/components/listV2';
 import ConsoleAvatar from '~/console/components/console-avatar';
+import Pulsable from '~/root/lib/client/components/pulsable';
 import HandleProvider from './handle-provider';
 
 const RESOURCE_NAME = 'cloud provider';

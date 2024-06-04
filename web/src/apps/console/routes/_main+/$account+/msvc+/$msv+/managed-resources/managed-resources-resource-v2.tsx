@@ -26,8 +26,7 @@ import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-// import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
-import HandleManagedResources from './handle-managed-resource';
+import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
 
 const RESOURCE_NAME = 'managed resource';
 type BaseType = ExtractNodeType<IManagedResources>;
@@ -308,7 +307,7 @@ const ManagedResourceResourcesV2 = ({
         }}
       />
 
-      {/* {showSecret && (
+      {showSecret && (
         <ViewSecret
           show={!!showSecret}
           setShow={() => {
@@ -316,7 +315,7 @@ const ManagedResourceResourcesV2 = ({
           }}
           item={showSecret!}
         />
-      )} */}
+      )}
     </>
   );
 };

@@ -13,7 +13,7 @@ import logger from '~/root/lib/client/helpers/log';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { socketUrl } from '~/root/lib/configs/base-url.cjs';
 import { sleep } from '~/root/lib/utils/common';
-import { usePulsableLoading } from '~/console/components/pulsable';
+import { usePulsableLoading } from '../../components/pulsable';
 
 type IFor = 'logs' | 'resource-update';
 
