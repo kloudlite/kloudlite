@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/csv"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -12,7 +11,6 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"syscall"
 
 	"github.com/kloudlite/kl/domain/client"
@@ -94,14 +92,6 @@ func Run() error {
 }
 
 func RunScript(script string) error {
-
-	r := csv.NewReader(strings.NewReader(script))
-	r.Comma = ' '
-	cmdArr, err := r.Read()
-	if err != nil {
-		return err
-	}
-
 	username := "kl"
 
 	// Lookup the user
@@ -125,7 +115,7 @@ func RunScript(script string) error {
 	}
 
 	// Prepare the command
-	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
+	cmd := exec.Command("bash", "-c", script)
 
 	// Set the UID and GID for the command
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -135,7 +125,7 @@ func RunScript(script string) error {
 		},
 	}
 
-	fn.Logf("[%s] %s", text.Blue("+"), strings.Join(cmdArr, " "))
+	fn.Logf("[%s] %s", text.Blue("+"), script)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = "/home/kl/workspace"
