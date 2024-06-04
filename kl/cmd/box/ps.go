@@ -7,8 +7,8 @@ import (
 )
 
 var psCmd = &cobra.Command{
-	Use:   "ps",
-	Short: "list running boxes",
+	Use:   "ls",
+	Short: "list all running boxes",
 	Run: func(cmd *cobra.Command, args []string) {
 		c, err := boxpkg.NewClient(cmd, args)
 		if err != nil {

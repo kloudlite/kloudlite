@@ -14,24 +14,9 @@ import (
 	"strings"
 )
 
-func openBrowser(url string) error {
-	var cmd string
-	switch runtime.GOOS {
-	case constants.RuntimeDarwin:
-		cmd = "open"
-	case constants.RuntimeWindows:
-		cmd = "cmd /c start"
-	default:
-		cmd = "xdg-open"
-	}
-	return exec.Command(cmd, url).Start()
-}
-
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "login to kloudlite",
-	Example: fn.Desc(`# Login to kloudlite
-{cmd} auth login`),
 	Run: func(_ *cobra.Command, _ []string) {
 		loginId, err := server.CreateRemoteLogin()
 		if err != nil {
@@ -72,3 +57,18 @@ var loginCmd = &cobra.Command{
 
 	},
 }
+
+func openBrowser(url string) error {
+	var cmd string
+	switch runtime.GOOS {
+	case constants.RuntimeDarwin:
+		cmd = "open"
+	case constants.RuntimeWindows:
+		cmd = "cmd /c start"
+	default:
+		cmd = "xdg-open"
+	}
+	return exec.Command(cmd, url).Start()
+}
+
+func init() {}

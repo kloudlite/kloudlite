@@ -15,33 +15,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func RenameKey(key string) string {
-	regexPattern := `[^a-zA-Z0-9]`
-
-	regexpCompiled, err := regexp.Compile(regexPattern)
-	if err != nil {
-		fn.Log(text.Yellow(fmt.Sprintf("[#] error compiling regex pattern: %s", regexPattern)))
-		return key
-	}
-
-	resultString := regexpCompiled.ReplaceAllString(key, "_")
-
-	return strings.ToUpper(resultString)
-}
-
 var confCmd = &cobra.Command{
-	Use:   "config",
-	Short: "Add config references to your kl-config",
+	Use:   "config [name]",
+	Short: "add config references to your kl-config",
 	Long: `
 This command will add config entry references from current environment to your kl-config file.
 	`,
 	Example: `
   kl add config 		# add config and entry by selecting from list
-  kl add config --name <name> 	# add entry by providing config name
-  kl add config <name>		# add all entries of config by providing config name
-  
-  # Customise your mapping to local keys
-  kl add config <name> -m <ref_key>=<your_local_key>
+  kl add config [name] 		# add all entries of config by providing config name
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := selectAndAddConfig(cmd, args)
@@ -53,12 +35,13 @@ This command will add config entry references from current environment to your k
 }
 
 func selectAndAddConfig(cmd *cobra.Command, args []string) error {
-	name := fn.ParseStringFlag(cmd, "name")
-	m := fn.ParseStringFlag(cmd, "map")
+	// name := fn.ParseStringFlag(cmd, "name")
+	// m := fn.ParseStringFlag(cmd, "map")
 
 	filePath := fn.ParseKlFile(cmd)
 
-	if name == "" && len(args) >= 1 {
+	name := ""
+	if len(args) >= 1 {
 		name = args[0]
 	}
 
@@ -113,6 +96,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 
 	selectedConfigKey := &KV{}
 
+	m := ""
 	if m != "" {
 		kk := strings.Split(m, "=")
 		if len(kk) != 2 {
@@ -224,8 +208,22 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func RenameKey(key string) string {
+	regexPattern := `[^a-zA-Z0-9]`
+
+	regexpCompiled, err := regexp.Compile(regexPattern)
+	if err != nil {
+		fn.Log(text.Yellow(fmt.Sprintf("[#] error compiling regex pattern: %s", regexPattern)))
+		return key
+	}
+
+	resultString := regexpCompiled.ReplaceAllString(key, "_")
+
+	return strings.ToUpper(resultString)
+}
+
 func init() {
-	confCmd.Flags().StringP("map", "m", "", "config_key=your_var_key")
+	// confCmd.Flags().StringP("map", "m", "", "config_key=your_var_key")
 	confCmd.Flags().StringP("name", "n", "", "config name")
 	confCmd.Aliases = append(confCmd.Aliases, "conf")
 	fn.WithKlFile(confCmd)

@@ -9,14 +9,7 @@ import (
 var Cmd = &cobra.Command{
 	Use:   "intercept",
 	Short: "intercept app to tunnel trafic to your device",
-	Long: `intercept app to tunnel trafic to your device
-Examples:
-	# intercept app with selected vpn device
-  kl vpn intercept start --app <app_name> --port <port>:<your_local_port> 
-
-	# stop intercept app with selected vpn device
-	kl vpn intercept stop --app <app_name>
-	`,
+	Long:  `use this command to intercept an app to tunnel trafic to your device`,
 }
 
 func init() {
@@ -34,5 +27,4 @@ func init() {
 	Cmd.AddCommand(stopCmd)
 
 	Cmd.Aliases = append(startCmd.Aliases, "inc")
-	Cmd.Flags().StringP("app", "a", "", "app name")
 }

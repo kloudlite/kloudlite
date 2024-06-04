@@ -9,7 +9,7 @@ import (
 var stopAllCmd = &cobra.Command{
 	Hidden: true,
 	Use:    "stop-all",
-	Short:  "stop all running boxes",
+	Short:  "stop all the running boxes",
 	Run: func(cmd *cobra.Command, args []string) {
 		c, err := boxpkg.NewClient(cmd, args)
 		if err != nil {

@@ -11,17 +11,17 @@ import (
 )
 
 var startCmd = &cobra.Command{
-	Use:   "start",
-	Short: "start intercept app to tunnel trafic to your device",
+	Use:   "start [app_name]",
+	Short: "start tunneling the traffic to your device",
 	Long: `start intercept app to tunnel trafic to your device
 Examples:
 	# intercept app with selected vpn device
-  kl vpn intercept start --app <app_name> --port <port>:<your_local_port>
-
+  kl intercept start [app_name] --port <port>:<your_local_port>
 	`,
 
 	Run: func(cmd *cobra.Command, _ []string) {
-		app := fn.ParseStringFlag(cmd, "app")
+		// app := fn.ParseStringFlag(cmd, "app")
+		app := ""
 		maps, err := cmd.Flags().GetStringArray("port")
 		if err != nil {
 			fn.PrintError(err)
@@ -72,7 +72,7 @@ Examples:
 }
 
 func init() {
-	startCmd.Flags().StringP("app", "a", "", "app name")
+	// startCmd.Flags().StringP("app", "a", "", "app name")
 	startCmd.Flags().StringArrayP(
 		"port", "p", []string{},
 		"expose port <server_port>:<local_port> while intercepting app",

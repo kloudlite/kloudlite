@@ -11,15 +11,8 @@ import (
 
 var InitCommand = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize your kl-config file with some sample values",
-	Long: `kl init
-
-This command initialize a kl-config.
-
-Examples:
-  # Initialize the kl-config file
-  kl init
-	`,
+	Short: "initialize a kl-config file",
+	Long:  `use this command to initialize a kl-config file`,
 
 	Run: func(cmd *cobra.Command, _ []string) {
 

@@ -10,13 +10,15 @@ import (
 )
 
 var mresCmd = &cobra.Command{
-	Use:   "mres",
-	Short: "Add managed resource references to your kl-config",
+	Use:   "mres [name]",
+	Short: "add managed resource references to your kl-config",
 	Long: `
-This command will add secret entry references from current environement to your kl-config file.
+This command will add secret entry of managed resource references from current environement to your kl-config file.
 `,
-	Example: `  # add managed resource by selecting one
-  kl add mres`,
+	Example: ` 
+  kl add mres # add mres secret entry to your kl-config as env var
+  kl add  mres [name] # add specific mres secret entry to your kl-config as env var by providing mres name
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if err := AddMres(cmd, args); err != nil {
@@ -117,6 +119,6 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 }
 
 func init() {
-	mresCmd.Flags().StringP("name", "n", "", "managed resource name")
+	// mresCmd.Flags().StringP("name", "n", "", "managed resource name")
 	fn.WithKlFile(mresCmd)
 }
