@@ -122,6 +122,11 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	BYOKSetupInstruction struct {
+		Command func(childComplexity int) int
+		Title   func(childComplexity int) int
+	}
+
 	CheckAwsAccessOutput struct {
 		InstallationURL func(childComplexity int) int
 		Result          func(childComplexity int) int
@@ -1587,7 +1592,7 @@ type QueryResolver interface {
 	InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error)
 	InfraListBYOKClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.BYOKClusterPaginatedRecords, error)
 	InfraGetBYOKCluster(ctx context.Context, name string) (*entities.BYOKCluster, error)
-	InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) ([]string, error)
+	InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) ([]*model.BYOKSetupInstruction, error)
 	InfraListGlobalVPNs(ctx context.Context, search *model.SearchGlobalVPNs, pagination *repos.CursorPagination) (*model.GlobalVPNPaginatedRecords, error)
 	InfraGetGlobalVpn(ctx context.Context, name string) (*entities.GlobalVPN, error)
 	InfraListGlobalVPNDevices(ctx context.Context, gvpn string, search *model.SearchGlobalVPNDevices, pagination *repos.CursorPagination) (*model.GlobalVPNDevicePaginatedRecords, error)
@@ -1853,6 +1858,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BYOKClusterPaginatedRecords.TotalCount(childComplexity), true
+
+	case "BYOKSetupInstruction.command":
+		if e.complexity.BYOKSetupInstruction.Command == nil {
+			break
+		}
+
+		return e.complexity.BYOKSetupInstruction.Command(childComplexity), true
+
+	case "BYOKSetupInstruction.title":
+		if e.complexity.BYOKSetupInstruction.Title == nil {
+			break
+		}
+
+		return e.complexity.BYOKSetupInstruction.Title(childComplexity), true
 
 	case "CheckAwsAccessOutput.installationUrl":
 		if e.complexity.CheckAwsAccessOutput.InstallationURL == nil {
@@ -7877,6 +7896,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputBYOKClusterIn,
+		ec.unmarshalInputBYOKSetupInstructionIn,
 		ec.unmarshalInputCloudProviderSecretIn,
 		ec.unmarshalInputClusterIn,
 		ec.unmarshalInputClusterManagedServiceIn,
@@ -8176,7 +8196,7 @@ type Query {
     # byok
     infra_listBYOKClusters(search: SearchCluster, pagination: CursorPaginationIn): BYOKClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getBYOKCluster(name: String!): BYOKCluster @isLoggedInAndVerified @hasAccount
-    infrat_getBYOKClusterSetupInstructions(name: String!): [String!] @isLoggedInAndVerified @hasAccount
+    infrat_getBYOKClusterSetupInstructions(name: String!): [BYOKSetupInstruction!] @isLoggedInAndVerified @hasAccount
 
     # global VPN
     infra_listGlobalVPNs(search: SearchGlobalVPNs, pagination: CursorPaginationIn): GlobalVPNPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -8318,6 +8338,17 @@ type BYOKClusterPaginatedRecords @shareable {
 input BYOKClusterIn {
   displayName: String!
   metadata: MetadataIn!
+}
+
+`, BuiltIn: false},
+	{Name: "../struct-to-graphql/byoksetupinstruction.graphqls", Input: `type BYOKSetupInstruction @shareable {
+  command: String!
+  title: String!
+}
+
+input BYOKSetupInstructionIn {
+  command: String!
+  title: String!
 }
 
 `, BuiltIn: false},
@@ -12761,6 +12792,94 @@ func (ec *executionContext) fieldContext_BYOKClusterPaginatedRecords_totalCount(
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOKSetupInstruction_command(ctx context.Context, field graphql.CollectedField, obj *model.BYOKSetupInstruction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKSetupInstruction_command(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Command, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKSetupInstruction_command(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKSetupInstruction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOKSetupInstruction_title(ctx context.Context, field graphql.CollectedField, obj *model.BYOKSetupInstruction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKSetupInstruction_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKSetupInstruction_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKSetupInstruction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -49873,10 +49992,10 @@ func (ec *executionContext) _Query_infrat_getBYOKClusterSetupInstructions(ctx co
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.([]string); ok {
+		if data, ok := tmp.([]*model.BYOKSetupInstruction); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []string`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/kloudlite/api/apps/infra/internal/app/graph/model.BYOKSetupInstruction`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -49885,9 +50004,9 @@ func (ec *executionContext) _Query_infrat_getBYOKClusterSetupInstructions(ctx co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]string)
+	res := resTmp.([]*model.BYOKSetupInstruction)
 	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+	return ec.marshalOBYOKSetupInstruction2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOKSetupInstructionᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_infrat_getBYOKClusterSetupInstructions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -49897,7 +50016,13 @@ func (ec *executionContext) fieldContext_Query_infrat_getBYOKClusterSetupInstruc
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "command":
+				return ec.fieldContext_BYOKSetupInstruction_command(ctx, field)
+			case "title":
+				return ec.fieldContext_BYOKSetupInstruction_title(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BYOKSetupInstruction", field.Name)
 		},
 	}
 	defer func() {
@@ -55338,6 +55463,44 @@ func (ec *executionContext) unmarshalInputBYOKClusterIn(ctx context.Context, obj
 			if err = ec.resolvers.BYOKClusterIn().Metadata(ctx, &it, data); err != nil {
 				return it, err
 			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBYOKSetupInstructionIn(ctx context.Context, obj interface{}) (model.BYOKSetupInstructionIn, error) {
+	var it model.BYOKSetupInstructionIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"command", "title"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "command":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("command"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Command = data
+		case "title":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
 		}
 	}
 
@@ -61599,6 +61762,50 @@ func (ec *executionContext) _BYOKClusterPaginatedRecords(ctx context.Context, se
 			}
 		case "totalCount":
 			out.Values[i] = ec._BYOKClusterPaginatedRecords_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var bYOKSetupInstructionImplementors = []string{"BYOKSetupInstruction"}
+
+func (ec *executionContext) _BYOKSetupInstruction(ctx context.Context, sel ast.SelectionSet, obj *model.BYOKSetupInstruction) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bYOKSetupInstructionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BYOKSetupInstruction")
+		case "command":
+			out.Values[i] = ec._BYOKSetupInstruction_command(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._BYOKSetupInstruction_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -73086,6 +73293,16 @@ func (ec *executionContext) unmarshalNBYOKClusterIn2githubᚗcomᚋkloudliteᚋa
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNBYOKSetupInstruction2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOKSetupInstruction(ctx context.Context, sel ast.SelectionSet, v *model.BYOKSetupInstruction) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BYOKSetupInstruction(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -75430,7 +75647,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -75438,7 +75655,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -75496,6 +75713,53 @@ func (ec *executionContext) marshalOBYOKClusterPaginatedRecords2ᚖgithubᚗcom�
 		return graphql.Null
 	}
 	return ec._BYOKClusterPaginatedRecords(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOBYOKSetupInstruction2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOKSetupInstructionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.BYOKSetupInstruction) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNBYOKSetupInstruction2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOKSetupInstruction(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
