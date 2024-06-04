@@ -58,7 +58,6 @@ if [ -d "$HOME/.local/bin" ]; then
 	PATH="$HOME/.local/bin:$PATH"
 fi
 
-
 if [ -f "/home/kl/.kl/global-profile" ]; then
   source /home/kl/.kl/global-profile
 fi

@@ -16,8 +16,12 @@ chown kl:kl "$HOME/.kl"
 
 entrypoint_executed="/home/kl/.kloudlite_entrypoint_executed"
 if [ ! -f "$entrypoint_executed" ]; then
+    mkdir -p /home/kl/.config
+    cp /tmp/.zshrc /home/kl/.zshrc
     cp /tmp/.bashrc /home/kl/.bashrc
     cp /tmp/.profile /home/kl/.profile
+    ln -sf /home/kl/.profile /home/kl/.zprofile
+    cp /tmp/aliasrc /home/kl/.config/aliasrc
     echo "successfully initialized .profile and .bashrc" >> $entrypoint_executed
 fi
 

@@ -18,7 +18,8 @@ RUN go build --tags=box -ldflags="-X github.com/kloudlite/kl/flags.Version=${VER
 
 FROM --platform=$TARGETPLATFORM ubuntu:latest
 
-RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano
+RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano zsh git
+
 
 RUN mkdir /var/run/sshd
 
@@ -48,6 +49,9 @@ RUN /tmp/devbox.sh -f && rm /tmp/devbox.sh && sudo chown kl:kl /usr/local/bin/de
 
 RUN cd /tmp
 RUN devbox init
+
+RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git  "/usr/share/zsh/plugins/zsh-syntax-highlighting"
+
 # RUN rm /tmp/devbox.lock /tmp/devbox.json
 
 # COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
@@ -63,13 +67,15 @@ RUN cat > /etc/motd <<'EOF'
 Welcome to KloudLite's Development Environment
 EOF
 
-COPY .bashrc .profile /tmp/
+COPY .bashrc .profile .zshrc aliasrc /tmp/
 
 COPY --from=builder /kl-app/bin/mounter /mounter
 COPY --from=builder /kl-app/bin/kl /usr/local/bin/kl
 
 
-SHELL ["/bin/bash", "-c"]
+SHELL ["/bin/zsh", "-c"]
+
+RUN chsh -s /bin/zsh kl
 
 COPY ./start.sh /start.sh
 COPY ./entrypoint.sh /entrypoint.sh
@@ -78,4 +84,9 @@ RUN chmod +x /start.sh
 RUN chmod +x /entrypoint.sh
 
 USER kl
+
+RUN mkdir -p "/home/kl/.config/zsh"
+RUN git clone https://github.com/sindresorhus/pure.git "/home/kl/.config/zsh/pure"
+
+
 ENTRYPOINT ["/entrypoint.sh"]

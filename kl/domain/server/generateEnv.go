@@ -320,6 +320,11 @@ func LoadDevboxConfig() (*devboxfile.DevboxConfig, error) {
 		ev[ne.Key] = ne.Value
 	}
 
+	e, err := client.CurrentEnv()
+	if err == nil {
+		ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", e.Name, "❯")
+	}
+
 	klConfig.Env = ev
 	klConfig.KlConfig.Mounts = fm
 
@@ -340,8 +345,6 @@ func SyncDevboxJsonFile() error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(string(b), client.DEVBOX_JSON_PATH)
 
 	if err := os.WriteFile(client.DEVBOX_JSON_PATH, b, os.ModePerm); err != nil {
 		return err

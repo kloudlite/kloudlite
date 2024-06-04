@@ -250,7 +250,9 @@ func ExecPackageCommand(cmd string) error {
 
 	devboxJsonConfig, err := os.ReadFile(DEVBOX_JSON_PATH)
 	if err == nil {
-		devboxContext.ParseJson(devboxJsonConfig)
+		if err := devboxContext.ParseJson(devboxJsonConfig); err != nil {
+			return err
+		}
 	}
 
 	klContext, err := GetKlFile("")
