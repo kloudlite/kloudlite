@@ -1,6 +1,6 @@
 import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
-import { Link, useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -9,6 +9,7 @@ import { IRemixCtx } from '~/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import { Button } from '~/components/atoms/button';
 import { useState } from 'react';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import Tools from './tools';
 import ManagedResourceResourcesV2 from './managed-resources-resource-v2';
 import HandleManagedResourceV2 from './handle-managed-resource-v2';
@@ -36,6 +37,7 @@ export const loader = (ctx: IRemixCtx) => {
 };
 
 const KlOperatorServices = () => {
+  const { msvtemplates } = useOutletContext<IAccountContext>();
   const [visible, setVisible] = useState(false);
 
   const { promise } = useLoaderData<typeof loader>();
@@ -87,7 +89,10 @@ const KlOperatorServices = () => {
               }}
               tools={<Tools />}
             >
-              <ManagedResourceResourcesV2 items={managedResources} />
+              <ManagedResourceResourcesV2
+                items={managedResources}
+                templates={msvtemplates}
+              />
             </Wrapper>
           );
         }}

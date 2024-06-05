@@ -417,7 +417,7 @@ export const ShowWireguardConfig = ({
               }
 
               downloadConfig({
-                filename: `wireguardconfig.yaml`,
+                filename: `wireguardconfig.conf`,
                 data: decodeConfig(data),
               });
             }}

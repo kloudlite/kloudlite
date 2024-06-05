@@ -223,12 +223,14 @@ export const environmentQueries = (executor: IExecutor) => ({
   cloneEnvironment: executor(
     gql`
       mutation Core_cloneEnvironment(
+        $clusterName: String!
         $sourceEnvName: String!
         $destinationEnvName: String!
         $displayName: String!
         $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!
       ) {
         core_cloneEnvironment(
+          clusterName: $clusterName
           sourceEnvName: $sourceEnvName
           destinationEnvName: $destinationEnvName
           displayName: $displayName
