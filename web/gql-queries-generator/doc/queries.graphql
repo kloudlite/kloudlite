@@ -950,8 +950,9 @@ query consoleListEnvironments($search: SearchEnvironments, $pq: CursorPagination
   }
 }
 
-mutation consoleCloneEnvironment($sourceEnvName: String!, $destinationEnvName: String!, $displayName: String!, $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!) {
+mutation consoleCloneEnvironment($clusterName: String!, $sourceEnvName: String!, $destinationEnvName: String!, $displayName: String!, $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!) {
   core_cloneEnvironment(
+    clusterName: $clusterName
     sourceEnvName: $sourceEnvName
     destinationEnvName: $destinationEnvName
     displayName: $displayName

@@ -25,6 +25,7 @@ import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
+import ConsoleAvatar from '~/console/components/console-avatar';
 import { ViewSecret } from './handle-managed-resource-v2';
 
 const RESOURCE_NAME = 'managed resource';
@@ -126,19 +127,19 @@ const ListView = ({ items = [], onAction }: IResource) => {
       data={{
         headers: [
           {
-            render: () => 'Name',
+            render: () => 'Resource Name',
             name: 'name',
-            className: 'w-[80px]',
+            className: 'flex flex-1 w-[80px]',
           },
+          // {
+          //   render: () => '',
+          //   name: 'secret',
+          //   className: 'flex flex-1 w-[150px]',
+          // },
           {
-            render: () => '',
-            name: 'secret',
-            className: 'flex flex-1 w-[150px]',
-          },
-          {
-            render: () => 'Type',
-            name: 'type',
-            className: 'w-[100px]',
+            render: () => 'Resource Type',
+            name: 'resource',
+            className: 'w-[140px]',
           },
           {
             render: () => '',
@@ -146,8 +147,8 @@ const ListView = ({ items = [], onAction }: IResource) => {
             className: 'flex-1',
           },
           {
-            render: () => 'Kind',
-            name: 'kind',
+            render: () => 'Managed Service',
+            name: 'service',
             className: 'w-[180px]',
           },
           {
@@ -155,11 +156,11 @@ const ListView = ({ items = [], onAction }: IResource) => {
             name: 'flex-post',
             className: 'flex-1',
           },
-          {
-            render: () => 'Status',
-            name: 'status',
-            className: 'flex-1 min-w-[30px]',
-          },
+          // {
+          //   render: () => 'Status',
+          //   name: 'status',
+          //   className: 'flex-1 min-w-[30px]',
+          // },
           {
             render: () => 'Updated',
             name: 'updated',
@@ -176,7 +177,18 @@ const ListView = ({ items = [], onAction }: IResource) => {
           return {
             columns: {
               name: {
-                render: () => <ListTitle title={name} subtitle={id} />,
+                render: () => (
+                  <ListTitle
+                    title={name}
+                    subtitle={id}
+                    // avatar={
+                    //   <div className="pulsable pulsable-circle aspect-square">
+                    //     <img src={i.} alt={name} className="w-4xl h-4xl" />
+                    //   </div>
+                    // }
+                    // avatar={<ConsoleAvatar name={id} />}
+                  />
+                ),
               },
               secret: {
                 render: () =>
@@ -190,21 +202,21 @@ const ListView = ({ items = [], onAction }: IResource) => {
                     />
                   ) : null,
               },
-              type: {
+              resource: {
                 render: () => (
                   <ListItem data={`${i.spec?.resourceTemplate?.kind}`} />
                 ),
               },
-              kind: {
+              service: {
                 render: () => (
                   <ListItem
-                    data={`${i.spec?.resourceTemplate?.msvcRef?.kind}`}
+                    data={`${i.spec?.resourceTemplate?.msvcRef?.name}`}
                   />
                 ),
               },
-              status: {
-                render: () => <SyncStatusV2 item={i} />,
-              },
+              // status: {
+              //   render: () => <SyncStatusV2 item={i} />,
+              // },
               updated: {
                 render: () => (
                   <ListItem

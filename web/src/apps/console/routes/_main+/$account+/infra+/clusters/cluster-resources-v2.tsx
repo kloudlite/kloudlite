@@ -1,6 +1,6 @@
 import {
-  ArrowClockwise,
   GearSix,
+  ListDashes,
   PencilLine,
   Trash,
 } from '~/console/components/icons';
@@ -33,14 +33,10 @@ import logger from '~/root/lib/client/helpers/log';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
-import AnimateHide from '~/components/atoms/animate-hide';
-import LogComp from '~/root/lib/client/components/logger';
-import LogAction from '~/console/page-components/log-action';
-import { useDataState } from '~/console/page-components/common-state';
+
 import { useState } from 'react';
 import { SyncStatusV2 } from '~/console/components/sync-status';
 import { Button } from '~/components/atoms/button';
-import { dayjs } from '~/components/molecule/dayjs';
 import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -50,8 +46,10 @@ import { handleError } from '~/root/lib/utils/common';
 import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import { LoadingPlaceHolder } from '~/console/components/loading';
+import { Badge } from '~/components/atoms/badge';
+import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
+import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
@@ -67,18 +65,20 @@ const getProvider = (item: BaseType) => {
   switch (item.spec.cloudProvider) {
     case 'aws':
       return (
-        <div className="flex flex-row items-center gap-lg">
-          {renderCloudProvider({ cloudprovider: item.spec.cloudProvider })}
+        <span>
+          {renderCloudProvider({ cloudprovider: item.spec.cloudProvider })}{' '}
           <span>({item.spec.aws?.region})</span>
-        </div>
+        </span>
       );
     case 'gcp':
-    case 'azure':
       return (
-        <div className="flex flex-row items-center gap-lg">
-          <span>{item.spec.cloudProvider}</span>
-        </div>
+        <span>
+          {renderCloudProvider({ cloudprovider: item.spec.cloudProvider })}{' '}
+          <span>({item.spec.gcp?.region})</span>
+        </span>
       );
+    case 'azure':
+      return <span>{item.spec.cloudProvider}</span>;
 
     default:
       logger.error('unknown provider', item.spec.cloudProvider);
@@ -192,7 +192,7 @@ const ByokButton = ({ item }: { item: CombinedBaseType }) => {
             }}
             size="sm"
             variant="outline"
-            prefix={<ArrowClockwise size={16} />}
+            // prefix={<ArrowClockwise size={16} />}
           />
         </div>
       )}
@@ -200,13 +200,57 @@ const ByokButton = ({ item }: { item: CombinedBaseType }) => {
   );
 };
 
+const GetByokClusterMessage = ({
+  syncStatusState,
+  item,
+}: {
+  syncStatusState: SyncStatusState;
+  item: CombinedBaseType;
+}) => {
+  switch (syncStatusState) {
+    case 'UPDATED_AT_AGENT':
+      return (
+        <ListItem
+          data={
+            <div className="flex flex-row gap-sm">
+              <span>Attached Cluster</span>
+            </div>
+          }
+        />
+      );
+    default:
+      return <ByokButton item={item} />;
+  }
+};
+
+const GetByokClusterSyncStatus = ({
+  syncStatusState,
+}: {
+  syncStatusState: SyncStatusState;
+}) => {
+  switch (syncStatusState) {
+    case 'UPDATED_AT_AGENT':
+      return <Badge type="success">Online</Badge>;
+    case 'ERRORED_AT_AGENT':
+      return <Badge type="critical">Not Connected</Badge>;
+    case 'APPLIED_AT_AGENT':
+      return <Badge type="warning">Offline</Badge>;
+    case 'DELETING_AT_AGENT':
+      return <Badge type="critical">Deleting</Badge>;
+    default:
+      return <Badge type="critical">Not Connected</Badge>;
+  }
+};
+
 const ExtraButton = ({
   onDelete,
   onEdit,
+  onShowLogs,
   item,
 }: {
   onDelete: () => void;
   onEdit: () => void;
+  onShowLogs: () => void;
   item: CombinedBaseType;
 }) => {
   const { account } = useParams();
@@ -234,6 +278,14 @@ const ExtraButton = ({
     <ResourceExtraAction
       options={[
         {
+          label: 'Show Logs',
+          icon: <ListDashes size={16} />,
+          type: 'item',
+          onClick: onShowLogs,
+          key: '1',
+          // className: '!text-text-critical',
+        },
+        {
           label: 'Settings',
           icon: <GearSix size={16} />,
           type: 'item',
@@ -249,19 +301,10 @@ interface IResource {
   items: CombinedBaseType[];
   onDelete: (item: CombinedBaseType) => void;
   onEdit: (item: CombinedBaseType) => void;
+  onShowLogs: (item: CombinedBaseType) => void;
 }
 
-const ClusterDnsView = ({ service }: { service: string }) => {
-  return (
-    <CopyContentToClipboard
-      toolTip
-      content={service}
-      toastMessage="Cluster dns copied successfully."
-    />
-  );
-};
-
-const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
+const GridView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
   const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
@@ -285,13 +328,10 @@ const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
                       <ExtraButton
                         onDelete={() => onDelete(item)}
                         onEdit={() => onEdit(item)}
+                        onShowLogs={() => onShowLogs(item)}
                         item={item}
                       />
                     }
-                    // action={
-                    //   // <ExtraButton status={status.status} cluster={item} />
-                    //   <span />
-                    // }
                   />
                 ),
               },
@@ -299,7 +339,6 @@ const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
                 key: generateKey(keyPrefix, id + name + provider),
                 render: () => (
                   <div className="flex flex-col gap-md">
-                    {/* <ListItem data={path} /> */}
                     <ListBody data={provider} />
                   </div>
                 ),
@@ -321,13 +360,7 @@ const GridView = ({ items = [], onEdit, onDelete }: IResource) => {
     </Grid.Root>
   );
 };
-const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
-  const [open, setOpen] = useState<string>('');
-  const { state } = useDataState<{
-    linesVisible: boolean;
-    timestampVisible: boolean;
-  }>('logs');
-
+const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
   const { account } = useParams();
   return (
     <ListV2.Root
@@ -342,28 +375,19 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
               </div>
             ),
             name: 'name',
-            className: 'w-[180px]',
+            className: 'w-[280px]',
           },
           {
             render: () => '',
-            name: 'logs',
-            className: 'min-w-[150px] flex-1 flex items-center justify-center',
-          },
-          {
-            render: () => 'Provider',
             name: 'provider',
-            className: 'flex w-[100px]',
-          },
-          {
-            render: () => 'Dns',
-            name: 'dns',
-            className: 'flex w-[180px]',
+            className: 'flex flex-1 ',
           },
           {
             render: () => 'Status',
             name: 'status',
-            className: 'flex-1 min-w-[30px]',
+            className: 'min-w-[150px] max-w-[150px]',
           },
+
           {
             render: () => 'Updated',
             name: 'updated',
@@ -378,9 +402,9 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
         rows: items.map((i) => {
           const { name, id, updateInfo, provider } = parseItem(i);
 
-          const isLatest = dayjs(i.updateTime).isAfter(
-            dayjs().subtract(3, 'hour')
-          );
+          // const isLatest = dayjs(i.updateTime).isAfter(
+          //   dayjs().subtract(3, 'hour')
+          // );
 
           return {
             columns: {
@@ -393,38 +417,33 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
                   />
                 ),
               },
-              logs: {
+              provider: {
                 render: () =>
-                  i.type === 'normal'
-                    ? isLatest && (
-                        <Button
-                          size="sm"
-                          variant="basic"
-                          content={open === i.id ? 'Hide Logs' : 'Show Logs'}
-                          onClick={(e) => {
-                            e.preventDefault();
-
-                            setOpen((s) => {
-                              if (s === i.id) {
-                                return '';
-                              }
-                              return i.id;
-                            });
-                          }}
-                        />
-                      )
-                    : i.type === 'byok' && <ByokButton item={i} />,
-              },
-              provider: { render: () => <ListItem data={provider} /> },
-              dns: {
-                render: () => (
-                  <div className="flex w-fit truncate">
-                    <ClusterDnsView service={`${parseName(i)}.local`} />
-                  </div>
-                ),
+                  i.type === 'normal' ? (
+                    <ListItem
+                      data={
+                        <span>
+                          <span className="pr-lg">Managed by kloudlite on</span>{' '}
+                          {provider}
+                        </span>
+                      }
+                    />
+                  ) : (
+                    <GetByokClusterMessage
+                      syncStatusState={i.syncStatus.state}
+                      item={i}
+                    />
+                  ),
               },
               status: {
-                render: () => <SyncStatusV2 item={i} resourceType={i.type} />,
+                render: () =>
+                  i.type === 'normal' ? (
+                    <SyncStatusV2 item={i} resourceType={i.type} />
+                  ) : (
+                    <GetByokClusterSyncStatus
+                      syncStatusState={i.syncStatus.state}
+                    />
+                  ),
               },
               updated: {
                 render: () => (
@@ -439,6 +458,7 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
                   <ExtraButton
                     onDelete={() => onDelete(i)}
                     onEdit={() => onEdit(i)}
+                    onShowLogs={() => onShowLogs(i)}
                     item={i}
                   />
                 ),
@@ -447,32 +467,6 @@ const ListView = ({ items = [], onEdit, onDelete }: IResource) => {
             ...(i.type === 'normal'
               ? { to: `/${account}/infra/${id}/overview` }
               : {}),
-            detail: (
-              <AnimateHide
-                onClick={(e) => e.preventDefault()}
-                show={open === i.id}
-                className="w-full flex pt-4xl pb-2xl justify-center items-center"
-              >
-                <LogComp
-                  {...{
-                    hideLineNumber: !state.linesVisible,
-                    hideTimestamp: !state.timestampVisible,
-                    className: 'flex-1',
-                    dark: true,
-                    width: '100%',
-                    height: '40rem',
-                    title: 'Logs',
-                    websocket: {
-                      account: account || '',
-                      cluster: parseName(i),
-                      trackingId: i.id,
-                    },
-                    actionComponent: <LogAction />,
-                  }}
-                />
-              </AnimateHide>
-            ),
-            hideDetailSeperator: true,
           };
         }),
       }}
@@ -508,6 +502,8 @@ const ClusterResourcesV2 = ({
     useState<CombinedBaseType | null>(null);
   const [showHandleByokCluster, setShowHandleByokCluster] =
     useState<CombinedBaseType | null>(null);
+  const [showClusterLogs, setShowClusterLogs] =
+    useState<CombinedBaseType | null>(null);
 
   const api = useConsoleApi();
   const reloadPage = useReload();
@@ -519,6 +515,9 @@ const ClusterResourcesV2 = ({
     },
     onEdit: (item) => {
       setShowHandleByokCluster(item);
+    },
+    onShowLogs: (item) => {
+      setShowClusterLogs(item);
     },
   };
 
@@ -550,6 +549,15 @@ const ClusterResourcesV2 = ({
           }
         }}
       />
+      {showClusterLogs && (
+        <ViewClusterLogs
+          show={!!showClusterLogs}
+          setShow={() => {
+            setShowClusterLogs(null);
+          }}
+          item={showClusterLogs!}
+        />
+      )}
       <HandleByokCluster
         {...{
           isUpdate: true,

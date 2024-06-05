@@ -17,19 +17,83 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Select from '~/components/atoms/select';
+import { useAppend, useMapper } from '~/components/utils';
 
 type IDialog = IDialogBase<ExtractNodeType<IEnvironments>>;
+
+const ClusterSelectItem = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) => {
+  return (
+    <div>
+      <div className="flex flex-col">
+        <div>{label}</div>
+        <div className="bodySm text-text-soft">{value}</div>
+      </div>
+    </div>
+  );
+};
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;
   const api = useConsoleApi();
   const reloadPage = useReload();
 
+  // const { data: clustersData, isLoading: cIsLoading } = useCustomSwr(
+  //   'clusters',
+  //   async () => api.listClusters({}),
+  //   true
+  // );
+
   const { data: clustersData, isLoading: cIsLoading } = useCustomSwr(
     'clusters',
-    async () => api.listClusters({}),
+    async () =>
+      api.listClusters({
+        pagination: {
+          first: 100,
+        },
+      }),
     true
   );
+
+  const { data: byokClustersData, isLoading: byokCIsLoading } = useCustomSwr(
+    'byokclusters',
+    async () =>
+      api.listByokClusters({
+        pagination: {
+          first: 100,
+        },
+      }),
+    true
+  );
+
+  const cData = useMapper(parseNodes(clustersData), (item) => {
+    return {
+      label: item.displayName,
+      value: parseName(item),
+      ready: item.status?.isReady,
+      render: () => (
+        <ClusterSelectItem label={item.displayName} value={parseName(item)} />
+      ),
+    };
+  });
+
+  const bCData = useMapper(parseNodes(byokClustersData), (item) => {
+    return {
+      label: item.displayName,
+      value: parseName(item),
+      ready: true,
+      render: () => (
+        <ClusterSelectItem label={item.displayName} value={parseName(item)} />
+      ),
+    };
+  });
+
+  const clusterList = useAppend(cData, bCData);
 
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
@@ -54,7 +118,7 @@ const Root = (props: IDialog) => {
                 ? 'public'
                 : 'private',
               destinationEnvName: val.name,
-
+              clusterName: val.clusterName,
               sourceEnvName: parseName(props.data),
             });
             if (e) {
@@ -100,15 +164,10 @@ const Root = (props: IDialog) => {
             disabled={cIsLoading}
             placeholder="Select a Cluster"
             options={async () => [
-              ...((clustersData &&
-                parseNodes(clustersData)
-                  .filter((d) => {
-                    return d.status?.isReady;
-                  })
-                  .map((d) => ({
-                    label: `${d.displayName} - ${parseName(d)}`,
-                    value: parseName(d),
-                  }))) ||
+              ...((clusterList &&
+                clusterList.filter((d) => {
+                  return d.ready;
+                })) ||
                 []),
             ]}
             onChange={({ value }) => {
@@ -116,6 +175,7 @@ const Root = (props: IDialog) => {
             }}
             error={!!errors.clusterName}
             message={errors.clusterName}
+            loading={cIsLoading || byokCIsLoading}
           />
 
           {/* <Checkbox */}

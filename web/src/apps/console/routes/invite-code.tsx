@@ -4,7 +4,6 @@ import { BrandLogo } from '~/components/branding/brand-logo';
 import { toast } from '~/components/molecule/toast';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm from '~/root/lib/client/hooks/use-form';
-import getQueries from '~/root/lib/server/helpers/get-queries';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '~/lib/server/gql/saved-queries';
@@ -54,8 +53,8 @@ const InviteCode = () => {
         Unlock early access now!
       </span>
       <span className="text-center bodyXl">
-        Don't miss the chance to try our product. Enter your referral code now
-        to move up the waitlist and secure early access!
+        Dont miss the chance to try our product. Enter your referral code now to
+        move up the waitlist and secure early access!
       </span>
       <form
         onSubmit={handleSubmit}
@@ -74,23 +73,19 @@ const InviteCode = () => {
 };
 
 export const loader = async (ctx: IRemixCtx) => {
-  const query = getQueries(ctx);
   const { data, errors } = await GQLServerHandler(ctx.request).whoAmI();
-  if (errors) {
-    return {
-      query,
-    };
+
+  if (!data || errors) {
+    return redirect('/');
   }
-  const { email, approved } = data || {};
+
+  const { approved } = data || {};
 
   if (approved) {
     return redirect('/teams');
   }
 
-  return {
-    query,
-    email: email || '',
-  };
+  return {};
 };
 
 export default InviteCode;

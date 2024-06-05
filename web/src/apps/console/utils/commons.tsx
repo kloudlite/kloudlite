@@ -113,8 +113,8 @@ export const downloadFile = ({
 
 export const providerIcons = (iconsSize = 16) => {
   return {
-    aws: <AWSlogoFill size={iconsSize} />,
-    gcp: <GoogleCloudlogo size={iconsSize} />,
+    aws: <AWSlogoFill className="inline" size={iconsSize} />,
+    gcp: <GoogleCloudlogo className="inline" size={iconsSize} />,
   };
 };
 
@@ -127,17 +127,17 @@ export const renderCloudProvider = ({
   switch (cloudprovider) {
     case 'aws':
       return (
-        <div className="flex flex-row gap-xl items-center">
+        <span>
           {providerIcons(iconSize).aws}
-          <span>{cloudprovider}</span>
-        </div>
+          <span className="pl-lg bodySm-semibold">{cloudprovider}</span>
+        </span>
       );
     case 'gcp':
       return (
-        <div className="flex flex-row gap-xl items-center">
+        <span>
           {providerIcons(iconSize).gcp}
-          <span>{cloudprovider}</span>
-        </div>
+          <span className="pl-lg bodyMd-semibold">{cloudprovider}</span>
+        </span>
       );
     default:
       return cloudprovider;

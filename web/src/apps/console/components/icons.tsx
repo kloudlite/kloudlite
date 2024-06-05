@@ -100,4 +100,5 @@ export {
   CheckCircle,
   CalendarCheckFill,
   PlugsConnected,
+  ListDashes,
 } from '@jengaicons/react';
