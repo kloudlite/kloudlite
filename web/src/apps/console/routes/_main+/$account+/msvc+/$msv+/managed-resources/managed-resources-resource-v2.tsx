@@ -127,18 +127,18 @@ const ListView = ({ items = [], onAction }: IResource) => {
       data={{
         headers: [
           {
-            render: () => 'Name',
+            render: () => 'Resource Name',
             name: 'name',
-            className: 'w-[80px]',
+            className: 'flex flex-1 w-[80px]',
           },
+          // {
+          //   render: () => '',
+          //   name: 'secret',
+          //   className: 'flex flex-1 w-[150px]',
+          // },
           {
-            render: () => '',
-            name: 'secret',
-            className: 'flex flex-1 w-[150px]',
-          },
-          {
-            render: () => 'Type',
-            name: 'type',
+            render: () => 'Resource Type',
+            name: 'resource',
             className: 'w-[100px]',
           },
           {
@@ -147,8 +147,8 @@ const ListView = ({ items = [], onAction }: IResource) => {
             className: 'flex-1',
           },
           {
-            render: () => 'Kind',
-            name: 'kind',
+            render: () => 'Managed Service',
+            name: 'service',
             className: 'w-[180px]',
           },
           {
@@ -156,11 +156,11 @@ const ListView = ({ items = [], onAction }: IResource) => {
             name: 'flex-post',
             className: 'flex-1',
           },
-          {
-            render: () => 'Status',
-            name: 'status',
-            className: 'flex-1 min-w-[30px]',
-          },
+          // {
+          //   render: () => 'Status',
+          //   name: 'status',
+          //   className: 'flex-1 min-w-[30px]',
+          // },
           {
             render: () => 'Updated',
             name: 'updated',
@@ -191,15 +191,15 @@ const ListView = ({ items = [], onAction }: IResource) => {
                     />
                   ) : null,
               },
-              type: {
+              resource: {
                 render: () => (
                   <ListItem data={`${i.spec?.resourceTemplate?.kind}`} />
                 ),
               },
-              kind: {
+              service: {
                 render: () => (
                   <ListItem
-                    data={`${i.spec?.resourceTemplate?.msvcRef?.kind}`}
+                    data={`${i.spec?.resourceTemplate?.msvcRef?.name}`}
                   />
                 ),
               },

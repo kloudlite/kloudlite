@@ -16,8 +16,6 @@ const AttachNewCluster = () => {
   const { a: accountName } = useParams();
   const api = useConsoleApi();
 
-  const rootUrl = `/${accountName}/infra/clusters`;
-
   const navigate = useNavigate();
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
@@ -43,7 +41,10 @@ const AttachNewCluster = () => {
           throw e[0];
         }
         toast.success('Cluster attched successfully');
-        navigate(rootUrl);
+        navigate(
+          `/onboarding/${accountName}/${values.name}/validate-attached-cluster`
+        );
+        // navigate(rootUrl);
       } catch (err) {
         handleError(err);
       }
@@ -52,7 +53,7 @@ const AttachNewCluster = () => {
 
   const { currentStep, jumpStep } = useMultiStepProgress({
     defaultStep: 2,
-    totalSteps: 4,
+    totalSteps: 3,
   });
 
   return (
@@ -75,12 +76,8 @@ const AttachNewCluster = () => {
             className="py-3xl flex flex-col gap-3xl
             "
           />
-          <MultiStepProgress.Step step={2} label="Attach your own cluster">
+          <MultiStepProgress.Step step={2} label="Attach Kubernetes Cluster">
             <div className="flex flex-col gap-3xl">
-              <div className="bodyMd text-text-soft">
-                A cluster is a group of interconnected elements working together
-                as a single unit.
-              </div>
               <div className="flex flex-col">
                 <NameIdView
                   resType="cluster"
@@ -104,13 +101,18 @@ const AttachNewCluster = () => {
                 }}
                 primaryButton={{
                   variant: 'primary',
-                  content: 'Create',
+                  content: 'Next',
                   loading: isLoading,
                   type: 'submit',
                 }}
               />
             </div>
           </MultiStepProgress.Step>
+          <MultiStepProgress.Step
+            step={3}
+            label="Verify Your Attached Kubernetes Cluster"
+          />
+          {/* <MultiStepProgress.Step step={3} label="Verify Cluster" /> */}
           {/* <MultiStepProgress.Step step={3} label="Validate cloud provider" /> */}
           {/* <MultiStepProgress.Step step={4} label="Setup first cluster" /> */}
         </MultiStepProgress.Root>

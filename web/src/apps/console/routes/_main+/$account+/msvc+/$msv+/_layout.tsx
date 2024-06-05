@@ -77,7 +77,7 @@ const LocalBreadcrum = ({ data }: { data: IClusterMSv }) => {
         linkComponent={Link}
         content={
           <div className="flex flex-row gap-md items-center">
-            Msvc <ChevronRight size={14} />{' '}
+            Managed Services <ChevronRight size={14} />{' '}
           </div>
         }
       />

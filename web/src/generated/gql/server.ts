@@ -2600,6 +2600,7 @@ export type ConsoleListEnvironmentsQuery = {
 };
 
 export type ConsoleCloneEnvironmentMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
   sourceEnvName: Scalars['String']['input'];
   destinationEnvName: Scalars['String']['input'];
   displayName: Scalars['String']['input'];

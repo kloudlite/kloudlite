@@ -123,7 +123,11 @@ const NewAccount = () => {
           {/* <MultiStepProgress.Step step={2} label="Add your cloud provider" /> */}
           {/* <MultiStepProgress.Step step={3} label="Validate cloud provider" />
           <MultiStepProgress.Step step={4} label="Setup first cluster" /> */}
-          <MultiStepProgress.Step step={2} label="Attach your own cluster" />
+          <MultiStepProgress.Step step={2} label="Attach Kubernetes Cluster" />
+          <MultiStepProgress.Step
+            step={3}
+            label="Verify Your Attached Kubernetes Cluster"
+          />
         </MultiStepProgress.Root>
       </MultiStepProgressWrapper>
     </form>
