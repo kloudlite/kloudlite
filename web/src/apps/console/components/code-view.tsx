@@ -49,7 +49,7 @@ const CodeView = ({
   }, [data, language]);
 
   return (
-    <div className="flex flex-col gap-lg flex-1 min-w-[45%] ">
+    <div className="flex flex-col gap-lg flex-1 min-w-[45%]">
       {!!title && (
         <div className="bodyMd-medium text-text-default">{title}</div>
       )}
@@ -58,6 +58,11 @@ const CodeView = ({
           <div
             onClick={() => {
               if (copy) cpy(data);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (copy) cpy(data);
+              }
             }}
             className="group/sha cursor-pointer hljs p-lg relative"
           >
@@ -75,7 +80,12 @@ const CodeView = ({
             }}
             className="group/sha cursor-pointer p-lg rounded-md bodyMd flex flex-row gap-xl items-center hljs w-full"
           >
-            <pre className={cn('flex-1 overflow-auto', preClassName)}>
+            <pre
+              className={cn(
+                'flex-1 overflow-auto outline-none ring-2 focus-visible:ring-border-focus ring-offset-0',
+                preClassName
+              )}
+            >
               <code ref={ref}>{data}</code>
             </pre>
             <span className="invisible group-hover/sha:visible">

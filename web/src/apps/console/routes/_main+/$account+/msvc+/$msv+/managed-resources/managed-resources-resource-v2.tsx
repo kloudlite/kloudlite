@@ -1,4 +1,4 @@
-import { PencilSimple, Trash } from '~/console/components/icons';
+import { LockSimple, PencilSimple, Trash } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -26,12 +26,18 @@ import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { SyncStatusV2 } from '~/console/components/sync-status';
+import { getManagedTemplate } from '~/console/utils/commons';
 import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
 
 const RESOURCE_NAME = 'managed resource';
 type BaseType = ExtractNodeType<IManagedResources>;
 
-const parseItem = (item: BaseType) => {
+const parseItem = (item: BaseType, templates: IMSvTemplates) => {
+  const template = getManagedTemplate({
+    templates,
+    kind: item.spec?.resourceTemplate.msvcRef?.kind || '',
+    apiVersion: item.spec?.resourceTemplate.msvcRef?.apiVersion || '',
+  });
   return {
     name: item?.displayName,
     id: parseName(item),
@@ -39,6 +45,7 @@ const parseItem = (item: BaseType) => {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
+    logo: template?.logoUrl,
   };
 };
 
@@ -67,6 +74,13 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
           key: 'edit',
         },
         {
+          label: 'View Secret',
+          icon: <LockSimple size={16} />,
+          type: 'item',
+          onClick: () => onAction({ action: 'view_secret', item }),
+          key: 'view_secret',
+        },
+        {
           label: 'Delete',
           icon: <Trash size={16} />,
           type: 'item',
@@ -82,13 +96,14 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
 interface IResource {
   items: BaseType[];
   onAction: OnAction;
+  templates: IMSvTemplates;
 }
 
-const GridView = ({ items = [], onAction }: IResource) => {
+const GridView = ({ items = [], onAction, templates }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
+        const { name, id, updateInfo } = parseItem(item, templates);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
@@ -121,7 +136,7 @@ const GridView = ({ items = [], onAction }: IResource) => {
   );
 };
 
-const ListView = ({ items = [], onAction }: IResource) => {
+const ListView = ({ items = [], onAction, templates }: IResource) => {
   return (
     <ListV2.Root
       data={{
@@ -149,7 +164,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
           {
             render: () => 'Managed Service',
             name: 'service',
-            className: 'w-[180px]',
+            className: 'w-[200px]',
           },
           {
             render: () => '',
@@ -173,7 +188,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const { name, id, updateInfo } = parseItem(i);
+          const { name, id, logo, updateInfo } = parseItem(i, templates);
           return {
             columns: {
               name: {
@@ -199,7 +214,18 @@ const ListView = ({ items = [], onAction }: IResource) => {
               service: {
                 render: () => (
                   <ListItem
-                    data={`${i.spec?.resourceTemplate?.msvcRef?.name}`}
+                    data={
+                      <div className="flex flex-row gap-xl">
+                        <span>
+                          <img
+                            src={logo}
+                            alt={`${i.spec?.resourceTemplate?.msvcRef?.name}`}
+                            className="w-4xl h-4xl"
+                          />
+                        </span>
+                        <span>{`${i.spec?.resourceTemplate?.msvcRef?.name}`}</span>
+                      </div>
+                    }
                   />
                 ),
               },
@@ -267,6 +293,7 @@ const ManagedResourceResourcesV2 = ({
           break;
       }
     },
+    templates,
   };
   return (
     <>

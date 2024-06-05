@@ -403,7 +403,7 @@ export const ViewSecret = ({
         <MultiStep.Root currentStep={currentStep}>
           <MultiStep.Step step={0}>
             <div>
-              <p>{`Are you sure you want to view the secrets of '${item?.displayName}'?`}</p>
+              <p>{`Are you sure you want to view the secrets of '${item.syncedOutputSecretRef?.metadata?.name}'?`}</p>
             </div>
           </MultiStep.Step>
           <MultiStep.Step step={1}>
