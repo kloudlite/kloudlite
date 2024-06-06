@@ -3,17 +3,20 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	"github.com/kloudlite/operator/operators/networking/internal/env"
 	"github.com/kloudlite/operator/operators/networking/internal/gateway/templates"
 	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,6 +50,12 @@ const (
 	setupDeploymentRBAC    string = "setup-deployment-rbac"
 	setupGatewayDeployment string = "setup-gateway-deployment"
 	setupMutationWebhooks  string = "setup-mutation-webhooks"
+	configureGatewayDNS    string = "configure-gateway-dns"
+)
+
+const (
+	// Read more @ https://en.wikipedia.org/wiki/Reserved_IP_addresses
+	gatewayInternalDNSNameServer string = "198.18.0.53"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lifecycles,verbs=get;list;watch;create;update;patch;delete
@@ -87,6 +96,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		{Name: setupDeploymentRBAC, Title: "Setup Deployment RBAC"},
 		{Name: setupGatewayDeployment, Title: "Setup Gateway Device Deployment"},
 		{Name: setupMutationWebhooks, Title: "Setup Mutation Webhooks for kloudlite systems"},
+		{Name: configureGatewayDNS, Title: "Configure Gateway DNS"},
 	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -108,6 +118,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := r.setupMutationWebhooks(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.configureGatewayDNS(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -148,8 +162,8 @@ func (r *Reconciler) generateWireguardKeys(req *rApi.Request[*networkingv1.Gatew
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(generateWireguardKeys, req)
 
-	scrt := &corev1.Secret{}
-	if err := r.Get(ctx, fn.NN(obj.Spec.WireguardKeysRef.Namespace, obj.Spec.WireguardKeysRef.Name), scrt); err != nil {
+	_, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.WireguardKeysRef.Namespace, obj.Spec.WireguardKeysRef.Name), &corev1.Secret{})
+	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return check.Failed(err)
 		}
@@ -205,7 +219,12 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 	check := rApi.NewRunningCheck(setupGatewayDeployment, req)
 
 	b, err := templates.ParseBytes(r.templateDeployment, templates.GatewayDeploymentArgs{
-		ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: r.Env.GatewayAdminNamespace, Labels: map[string]string{"kloudlite.io/managed-by-gateway": "true"}},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            obj.Name,
+			Namespace:       r.Env.GatewayAdminNamespace,
+			Labels:          map[string]string{"kloudlite.io/managed-by-gateway": "true"},
+			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		},
 
 		ServiceAccountName: fmt.Sprintf("%s-svc-account", obj.Name),
 
@@ -215,8 +234,11 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 		GatewayAdminAPIImage: "ghcr.io/kloudlite/operator/networking/cmd/ip-manager:v1.0.7-nightly",
 		WebhookServerImage:   "ghcr.io/kloudlite/operator/networking/cmd/webhook:v1.0.7-nightly",
 
-		GatewayWgSecretName:      obj.Spec.WireguardKeysRef.Name,
-		GatewayGlobalIP:          obj.Spec.GlobalIP,
+		GatewayWgSecretName:          obj.Spec.WireguardKeysRef.Name,
+		GatewayGlobalIP:              obj.Spec.GlobalIP,
+		GatewayDNSSuffix:             obj.Spec.DNSSuffix,
+		GatewayInternalDNSNameserver: gatewayInternalDNSNameServer,
+
 		ClusterCIDR:              obj.Spec.ClusterCIDR,
 		ServiceCIDR:              obj.Spec.SvcCIDR,
 		IPManagerConfigName:      "gateway-ip-manager",
@@ -232,7 +254,18 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 	}
 	req.AddToOwnedResources(rr...)
 
-	return check.Completed()
+	deployment, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.GatewayAdminNamespace, obj.Name), &appsv1.Deployment{})
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	for _, c := range deployment.Status.Conditions {
+		if c.Type == appsv1.DeploymentAvailable {
+			return check.Completed()
+		}
+	}
+
+	return check.Failed(errors.Newf("deployment %s/%s is not available/ready yet", r.Env.GatewayAdminNamespace, obj.Name))
 }
 
 func (r *Reconciler) setupMutationWebhooks(req *rApi.Request[*networkingv1.Gateway]) stepResult.Result {
@@ -261,6 +294,57 @@ func (r *Reconciler) setupMutationWebhooks(req *rApi.Request[*networkingv1.Gatew
 	return check.Completed()
 }
 
+func syncDNS(ctx context.Context, registrationAddr string, dnsSuffix string, dnsAddr string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, fmt.Sprintf("%s/gateway/%s/%s", registrationAddr, dnsSuffix, dnsAddr), nil)
+	if err != nil {
+		return errors.NewEf(err, "creating http request")
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return errors.NewEf(err, "executing http request")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.Newf("http request failed with status: %d, url: %s", resp.StatusCode, req.URL.String())
+	}
+
+	return nil
+}
+
+func (r *Reconciler) configureGatewayDNS(req *rApi.Request[*networkingv1.Gateway]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(configureGatewayDNS, req)
+
+	// finding kubernetes kube-dns service
+	dnsService, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
+	if err != nil {
+		return check.Failed(errors.NewEf(err, "failed to find kube-dns service"))
+	}
+
+	gatewaySvc, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.GatewayAdminNamespace, obj.Name), &corev1.Service{})
+	if err != nil {
+		return check.Failed(errors.NewEf(err, "failed to find gateway service"))
+	}
+
+	addr := fmt.Sprintf("http://%s.%s.svc.cluster.local", obj.Name, r.Env.GatewayAdminNamespace)
+
+	for i := range gatewaySvc.Spec.Ports {
+		if gatewaySvc.Spec.Ports[i].Name == "dns-http" {
+			addr = fmt.Sprintf("%s:%d", addr, gatewaySvc.Spec.Ports[i].Port)
+		}
+	}
+
+	if err := syncDNS(ctx, addr, "svc.cluster.local", fmt.Sprintf("%s:53", dnsService.Spec.ClusterIP)); err != nil {
+		return check.Failed(err)
+	}
+
+	if err := syncDNS(ctx, addr, obj.Spec.DNSSuffix, fmt.Sprintf("%s:53", obj.Spec.GlobalIP)); err != nil {
+		return check.Failed(err)
+	}
+
+	return check.Completed()
+}
+
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
@@ -284,103 +368,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&networkingv1.Gateway{})
-
-	// ctx := context.TODO()
-	//
-	// if err := r.Get(ctx, fn.NN("", r.Env.GatewayAdminNamespace), &corev1.Namespace{}); err != nil {
-	// 	if !apiErrors.IsNotFound(err) {
-	// 		return err
-	// 	}
-	//
-	// 	if err := r.Create(ctx, &corev1.Namespace{
-	// 		ObjectMeta: metav1.ObjectMeta{
-	// 			Name: r.Env.GatewayAdminNamespace,
-	// 			Annotations: map[string]string{
-	// 				constants.DescriptionKey: "Kloudlite Gateway Administration Namespace",
-	// 			},
-	// 		},
-	// 	}); err != nil {
-	// 		return err
-	// 	}
-	// }
-	//
-	// var gatewayList networkingv1.GatewayList
-	// if err := r.List(context.TODO(), &gatewayList); err != nil {
-	// 	return err
-	// }
-	//
-	// if len(gatewayList.Items) != 1 {
-	// 	return errors.Newf("must be only one gateway, but got %d", len(gatewayList.Items))
-	// }
-	//
-	// gateway := gatewayList.Items[0]
-	//
-	// wgSecret := &corev1.Secret{}
-	// if err := r.Get(ctx, fn.NN(gateway.Spec.WireguardKeysRef.Namespace, gateway.Spec.WireguardKeysRef.Name), wgSecret); err != nil {
-	// 	if !apiErrors.IsNotFound(err) {
-	// 		return err
-	// 	}
-	// 	key, err := wgtypes.GenerateKey()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	//
-	// 	wgSecret = &corev1.Secret{
-	// 		ObjectMeta: metav1.ObjectMeta{
-	// 			Name:      gateway.Spec.WireguardKeysRef.Name,
-	// 			Namespace: gateway.Spec.WireguardKeysRef.Namespace,
-	// 		},
-	// 		StringData: map[string]string{
-	// 			"private_key": key.String(),
-	// 			"public_key":  key.PublicKey().String(),
-	// 		},
-	// 	}
-	//
-	// 	if err := r.Create(ctx, wgSecret); err != nil {
-	// 		return err
-	// 	}
-	// }
-	//
-	// s := strings.SplitN(gateway.Spec.SvcCIDR, "/", 2)
-	// if len(s) != 2 {
-	// 	return fmt.Errorf("invalid svcCIDR: %s", gateway.Spec.SvcCIDR)
-	// }
-	// cidrSuffix, err := strconv.Atoi(s[1])
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// if r.Env.GatewayAdminHttpPort != 0 {
-	// 	go func() {
-	// 		if err := HttpServer(HttpServerArgs{
-	// 			Port:       r.Env.GatewayAdminHttpPort,
-	// 			kcli:       r.Client,
-	// 			kclientset: r.yamlClient.Client(),
-	//
-	// 			IPManagerConfigName:      "gateway-ip-manager",
-	// 			IPManagerConfigNamespace: r.Env.GatewayAdminNamespace,
-	//
-	// 			ClusterCIDR: gateway.Spec.ClusterCIDR,
-	//
-	// 			PodIPOffset:   int(math.Pow(2, float64(32-cidrSuffix)) + 1),
-	// 			PodAllowedIPs: []string{"100.64.0.0/10"},
-	//
-	// 			PodPeersSecretName:      "gateway-pod-peers",
-	// 			PodPeersSecretNamespace: r.Env.GatewayAdminNamespace,
-	//
-	// 			SvcCIDR: gateway.Spec.SvcCIDR,
-	//
-	// 			GatewayWgPublicKey:  string(wgSecret.Data["public_key"]),
-	// 			GatewayWgEndpoint:   fmt.Sprintf("%s.%s.svc.cluster.local:51820", gateway.Name, r.Env.GatewayAdminNamespace),
-	// 			GatewayGlobalIP:     gateway.Spec.GlobalIP,
-	// 			GatewayWgPrivateKey: string(wgSecret.Data["private_key"]),
-	// 		}); err != nil {
-	// 			r.logger.Errorf(err, "Failed to start http server")
-	// 			os.Exit(1)
-	// 		}
-	// 	}()
-	// }
-
+	builder.Owns(&appsv1.Deployment{})
+	builder.Owns(&corev1.Service{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)

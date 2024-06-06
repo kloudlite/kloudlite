@@ -18,8 +18,11 @@ type ServiceBindingSpec struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
+//+kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 //+kubebuilder:printcolumn:JSONPath=".spec.globalIP",name=GlobalIP,type=string
 //+kubebuilder:printcolumn:JSONPath=".spec.serviceIP",name=ServiceIP,type=string
+//+kubebuilder:printcolumn:JSONPath=".metadata.labels.kloudlite\\.io\\/global\\.hostname",name=Host,type=string
+//+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // ServiceBinding is the Schema for the servicebindings API
