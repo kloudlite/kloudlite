@@ -82,34 +82,26 @@ export const CopyContentToClipboard = ({
   };
 
   return (
-    <div className="flex flex-row items-center truncate">
+    <div
+      className="flex flex-row items-center truncate flex-1 cursor-pointer group"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!copied) {
+          handleCopy();
+        }
+      }}
+    >
       <ListItem
+        className="flex-1"
         noTooltip={!toolTip}
         data={
-          <span
-            className="cursor-pointer items-center gap-lg hover:text-text-default group-[.is-data]:truncate"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!copied) {
-                handleCopy();
-              }
-            }}
-          >
+          <span className="cursor-pointer items-center gap-lg hover:text-text-default group-hover:text-text-default group-[.is-data]:truncate">
             {label || content}
           </span>
         }
       />
-      <div
-        className="shrink-0 ml-md"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!copied) {
-            handleCopy();
-          }
-        }}
-      >
+      <div className="shrink-0 ml-md">
         {copied ? (
           <span>
             <Check size={iconSize} />

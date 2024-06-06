@@ -282,14 +282,10 @@ export const ViewSecret = ({
                         className: 'min-w-[170px]',
                       },
                       {
-                        render: () => '',
-                        name: 'copy',
-                        className: 'max-w-[120px]',
-                      },
-                      {
                         render: () => 'Value',
                         name: 'value',
-                        className: 'flex-1',
+                        className:
+                          'flex-1 min-w-[345px] max-w-[345px] w-[345px]',
                       },
                     ],
                     rows: Object.entries(data.stringData).map(
@@ -302,15 +298,9 @@ export const ViewSecret = ({
                             },
                             value: {
                               render: () => (
-                                <ListItem data={v} className="w-[220px]" />
-                              ),
-                            },
-                            copy: {
-                              render: () => (
                                 <CopyContentToClipboard
                                   content={v}
                                   toastMessage={`${key} copied`}
-                                  label="Copy Secret"
                                 />
                               ),
                             },
