@@ -142,6 +142,8 @@ func NewManager(ev *env.Env, kclientset *kubernetes.Clientset, kcli client.Clien
 		return nil, err
 	}
 
+	manager.logger.Info("manager initialized with", "counter_pod_ip", manager.PodIPCounter, "counter_svc_ip", manager.SvcIPCounter)
+
 	return &manager, nil
 }
 

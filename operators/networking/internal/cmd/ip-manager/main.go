@@ -83,12 +83,14 @@ func main() {
 	r.Post("/pod", func(w http.ResponseWriter, r *http.Request) {
 		s, err := manager.RegisterPod(r.Context())
 		if err != nil {
+			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		b, err := json.Marshal(s)
 		if err != nil {
+			log.Error("unmarshalling", "err", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -111,6 +113,7 @@ func main() {
 	r.Delete("/pod/{pb_ip}/{pb_uid}", func(w http.ResponseWriter, r *http.Request) {
 		pbIP, pbUID := chi.URLParam(r, "pb_ip"), chi.URLParam(r, "pb_uid")
 		if err := manager.DeregisterPod(r.Context(), pbIP, pbUID); err != nil {
+			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -123,18 +126,20 @@ func main() {
 	r.Post("/service/{svc_namespace}/{svc_name}", func(w http.ResponseWriter, r *http.Request) {
 		result, err := manager.RegisterService(r.Context(), chi.URLParam(r, "svc_namespace"), chi.URLParam(r, "svc_name"))
 		if err != nil {
+			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		if err := json.NewEncoder(w).Encode(result); err != nil {
+			log.Error("marshalling result", "err", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
 
 	r.Put("/service/{svc_binding_name}", func(w http.ResponseWriter, r *http.Request) {
 		if err := manager.RegisterAndSyncNginxStreams(r.Context(), chi.URLParam(r, "svc_binding_name")); err != nil {
-			log.Error(err, "while", "registering and syncing nginx streams")
+			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -142,7 +147,9 @@ func main() {
 	})
 
 	r.Delete("/service/{svc_binding_ip}/{svc_binding_uid}", func(w http.ResponseWriter, r *http.Request) {
-		if err := manager.DeregisterService(r.Context(), chi.URLParam(r, "svc_binding_ip"), chi.URLParam(r, "svc_binding_uid")); err != nil {
+		svcBindingIP, svcBindingUID := chi.URLParam(r, "svc_binding_ip"), chi.URLParam(r, "svc_binding_uid")
+		if err := manager.DeregisterService(r.Context(), svcBindingIP, svcBindingUID); err != nil {
+			log.Error("while deregistering service", "svc", svcBindingIP, "err", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

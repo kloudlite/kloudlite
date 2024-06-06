@@ -25,8 +25,11 @@ func (m *Manager) genGatewayWGConfig() string {
 	postDowns := make([]string, 0, len(m.svcNginxStreams))
 	for k := range m.svcNginxStreams {
 		postUps = append(postUps, fmt.Sprintf("PostUp = ip -4 address add %s/32 dev wg0", k))
-		postDowns = append(postDowns, fmt.Sprintf("PostDOwn = ip -4 address del %s/32 dev wg0", k))
+		postDowns = append(postDowns, fmt.Sprintf("PostDown = ip -4 address del %s/32 dev wg0", k))
 	}
+
+	postUps = append(postUps, fmt.Sprintf("PostUp = ip -4 address add %s/32 dev wg0", m.Env.GatewayInternalDNSNameserver))
+	postDowns = append(postDowns, fmt.Sprintf("PostDown = ip -4 address del %s/32 dev wg0", m.Env.GatewayInternalDNSNameserver))
 	return fmt.Sprintf(`[Interface]
 Address = %s
 ListenPort = 51820

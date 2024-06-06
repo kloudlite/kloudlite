@@ -16,11 +16,19 @@ tasks:
         vars:
           Out: "./bin/{{.binary}}"
 
-
   run:
     cmds:
       - task: build
       - ./bin/{{.binary}} --addr :8090 --dev
+
+  debug:
+    dotenv: 
+      - .secrets/env
+    cmds:
+      - |+
+        go build -o _debug_{{.binary}} .
+        trap "echo closing; rm _debug_{{.binary}}" EXIT
+        ./_debug_{{.binary}} --addr :8090 --dev
 
   container:build:
     preconditions: 

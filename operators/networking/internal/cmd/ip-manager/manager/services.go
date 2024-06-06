@@ -10,6 +10,7 @@ import (
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/iputils"
 	jp "github.com/kloudlite/operator/pkg/json-patch"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/types"
@@ -89,6 +90,10 @@ func (m *Manager) RegisterService(ctx context.Context, namespace, name string) (
 func (m *Manager) DeregisterService(ctx context.Context, svcBindingIP string, svcBindingUID string) error {
 	var svcBinding networkingv1.ServiceBinding
 	if err := m.kcli.Get(ctx, fn.NN("", sanitizeSvcIP(svcBindingIP)), &svcBinding); err != nil {
+		if apiErrors.IsNotFound(err) {
+			m.logger.Info("service binding not found, already deleted", "svc_binding_ip", svcBindingIP)
+			return nil
+		}
 		return NewError(err, "k8s get svc binding")
 	}
 
@@ -112,7 +117,9 @@ func (m *Manager) DeregisterService(ctx context.Context, svcBindingIP string, sv
 	}
 
 	if err := m.kcli.Delete(ctx, &svcBinding); err != nil {
-		return NewError(err, "k8s delete svc binding")
+		if !apiErrors.IsNotFound(err) {
+			return NewError(err, "k8s delete svc binding")
+		}
 	}
 
 	// if err := m.WgRemoveAddr(svcBindingIP); err != nil {
