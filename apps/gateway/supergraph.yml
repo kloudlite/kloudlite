@@ -17,7 +17,7 @@ subgraphs:
     schema:
       file: ./schemas/console-api.schema
   comms-api:
-    routing_url: http://comms-api:3000/query
+    routing_url: http://comms:3000/query
     schema:
       file: ./schemas/comms-api.schema
   infra-api:
