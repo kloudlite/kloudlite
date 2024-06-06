@@ -11,7 +11,7 @@ tasks:
     cmds:
       - task: go:build
         vars:
-          Out: "./bin/{{.binary}}"
+          Out: "./bin/{{.binary}}-{{.GOARCH}}"
 
   run:
     env:
@@ -19,10 +19,11 @@ tasks:
     cmds:
       - go run .
 
-  container:build:
+  container:build-and-push:
     preconditions: 
       - sh: '[ -n "{{.image}}" ]'
         msg: "image must be set"
     cmds:
-      - task: build
-      - docker buildx build --build-arg BINARY=./bin/{{.binary}} --output=type=image,compression=zstd,compression-level=10,force-compression=true,push=true -t {{.image}} .
+      - GOARCH=amd64 task build
+      - GOARCH=arm64 task build
+      - docker buildx build --build-arg BINARY=./bin/{{.binary}} --platform linux/amd64,linux/arm64 --output=type=image,compression=zstd,compression-level=12,force-compression=true,push=true -t {{.image}} .
