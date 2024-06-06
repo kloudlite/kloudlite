@@ -14,8 +14,10 @@ type GatewayDeploymentArgs struct {
 	GatewayAdminAPIImage   string
 	WebhookServerImage     string
 
-	GatewayWgSecretName string
-	GatewayGlobalIP     string
+	GatewayWgSecretName          string
+	GatewayGlobalIP              string
+	GatewayDNSSuffix             string
+	GatewayInternalDNSNameserver string
 
 	ClusterCIDR string
 	ServiceCIDR string

@@ -3,9 +3,10 @@ kind: Gateway
 metadata:
   name: gateway
 spec:
-  globalIP: "100.160.0.1/24"
-  clusterCIDR: "100.160.0.0/18"
-  svcCIDR: "100.160.0.0/20"
+  globalIP: 100.64.128.1
+  clusterCIDR: "100.64.128.0/18"
+  svcCIDR: "100.64.128.0/20"
+  dnsSuffix: svc.my-cluster.local
   wireguardKeysRef:
     name: gateway-wg
     namespace: kloudlite

@@ -16,11 +16,23 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
+    - jsonPath: .spec.globalIP
+      name: GlobalIP
+      type: string
     - jsonPath: .spec.clusterCIDR
       name: ClusterCIDR
       type: string
     - jsonPath: .spec.svcCIDR
       name: ServiceCIDR
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
       type: string
     name: v1
     schema:
@@ -44,6 +56,8 @@ spec:
             properties:
               clusterCIDR:
                 type: string
+              dnsSuffix:
+                type: string
               globalIP:
                 type: string
               svcCIDR:
@@ -60,6 +74,7 @@ spec:
                 type: object
             required:
             - clusterCIDR
+            - dnsSuffix
             - globalIP
             - svcCIDR
             type: object
