@@ -32,7 +32,7 @@ const (
 func exchangeWithDNS(ctx ResolverCtx, m *dns.Msg, nameserver string) []dns.RR {
 	m, err := dns.ExchangeContext(ctx, m, nameserver)
 	if err != nil {
-		log.Error("while exchanging dns message", "err", err)
+		log.Error("while exchanging dns message", "err", err, "nameserver", nameserver)
 		return nil
 	}
 	if m == nil {
@@ -47,6 +47,8 @@ func (h *dnsHandler) resolver(ctx ResolverCtx, domain string, qtype uint16) []dn
 	m.SetQuestion(dns.Fqdn(domain), qtype)
 	m.RecursionDesired = true
 
+	result := make([]dns.RR, 0, 1)
+
 	for i := range m.Question {
 		qdomain := m.Question[i].Name
 
@@ -55,31 +57,44 @@ func (h *dnsHandler) resolver(ctx ResolverCtx, domain string, qtype uint16) []dn
 
 		for _, k := range gatewayMap.Keys() {
 			ctx.logger.Debug("checking for question", "domain", domain, "dns-suffix", k, "local-gateway-dns", h.localGatewayDNS)
+
+			if len(result) > 0 {
+				ctx.logger.Debug("found result", "result", result)
+				break
+			}
+
 			if strings.HasSuffix(qdomain, fmt.Sprintf("%s.", k)) {
 				switch k {
 				case "svc.cluster.local":
-					return exchangeWithDNS(ctx, m, gatewayMap.Get(k))
+					result = append(result, exchangeWithDNS(ctx, m, gatewayMap.Get(k))...)
 
 				case h.localGatewayDNS:
 					{
 						serviceMap.Debug()
+
 						if h.AnswerClusterLocalIPs {
 							m.Question[i].Name = strings.ReplaceAll(qdomain, h.localGatewayDNS, "svc.cluster.local")
 							rr := exchangeWithDNS(ctx, m, gatewayMap.Get("svc.cluster.local"))
 							for j := range rr {
 								rr[j].Header().Name = strings.ReplaceAll(rr[j].Header().Name, "svc.cluster.local", h.localGatewayDNS)
 							}
-							return rr
+
+							result = append(result, rr...)
+							continue
 						}
 
-						return serviceMap.Get(qdomain)
+						result = append(result, serviceMap.Get(qdomain)...)
 					}
 
 				default:
-					return exchangeWithDNS(ctx, m, gatewayMap.Get(k))
+					result = append(result, exchangeWithDNS(ctx, m, gatewayMap.Get(k))...)
 				}
 			}
 		}
+	}
+
+	if len(result) > 0 {
+		return result
 	}
 
 	return exchangeWithDNS(ctx, m, cloudflareDNS)
