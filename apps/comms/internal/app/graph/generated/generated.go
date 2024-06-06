@@ -115,9 +115,10 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CommsMarkNotificationAsRead   func(childComplexity int, id repos.ID) int
-		CommsUpdateNotificationConfig func(childComplexity int, config entities.NotificationConf) int
-		CommsUpdateSubscriptionConfig func(childComplexity int, config entities.Subscription, id repos.ID) int
+		CommsMarkAllNotificationAsRead func(childComplexity int) int
+		CommsMarkNotificationAsRead    func(childComplexity int, id repos.ID) int
+		CommsUpdateNotificationConfig  func(childComplexity int, config entities.NotificationConf) int
+		CommsUpdateSubscriptionConfig  func(childComplexity int, config entities.Subscription, id repos.ID) int
 	}
 
 	Notification struct {
@@ -206,6 +207,7 @@ type MutationResolver interface {
 	CommsUpdateNotificationConfig(ctx context.Context, config entities.NotificationConf) (*entities.NotificationConf, error)
 	CommsUpdateSubscriptionConfig(ctx context.Context, config entities.Subscription, id repos.ID) (*entities.Subscription, error)
 	CommsMarkNotificationAsRead(ctx context.Context, id repos.ID) (*types.Notification, error)
+	CommsMarkAllNotificationAsRead(ctx context.Context) (bool, error)
 }
 type NotificationResolver interface {
 	Content(ctx context.Context, obj *types.Notification) (*model.GithubComKloudliteAPIAppsCommsTypesNotifyContent, error)
@@ -466,6 +468,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MatchFilter.Regex(childComplexity), true
+
+	case "Mutation.comms_markAllNotificationAsRead":
+		if e.complexity.Mutation.CommsMarkAllNotificationAsRead == nil {
+			break
+		}
+
+		return e.complexity.Mutation.CommsMarkAllNotificationAsRead(childComplexity), true
 
 	case "Mutation.comms_markNotificationAsRead":
 		if e.complexity.Mutation.CommsMarkNotificationAsRead == nil {
@@ -994,6 +1003,7 @@ type Mutation {
   comms_updateSubscriptionConfig(config: SubscriptionIn!, id: ID!): Subscription
 
   comms_markNotificationAsRead(id: ID!): Notification @isLoggedInAndVerified @hasAccount
+  comms_markAllNotificationAsRead: Boolean! @isLoggedInAndVerified @hasAccount
 }
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/common-types.graphqls", Input: `type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Email @shareable {
@@ -2872,6 +2882,76 @@ func (ec *executionContext) fieldContext_Mutation_comms_markNotificationAsRead(c
 	if fc.Args, err = ec.field_Mutation_comms_markNotificationAsRead_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_comms_markAllNotificationAsRead(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_comms_markAllNotificationAsRead(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CommsMarkAllNotificationAsRead(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_comms_markAllNotificationAsRead(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -8086,6 +8166,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_comms_markNotificationAsRead(ctx, field)
 			})
+		case "comms_markAllNotificationAsRead":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_comms_markAllNotificationAsRead(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

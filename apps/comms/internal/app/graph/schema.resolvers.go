@@ -6,11 +6,13 @@ package graph
 
 import (
 	"context"
+
+	"github.com/kloudlite/api/pkg/errors"
+
 	"github.com/kloudlite/api/apps/comms/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/comms/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/comms/internal/domain/entities"
 	"github.com/kloudlite/api/apps/comms/types"
-	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -43,6 +45,20 @@ func (r *mutationResolver) CommsMarkNotificationAsRead(ctx context.Context, id r
 	}
 
 	return r.Domain.MarkNotificationAsRead(cc, id)
+}
+
+// CommsMarkAllNotificationAsRead is the resolver for the comms_markAllNotificationAsRead field.
+func (r *mutationResolver) CommsMarkAllNotificationAsRead(ctx context.Context) (bool, error) {
+	cc, err := toCommsContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.MarkAllNotificationsAsRead(cc); err != nil {
+		return false, errors.NewE(err)
+	}
+
+	return true, nil
 }
 
 // CommsListNotifications is the resolver for the comms_listNotifications field.

@@ -12,4 +12,5 @@ type Mutation {
   comms_updateSubscriptionConfig(config: SubscriptionIn!, id: ID!): Subscription
 
   comms_markNotificationAsRead(id: ID!): Notification @isLoggedInAndVerified @hasAccount
+  comms_markAllNotificationAsRead: Boolean! @isLoggedInAndVerified @hasAccount
 }
