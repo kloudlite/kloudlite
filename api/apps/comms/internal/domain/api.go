@@ -11,6 +11,7 @@ import (
 type Domain interface {
 	ListNotifications(ctx CommsContext, pagination repos.CursorPagination) (*repos.PaginatedRecord[*types.Notification], error)
 	MarkNotificationAsRead(ctx CommsContext, id repos.ID) (*types.Notification, error)
+	MarkAllNotificationsAsRead(ctx CommsContext) error
 
 	GetNotificationConfig(ctx CommsContext) (*entities.NotificationConf, error)
 	UpdateNotificationConfig(ctx CommsContext, config entities.NotificationConf) (*entities.NotificationConf, error)
