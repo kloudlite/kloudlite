@@ -16,6 +16,22 @@ type Env struct {
 
 	ResetPasswordWebUrl string `env:"RESET_PASSWORD_WEB_URL" required:"true"`
 	VerifyEmailWebUrl   string `env:"VERIFY_EMAIL_WEB_URL" required:"true"`
+
+	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
+
+	NatsURL string `env:"NATS_URL" required:"true"`
+
+	// NATS:start
+	NotificationNatsStream string `env:"NOTIFICATION_NATS_STREAM" required:"true"`
+	// NATS:start
+
+	IsDev bool
+
+	SessionKVBucket string `env:"SESSION_KV_BUCKET" required:"true"`
+	IAMGrpcAddr     string `env:"IAM_GRPC_ADDR" required:"true"`
+
+	CommsDBUri  string `env:"MONGO_URI" required:"true"`
+	CommsDBName string `env:"MONGO_DB_NAME" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

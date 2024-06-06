@@ -10,6 +10,10 @@ cat ../accounts/internal/app/graph/struct-to-graphql/*.graphqls >>./schemas/acco
 cat ../console/internal/app/graph/*.graphqls >./schemas/console-api.schema
 cat ../console/internal/app/graph/struct-to-graphql/*.graphqls >>./schemas/console-api.schema
 
+cat ../comms/internal/app/graph/*.graphqls >./schemas/comms-api.schema
+cat ../comms/internal/app/graph/struct-to-graphql/*.graphqls >>./schemas/comms-api.schema
+
+
 cat ../container-registry/internal/app/graph/*.graphqls >./schemas/container-registry-api.schema
 cat ../container-registry/internal/app/graph/struct-to-graphql/*.graphqls >>./schemas/container-registry-api.schema
 

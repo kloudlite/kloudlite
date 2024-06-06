@@ -66,6 +66,7 @@ type ServerArgs struct {
 	IsDev            bool
 	Logger           logging.Logger
 	CorsAllowOrigins *string
+	IAMGrpcAddr      string `env:"IAM_GRPC_ADDR" required:"true"`
 }
 
 func NewServer(args ServerArgs) Server {

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+
+	"github.com/kloudlite/api/apps/comms/internal/domain"
 	"github.com/kloudlite/api/apps/comms/internal/env"
 	"github.com/kloudlite/api/pkg/errors"
 
@@ -19,12 +21,7 @@ type commsSvc struct {
 
 	ev *env.Env
 
-	accountInviteEmail    AccountInviteEmail
-	projectInviteEmail    ProjectInviteEmail
-	resetPasswordEmail    RestPasswordEmail
-	userVerificationEmail UserVerificationEmail
-	welcomeEmail          WelcomeEmail
-	waitingEmail          WaitingEmail
+	eTemplattes *domain.EmailTemplates
 }
 
 func (r *commsSvc) sendSupportEmail(ctx context.Context, subject string, toEmail string, toName string, plainText string, htmlContent string) error {
@@ -57,16 +54,16 @@ func (r *commsSvc) SendAccountMemberInviteEmail(ctx context.Context, input *comm
 		"Link":        fmt.Sprintf("%v?token=%v", r.ev.AccountsWebInviteUrl, input.InvitationToken),
 	}
 
-	if err := r.accountInviteEmail.PlainText.Execute(plainText, args); err != nil {
+	if err := r.eTemplattes.AccountInviteEmail.PlainText.Execute(plainText, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute plain-text template")
 	}
 
 	html := new(bytes.Buffer)
-	if err := r.accountInviteEmail.Html.Execute(html, args); err != nil {
+	if err := r.eTemplattes.AccountInviteEmail.Html.Execute(html, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute html template")
 	}
 
-	if err := r.sendSupportEmail(ctx, r.accountInviteEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
+	if err := r.sendSupportEmail(ctx, r.eTemplattes.AccountInviteEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
 		return nil, errors.NewE(err)
 	}
 	return &comms.Void{}, nil
@@ -86,16 +83,16 @@ func (r *commsSvc) SendProjectMemberInviteEmail(ctx context.Context, input *comm
 		"Link":        fmt.Sprintf("%v?token=%v", r.ev.ProjectsWebInviteUrl, input.InvitationToken),
 	}
 
-	if err := r.projectInviteEmail.PlainText.Execute(plainText, args); err != nil {
+	if err := r.eTemplattes.ProjectInviteEmail.PlainText.Execute(plainText, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute plain-text template")
 	}
 
 	html := new(bytes.Buffer)
-	if err := r.projectInviteEmail.Html.Execute(html, args); err != nil {
+	if err := r.eTemplattes.ProjectInviteEmail.Html.Execute(html, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute html template")
 	}
 
-	if err := r.sendSupportEmail(ctx, r.projectInviteEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
+	if err := r.sendSupportEmail(ctx, r.eTemplattes.ProjectInviteEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -114,16 +111,16 @@ func (r *commsSvc) SendPasswordResetEmail(ctx context.Context, input *comms.Pass
 		"Link": fmt.Sprintf("%v?token=%v", r.ev.ResetPasswordWebUrl, input.ResetToken),
 	}
 
-	if err := r.resetPasswordEmail.PlainText.Execute(plainText, args); err != nil {
+	if err := r.eTemplattes.ResetPasswordEmail.PlainText.Execute(plainText, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute plain text template")
 	}
 
 	html := new(bytes.Buffer)
-	if err := r.resetPasswordEmail.Html.Execute(html, args); err != nil {
+	if err := r.eTemplattes.ResetPasswordEmail.Html.Execute(html, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute html template")
 	}
 
-	if err := r.sendSupportEmail(ctx, r.resetPasswordEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
+	if err := r.sendSupportEmail(ctx, r.eTemplattes.ResetPasswordEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -141,16 +138,16 @@ func (r *commsSvc) SendWelcomeEmail(ctx context.Context, input *comms.WelcomeEma
 		}(),
 	}
 
-	if err := r.welcomeEmail.PlainText.Execute(plainText, args); err != nil {
+	if err := r.eTemplattes.WelcomeEmail.PlainText.Execute(plainText, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute plain text template")
 	}
 
 	html := new(bytes.Buffer)
-	if err := r.welcomeEmail.Html.Execute(html, args); err != nil {
+	if err := r.eTemplattes.WelcomeEmail.Html.Execute(html, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute html template")
 	}
 
-	if err := r.sendSupportEmail(ctx, r.welcomeEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
+	if err := r.sendSupportEmail(ctx, r.eTemplattes.WelcomeEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -168,16 +165,16 @@ func (r *commsSvc) SendWaitingEmail(ctx context.Context, input *comms.WelcomeEma
 		}(),
 	}
 
-	if err := r.waitingEmail.PlainText.Execute(plainText, args); err != nil {
+	if err := r.eTemplattes.WaitingEmail.PlainText.Execute(plainText, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute plain text template")
 	}
 
 	html := new(bytes.Buffer)
-	if err := r.waitingEmail.Html.Execute(html, args); err != nil {
+	if err := r.eTemplattes.WaitingEmail.Html.Execute(html, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute html template")
 	}
 
-	if err := r.sendSupportEmail(ctx, r.waitingEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
+	if err := r.sendSupportEmail(ctx, r.eTemplattes.WaitingEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
 		return nil, errors.NewE(err)
 	}
 	return &comms.Void{}, nil
@@ -195,30 +192,25 @@ func (r *commsSvc) SendVerificationEmail(ctx context.Context, input *comms.Verif
 		"Link": fmt.Sprintf("%v?token=%v", r.ev.VerifyEmailWebUrl, input.VerificationToken),
 	}
 
-	if err := r.userVerificationEmail.PlainText.Execute(plainText, args); err != nil {
+	if err := r.eTemplattes.UserVerificationEmail.PlainText.Execute(plainText, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute plain text template")
 	}
 
 	html := new(bytes.Buffer)
-	if err := r.userVerificationEmail.Html.Execute(html, args); err != nil {
+	if err := r.eTemplattes.UserVerificationEmail.Html.Execute(html, args); err != nil {
 		return nil, errors.NewEf(err, "failed to execute html template")
 	}
 
-	if err := r.sendSupportEmail(ctx, r.userVerificationEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
+	if err := r.sendSupportEmail(ctx, r.eTemplattes.UserVerificationEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
 		return nil, errors.NewE(err)
 	}
 	return &comms.Void{}, nil
 }
-func newCommsSvc(mailer mail.Mailer, ev *env.Env, ai AccountInviteEmail, pi ProjectInviteEmail, rp RestPasswordEmail, uv UserVerificationEmail, nwl WaitingEmail, wl WelcomeEmail) comms.CommsServer {
+func newCommsSvc(mailer mail.Mailer, ev *env.Env, et *domain.EmailTemplates) comms.CommsServer {
 	return &commsSvc{
-		mailer:                mailer,
-		supportEmail:          ev.SupportEmail,
-		ev:                    ev,
-		accountInviteEmail:    ai,
-		projectInviteEmail:    pi,
-		resetPasswordEmail:    rp,
-		userVerificationEmail: uv,
-		welcomeEmail:          wl,
-		waitingEmail:          nwl,
+		mailer:       mailer,
+		supportEmail: ev.SupportEmail,
+		ev:           ev,
+		eTemplattes:  et,
 	}
 }
