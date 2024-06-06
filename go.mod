@@ -10,13 +10,14 @@ require (
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
 	github.com/evanphx/json-patch/v5 v5.6.0
 	github.com/fatih/color v1.15.0
-	github.com/go-chi/chi/v5 v5.0.0
+	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gobuffalo/flect v1.0.2
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3
 	github.com/matoous/go-nanoid/v2 v2.0.0
+	github.com/miekg/dns v1.1.55
 	github.com/nats-io/nats.go v1.31.0
 	github.com/nxtcoder17/go-helm-client v0.0.0-20230915000026-8789cfa27bf3
 	github.com/onsi/ginkgo/v2 v2.12.0

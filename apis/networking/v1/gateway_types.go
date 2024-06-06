@@ -13,6 +13,8 @@ type GatewaySpec struct {
 	ClusterCIDR string `json:"clusterCIDR"`
 	SvcCIDR     string `json:"svcCIDR"`
 
+	DNSSuffix string `json:"dnsSuffix"`
+
 	// secret's data will be unmarshalled into WireguardKeys
 	WireguardKeysRef ct.SecretRef `json:"wireguardKeysRef,omitempty"`
 }
@@ -25,8 +27,12 @@ type WireguardKeys struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
+//+kubebuilder:printcolumn:JSONPath=".spec.globalIP",name=GlobalIP,type=string
 //+kubebuilder:printcolumn:JSONPath=".spec.clusterCIDR",name=ClusterCIDR,type=string
 //+kubebuilder:printcolumn:JSONPath=".spec.svcCIDR",name=ServiceCIDR,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 
 // Gateway is the Schema for the gateways API
 type Gateway struct {

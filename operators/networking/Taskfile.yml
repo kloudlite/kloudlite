@@ -13,7 +13,7 @@ tasks:
   run:
     cmds:
       - go build -o ./bin/networking .
-      - ./bin/networking
+      - ./bin/networking --dev
 
   build:
     cmds:

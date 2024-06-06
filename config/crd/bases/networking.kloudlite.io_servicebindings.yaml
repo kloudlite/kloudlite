@@ -16,11 +16,20 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Seen
+      type: date
     - jsonPath: .spec.globalIP
       name: GlobalIP
       type: string
     - jsonPath: .spec.serviceIP
       name: ServiceIP
+      type: string
+    - jsonPath: .metadata.labels.kloudlite\.io\/global\.hostname
+      name: Host
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
