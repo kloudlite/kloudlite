@@ -11,18 +11,32 @@ tasks:
     cmds:
       - task: go:build
         vars:
-          Out: "./bin/{{.app}}"
+          Out: "./bin/{{.app}}-{{.GOARCH}}"
 
   run:
     env:
       GATEWAY_ADMIN_API_ADDR: "http://gateway.kl-gateway.svc.cluster.local:8080"
     cmds:
-      - go run ./main.go
+      - go run ./main.go --debug --addr ":8443"
+
+  debug:
+    env:
+      GATEWAY_ADMIN_API_ADDR: "http://gateway.kl-gateway.svc.cluster.local:8080"
+    cmds:
+      - |+
+        go build -o ./_debug-{{.app}} .
+        trap "echo closing; rm -f ./_debug-{{.app}}" EXIT
+        ./_debug-{{.app}} --debug --addr ":8443"
 
   container:build-and-push:
     preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
+      - sh: '[[ -n "{{.image}}" ]]'
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
       - task: build
-      - docker buildx build -t {{.Image}} . --build-arg BINARY=./bin/{{.app}} --push
+        vars:
+          GOARCH: amd64
+      - task: build
+        vars:
+          GOARCH: arm64
+      - docker buildx build -t {{.image}} . --build-arg BINARY=./bin/{{.app}} --output=type=image,compression=zstd,compression-level=12,force-compression=true,push=true
