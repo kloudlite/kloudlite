@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/kloudlite/api/apps/comms/internal/app"
+	"github.com/kloudlite/api/apps/comms/internal/domain"
 	"github.com/kloudlite/api/apps/comms/internal/env"
 	"github.com/kloudlite/api/apps/comms/internal/framework"
 	"github.com/kloudlite/api/common"
@@ -38,8 +38,8 @@ func main() {
 		fx.Provide(func() (*env.Env, error) {
 			return env.LoadEnv()
 		}),
-		fx.Provide(func() app.EmailTemplatesDir {
-			return app.EmailTemplatesDir{
+		fx.Provide(func() domain.EmailTemplatesDir {
+			return domain.EmailTemplatesDir{
 				FS: EmailTemplatesDir,
 			}
 		}),
