@@ -32,6 +32,8 @@ type Env struct {
 
 	CommsDBUri  string `env:"MONGO_URI" required:"true"`
 	CommsDBName string `env:"MONGO_DB_NAME" required:"true"`
+
+	Port uint16 `env:"HTTP_PORT" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {
