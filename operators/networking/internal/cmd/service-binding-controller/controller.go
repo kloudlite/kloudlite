@@ -109,6 +109,15 @@ func (r *Reconciler) patchServiceBinding(req *rApi.Request[*networkingv1.Service
 	obj.Spec.ServiceIP = &svc.Spec.ClusterIP
 	obj.Spec.Ports = svc.Spec.Ports
 
+	svcHost := fmt.Sprintf("%s.%s.%s", svc.Name, svc.Namespace, r.Env.GatewayDNSSuffix)
+
+	lb := obj.GetLabels()
+	if lb == nil {
+		lb = make(map[string]string, 1)
+	}
+	lb["kloudlite.io/global.hostname"] = svcHost
+	obj.SetLabels(lb)
+
 	if err := r.Update(ctx, obj); err != nil {
 		return check.Failed(err)
 	}
@@ -119,6 +128,15 @@ func (r *Reconciler) patchServiceBinding(req *rApi.Request[*networkingv1.Service
 	}
 
 	if _, err := http.DefaultClient.Do(r2); err != nil {
+		return check.Failed(err)
+	}
+
+	svcDnsReq, err := http.NewRequestWithContext(ctx, http.MethodPut, fmt.Sprintf("%s/service/%s/%s", r.Env.ServiceDNSHttpAddr, svcHost, obj.Spec.GlobalIP), nil)
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	if _, err := http.DefaultClient.Do(svcDnsReq); err != nil {
 		return check.Failed(err)
 	}
 
