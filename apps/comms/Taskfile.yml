@@ -7,6 +7,33 @@ vars:
   app: comms
 
 tasks:
+  gql:
+    dir: ./internal/app
+    cmds:
+      - go run github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
+
+  k8s-schema:
+    cmds:
+      - mkdir -p "./internal/app/_struct-to-graphql"
+      - go run ../../cmd/struct-to-graphql
+          --struct github.com/kloudlite/api/apps/comms/internal/domain/entities.NotificationConf
+          --struct github.com/kloudlite/api/apps/comms/internal/domain/entities.Subscription
+          --struct github.com/kloudlite/api/apps/comms/types.Notification
+          --struct github.com/kloudlite/api/pkg/types.Pagination
+          --struct github.com/kloudlite/api/pkg/repos.MatchFilter
+          --struct github.com/kloudlite/api/pkg/repos.CursorPagination
+        > ./internal/app/_struct-to-graphql/main.go
+      - |+
+        pushd ./internal/app/_struct-to-graphql
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Notification
+        popd
+      - rm -rf ./internal/app/_struct-to-graphql
+
+
+  gen:constants:
+    cmds:
+      - go generate ./internal/domain/entities/field-constants/gen.go
   run:
     dotenv: [".secrets/env"]
     cmds:

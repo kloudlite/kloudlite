@@ -7,6 +7,7 @@ type topicName string
 const (
 	GitWebhookTopicName    topicName = "events.webhooks.git"
 	AuditEventLogTopicName topicName = "events.audit.event-log"
+	NotificationTopicName  topicName = "events.notification"
 )
 
 func GetKafkaTopicName(accountName string, clusterName string) string {

@@ -182,6 +182,7 @@ var Module = fx.Module("app",
 			},
 		})
 	}),
+
 	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
