@@ -24,8 +24,9 @@ func sanitizePodIP(podIP string) string {
 }
 
 type RegisterPodResult struct {
-	PodIP  string
-	PodUID string
+	PodIP         string
+	PodUID        string
+	DNSNameserver string
 }
 
 func (m *Manager) ensurePodBinding(ctx context.Context, podIP string) (*networkingv1.PodBinding, error) {
@@ -37,7 +38,7 @@ func (m *Manager) ensurePodBinding(ctx context.Context, podIP string) (*networki
 
 		key, err := wgtypes.GenerateKey()
 		if err != nil {
-			return nil, Error{Err: err, Message: "while generating wireguard key-pair"}
+			return nil, Error{Err: err, Message: "generating wireguard key-pair"}
 		}
 
 		podBinding := &networkingv1.PodBinding{
@@ -83,12 +84,12 @@ func (m *Manager) RegisterPod(ctx context.Context) (*RegisterPodResult, error) {
 		return s, false, err
 	}()
 	if err != nil {
-		return nil, Error{Err: err, Message: "while generating pod IP"}
+		return nil, Error{Err: err, Message: "generating pod IP"}
 	}
 
 	pb, err := m.ensurePodBinding(ctx, podIP)
 	if err != nil {
-		return nil, NewError(err, "while ensuring pod binding")
+		return nil, NewError(err, "ensuring pod binding")
 	}
 
 	b, err := counterPatch.Json()
@@ -109,7 +110,7 @@ func (m *Manager) RegisterPod(ctx context.Context) (*RegisterPodResult, error) {
 		return nil, NewError(err, "while restarting wireguard")
 	}
 
-	return &RegisterPodResult{PodIP: podIP, PodUID: string(pb.GetUID())}, nil
+	return &RegisterPodResult{PodIP: podIP, PodUID: string(pb.GetUID()), DNSNameserver: m.Env.GatewayInternalDNSNameserver}, nil
 }
 
 func (m *Manager) DeregisterPod(ctx context.Context, podBindingIP string, podBindingUID string) error {
@@ -158,10 +159,11 @@ func (m *Manager) GetWgConfigForPod(ctx context.Context, podIP string) ([]byte, 
 		return nil, NewError(err, "k8s get pod binding")
 	}
 
-	wgconfig := fmt.Sprintf(`
-[Interface]
+	wgconfig := fmt.Sprintf(`[Interface]
 Address = %s
 PrivateKey = %s
+
+DNS = %s
 
 [Peer]
 PublicKey = %s
@@ -172,9 +174,11 @@ PersistentKeepalive = 5
 		fmt.Sprintf("%s/32", podIP),
 		podBinding.Spec.WgPrivateKey,
 
+		m.Env.GatewayInternalDNSNameserver,
+
 		m.Env.GatewayWGPublicKey,
 		m.Env.GatewayWGEndpoint,
-		strings.Join(podBinding.Spec.AllowedIPs, ", "),
+		strings.Join(append(podBinding.Spec.AllowedIPs, m.Env.GatewayInternalDNSNameserver), ", "),
 	)
 
 	return []byte(wgconfig), nil

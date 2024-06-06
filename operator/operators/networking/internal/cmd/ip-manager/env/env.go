@@ -8,7 +8,9 @@ type Env struct {
 	GatewayWGPublicKey  string `env:"GATEWAY_WG_PUBLIC_KEY" required:"true"`
 	GatewayWGPrivateKey string `env:"GATEWAY_WG_PRIVATE_KEY" required:"true"`
 	GatewayWGEndpoint   string `env:"GATEWAY_WG_ENDPOINT" required:"true"`
-	GatewayGlobalIP     string `env:"GATEWAY_GLOBAL_IP" required:"true"`
+
+	GatewayGlobalIP              string `env:"GATEWAY_GLOBAL_IP" required:"true"`
+	GatewayInternalDNSNameserver string `env:"GATEWAY_INTERNAL_DNS_NAMESERVER" required:"true"`
 
 	ClusterCIDR string `env:"CLUSTER_CIDR" required:"true"`
 	ServiceCIDR string `env:"SERVICE_CIDR" required:"true"`
