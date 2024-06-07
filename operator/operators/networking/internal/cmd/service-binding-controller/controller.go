@@ -52,6 +52,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if req.Object.Spec.ServiceRef == nil {
+		return ctrl.Result{}, nil
+	}
+
 	req.PreReconcile()
 	defer req.PostReconcile()
 
@@ -151,7 +155,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&networkingv1.ServiceBinding{})
 	builder.Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-		if v, ok := obj.GetLabels()["kloudlite.io/servicebinding.enabled"]; v == "true" && ok {
+		if _, ok := obj.GetLabels()["kloudlite.io/servicebinding.ip"]; ok {
 			return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), obj.GetName())}}
 		}
 		return nil
