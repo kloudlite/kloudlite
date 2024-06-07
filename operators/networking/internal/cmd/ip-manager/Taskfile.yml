@@ -24,11 +24,17 @@ tasks:
   debug:
     dotenv: 
       - .secrets/env
+    vars:
+      binary: __debug-{{.binary}}
     cmds:
       - |+
-        go build -o _debug_{{.binary}} .
-        trap "echo closing; rm _debug_{{.binary}}" EXIT
-        ./_debug_{{.binary}} --addr :8090 --dev
+        trap "echo closing; rm {{.binary}}" EXIT
+        if [ -n "{{.hotreload}}" ]; then
+          fwatcher --exec 'go build -o {{.binary}} .; ./{{.binary}} --addr :8090 --dev' --ext .go
+        else
+          go build -o {{.binary}} .
+          ./{{.binary}} --addr :8090 --dev
+        fi
 
   container:build:
     preconditions: 

@@ -34,7 +34,7 @@ func main() {
 
 	restCfg, err := func() (*rest.Config, error) {
 		if isDev {
-			return &rest.Config{Host: "localhost:8080"}, nil
+			return &rest.Config{Host: "localhost:8080", QPS: 200, Burst: 200}, nil
 		}
 		return rest.InClusterConfig()
 	}()
@@ -62,7 +62,7 @@ func main() {
 		panic(err)
 	}
 
-	manager, err := manager.NewManager(ev, yamlClient.Client(), cli)
+	mg, err := manager.NewManager(ev, yamlClient.Client(), cli)
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +81,7 @@ func main() {
 	})
 
 	r.Post("/pod", func(w http.ResponseWriter, r *http.Request) {
-		s, err := manager.RegisterPod(r.Context())
+		s, err := mg.RegisterPod(r.Context())
 		if err != nil {
 			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -97,9 +97,13 @@ func main() {
 		w.Write(b)
 	})
 
-	r.Get("/pod/{pod_ip}", func(w http.ResponseWriter, r *http.Request) {
-		podIP := chi.URLParam(r, "pod_ip")
-		wgconfig, err := manager.GetWgConfigForPod(r.Context(), podIP)
+	r.Put("/pod/{pod_namespace}/{pod_name}/{reservation_token}", func(w http.ResponseWriter, r *http.Request) {
+		podNamespace, podName, reservationToken := chi.URLParam(r, "pod_namespace"), chi.URLParam(r, "pod_name"), chi.URLParam(r, "reservation_token")
+		wgconfig, err := mg.GetWgConfigForReservedPod(r.Context(), manager.WgConfigForReservedPodArgs{
+			ReservationToken: reservationToken,
+			PodNamespace:     podNamespace,
+			PodName:          podName,
+		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -110,9 +114,9 @@ func main() {
 		// }
 	})
 
-	r.Delete("/pod/{pb_ip}/{pb_uid}", func(w http.ResponseWriter, r *http.Request) {
-		pbIP, pbUID := chi.URLParam(r, "pb_ip"), chi.URLParam(r, "pb_uid")
-		if err := manager.DeregisterPod(r.Context(), pbIP, pbUID); err != nil {
+	r.Delete("/pod/{pb_ip}/{reservation_token}", func(w http.ResponseWriter, r *http.Request) {
+		pbIP, reservationToken := chi.URLParam(r, "pb_ip"), chi.URLParam(r, "reservation_token")
+		if err := mg.DeregisterPod(r.Context(), pbIP, reservationToken); err != nil {
 			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -124,7 +128,7 @@ func main() {
 	})
 
 	r.Post("/service/{svc_namespace}/{svc_name}", func(w http.ResponseWriter, r *http.Request) {
-		result, err := manager.RegisterService(r.Context(), chi.URLParam(r, "svc_namespace"), chi.URLParam(r, "svc_name"))
+		result, err := mg.ReserveService(r.Context(), chi.URLParam(r, "svc_namespace"), chi.URLParam(r, "svc_name"))
 		if err != nil {
 			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -137,8 +141,8 @@ func main() {
 		}
 	})
 
-	r.Put("/service/{svc_binding_name}", func(w http.ResponseWriter, r *http.Request) {
-		if err := manager.RegisterAndSyncNginxStreams(r.Context(), chi.URLParam(r, "svc_binding_name")); err != nil {
+	r.Put("/service/{svc_binding_ip}", func(w http.ResponseWriter, r *http.Request) {
+		if err := mg.RegisterService(r.Context(), chi.URLParam(r, "svc_binding_ip")); err != nil {
 			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -146,10 +150,10 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	r.Delete("/service/{svc_binding_ip}/{svc_binding_uid}", func(w http.ResponseWriter, r *http.Request) {
-		svcBindingIP, svcBindingUID := chi.URLParam(r, "svc_binding_ip"), chi.URLParam(r, "svc_binding_uid")
-		if err := manager.DeregisterService(r.Context(), svcBindingIP, svcBindingUID); err != nil {
-			log.Error("while deregistering service", "svc", svcBindingIP, "err", err)
+	r.Delete("/service/{svc_binding_ip}", func(w http.ResponseWriter, r *http.Request) {
+		svcBindingIP := chi.URLParam(r, "svc_binding_ip")
+		if err := mg.DeregisterService(r.Context(), svcBindingIP); err != nil {
+			log.Error("deregistering service", "svc-binding", svcBindingIP, "err", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

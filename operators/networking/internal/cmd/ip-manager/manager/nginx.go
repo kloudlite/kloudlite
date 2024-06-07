@@ -72,9 +72,6 @@ func (m *Manager) RegisterAndSyncNginxStreams(ctx context.Context, svcBindingNam
 
 func (m *Manager) DeregisterAndSyncNginxStreams(ctx context.Context, svcBindingIP string) error {
 	delete(m.svcNginxStreams, svcBindingIP)
-	if err := m.RestartWireguard(); err != nil {
-		return err
-	}
 	return m.SyncNginxStreams()
 }
 

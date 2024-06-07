@@ -11,153 +11,231 @@ import (
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/iputils"
-	jp "github.com/kloudlite/operator/pkg/json-patch"
+	json_patch "github.com/kloudlite/operator/pkg/json-patch"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	corev1 "k8s.io/api/core/v1"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	ct "github.com/kloudlite/operator/apis/common-types"
 )
 
 func sanitizePodIP(podIP string) string {
 	return strings.ReplaceAll(podIP, ".", "-")
 }
 
-type RegisterPodResult struct {
-	PodIP         string
-	PodUID        string
-	DNSNameserver string
+const (
+	podReservationLabel = "kloudlite.io/podbinding.reservation"
+)
+
+var unReservedPodsLabels = map[string]string{
+	podReservationLabel: "false",
 }
 
-func (m *Manager) ensurePodBinding(ctx context.Context, podIP string) (*networkingv1.PodBinding, error) {
-	var podBinding networkingv1.PodBinding
-	if err := m.kcli.Get(ctx, fn.NN("", sanitizePodIP(podIP)), &podBinding); err != nil {
+type RegisterPodResult struct {
+	PodBindingIP     string
+	ReservationToken string
+}
+
+func (m *Manager) EnsureIPManagerConfigExists(ctx context.Context) (podIPCounter int, svcIPCounter int, err error) {
+	cfgMap, err := m.kclientset.CoreV1().ConfigMaps(m.Env.IPManagerConfigNamespace).Get(ctx, m.Env.IPManagerConfigName, metav1.GetOptions{})
+	if err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return nil, NewError(err, "k8s get pod binding")
+			return podIPCounter, svcIPCounter, NewError(err, fmt.Sprintf("k8s get ip manager config %s/%s", m.Env.IPManagerConfigNamespace, m.Env.IPManagerConfigName))
 		}
 
-		key, err := wgtypes.GenerateKey()
-		if err != nil {
-			return nil, Error{Err: err, Message: "generating wireguard key-pair"}
-		}
-
-		podBinding := &networkingv1.PodBinding{
+		cfgMap = &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: sanitizePodIP(podIP),
+				Name:      m.Env.IPManagerConfigName,
+				Namespace: m.Env.IPManagerConfigNamespace,
+			},
+			Data: map[string]string{
+				"counter_pod_ip": "0",
+				"counter_svc_ip": "10", // reserving 10 svc ips for future usecases
+			},
+		}
+
+		cfgMap, err = m.kclientset.CoreV1().ConfigMaps(m.Env.IPManagerConfigNamespace).Create(ctx, cfgMap, metav1.CreateOptions{})
+		if err != nil {
+			return podIPCounter, svcIPCounter, NewError(err, fmt.Sprintf("k8s create ip manager config %s/%s", m.Env.IPManagerConfigNamespace, m.Env.IPManagerConfigName))
+		}
+	}
+
+	podIPCounter, err = strconv.Atoi(cfgMap.Data["counter_pod_ip"])
+	if err != nil {
+		return podIPCounter, svcIPCounter, NewError(err, fmt.Sprintf("parsing pod ip counter from configmap %s/%s", m.Env.IPManagerConfigNamespace, m.Env.IPManagerConfigName))
+	}
+	svcIPCounter, err = strconv.Atoi(cfgMap.Data["counter_svc_ip"])
+	if err != nil {
+		return podIPCounter, svcIPCounter, NewError(err, fmt.Sprintf("parsing svc ip counter from configmap %s/%s", m.Env.IPManagerConfigNamespace, m.Env.IPManagerConfigName))
+	}
+
+	return podIPCounter, svcIPCounter, nil
+}
+
+func (m *Manager) CreatePodBindings(ctx context.Context, count int) error {
+	podIPCounter, _, err := m.EnsureIPManagerConfigExists(ctx)
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < count; i++ {
+		s, err := iputils.GenIPAddr(m.Env.ClusterCIDR, m.podIPOffset+podIPCounter+i+1)
+		if err != nil {
+			return err
+		}
+
+		k, err := wgtypes.GenerateKey()
+		if err != nil {
+			return err
+		}
+
+		pb := &networkingv1.PodBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   sanitizePodIP(s),
+				Labels: unReservedPodsLabels,
 			},
 			Spec: networkingv1.PodBindingSpec{
-				GlobalIP:     podIP,
-				WgPrivateKey: key.String(),
-				WgPublicKey:  key.PublicKey().String(),
-				AllowedIPs:   strings.Split(m.Env.PodAllowedIPs, ","),
+				GlobalIP:     s,
+				WgPrivateKey: k.String(),
+				WgPublicKey:  k.PublicKey().String(),
+				PodRef:       nil,
+				AllowedIPs:   append(strings.Split(m.Env.PodAllowedIPs, ","), m.Env.GatewayInternalDNSNameserver, s),
 			},
 		}
-
-		podBinding.EnsureGVK()
-		if err := m.kcli.Create(ctx, podBinding); err != nil {
-			return nil, NewError(err, "creating pod binding")
+		pb.EnsureGVK()
+		pb.SetAnnotations(pb.GetEnsuredAnnotations())
+		if err := m.kcli.Create(ctx, pb); err != nil {
+			if !apiErrors.IsAlreadyExists(err) {
+				return err
+			}
+			m.logger.Warn("pod binding already exists", "ip", s)
 		}
 
-		return podBinding, nil
+		m.podPeers[pb.Spec.GlobalIP] = genGatewayWgPodPeer(pb)
 	}
 
-	return &podBinding, nil
-}
-
-func (m *Manager) RegisterPod(ctx context.Context) (*RegisterPodResult, error) {
-	m.Lock()
-	defer m.Unlock()
-
-	var counterPatch jp.Document
-
-	podIP, isFreeIP, err := func() (string, bool, error) {
-		if len(m.FreePodIPs) > 0 {
-			ip := m.FreePodIPs[0]
-			m.FreePodIPs = m.FreePodIPs[1:]
-
-			counterPatch.Add("add", "/data/free_pod_ips", strings.Join(m.FreePodIPs, ","))
-			return ip, true, nil
-		}
-
-		counterPatch.Add("add", "/data/counter_pod_ip", strconv.Itoa(m.PodIPCounter+1))
-		s, err := iputils.GenIPAddr(m.Env.ClusterCIDR, m.podIPOffset+m.PodIPCounter+1)
-		return s, false, err
-	}()
-	if err != nil {
-		return nil, Error{Err: err, Message: "generating pod IP"}
-	}
-
-	pb, err := m.ensurePodBinding(ctx, podIP)
-	if err != nil {
-		return nil, NewError(err, "ensuring pod binding")
-	}
-
-	b, err := counterPatch.Json()
-	if err != nil {
-		return nil, NewError(err, "marshalling patches into json array")
-	}
-
-	if _, err := m.kclientset.CoreV1().ConfigMaps(m.Env.IPManagerConfigNamespace).Patch(ctx, m.Env.IPManagerConfigName, types.JSONPatchType, b, metav1.PatchOptions{}); err != nil {
-		return nil, NewError(err, "patching configmap")
-	}
-
-	if !isFreeIP {
-		m.PodIPCounter++
-	}
-
-	m.podPeers[podIP] = genGatewayWgPodPeer(pb)
 	if err := m.RestartWireguard(); err != nil {
-		return nil, NewError(err, "while restarting wireguard")
+		return NewError(err, "while restarting wireguard")
 	}
 
-	return &RegisterPodResult{PodIP: podIP, PodUID: string(pb.GetUID()), DNSNameserver: m.Env.GatewayInternalDNSNameserver}, nil
-}
-
-func (m *Manager) DeregisterPod(ctx context.Context, podBindingIP string, podBindingUID string) error {
-	m.Lock()
-	defer m.Unlock()
-
-	var podBinding networkingv1.PodBinding
-	if err := m.kcli.Get(ctx, fn.NN("", sanitizePodIP(podBindingIP)), &podBinding); err != nil {
-		return NewError(err, "k8s get pod binding")
-	}
-
-	if string(podBinding.GetUID()) != podBindingUID {
-		log.Warn("pod uid mismatch", "ip", podBindingIP, "UID", string(podBinding.GetUID()), "request:UID", podBindingUID)
-		return nil
-	}
-
-	m.FreePodIPs = append(m.FreePodIPs, podBindingIP)
-
-	var counterPatch jp.Document
-	counterPatch.Add("add", "/data/free_pod_ips", strings.Join(m.FreePodIPs, ","))
-
-	b, err := counterPatch.Json()
+	d := json_patch.Document{}
+	d.Add("replace", "/data/counter_pod_ip", strconv.Itoa(podIPCounter+count))
+	b, err := d.Json()
 	if err != nil {
-		return NewError(err, "marshalling patches into json array")
+		return err
 	}
 
 	if _, err := m.kclientset.CoreV1().ConfigMaps(m.Env.IPManagerConfigNamespace).Patch(ctx, m.Env.IPManagerConfigName, types.JSONPatchType, b, metav1.PatchOptions{}); err != nil {
 		return NewError(err, "patching configmap")
 	}
 
-	if err := m.kcli.Delete(ctx, &podBinding); err != nil {
-		return NewError(err, "k8s delete pod binding")
+	return nil
+}
+
+func (m *Manager) PickFreePodBinding(ctx context.Context) (*networkingv1.PodBinding, error) {
+	var pblist networkingv1.PodBindingList
+	if err := m.kcli.List(ctx, &pblist, &client.ListOptions{
+		Limit:         1,
+		LabelSelector: apiLabels.SelectorFromValidatedSet(unReservedPodsLabels),
+	}); err != nil {
+		return nil, NewError(err, "k8s list pod bindings")
 	}
 
-	delete(m.podPeers, podBindingIP)
-	if err := m.RestartWireguard(); err != nil {
-		return NewError(err, "while restarting wireguard")
+	if len(pblist.Items) == 1 {
+		return &pblist.Items[0], nil
+	}
+
+	if err := m.CreatePodBindings(ctx, 100); err != nil {
+		return nil, NewError(err, "creating pod bindings")
+	}
+
+	return m.PickFreePodBinding(ctx)
+}
+
+func (m *Manager) RegisterPod(ctx context.Context) (*RegisterPodResult, error) {
+	m.Lock()
+	defer m.Unlock()
+
+	pb, err := m.PickFreePodBinding(ctx)
+	if err != nil {
+		return nil, NewError(err, "picking free pod binding")
+	}
+
+	reservationToken := fn.CleanerNanoid(40)
+
+	lb := pb.GetLabels()
+	if lb == nil {
+		lb = make(map[string]string, 1)
+	}
+
+	lb[podReservationLabel] = reservationToken
+	pb.SetLabels(lb)
+
+	if err := m.kcli.Update(ctx, pb); err != nil {
+		return nil, NewError(err, "updating pod binding")
+	}
+
+	return &RegisterPodResult{
+		PodBindingIP:     pb.Spec.GlobalIP,
+		ReservationToken: reservationToken,
+	}, nil
+}
+
+func (m *Manager) DeregisterPod(ctx context.Context, podBindingIP string, reservationToken string) error {
+	m.Lock()
+	defer m.Unlock()
+
+	var pb networkingv1.PodBinding
+	if err := m.kcli.Get(ctx, fn.NN("", sanitizePodIP(podBindingIP)), &pb); err != nil {
+		return NewError(err, "k8s get pod binding")
+	}
+
+	if pb.GetLabels()[podReservationLabel] != reservationToken {
+		log.Warn("pod reservation token mismatch", "ip", podBindingIP, "reservation-token", reservationToken)
+		return nil
+	}
+
+	pb.Spec.PodRef = nil
+	lb := pb.GetLabels()
+	if lb != nil {
+		lb[podReservationLabel] = "false"
+		pb.SetLabels(lb)
+	}
+	pb.SetAnnotations(pb.GetEnsuredAnnotations())
+
+	if err := m.kcli.Update(ctx, &pb); err != nil {
+		return NewError(err, "k8s update pod binding")
 	}
 
 	return nil
 }
 
-func (m *Manager) GetWgConfigForPod(ctx context.Context, podIP string) ([]byte, error) {
-	var podBinding networkingv1.PodBinding
-	if err := m.kcli.Get(ctx, fn.NN("", sanitizePodIP(podIP)), &podBinding); err != nil {
-		return nil, NewError(err, "k8s get pod binding")
+type WgConfigForReservedPodArgs struct {
+	ReservationToken string
+	PodNamespace     string
+	PodName          string
+}
+
+func (m *Manager) GetWgConfigForReservedPod(ctx context.Context, args WgConfigForReservedPodArgs) ([]byte, error) {
+	var pblist networkingv1.PodBindingList
+	if err := m.kcli.List(ctx, &pblist, &client.ListOptions{
+		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+			podReservationLabel: args.ReservationToken,
+		}),
+	}); err != nil {
+		return nil, NewError(err, "k8s list pod bindings")
 	}
+
+	if len(pblist.Items) != 1 {
+		return nil, NewError(fmt.Errorf("expected 1 pod binding, got %d", len(pblist.Items)), "k8s list pod bindings")
+	}
+
+	pb := pblist.Items[0]
 
 	wgconfig := fmt.Sprintf(`[Interface]
 Address = %s
@@ -171,15 +249,24 @@ Endpoint = %s
 AllowedIPs = %s
 PersistentKeepalive = 5
 `,
-		fmt.Sprintf("%s/32", podIP),
-		podBinding.Spec.WgPrivateKey,
+		fmt.Sprintf("%s/32", pb.Spec.GlobalIP),
+		pb.Spec.WgPrivateKey,
 
 		m.Env.GatewayInternalDNSNameserver,
 
 		m.Env.GatewayWGPublicKey,
 		m.Env.GatewayWGEndpoint,
-		strings.Join(append(podBinding.Spec.AllowedIPs, m.Env.GatewayInternalDNSNameserver), ", "),
+		strings.Join(pb.Spec.AllowedIPs, ", "),
 	)
+
+	pb.Spec.PodRef = &ct.NamespacedResourceRef{
+		Name:      args.PodName,
+		Namespace: args.PodNamespace,
+	}
+	pb.SetAnnotations(pb.GetEnsuredAnnotations())
+	if err := m.kcli.Update(ctx, &pb); err != nil {
+		return nil, NewError(err, "updating pod binding")
+	}
 
 	return []byte(wgconfig), nil
 }
