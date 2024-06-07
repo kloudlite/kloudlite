@@ -1,22 +1,27 @@
 package v1
 
 import (
+	"fmt"
+
+	ct "github.com/kloudlite/operator/apis/common-types"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // PodBindingSpec defines the desired state of PodBinding
 type PodBindingSpec struct {
-	GlobalIP     string   `json:"globalIP"`
-	WgPrivateKey string   `json:"wgPrivateKey"`
-	WgPublicKey  string   `json:"wgPublicKey"`
-	AllowedIPs   []string `json:"allowedIPs"`
+	GlobalIP     string                    `json:"globalIP"`
+	WgPrivateKey string                    `json:"wgPrivateKey"`
+	WgPublicKey  string                    `json:"wgPublicKey"`
+	PodRef       *ct.NamespacedResourceRef `json:"podRef,omitempty"`
+	AllowedIPs   []string                  `json:"allowedIPs"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
 //+kubebuilder:printcolumn:JSONPath=".spec.globalIP",name=GlobalIP,type=string
+//+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/podbinding\\.reservation",name=Allocation,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // PodBinding is the Schema for the podbindings API
@@ -34,6 +39,23 @@ func (p *PodBinding) EnsureGVK() {
 	}
 }
 
+func (p *PodBinding) GetEnsuredLabels() map[string]string {
+	return map[string]string{}
+}
+
+func (p *PodBinding) GetEnsuredAnnotations() map[string]string {
+	key := "kloudlite.io/podbinding.reservation"
+	v, ok := p.GetLabels()[key]
+	if !ok || v == "false" {
+		return map[string]string{key: "UnReserved"}
+	}
+
+	if p.Spec.PodRef == nil {
+		return map[string]string{key: "Reserved"}
+	}
+	return map[string]string{key: fmt.Sprintf("Reserved (%s/%s)", p.Spec.PodRef.Namespace, p.Spec.PodRef.Name)}
+}
+
 //+kubebuilder:object:root=true
 
 // PodBindingList contains a list of PodBinding
@@ -46,13 +68,3 @@ type PodBindingList struct {
 func init() {
 	SchemeBuilder.Register(&PodBinding{}, &PodBindingList{})
 }
-
-/*
-100.160.0.0/18 => 16K IPs
-100.160.0.0/19 => 8K IPs
-100.160.0.0/20 => 4K IPs
-100.160.0.0/21 => 2K IPs
-100.160.0.0/22 => 1K IPs
-100.160.0.0/23 => 512 IPs
-100.160.0.0/24 => 256 IPs
-*/

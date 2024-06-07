@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"fmt"
+
 	ct "github.com/kloudlite/operator/apis/common-types"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
@@ -9,10 +11,10 @@ import (
 
 // ServiceBindingSpec defines the desired state of ServiceBinding
 type ServiceBindingSpec struct {
-	GlobalIP   string                   `json:"globalIP"`
-	ServiceIP  *string                  `json:"serviceIP,omitempty"`
-	ServiceRef ct.NamespacedResourceRef `json:"serviceRef"`
-	Ports      []corev1.ServicePort     `json:"ports,omitempty"`
+	GlobalIP   string                    `json:"globalIP"`
+	ServiceIP  *string                   `json:"serviceIP,omitempty"`
+	ServiceRef *ct.NamespacedResourceRef `json:"serviceRef,omitempty"`
+	Ports      []corev1.ServicePort      `json:"ports,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -45,11 +47,20 @@ func (sb *ServiceBinding) GetStatus() *rApi.Status {
 }
 
 func (sb *ServiceBinding) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+  return map[string]string{}
 }
 
 func (sb *ServiceBinding) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	key := "kloudlite.io/servicebinding.reservation"
+	v, ok := sb.GetLabels()[key]
+	if !ok || v == "false" {
+		return map[string]string{key: "UnReserved"}
+	}
+
+	if sb.Spec.ServiceRef == nil {
+		return map[string]string{key: "Reserved"}
+	}
+	return map[string]string{key: fmt.Sprintf("Reserved (%s/%s)", sb.Spec.ServiceRef.Namespace, sb.Spec.ServiceRef.Name)}
 }
 
 //+kubebuilder:object:root=true

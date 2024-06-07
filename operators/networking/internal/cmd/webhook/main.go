@@ -38,8 +38,9 @@ const (
 )
 
 const (
-	podBindingIP  string = "kloudlite.io/podbinding.ip"
-	podBindingUID string = "kloudlite.io/podbinding.uid"
+	podBindingIP        string = "kloudlite.io/podbinding.ip"
+	podBindingUID       string = "kloudlite.io/podbinding.uid"
+	podReservationToken string = "kloudlite.io/podbinding.reservation-token"
 
 	svcBindingIP  string = "kloudlite.io/servicebinding.ip"
 	svcBindingUID string = "kloudlite.io/servicebinding.uid"
@@ -171,11 +172,11 @@ func processPodAdmission(ctx HandlerContext, review admissionv1.AdmissionReview)
 					"-c",
 					fmt.Sprintf(`
 mkdir -p /config/wg_confs
-curl --silent '%s/pod/%s' > /config/wg_confs/wg0.conf
+curl -X PUT --silent %q > /config/wg_confs/wg0.conf
 wg-quick down wg0 || echo "starting wireguard"
 wg-quick up wg0
 %s
-`, ctx.GatewayAdminApiAddr, response.PodIP,
+`, fmt.Sprintf("%s/pod/$POD_NAMESPACE/$POD_NAME/$PODBINDING_RESERVATION_TOKEN", ctx.GatewayAdminApiAddr),
 						func() string {
 							if ctx.IsDebug {
 								return "tail -f /dev/null"
@@ -183,6 +184,28 @@ wg-quick up wg0
 							return ""
 						}(),
 					),
+				},
+				Env: []corev1.EnvVar{
+					{
+						Name: "POD_NAME",
+						ValueFrom: &corev1.EnvVarSource{
+							FieldRef: &corev1.ObjectFieldSelector{
+								FieldPath: "metadata.name",
+							},
+						},
+					},
+					{
+						Name: "POD_NAMESPACE",
+						ValueFrom: &corev1.EnvVarSource{
+							FieldRef: &corev1.ObjectFieldSelector{
+								FieldPath: "metadata.namespace",
+							},
+						},
+					},
+					{
+						Name:  "PODBINDING_RESERVATION_TOKEN",
+						Value: response.ReservationToken,
+					},
 				},
 				SecurityContext: &corev1.SecurityContext{
 					Capabilities: &corev1.Capabilities{
@@ -199,28 +222,12 @@ wg-quick up wg0
 				pod.Spec.InitContainers = append(pod.Spec.InitContainers, wgContainer)
 			}
 
-			// containersPatch := func() map[string]any {
-			// 	if ctx.IsDebug {
-			// 		return map[string]any{
-			// 			"op":    "add",
-			// 			"path":  "/spec/containers",
-			// 			"value": append(pod.Spec.Containers, wgContainer),
-			// 		}
-			// 	}
-			//
-			// 	return map[string]any{
-			// 		"op":    "add",
-			// 		"path":  "/spec/initContainers",
-			// 		"value": append(pod.Spec.InitContainers, wgContainer),
-			// 	}
-			// }()
-			//
 			lb := pod.GetLabels()
 			if lb == nil {
 				lb = make(map[string]string, 2)
 			}
-			lb[podBindingIP] = response.PodIP
-			lb[podBindingUID] = response.PodUID
+			lb[podBindingIP] = response.PodBindingIP
+			lb[podReservationToken] = response.ReservationToken
 			pod.SetLabels(lb)
 
 			// pod.Spec.DNSPolicy = "None"
@@ -231,7 +238,6 @@ wg-quick up wg0
 			// }
 
 			patchBytes, err := json.Marshal([]map[string]any{
-				// containersPatch,
 				{
 					"op":    "add",
 					"path":  "/metadata/labels",
@@ -265,12 +271,12 @@ wg-quick up wg0
 			if !ok {
 				return mutateAndAllow(review, nil)
 			}
-			pbUID, ok := pod.GetLabels()[podBindingUID]
+			pbToken, ok := pod.GetLabels()[podReservationToken]
 			if !ok {
 				return mutateAndAllow(review, nil)
 			}
 
-			req, err := http.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("%s/pod/%s/%s", ctx.Env.GatewayAdminApiAddr, pbIP, pbUID), nil)
+			req, err := http.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("%s/pod/%s/%s", ctx.Env.GatewayAdminApiAddr, pbIP, pbToken), nil)
 			if err != nil {
 				return errResponse(ctx, err, review.Request.UID)
 			}
@@ -281,8 +287,7 @@ wg-quick up wg0
 			}
 
 			if resp.StatusCode != 200 {
-				return mutateAndAllow(review, nil)
-				// return errResponse(fmt.Errorf("unexpected status code: %d", resp.StatusCode), review.Request.UID)
+				return errResponse(ctx, fmt.Errorf("unexpected status code: %d", resp.StatusCode), review.Request.UID)
 			}
 
 			return mutateAndAllow(review, nil)
@@ -314,17 +319,16 @@ func processServiceAdmission(ctx HandlerContext, review admissionv1.AdmissionRev
 				return errResponse(ctx, err, review.Request.UID)
 			}
 
-			var response manager.RegisterServiceResponse
+			var response manager.ReserveServiceResponse
 			if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 				return errResponse(ctx, err, review.Request.UID)
 			}
 
 			lb := svc.GetLabels()
 			if lb == nil {
-				lb = make(map[string]string, 2)
+				lb = make(map[string]string, 1)
 			}
 			lb[svcBindingIP] = response.ServiceBindingIP
-			lb[svcBindingUID] = response.ServiceBindingUID
 			svc.SetLabels(lb)
 
 			patchBytes, err := json.Marshal([]map[string]any{
@@ -348,20 +352,12 @@ func processServiceAdmission(ctx HandlerContext, review admissionv1.AdmissionRev
 				return errResponse(ctx, err, review.Request.UID)
 			}
 
-			// if svc.GetDeletionTimestamp() == nil {
-			// 	return mutateAndAllow(review, nil)
-			// }
-
 			svcBindingIP, ok := svc.GetLabels()[svcBindingIP]
 			if !ok {
 				return mutateAndAllow(review, nil)
 			}
-			svcBindingUID, ok := svc.GetLabels()[svcBindingUID]
-			if !ok {
-				return mutateAndAllow(review, nil)
-			}
 
-			req, err := http.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("%s/service/%s/%s", ctx.Env.GatewayAdminApiAddr, svcBindingIP, svcBindingUID), nil)
+			req, err := http.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("%s/service/%s", ctx.Env.GatewayAdminApiAddr, svcBindingIP), nil)
 			if err != nil {
 				return errResponse(ctx, err, review.Request.UID)
 			}

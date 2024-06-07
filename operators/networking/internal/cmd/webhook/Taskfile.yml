@@ -24,9 +24,9 @@ tasks:
       GATEWAY_ADMIN_API_ADDR: "http://gateway.kl-gateway.svc.cluster.local:8080"
     cmds:
       - |+
-        go build -o ./_debug-{{.app}} .
-        trap "echo closing; rm -f ./_debug-{{.app}}" EXIT
-        ./_debug-{{.app}} --debug --addr ":8443"
+        go build -o ./__debug-{{.app}} .
+        trap "echo closing; rm -f ./__debug-{{.app}}" EXIT
+        ./__debug-{{.app}} --debug --addr ":8443"
 
   container:build-and-push:
     preconditions:
