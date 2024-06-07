@@ -51,6 +51,8 @@ spec:
                 type: array
               globalIP:
                 type: string
+              podIP:
+                type: string
               podRef:
                 properties:
                   name:
