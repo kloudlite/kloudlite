@@ -83,8 +83,8 @@ spec:
           {{include "pod-ip" . | nindent 10}}
 
           - name: GATEWAY_ADMIN_API_ADDR
-            {{- /* value: {{$gatewayAdminApiAddr}} */}}
-            value: http://$(POD_IP):{{$gatewayAdminHttpPort}}
+            value: {{$gatewayAdminApiAddr}}
+            {{- /* value: http://$(POD_IP):{{$gatewayAdminHttpPort}} */}}
         args:
           - --debug
           - --addr

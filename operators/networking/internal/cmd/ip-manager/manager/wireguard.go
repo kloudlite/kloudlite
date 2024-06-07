@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -12,12 +13,21 @@ import (
 )
 
 func genGatewayWgPodPeer(podbinding *networkingv1.PodBinding) string {
-	return strings.TrimSpace(fmt.Sprintf(`
+	b := new(bytes.Buffer)
+	fmt.Fprintf(b, `
 [Peer]
 PublicKey = %s
 AllowedIPs = %s/32
+`, podbinding.Spec.WgPublicKey, podbinding.Spec.GlobalIP)
 
-`, podbinding.Spec.WgPublicKey, podbinding.Spec.GlobalIP))
+	if podbinding.Spec.PodIP != nil {
+		fmt.Fprintf(b, `
+Endpoint = %s:51820
+PersistentKeepalive = 25
+`, *podbinding.Spec.PodIP)
+	}
+
+	return strings.TrimSpace(b.String())
 }
 
 func (m *Manager) genGatewayWGConfig() string {
@@ -70,6 +80,28 @@ func (m *Manager) RestartWireguard() error {
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (m *Manager) RestartWireguardInline() error {
+	cfg := m.genGatewayWGConfig()
+	if err := os.WriteFile(fmt.Sprintf("%s/wg0.conf", m.Env.WireguardConfigDir), []byte(cfg), 0o644); err != nil {
+		return err
+	}
+
+	if m.Env.IsDev {
+		m.logger.Infof("Restarting Wireguard")
+		return nil
+	}
+
+	cmd := exec.Command("sh", "-c", "wg syncconf wg0 <(wg-quick strip wg0)")
+	if err := cmd.Run(); err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			if exitError.ExitCode() != 1 { // 1 is the error code for "interface not found"
+				return err
+			}
+		}
 	}
 	return nil
 }

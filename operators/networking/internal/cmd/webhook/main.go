@@ -176,7 +176,7 @@ curl -X PUT --silent %q > /config/wg_confs/wg0.conf
 wg-quick down wg0 || echo "starting wireguard"
 wg-quick up wg0
 %s
-`, fmt.Sprintf("%s/pod/$POD_NAMESPACE/$POD_NAME/$PODBINDING_RESERVATION_TOKEN", ctx.GatewayAdminApiAddr),
+`, fmt.Sprintf("%s/pod/$POD_NAMESPACE/$POD_NAME/$POD_IP/$PODBINDING_RESERVATION_TOKEN", ctx.GatewayAdminApiAddr),
 						func() string {
 							if ctx.IsDebug {
 								return "tail -f /dev/null"
@@ -186,6 +186,14 @@ wg-quick up wg0
 					),
 				},
 				Env: []corev1.EnvVar{
+					{
+						Name: "POD_IP",
+						ValueFrom: &corev1.EnvVarSource{
+							FieldRef: &corev1.ObjectFieldSelector{
+								FieldPath: "status.podIP",
+							},
+						},
+					},
 					{
 						Name: "POD_NAME",
 						ValueFrom: &corev1.EnvVarSource{

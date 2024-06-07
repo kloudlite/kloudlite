@@ -242,6 +242,11 @@ func (in *PodBindingSpec) DeepCopyInto(out *PodBindingSpec) {
 		*out = new(common_types.NamespacedResourceRef)
 		**out = **in
 	}
+	if in.PodIP != nil {
+		in, out := &in.PodIP, &out.PodIP
+		*out = new(string)
+		**out = **in
+	}
 	if in.AllowedIPs != nil {
 		in, out := &in.AllowedIPs, &out.AllowedIPs
 		*out = make([]string, len(*in))

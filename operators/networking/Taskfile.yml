@@ -24,7 +24,7 @@ tasks:
   container:build:
     cmds:
       - task: build
-      - docker buildx build -t ghcr.io/kloudlite/operator/networking:v1.0.7-nightly --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true --build-arg BINARY="./bin/{{.binary}}" .
+      - docker buildx build -t ghcr.io/kloudlite/operator/networking:v1.0.7-nightly --output=type=image,compression=zstd,force-compression=true,compression-level=10,push=true --build-arg BINARY="./bin/{{.binary}}" .
 
   k8s:apply:
     vars:

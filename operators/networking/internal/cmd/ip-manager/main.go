@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
+	"github.com/kloudlite/operator/common"
 	"github.com/kloudlite/operator/operators/networking/internal/cmd/ip-manager/env"
 	"github.com/kloudlite/operator/operators/networking/internal/cmd/ip-manager/manager"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -97,21 +98,19 @@ func main() {
 		w.Write(b)
 	})
 
-	r.Put("/pod/{pod_namespace}/{pod_name}/{reservation_token}", func(w http.ResponseWriter, r *http.Request) {
-		podNamespace, podName, reservationToken := chi.URLParam(r, "pod_namespace"), chi.URLParam(r, "pod_name"), chi.URLParam(r, "reservation_token")
+	r.Put("/pod/{pod_namespace}/{pod_name}/{pod_ip}/{reservation_token}", func(w http.ResponseWriter, r *http.Request) {
+		podNamespace, podName, podIP, reservationToken := chi.URLParam(r, "pod_namespace"), chi.URLParam(r, "pod_name"), chi.URLParam(r, "pod_ip"), chi.URLParam(r, "reservation_token")
 		wgconfig, err := mg.GetWgConfigForReservedPod(r.Context(), manager.WgConfigForReservedPodArgs{
 			ReservationToken: reservationToken,
 			PodNamespace:     podNamespace,
 			PodName:          podName,
+			PodIP:            podIP,
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Write(wgconfig)
-		// if err := manager.RestartWireguard(); err != nil {
-		// 	log.Error(err)
-		// }
 	})
 
 	r.Delete("/pod/{pb_ip}/{reservation_token}", func(w http.ResponseWriter, r *http.Request) {
@@ -122,9 +121,6 @@ func main() {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		// if err := manager.RestartWireguard(); err != nil {
-		// 	log.Error(err)
-		// }
 	})
 
 	r.Post("/service/{svc_namespace}/{svc_name}", func(w http.ResponseWriter, r *http.Request) {
@@ -164,6 +160,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
+	common.PrintReadyBanner()
 	log.Infof("Starting server on %s", addr)
 	if err := http.ListenAndServe(addr, r); err != nil {
 		log.Fatal(err)

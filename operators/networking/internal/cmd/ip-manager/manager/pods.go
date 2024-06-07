@@ -212,6 +212,11 @@ func (m *Manager) DeregisterPod(ctx context.Context, podBindingIP string, reserv
 		return NewError(err, "k8s update pod binding")
 	}
 
+	delete(m.podPeers, pb.Spec.GlobalIP)
+	if err := m.RestartWireguardInline(); err != nil {
+		return NewError(err, "while restarting wireguard")
+	}
+
 	return nil
 }
 
@@ -219,6 +224,7 @@ type WgConfigForReservedPodArgs struct {
 	ReservationToken string
 	PodNamespace     string
 	PodName          string
+	PodIP            string
 }
 
 func (m *Manager) GetWgConfigForReservedPod(ctx context.Context, args WgConfigForReservedPodArgs) ([]byte, error) {
@@ -238,6 +244,7 @@ func (m *Manager) GetWgConfigForReservedPod(ctx context.Context, args WgConfigFo
 	pb := pblist.Items[0]
 
 	wgconfig := fmt.Sprintf(`[Interface]
+ListenPort = 51820
 Address = %s
 PrivateKey = %s
 
@@ -247,7 +254,6 @@ DNS = %s
 PublicKey = %s
 Endpoint = %s
 AllowedIPs = %s
-PersistentKeepalive = 5
 `,
 		fmt.Sprintf("%s/32", pb.Spec.GlobalIP),
 		pb.Spec.WgPrivateKey,
@@ -263,10 +269,15 @@ PersistentKeepalive = 5
 		Name:      args.PodName,
 		Namespace: args.PodNamespace,
 	}
+	pb.Spec.PodIP = &args.PodIP
 	pb.SetAnnotations(pb.GetEnsuredAnnotations())
 	if err := m.kcli.Update(ctx, &pb); err != nil {
 		return nil, NewError(err, "updating pod binding")
 	}
 
+	m.podPeers[pb.Spec.GlobalIP] = genGatewayWgPodPeer(&pb)
+	if err := m.RestartWireguardInline(); err != nil {
+		return nil, NewError(err, "while restarting wireguard")
+	}
 	return []byte(wgconfig), nil
 }

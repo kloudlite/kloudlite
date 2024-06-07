@@ -14,6 +14,7 @@ type PodBindingSpec struct {
 	WgPrivateKey string                    `json:"wgPrivateKey"`
 	WgPublicKey  string                    `json:"wgPublicKey"`
 	PodRef       *ct.NamespacedResourceRef `json:"podRef,omitempty"`
+	PodIP        *string                   `json:"podIP,omitempty"`
 	AllowedIPs   []string                  `json:"allowedIPs"`
 }
 
