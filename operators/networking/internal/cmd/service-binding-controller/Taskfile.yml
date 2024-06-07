@@ -24,6 +24,10 @@ tasks:
       - sh: '[ -n "{{.image}}" ]'
         msg: "image must be set"
     cmds:
-      - GOARCH=amd64 task build
-      - GOARCH=arm64 task build
+      - task: build
+        vars:
+          GOARCH: amd64
+      - task: build
+        vars:
+          GOARCH: arm64
       - docker buildx build --build-arg BINARY=./bin/{{.binary}} --platform linux/amd64,linux/arm64 --output=type=image,compression=zstd,compression-level=12,force-compression=true,push=true -t {{.image}} .
