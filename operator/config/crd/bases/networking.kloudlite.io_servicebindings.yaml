@@ -136,7 +136,6 @@ spec:
                 type: object
             required:
             - globalIP
-            - serviceRef
             type: object
           status:
             properties:

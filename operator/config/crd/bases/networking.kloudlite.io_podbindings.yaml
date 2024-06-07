@@ -19,6 +19,9 @@ spec:
     - jsonPath: .spec.globalIP
       name: GlobalIP
       type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/podbinding\.reservation
+      name: Allocation
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -48,6 +51,18 @@ spec:
                 type: array
               globalIP:
                 type: string
+              podRef:
+                properties:
+                  name:
+                    description: .metadata.name of the resource
+                    type: string
+                  namespace:
+                    description: .metadata.namespace of the resource
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               wgPrivateKey:
                 type: string
               wgPublicKey:
