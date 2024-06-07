@@ -115,7 +115,7 @@ func NewManager(ev *env.Env, kclientset *kubernetes.Clientset, kcli client.Clien
 		manager.FreeSvcIPs = strings.Split(v, ",")
 	}
 
-	c, err := kubectl.PaginatedList[*networkingv1.PodBinding](ctx, kcli, &networkingv1.PodBindingList{}, &client.ListOptions{Limit: 10})
+	c, err := kubectl.PaginatedList[*networkingv1.PodBinding](ctx, kcli, &networkingv1.PodBindingList{}, &client.ListOptions{Limit: 50})
 	if err != nil {
 		return nil, err
 	}
