@@ -7,12 +7,14 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	v11 "github.com/kloudlite/operator/apis/crds/v1"
@@ -58,12 +60,19 @@ func (r *mutationResolver) CoreDeleteEnvironment(ctx context.Context, envName st
 }
 
 // CoreCloneEnvironment is the resolver for the core_cloneEnvironment field.
-func (r *mutationResolver) CoreCloneEnvironment(ctx context.Context, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v11.EnvironmentRoutingMode) (*entities.Environment, error) {
+func (r *mutationResolver) CoreCloneEnvironment(ctx context.Context, clusterName string, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v11.EnvironmentRoutingMode) (*entities.Environment, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.CloneEnvironment(cc, sourceEnvName, destinationEnvName, displayName, environmentRoutingMode)
+
+	return r.Domain.CloneEnvironment(cc, domain.CloneEnvironmentArgs{
+		ClusterName:        clusterName,
+		SourceEnvName:      sourceEnvName,
+		DestinationEnvName: destinationEnvName,
+		DisplayName:        displayName,
+		EnvRoutingMode:     environmentRoutingMode,
+	})
 }
 
 // CoreCreateImagePullSecret is the resolver for the core_createImagePullSecret field.
@@ -880,6 +889,11 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, search *mo
 
 		if search.EnvName != nil {
 			filter["environmentName"] = *search.EnvName
+		} else {
+			filter[fc.ManagedResourceIsImported] = repos.MatchFilter{
+				MatchType: repos.MatchTypeExact,
+				Exact:     true,
+			}
 		}
 	}
 
@@ -968,5 +982,7 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)
