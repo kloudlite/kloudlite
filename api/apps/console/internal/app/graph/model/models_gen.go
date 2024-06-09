@@ -748,6 +748,7 @@ type SearchImagePullSecrets struct {
 type SearchManagedResources struct {
 	Text               *repos.MatchFilter `json:"text,omitempty"`
 	ManagedServiceName *repos.MatchFilter `json:"managedServiceName,omitempty"`
+	EnvName            *repos.MatchFilter `json:"envName,omitempty"`
 	IsReady            *repos.MatchFilter `json:"isReady,omitempty"`
 	MarkedForDeletion  *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
