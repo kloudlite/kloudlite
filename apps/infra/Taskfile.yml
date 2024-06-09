@@ -33,6 +33,7 @@ tasks:
           --struct github.com/kloudlite/api/apps/infra/internal/entities.Namespace
           --struct github.com/kloudlite/api/apps/infra/internal/entities.VolumeAttachment
           --struct github.com/kloudlite/api/pkg/repos.MatchFilter
+          --struct github.com/kloudlite/api/apps/infra/internal/domain.BYOKSetupInstruction
           --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
