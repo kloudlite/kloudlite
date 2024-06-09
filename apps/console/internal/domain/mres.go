@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -19,25 +20,19 @@ import (
 
 // query
 
-func (d *domain) ListManagedResources(ctx ManagedResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error) {
-	if err := d.canPerformActionInAccount(ctx.ConsoleContext, iamT.ListManagedResources); err != nil {
+func (d *domain) ListManagedResources(ctx ConsoleContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.ListManagedResources); err != nil {
 		return nil, errors.NewE(err)
 	}
-	filters := ctx.MresDBFilters().Add(fields.EnvironmentName, "")
 
-	return d.mresRepo.FindPaginated(ctx, d.mresRepo.MergeMatchFilters(filters, search), pq)
-}
-
-func (d *domain) ListImportedManagedResources(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error) {
-	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
-		return nil, errors.NewE(err)
+	filters := repos.Filter{
+		fields.AccountName: ctx.AccountName,
 	}
-	filters := ctx.DBFilters()
+
 	return d.mresRepo.FindPaginated(ctx, d.mresRepo.MergeMatchFilters(filters, search), pq)
 }
 
 func (d *domain) listImportedMres(ctx ConsoleContext, mresName string) ([]*entities.ManagedResource, error) {
-
 	filter := repos.Filter{
 		fields.AccountName:        ctx.AccountName,
 		fc.ManagedResourceMresRef: mresName,
@@ -47,9 +42,14 @@ func (d *domain) listImportedMres(ctx ConsoleContext, mresName string) ([]*entit
 }
 
 func (d *domain) findMRes(ctx ManagedResourceContext, name string) (*entities.ManagedResource, error) {
+	filters, err := ctx.MresDBFilters()
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	mres, err := d.mresRepo.FindOne(
 		ctx,
-		ctx.MresDBFilters().Add(fields.MetadataName, name),
+		filters.Add(fields.MetadataName, name),
 	)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -86,23 +86,26 @@ func (d *domain) GetManagedResource(ctx ManagedResourceContext, name string) (*e
 	return d.findMRes(ctx, name)
 }
 
-func (d *domain) GetImportedManagedResource(ctx ResourceContext, name string) (*entities.ManagedResource, error) {
-	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
-		return nil, errors.NewE(err)
-	}
-	return d.findImportedMRes(ctx, name)
-}
+// func (d *domain) GetImportedManagedResource(ctx ResourceContext, name string) (*entities.ManagedResource, error) {
+// 	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
+// 		return nil, errors.NewE(err)
+// 	}
+// 	return d.findImportedMRes(ctx, name)
+// }
 
 // GetManagedResourceOutputKVs implements Domain.
 func (d *domain) GetManagedResourceOutputKVs(ctx ManagedResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error) {
-	filters := ctx.MresDBFilters()
+	f, err := ctx.MresDBFilters()
+	if err != nil {
+		return nil, err
+	}
 
 	names := make([]any, 0, len(keyrefs))
 	for i := range keyrefs {
 		names = append(names, keyrefs[i].MresName)
 	}
 
-	filters = d.mresRepo.MergeMatchFilters(filters, map[string]repos.MatchFilter{
+	filters := d.mresRepo.MergeMatchFilters(*f, map[string]repos.MatchFilter{
 		fields.MetadataName: {
 			MatchType: repos.MatchTypeArray,
 			Array:     names,
@@ -144,8 +147,12 @@ func (d *domain) GetManagedResourceOutputKVs(ctx ManagedResourceContext, keyrefs
 
 // GetManagedResourceOutputKeys implements Domain.
 func (d *domain) GetManagedResourceOutputKeys(ctx ManagedResourceContext, name string) ([]string, error) {
-	filters := ctx.MresDBFilters()
-	filters.Add(fields.MetadataName, name)
+	// filters, err := ctx.MresDBFilters()
+	// if err != nil {
+	// 	return nil, errors.NewE(err)
+	// }
+	//
+	// filters.Add(fields.MetadataName, name)
 
 	mresSecret, err := d.findMRes(ctx, name)
 	if err != nil {
@@ -168,9 +175,12 @@ func (d *domain) GetManagedResourceOutputKeys(ctx ManagedResourceContext, name s
 // mutations
 
 func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error) {
-
 	if err := d.canPerformActionInAccount(ctx.ConsoleContext, iamT.CreateManagedResource); err != nil {
 		return nil, errors.NewE(err)
+	}
+
+	if ctx.ManagedServiceName == nil {
+		return nil, errors.Newf("managed service name is required")
 	}
 
 	msvcOut, err := d.infraClient.GetClusterManagedService(ctx, &infra.GetClusterManagedServiceIn{
@@ -178,9 +188,8 @@ func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities
 		UserName:    ctx.UserName,
 		UserEmail:   ctx.UserEmail,
 		AccountName: ctx.AccountName,
-		MsvcName:    ctx.ManagedServiceName,
+		MsvcName:    *ctx.ManagedServiceName,
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -210,16 +219,19 @@ func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities
 
 	mres.AccountName = ctx.AccountName
 	mres.EnvironmentName = ""
-	mres.ManagedServiceName = ctx.ManagedServiceName
+	mres.ManagedServiceName = *ctx.ManagedServiceName
 	mres.IsImported = false
 	mres.ClusterName = msvcOut.ClusterName
 
 	return d.createAndApplyManagedResource(ctx, msvcOut.ClusterName, &mres)
 }
 
-func (d *domain) ImportManagedResource(ctx ManagedResourceContext, mresName string, envName string) (*entities.ManagedResource, error) {
-
-	exMres, err := d.findMRes(ctx, mresName)
+func (d *domain) ImportManagedResource(ctx ManagedResourceContext, mresName string) (*entities.ManagedResource, error) {
+	exMres, err := d.findMRes(ManagedResourceContext{
+		ConsoleContext:     ctx.ConsoleContext,
+		ManagedServiceName: ctx.ManagedServiceName,
+		EnvironmentName:    nil,
+	}, mresName)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -228,7 +240,7 @@ func (d *domain) ImportManagedResource(ctx ManagedResourceContext, mresName stri
 		ctx,
 		repos.Filter{
 			fields.AccountName:        ctx.AccountName,
-			fields.EnvironmentName:    envName,
+			fields.EnvironmentName:    ctx.EnvironmentName,
 			fc.ManagedResourceMresRef: mresName,
 		},
 	)
@@ -240,22 +252,31 @@ func (d *domain) ImportManagedResource(ctx ManagedResourceContext, mresName stri
 		return nil, errors.Newf("managed resource with name (%s) has been already imported", mresName)
 	}
 
-	exMres.IncrementRecordVersion()
-
-	exMres.Id = "imp-" + exMres.Id
-
-	exMres.CreatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
+	nmres := &entities.ManagedResource{
+		ManagedResource:       exMres.ManagedResource,
+		AccountName:           ctx.AccountName,
+		EnvironmentName:       *ctx.EnvironmentName,
+		ManagedServiceName:    exMres.ManagedServiceName,
+		ClusterName:           exMres.ClusterName,
+		SyncedOutputSecretRef: exMres.SyncedOutputSecretRef,
+		ResourceMetadata: common.ResourceMetadata{
+			DisplayName: exMres.DisplayName,
+			CreatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+			LastUpdatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+		},
+		IsImported: true,
+		MresRef:    mresName,
 	}
-	exMres.LastUpdatedBy = exMres.CreatedBy
 
-	exMres.EnvironmentName = envName
-	exMres.IsImported = true
-	exMres.MresRef = mresName
-
-	return d.importAndApplyManagedResourceSecret(ctx, envName, exMres)
+	return d.importAndApplyManagedResourceSecret(ctx.ConsoleContext, *ctx.EnvironmentName, nmres)
 }
 
 func genMresResourceName(envName string, mresName string) string {
@@ -288,7 +309,7 @@ func (d *domain) createAndApplyManagedResource(ctx ManagedResourceContext, clust
 	return m, nil
 }
 
-func (d *domain) importAndApplyManagedResourceSecret(ctx ManagedResourceContext, envName string, mres *entities.ManagedResource) (*entities.ManagedResource, error) {
+func (d *domain) importAndApplyManagedResourceSecret(ctx ConsoleContext, envName string, mres *entities.ManagedResource) (*entities.ManagedResource, error) {
 	mres.Spec.ResourceNamePrefix = fn.New(genMresResourceName(envName, mres.Name))
 	mres.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
@@ -296,17 +317,9 @@ func (d *domain) importAndApplyManagedResourceSecret(ctx ManagedResourceContext,
 		return nil, errors.Newf("managed resource (%s), not ready yet, please try again", mres.Name)
 	}
 
-	secret := corev1.Secret{
-		TypeMeta: v1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s-creds", d.getEnvironmentTargetNamespace(envName), mres.Name),
-			Namespace: d.getEnvironmentTargetNamespace(envName),
-			Labels: map[string]string{
-				"kloudlite.io/mres.imported": "true",
-			},
-			Annotations: mres.SyncedOutputSecretRef.GetAnnotations(),
-		},
-		Data: mres.SyncedOutputSecretRef.Data,
+	ann := mres.SyncedOutputSecretRef.GetAnnotations()
+	for k, v := range types.SecretWatchingAnnotation {
+		ann[k] = v
 	}
 
 	nImpMres, err := d.mresRepo.Create(ctx, mres)
@@ -314,9 +327,32 @@ func (d *domain) importAndApplyManagedResourceSecret(ctx ManagedResourceContext,
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx.ConsoleContext, entities.ResourceTypeManagedResource, nImpMres.Name, PublishAdd)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeManagedResource, nImpMres.Name, PublishAdd)
 
-	if err := d.applyK8sResource(ctx, envName, &secret, 1); err != nil {
+	s, err := d.secretRepo.Create(ctx, &entities.Secret{
+		Secret: corev1.Secret{
+			TypeMeta: v1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+			ObjectMeta: v1.ObjectMeta{
+				Name:      mres.SyncedOutputSecretRef.Name,
+				Namespace: d.getEnvironmentTargetNamespace(envName),
+				Labels: map[string]string{
+					"kloudlite.io/mres.imported": "true",
+				},
+				Annotations: ann,
+			},
+			Data: mres.SyncedOutputSecretRef.Data,
+		},
+		AccountName:      mres.AccountName,
+		EnvironmentName:  mres.EnvironmentName,
+		ResourceMetadata: mres.ResourceMetadata,
+		SyncStatus:       t.GenSyncStatus(t.SyncActionApply, 0),
+		IsReadOnly:       true,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if err := d.applyK8sResource(ctx, envName, &s.Secret, s.RecordVersion); err != nil {
 		return nImpMres, errors.NewE(err)
 	}
 
@@ -329,7 +365,6 @@ func (d *domain) applyMresSecretsToEnvironment(ctx ConsoleContext, envName strin
 }
 
 func (d *domain) applyMresSecrets(ctx ConsoleContext, mres *entities.ManagedResource) error {
-
 	listImportedMres, err := d.listImportedMres(ctx, mres.Name)
 	if err != nil {
 		return nil
@@ -363,9 +398,14 @@ func (d *domain) UpdateManagedResource(ctx ManagedResourceContext, mres entities
 			},
 		})
 
+	f, err := ctx.MresDBFilters()
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	upMres, err := d.mresRepo.Patch(
 		ctx,
-		ctx.MresDBFilters().Add(fields.MetadataName, mres.Name),
+		f.Add(fields.MetadataName, mres.Name),
 		patchForUpdate,
 	)
 	if err != nil {
@@ -386,9 +426,14 @@ func (d *domain) DeleteManagedResource(ctx ManagedResourceContext, name string) 
 		return errors.NewE(err)
 	}
 
+	f, err := ctx.MresDBFilters()
+	if err != nil {
+		return errors.NewE(err)
+	}
+
 	umres, err := d.mresRepo.Patch(
 		ctx,
-		ctx.MresDBFilters().Add(fields.MetadataName, name),
+		f.Add(fields.MetadataName, name),
 		common.PatchForMarkDeletion(),
 	)
 	if err != nil {
@@ -414,10 +459,14 @@ func (d *domain) DeleteImportedManagedResource(ctx ResourceContext, mresName str
 		return errors.NewE(err)
 	}
 
+	if impMres.SyncedOutputSecretRef == nil {
+		return errors.Newf("managed resource (%s), not ready yet, please try again", mresName)
+	}
+
 	secret := corev1.Secret{
 		TypeMeta: v1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
 		ObjectMeta: v1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s-creds", d.getEnvironmentTargetNamespace(impMres.EnvironmentName), mresName),
+			Name:      impMres.SyncedOutputSecretRef.Name,
 			Namespace: d.getEnvironmentTargetNamespace(impMres.EnvironmentName),
 			Labels: map[string]string{
 				"kloudlite.io/mres.imported": "true",

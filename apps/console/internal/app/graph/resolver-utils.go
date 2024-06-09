@@ -103,6 +103,6 @@ func newResourceContext(ctx domain.ConsoleContext, environmentName string) domai
 	return domain.ResourceContext{ConsoleContext: ctx, EnvironmentName: environmentName}
 }
 
-func newMresContext(ctx domain.ConsoleContext, msvcName string) domain.ManagedResourceContext {
-	return domain.ManagedResourceContext{ConsoleContext: ctx, ManagedServiceName: msvcName}
+func newMresContext(ctx domain.ConsoleContext, msvcName *string, envName *string) domain.ManagedResourceContext {
+	return domain.ManagedResourceContext{ConsoleContext: ctx, ManagedServiceName: msvcName, EnvironmentName: envName}
 }
