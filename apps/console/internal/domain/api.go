@@ -45,7 +45,6 @@ func (c ConsoleContext) GetAccountName() string {
 
 type ResourceContext struct {
 	ConsoleContext
-	//ProjectName     string
 	EnvironmentName string
 }
 
@@ -71,7 +70,6 @@ func (m ManagedResourceContext) MresDBFilters() (*repos.Filter, error) {
 	}
 
 	return nil, errors.New("environment or managed service name is required")
-
 }
 
 func (r ResourceContext) DBFilters() repos.Filter {
@@ -168,7 +166,7 @@ type Domain interface {
 	GetEnvironment(ctx ConsoleContext, name string) (*entities.Environment, error)
 
 	CreateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
-	CloneEnvironment(ctx ConsoleContext, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode crdsv1.EnvironmentRoutingMode) (*entities.Environment, error)
+	CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs) (*entities.Environment, error)
 	UpdateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
 	DeleteEnvironment(ctx ConsoleContext, name string) error
 
@@ -287,13 +285,13 @@ type Domain interface {
 	ResyncImagePullSecret(ctx ConsoleContext, name string) error
 
 	GetEnvironmentResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error)
-	//GetProjectResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error)
+	// GetProjectResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error)
 
-	//ListProjectManagedServices(ctx ConsoleContext, projectName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ProjectManagedService], error)
-	//GetProjectManagedService(ctx ConsoleContext, projectName string, serviceName string) (*entities.ProjectManagedService, error)
-	//CreateProjectManagedService(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) (*entities.ProjectManagedService, error)
-	//UpdateProjectManagedService(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) (*entities.ProjectManagedService, error)
-	//DeleteProjectManagedService(ctx ConsoleContext, projectName string, name string) error
+	// ListProjectManagedServices(ctx ConsoleContext, projectName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ProjectManagedService], error)
+	// GetProjectManagedService(ctx ConsoleContext, projectName string, serviceName string) (*entities.ProjectManagedService, error)
+	// CreateProjectManagedService(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) (*entities.ProjectManagedService, error)
+	// UpdateProjectManagedService(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) (*entities.ProjectManagedService, error)
+	// DeleteProjectManagedService(ctx ConsoleContext, projectName string, name string) error
 
 	//RestartProjectManagedService(ctx ConsoleContext, projectName string, name string) error
 	//
