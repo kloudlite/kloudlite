@@ -152,7 +152,7 @@ type Mutation {
 	core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	core_cloneEnvironment(sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
+	core_cloneEnvironment(clusterName: String!, sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
 
 	# image pull secrets
 	core_createImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount

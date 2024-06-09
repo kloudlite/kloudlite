@@ -33,7 +33,6 @@ func (d *domain) ListManagedResources(ctx ConsoleContext, search map[string]repo
 }
 
 func (d *domain) listImportedMres(ctx ConsoleContext, mresName string) ([]*entities.ManagedResource, error) {
-
 	filter := repos.Filter{
 		fields.AccountName:        ctx.AccountName,
 		fc.ManagedResourceMresRef: mresName,
@@ -176,7 +175,6 @@ func (d *domain) GetManagedResourceOutputKeys(ctx ManagedResourceContext, name s
 // mutations
 
 func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error) {
-
 	if err := d.canPerformActionInAccount(ctx.ConsoleContext, iamT.CreateManagedResource); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -192,7 +190,6 @@ func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities
 		AccountName: ctx.AccountName,
 		MsvcName:    *ctx.ManagedServiceName,
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -230,13 +227,11 @@ func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities
 }
 
 func (d *domain) ImportManagedResource(ctx ManagedResourceContext, mresName string) (*entities.ManagedResource, error) {
-
 	exMres, err := d.findMRes(ManagedResourceContext{
 		ConsoleContext:     ctx.ConsoleContext,
 		ManagedServiceName: ctx.ManagedServiceName,
 		EnvironmentName:    nil,
 	}, mresName)
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -257,22 +252,31 @@ func (d *domain) ImportManagedResource(ctx ManagedResourceContext, mresName stri
 		return nil, errors.Newf("managed resource with name (%s) has been already imported", mresName)
 	}
 
-	exMres.IncrementRecordVersion()
-
-	exMres.Id = "imp-" + exMres.Id
-
-	exMres.CreatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
+	nmres := &entities.ManagedResource{
+		ManagedResource:       exMres.ManagedResource,
+		AccountName:           ctx.AccountName,
+		EnvironmentName:       *ctx.EnvironmentName,
+		ManagedServiceName:    exMres.ManagedServiceName,
+		ClusterName:           exMres.ClusterName,
+		SyncedOutputSecretRef: exMres.SyncedOutputSecretRef,
+		ResourceMetadata: common.ResourceMetadata{
+			DisplayName: exMres.DisplayName,
+			CreatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+			LastUpdatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+		},
+		IsImported: true,
+		MresRef:    mresName,
 	}
-	exMres.LastUpdatedBy = exMres.CreatedBy
 
-	exMres.EnvironmentName = *ctx.EnvironmentName
-	exMres.IsImported = true
-	exMres.MresRef = mresName
-
-	return d.importAndApplyManagedResourceSecret(ctx.ConsoleContext, *ctx.EnvironmentName, exMres)
+	return d.importAndApplyManagedResourceSecret(ctx.ConsoleContext, *ctx.EnvironmentName, nmres)
 }
 
 func genMresResourceName(envName string, mresName string) string {
@@ -318,19 +322,6 @@ func (d *domain) importAndApplyManagedResourceSecret(ctx ConsoleContext, envName
 		ann[k] = v
 	}
 
-	secret := corev1.Secret{
-		TypeMeta: v1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
-		ObjectMeta: v1.ObjectMeta{
-			Name:      mres.SyncedOutputSecretRef.Name,
-			Namespace: d.getEnvironmentTargetNamespace(envName),
-			Labels: map[string]string{
-				"kloudlite.io/mres.imported": "true",
-			},
-			Annotations: ann,
-		},
-		Data: mres.SyncedOutputSecretRef.Data,
-	}
-
 	nImpMres, err := d.mresRepo.Create(ctx, mres)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -338,7 +329,30 @@ func (d *domain) importAndApplyManagedResourceSecret(ctx ConsoleContext, envName
 
 	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeManagedResource, nImpMres.Name, PublishAdd)
 
-	if err := d.applyK8sResource(ctx, envName, &secret, 1); err != nil {
+	s, err := d.secretRepo.Create(ctx, &entities.Secret{
+		Secret: corev1.Secret{
+			TypeMeta: v1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
+			ObjectMeta: v1.ObjectMeta{
+				Name:      mres.SyncedOutputSecretRef.Name,
+				Namespace: d.getEnvironmentTargetNamespace(envName),
+				Labels: map[string]string{
+					"kloudlite.io/mres.imported": "true",
+				},
+				Annotations: ann,
+			},
+			Data: mres.SyncedOutputSecretRef.Data,
+		},
+		AccountName:      mres.AccountName,
+		EnvironmentName:  mres.EnvironmentName,
+		ResourceMetadata: mres.ResourceMetadata,
+		SyncStatus:       t.GenSyncStatus(t.SyncActionApply, 0),
+		IsReadOnly:       true,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if err := d.applyK8sResource(ctx, envName, &s.Secret, s.RecordVersion); err != nil {
 		return nImpMres, errors.NewE(err)
 	}
 
@@ -351,7 +365,6 @@ func (d *domain) applyMresSecretsToEnvironment(ctx ConsoleContext, envName strin
 }
 
 func (d *domain) applyMresSecrets(ctx ConsoleContext, mres *entities.ManagedResource) error {
-
 	listImportedMres, err := d.listImportedMres(ctx, mres.Name)
 	if err != nil {
 		return nil

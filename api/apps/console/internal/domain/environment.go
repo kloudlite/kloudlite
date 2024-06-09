@@ -207,12 +207,20 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment)
 	return nenv, nil
 }
 
-func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, destinationEnvName string, displayName string, envRoutingMode crdsv1.EnvironmentRoutingMode) (*entities.Environment, error) {
+type CloneEnvironmentArgs struct {
+	SourceEnvName      string
+	DestinationEnvName string
+	DisplayName        string
+	EnvRoutingMode     crdsv1.EnvironmentRoutingMode
+	ClusterName        string
+}
+
+func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs) (*entities.Environment, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CloneEnvironment); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	sourceEnv, err := d.findEnvironment(ctx, sourceEnvName)
+	sourceEnv, err := d.findEnvironment(ctx, args.SourceEnvName)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -221,19 +229,20 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 		Environment: crdsv1.Environment{
 			TypeMeta: sourceEnv.TypeMeta,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      destinationEnvName,
+				Name:      args.DestinationEnvName,
 				Namespace: sourceEnv.Namespace,
 			},
 			Spec: crdsv1.EnvironmentSpec{
-				TargetNamespace: d.getEnvironmentTargetNamespace(destinationEnvName),
+				TargetNamespace: d.getEnvironmentTargetNamespace(args.DestinationEnvName),
 				Routing: &crdsv1.EnvironmentRouting{
-					Mode: envRoutingMode,
+					Mode: args.EnvRoutingMode,
 				},
 			},
 		},
 		AccountName: ctx.AccountName,
+		ClusterName: args.ClusterName,
 		ResourceMetadata: common.ResourceMetadata{
-			DisplayName: displayName,
+			DisplayName: args.DisplayName,
 			CreatedBy: common.CreatedOrUpdatedBy{
 				UserId:    ctx.UserId,
 				UserName:  ctx.UserName,
@@ -270,7 +279,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, sourceEnv.Name, &corev1.Namespace{
+	if err := d.applyK8sResource(ctx, destEnv.Name, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: destEnv.Spec.TargetNamespace,
@@ -279,7 +288,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, sourceEnv.Name, &destEnv.Environment, destEnv.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, destEnv.Name, &destEnv.Environment, destEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -290,7 +299,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 
 	filters := repos.Filter{
 		fields.AccountName:     resCtx.AccountName,
-		fields.EnvironmentName: sourceEnvName,
+		fields.EnvironmentName: args.SourceEnvName,
 	}
 
 	apps, err := d.appRepo.Find(ctx, repos.Query{
@@ -412,7 +421,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, sourceEnvName string, dest
 		}
 	}
 
-	if err := d.syncImagePullSecretsToEnvironment(ctx, destinationEnvName); err != nil {
+	if err := d.syncImagePullSecretsToEnvironment(ctx, args.DestinationEnvName); err != nil {
 		return nil, err
 	}
 
