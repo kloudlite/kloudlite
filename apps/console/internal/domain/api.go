@@ -2,8 +2,9 @@ package domain
 
 import (
 	"context"
-	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"time"
+
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 
 	"github.com/kloudlite/api/common/fields"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -49,14 +51,27 @@ type ResourceContext struct {
 
 type ManagedResourceContext struct {
 	ConsoleContext
-	ManagedServiceName string
+	ManagedServiceName *string
+	EnvironmentName    *string
 }
 
-func (m ManagedResourceContext) MresDBFilters() repos.Filter {
-	return repos.Filter{
-		fields.AccountName:                   m.AccountName,
-		fc.ManagedResourceManagedServiceName: m.ManagedServiceName,
+func (m ManagedResourceContext) MresDBFilters() (*repos.Filter, error) {
+	if m.EnvironmentName != nil {
+		return &repos.Filter{
+			fields.AccountName:     m.AccountName,
+			fields.EnvironmentName: m.EnvironmentName,
+		}, nil
 	}
+
+	if m.ManagedServiceName != nil {
+		return &repos.Filter{
+			fields.AccountName:                   m.AccountName,
+			fc.ManagedResourceManagedServiceName: m.ManagedServiceName,
+		}, nil
+	}
+
+	return nil, errors.New("environment or managed service name is required")
+
 }
 
 func (r ResourceContext) DBFilters() repos.Filter {
@@ -84,7 +99,7 @@ func NewConsoleContext(parent context.Context, userId repos.ID, accountName stri
 func NewManagedResourceContext(ctx ConsoleContext, msvcName string) ManagedResourceContext {
 	return ManagedResourceContext{
 		ConsoleContext:     ctx,
-		ManagedServiceName: msvcName,
+		ManagedServiceName: &msvcName,
 	}
 }
 
@@ -220,11 +235,11 @@ type Domain interface {
 
 	ResyncRouter(ctx ResourceContext, name string) error
 
-	ListManagedResources(ctx ManagedResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
+	ListManagedResources(ctx ConsoleContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
 	GetManagedResource(ctx ManagedResourceContext, name string) (*entities.ManagedResource, error)
 
-	ListImportedManagedResources(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
-	GetImportedManagedResource(ctx ResourceContext, name string) (*entities.ManagedResource, error)
+	// ListImportedManagedResources(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
+	// GetImportedManagedResource(ctx ResourceContext, name string) (*entities.ManagedResource, error)
 
 	GetManagedResourceOutputKeys(ctx ManagedResourceContext, name string) ([]string, error)
 	GetManagedResourceOutputKVs(ctx ManagedResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error)
@@ -233,7 +248,7 @@ type Domain interface {
 	UpdateManagedResource(ctx ManagedResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
 	DeleteManagedResource(ctx ManagedResourceContext, name string) error
 
-	ImportManagedResource(ctx ManagedResourceContext, mresName string, envName string) (*entities.ManagedResource, error)
+	ImportManagedResource(ctx ManagedResourceContext, mresName string) (*entities.ManagedResource, error)
 	DeleteImportedManagedResource(ctx ResourceContext, mresName string) error
 
 	OnManagedResourceApplyError(ctx ConsoleContext, errMsg string, msvcName string, name string, opts UpdateAndDeleteOpts) error
