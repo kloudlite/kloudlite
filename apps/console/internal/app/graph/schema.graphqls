@@ -69,6 +69,7 @@ input SearchRouters {
 input SearchManagedResources {
 	text: MatchFilterIn
 	managedServiceName: MatchFilterIn
+	envName: MatchFilterIn
 	isReady: MatchFilterIn
 	markedForDeletion: MatchFilterIn
 }
@@ -125,13 +126,13 @@ type Query {
 	core_getRouter(envName: String!, name: String!): Router @isLoggedInAndVerified @hasAccount
 	core_resyncRouter(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-	core_getManagedResouceOutputKeys(msvcName: String!, name: String!): [String!]! @isLoggedInAndVerified @hasAccount
-	core_getManagedResouceOutputKeyValues(msvcName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
-	core_listManagedResources(msvcName: String! ,search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
-	core_getManagedResource(msvcName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
+	core_getManagedResouceOutputKeys(msvcName: String, envName:String , name: String!): [String!]! @isLoggedInAndVerified @hasAccount
+	core_getManagedResouceOutputKeyValues(msvcName: String, envName:String, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
+	core_listManagedResources(search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
+	core_getManagedResource(msvcName: String, envName: String, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_resyncManagedResource(msvcName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	core_listImportedManagedResources(envName: String! ,search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
-	core_getImportedManagedResource(envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
+	# core_listImportedManagedResources(envName: String! ,search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
+	# core_getImportedManagedResource(envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
 
 	# core_listProjectManagedServices(search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
 	# core_getProjectManagedService( name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
