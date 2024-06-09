@@ -30,7 +30,7 @@ tasks:
     cmds:
       - task: go:build 
         vars: 
-          Out: ./bin/{{.app}}-${GOARCH:-{{.GOARCH}}}
+          Out: ./bin/{{.app}}-${GOARCH:-$(go env GOARCH)}
 
   local:build-and-push:
     preconditions:

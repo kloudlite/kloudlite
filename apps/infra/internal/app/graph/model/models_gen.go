@@ -24,6 +24,16 @@ type BYOKClusterPaginatedRecords struct {
 	TotalCount int                `json:"totalCount"`
 }
 
+type BYOKSetupInstruction struct {
+	Command string `json:"command"`
+	Title   string `json:"title"`
+}
+
+type BYOKSetupInstructionIn struct {
+	Command string `json:"command"`
+	Title   string `json:"title"`
+}
+
 type CheckAwsAccessOutput struct {
 	Result          bool    `json:"result"`
 	InstallationURL *string `json:"installationUrl,omitempty"`
