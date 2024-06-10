@@ -8,14 +8,14 @@ import (
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	elasticsearchmsvcv1 "github.com/kloudlite/operator/apis/elasticsearch.msvc/v1"
-	influxdbmsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
-	mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
-	neo4jmsvcv1 "github.com/kloudlite/operator/apis/neo4j.msvc/v1"
-	redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
-	redpandamsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
-	zookeeperMsvcv1 "github.com/kloudlite/operator/apis/zookeeper.msvc/v1"
+	// elasticsearchmsvcv1 "github.com/kloudlite/operator/apis/elasticsearch.msvc/v1"
+	// influxdbmsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
+	// mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
+	// neo4jmsvcv1 "github.com/kloudlite/operator/apis/neo4j.msvc/v1"
+	// redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
+	// redpandamsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
+	// zookeeperMsvcv1 "github.com/kloudlite/operator/apis/zookeeper.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/msvc/http"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
@@ -258,15 +258,15 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	msvcs := []client.Object{
 		&mongodbMsvcv1.StandaloneService{},
 		&mongodbMsvcv1.ClusterService{},
-		&mysqlMsvcv1.StandaloneService{},
-		&mysqlMsvcv1.ClusterService{},
-		&redisMsvcv1.StandaloneService{},
-		&redisMsvcv1.ClusterService{},
-		&elasticsearchmsvcv1.Service{},
-		&zookeeperMsvcv1.Service{},
-		&influxdbmsvcv1.Service{},
-		&redpandamsvcv1.Service{},
-		&neo4jmsvcv1.StandaloneService{},
+		// &mysqlMsvcv1.StandaloneService{},
+		// &mysqlMsvcv1.ClusterService{},
+		// &redisMsvcv1.StandaloneService{},
+		// &redisMsvcv1.ClusterService{},
+		// &elasticsearchmsvcv1.Service{},
+		// &zookeeperMsvcv1.Service{},
+		// &influxdbmsvcv1.Service{},
+		// &redpandamsvcv1.Service{},
+		// &neo4jmsvcv1.StandaloneService{},
 	}
 
 	for _, obj := range msvcs {

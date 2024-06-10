@@ -8,10 +8,10 @@ import (
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	influxdbMsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
-	mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
-	redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
+	// influxdbMsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
+	// mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
+	// redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -305,21 +305,21 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Owns(&corev1.Secret{})
 
 	children := []client.Object{
-		&redisMsvcv1.StandaloneService{},
-		&redisMsvcv1.ClusterService{},
-		&redisMsvcv1.ACLAccount{},
-		&redisMsvcv1.Prefix{},
+		// &redisMsvcv1.StandaloneService{},
+		// &redisMsvcv1.ClusterService{},
+		// &redisMsvcv1.ACLAccount{},
+		// &redisMsvcv1.Prefix{},
 
 		&mongodbMsvcv1.StandaloneService{},
 		&mongodbMsvcv1.ClusterService{},
 		&mongodbMsvcv1.Database{},
 
-		&mysqlMsvcv1.ClusterService{},
-		&mysqlMsvcv1.StandaloneService{},
-		&mysqlMsvcv1.Database{},
-
-		&influxdbMsvcv1.Bucket{},
-		&influxdbMsvcv1.Service{},
+		// &mysqlMsvcv1.ClusterService{},
+		// &mysqlMsvcv1.StandaloneService{},
+		// &mysqlMsvcv1.Database{},
+		//
+		// &influxdbMsvcv1.Bucket{},
+		// &influxdbMsvcv1.Service{},
 	}
 
 	for _, obj := range children {
