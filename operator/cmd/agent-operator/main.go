@@ -9,7 +9,8 @@ import (
 	lifecycle "github.com/kloudlite/operator/operators/lifecycle/controller"
 	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
 	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
-	msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
+	// msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
+	networkingv1 "github.com/kloudlite/operator/operators/networking/register"
 	nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	project "github.com/kloudlite/operator/operators/project/controller"
 	resourceWatcher "github.com/kloudlite/operator/operators/resource-watcher/controller"
@@ -29,7 +30,7 @@ func main() {
 	// kloudlite managed services
 	msvcAndMres.RegisterInto(mgr)
 	msvcMongo.RegisterInto(mgr)
-	msvcRedis.RegisterInto(mgr)
+	// msvcRedis.RegisterInto(mgr)
 
 	// kloudlite cluster management
 	nodepool.RegisterInto(mgr)
@@ -42,6 +43,7 @@ func main() {
 	distribution.RegisterInto(mgr)
 
 	wireguard.RegisterInto(mgr)
+	networkingv1.RegisterInto(mgr)
 
 	mgr.Start()
 }
