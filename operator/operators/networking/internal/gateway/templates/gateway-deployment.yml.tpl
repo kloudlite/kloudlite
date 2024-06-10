@@ -6,8 +6,6 @@
 {{- $gatewayAdminHttpPort := "8080" }}
 {{- $gatewayWgPort := "51820" }}
 
-{{- /* {{- $dnsUDPPortWg := "5353" }} */}}
-{{- /* {{- $dnsUDPPortLocal := "5354" }} */}}
 {{- $dnsUDPPortWg := "53" }}
 {{- $dnsUDPPortLocal := "54" }}
 {{- $dnsHttpPort := "8082" }}
@@ -39,6 +37,8 @@ spec:
   template:
     metadata:
       labels: *labels
+      annotations:
+        kloudlite.io/gateway-extra-peers-hash: {{.GatewayWgExtraPeersHash}}
     spec:
       serviceAccountName: {{.ServiceAccountName}}
       initContainers:
@@ -58,6 +58,13 @@ spec:
               EOF
               wg-quick down wg0 || echo "starting wg0"
               wg-quick up wg0
+          resources:
+            requests:
+              cpu: 50m
+              memory: 50Mi
+            limits:
+              cpu: 300m
+              memory: 300Mi
           securityContext:
             capabilities:
               add:
@@ -89,6 +96,13 @@ spec:
           - --debug
           - --addr
           - $(POD_IP):{{$webhookServerHttpPort}}
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+          limits:
+            cpu: 300m
+            memory: 300Mi
 
         volumeMounts:
         - name: webhook-cert
@@ -97,7 +111,7 @@ spec:
         {{- end }}
 
       {{- /* # runs, wireguard, nginx, and gateway-admin-api */}}
-      - name: gateway-admin-api
+      - name: ip-manager
         {{- if $debugIPManager }}
         image: ghcr.io/kloudlite/hub/socat:latest
         command:
@@ -134,6 +148,9 @@ spec:
           - name: GATEWAY_WG_ENDPOINT
             value: {{.Name}}.{{.Namespace}}.svc.cluster.local:51820
 
+          - name: EXTRA_WIREGUARD_PEERS_PATH
+            value: "/tmp/peers.conf"
+
           - name: GATEWAY_GLOBAL_IP
             value: {{.GatewayGlobalIP}}
 
@@ -155,9 +172,18 @@ spec:
           - name: POD_ALLOWED_IPS
             value: "100.64.0.0/10"
 
-        {{- /* volumeMounts: */}}
-        {{- /*   - name: nginx-stream-configs */}}
-        {{- /*     mountPath: /etc/nginx/streams-enabled */}}
+        volumeMounts:
+          - name: gateway-wg-extra-peers
+            mountPath: /tmp/peers.conf
+            subPath: peers.conf
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 300m
+            memory: 300Mi
 
         securityContext:
           capabilities:
@@ -171,6 +197,14 @@ spec:
             - --health-probe-bind-address=$(POD_IP):8081
             - --metrics-bind-address=$(POD_IP):9090
             - --leader-elect
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 300m
+            memory: 300Mi
+
         env:
           {{include "pod-ip" . | nindent 10}}
 
@@ -193,7 +227,7 @@ spec:
         args:
           - --wg-dns-addr
           {{- /* - $(POD_IP):{{$dnsUDPPortWg}} */}}
-          - ":{{$dnsUDPPortWg}}"
+          - :{{$dnsUDPPortWg}}
           - --local-dns-addr
           {{- /* - "$(POD_IP):{{$dnsUDPPortLocal}}" */}}
           {{- /* - "{{.GatewayInternalDNSNameserver}}:{{$dnsUDPPortLocal}}" */}}
@@ -202,24 +236,27 @@ spec:
           - "{{.GatewayDNSSuffix}}"
           - --http-addr
           - $(POD_IP):{{$dnsHttpPort}}
+
+          - --dns-servers
+          - {{.GatewayDNSServers}}
+
           - --debug
         imagePullPolicy: Always
-        {{- /* containerPorts: */}}
-        {{- /*   - containerPort: 553 */}}
-        {{- /*     name: dns */}}
-        {{- /*     protocol: UDP */}}
-        {{- /*   - containerPort: 553 */}}
-        {{- /*     name: dns-tcp */}}
-        {{- /*     protocol: TCP */}}
-        {{- /**/}}
-        {{- /**/}}
-        {{- /*   - containerPort: 554 */}}
-        {{- /*     name: dns-local */}}
-        {{- /*     protocol: UDP */}}
-        {{- /**/}}
-        {{- /*   - containerPort: 554 */}}
-        {{- /*     name: dns-local-tcp */}}
-        {{- /*     protocol: TCP */}}
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+          limits:
+            cpu: 300m
+            memory: 300Mi
+
+        securityContext:
+          capabilities:
+            add:
+              - NET_BIND_SERVICE
+              - SETGID
+            drop:
+              - all
 
         env:
           {{include "pod-ip" . | nindent 10}}
@@ -242,6 +279,13 @@ spec:
 
               - key: tls.key
                 path: tls.key
+
+        - name: gateway-wg-extra-peers
+          configMap:
+            name: {{.Name}}-wg-extra-peers
+            items:
+              - key: peers.conf
+                path: peers.conf
         {{- end }}
 
 ---
@@ -290,14 +334,20 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: &name {{.Name}}-local-dns
+  name: &name {{.Name}}-wg
   namespace: {{.Namespace}}
   labels: {{.Labels | toYAML | nindent 4}}
   ownerReferences: {{.OwnerReferences | toYAML | nindent 4}}
 spec:
+  type: LoadBalancer
   selector: {{.Labels | toYAML | nindent 4}}
   ports:
-    - name: dns
-      port: 53
+    - name: wireguard
+      port: 31820
       protocol: UDP
-      targetPort: {{$dnsUDPPortLocal}}
+      targetPort: {{$gatewayWgPort}}
+
+    {{- /* - name: dns */}}
+    {{- /*   port: 53 */}}
+    {{- /*   protocol: UDP */}}
+    {{- /*   targetPort: {{$dnsUDPPortLocal}} */}}
