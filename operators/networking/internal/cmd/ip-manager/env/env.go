@@ -9,6 +9,8 @@ type Env struct {
 	GatewayWGPrivateKey string `env:"GATEWAY_WG_PRIVATE_KEY" required:"true"`
 	GatewayWGEndpoint   string `env:"GATEWAY_WG_ENDPOINT" required:"true"`
 
+	ExtraWireguardPeersPath string `env:"EXTRA_WIREGUARD_PEERS_PATH" required:"false"`
+
 	GatewayGlobalIP              string `env:"GATEWAY_GLOBAL_IP" required:"true"`
 	GatewayInternalDNSNameserver string `env:"GATEWAY_INTERNAL_DNS_NAMESERVER" required:"true"`
 

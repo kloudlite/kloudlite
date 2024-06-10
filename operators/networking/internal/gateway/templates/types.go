@@ -9,15 +9,15 @@ type GatewayDeploymentArgs struct {
 
 	ServiceAccountName string
 
-	GatewayWgConfigURI     string
-	GatewayWgConfigHashURI string
-	GatewayAdminAPIImage   string
-	WebhookServerImage     string
+	GatewayAdminAPIImage string
+	WebhookServerImage   string
 
 	GatewayWgSecretName          string
 	GatewayGlobalIP              string
 	GatewayDNSSuffix             string
 	GatewayInternalDNSNameserver string
+	GatewayWgExtraPeersHash      string
+	GatewayDNSServers            string
 
 	ClusterCIDR string
 	ServiceCIDR string
@@ -33,7 +33,8 @@ type WebhookTemplateArgs struct {
 
 	ServiceName string
 
-	WebhookServerImage string
+	WebhookServerImage        string
+	WebhookServerCertCABundle string
 }
 
 type GatewayRBACTemplateArgs struct {

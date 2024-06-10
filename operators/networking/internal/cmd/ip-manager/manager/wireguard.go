@@ -48,11 +48,14 @@ PrivateKey = %s
 %s
 
 %s
+%s
 `, m.Env.GatewayGlobalIP,
 		m.Env.GatewayWGPrivateKey,
 		strings.Join(postUps, "\n"),
 		strings.Join(postDowns, "\n"),
-		strings.Join(fn.MapValues(m.podPeers), "\n"))
+		strings.Join(fn.MapValues(m.podPeers), "\n"),
+		m.gatewayWgExtraPeers,
+	)
 }
 
 func (m *Manager) RestartWireguard() error {

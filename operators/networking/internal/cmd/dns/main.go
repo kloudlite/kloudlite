@@ -171,6 +171,7 @@ func main() {
 		localDNSAddr    string
 		localGatewayDNS string
 		httpAddr        string
+		dnsServers      string
 	)
 
 	flag.BoolVar(&isDebug, "debug", false, "--debug")
@@ -178,11 +179,22 @@ func main() {
 	flag.StringVar(&localDNSAddr, "local-dns-addr", ":54", "--local-dns-addr <host>:<port>")
 	flag.StringVar(&localGatewayDNS, "local-gateway-dns", "svc.cluster.local", "--local-gateway-dns <alias>")
 	flag.StringVar(&httpAddr, "http-addr", ":8080", "--http-addr <host>:<port>")
+	flag.StringVar(&dnsServers, "dns-servers", "", "--dns-servers dns_suffix=ip[,dns_suffix2=ip2,dns_suffix3=ip3...]")
 	flag.Parse()
 
 	if isDebug {
 		log.SetLevel(log.DebugLevel)
 		log.Info("logging at DEBUG level")
+	}
+
+	for _, dnsServer := range strings.Split(dnsServers, ",") {
+		s := strings.SplitN(dnsServer, "=", 2)
+		if len(s) != 2 {
+			continue
+		}
+
+		gatewayMap.Set(s[0], s[1])
+		log.Info("registered gateway", "dns-suffix", s[0], "gateway-addr", s[1])
 	}
 
 	go dnsServer(localDNSAddr, &dnsHandler{AnswerClusterLocalIPs: true, localGatewayDNS: localGatewayDNS})

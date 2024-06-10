@@ -48,7 +48,7 @@ tasks:
       - task: build
         vars:
           GOARCH: arm64
-      - docker buildx build --build-arg BINARY=./bin/{{.binary}} --output=type=image,compression=zstd,compression-level=10,force-compression=true,push=true -t {{.image}} .
+      - docker buildx build --build-arg BINARY=./bin/{{.binary}} --platform linux/amd64,linux/arm64 --output=type=image,compression=zstd,compression-level=10,force-compression=true,push=true -t {{.image}} .
 
   container:build:
     preconditions: 
