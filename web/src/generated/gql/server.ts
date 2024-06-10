@@ -41,6 +41,20 @@ export type Github__Com___Kloudlite___Api___Apps___Iam___Types__Role =
   | 'project_member'
   | 'resource_owner';
 
+export type CursorPaginationIn = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<Scalars['String']['input']>;
+  sortDirection?: InputMaybe<CursorPaginationSortDirection>;
+};
+
+export type CursorPaginationSortDirection = 'ASC' | 'DESC';
+
+export type Github__Com___Kloudlite___Api___Apps___Comms___Types__NotificationType =
+  'alert' | 'notification';
+
 export type ConsoleResType =
   | 'app'
   | 'config'
@@ -120,17 +134,6 @@ export type SecretKeyRefIn = {
   key: Scalars['String']['input'];
   secretName: Scalars['String']['input'];
 };
-
-export type CursorPaginationIn = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<Scalars['String']['input']>;
-  sortDirection?: InputMaybe<CursorPaginationSortDirection>;
-};
-
-export type CursorPaginationSortDirection = 'ASC' | 'DESC';
 
 export type SearchApps = {
   isReady?: InputMaybe<MatchFilterIn>;
@@ -407,6 +410,43 @@ export type InvitationIn = {
   userEmail?: InputMaybe<Scalars['String']['input']>;
   userName?: InputMaybe<Scalars['String']['input']>;
   userRole: Github__Com___Kloudlite___Api___Apps___Iam___Types__Role;
+};
+
+export type NotificationConfIn = {
+  email?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__EmailIn>;
+  slack?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__SlackIn>;
+  telegram?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__TelegramIn>;
+  webhook?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__WebhookIn>;
+};
+
+export type Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__EmailIn =
+  {
+    enabled: Scalars['Boolean']['input'];
+    mailAddress: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__SlackIn =
+  {
+    enabled: Scalars['Boolean']['input'];
+    url: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__TelegramIn =
+  {
+    chatId: Scalars['String']['input'];
+    enabled: Scalars['Boolean']['input'];
+    token: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__WebhookIn =
+  {
+    enabled: Scalars['Boolean']['input'];
+    url: Scalars['String']['input'];
+  };
+
+export type SubscriptionIn = {
+  enabled: Scalars['Boolean']['input'];
+  mailAddress: Scalars['String']['input'];
 };
 
 export type AppIn = {
@@ -5821,6 +5861,108 @@ export type ConsoleListGlobalVpnDevicesQuery = {
           labels?: any;
           name: string;
           namespace?: string;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleUpdateNotificationConfigMutationVariables = Exact<{
+  config: NotificationConfIn;
+}>;
+
+export type ConsoleUpdateNotificationConfigMutation = {
+  comms_updateNotificationConfig?: { id: string };
+};
+
+export type ConsoleUpdateSubscriptionConfigMutationVariables = Exact<{
+  config: SubscriptionIn;
+  commsUpdateSubscriptionConfigId: Scalars['ID']['input'];
+}>;
+
+export type ConsoleUpdateSubscriptionConfigMutation = {
+  comms_updateSubscriptionConfig?: { id: string };
+};
+
+export type ConsoleMarkAllNotificationAsReadMutationVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type ConsoleMarkAllNotificationAsReadMutation = {
+  comms_markAllNotificationAsRead: boolean;
+};
+
+export type ConsoleGetNotificationConfigQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type ConsoleGetNotificationConfigQuery = {
+  comms_getNotificationConfig?: {
+    accountName: string;
+    creationTime: any;
+    id: string;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    email?: { enabled: boolean; mailAddress: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    slack?: { enabled: boolean; url: string };
+    telegram?: { chatId: string; enabled: boolean; token: string };
+    webhook?: { enabled: boolean; url: string };
+  };
+};
+
+export type ConsoleGetSubscriptionConfigQueryVariables = Exact<{
+  commsGetSubscriptionConfigId: Scalars['ID']['input'];
+}>;
+
+export type ConsoleGetSubscriptionConfigQuery = {
+  comms_getSubscriptionConfig?: {
+    accountName: string;
+    creationTime: any;
+    enabled: boolean;
+    id: string;
+    mailAddress: string;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+  };
+};
+
+export type ConsoleListNotificationsQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListNotificationsQuery = {
+  comms_listNotifications?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        creationTime: any;
+        id: string;
+        markedForDeletion?: boolean;
+        notificationType: Github__Com___Kloudlite___Api___Apps___Comms___Types__NotificationType;
+        priority: number;
+        read: boolean;
+        recordVersion: number;
+        updateTime: any;
+        content: {
+          body: string;
+          image: string;
+          link: string;
+          subject: string;
+          title: string;
         };
       };
     }>;

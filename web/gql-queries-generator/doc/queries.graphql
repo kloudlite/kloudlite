@@ -4296,6 +4296,119 @@ query consoleListGlobalVpnDevices($gvpn: String!, $search: SearchGlobalVPNDevice
   }
 }
 
+mutation consoleUpdateNotificationConfig($config: NotificationConfIn!) {
+  comms_updateNotificationConfig(config: $config) {
+    id
+  }
+}
+
+mutation consoleUpdateSubscriptionConfig($config: SubscriptionIn!, $commsUpdateSubscriptionConfigId: ID!) {
+  comms_updateSubscriptionConfig(
+    config: $config
+    id: $commsUpdateSubscriptionConfigId
+  ) {
+    id
+  }
+}
+
+mutation consoleMarkAllNotificationAsRead {
+  comms_markAllNotificationAsRead
+}
+
+query consoleGetNotificationConfig {
+  comms_getNotificationConfig {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    email {
+      enabled
+      mailAddress
+    }
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    recordVersion
+    slack {
+      enabled
+      url
+    }
+    telegram {
+      chatId
+      enabled
+      token
+    }
+    updateTime
+    webhook {
+      enabled
+      url
+    }
+  }
+}
+
+query consoleGetSubscriptionConfig($commsGetSubscriptionConfigId: ID!) {
+  comms_getSubscriptionConfig(id: $commsGetSubscriptionConfigId) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    enabled
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    mailAddress
+    markedForDeletion
+    recordVersion
+    updateTime
+  }
+}
+
+query consoleListNotifications($pagination: CursorPaginationIn) {
+  comms_listNotifications(pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        content {
+          body
+          image
+          link
+          subject
+          title
+        }
+        creationTime
+        id
+        markedForDeletion
+        notificationType
+        priority
+        read
+        recordVersion
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
 query iotconsoleAccountCheckNameAvailability($name: String!) {
   accounts_checkNameAvailability(name: $name) {
     result

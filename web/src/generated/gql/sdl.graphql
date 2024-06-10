@@ -672,6 +672,61 @@ type GitBranch {
   protected: Boolean
 }
 
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Email {
+  enabled: Boolean!
+  mailAddress: String!
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__EmailIn {
+  enabled: Boolean!
+  mailAddress: String!
+}
+
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Slack {
+  enabled: Boolean!
+  url: String!
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__SlackIn {
+  enabled: Boolean!
+  url: String!
+}
+
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Telegram {
+  chatId: String!
+  enabled: Boolean!
+  token: String!
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__TelegramIn {
+  chatId: String!
+  enabled: Boolean!
+  token: String!
+}
+
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Webhook {
+  enabled: Boolean!
+  url: String!
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__WebhookIn {
+  enabled: Boolean!
+  url: String!
+}
+
+enum Github__com___kloudlite___api___apps___comms___types__NotificationType {
+  alert
+  notification
+}
+
+type Github__com___kloudlite___api___apps___comms___types__NotifyContent {
+  body: String!
+  image: String!
+  link: String!
+  subject: String!
+  title: String!
+}
+
 enum Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat {
   dockerConfigJson
   params
@@ -3472,6 +3527,10 @@ type Mutation {
   auth_signup(email: String!, name: String!, password: String!): Session
   auth_verifyEmail(token: String!): Session!
   auth_verifyInviteCode(invitationCode: String!): Boolean!
+  comms_markAllNotificationAsRead: Boolean!
+  comms_markNotificationAsRead(id: ID!): Notification
+  comms_updateNotificationConfig(config: NotificationConfIn!): NotificationConf
+  comms_updateSubscriptionConfig(config: SubscriptionIn!, id: ID!): Subscription
   core_cloneEnvironment(clusterName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!, sourceEnvName: String!): Environment
   core_createApp(app: AppIn!, envName: String!): App
   core_createConfig(config: ConfigIn!, envName: String!): Config
@@ -3675,6 +3734,52 @@ type NodePoolPaginatedRecords {
   totalCount: Int!
 }
 
+type Notification {
+  accountName: String!
+  content: Github__com___kloudlite___api___apps___comms___types__NotifyContent!
+  creationTime: Date!
+  id: ID!
+  markedForDeletion: Boolean
+  notificationType: Github__com___kloudlite___api___apps___comms___types__NotificationType!
+  priority: Int!
+  read: Boolean!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type NotificationConf {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  email: Github__com___kloudlite___api___apps___comms___internal___domain___entities__Email
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  recordVersion: Int!
+  slack: Github__com___kloudlite___api___apps___comms___internal___domain___entities__Slack
+  telegram: Github__com___kloudlite___api___apps___comms___internal___domain___entities__Telegram
+  updateTime: Date!
+  webhook: Github__com___kloudlite___api___apps___comms___internal___domain___entities__Webhook
+}
+
+input NotificationConfIn {
+  email: Github__com___kloudlite___api___apps___comms___internal___domain___entities__EmailIn
+  slack: Github__com___kloudlite___api___apps___comms___internal___domain___entities__SlackIn
+  telegram: Github__com___kloudlite___api___apps___comms___internal___domain___entities__TelegramIn
+  webhook: Github__com___kloudlite___api___apps___comms___internal___domain___entities__WebhookIn
+}
+
+type NotificationEdge {
+  cursor: String!
+  node: Notification!
+}
+
+type NotificationPaginatedRecords {
+  edges: [NotificationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type OAuthProviderStatus {
   enabled: Boolean!
   provider: String!
@@ -3793,6 +3898,9 @@ type Query {
   auth_getRemoteLogin(loginId: String!, secret: String!): RemoteLogin
   auth_listOAuthProviders: [OAuthProviderStatus!]
   auth_me: User
+  comms_getNotificationConfig: NotificationConf
+  comms_getSubscriptionConfig(id: ID!): Subscription
+  comms_listNotifications(pagination: CursorPaginationIn): NotificationPaginatedRecords
   core_checkNameAvailability(envName: String, name: String!, resType: ConsoleResType!): ConsoleCheckNameAvailabilityOutput!
   core_getApp(envName: String!, name: String!): App
   core_getConfig(envName: String!, name: String!): Config
@@ -4206,6 +4314,24 @@ type Session {
   userEmail: String!
   userId: ID!
   userVerified: Boolean!
+}
+
+type Subscription {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  enabled: Boolean!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  mailAddress: String!
+  markedForDeletion: Boolean
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+input SubscriptionIn {
+  enabled: Boolean!
+  mailAddress: String!
 }
 
 scalar URL

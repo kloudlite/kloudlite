@@ -37,7 +37,17 @@ import {
   GearSix,
   Project,
   BackingServices,
+  BellFill,
+  Sliders,
 } from '~/console/components/icons';
+import { Button, IconButton } from '~/components/atoms/button';
+import { Avatar } from '~/components/atoms/avatar';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
+import { ICommsNotifications } from '~/console/server/gql/queries/comms-queries';
+import { LoadingPlaceHolder } from '~/console/components/loading';
 
 const restActions = (ctx: IExtRemixCtx) => {
   return withContext(ctx, {});
@@ -203,6 +213,227 @@ const ProfileMenu = ({ hideProfileName }: { hideProfileName: boolean }) => {
   );
 };
 
+// type INotificationMessage = {
+//   id: string;
+//   name: string;
+//   message: string;
+//   time: string;
+//   isRead: boolean;
+//   isInvited: boolean;
+// };
+
+type INotificationBaseType = ExtractNodeType<ICommsNotifications>;
+
+const NotificationMessageView = ({
+  notificationMessage,
+}: {
+  // notificationMessage: INotificationMessage;
+  notificationMessage: INotificationBaseType;
+}) => {
+  const avatar = notificationMessage.read ? (
+    <Avatar size="xs" />
+  ) : (
+    <Avatar size="xs" dot />
+  );
+
+  console.log('kkk', notificationMessage);
+
+  return (
+    <div className="flex flex-row gap-lg">
+      {avatar}
+      <div className="flex flex-col gap-xl">
+        <div className="flex flex-col gap-md">
+          <span className="flex">
+            <span className="bodySm-medium">
+              {notificationMessage.accountName}&nbsp;
+            </span>
+            <span className="bodySm text-text-soft">
+              {notificationMessage.content.title}
+            </span>
+          </span>
+          <span className="bodySm text-text-disabled">
+            {notificationMessage.creationTime}
+          </span>
+        </div>
+        {/* {notificationMessage.isInvited && (
+          <BottomNavigation
+            secondaryButton={{
+              variant: 'outline',
+              content: 'Decline',
+              prefix: undefined,
+              size: 'sm',
+              // onClick: () => {
+              //   navigate(`/${accountName}/environments`);
+              // },
+            }}
+            primaryButton={{
+              variant: 'primary',
+              content: 'Acceept',
+              // loading: isLoading,
+              type: 'submit',
+              size: 'sm',
+            }}
+          />
+        )} */}
+      </div>
+    </div>
+  );
+};
+
+const NotificationMenu = () => {
+  // const { user } = useLoaderData();
+  // const cookie = getCookie();
+  // const { pathname } = useLocation();
+  // const eNavigate = useExternalRedirect();
+  // const { account } = useParams();
+  const api = useConsoleApi();
+  const reloadPage = useReload();
+
+  const { data: notificationsData, isLoading: notificationIsLoading } =
+    useCustomSwr(
+      'notifications',
+      async () =>
+        api.listNotifications({
+          pagination: {
+            first: 100,
+          },
+        }),
+      true
+    );
+
+  const notifications = parseNodes(notificationsData);
+
+  console.log('notifications', notificationsData);
+  console.log('nnn', notifications);
+
+  // const notificationMessage: INotificationMessage[] = [
+  //   {
+  //     id: '1',
+  //     name: 'Piyush',
+  //     message: 'invited you to the team kloudlite ops',
+  //     time: '10 hrs ago',
+  //     isRead: false,
+  //     isInvited: true,
+  //   },
+  //   {
+  //     id: '2',
+  //     name: 'Bikash',
+  //     message: 'deployed the application nginx',
+  //     time: '10 hrs ago',
+  //     isRead: true,
+  //     isInvited: false,
+  //   },
+  //   {
+  //     id: '3',
+  //     name: 'Piyush',
+  //     message: 'invited you to the team kloudlite ops',
+  //     time: '10 hrs ago',
+  //     isRead: false,
+  //     isInvited: true,
+  //   },
+  //   {
+  //     id: '4',
+  //     name: 'Bikash',
+  //     message: 'deployed the application nginx',
+  //     time: '10 hrs ago',
+  //     isRead: true,
+  //     isInvited: false,
+  //   },
+  //   {
+  //     id: '5',
+  //     name: 'Piyush',
+  //     message: 'invited you to the team kloudlite ops',
+  //     time: '10 hrs ago',
+  //     isRead: false,
+  //     isInvited: true,
+  //   },
+  //   {
+  //     id: '6',
+  //     name: 'Bikash',
+  //     message: 'deployed the application nginx',
+  //     time: '10 hrs ago',
+  //     isRead: true,
+  //     isInvited: false,
+  //   },
+  //   {
+  //     id: '7',
+  //     name: 'Piyush',
+  //     message: 'invited you to the team kloudlite ops',
+  //     time: '10 hrs ago',
+  //     isRead: false,
+  //     isInvited: true,
+  //   },
+  //   {
+  //     id: '8',
+  //     name: 'Bikash',
+  //     message: 'deployed the application nginx',
+  //     time: '10 hrs ago',
+  //     isRead: true,
+  //     isInvited: false,
+  //   },
+  // ];
+
+  return (
+    <OptionList.Root>
+      <OptionList.Trigger>
+        <IconButton icon={<BellFill />} variant="plain" />
+      </OptionList.Trigger>
+      <OptionList.Content className="w-[360px] !max-w-[360px] !py-0 ">
+        <div className="flex flex-row items-center justify-between p-2xl bg-surface-basic-active">
+          <span className="headingMd">Notifications</span>
+          <div className="flex flex-row">
+            <Button
+              size="sm"
+              content={
+                <span className="truncate text-left">Mark all as read</span>
+              }
+              variant="primary-plain"
+              className="truncate"
+              onClick={async () => {
+                try {
+                  const { errors: e } = await api.markAllNotificationAsRead();
+                  if (e) {
+                    throw e[0];
+                  }
+                  reloadPage();
+                } catch (error) {
+                  console.log(error);
+                }
+              }}
+            />
+            <IconButton icon={<Sliders />} variant="plain" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-3xl p-3xl max-h-[425px] overflow-y-scroll">
+          {notificationIsLoading && <LoadingPlaceHolder />}
+          {notifications.length === 0 ? (
+            <div className="flex items-center justify-center bodyMd-medium text-text-soft">
+              You dont have any notifications yet
+            </div>
+          ) : (
+            notifications.map((data) => {
+              return (
+                <NotificationMessageView
+                  key={data.id}
+                  notificationMessage={data}
+                />
+              );
+            })
+          )}
+          {/* {notifications.map((data) => {
+            return (
+              <NotificationMessageView
+                key={data.id}
+                notificationMessage={data}
+              />
+            );
+          })} */}
+        </div>
+      </OptionList.Content>
+    </OptionList.Root>
+  );
+};
+
 const Console = () => {
   const loaderData = useLoaderData<typeof loader>();
 
@@ -255,6 +486,7 @@ const Console = () => {
           <div className="flex flex-row gap-2xl items-center">
             {!!devicesMenu && devicesMenu()}
             {!!headerExtra && headerExtra()}
+            <NotificationMenu />
             <ProfileMenu hideProfileName={hideProfileName} />
           </div>
         }
