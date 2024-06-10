@@ -6,14 +6,35 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type Peer struct {
+	PublicKey      string  `json:"publicKey"`
+	PublicEndpoint *string `json:"publicEndpoint,omitempty"`
+	IP             string  `json:"ip"`
+
+	DNSSuffix  *string  `json:"dnsSuffix,omitempty"`
+	AllowedIPs []string `json:"allowedIPs,omitempty"`
+}
+
+type GatewayLoadBalancer struct {
+	Hosts []string `json:"hosts"`
+	Port  int32    `json:"port"`
+}
+
 // GatewaySpec defines the desired state of Gateway
 type GatewaySpec struct {
+	AdminNamespace string `json:"adminNamespace,omitempty"`
+
 	GlobalIP string `json:"globalIP"`
 
 	ClusterCIDR string `json:"clusterCIDR"`
 	SvcCIDR     string `json:"svcCIDR"`
 
 	DNSSuffix string `json:"dnsSuffix"`
+
+	Peers []Peer `json:"peers,omitempty"`
+
+	// it will be filled by resource controller
+	LoadBalancer *GatewayLoadBalancer `json:"loadBalancer,omitempty"`
 
 	// secret's data will be unmarshalled into WireguardKeys
 	WireguardKeysRef ct.SecretRef `json:"wireguardKeysRef,omitempty"`
