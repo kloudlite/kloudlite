@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"strconv"
@@ -41,6 +42,8 @@ type Manager struct {
 
 	podPeers        map[string]string
 	svcNginxStreams map[string][]string
+
+	gatewayWgExtraPeers string
 }
 
 func NewManager(ev *env.Env, kclientset *kubernetes.Clientset, kcli client.Client) (*Manager, error) {
@@ -134,6 +137,18 @@ func NewManager(ev *env.Env, kclientset *kubernetes.Clientset, kcli client.Clien
 	manager.svcNginxStreams = make(map[string][]string)
 	for svcBinding := range sbList {
 		manager.svcNginxStreams[svcBinding.Spec.GlobalIP] = RegisterNginxStreamConfig(svcBinding)
+	}
+
+	if ev.ExtraWireguardPeersPath != "" {
+		f, err := os.Open(ev.ExtraWireguardPeersPath)
+		if err != nil {
+			return nil, errors.NewEf(err, "failed to open extra wireguard peers file %s", ev.ExtraWireguardPeersPath)
+		}
+		b, err := io.ReadAll(f)
+		if err != nil {
+			return nil, errors.NewEf(err, "failed to read extra wireguard peers file %s", ev.ExtraWireguardPeersPath)
+		}
+		manager.gatewayWgExtraPeers = string(b)
 	}
 
 	if err := manager.RestartWireguard(); err != nil {
