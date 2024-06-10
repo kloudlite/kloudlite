@@ -54,12 +54,48 @@ spec:
           spec:
             description: GatewaySpec defines the desired state of Gateway
             properties:
+              adminNamespace:
+                type: string
               clusterCIDR:
                 type: string
               dnsSuffix:
                 type: string
               globalIP:
                 type: string
+              loadBalancer:
+                description: it will be filled by resource controller
+                properties:
+                  hosts:
+                    items:
+                      type: string
+                    type: array
+                  port:
+                    format: int32
+                    type: integer
+                required:
+                - hosts
+                - port
+                type: object
+              peers:
+                items:
+                  properties:
+                    allowedIPs:
+                      items:
+                        type: string
+                      type: array
+                    dnsSuffix:
+                      type: string
+                    ip:
+                      type: string
+                    publicEndpoint:
+                      type: string
+                    publicKey:
+                      type: string
+                  required:
+                  - ip
+                  - publicKey
+                  type: object
+                type: array
               svcCIDR:
                 type: string
               wireguardKeysRef:

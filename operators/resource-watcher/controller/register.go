@@ -11,9 +11,9 @@ import (
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
-	mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
-	redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
-	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
+	// mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
+	// redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
+	// serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
 	wireguardv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operator"
 	watchAndUpdate "github.com/kloudlite/operator/operators/resource-watcher/internal/controllers/watch-and-update"
@@ -32,8 +32,9 @@ func RegisterInto(mgr operator.Operator) {
 
 	mgr.AddToSchemes(
 		crdsv1.AddToScheme,
-		mongodbMsvcv1.AddToScheme, mysqlMsvcv1.AddToScheme, redisMsvcv1.AddToScheme,
-		serverlessv1.AddToScheme,
+		mongodbMsvcv1.AddToScheme,
+		// mysqlMsvcv1.AddToScheme, redisMsvcv1.AddToScheme,
+		// serverlessv1.AddToScheme,
 		clustersv1.AddToScheme,
 		wireguardv1.AddToScheme,
 	)
