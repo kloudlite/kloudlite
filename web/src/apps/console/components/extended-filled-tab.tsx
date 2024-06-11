@@ -2,6 +2,7 @@ import { Key } from 'react';
 import Tabs, { ITab } from '~/components/atoms/tabs';
 import { cn } from '~/components/utils';
 import { NonNullableString } from '~/root/lib/types/common';
+import { Button } from '~/components/atoms/button';
 
 export interface IExtendedFilledTab<T = string> {
   value: string;
