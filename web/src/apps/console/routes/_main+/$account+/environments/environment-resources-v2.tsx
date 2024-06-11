@@ -1,4 +1,4 @@
-import { Copy, GearSix } from '~/console/components/icons';
+import { Copy, GearSix, Trash } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { generateKey, titleCase } from '~/components/utils';
@@ -22,6 +22,11 @@ import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
+import DeleteDialog from '~/console/components/delete-dialog';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { toast } from '~/components/molecule/toast';
+import { handleError } from '~/root/lib/utils/common';
 import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'environment';
@@ -38,7 +43,13 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-type OnAction = ({ action, item }: { action: 'clone'; item: BaseType }) => void;
+type OnAction = ({
+  action,
+  item,
+}: {
+  action: 'clone' | 'delete';
+  item: BaseType;
+}) => void;
 
 type IExtraButton = {
   onAction: OnAction;
@@ -47,7 +58,20 @@ type IExtraButton = {
 
 const ExtraButton = ({ item, onAction }: IExtraButton) => {
   const { account } = useParams();
-  return (
+  return item.clusterName === '' ? (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Delete',
+          icon: <Trash size={16} />,
+          type: 'item',
+          onClick: () => onAction({ action: 'delete', item }),
+          key: 'delete',
+          className: '!text-text-critical',
+        },
+      ]}
+    />
+  ) : (
     <ResourceExtraAction
       options={[
         {
@@ -201,7 +225,8 @@ const ListView = ({ items, onAction }: IResource) => {
                 render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
-            to: `/${account}/env/${id}`,
+            // to: `/${account}/env/${id}`,
+            ...(i.clusterName !== '' ? { to: `/${account}/env/${id}` } : {}),
           };
         }),
       }}
@@ -217,7 +242,13 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
     })
   );
 
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
   const [visible, setVisible] = useState<BaseType | null>(null);
+  const api = useConsoleApi();
+  const reloadPage = useReload();
+
   const props: IResource = {
     items,
     onAction: ({ action, item }) => {
@@ -225,6 +256,9 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
       switch (action) {
         case 'clone':
           setVisible(item);
+          break;
+        case 'delete':
+          setShowDeleteDialog(item);
           break;
         default:
           break;
@@ -237,6 +271,28 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
       <ListGridView
         listView={<ListView {...props} />}
         gridView={<GridView {...props} />}
+      />
+      <DeleteDialog
+        resourceName={parseName(showDeleteDialog)}
+        resourceType={RESOURCE_NAME}
+        show={showDeleteDialog}
+        setShow={setShowDeleteDialog}
+        onSubmit={async () => {
+          try {
+            const { errors } = await api.deleteEnvironment({
+              envName: parseName(showDeleteDialog),
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            reloadPage();
+            toast.success(`Environment deleted successfully`);
+            setShowDeleteDialog(null);
+          } catch (err) {
+            handleError(err);
+          }
+        }}
       />
       <CloneEnvironment
         {...{

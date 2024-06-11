@@ -5,9 +5,9 @@ import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
 import { BottomNavigation, GitDetailRaw } from '~/console/components/commons';
-import { registryHost } from '~/lib/configs/base-url.cjs';
+// import { registryHost } from '~/lib/configs/base-url.cjs';
 import { useOutletContext } from '@remix-run/react';
-import RepoSelector from '~/console/page-components/app/components';
+// import RepoSelector from '~/console/page-components/app/components';
 import AppBuildIntegration from '~/console/page-components/app/app-build-integration';
 import { TextInput } from '~/components/atoms/input';
 import { useEffect, useState } from 'react';
@@ -147,7 +147,10 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     validationSchema: Yup.object({
       name: Yup.string().required(),
       displayName: Yup.string().required(),
-      imageUrl: Yup.string(),
+      imageUrl: Yup.string().matches(
+        /^\w(\w|[-/])+?(?::(\w|[-])+)?\w$/,
+        'Invalid image format'
+      ),
       manualRepo: Yup.string().when(
         ['imageUrl', 'imageMode'],
         ([imageUrl, imageMode], schema) => {
@@ -377,7 +380,17 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             size="sm"
           /> */}
 
-          {values.imageMode === 'default' && (
+          <TextInput
+            size="lg"
+            label="Image name"
+            placeholder="Enter Image name"
+            value={values.imageUrl}
+            onChange={handleChange('imageUrl')}
+            error={!!errors.imageUrl}
+            message={errors.imageUrl}
+          />
+
+          {/* {values.imageMode === 'default' && (
             <RepoSelector
               tag={values.imageUrl.split(':')[1]}
               repo={
@@ -406,7 +419,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               }}
               error={errors.manualRepo}
             />
-          )}
+          )} */}
 
           {buildData?.name && values.imageMode === 'git' && !isEdited && (
             <GitDetailRaw
