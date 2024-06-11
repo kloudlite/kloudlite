@@ -41,6 +41,20 @@ export type Github__Com___Kloudlite___Api___Apps___Iam___Types__Role =
   | 'project_member'
   | 'resource_owner';
 
+export type CursorPaginationIn = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<Scalars['String']['input']>;
+  sortDirection?: InputMaybe<CursorPaginationSortDirection>;
+};
+
+export type CursorPaginationSortDirection = 'ASC' | 'DESC';
+
+export type Github__Com___Kloudlite___Api___Apps___Comms___Types__NotificationType =
+  'alert' | 'notification';
+
 export type ConsoleResType =
   | 'app'
   | 'config'
@@ -120,17 +134,6 @@ export type SecretKeyRefIn = {
   key: Scalars['String']['input'];
   secretName: Scalars['String']['input'];
 };
-
-export type CursorPaginationIn = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-  orderBy?: InputMaybe<Scalars['String']['input']>;
-  sortDirection?: InputMaybe<CursorPaginationSortDirection>;
-};
-
-export type CursorPaginationSortDirection = 'ASC' | 'DESC';
 
 export type SearchApps = {
   isReady?: InputMaybe<MatchFilterIn>;
@@ -407,6 +410,43 @@ export type InvitationIn = {
   userEmail?: InputMaybe<Scalars['String']['input']>;
   userName?: InputMaybe<Scalars['String']['input']>;
   userRole: Github__Com___Kloudlite___Api___Apps___Iam___Types__Role;
+};
+
+export type NotificationConfIn = {
+  email?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__EmailIn>;
+  slack?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__SlackIn>;
+  telegram?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__TelegramIn>;
+  webhook?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__WebhookIn>;
+};
+
+export type Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__EmailIn =
+  {
+    enabled: Scalars['Boolean']['input'];
+    mailAddress: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__SlackIn =
+  {
+    enabled: Scalars['Boolean']['input'];
+    url: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__TelegramIn =
+  {
+    chatId: Scalars['String']['input'];
+    enabled: Scalars['Boolean']['input'];
+    token: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Api___Apps___Comms___Internal___Domain___Entities__WebhookIn =
+  {
+    enabled: Scalars['Boolean']['input'];
+    url: Scalars['String']['input'];
+  };
+
+export type SubscriptionIn = {
+  enabled: Scalars['Boolean']['input'];
+  mailAddress: Scalars['String']['input'];
 };
 
 export type AppIn = {
