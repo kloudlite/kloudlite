@@ -7,7 +7,7 @@ import { getCookie } from '~/root/lib/app-setup/cookies';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { FlatMapType, NN } from '~/root/lib/types/common';
 import { parseError, sleep } from '~/root/lib/utils/common';
-import Pulsable from './pulsable';
+import Pulsable from '~/root/lib/client/components/pulsable';
 
 interface SetCookieProps {
   _cookie: FlatMapType<string>[] | undefined;

@@ -49,7 +49,7 @@ const CodeView = ({
   }, [data, language]);
 
   return (
-    <div className="flex flex-col gap-lg flex-1 min-w-[45%] ">
+    <div className="flex flex-col gap-lg flex-1 min-w-[45%]">
       {!!title && (
         <div className="bodyMd-medium text-text-default">{title}</div>
       )}
@@ -58,6 +58,11 @@ const CodeView = ({
           <div
             onClick={() => {
               if (copy) cpy(data);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (copy) cpy(data);
+              }
             }}
             className="group/sha cursor-pointer hljs p-lg relative"
           >

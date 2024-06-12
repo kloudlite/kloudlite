@@ -34,7 +34,8 @@ import {
   ReviewComponent,
 } from '~/console/components/commons';
 import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
-import { IEnvironmentContext } from '../_layout';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { IManagedServiceContext } from '~/console/routes/_main+/$account+/msvc+/$msv+/_layout';
 
 export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -217,12 +218,6 @@ type ISelectedResource = {
   resource: IMSvTemplate['resources'][number];
 };
 
-type ISelectedService = {
-  label: string;
-  value: string;
-  service: ExtractNodeType<IClusterMSvs>;
-};
-
 interface ITemplateView {
   handleSubmit: FormEventHandler<HTMLFormElement>;
   values: Record<string, any>;
@@ -249,29 +244,7 @@ const TemplateView = ({
   return (
     <form className="flex flex-col gap-3xl" onSubmit={handleSubmit}>
       <div className="bodyMd text-text-soft">Create your managed services.</div>
-
       <Select
-        label="Service"
-        size="lg"
-        placeholder="Select service"
-        value={values.selectedService?.value}
-        searchable
-        onChange={(val) => {
-          handleChange('selectedService')(dummyEvent(val));
-          handleChange('selectedResource')(dummyEvent(undefined));
-        }}
-        options={async () => [
-          ...services.map((mt) => ({
-            label: mt.displayName,
-            value: parseName(mt),
-            service: mt,
-          })),
-        ]}
-        error={!!errors.selectedService}
-        message={errors.selectedService}
-      />
-      <Select
-        disabled={!values.selectedService?.value}
         label="Resource type"
         size="lg"
         placeholder="Select resource type"
@@ -281,8 +254,8 @@ const TemplateView = ({
           handleChange('selectedResource')(dummyEvent(val));
         }}
         options={async () => [...resources]}
-        error={!!values.selectedService && !!errors.selectedResource}
-        message={values.selectedService ? errors.selectedResource : null}
+        error={!!errors.selectedResource}
+        message={errors.selectedResource}
       />
       <BottomNavigation
         primaryButton={{
@@ -323,7 +296,7 @@ const FieldView = ({
       <NameIdView
         placeholder="Enter managed service name"
         label="Name"
-        resType="managed_resource"
+        resType="environment"
         name={values.name}
         displayName={values.displayName}
         errors={errors.name}
@@ -365,14 +338,14 @@ const ReviewView = ({
   handleSubmit,
   values,
   selectedResource,
-  selectedService,
+  selectedService: managedService,
   isLoading,
   onEdit,
 }: {
   values: Record<string, any>;
   handleSubmit: FormEventHandler<HTMLFormElement>;
   selectedResource: ISelectedResource | null;
-  selectedService: ISelectedService | null;
+  selectedService: IManagedServiceContext['managedService'] | null;
   isLoading?: boolean;
   onEdit: (step: number) => void;
 }) => {
@@ -440,7 +413,7 @@ const ReviewView = ({
               <div className="flex flex-col gap-md pb-lg border-b border-border-default">
                 <div className="bodyMd-semibold text-text-default">Service</div>
                 <div className="bodySm text-text-soft">
-                  {selectedService?.service?.metadata?.name}
+                  {managedService?.metadata?.name}
                 </div>
               </div>
               <div className="flex flex-col gap-md">
@@ -469,24 +442,24 @@ const ReviewView = ({
 };
 
 const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
-  const { msvtemplates } = useOutletContext<IEnvironmentContext>();
+  const { msvtemplates } = useOutletContext<IAccountContext>();
   const navigate = useNavigate();
   const api = useConsoleApi();
 
-  const { account, environment } = useParams();
-  const rootUrl = `/${account}/env/${environment}/managed-resources`;
-
+  const { account, msv } = useParams();
+  const rootUrl = `/${account}/msvc/${msv}/managed-resources`;
   const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
     defaultStep: 1,
     totalSteps: 3,
   });
+
+  const { managedService } = useOutletContext<IManagedServiceContext>();
 
   const { values, errors, handleSubmit, handleChange, isLoading, setValues } =
     useForm({
       initialValues: {
         name: '',
         displayName: '',
-        selectedService: null,
         selectedResource: null,
         res: {},
         isNameError: false,
@@ -498,27 +471,24 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
         displayName: Yup.string().test('required', 'Name is required', (v) => {
           return !(currentStep === 2 && !v);
         }),
-        selectedService: Yup.object().required('Service is required'),
         selectedResource: Yup.object({}).required('Resource type is required'),
       }),
       onSubmit: async (val) => {
-        const selectedService =
-          val.selectedService as unknown as ISelectedService;
         const selectedResource =
           val.selectedResource as unknown as ISelectedResource;
         const submit = async () => {
           try {
-            if (!environment) {
-              throw new Error('Project and Environment is required!.');
+            if (!msv) {
+              throw new Error('msvc is required!.');
             }
             if (
-              !selectedService ||
-              (selectedService && !selectedService.service)
+              !managedService ||
+              (managedService && !managedService.spec?.msvcSpec.serviceTemplate)
             ) {
               throw new Error('Service apiversion or kind error.');
             }
             const { errors: e } = await api.createManagedResource({
-              envName: environment,
+              msvcName: msv,
               mres: {
                 displayName: val.displayName,
                 metadata: {
@@ -533,16 +503,15 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
                       ...val.res,
                     },
                     msvcRef: {
-                      name: parseName(selectedService?.service),
-                      namespace:
-                        selectedService?.service.spec?.targetNamespace || '',
+                      name: parseName(managedService),
+                      namespace: managedService?.spec?.targetNamespace || '',
                       apiVersion:
-                        selectedService?.service?.spec?.msvcSpec.serviceTemplate
+                        managedService?.spec?.msvcSpec.serviceTemplate
                           .apiVersion || '',
                       kind:
-                        selectedService?.service?.spec?.msvcSpec.serviceTemplate
-                          .kind || '',
-                      clusterName: selectedService.service.clusterName,
+                        managedService?.spec?.msvcSpec.serviceTemplate.kind ||
+                        '',
+                      clusterName: managedService.clusterName,
                     },
                   },
                 },
@@ -593,12 +562,9 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
     [
       ...(getManagedTemplate({
         templates: msvtemplates || [],
-        kind:
-          (values.selectedService as unknown as ISelectedService)?.service?.spec
-            ?.msvcSpec.serviceTemplate.kind || '',
+        kind: managedService?.spec?.msvcSpec.serviceTemplate.kind || '',
         apiVersion:
-          (values.selectedService as unknown as ISelectedService)?.service?.spec
-            ?.msvcSpec.serviceTemplate.apiVersion || '',
+          managedService?.spec?.msvcSpec.serviceTemplate.apiVersion || '',
       })?.resources || []),
     ],
     (res) => ({
@@ -643,7 +609,7 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
             onEdit={jumpStep}
             values={values}
             handleSubmit={handleSubmit}
-            selectedService={values.selectedService}
+            selectedService={managedService}
             selectedResource={values.selectedResource}
             isLoading={isLoading}
           />

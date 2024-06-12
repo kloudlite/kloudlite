@@ -950,8 +950,9 @@ query consoleListEnvironments($search: SearchEnvironments, $pq: CursorPagination
   }
 }
 
-mutation consoleCloneEnvironment($sourceEnvName: String!, $destinationEnvName: String!, $displayName: String!, $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!) {
+mutation consoleCloneEnvironment($clusterName: String!, $sourceEnvName: String!, $destinationEnvName: String!, $displayName: String!, $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!) {
   core_cloneEnvironment(
+    clusterName: $clusterName
     sourceEnvName: $sourceEnvName
     destinationEnvName: $destinationEnvName
     displayName: $displayName
@@ -1908,6 +1909,10 @@ mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $
 
 mutation consoleDeleteAccountMembership($accountName: String!, $memberId: ID!) {
   accounts_removeAccountMembership(accountName: $accountName, memberId: $memberId)
+}
+
+mutation consoleVerifyInviteCode($invitationCode: String!) {
+  auth_verifyInviteCode(invitationCode: $invitationCode)
 }
 
 query consoleGetCredToken($username: String!) {
@@ -3288,7 +3293,10 @@ mutation consoleUpdateByokCluster($clusterName: String!, $displayName: String!) 
 }
 
 query consoleGetBYOKClusterInstructions($name: String!) {
-  infrat_getBYOKClusterSetupInstructions(name: $name)
+  infrat_getBYOKClusterSetupInstructions(name: $name) {
+    title
+    command
+  }
 }
 
 query consoleGetByokCluster($name: String!) {
@@ -3487,22 +3495,49 @@ query consoleListMSvTemplates {
   }
 }
 
-query consoleGetManagedResource($envName: String!, $name: String!) {
-  core_getManagedResource(envName: $envName, name: $name) {
+query consoleGetManagedResource($name: String!, $msvcName: String, $envName: String) {
+  core_getManagedResource(name: $name, msvcName: $msvcName, envName: $envName) {
+    accountName
+    apiVersion
+    clusterName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
     displayName
     enabled
     environmentName
+    id
+    isImported
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    managedServiceName
     markedForDeletion
     metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
       name
       namespace
     }
+    mresRef
+    recordVersion
     spec {
+      resourceNamePrefix
       resourceTemplate {
         apiVersion
         kind
         msvcRef {
           apiVersion
+          clusterName
           kind
           name
           namespace
@@ -3510,27 +3545,71 @@ query consoleGetManagedResource($envName: String!, $name: String!) {
         spec
       }
     }
+    status {
+      checkList {
+        debug
+        description
+        hide
+        name
+        title
+      }
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncedOutputSecretRef {
+      metadata {
+        name
+      }
+      apiVersion
+      data
+      immutable
+      kind
+      stringData
+      type
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
     updateTime
   }
 }
 
-mutation consoleCreateManagedResource($envName: String!, $mres: ManagedResourceIn!) {
-  core_createManagedResource(envName: $envName, mres: $mres) {
+mutation consoleCreateManagedResource($msvcName: String!, $mres: ManagedResourceIn!) {
+  core_createManagedResource(msvcName: $msvcName, mres: $mres) {
     id
   }
 }
 
-mutation consoleUpdateManagedResource($envName: String!, $mres: ManagedResourceIn!) {
-  core_updateManagedResource(envName: $envName, mres: $mres) {
+mutation consoleUpdateManagedResource($msvcName: String!, $mres: ManagedResourceIn!) {
+  core_updateManagedResource(msvcName: $msvcName, mres: $mres) {
     id
   }
 }
 
-query consoleListManagedResources($envName: String!, $search: SearchManagedResources, $pq: CursorPaginationIn) {
-  core_listManagedResources(envName: $envName, search: $search, pq: $pq) {
+query consoleListManagedResources($search: SearchManagedResources, $pq: CursorPaginationIn) {
+  core_listManagedResources(search: $search, pq: $pq) {
     edges {
       cursor
       node {
+        accountName
+        apiVersion
+        clusterName
         createdBy {
           userEmail
           userId
@@ -3538,11 +3617,17 @@ query consoleListManagedResources($envName: String!, $search: SearchManagedResou
         }
         creationTime
         displayName
+        enabled
+        environmentName
+        id
+        isImported
+        kind
         lastUpdatedBy {
           userEmail
           userId
           userName
         }
+        managedServiceName
         markedForDeletion
         metadata {
           annotations
@@ -3553,29 +3638,32 @@ query consoleListManagedResources($envName: String!, $search: SearchManagedResou
           name
           namespace
         }
+        mresRef
         recordVersion
         spec {
+          resourceNamePrefix
           resourceTemplate {
             apiVersion
             kind
             msvcRef {
               apiVersion
+              clusterName
               kind
               name
               namespace
-              clusterName
             }
             spec
           }
         }
         status {
-          checks
           checkList {
-            description
             debug
+            description
+            hide
             name
             title
           }
+          checks
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -3592,8 +3680,13 @@ query consoleListManagedResources($envName: String!, $search: SearchManagedResou
         syncedOutputSecretRef {
           metadata {
             name
-            namespace
           }
+          apiVersion
+          data
+          immutable
+          kind
+          stringData
+          type
         }
         syncStatus {
           action
@@ -3616,8 +3709,22 @@ query consoleListManagedResources($envName: String!, $search: SearchManagedResou
   }
 }
 
-mutation consoleDeleteManagedResource($envName: String!, $mresName: String!) {
-  core_deleteManagedResource(envName: $envName, mresName: $mresName)
+mutation consoleDeleteManagedResource($msvcName: String!, $mresName: String!) {
+  core_deleteManagedResource(msvcName: $msvcName, mresName: $mresName)
+}
+
+mutation consoleImportManagedResource($envName: String!, $msvcName: String!, $mresName: String!) {
+  core_importManagedResource(
+    envName: $envName
+    msvcName: $msvcName
+    mresName: $mresName
+  ) {
+    id
+  }
+}
+
+mutation consoleDeleteImportedManagedResource($envName: String!, $mresName: String!) {
+  core_deleteImportedManagedResource(envName: $envName, mresName: $mresName)
 }
 
 query consoleGetHelmChart($clusterName: String!, $name: String!) {
@@ -5843,8 +5950,8 @@ mutation authCli_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
   }
 }
 
-query authCli_getMresOutputKeyValues($envName: String!, $keyrefs: [ManagedResourceKeyRefIn]) {
-  core_getManagedResouceOutputKeyValues(envName: $envName, keyrefs: $keyrefs) {
+query authCli_getMresOutputKeyValues($msvcName: String!, $keyrefs: [ManagedResourceKeyRefIn]) {
+  core_getManagedResouceOutputKeyValues(msvcName: $msvcName, keyrefs: $keyrefs) {
     key
     mresName
     value
@@ -5897,12 +6004,12 @@ query authCli_coreCheckNameAvailability($resType: ConsoleResType!, $name: String
   }
 }
 
-query authCli_getMresKeys($envName: String!, $name: String!) {
-  core_getManagedResouceOutputKeys(envName: $envName, name: $name)
+query authCli_getMresKeys($name: String!, $envName: String) {
+  core_getManagedResouceOutputKeys(name: $name, envName: $envName)
 }
 
-query authCli_listMreses($envName: String!, $pq: CursorPaginationIn) {
-  core_listManagedResources(envName: $envName, pq: $pq) {
+query authCli_listMreses($pq: CursorPaginationIn, $search: SearchManagedResources) {
+  core_listManagedResources(pq: $pq, search: $search) {
     edges {
       node {
         displayName
@@ -5915,7 +6022,7 @@ query authCli_listMreses($envName: String!, $pq: CursorPaginationIn) {
   }
 }
 
-query authCli_getMresConfigsValues($keyrefs: [ManagedResourceKeyRefIn], $envName: String!) {
+query authCli_getMresConfigsValues($keyrefs: [ManagedResourceKeyRefIn], $envName: String) {
   core_getManagedResouceOutputKeyValues(keyrefs: $keyrefs, envName: $envName) {
     key
     mresName
@@ -5955,12 +6062,22 @@ query authCli_getConfigSecretMap($envName: String!, $configQueries: [ConfigKeyRe
   }
 }
 
-mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $deviceName: String!, $appname: String!, $envName: String!) {
+mutation authCli_intercepExternalApp($envName: String!, $appName: String!, $deviceName: String!, $intercept: Boolean!, $portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]) {
+  core_interceptExternalApp(
+    envName: $envName
+    externalAppName: $appName
+    deviceName: $deviceName
+    intercept: $intercept
+    portMappings: $portMappings
+  )
+}
+
+mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!], $intercept: Boolean!, $deviceName: String!, $appName: String!, $envName: String!) {
   core_interceptApp(
     portMappings: $portMappings
     intercept: $intercept
     deviceName: $deviceName
-    appname: $appname
+    appname: $appName
     envName: $envName
   )
 }
@@ -6007,9 +6124,39 @@ query authCli_getConfig($envName: String!, $name: String!) {
 }
 
 query authCli_listApps($envName: String!) {
-  core_listApps(envName: $envName) {
+  apps: core_listExternalApps(envName: $envName) {
     edges {
-      cursor
+      node {
+        spec {
+          intercept {
+            enabled
+            portMappings {
+              devicePort
+              appPort
+            }
+            toDevice
+          }
+        }
+        displayName
+        environmentName
+        markedForDeletion
+        metadata {
+          name
+          annotations
+          namespace
+        }
+        status {
+          checks
+          isReady
+          message {
+            RawMessage
+          }
+        }
+      }
+    }
+  }
+  mapps: core_listApps(envName: $envName) {
+    edges {
       node {
         displayName
         environmentName
@@ -6021,31 +6168,14 @@ query authCli_listApps($envName: String!) {
         }
         spec {
           displayName
-          containers {
-            args
-            command
-            env {
-              key
-              optional
-              refKey
-              refName
-              type
-              value
-            }
-            envFrom {
-              refName
-              type
-            }
-            image
-            name
-          }
           intercept {
             enabled
             toDevice
+            portMappings {
+              devicePort
+              appPort
+            }
           }
-          nodeSelector
-          replicas
-          serviceAccount
           services {
             port
           }
@@ -6257,6 +6387,7 @@ query libWhoAmI {
     name
     id
     email
+    approved
     providerGitlab
     providerGithub
     providerGoogle

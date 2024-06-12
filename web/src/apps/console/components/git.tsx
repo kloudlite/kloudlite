@@ -18,8 +18,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '~/components/atoms/button';
 import { toast } from '~/components/molecule/toast';
 import { gitEnvs } from '~/root/lib/configs/base-url.cjs';
+import Pulsable from '~/root/lib/client/components/pulsable';
 import { ILoginUrls, ILogins } from '../server/gql/queries/git-queries';
-import Pulsable from './pulsable';
 import useGit, { IGIT_PROVIDERS } from '../hooks/use-git';
 
 const extraAddOption = 'add';

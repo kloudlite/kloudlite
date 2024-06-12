@@ -11,7 +11,6 @@ import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IApps } from '~/console/server/gql/queries/app-queries';
 import {
   ExtractNodeType,
   parseName,
@@ -29,7 +28,6 @@ import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import Tooltip from '~/components/atoms/tooltip';
-import { Button } from '~/components/atoms/button';
 import { NN } from '~/root/lib/types/common';
 // import HandleIntercept from './handle-intercept';
 import { IExternalApps } from '~/console/server/gql/queries/external-app-queries';
@@ -66,23 +64,26 @@ type IExtraButton = {
 
 const InterceptPortView = ({
   ports = [],
+  devName = '',
 }: {
-  ports: NN<ExtractNodeType<IApps>['spec']['intercept']>['portMappings'];
+  ports: NN<
+    NN<ExtractNodeType<IExternalApps>['spec']>['intercept']
+  >['portMappings'];
+  devName: string;
 }) => {
   return (
     <div className="flex flex-row items-center gap-md">
-      {ports.slice(0, 2).map((port) => (
-        <Badge key={port.appPort}>
-          {port.appPort} → {port.devicePort}
-        </Badge>
-      ))}
-
-      {ports.length > 2 && (
-        <Tooltip.Root
-          align="start"
-          side="top"
-          className="!max-w-fit "
-          content={
+      <Tooltip.Root
+        align="start"
+        side="top"
+        className="!max-w-fit "
+        content={
+          <div>
+            <span className="bodyMd-medium text-text-soft">
+              {' '}
+              intercepted to{' '}
+              <span className="bodyMd-medium text-text-strong">{devName}</span>
+            </span>
             <div className="flex flex-row gap-md py-md">
               {ports?.map((d) => {
                 return (
@@ -94,17 +95,24 @@ const InterceptPortView = ({
                 );
               })}
             </div>
-          }
-        >
-          <div className="shrink-0">
-            <Button
-              content={`+${ports.length - 2} more`}
-              variant="plain"
-              size="sm"
-            />
           </div>
-        </Tooltip.Root>
-      )}
+        }
+      >
+        <div className="bodyMd-medium text-text-strong w-fit truncate">
+          {ports?.length === 1 ? (
+            <span>{ports.length} port</span>
+          ) : (
+            <span>{ports.length} ports</span>
+          )}
+          <span className="text-text-soft">
+            {' '}
+            intercepted to{' '}
+            <span className="bodyMd-medium text-text-strong truncate">
+              {devName}
+            </span>
+          </span>
+        </div>
+      </Tooltip.Root>
     </div>
   );
 };
@@ -244,12 +252,22 @@ const ListView = ({ items = [], onAction }: IResource) => {
           {
             render: () => '',
             name: 'intercept',
-            className: 'w-[250px] ',
+            className: 'w-[250px] truncate',
+          },
+          {
+            render: () => '',
+            name: 'flex-pre',
+            className: 'flex-1',
           },
           {
             render: () => 'Service',
             name: 'service',
-            className: 'w-[180px] flex flex-1',
+            className: 'w-[240px] flex flex-1',
+          },
+          {
+            render: () => '',
+            name: 'flex-post',
+            className: 'flex-1',
           },
           {
             render: () => 'Status',
@@ -277,38 +295,27 @@ const ListView = ({ items = [], onAction }: IResource) => {
               intercept: {
                 render: () =>
                   i.spec?.intercept?.enabled ? (
-                    <div className="flex flex-col gap-md">
-                      <ListItem
-                        subtitle={
-                          <span>
-                            Intercepted to{' '}
-                            <span className="bodyMd-medium text-text-strong">
-                              {i.spec?.intercept.toDevice}
-                            </span>
-                          </span>
-                        }
-                      />
+                    <div>
                       <InterceptPortView
                         ports={i.spec?.intercept.portMappings || []}
+                        devName={i.spec?.intercept.toDevice || ''}
                       />
                     </div>
                   ) : null,
               },
               service: {
                 render: () => (
-                  <div className="flex w-fit truncate">
-                    <AppServiceView
-                      service={
-                        environment?.spec?.targetNamespace
-                          ? `${parseName(i)}.${
-                              environment?.spec?.targetNamespace
-                            }.svc.${parseName(cluster)}.local`
-                          : `${parseName(i)}.${parseName(
-                              environment
-                            )}.svc.${parseName(cluster)}.local`
-                      }
-                    />
-                  </div>
+                  <AppServiceView
+                    service={
+                      environment?.spec?.targetNamespace
+                        ? `${parseName(i)}.${
+                            environment?.spec?.targetNamespace
+                          }.svc.${parseName(cluster)}.local`
+                        : `${parseName(i)}.${parseName(
+                            environment
+                          )}.svc.${parseName(cluster)}.local`
+                    }
+                  />
                 ),
               },
               status: {
@@ -374,7 +381,7 @@ const ExternalNameResource = ({ items = [] }: Omit<IResource, 'onAction'>) => {
       if (errors) {
         throw errors[0];
       }
-      toast.success('app intercepted removed successfully');
+      toast.success('external app intercept removed successfully');
       reload();
     } catch (error) {
       handleError(error);

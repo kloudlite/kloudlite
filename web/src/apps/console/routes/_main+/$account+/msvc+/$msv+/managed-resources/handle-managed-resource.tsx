@@ -27,7 +27,7 @@ import ListV2 from '~/console/components/listV2';
 import { ListItem } from '~/console/components/console-list-components';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import { LoadingPlaceHolder } from '~/console/components/loading';
-import { IEnvironmentContext } from '../_layout';
+import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$environment+/_layout';
 
 type BaseType = ExtractNodeType<IManagedResources>;
 type IDialog = IDialogBase<BaseType> & {
@@ -233,16 +233,17 @@ const Root = (props: IDialog) => {
   const api = useConsoleApi();
   const reload = useReload();
 
-  const { environment } = useParams();
+  const { msv } = useParams();
 
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
     initialValues: isUpdate
       ? {
           name: parseName(props.data),
           displayName: props.data.displayName,
+          namespace: props.data.metadata?.namespace,
           isNameError: false,
           res: {
-            ...props.data.spec?.resourceTemplate.spec,
+            ...props.data.spec?.resourceTemplate.msvcRef,
           },
         }
       : {
@@ -250,20 +251,22 @@ const Root = (props: IDialog) => {
           displayName: '',
           res: {},
           isNameError: false,
+          namespace: '',
         },
     validationSchema: Yup.object({}),
     onSubmit: async (val) => {
       if (isUpdate) {
         try {
-          if (!environment) {
-            throw new Error('Project and environment is required!.');
+          if (!msv) {
+            throw new Error('Managed Service is required!.');
           }
           const { errors: e } = await api.updateManagedResource({
-            envName: environment,
+            msvcName: msv,
             mres: {
               displayName: val.displayName,
               metadata: {
                 name: val.name,
+                namespace: val.namespace,
               },
 
               spec: {
@@ -364,8 +367,10 @@ export const ViewSecret = ({
 }) => {
   const api = useConsoleApi();
   const { environment } = useOutletContext<IEnvironmentContext>();
+  const [onClick, setOnClick] = useState(false);
   const { data, isLoading, error } = useCustomSwr(
-    () => `secret _${item.syncedOutputSecretRef?.metadata?.name}`,
+    () =>
+      onClick ? `secret _${item.syncedOutputSecretRef?.metadata?.name}` : null,
     async () => {
       if (!item.syncedOutputSecretRef?.metadata?.name) {
         toast.error('Secret not found');
@@ -379,7 +384,6 @@ export const ViewSecret = ({
       }
     }
   );
-
   useEffect(() => {
     if (error) {
       toast.error(error);
@@ -398,11 +402,9 @@ export const ViewSecret = ({
       <Popup.Content>
         <MultiStep.Root currentStep={currentStep}>
           <MultiStep.Step step={0}>
-            {data && (
-              <div>
-                <p>{`Are you sure you want to view the secrets of '${data.displayName}'?`}</p>
-              </div>
-            )}
+            <div>
+              <p>{`Are you sure you want to view the secrets of '${item.syncedOutputSecretRef?.metadata?.name}'?`}</p>
+            </div>
           </MultiStep.Step>
           <MultiStep.Step step={1}>
             {isLoading ? (
@@ -418,14 +420,10 @@ export const ViewSecret = ({
                         className: 'min-w-[170px]',
                       },
                       {
-                        render: () => '',
-                        name: 'copy',
-                        className: 'max-w-[120px]',
-                      },
-                      {
                         render: () => 'Value',
                         name: 'value',
-                        className: 'flex-1',
+                        className:
+                          'flex-1 min-w-[345px] max-w-[345px] w-[345px]',
                       },
                     ],
                     rows: Object.entries(data.stringData).map(
@@ -438,15 +436,9 @@ export const ViewSecret = ({
                             },
                             value: {
                               render: () => (
-                                <ListItem data={v} className="w-[220px]" />
-                              ),
-                            },
-                            copy: {
-                              render: () => (
                                 <CopyContentToClipboard
                                   content={v}
                                   toastMessage={`${key} copied`}
-                                  label="Copy Secret"
                                 />
                               ),
                             },
@@ -463,7 +455,13 @@ export const ViewSecret = ({
       </Popup.Content>
       <Popup.Footer>
         {currentStep === 0 ? (
-          <Popup.Button content="Yes" onClick={() => onNext()} />
+          <Popup.Button
+            content="Yes"
+            onClick={() => {
+              onNext();
+              setOnClick(true);
+            }}
+          />
         ) : null}
       </Popup.Footer>
     </Popup.Root>

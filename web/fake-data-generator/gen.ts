@@ -16,6 +16,7 @@ const types: string[] = [
   'ConsoleListWorkspacesQuery',
   'ConsoleListEnvironmentsQuery',
   'ConsoleListAppsQuery',
+  'ConsoleListExternalAppsQuery',
   'ConsoleListConfigsQuery',
   'ConsoleListSecretsQuery',
   'ConsoleListClusterMSvsQuery',

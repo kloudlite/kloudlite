@@ -198,6 +198,16 @@ type BYOKClusterPaginatedRecords {
   totalCount: Int!
 }
 
+type BYOKSetupInstruction {
+  command: String!
+  title: String!
+}
+
+input BYOKSetupInstructionIn {
+  command: String!
+  title: String!
+}
+
 type CheckAwsAccessOutput {
   installationUrl: String
   result: Boolean!
@@ -660,6 +670,61 @@ type ExternalAppPaginatedRecords {
 type GitBranch {
   name: String
   protected: Boolean
+}
+
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Email {
+  enabled: Boolean!
+  mailAddress: String!
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__EmailIn {
+  enabled: Boolean!
+  mailAddress: String!
+}
+
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Slack {
+  enabled: Boolean!
+  url: String!
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__SlackIn {
+  enabled: Boolean!
+  url: String!
+}
+
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Telegram {
+  chatId: String!
+  enabled: Boolean!
+  token: String!
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__TelegramIn {
+  chatId: String!
+  enabled: Boolean!
+  token: String!
+}
+
+type Github__com___kloudlite___api___apps___comms___internal___domain___entities__Webhook {
+  enabled: Boolean!
+  url: String!
+}
+
+input Github__com___kloudlite___api___apps___comms___internal___domain___entities__WebhookIn {
+  enabled: Boolean!
+  url: String!
+}
+
+enum Github__com___kloudlite___api___apps___comms___types__NotificationType {
+  alert
+  notification
+}
+
+type Github__com___kloudlite___api___apps___comms___types__NotifyContent {
+  body: String!
+  image: String!
+  link: String!
+  subject: String!
+  title: String!
 }
 
 enum Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat {
@@ -3328,16 +3393,20 @@ input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementI
 type ManagedResource {
   accountName: String!
   apiVersion: String
+  clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
   environmentName: String!
   id: ID!
+  isImported: Boolean!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  managedServiceName: String!
   markedForDeletion: Boolean
   metadata: Metadata
+  mresRef: String!
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -3458,13 +3527,17 @@ type Mutation {
   auth_signup(email: String!, name: String!, password: String!): Session
   auth_verifyEmail(token: String!): Session!
   auth_verifyInviteCode(invitationCode: String!): Boolean!
-  core_cloneEnvironment(destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!, sourceEnvName: String!): Environment
+  comms_markAllNotificationAsRead: Boolean!
+  comms_markNotificationAsRead(id: ID!): Notification
+  comms_updateNotificationConfig(config: NotificationConfIn!): NotificationConf
+  comms_updateSubscriptionConfig(config: SubscriptionIn!, id: ID!): Subscription
+  core_cloneEnvironment(clusterName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!, sourceEnvName: String!): Environment
   core_createApp(app: AppIn!, envName: String!): App
   core_createConfig(config: ConfigIn!, envName: String!): Config
   core_createEnvironment(env: EnvironmentIn!): Environment
   core_createExternalApp(envName: String!, externalApp: ExternalAppIn!): ExternalApp
   core_createImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret
-  core_createManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource
+  core_createManagedResource(mres: ManagedResourceIn!, msvcName: String!): ManagedResource
   core_createRouter(envName: String!, router: RouterIn!): Router
   core_createSecret(envName: String!, secret: SecretIn!): Secret
   core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice
@@ -3473,10 +3546,12 @@ type Mutation {
   core_deleteEnvironment(envName: String!): Boolean!
   core_deleteExternalApp(envName: String!, externalAppName: String!): Boolean!
   core_deleteImagePullSecret(name: String!): Boolean!
-  core_deleteManagedResource(envName: String!, mresName: String!): Boolean!
+  core_deleteImportedManagedResource(envName: String!, mresName: String!): Boolean!
+  core_deleteManagedResource(mresName: String!, msvcName: String!): Boolean!
   core_deleteRouter(envName: String!, routerName: String!): Boolean!
   core_deleteSecret(envName: String!, secretName: String!): Boolean!
   core_deleteVPNDevice(deviceName: String!): Boolean!
+  core_importManagedResource(envName: String!, mresName: String!, msvcName: String!): ManagedResource
   core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_interceptExternalApp(deviceName: String!, envName: String!, externalAppName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_updateApp(app: AppIn!, envName: String!): App
@@ -3484,7 +3559,7 @@ type Mutation {
   core_updateEnvironment(env: EnvironmentIn!): Environment
   core_updateExternalApp(envName: String!, externalApp: ExternalAppIn!): ExternalApp
   core_updateImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret
-  core_updateManagedResource(envName: String!, mres: ManagedResourceIn!): ManagedResource
+  core_updateManagedResource(mres: ManagedResourceIn!, msvcName: String!): ManagedResource
   core_updateRouter(envName: String!, router: RouterIn!): Router
   core_updateSecret(envName: String!, secret: SecretIn!): Secret
   core_updateVpnClusterName(clusterName: String!, deviceName: String!): Boolean!
@@ -3659,6 +3734,52 @@ type NodePoolPaginatedRecords {
   totalCount: Int!
 }
 
+type Notification {
+  accountName: String!
+  content: Github__com___kloudlite___api___apps___comms___types__NotifyContent!
+  creationTime: Date!
+  id: ID!
+  markedForDeletion: Boolean
+  notificationType: Github__com___kloudlite___api___apps___comms___types__NotificationType!
+  priority: Int!
+  read: Boolean!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type NotificationConf {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  email: Github__com___kloudlite___api___apps___comms___internal___domain___entities__Email
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  recordVersion: Int!
+  slack: Github__com___kloudlite___api___apps___comms___internal___domain___entities__Slack
+  telegram: Github__com___kloudlite___api___apps___comms___internal___domain___entities__Telegram
+  updateTime: Date!
+  webhook: Github__com___kloudlite___api___apps___comms___internal___domain___entities__Webhook
+}
+
+input NotificationConfIn {
+  email: Github__com___kloudlite___api___apps___comms___internal___domain___entities__EmailIn
+  slack: Github__com___kloudlite___api___apps___comms___internal___domain___entities__SlackIn
+  telegram: Github__com___kloudlite___api___apps___comms___internal___domain___entities__TelegramIn
+  webhook: Github__com___kloudlite___api___apps___comms___internal___domain___entities__WebhookIn
+}
+
+type NotificationEdge {
+  cursor: String!
+  node: Notification!
+}
+
+type NotificationPaginatedRecords {
+  edges: [NotificationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type OAuthProviderStatus {
   enabled: Boolean!
   provider: String!
@@ -3777,6 +3898,9 @@ type Query {
   auth_getRemoteLogin(loginId: String!, secret: String!): RemoteLogin
   auth_listOAuthProviders: [OAuthProviderStatus!]
   auth_me: User
+  comms_getNotificationConfig: NotificationConf
+  comms_getSubscriptionConfig(id: ID!): Subscription
+  comms_listNotifications(pagination: CursorPaginationIn): NotificationPaginatedRecords
   core_checkNameAvailability(envName: String, name: String!, resType: ConsoleResType!): ConsoleCheckNameAvailabilityOutput!
   core_getApp(envName: String!, name: String!): App
   core_getConfig(envName: String!, name: String!): Config
@@ -3784,9 +3908,9 @@ type Query {
   core_getEnvironment(name: String!): Environment
   core_getExternalApp(envName: String!, name: String!): ExternalApp
   core_getImagePullSecret(name: String!): ImagePullSecret
-  core_getManagedResouceOutputKeys(envName: String!, name: String!): [String!]!
-  core_getManagedResouceOutputKeyValues(envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]!
-  core_getManagedResource(envName: String!, name: String!): ManagedResource
+  core_getManagedResouceOutputKeys(envName: String, msvcName: String, name: String!): [String!]!
+  core_getManagedResouceOutputKeyValues(envName: String, keyrefs: [ManagedResourceKeyRefIn], msvcName: String): [ManagedResourceKeyValueRef!]!
+  core_getManagedResource(envName: String, msvcName: String, name: String!): ManagedResource
   core_getRouter(envName: String!, name: String!): Router
   core_getSecret(envName: String!, name: String!): Secret
   core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!]
@@ -3796,7 +3920,7 @@ type Query {
   core_listEnvironments(pq: CursorPaginationIn, search: SearchEnvironments): EnvironmentPaginatedRecords
   core_listExternalApps(envName: String!, pq: CursorPaginationIn, search: SearchExternalApps): ExternalAppPaginatedRecords
   core_listImagePullSecrets(pq: CursorPaginationIn, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
-  core_listManagedResources(envName: String!, pq: CursorPaginationIn, search: SearchManagedResources): ManagedResourcePaginatedRecords
+  core_listManagedResources(pq: CursorPaginationIn, search: SearchManagedResources): ManagedResourcePaginatedRecords
   core_listRouters(envName: String!, pq: CursorPaginationIn, search: SearchRouters): RouterPaginatedRecords
   core_listSecrets(envName: String!, pq: CursorPaginationIn, search: SearchSecrets): SecretPaginatedRecords
   core_listVPNDevices(pq: CursorPaginationIn, search: CoreSearchVPNDevices): ConsoleVPNDevicePaginatedRecords
@@ -3807,7 +3931,7 @@ type Query {
   core_resyncEnvironment(name: String!): Boolean!
   core_resyncExternalApp(envName: String!, name: String!): Boolean!
   core_resyncImagePullSecret(name: String!): Boolean!
-  core_resyncManagedResource(envName: String!, name: String!): Boolean!
+  core_resyncManagedResource(msvcName: String!, name: String!): Boolean!
   core_resyncRouter(envName: String!, name: String!): Boolean!
   core_resyncSecret(envName: String!, name: String!): Boolean!
   cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput!
@@ -3856,7 +3980,7 @@ type Query {
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
   infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
-  infrat_getBYOKClusterSetupInstructions(name: String!): [String!]
+  infrat_getBYOKClusterSetupInstructions(name: String!): [BYOKSetupInstruction!]
   iot_getApp(deviceBlueprintName: String!, name: String!, projectName: String!): IOTApp
   iot_getDeployment(name: String!, projectName: String!): IOTDeployment
   iot_getDevice(deploymentName: String!, name: String!, projectName: String!): IOTDevice
@@ -4057,6 +4181,7 @@ input SearchIOTProjects {
 }
 
 input SearchManagedResources {
+  envName: MatchFilterIn
   isReady: MatchFilterIn
   managedServiceName: MatchFilterIn
   markedForDeletion: MatchFilterIn
@@ -4189,6 +4314,24 @@ type Session {
   userEmail: String!
   userId: ID!
   userVerified: Boolean!
+}
+
+type Subscription {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  enabled: Boolean!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  mailAddress: String!
+  markedForDeletion: Boolean
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+input SubscriptionIn {
+  enabled: Boolean!
+  mailAddress: String!
 }
 
 scalar URL

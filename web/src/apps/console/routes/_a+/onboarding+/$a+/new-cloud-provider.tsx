@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from '@remix-run/react';
+import { useNavigate, useParams, useSearchParams } from '@remix-run/react';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
@@ -15,9 +15,11 @@ import MultiStepProgress, {
 import { BottomNavigation } from '~/console/components/commons';
 import FillerCloudProvider from '~/console/assets/filler-cloud-provider';
 import { TextArea } from '~/components/atoms/input';
+import { base64Decrypt } from '~/console/server/utils/common';
 
 const NewCloudProvider = () => {
   const { a: accountName } = useParams();
+  const [sp] = useSearchParams();
   const api = useConsoleApi();
 
   const providers = [
@@ -112,6 +114,19 @@ const NewCloudProvider = () => {
         title="Setup your account!"
         subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"
+        {...(base64Decrypt(sp.get('f') || '') === 'infra'
+          ? {
+              backButton: {
+                content: 'Back to infra',
+                to: `/${accountName}/infra`,
+              },
+            }
+          : {
+              backButton: {
+                content: 'Back to teams',
+                to: `/teams`,
+              },
+            })}
       >
         <MultiStepProgress.Root
           currentStep={currentStep}

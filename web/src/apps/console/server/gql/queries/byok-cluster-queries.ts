@@ -72,8 +72,11 @@ export const byokClusterQueries = (executor: IExecutor) => ({
   ),
   getBYOKClusterInstructions: executor(
     gql`
-      query Query($name: String!) {
-        infrat_getBYOKClusterSetupInstructions(name: $name)
+      query Infrat_getBYOKClusterSetupInstructions($name: String!) {
+        infrat_getBYOKClusterSetupInstructions(name: $name) {
+          title
+          command
+        }
       }
     `,
     {

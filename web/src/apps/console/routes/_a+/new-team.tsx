@@ -51,7 +51,7 @@ const NewAccount = () => {
           throw _errors[0];
         }
         toast.success('account created');
-        navigate(`/onboarding/${v.name}/new-cloud-provider`);
+        navigate(`/onboarding/${v.name}/attach-new-cluster`);
       } catch (err) {
         handleError(err);
       }
@@ -84,6 +84,14 @@ const NewAccount = () => {
         }
         subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"
+        {...(accountsData?.length === 0
+          ? {}
+          : {
+              backButton: {
+                content: 'Back to teams',
+                to: `/teams`,
+              },
+            })}
       >
         <MultiStepProgress.Root
           currentStep={currentStep}
@@ -112,9 +120,14 @@ const NewAccount = () => {
               />
             </div>
           </MultiStepProgress.Step>
-          <MultiStepProgress.Step step={2} label="Add your cloud provider" />
-          <MultiStepProgress.Step step={3} label="Validate cloud provider" />
-          <MultiStepProgress.Step step={4} label="Setup first cluster" />
+          {/* <MultiStepProgress.Step step={2} label="Add your cloud provider" /> */}
+          {/* <MultiStepProgress.Step step={3} label="Validate cloud provider" />
+          <MultiStepProgress.Step step={4} label="Setup first cluster" /> */}
+          <MultiStepProgress.Step step={2} label="Attach Kubernetes Cluster" />
+          <MultiStepProgress.Step
+            step={3}
+            label="Verify Your Attached Kubernetes Cluster"
+          />
         </MultiStepProgress.Root>
       </MultiStepProgressWrapper>
     </form>

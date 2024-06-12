@@ -1,4 +1,4 @@
-import { LockSimple, Trash } from '~/console/components/icons';
+import { LockSimple, PencilSimple, Trash } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -12,6 +12,7 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import DeleteDialog from '~/console/components/delete-dialog';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -20,15 +21,13 @@ import { useState } from 'react';
 import { handleError } from '~/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useParams } from '@remix-run/react';
+import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
-// import { SyncStatusV2 } from '~/console/components/sync-status';
-import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
-// import ConsoleAvatar from '~/console/components/console-avatar';
-import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 import { getManagedTemplate } from '~/console/utils/commons';
-import { ViewSecret } from './handle-managed-resource-v2';
+import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
 
 const RESOURCE_NAME = 'managed resource';
 type BaseType = ExtractNodeType<IManagedResources>;
@@ -67,13 +66,13 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
-        // {
-        //   label: 'Edit',
-        //   icon: <PencilSimple size={16} />,
-        //   type: 'item',
-        //   onClick: () => onAction({ action: 'edit', item }),
-        //   key: 'edit',
-        // },
+        {
+          label: 'Edit',
+          icon: <PencilSimple size={16} />,
+          type: 'item',
+          onClick: () => onAction({ action: 'edit', item }),
+          key: 'edit',
+        },
         {
           label: 'View Secret',
           icon: <LockSimple size={16} />,
@@ -155,7 +154,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           {
             render: () => 'Resource Type',
             name: 'resource',
-            className: 'w-[140px]',
+            className: 'w-[100px]',
           },
           {
             render: () => '',
@@ -193,18 +192,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           return {
             columns: {
               name: {
-                render: () => (
-                  <ListTitle
-                    title={name}
-                    subtitle={id}
-                    // avatar={
-                    //   <div className="pulsable pulsable-circle aspect-square">
-                    //     <img src={i.} alt={name} className="w-4xl h-4xl" />
-                    //   </div>
-                    // }
-                    // avatar={<ConsoleAvatar name={id} />}
-                  />
-                ),
+                render: () => <ListTitle title={name} subtitle={id} />,
               },
               secret: {
                 render: () =>
@@ -241,9 +229,9 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
                   />
                 ),
               },
-              // status: {
-              //   render: () => <SyncStatusV2 item={i} />,
-              // },
+              status: {
+                render: () => <SyncStatusV2 item={i} />,
+              },
               updated: {
                 render: () => (
                   <ListItem
@@ -274,15 +262,15 @@ const ManagedResourceResourcesV2 = ({
     null
   );
   const [showSecret, setShowSecret] = useState<BaseType | null>(null);
+  const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const params = useParams();
 
-  const { environment, account } = useParams();
+  const { msv, account } = useParams();
 
   useWatchReload(
     items.map((i) => {
-      return `account:${account}.environment:${environment}.managed_resource:${parseName(
+      return `account:${account}.managed_service:${msv}.managed_resource:${parseName(
         i
       )}`;
     })
@@ -294,6 +282,9 @@ const ManagedResourceResourcesV2 = ({
       switch (action) {
         case 'delete':
           setShowDeleteDialog(item);
+          break;
+        case 'edit':
+          setVisible(item);
           break;
         case 'view_secret':
           setShowSecret(item);
@@ -316,13 +307,10 @@ const ManagedResourceResourcesV2 = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!params.environment) {
-            throw new Error('Environment is required!.');
-          }
           try {
-            const { errors } = await api.deleteImportedManagedResource({
+            const { errors } = await api.deleteManagedResource({
               mresName: parseName(showDeleteDialog),
-              envName: environment || '',
+              msvcName: msv || '',
             });
 
             if (errors) {
@@ -334,6 +322,15 @@ const ManagedResourceResourcesV2 = ({
           } catch (err) {
             handleError(err);
           }
+        }}
+      />
+      <HandleManagedResources
+        {...{
+          isUpdate: true,
+          visible: !!visible,
+          setVisible: () => setVisible(null),
+          data: visible!,
+          templates: templates || [],
         }}
       />
 

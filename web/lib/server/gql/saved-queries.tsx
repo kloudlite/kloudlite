@@ -19,6 +19,7 @@ export const GQLServerHandler = ({ headers }: IGQLServerProps) => {
             name
             id
             email
+            approved
             providerGitlab
             providerGithub
             providerGoogle
