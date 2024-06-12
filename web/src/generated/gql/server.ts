@@ -7998,7 +7998,13 @@ export type AuthSignUpWithEmailMutation = { auth_signup?: { id: string } };
 export type AuthWhoAmIQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AuthWhoAmIQuery = {
-  auth_me?: { id: string; email: string; verified: boolean; approved: boolean };
+  auth_me?: {
+    id: string;
+    email: string;
+    verified: boolean;
+    name: string;
+    approved: boolean;
+  };
 };
 
 export type LibWhoAmIQueryVariables = Exact<{ [key: string]: never }>;

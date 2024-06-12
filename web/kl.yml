@@ -1,0 +1,13 @@
+version: v1
+defaultEnv: test-env
+packages:
+- nodejs@latest
+- nodePackages.pnpm@latest
+- git@latest
+- vim@latest
+initScripts:
+- pnpm config set store-dir ~/.pnpm-store
+mounts: []
+envVars:
+- key: HI
+  configRef: piy-config/hi

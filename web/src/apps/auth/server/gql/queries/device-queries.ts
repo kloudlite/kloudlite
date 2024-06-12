@@ -50,10 +50,7 @@ export const vpnQueries = (executor: IExecutor) => ({
         $deviceName: String!
         $envName: String!
       ) {
-        core_updateVPNDeviceEnv(
-          deviceName: $deviceName
-          envName: $envName
-        )
+        core_updateVPNDeviceEnv(deviceName: $deviceName, envName: $envName)
       }
     `,
     {

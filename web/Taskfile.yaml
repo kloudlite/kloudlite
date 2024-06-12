@@ -113,6 +113,10 @@ tasks:
             PORT=4000
             ;;
 
+          "community")
+            PORT=4002
+            ;;
+        
           "console")
             PORT=4001
             ;;
