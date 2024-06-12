@@ -28,7 +28,8 @@ type GlobalVPN struct {
 	AllocatableCIDRSuffix int    `json:"allocatableCIDRSuffix"`
 	WgInterface           string `json:"wgInterface"`
 
-	NumReservedIPsForNonClusterUse int `json:"numReservedIPsForNonClusterUse"`
+	NumReservedIPsForNonClusterUse int      `json:"numReservedIPsForNonClusterUse"`
+	NonClusterUseAllowedIPs        []string `json:"nonClusterUseAllowedIPs"`
 
 	// Running Count of allocated Cluster CIDRs for clusters, under this GlobalVPN
 	NumAllocatedClusterCIDRs int `json:"numAllocatedClusterCIDRs"`

@@ -6,7 +6,7 @@ import (
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
-	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
+	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	"github.com/kloudlite/operator/pkg/operator"
 )
 
@@ -15,32 +15,50 @@ type GlobalVPNConnDeviceRef struct {
 	IPAddr string `json:"ipAddr"`
 }
 
+type WgParams struct {
+	WgPrivateKey string `json:"wg_private_key"`
+	WgPublicKey  string `json:"wg_public_key"`
+
+	IP string `json:"ip"`
+
+	DNSServer *string `json:"dnsServer"`
+
+	PublicGatewayHosts *string `json:"publicGatewayHosts,omitempty"`
+	PublicGatewayPort  *string `json:"publicGatewayPort,omitempty"`
+
+	VirtualCidr string `json:"virtualCidr"`
+}
+
 type GlobalVPNConnection struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
-	wgv1.GlobalVPN `json:",inline"`
+	// wgv1.GlobalVPN       `json:",inline"`
+	networkingv1.Gateway `json:",inline"`
 
 	GlobalVPNName string `json:"globalVPNName"`
 
 	common.ResourceMetadata `json:",inline"`
 
-	AccountName           string `json:"accountName" graphql:"noinput"`
-	ClusterName           string `json:"clusterName" graphql:"noinput"`
-	ClusterSvcCIDR        string `json:"clusterSvcCIDR" graphql:"noinput"`
-	ClusterPublicEndpoint string `json:"clusterPublicEndpoint" graphql:"noinput"`
+	AccountName string `json:"accountName" graphql:"noinput"`
+	ClusterName string `json:"clusterName" graphql:"noinput"`
+	ClusterCIDR string `json:"clusterSvcCIDR" graphql:"noinput"`
 
-	DeviceRef GlobalVPNConnDeviceRef `json:"deviceRef" graphql:"noinput"`
+	Visibility ClusterVisbility `json:"visibility" graphql:"noinput"`
 
-	ParsedWgParams *wgv1.WgParams `json:"parsedWgParams" graphql:"ignore"`
-	SyncStatus     t.SyncStatus   `json:"syncStatus" graphql:"noinput"`
+	ClusterPublicEndpoint string                 `json:"clusterPublicEndpoint" graphql:"noinput"`
+	DeviceRef             GlobalVPNConnDeviceRef `json:"deviceRef" graphql:"noinput"`
+
+	// ParsedWgParams *wgv1.WgParams `json:"parsedWgParams" graphql:"ignore"`
+	ParsedWgParams *networkingv1.WireguardKeys `json:"parsedWgParams" graphql:"ignore"`
+	SyncStatus     t.SyncStatus                `json:"syncStatus" graphql:"noinput"`
 }
 
 func (c *GlobalVPNConnection) GetDisplayName() string {
-	return c.ResourceMetadata.DisplayName
+	return c.DisplayName
 }
 
 func (c *GlobalVPNConnection) GetStatus() operator.Status {
-	return c.GlobalVPN.Status
+	return c.Status
 }
 
 var GlobalVPNConnectionIndices = []repos.IndexField{
@@ -57,17 +75,6 @@ var GlobalVPNConnectionIndices = []repos.IndexField{
 			{Key: "clusterName", Value: repos.IndexAsc},
 		},
 		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "accountName", Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "accountName", Value: repos.IndexAsc},
-		},
 	},
 }
 

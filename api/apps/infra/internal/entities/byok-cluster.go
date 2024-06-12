@@ -9,6 +9,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type ClusterVisibilityMode string
+
+const (
+	ClusterVisibilityModePublic  ClusterVisibilityMode = "public"
+	ClusterVisibilityModePrivate ClusterVisibilityMode = "private"
+)
+
+type ClusterVisbility struct {
+	Mode           ClusterVisibilityMode `json:"mode"`
+	PublicEndpoint *string               `json:"publicEndpoint"`
+}
+
 type BYOKCluster struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
@@ -17,9 +29,11 @@ type BYOKCluster struct {
 	GlobalVPN             string `json:"globalVPN" graphql:"noinput"`
 	ClusterSvcCIDR        string `json:"clusterSvcCIDR" graphql:"noinput"`
 	ClusterPublicEndpoint string `json:"clusterPublicEndpoint" graphql:"noinput"`
-	ClusterToken          string `json:"clusterToken" graphql:"noinput"`
-	MessageQueueTopicName string `json:"messageQueueTopicName" graphql:"noinput"`
 
+	Visibility ClusterVisbility `json:"visibility" graphql:"noinput"`
+
+	ClusterToken            string `json:"clusterToken" graphql:"noinput"`
+	MessageQueueTopicName   string `json:"messageQueueTopicName" graphql:"noinput"`
 	common.ResourceMetadata `json:",inline"`
 
 	SyncStatus  t.SyncStatus `json:"syncStatus" graphql:"noinput"`

@@ -2,7 +2,9 @@
 {{ with . }}
 
 {{- $namespace := .Namespace }}
-{{- $klDeviceWgSecretName := "kl-device-wg-secret-name" }}
+{{- $klDeviceWgSecretName := printf "%s-wg" .Name }}
+
+{{- $isDebug := true }}
 
 ---
 apiVersion: v1
@@ -39,33 +41,39 @@ spec:
       annotations:
         "secret-ref": "{{.WgConfig | b64enc | sha256sum}}"
     spec:
+      {{- if not $isDebug }}
       initContainers:
-        - image: linuxserver/wireguard
+        {{- /* - image: linuxserver/wireguard */}}
+        - image: ghcr.io/kloudlite/hub/wireguard:latest
           imagePullPolicy: IfNotPresent
           name: wg
-          {{- /* resources: */}}
-          {{- /*   limits: */}}
-          {{- /*     cpu: 80m */}}
-          {{- /*     memory: 100Mi */}}
-          {{- /*   requests: */}}
-          {{- /*     cpu: 50m */}}
-          {{- /*     memory: 75Mi */}}
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 50m
+              memory: 50Mi
           securityContext:
             capabilities:
               add:
                 - NET_ADMIN
-                {{- /* - SYS_MODULE */}}
-            {{- /* privileged: true */}}
+              drop:
+                - all
           command:
-            - wg-quick
-            - up
-            - wg0
+            - sh
+            - -c
+            - |+
+              wg-quick down wg0 || echo "[starting] wg-quick down wg0"
+              wg-quick up wg0
           volumeMounts:
             - mountPath: /config/wg_confs/wg0.conf
               name: wg-config
               subPath: wg0.conf
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
+      {{- end }}
+
       containers:
         - name: kube-reverse-proxy
           image: {{.KubeReverseProxyImage}}
@@ -83,7 +91,69 @@ spec:
               memory: 100Mi
             requests:
               cpu: 100m
+
               memory: 100Mi
+
+        {{- if $isDebug }}
+        - image: ghcr.io/kloudlite/hub/wireguard:latest
+          imagePullPolicy: IfNotPresent
+          name: wg
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 50m
+              memory: 50Mi
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+              drop:
+                - all
+          command:
+            - sh
+            - -c
+            - |+
+              wg-quick down wg0 || echo "[starting] wg-quick down wg0"
+              wg-quick up wg0
+              tail -f /dev/null
+              pid=$!
+              trap "kill $pid" EXIT SIGINT SIGTERM
+              wait $pid
+          volumeMounts:
+            - mountPath: /config/wg_confs/wg0.conf
+              name: wg-config
+              subPath: wg0.conf
+        {{- end }}
+
+        - name: dns
+          image: "ghcr.io/kloudlite/operator/networking/cmd/dns:v1.0.7-nightly"
+          imagePullPolicy: Always
+          args:
+            - --wg-dns-addr
+            - :53
+
+            - --dns-servers
+            - {{.GatewayDNSServers}}
+
+            - --debug
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 50m
+              memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+
+          {{- /* securityContext: */}}
+          {{- /*   capabilities: */}}
+          {{- /*     add: */}}
+          {{- /*       - NET_BIND_SERVICE */}}
+          {{- /*       - SETGID */}}
+          {{- /*     drop: */}}
+          {{- /*       - all */}}
 
       dnsPolicy: ClusterFirst
       volumes:
@@ -110,4 +180,19 @@ spec:
       targetPort: 8080
       protocol: TCP
 ---
+
+{{- /* apiVersion: v1 */}}
+{{- /* kind: Service */}}
+{{- /* metadata: */}}
+{{- /*   name: {{printf "%s-wg" .Name | squote }} */}}
+{{- /*   namespace: {{.Namespace | squote}} */}}
+{{- /* spec: */}}
+{{- /*   type: LoadBalancer */}}
+{{- /*   selector: */}}
+{{- /*     app: {{.Name | squote}} */}}
+{{- /*   ports: */}}
+{{- /*     - name: wireguard */}}
+{{- /*       port: {{.WireguardPort }} */}}
+{{- /*       targetPort: {{.WireguardPort}} */}}
+{{- /*       protocol: UDP */}}
 {{ end }}
