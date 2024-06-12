@@ -1,17 +1,24 @@
 package wgutils
 
 import (
+	"strings"
+
 	"github.com/kloudlite/operator/pkg/templates"
 )
 
 type PublicPeer struct {
+	// displayname is used in comment for the specified peer
+	DisplayName string
+
 	PublicKey  string
 	AllowedIPs []string
 	Endpoint   string
-	IPAddr     string
 }
 
 type PrivatePeer struct {
+	// displayname is used in comment for the specified peer
+	DisplayName string
+
 	PublicKey  string
 	AllowedIPs []string
 }
@@ -19,7 +26,9 @@ type PrivatePeer struct {
 type WgConfigParams struct {
 	IPAddr     string
 	PrivateKey string
-	DNS        string
+	ListenPort uint16
+
+	DNS string
 
 	PostUp   []string
 	PostDown []string
@@ -30,11 +39,17 @@ type WgConfigParams struct {
 
 func GenerateWireguardConfig(wgParams WgConfigParams) (string, error) {
 	t := templates.NewTextTemplate("wg-config")
-	b, err := t.ParseBytes([]byte(`
+	b, err := t.ParseBytes([]byte(strings.TrimSpace(`
 [Interface]
 Address = {{.IPAddr}}/32
 PrivateKey = {{.PrivateKey}}
+{{- if .ListenPort }}
+ListenPort = {{.ListenPort}}
+{{- end }}
+
+{{- if .DNS }}
 DNS = {{.DNS}}
+{{- end }}
 
 {{- range .PostUp -}}
 PostUp = {{.}}
@@ -47,20 +62,28 @@ PostDown = {{.}}
 {{- range .PublicPeers}}
 {{- with .}}
 [Peer]
+{{- if .DisplayName }}
+# {{.DisplayName}}
+{{- end }} 
 PublicKey = {{.PublicKey}}
-AllowedIPs = {{.AllowedIPs | join ", " }}, {{.IPAddr}}/32
+AllowedIPs = {{.AllowedIPs | join ", " }}
 Endpoint = {{.Endpoint}}
+PersistentKeepalive = 25
 {{- end }}
 {{- end }}
 
 {{- range .PrivatePeers}}
 {{- with .}}
 [Peer]
+{{- if .DisplayName }}
+# {{.DisplayName}}
+{{- end }} 
 PublicKey = {{.PublicKey}}
 AllowedIPs = {{.AllowedIPs | join ", " }}
+PersistentKeepalive = 25
 {{- end }}
 {{- end }}
-`), wgParams)
+`)), wgParams)
 	if err != nil {
 		return "", err
 	}

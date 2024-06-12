@@ -1,9 +1,12 @@
 package domain
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/domain/templates"
@@ -22,10 +25,12 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/api/pkg/wgutils"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -340,7 +345,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	cluster.Spec.ClusterServiceCIDR = gvpnConn.ClusterSvcCIDR
+	cluster.Spec.ClusterServiceCIDR = gvpnConn.ClusterCIDR
 
 	if err := d.k8sClient.ValidateObject(ctx, &cluster.Cluster); err != nil {
 		return nil, errors.NewE(err)
@@ -393,18 +398,99 @@ func (d *domain) syncKloudliteDeviceOnCluster(ctx InfraContext, gvpnName string)
 		return nil
 	}
 
-	// 2. Grab wireguard config from that device
-	wgConfig, err := d.getGlobalVPNDeviceWgConfig(ctx, gv.Name, gv.KloudliteDevice.Name, nil)
+	gvpnConns, err := d.listGlobalVPNConnections(ctx, gvpnName)
+	if err != nil {
+		return err
+	}
+
+	klDevice, err := d.findGlobalVPNDevice(ctx, gvpnName, gv.KloudliteDevice.Name)
+	if err != nil {
+		return err
+	}
+
+	wgParams, err := d.buildGlobalVPNDeviceWgBaseParams(ctx, gvpnConns, klDevice)
+	if err != nil {
+		return err
+	}
+
+	wgParams.DNS = klDevice.IPAddr
+	wgParams.ListenPort = 31820
+
+	dnsServerArgs := make([]string, 0, len(gvpnConns))
+	for _, gvpnConn := range gvpnConns {
+		if gvpnConn.Spec.GlobalIP != "" {
+			dnsServerArgs = append(dnsServerArgs, fmt.Sprintf("%s=%s:53", gvpnConn.Spec.DNSSuffix, gvpnConn.Spec.GlobalIP))
+		}
+	}
+
+	resourceName := fmt.Sprintf("kloudlite-device-%s", gv.Name)
+	resourceNamespace := accNs
+	selector := map[string]string{
+		"app": resourceName,
+	}
+
+	service := &corev1.Service{}
+	ctx2, cf := context.WithTimeout(ctx, 5*time.Second)
+	defer cf()
+
+	wgEndpoint := d.env.KloudliteGlobalVPNDeviceHost
+
+	for {
+		if ctx2.Err() != nil {
+			return ctx2.Err()
+		}
+		if err := d.k8sClient.Get(ctx, fn.NN(resourceNamespace, fmt.Sprintf("%s-wg", resourceName)), service); err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return err
+			}
+			if err := d.k8sClient.Create(ctx, &corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%s-wg", resourceName),
+					Namespace: resourceNamespace,
+				},
+				Spec: corev1.ServiceSpec{
+					Type: corev1.ServiceTypeNodePort,
+					Ports: []corev1.ServicePort{
+						{
+							Name:       "wireguard",
+							Protocol:   corev1.ProtocolUDP,
+							Port:       int32(wgParams.ListenPort),
+							TargetPort: intstr.FromInt(int(wgParams.ListenPort)),
+						},
+					},
+					Selector: selector,
+				},
+			}); err != nil {
+				return err
+			}
+			continue
+		}
+
+		if service.Spec.Ports[0].NodePort != 0 {
+			wgEndpoint = fmt.Sprintf("%s:%d", wgEndpoint, service.Spec.Ports[0].NodePort)
+			break
+		}
+	}
+
+	if _, err := d.gvpnDevicesRepo.PatchById(ctx, klDevice.Id, repos.Document{
+		fc.GlobalVPNDevicePublicEndpoint: wgEndpoint,
+	}); err != nil {
+		return err
+	}
+
+	wgConfig, err := wgutils.GenerateWireguardConfig(*wgParams)
 	if err != nil {
 		return err
 	}
 
 	deploymentBytes, err := templates.ParseBytes(b, templates.GVPNKloudliteDeviceTemplateVars{
-		Name:                  fmt.Sprintf("kloudlite-device-proxy-%s", gv.Name),
+		Name:                  resourceName,
 		Namespace:             accNs,
 		WgConfig:              wgConfig,
 		KubeReverseProxyImage: d.env.GlobalVPNKubeReverseProxyImage,
 		AuthzToken:            d.env.GlobalVPNKubeReverseProxyAuthzToken,
+		GatewayDNSServers:     strings.Join(dnsServerArgs, ","),
+		WireguardPort:         wgParams.ListenPort,
 	})
 	if err != nil {
 		return err

@@ -45,7 +45,6 @@ type domain struct {
 	gvpnRepo        repos.DbRepo[*entities.GlobalVPN]
 	gvpnDevicesRepo repos.DbRepo[*entities.GlobalVPNDevice]
 
-	//deviceAddressPoolRepo repos.DbRepo[*entities.GlobalVPNDeviceAddressPool]
 	freeDeviceIpRepo  repos.DbRepo[*entities.FreeDeviceIP]
 	claimDeviceIPRepo repos.DbRepo[*entities.ClaimDeviceIP]
 
@@ -235,7 +234,7 @@ var Module = fx.Module("domain",
 				env:              env,
 				clusterRepo:      clusterRepo,
 				gvpnConnRepo:     gvpnConnRepo,
-				//deviceAddressPoolRepo:   deviceAddressPoolRepo,
+				// deviceAddressPoolRepo:   deviceAddressPoolRepo,
 
 				claimDeviceIPRepo:       claimDeviceIPRepo,
 				freeDeviceIpRepo:        freeDeviceIpRepo,
