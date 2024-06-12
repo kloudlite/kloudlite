@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"math"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -10,6 +11,7 @@ import (
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/operator/pkg/iputils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,6 +34,15 @@ func (d *domain) createGlobalVPN(ctx InfraContext, gvpn entities.GlobalVPN) (*en
 
 	if gvpn.NumReservedIPsForNonClusterUse == 0 {
 		gvpn.NumReservedIPsForNonClusterUse = d.env.ClustersOffset * int(math.Pow(2, float64(32-gvpn.AllocatableCIDRSuffix)))
+		gvpn.NonClusterUseAllowedIPs = make([]string, 0, gvpn.NumReservedIPsForNonClusterUse)
+		for i := 0; i < gvpn.NumReservedIPsForNonClusterUse; i++ {
+			numIPsPerCluster := int(math.Pow(2, float64(32-gvpn.AllocatableCIDRSuffix)))
+			ipv4StartingAddr, err := iputils.GenIPAddr(gvpn.CIDR, i*numIPsPerCluster)
+			if err != nil {
+				return nil, err
+			}
+			gvpn.NonClusterUseAllowedIPs = append(gvpn.NonClusterUseAllowedIPs, fmt.Sprintf("%s/%d", ipv4StartingAddr, gvpn.AllocatableCIDRSuffix))
+		}
 	}
 
 	if gvpn.WgInterface == "" {

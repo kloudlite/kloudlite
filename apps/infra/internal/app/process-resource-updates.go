@@ -18,12 +18,12 @@ import (
 
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
-	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	msgOfficeT "github.com/kloudlite/api/apps/message-office/types"
-	networkingv1 "k8s.io/api/networking/v1"
+	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
+	networkv1 "k8s.io/api/networking/v1"
 )
 
 type ReceiveResourceUpdatesConsumer messaging.Consumer
@@ -36,6 +36,7 @@ func gvk(obj client.Object) string {
 var (
 	clusterGVK          = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
 	globalVpnGVK        = fn.GVK("wireguard.kloudlite.io/v1", "GlobalVPN")
+	gatewayGVK          = fn.GVK("networking.kloudlite.io/v1", "Gateway")
 	nodepoolGVK         = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
 	helmreleaseGVK      = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
 	pvcGVK              = fn.GVK("v1", "PersistentVolumeClaim")
@@ -119,15 +120,35 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 				return d.OnClusterUpdateMessage(dctx, clus, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
-		case globalVpnGVK.String():
+		// case globalVpnGVK.String():
+		// 	{
+		// 		var gvpn entities.GlobalVPNConnection
+		// 		if err := fn.JsonConversion(su.Object, &gvpn); err != nil {
+		// 			return errors.NewE(err)
+		// 		}
+		//
+		// 		if v, ok := su.Object[types.KeyGlobalVPNWgParams]; ok {
+		// 			wp, err := fn.JsonConvertP[wgv1.WgParams](v)
+		// 			if err != nil {
+		// 				return errors.NewE(err)
+		// 			}
+		// 			gvpn.ParsedWgParams = wp
+		// 		}
+		//
+		// 		if resStatus == types.ResourceStatusDeleted {
+		// 			return d.OnGlobalVPNConnectionDeleteMessage(dctx, ru.ClusterName, gvpn)
+		// 		}
+		// 		return d.OnGlobalVPNConnectionUpdateMessage(dctx, ru.ClusterName, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+		// 	}
+		case gatewayGVK.String():
 			{
 				var gvpn entities.GlobalVPNConnection
 				if err := fn.JsonConversion(su.Object, &gvpn); err != nil {
 					return errors.NewE(err)
 				}
 
-				if v, ok := su.Object[types.KeyGlobalVPNWgParams]; ok {
-					wp, err := fn.JsonConvertP[wgv1.WgParams](v)
+				if v, ok := su.Object[types.KeyGatewayWgParams]; ok {
+					wp, err := fn.JsonConvertP[networkingv1.WireguardKeys](v)
 					if err != nil {
 						return errors.NewE(err)
 					}
@@ -139,6 +160,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 				return d.OnGlobalVPNConnectionUpdateMessage(dctx, ru.ClusterName, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
+
 		case nodepoolGVK.String():
 			{
 				var np entities.NodePool
@@ -238,7 +260,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 
 		case ingressGVK.String():
 			{
-				var ingress networkingv1.Ingress
+				var ingress networkv1.Ingress
 				if err := fn.JsonConversion(su.Object, &ingress); err != nil {
 					return errors.NewE(err)
 				}

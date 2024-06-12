@@ -43,8 +43,11 @@ type Env struct {
 
 	// READ more @ https://tailscale.com/kb/1015/100.x-addresses
 	BaseCIDR string `env:"BASE_CIDR" default:"100.64.0.0/10"`
-	// 19, as for 8K (2**13) IPs per cluster, 19 = (32 - (13 host bits))
-	AllocatableCIDRSuffix int `env:"ALLOCATABLE_CIDR_SUFFIX" default:"19"`
+	// 18, as for 16K (2**14) IPs per cluster
+	AllocatableCIDRSuffix int `env:"ALLOCATABLE_CIDR_SUFFIX" default:"18"`
+
+	// 20, as for  4K (2**12) IPs per cluster, reserved for k8s services
+	AllocatableSvcCIDRSuffix int `env:"ALLOCATABLE_SVC_CIDR_SUFFIX" default:"20"`
 	// ClusterOffset = 5, reserving 5 * 8K IPs for wireguard devices and other devices, that are not Clusters
 	ClustersOffset int `env:"CLUSTERS_OFFSET" default:"5"`
 
@@ -53,6 +56,8 @@ type Env struct {
 
 	GlobalVPNKubeReverseProxyImage      string `env:"GLOBAL_VPN_KUBE_REVERSE_PROXY_IMAGE" required:"true"`
 	GlobalVPNKubeReverseProxyAuthzToken string `env:"GLOBAL_VPN_KUBE_REVERSE_PROXY_AUTHZ_TOKEN" required:"true"`
+
+	KloudliteGlobalVPNDeviceHost string `env:"KLOUDLITE_GLOBAL_VPN_DEVICE_HOST" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {
