@@ -46,8 +46,8 @@ tasks:
     dotenv:
       - .secrets/env
     cmds:
-      - go run main.go --dev
-      # - go build  -o bin/infra . && ./bin/infra --dev
+      - go build -o bin/infra .
+      - ./bin/infra --dev
 
   gen:constants:
     cmds:
