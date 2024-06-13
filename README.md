@@ -11,3 +11,8 @@ The goal of Kloudlite is to become the go-to platform for developers to build, t
 - Ensure high scalability, reliability, and security for all users.
 - Foster innovation through open source contributions and partnerships with key technology providers.
 - Offer comprehensive educational resources and support to help developers make the most of Kloudlite.
+
+# Core Components
+- [Platform API](github.com/kloudlite/api)
+- [Dashboard](github.com/kloudlite/web)
+- [Operators](github.com/kloudlite/operator)
