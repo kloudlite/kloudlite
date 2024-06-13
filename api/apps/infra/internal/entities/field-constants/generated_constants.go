@@ -36,7 +36,6 @@ const (
 
 // constant vars generated for struct BYOKCluster
 const (
-	BYOKClusterClusterPublicEndpoint    = "clusterPublicEndpoint"
 	BYOKClusterClusterSvcCIDR           = "clusterSvcCIDR"
 	BYOKClusterClusterToken             = "clusterToken"
 	BYOKClusterGlobalVPN                = "globalVPN"
