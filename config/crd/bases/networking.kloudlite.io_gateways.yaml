@@ -83,6 +83,8 @@ spec:
                       items:
                         type: string
                       type: array
+                    displayName:
+                      type: string
                     dnsSuffix:
                       type: string
                     ip:
