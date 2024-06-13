@@ -94,7 +94,6 @@ type ComplexityRoot struct {
 	BYOKCluster struct {
 		AccountName           func(childComplexity int) int
 		ClusterDNSSuffix      func(childComplexity int) int
-		ClusterPublicEndpoint func(childComplexity int) int
 		ClusterSvcCIDR        func(childComplexity int) int
 		ClusterToken          func(childComplexity int) int
 		CreatedBy             func(childComplexity int) int
@@ -109,6 +108,7 @@ type ComplexityRoot struct {
 		RecordVersion         func(childComplexity int) int
 		SyncStatus            func(childComplexity int) int
 		UpdateTime            func(childComplexity int) int
+		Visibility            func(childComplexity int) int
 	}
 
 	BYOKClusterEdge struct {
@@ -285,6 +285,11 @@ type ComplexityRoot struct {
 		CfParamInstanceProfileName func(childComplexity int) int
 		CfParamRoleName            func(childComplexity int) int
 		CfParamStackName           func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility struct {
+		Mode           func(childComplexity int) int
+		PublicEndpoint func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentials struct {
@@ -625,6 +630,7 @@ type ComplexityRoot struct {
 		KloudliteDevice                func(childComplexity int) int
 		LastUpdatedBy                  func(childComplexity int) int
 		MarkedForDeletion              func(childComplexity int) int
+		NonClusterUseAllowedIPs        func(childComplexity int) int
 		NumAllocatedClusterCIDRs       func(childComplexity int) int
 		NumAllocatedDevices            func(childComplexity int) int
 		NumReservedIPsForNonClusterUse func(childComplexity int) int
@@ -1407,6 +1413,7 @@ type BYOKClusterResolver interface {
 	ID(ctx context.Context, obj *entities.BYOKCluster) (repos.ID, error)
 
 	UpdateTime(ctx context.Context, obj *entities.BYOKCluster) (string, error)
+	Visibility(ctx context.Context, obj *entities.BYOKCluster) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility, error)
 	ClusterDNSSuffix(ctx context.Context, obj *entities.BYOKCluster) (string, error)
 }
 type CloudProviderSecretResolver interface {
@@ -1632,6 +1639,7 @@ type VolumeAttachmentResolver interface {
 
 type BYOKClusterInResolver interface {
 	Metadata(ctx context.Context, obj *entities.BYOKCluster, data *v1.ObjectMeta) error
+	Visibility(ctx context.Context, obj *entities.BYOKCluster, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn) error
 }
 type CloudProviderSecretInResolver interface {
 	Aws(ctx context.Context, obj *entities.CloudProviderSecret, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn) error
@@ -1718,13 +1726,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BYOKCluster.ClusterDNSSuffix(childComplexity), true
-
-	case "BYOKCluster.clusterPublicEndpoint":
-		if e.complexity.BYOKCluster.ClusterPublicEndpoint == nil {
-			break
-		}
-
-		return e.complexity.BYOKCluster.ClusterPublicEndpoint(childComplexity), true
 
 	case "BYOKCluster.clusterSvcCIDR":
 		if e.complexity.BYOKCluster.ClusterSvcCIDR == nil {
@@ -1823,6 +1824,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BYOKCluster.UpdateTime(childComplexity), true
+
+	case "BYOKCluster.visibility":
+		if e.complexity.BYOKCluster.Visibility == nil {
+			break
+		}
+
+		return e.complexity.BYOKCluster.Visibility(childComplexity), true
 
 	case "BYOKClusterEdge.cursor":
 		if e.complexity.BYOKClusterEdge.Cursor == nil {
@@ -2593,6 +2601,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials.CfParamStackName(childComplexity), true
+
+	case "Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility.mode":
+		if e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility.Mode == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility.Mode(childComplexity), true
+
+	case "Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility.publicEndpoint":
+		if e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility.PublicEndpoint == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility.PublicEndpoint(childComplexity), true
 
 	case "Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentials.serviceAccountJSON":
 		if e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentials.ServiceAccountJSON == nil {
@@ -4070,6 +4092,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GlobalVPN.MarkedForDeletion(childComplexity), true
+
+	case "GlobalVPN.nonClusterUseAllowedIPs":
+		if e.complexity.GlobalVPN.NonClusterUseAllowedIPs == nil {
+			break
+		}
+
+		return e.complexity.GlobalVPN.NonClusterUseAllowedIPs(childComplexity), true
 
 	case "GlobalVPN.numAllocatedClusterCIDRs":
 		if e.complexity.GlobalVPN.NumAllocatedClusterCIDRs == nil {
@@ -7905,6 +7934,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn,
 		ec.unmarshalInputGithub__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn,
 		ec.unmarshalInputGithub__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentialsIn,
+		ec.unmarshalInputGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn,
 		ec.unmarshalInputGithub__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentialsIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn,
@@ -8307,7 +8337,6 @@ extend type GlobalVPNDevice {
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/byokcluster.graphqls", Input: `type BYOKCluster @shareable {
   accountName: String!
-  clusterPublicEndpoint: String!
   clusterSvcCIDR: String!
   clusterToken: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -8322,6 +8351,7 @@ extend type GlobalVPNDevice {
   recordVersion: Int!
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
+  visibility: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility!
 }
 
 type BYOKClusterEdge @shareable {
@@ -8338,6 +8368,7 @@ type BYOKClusterPaginatedRecords @shareable {
 input BYOKClusterIn {
   displayName: String!
   metadata: MetadataIn!
+  visibility: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn!
 }
 
 `, BuiltIn: false},
@@ -8488,6 +8519,11 @@ type Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecr
   cfParamInstanceProfileName: String
   cfParamRoleName: String
   cfParamStackName: String
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility @shareable {
+  mode: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode!
+  publicEndpoint: String
 }
 
 type Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentials @shareable {
@@ -9259,6 +9295,10 @@ input Github__com___kloudlite___api___apps___infra___internal___entities__AWSSec
   authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn
 }
 
+input Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn {
+  mode: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode!
+}
+
 input Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentialsIn {
   serviceAccountJSON: String!
 }
@@ -9806,6 +9846,11 @@ input MetadataIn {
   namespace: String
 }
 
+enum Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode {
+  private
+  public
+}
+
 enum Github__com___kloudlite___api___pkg___repos__MatchType {
   array
   exact
@@ -10015,6 +10060,7 @@ input DomainEntryIn {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
+  nonClusterUseAllowedIPs: [String!]!
   numAllocatedClusterCIDRs: Int!
   numAllocatedDevices: Int!
   numReservedIPsForNonClusterUse: Int!
@@ -10045,6 +10091,7 @@ input GlobalVPNIn {
   displayName: String!
   kloudliteDevice: GlobalVPNKloudliteDeviceIn!
   metadata: MetadataIn!
+  nonClusterUseAllowedIPs: [String!]!
   numAllocatedClusterCIDRs: Int!
   numAllocatedDevices: Int!
   numReservedIPsForNonClusterUse: Int!
@@ -10404,7 +10451,13 @@ input VolumeAttachmentIn {
 	  | UNION
 	directive @interfaceObject on OBJECT
 	directive @link(import: [String!], url: String!) repeatable on SCHEMA
-	directive @override(from: String!) on FIELD_DEFINITION
+	directive @override(from: String!, label: String) on FIELD_DEFINITION
+	directive @policy(policies: [[federation__Policy!]!]!) on 
+	  | FIELD_DEFINITION
+	  | OBJECT
+	  | INTERFACE
+	  | SCALAR
+	  | ENUM
 	directive @provides(fields: FieldSet!) on FIELD_DEFINITION
 	directive @requires(fields: FieldSet!) on FIELD_DEFINITION
 	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on 
@@ -10427,6 +10480,7 @@ input VolumeAttachmentIn {
 	  | UNION
 	scalar _Any
 	scalar FieldSet
+	scalar federation__Policy
 	scalar federation__Scope
 `, BuiltIn: true},
 	{Name: "../../federation/entity.graphql", Input: `
@@ -11778,50 +11832,6 @@ func (ec *executionContext) fieldContext_BYOKCluster_accountName(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _BYOKCluster_clusterPublicEndpoint(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_BYOKCluster_clusterPublicEndpoint(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ClusterPublicEndpoint, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_BYOKCluster_clusterPublicEndpoint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "BYOKCluster",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _BYOKCluster_clusterSvcCIDR(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BYOKCluster_clusterSvcCIDR(ctx, field)
 	if err != nil {
@@ -12481,6 +12491,56 @@ func (ec *executionContext) fieldContext_BYOKCluster_updateTime(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _BYOKCluster_visibility(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKCluster_visibility(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.BYOKCluster().Visibility(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKCluster_visibility(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKCluster",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "mode":
+				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility_mode(ctx, field)
+			case "publicEndpoint":
+				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility_publicEndpoint(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BYOKCluster_clusterDNSSuffix(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BYOKCluster_clusterDNSSuffix(ctx, field)
 	if err != nil {
@@ -12610,8 +12670,6 @@ func (ec *executionContext) fieldContext_BYOKClusterEdge_node(ctx context.Contex
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_BYOKCluster_accountName(ctx, field)
-			case "clusterPublicEndpoint":
-				return ec.fieldContext_BYOKCluster_clusterPublicEndpoint(ctx, field)
 			case "clusterSvcCIDR":
 				return ec.fieldContext_BYOKCluster_clusterSvcCIDR(ctx, field)
 			case "clusterToken":
@@ -12640,6 +12698,8 @@ func (ec *executionContext) fieldContext_BYOKClusterEdge_node(ctx context.Contex
 				return ec.fieldContext_BYOKCluster_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_BYOKCluster_updateTime(ctx, field)
+			case "visibility":
+				return ec.fieldContext_BYOKCluster_visibility(ctx, field)
 			case "clusterDNSSuffix":
 				return ec.fieldContext_BYOKCluster_clusterDNSSuffix(ctx, field)
 			}
@@ -17765,6 +17825,91 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___inte
 func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials_cfParamStackName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility_mode(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility_mode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Mode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility_mode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility_publicEndpoint(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility_publicEndpoint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PublicEndpoint, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility_publicEndpoint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -27290,6 +27435,50 @@ func (ec *executionContext) fieldContext_GlobalVPN_metadata(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _GlobalVPN_nonClusterUseAllowedIPs(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GlobalVPN_nonClusterUseAllowedIPs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NonClusterUseAllowedIPs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GlobalVPN_nonClusterUseAllowedIPs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GlobalVPN",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GlobalVPN_numAllocatedClusterCIDRs(ctx context.Context, field graphql.CollectedField, obj *entities.GlobalVPN) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GlobalVPN_numAllocatedClusterCIDRs(ctx, field)
 	if err != nil {
@@ -28705,6 +28894,8 @@ func (ec *executionContext) fieldContext_GlobalVPNEdge_node(ctx context.Context,
 				return ec.fieldContext_GlobalVPN_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_GlobalVPN_metadata(ctx, field)
+			case "nonClusterUseAllowedIPs":
+				return ec.fieldContext_GlobalVPN_nonClusterUseAllowedIPs(ctx, field)
 			case "numAllocatedClusterCIDRs":
 				return ec.fieldContext_GlobalVPN_numAllocatedClusterCIDRs(ctx, field)
 			case "numAllocatedDevices":
@@ -41776,6 +41967,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createGlobalVPN(ctx cont
 				return ec.fieldContext_GlobalVPN_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_GlobalVPN_metadata(ctx, field)
+			case "nonClusterUseAllowedIPs":
+				return ec.fieldContext_GlobalVPN_nonClusterUseAllowedIPs(ctx, field)
 			case "numAllocatedClusterCIDRs":
 				return ec.fieldContext_GlobalVPN_numAllocatedClusterCIDRs(ctx, field)
 			case "numAllocatedDevices":
@@ -41890,6 +42083,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateGlobalVPN(ctx cont
 				return ec.fieldContext_GlobalVPN_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_GlobalVPN_metadata(ctx, field)
+			case "nonClusterUseAllowedIPs":
+				return ec.fieldContext_GlobalVPN_nonClusterUseAllowedIPs(ctx, field)
 			case "numAllocatedClusterCIDRs":
 				return ec.fieldContext_GlobalVPN_numAllocatedClusterCIDRs(ctx, field)
 			case "numAllocatedDevices":
@@ -42374,8 +42569,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_createBYOKCluster(ctx co
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_BYOKCluster_accountName(ctx, field)
-			case "clusterPublicEndpoint":
-				return ec.fieldContext_BYOKCluster_clusterPublicEndpoint(ctx, field)
 			case "clusterSvcCIDR":
 				return ec.fieldContext_BYOKCluster_clusterSvcCIDR(ctx, field)
 			case "clusterToken":
@@ -42404,6 +42597,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createBYOKCluster(ctx co
 				return ec.fieldContext_BYOKCluster_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_BYOKCluster_updateTime(ctx, field)
+			case "visibility":
+				return ec.fieldContext_BYOKCluster_visibility(ctx, field)
 			case "clusterDNSSuffix":
 				return ec.fieldContext_BYOKCluster_clusterDNSSuffix(ctx, field)
 			}
@@ -42488,8 +42683,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateBYOKCluster(ctx co
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_BYOKCluster_accountName(ctx, field)
-			case "clusterPublicEndpoint":
-				return ec.fieldContext_BYOKCluster_clusterPublicEndpoint(ctx, field)
 			case "clusterSvcCIDR":
 				return ec.fieldContext_BYOKCluster_clusterSvcCIDR(ctx, field)
 			case "clusterToken":
@@ -42518,6 +42711,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateBYOKCluster(ctx co
 				return ec.fieldContext_BYOKCluster_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_BYOKCluster_updateTime(ctx, field)
+			case "visibility":
+				return ec.fieldContext_BYOKCluster_visibility(ctx, field)
 			case "clusterDNSSuffix":
 				return ec.fieldContext_BYOKCluster_clusterDNSSuffix(ctx, field)
 			}
@@ -49905,8 +50100,6 @@ func (ec *executionContext) fieldContext_Query_infra_getBYOKCluster(ctx context.
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_BYOKCluster_accountName(ctx, field)
-			case "clusterPublicEndpoint":
-				return ec.fieldContext_BYOKCluster_clusterPublicEndpoint(ctx, field)
 			case "clusterSvcCIDR":
 				return ec.fieldContext_BYOKCluster_clusterSvcCIDR(ctx, field)
 			case "clusterToken":
@@ -49935,6 +50128,8 @@ func (ec *executionContext) fieldContext_Query_infra_getBYOKCluster(ctx context.
 				return ec.fieldContext_BYOKCluster_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_BYOKCluster_updateTime(ctx, field)
+			case "visibility":
+				return ec.fieldContext_BYOKCluster_visibility(ctx, field)
 			case "clusterDNSSuffix":
 				return ec.fieldContext_BYOKCluster_clusterDNSSuffix(ctx, field)
 			}
@@ -50209,6 +50404,8 @@ func (ec *executionContext) fieldContext_Query_infra_getGlobalVPN(ctx context.Co
 				return ec.fieldContext_GlobalVPN_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_GlobalVPN_metadata(ctx, field)
+			case "nonClusterUseAllowedIPs":
+				return ec.fieldContext_GlobalVPN_nonClusterUseAllowedIPs(ctx, field)
 			case "numAllocatedClusterCIDRs":
 				return ec.fieldContext_GlobalVPN_numAllocatedClusterCIDRs(ctx, field)
 			case "numAllocatedDevices":
@@ -55436,7 +55633,7 @@ func (ec *executionContext) unmarshalInputBYOKClusterIn(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"displayName", "metadata"}
+	fieldsInOrder := [...]string{"displayName", "metadata", "visibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -55444,8 +55641,6 @@ func (ec *executionContext) unmarshalInputBYOKClusterIn(ctx context.Context, obj
 		}
 		switch k {
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55453,14 +55648,21 @@ func (ec *executionContext) unmarshalInputBYOKClusterIn(ctx context.Context, obj
 			}
 			it.DisplayName = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			if err = ec.resolvers.BYOKClusterIn().Metadata(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "visibility":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("visibility"))
+			data, err := ec.unmarshalNGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.BYOKClusterIn().Visibility(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -55484,8 +55686,6 @@ func (ec *executionContext) unmarshalInputBYOKSetupInstructionIn(ctx context.Con
 		}
 		switch k {
 		case "command":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("command"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55493,8 +55693,6 @@ func (ec *executionContext) unmarshalInputBYOKSetupInstructionIn(ctx context.Con
 			}
 			it.Command = data
 		case "title":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55522,8 +55720,6 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 		}
 		switch k {
 		case "aws":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aws"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentialsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn(ctx, v)
 			if err != nil {
@@ -55533,8 +55729,6 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 				return it, err
 			}
 		case "cloudProviderName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProviderName"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, v)
 			if err != nil {
@@ -55544,8 +55738,6 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 				return it, err
 			}
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55553,8 +55745,6 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 			}
 			it.DisplayName = data
 		case "gcp":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gcp"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentialsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentialsIn(ctx, v)
 			if err != nil {
@@ -55564,8 +55754,6 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 				return it, err
 			}
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -55595,8 +55783,6 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -55604,8 +55790,6 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 			}
 			it.APIVersion = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55613,8 +55797,6 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 			}
 			it.DisplayName = data
 		case "globalVPN":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("globalVPN"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -55622,8 +55804,6 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 			}
 			it.GlobalVPN = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -55631,8 +55811,6 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -55642,8 +55820,6 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecIn(ctx, v)
 			if err != nil {
@@ -55673,8 +55849,6 @@ func (ec *executionContext) unmarshalInputClusterManagedServiceIn(ctx context.Co
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -55682,8 +55856,6 @@ func (ec *executionContext) unmarshalInputClusterManagedServiceIn(ctx context.Co
 			}
 			it.APIVersion = data
 		case "clusterName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55691,8 +55863,6 @@ func (ec *executionContext) unmarshalInputClusterManagedServiceIn(ctx context.Co
 			}
 			it.ClusterName = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55700,8 +55870,6 @@ func (ec *executionContext) unmarshalInputClusterManagedServiceIn(ctx context.Co
 			}
 			it.DisplayName = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -55709,8 +55877,6 @@ func (ec *executionContext) unmarshalInputClusterManagedServiceIn(ctx context.Co
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -55720,8 +55886,6 @@ func (ec *executionContext) unmarshalInputClusterManagedServiceIn(ctx context.Co
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn(ctx, v)
 			if err != nil {
@@ -55758,8 +55922,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 		}
 		switch k {
 		case "after":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -55767,8 +55929,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 			}
 			it.After = data
 		case "before":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -55776,8 +55936,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 			}
 			it.Before = data
 		case "first":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
 			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
 			if err != nil {
@@ -55785,8 +55943,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 			}
 			it.First = data
 		case "last":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
 			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
 			if err != nil {
@@ -55794,8 +55950,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 			}
 			it.Last = data
 		case "orderBy":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -55803,8 +55957,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 			}
 			it.OrderBy = data
 		case "sortDirection":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortDirection"))
 			data, err := ec.unmarshalOCursorPaginationSortDirection2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐSortDirection(ctx, v)
 			if err != nil {
@@ -55832,8 +55984,6 @@ func (ec *executionContext) unmarshalInputDomainEntryIn(ctx context.Context, obj
 		}
 		switch k {
 		case "clusterName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55841,8 +55991,6 @@ func (ec *executionContext) unmarshalInputDomainEntryIn(ctx context.Context, obj
 			}
 			it.ClusterName = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55850,8 +55998,6 @@ func (ec *executionContext) unmarshalInputDomainEntryIn(ctx context.Context, obj
 			}
 			it.DisplayName = data
 		case "domainName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domainName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55879,8 +56025,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 		}
 		switch k {
 		case "awsAccountId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("awsAccountId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55908,8 +56052,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 		}
 		switch k {
 		case "accessKey":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessKey"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55917,8 +56059,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 			}
 			it.AccessKey = data
 		case "secretKey":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretKey"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -55946,8 +56086,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 		}
 		switch k {
 		case "assumeRoleParams":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assumeRoleParams"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesAWSAssumeRoleParamsIn(ctx, v)
 			if err != nil {
@@ -55955,8 +56093,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 			}
 			it.AssumeRoleParams = data
 		case "authMechanism":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx, v)
 			if err != nil {
@@ -55964,14 +56100,39 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 			}
 			it.AuthMechanism = data
 		case "authSecretKeys":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authSecretKeys"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesAWSAuthSecretKeysIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.AuthSecretKeys = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn, error) {
+	var it model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"mode"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "mode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
+			data, err := ec.unmarshalNGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Mode = data
 		}
 	}
 
@@ -55993,8 +56154,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___api___apps__
 		}
 		switch k {
 		case "serviceAccountJSON":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceAccountJSON"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56022,8 +56181,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "credentials":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credentials"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsCredentialsIn(ctx, v)
 			if err != nil {
@@ -56031,8 +56188,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Credentials = data
 		case "k3sMasters":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("k3sMasters"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn(ctx, v)
 			if err != nil {
@@ -56040,8 +56195,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.K3sMasters = data
 		case "region":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56069,8 +56222,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "instanceType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceType"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56078,8 +56229,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.InstanceType = data
 		case "nvidiaGpuEnabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nvidiaGpuEnabled"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -56107,8 +56256,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "availabilityZone":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("availabilityZone"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56116,8 +56263,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.AvailabilityZone = data
 		case "ec2Pool":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ec2Pool"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn(ctx, v)
 			if err != nil {
@@ -56125,8 +56270,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Ec2Pool = data
 		case "nvidiaGpuEnabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nvidiaGpuEnabled"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -56134,8 +56277,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.NvidiaGpuEnabled = data
 		case "poolType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poolType"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AWSPoolType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSPoolType(ctx, v)
 			if err != nil {
@@ -56143,8 +56284,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.PoolType = data
 		case "spotPool":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spotPool"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn(ctx, v)
 			if err != nil {
@@ -56172,8 +56311,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "authMechanism":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authMechanism"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsAuthMechanism(ctx, v)
 			if err != nil {
@@ -56181,8 +56318,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.AuthMechanism = data
 		case "secretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__SecretRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRefIn(ctx, v)
 			if err != nil {
@@ -56210,8 +56345,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "instanceType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceType"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56219,8 +56352,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.InstanceType = data
 		case "nodes":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodes"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -56248,8 +56379,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "memoryPerVcpu":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPerVcpu"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn(ctx, v)
 			if err != nil {
@@ -56257,8 +56386,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.MemoryPerVcpu = data
 		case "vcpu":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vcpu"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn(ctx, v)
 			if err != nil {
@@ -56286,8 +56413,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "instanceTypes":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceTypes"))
 			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -56315,8 +56440,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "cpuNode":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuNode"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn(ctx, v)
 			if err != nil {
@@ -56324,8 +56447,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.CPUNode = data
 		case "gpuNode":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gpuNode"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn(ctx, v)
 			if err != nil {
@@ -56333,8 +56454,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.GpuNode = data
 		case "nodes":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodes"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -56362,8 +56481,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "availabilityMode":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("availabilityMode"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode(ctx, v)
 			if err != nil {
@@ -56371,8 +56488,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.AvailabilityMode = data
 		case "aws":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aws"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn(ctx, v)
 			if err != nil {
@@ -56380,8 +56495,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Aws = data
 		case "cloudflareEnabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudflareEnabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -56389,8 +56502,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.CloudflareEnabled = data
 		case "cloudProvider":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProvider"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, v)
 			if err != nil {
@@ -56398,8 +56509,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.CloudProvider = data
 		case "gcp":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gcp"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__GCPClusterConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPClusterConfigIn(ctx, v)
 			if err != nil {
@@ -56427,8 +56536,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "credentialsRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credentialsRef"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__SecretRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRefIn(ctx, v)
 			if err != nil {
@@ -56436,8 +56543,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.CredentialsRef = data
 		case "region":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56465,8 +56570,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "availabilityZone":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("availabilityZone"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56474,8 +56577,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.AvailabilityZone = data
 		case "machineType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("machineType"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56483,8 +56584,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.MachineType = data
 		case "poolType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poolType"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__GCPPoolType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPPoolType(ctx, v)
 			if err != nil {
@@ -56512,8 +56611,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "aws":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aws"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn(ctx, v)
 			if err != nil {
@@ -56521,8 +56618,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Aws = data
 		case "cloudProvider":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProvider"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, v)
 			if err != nil {
@@ -56530,8 +56625,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.CloudProvider = data
 		case "gcp":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gcp"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1GCPNodePoolConfigIn(ctx, v)
 			if err != nil {
@@ -56539,8 +56632,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Gcp = data
 		case "maxCount":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxCount"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -56548,8 +56639,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.MaxCount = data
 		case "minCount":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minCount"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -56557,8 +56646,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.MinCount = data
 		case "nodeLabels":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeLabels"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -56566,8 +56653,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.NodeLabels = data
 		case "nodeTaints":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeTaints"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__TaintIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TaintInᚄ(ctx, v)
 			if err != nil {
@@ -56595,8 +56680,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "lastRecreatedAt":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastRecreatedAt"))
 			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
@@ -56624,8 +56707,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "nodepoolName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodepoolName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56653,8 +56734,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "max":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("max"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56662,8 +56741,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Max = data
 		case "min":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("min"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56691,8 +56768,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56700,8 +56775,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Name = data
 		case "namespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -56729,8 +56802,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "msvcSpec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcSpec"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn(ctx, v)
 			if err != nil {
@@ -56758,8 +56829,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "chartName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56767,8 +56836,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ChartName = data
 		case "chartRepoURL":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartRepoURL"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56776,8 +56843,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ChartRepoURL = data
 		case "chartVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartVersion"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56785,8 +56850,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ChartVersion = data
 		case "jobVars":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("jobVars"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1JobVarsIn(ctx, v)
 			if err != nil {
@@ -56794,8 +56857,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.JobVars = data
 		case "postInstall":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postInstall"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -56803,8 +56864,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.PostInstall = data
 		case "postUninstall":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postUninstall"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -56812,8 +56871,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.PostUninstall = data
 		case "preInstall":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preInstall"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -56821,8 +56878,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.PreInstall = data
 		case "preUninstall":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preUninstall"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -56830,8 +56885,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.PreUninstall = data
 		case "values":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
 			data, err := ec.unmarshalNMap2map(ctx, v)
 			if err != nil {
@@ -56859,8 +56912,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "affinity":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("affinity"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__AffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AffinityIn(ctx, v)
 			if err != nil {
@@ -56868,8 +56919,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Affinity = data
 		case "backOffLimit":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backOffLimit"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -56877,8 +56926,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.BackOffLimit = data
 		case "nodeSelector":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelector"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -56886,8 +56933,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.NodeSelector = data
 		case "tolerations":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tolerations"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__TolerationIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationInᚄ(ctx, v)
 			if err != nil {
@@ -56915,8 +56960,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "nodeSelector":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelector"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -56924,8 +56967,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.NodeSelector = data
 		case "serviceTemplate":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceTemplate"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn(ctx, v)
 			if err != nil {
@@ -56933,8 +56974,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ServiceTemplate = data
 		case "tolerations":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tolerations"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__TolerationIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationInᚄ(ctx, v)
 			if err != nil {
@@ -56962,8 +57001,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56971,8 +57008,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.APIVersion = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -56980,8 +57015,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Kind = data
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -57009,8 +57042,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNDeviceIn(ctx context.Context,
 		}
 		switch k {
 		case "creationMethod":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creationMethod"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -57018,8 +57049,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNDeviceIn(ctx context.Context,
 			}
 			it.CreationMethod = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57027,8 +57056,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNDeviceIn(ctx context.Context,
 			}
 			it.DisplayName = data
 		case "globalVPNName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("globalVPNName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57036,8 +57063,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNDeviceIn(ctx context.Context,
 			}
 			it.GlobalVPNName = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -57059,7 +57084,7 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"allocatableCIDRSuffix", "CIDR", "displayName", "kloudliteDevice", "metadata", "numAllocatedClusterCIDRs", "numAllocatedDevices", "numReservedIPsForNonClusterUse", "wgInterface"}
+	fieldsInOrder := [...]string{"allocatableCIDRSuffix", "CIDR", "displayName", "kloudliteDevice", "metadata", "nonClusterUseAllowedIPs", "numAllocatedClusterCIDRs", "numAllocatedDevices", "numReservedIPsForNonClusterUse", "wgInterface"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -57067,8 +57092,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 		}
 		switch k {
 		case "allocatableCIDRSuffix":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocatableCIDRSuffix"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -57076,8 +57099,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 			}
 			it.AllocatableCIDRSuffix = data
 		case "CIDR":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("CIDR"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57085,8 +57106,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 			}
 			it.CIDR = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57094,8 +57113,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 			}
 			it.DisplayName = data
 		case "kloudliteDevice":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kloudliteDevice"))
 			data, err := ec.unmarshalNGlobalVPNKloudliteDeviceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGlobalVPNKloudliteDeviceIn(ctx, v)
 			if err != nil {
@@ -57105,8 +57122,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 				return it, err
 			}
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -57115,9 +57130,14 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 			if err = ec.resolvers.GlobalVPNIn().Metadata(ctx, &it, data); err != nil {
 				return it, err
 			}
+		case "nonClusterUseAllowedIPs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nonClusterUseAllowedIPs"))
+			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NonClusterUseAllowedIPs = data
 		case "numAllocatedClusterCIDRs":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("numAllocatedClusterCIDRs"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -57125,8 +57145,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 			}
 			it.NumAllocatedClusterCIDRs = data
 		case "numAllocatedDevices":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("numAllocatedDevices"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -57134,8 +57152,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 			}
 			it.NumAllocatedDevices = data
 		case "numReservedIPsForNonClusterUse":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("numReservedIPsForNonClusterUse"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -57143,8 +57159,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNIn(ctx context.Context, obj i
 			}
 			it.NumReservedIPsForNonClusterUse = data
 		case "wgInterface":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("wgInterface"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57172,8 +57186,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNKloudliteDeviceIn(ctx context
 		}
 		switch k {
 		case "ipAddr":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ipAddr"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57181,8 +57193,6 @@ func (ec *executionContext) unmarshalInputGlobalVPNKloudliteDeviceIn(ctx context
 			}
 			it.IPAddr = data
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57210,8 +57220,6 @@ func (ec *executionContext) unmarshalInputHelmReleaseIn(ctx context.Context, obj
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -57219,8 +57227,6 @@ func (ec *executionContext) unmarshalInputHelmReleaseIn(ctx context.Context, obj
 			}
 			it.APIVersion = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57228,8 +57234,6 @@ func (ec *executionContext) unmarshalInputHelmReleaseIn(ctx context.Context, obj
 			}
 			it.DisplayName = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -57237,8 +57241,6 @@ func (ec *executionContext) unmarshalInputHelmReleaseIn(ctx context.Context, obj
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -57248,8 +57250,6 @@ func (ec *executionContext) unmarshalInputHelmReleaseIn(ctx context.Context, obj
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn(ctx, v)
 			if err != nil {
@@ -57279,8 +57279,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AWSElasticB
 		}
 		switch k {
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57288,8 +57286,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AWSElasticB
 			}
 			it.FsType = data
 		case "partition":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("partition"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -57297,8 +57293,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AWSElasticB
 			}
 			it.Partition = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -57306,8 +57300,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AWSElasticB
 			}
 			it.ReadOnly = data
 		case "volumeID":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeID"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57335,8 +57327,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AffinityIn(
 		}
 		switch k {
 		case "nodeAffinity":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeAffinity"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeAffinityIn(ctx, v)
 			if err != nil {
@@ -57344,8 +57334,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AffinityIn(
 			}
 			it.NodeAffinity = data
 		case "podAffinity":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("podAffinity"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityIn(ctx, v)
 			if err != nil {
@@ -57353,8 +57341,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AffinityIn(
 			}
 			it.PodAffinity = data
 		case "podAntiAffinity":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("podAntiAffinity"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAntiAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAntiAffinityIn(ctx, v)
 			if err != nil {
@@ -57382,8 +57368,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureDiskVo
 		}
 		switch k {
 		case "cachingMode":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cachingMode"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57391,8 +57375,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureDiskVo
 			}
 			it.CachingMode = data
 		case "diskName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("diskName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57400,8 +57382,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureDiskVo
 			}
 			it.DiskName = data
 		case "diskURI":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("diskURI"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57409,8 +57389,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureDiskVo
 			}
 			it.DiskURI = data
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57418,8 +57396,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureDiskVo
 			}
 			it.FsType = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57427,8 +57403,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureDiskVo
 			}
 			it.Kind = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -57456,8 +57430,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureFilePe
 		}
 		switch k {
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -57465,8 +57437,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureFilePe
 			}
 			it.ReadOnly = data
 		case "secretName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57474,8 +57444,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureFilePe
 			}
 			it.SecretName = data
 		case "secretNamespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretNamespace"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57483,8 +57451,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureFilePe
 			}
 			it.SecretNamespace = data
 		case "shareName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shareName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57512,8 +57478,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersiste
 		}
 		switch k {
 		case "controllerExpandSecretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controllerExpandSecretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
@@ -57521,8 +57485,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersiste
 			}
 			it.ControllerExpandSecretRef = data
 		case "controllerPublishSecretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controllerPublishSecretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
@@ -57530,8 +57492,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersiste
 			}
 			it.ControllerPublishSecretRef = data
 		case "driver":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driver"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57539,8 +57499,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersiste
 			}
 			it.Driver = data
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57548,8 +57506,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersiste
 			}
 			it.FsType = data
 		case "nodeExpandSecretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeExpandSecretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
@@ -57557,8 +57513,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersiste
 			}
 			it.NodeExpandSecretRef = data
 		case "nodePublishSecretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodePublishSecretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
@@ -57566,8 +57520,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersiste
 			}
 			it.NodePublishSecretRef = data
 		case "nodeStageSecretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeStageSecretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
@@ -57575,8 +57527,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersiste
 			}
 			it.NodeStageSecretRef = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -57584,8 +57534,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersiste
 			}
 			it.ReadOnly = data
 		case "volumeAttributes":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeAttributes"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -57593,8 +57541,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersiste
 			}
 			it.VolumeAttributes = data
 		case "volumeHandle":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeHandle"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57622,8 +57568,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CephFSPersi
 		}
 		switch k {
 		case "monitors":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("monitors"))
 			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -57631,8 +57575,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CephFSPersi
 			}
 			it.Monitors = data
 		case "path":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57640,8 +57582,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CephFSPersi
 			}
 			it.Path = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -57649,8 +57589,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CephFSPersi
 			}
 			it.ReadOnly = data
 		case "secretFile":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretFile"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57658,8 +57596,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CephFSPersi
 			}
 			it.SecretFile = data
 		case "secretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
@@ -57667,8 +57603,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CephFSPersi
 			}
 			it.SecretRef = data
 		case "user":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57696,8 +57630,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CinderPersi
 		}
 		switch k {
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57705,8 +57637,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CinderPersi
 			}
 			it.FsType = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -57714,8 +57644,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CinderPersi
 			}
 			it.ReadOnly = data
 		case "secretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
@@ -57723,8 +57651,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CinderPersi
 			}
 			it.SecretRef = data
 		case "volumeID":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeID"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57752,8 +57678,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FCVolumeSou
 		}
 		switch k {
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57761,8 +57685,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FCVolumeSou
 			}
 			it.FsType = data
 		case "lun":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lun"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -57770,8 +57692,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FCVolumeSou
 			}
 			it.Lun = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -57779,8 +57699,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FCVolumeSou
 			}
 			it.ReadOnly = data
 		case "targetWWNs":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetWWNs"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -57788,8 +57706,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FCVolumeSou
 			}
 			it.TargetWWNs = data
 		case "wwids":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("wwids"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -57817,8 +57733,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FlexPersist
 		}
 		switch k {
 		case "driver":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driver"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57826,8 +57740,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FlexPersist
 			}
 			it.Driver = data
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57835,8 +57747,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FlexPersist
 			}
 			it.FsType = data
 		case "options":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("options"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -57844,8 +57754,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FlexPersist
 			}
 			it.Options = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -57853,8 +57761,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FlexPersist
 			}
 			it.ReadOnly = data
 		case "secretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
@@ -57882,8 +57788,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FlockerVolu
 		}
 		switch k {
 		case "datasetName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("datasetName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57891,8 +57795,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FlockerVolu
 			}
 			it.DatasetName = data
 		case "datasetUUID":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("datasetUUID"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57920,8 +57822,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GCEPersiste
 		}
 		switch k {
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57929,8 +57829,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GCEPersiste
 			}
 			it.FsType = data
 		case "partition":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("partition"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -57938,8 +57836,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GCEPersiste
 			}
 			it.Partition = data
 		case "pdName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pdName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57947,8 +57843,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GCEPersiste
 			}
 			it.PdName = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -57976,8 +57870,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GlusterfsPe
 		}
 		switch k {
 		case "endpoints":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endpoints"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -57985,8 +57877,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GlusterfsPe
 			}
 			it.Endpoints = data
 		case "endpointsNamespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endpointsNamespace"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -57994,8 +57884,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GlusterfsPe
 			}
 			it.EndpointsNamespace = data
 		case "path":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -58003,8 +57891,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GlusterfsPe
 			}
 			it.Path = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -58032,8 +57918,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__HostPathVol
 		}
 		switch k {
 		case "path":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -58041,8 +57925,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__HostPathVol
 			}
 			it.Path = data
 		case "type":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58070,8 +57952,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 		}
 		switch k {
 		case "chapAuthDiscovery":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chapAuthDiscovery"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -58079,8 +57959,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 			}
 			it.ChapAuthDiscovery = data
 		case "chapAuthSession":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chapAuthSession"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -58088,8 +57966,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 			}
 			it.ChapAuthSession = data
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58097,8 +57973,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 			}
 			it.FsType = data
 		case "initiatorName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("initiatorName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58106,8 +57980,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 			}
 			it.InitiatorName = data
 		case "iqn":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iqn"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -58115,8 +57987,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 			}
 			it.Iqn = data
 		case "iscsiInterface":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iscsiInterface"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58124,8 +57994,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 			}
 			it.IscsiInterface = data
 		case "lun":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lun"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -58133,8 +58001,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 			}
 			it.Lun = data
 		case "portals":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portals"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -58142,8 +58008,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 			}
 			it.Portals = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -58151,8 +58015,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 			}
 			it.ReadOnly = data
 		case "secretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
@@ -58160,8 +58022,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersis
 			}
 			it.SecretRef = data
 		case "targetPortal":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPortal"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -58189,8 +58049,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__LocalVolume
 		}
 		switch k {
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58198,8 +58056,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__LocalVolume
 			}
 			it.FsType = data
 		case "path":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -58227,8 +58083,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NFSVolumeSo
 		}
 		switch k {
 		case "path":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -58236,8 +58090,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NFSVolumeSo
 			}
 			it.Path = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -58245,8 +58097,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NFSVolumeSo
 			}
 			it.ReadOnly = data
 		case "server":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("server"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -58274,8 +58124,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceCo
 		}
 		switch k {
 		case "lastTransitionTime":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTransitionTime"))
 			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
@@ -58283,8 +58131,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceCo
 			}
 			it.LastTransitionTime = data
 		case "message":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58292,8 +58138,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceCo
 			}
 			it.Message = data
 		case "reason":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58301,8 +58145,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceCo
 			}
 			it.Reason = data
 		case "status":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalNK8s__io___api___core___v1__ConditionStatus2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ConditionStatus(ctx, v)
 			if err != nil {
@@ -58310,8 +58152,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceCo
 			}
 			it.Status = data
 		case "type":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalNK8s__io___api___core___v1__NamespaceConditionType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionType(ctx, v)
 			if err != nil {
@@ -58339,8 +58179,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceSp
 		}
 		switch k {
 		case "finalizers":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("finalizers"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -58368,8 +58206,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceSt
 		}
 		switch k {
 		case "conditions":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("conditions"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__NamespaceConditionIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionInᚄ(ctx, v)
 			if err != nil {
@@ -58377,8 +58213,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceSt
 			}
 			it.Conditions = data
 		case "phase":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phase"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__NamespacePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespacePhase(ctx, v)
 			if err != nil {
@@ -58406,8 +58240,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeAffinit
 		}
 		switch k {
 		case "preferredDuringSchedulingIgnoredDuringExecution":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preferredDuringSchedulingIgnoredDuringExecution"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PreferredSchedulingTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTermInᚄ(ctx, v)
 			if err != nil {
@@ -58415,8 +58247,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeAffinit
 			}
 			it.PreferredDuringSchedulingIgnoredDuringExecution = data
 		case "requiredDuringSchedulingIgnoredDuringExecution":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiredDuringSchedulingIgnoredDuringExecution"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorIn(ctx, v)
 			if err != nil {
@@ -58444,8 +58274,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelecto
 		}
 		switch k {
 		case "nodeSelectorTerms":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelectorTerms"))
 			data, err := ec.unmarshalNK8s__io___api___core___v1__NodeSelectorTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermInᚄ(ctx, v)
 			if err != nil {
@@ -58473,8 +58301,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelecto
 		}
 		switch k {
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -58482,8 +58308,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelecto
 			}
 			it.Key = data
 		case "operator":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
 			data, err := ec.unmarshalNK8s__io___api___core___v1__NodeSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorOperator(ctx, v)
 			if err != nil {
@@ -58491,8 +58315,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelecto
 			}
 			it.Operator = data
 		case "values":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -58520,8 +58342,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelecto
 		}
 		switch k {
 		case "matchExpressions":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchExpressions"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementInᚄ(ctx, v)
 			if err != nil {
@@ -58529,8 +58349,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelecto
 			}
 			it.MatchExpressions = data
 		case "matchFields":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchFields"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementInᚄ(ctx, v)
 			if err != nil {
@@ -58558,8 +58376,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ObjectRefer
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58567,8 +58383,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ObjectRefer
 			}
 			it.APIVersion = data
 		case "fieldPath":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fieldPath"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58576,8 +58390,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ObjectRefer
 			}
 			it.FieldPath = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58585,8 +58397,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ObjectRefer
 			}
 			it.Kind = data
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58594,8 +58404,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ObjectRefer
 			}
 			it.Name = data
 		case "namespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58603,8 +58411,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ObjectRefer
 			}
 			it.Namespace = data
 		case "resourceVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceVersion"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58612,8 +58418,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ObjectRefer
 			}
 			it.ResourceVersion = data
 		case "uid":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("uid"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58641,8 +58445,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 		}
 		switch k {
 		case "lastProbeTime":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastProbeTime"))
 			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
@@ -58650,8 +58452,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.LastProbeTime = data
 		case "lastTransitionTime":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTransitionTime"))
 			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
@@ -58659,8 +58459,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.LastTransitionTime = data
 		case "message":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58668,8 +58466,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Message = data
 		case "reason":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58677,8 +58473,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Reason = data
 		case "status":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalNK8s__io___api___core___v1__ConditionStatus2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ConditionStatus(ctx, v)
 			if err != nil {
@@ -58686,8 +58480,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Status = data
 		case "type":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalNK8s__io___api___core___v1__PersistentVolumeClaimConditionType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeClaimConditionType(ctx, v)
 			if err != nil {
@@ -58715,8 +58507,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 		}
 		switch k {
 		case "accessModes":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessModes"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -58724,8 +58514,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.AccessModes = data
 		case "dataSource":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSource"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__TypedLocalObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TypedLocalObjectReferenceIn(ctx, v)
 			if err != nil {
@@ -58733,8 +58521,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.DataSource = data
 		case "dataSourceRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSourceRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__TypedObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TypedObjectReferenceIn(ctx, v)
 			if err != nil {
@@ -58742,8 +58528,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.DataSourceRef = data
 		case "resources":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resources"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__ResourceRequirementsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ResourceRequirementsIn(ctx, v)
 			if err != nil {
@@ -58751,8 +58535,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Resources = data
 		case "selector":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("selector"))
 			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
 			if err != nil {
@@ -58760,8 +58542,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Selector = data
 		case "storageClassName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageClassName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58769,8 +58549,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.StorageClassName = data
 		case "volumeMode":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeMode"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58778,8 +58556,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.VolumeMode = data
 		case "volumeName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -58807,8 +58583,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 		}
 		switch k {
 		case "accessModes":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessModes"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -58816,8 +58590,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.AccessModes = data
 		case "allocatedResources":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocatedResources"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -58825,8 +58597,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.AllocatedResources = data
 		case "allocatedResourceStatuses":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocatedResourceStatuses"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -58834,8 +58604,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.AllocatedResourceStatuses = data
 		case "capacity":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("capacity"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -58843,8 +58611,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Capacity = data
 		case "conditions":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("conditions"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeClaimConditionIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeClaimConditionInᚄ(ctx, v)
 			if err != nil {
@@ -58852,8 +58618,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Conditions = data
 		case "phase":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phase"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeClaimPhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeClaimPhase(ctx, v)
 			if err != nil {
@@ -58881,8 +58645,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 		}
 		switch k {
 		case "accessModes":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessModes"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -58890,8 +58652,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.AccessModes = data
 		case "awsElasticBlockStore":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("awsElasticBlockStore"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -58899,8 +58659,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.AwsElasticBlockStore = data
 		case "azureDisk":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("azureDisk"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__AzureDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureDiskVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -58908,8 +58666,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.AzureDisk = data
 		case "azureFile":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("azureFile"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureFilePersistentVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -58917,8 +58673,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.AzureFile = data
 		case "capacity":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("capacity"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -58926,8 +58680,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Capacity = data
 		case "cephfs":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cephfs"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__CephFSPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CephFSPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -58935,8 +58687,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Cephfs = data
 		case "cinder":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cinder"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__CinderPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CinderPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -58944,8 +58694,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Cinder = data
 		case "claimRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claimRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__ObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReferenceIn(ctx, v)
 			if err != nil {
@@ -58953,8 +58701,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.ClaimRef = data
 		case "csi":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("csi"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__CSIPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CSIPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -58962,8 +58708,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Csi = data
 		case "fc":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fc"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__FCVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FCVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -58971,8 +58715,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Fc = data
 		case "flexVolume":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("flexVolume"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__FlexPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlexPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -58980,8 +58722,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.FlexVolume = data
 		case "flocker":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("flocker"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__FlockerVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlockerVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -58989,8 +58729,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Flocker = data
 		case "gcePersistentDisk":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gcePersistentDisk"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GCEPersistentDiskVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -58998,8 +58736,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.GcePersistentDisk = data
 		case "glusterfs":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("glusterfs"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GlusterfsPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59007,8 +58743,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Glusterfs = data
 		case "hostPath":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hostPath"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__HostPathVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1HostPathVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59016,8 +58750,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.HostPath = data
 		case "iscsi":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iscsi"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ISCSIPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59025,8 +58757,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Iscsi = data
 		case "local":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("local"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__LocalVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1LocalVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59034,8 +58764,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Local = data
 		case "mountOptions":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mountOptions"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -59043,8 +58771,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.MountOptions = data
 		case "nfs":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nfs"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__NFSVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NFSVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59052,8 +58778,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Nfs = data
 		case "nodeAffinity":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeAffinity"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__VolumeNodeAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VolumeNodeAffinityIn(ctx, v)
 			if err != nil {
@@ -59061,8 +58785,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.NodeAffinity = data
 		case "persistentVolumeReclaimPolicy":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("persistentVolumeReclaimPolicy"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeReclaimPolicy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeReclaimPolicy(ctx, v)
 			if err != nil {
@@ -59070,8 +58792,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.PersistentVolumeReclaimPolicy = data
 		case "photonPersistentDisk":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("photonPersistentDisk"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PhotonPersistentDiskVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59079,8 +58799,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.PhotonPersistentDisk = data
 		case "portworxVolume":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portworxVolume"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PortworxVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PortworxVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59088,8 +58806,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.PortworxVolume = data
 		case "quobyte":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quobyte"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__QuobyteVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1QuobyteVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59097,8 +58813,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Quobyte = data
 		case "rbd":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rbd"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__RBDPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1RBDPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59106,8 +58820,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Rbd = data
 		case "scaleIO":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scaleIO"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59115,8 +58827,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.ScaleIo = data
 		case "storageClassName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageClassName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59124,8 +58834,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.StorageClassName = data
 		case "storageos":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageos"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1StorageOSPersistentVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59133,8 +58841,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Storageos = data
 		case "volumeMode":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeMode"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59142,8 +58848,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.VolumeMode = data
 		case "vsphereVolume":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vsphereVolume"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn(ctx, v)
 			if err != nil {
@@ -59171,8 +58875,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 		}
 		switch k {
 		case "lastPhaseTransitionTime":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastPhaseTransitionTime"))
 			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
@@ -59180,8 +58882,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.LastPhaseTransitionTime = data
 		case "message":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59189,8 +58889,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Message = data
 		case "phase":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phase"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumePhase(ctx, v)
 			if err != nil {
@@ -59198,8 +58896,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 			}
 			it.Phase = data
 		case "reason":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59227,8 +58923,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PhotonPersi
 		}
 		switch k {
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59236,8 +58930,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PhotonPersi
 			}
 			it.FsType = data
 		case "pdID":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pdID"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -59265,8 +58957,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAffinity
 		}
 		switch k {
 		case "preferredDuringSchedulingIgnoredDuringExecution":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preferredDuringSchedulingIgnoredDuringExecution"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__WeightedPodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermInᚄ(ctx, v)
 			if err != nil {
@@ -59274,8 +58964,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAffinity
 			}
 			it.PreferredDuringSchedulingIgnoredDuringExecution = data
 		case "requiredDuringSchedulingIgnoredDuringExecution":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiredDuringSchedulingIgnoredDuringExecution"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermInᚄ(ctx, v)
 			if err != nil {
@@ -59303,8 +58991,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAffinity
 		}
 		switch k {
 		case "labelSelector":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labelSelector"))
 			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
 			if err != nil {
@@ -59312,8 +58998,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAffinity
 			}
 			it.LabelSelector = data
 		case "namespaces":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespaces"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -59321,8 +59005,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAffinity
 			}
 			it.Namespaces = data
 		case "namespaceSelector":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespaceSelector"))
 			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
 			if err != nil {
@@ -59330,8 +59012,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAffinity
 			}
 			it.NamespaceSelector = data
 		case "topologyKey":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topologyKey"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -59359,8 +59039,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAntiAffi
 		}
 		switch k {
 		case "preferredDuringSchedulingIgnoredDuringExecution":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preferredDuringSchedulingIgnoredDuringExecution"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__WeightedPodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermInᚄ(ctx, v)
 			if err != nil {
@@ -59368,8 +59046,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAntiAffi
 			}
 			it.PreferredDuringSchedulingIgnoredDuringExecution = data
 		case "requiredDuringSchedulingIgnoredDuringExecution":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requiredDuringSchedulingIgnoredDuringExecution"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PodAffinityTermIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermInᚄ(ctx, v)
 			if err != nil {
@@ -59397,8 +59073,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PortworxVol
 		}
 		switch k {
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59406,8 +59080,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PortworxVol
 			}
 			it.FsType = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -59415,8 +59087,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PortworxVol
 			}
 			it.ReadOnly = data
 		case "volumeID":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeID"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -59444,8 +59114,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PreferredSc
 		}
 		switch k {
 		case "preference":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preference"))
 			data, err := ec.unmarshalNK8s__io___api___core___v1__NodeSelectorTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorTermIn(ctx, v)
 			if err != nil {
@@ -59453,8 +59121,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PreferredSc
 			}
 			it.Preference = data
 		case "weight":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weight"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -59482,8 +59148,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__QuobyteVolu
 		}
 		switch k {
 		case "group":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("group"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59491,8 +59155,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__QuobyteVolu
 			}
 			it.Group = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -59500,8 +59162,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__QuobyteVolu
 			}
 			it.ReadOnly = data
 		case "registry":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("registry"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -59509,8 +59169,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__QuobyteVolu
 			}
 			it.Registry = data
 		case "tenant":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tenant"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59518,8 +59176,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__QuobyteVolu
 			}
 			it.Tenant = data
 		case "user":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59527,8 +59183,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__QuobyteVolu
 			}
 			it.User = data
 		case "volume":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volume"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -59556,8 +59210,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__RBDPersiste
 		}
 		switch k {
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59565,8 +59217,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__RBDPersiste
 			}
 			it.FsType = data
 		case "image":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -59574,8 +59224,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__RBDPersiste
 			}
 			it.Image = data
 		case "keyring":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keyring"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59583,8 +59231,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__RBDPersiste
 			}
 			it.Keyring = data
 		case "monitors":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("monitors"))
 			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -59592,8 +59238,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__RBDPersiste
 			}
 			it.Monitors = data
 		case "pool":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pool"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59601,8 +59245,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__RBDPersiste
 			}
 			it.Pool = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -59610,8 +59252,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__RBDPersiste
 			}
 			it.ReadOnly = data
 		case "secretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
@@ -59619,8 +59259,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__RBDPersiste
 			}
 			it.SecretRef = data
 		case "user":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59648,8 +59286,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ResourceCla
 		}
 		switch k {
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -59677,8 +59313,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ResourceReq
 		}
 		switch k {
 		case "claims":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claims"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__ResourceClaimIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ResourceClaimInᚄ(ctx, v)
 			if err != nil {
@@ -59686,8 +59320,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ResourceReq
 			}
 			it.Claims = data
 		case "limits":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limits"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -59695,8 +59327,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ResourceReq
 			}
 			it.Limits = data
 		case "requests":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requests"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -59724,8 +59354,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPers
 		}
 		switch k {
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59733,8 +59361,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPers
 			}
 			it.FsType = data
 		case "gateway":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gateway"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -59742,8 +59368,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPers
 			}
 			it.Gateway = data
 		case "protectionDomain":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("protectionDomain"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59751,8 +59375,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPers
 			}
 			it.ProtectionDomain = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -59760,8 +59382,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPers
 			}
 			it.ReadOnly = data
 		case "secretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
 			if err != nil {
@@ -59769,8 +59389,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPers
 			}
 			it.SecretRef = data
 		case "sslEnabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sslEnabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -59778,8 +59396,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPers
 			}
 			it.SslEnabled = data
 		case "storageMode":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageMode"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59787,8 +59403,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPers
 			}
 			it.StorageMode = data
 		case "storagePool":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePool"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59796,8 +59410,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPers
 			}
 			it.StoragePool = data
 		case "system":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("system"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -59805,8 +59417,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPers
 			}
 			it.System = data
 		case "volumeName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59834,8 +59444,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__SecretRefer
 		}
 		switch k {
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59843,8 +59451,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__SecretRefer
 			}
 			it.Name = data
 		case "namespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59872,8 +59478,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__StorageOSPe
 		}
 		switch k {
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59881,8 +59485,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__StorageOSPe
 			}
 			it.FsType = data
 		case "readOnly":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -59890,8 +59492,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__StorageOSPe
 			}
 			it.ReadOnly = data
 		case "secretRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__ObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReferenceIn(ctx, v)
 			if err != nil {
@@ -59899,8 +59499,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__StorageOSPe
 			}
 			it.SecretRef = data
 		case "volumeName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59908,8 +59506,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__StorageOSPe
 			}
 			it.VolumeName = data
 		case "volumeNamespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeNamespace"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59937,8 +59533,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TaintIn(ctx
 		}
 		switch k {
 		case "effect":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effect"))
 			data, err := ec.unmarshalNK8s__io___api___core___v1__TaintEffect2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TaintEffect(ctx, v)
 			if err != nil {
@@ -59946,8 +59540,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TaintIn(ctx
 			}
 			it.Effect = data
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -59955,8 +59547,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TaintIn(ctx
 			}
 			it.Key = data
 		case "timeAdded":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeAdded"))
 			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
@@ -59964,8 +59554,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TaintIn(ctx
 			}
 			it.TimeAdded = data
 		case "value":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -59993,8 +59581,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationI
 		}
 		switch k {
 		case "effect":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effect"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__TaintEffect2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TaintEffect(ctx, v)
 			if err != nil {
@@ -60002,8 +59588,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationI
 			}
 			it.Effect = data
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60011,8 +59595,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationI
 			}
 			it.Key = data
 		case "operator":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__TolerationOperator2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationOperator(ctx, v)
 			if err != nil {
@@ -60020,8 +59602,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationI
 			}
 			it.Operator = data
 		case "tolerationSeconds":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tolerationSeconds"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -60029,8 +59609,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationI
 			}
 			it.TolerationSeconds = data
 		case "value":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60058,8 +59636,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TypedLocalO
 		}
 		switch k {
 		case "apiGroup":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiGroup"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60067,8 +59643,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TypedLocalO
 			}
 			it.APIGroup = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -60076,8 +59650,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TypedLocalO
 			}
 			it.Kind = data
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -60105,8 +59677,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TypedObject
 		}
 		switch k {
 		case "apiGroup":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiGroup"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60114,8 +59684,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TypedObject
 			}
 			it.APIGroup = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -60123,8 +59691,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TypedObject
 			}
 			it.Kind = data
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -60132,8 +59698,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TypedObject
 			}
 			it.Name = data
 		case "namespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60161,8 +59725,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__VolumeNodeA
 		}
 		switch k {
 		case "required":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("required"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__NodeSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorIn(ctx, v)
 			if err != nil {
@@ -60190,8 +59752,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__VsphereVirt
 		}
 		switch k {
 		case "fsType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60199,8 +59759,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__VsphereVirt
 			}
 			it.FsType = data
 		case "storagePolicyID":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePolicyID"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60208,8 +59766,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__VsphereVirt
 			}
 			it.StoragePolicyID = data
 		case "storagePolicyName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePolicyName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60217,8 +59773,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__VsphereVirt
 			}
 			it.StoragePolicyName = data
 		case "volumePath":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumePath"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -60246,8 +59800,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__WeightedPod
 		}
 		switch k {
 		case "podAffinityTerm":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("podAffinityTerm"))
 			data, err := ec.unmarshalNK8s__io___api___core___v1__PodAffinityTermIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinityTermIn(ctx, v)
 			if err != nil {
@@ -60255,8 +59807,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__WeightedPod
 			}
 			it.PodAffinityTerm = data
 		case "weight":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weight"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -60284,8 +59834,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 		}
 		switch k {
 		case "inlineVolumeSpec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inlineVolumeSpec"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeSpecIn(ctx, v)
 			if err != nil {
@@ -60293,8 +59841,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 			}
 			it.InlineVolumeSpec = data
 		case "persistentVolumeName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("persistentVolumeName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60322,8 +59868,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 		}
 		switch k {
 		case "attacher":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attacher"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -60331,8 +59875,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 			}
 			it.Attacher = data
 		case "nodeName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -60340,8 +59882,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 			}
 			it.NodeName = data
 		case "source":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
 			data, err := ec.unmarshalNK8s__io___api___storage___v1__VolumeAttachmentSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSourceIn(ctx, v)
 			if err != nil {
@@ -60369,8 +59909,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 		}
 		switch k {
 		case "attached":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attached"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -60378,8 +59916,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 			}
 			it.Attached = data
 		case "attachError":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachError"))
 			data, err := ec.unmarshalOK8s__io___api___storage___v1__VolumeErrorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeErrorIn(ctx, v)
 			if err != nil {
@@ -60387,8 +59923,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 			}
 			it.AttachError = data
 		case "attachmentMetadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachmentMetadata"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -60396,8 +59930,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAt
 			}
 			it.AttachmentMetadata = data
 		case "detachError":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("detachError"))
 			data, err := ec.unmarshalOK8s__io___api___storage___v1__VolumeErrorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeErrorIn(ctx, v)
 			if err != nil {
@@ -60425,8 +59957,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeEr
 		}
 		switch k {
 		case "message":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60434,8 +59964,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeEr
 			}
 			it.Message = data
 		case "time":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("time"))
 			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
@@ -60463,8 +59991,6 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___api___r
 		}
 		switch k {
 		case "Format":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Format"))
 			data, err := ec.unmarshalNK8s__io___apimachinery___pkg___api___resource__Format2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgAPIResourceFormat(ctx, v)
 			if err != nil {
@@ -60492,8 +60018,6 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 		}
 		switch k {
 		case "matchExpressions":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchExpressions"))
 			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementInᚄ(ctx, v)
 			if err != nil {
@@ -60501,8 +60025,6 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 			}
 			it.MatchExpressions = data
 		case "matchLabels":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchLabels"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -60530,8 +60052,6 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 		}
 		switch k {
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -60539,8 +60059,6 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 			}
 			it.Key = data
 		case "operator":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
 			data, err := ec.unmarshalNK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorOperator(ctx, v)
 			if err != nil {
@@ -60548,8 +60066,6 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 			}
 			it.Operator = data
 		case "values":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -60577,8 +60093,6 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 		}
 		switch k {
 		case "array":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("array"))
 			data, err := ec.unmarshalOAny2ᚕinterfaceᚄ(ctx, v)
 			if err != nil {
@@ -60586,8 +60100,6 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 			}
 			it.Array = data
 		case "exact":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exact"))
 			data, err := ec.unmarshalOAny2interface(ctx, v)
 			if err != nil {
@@ -60595,8 +60107,6 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 			}
 			it.Exact = data
 		case "matchType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchType"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx, v)
 			if err != nil {
@@ -60606,8 +60116,6 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 				return it, err
 			}
 		case "notInArray":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notInArray"))
 			data, err := ec.unmarshalOAny2ᚕinterfaceᚄ(ctx, v)
 			if err != nil {
@@ -60615,8 +60123,6 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 			}
 			it.NotInArray = data
 		case "regex":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("regex"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60644,8 +60150,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 		}
 		switch k {
 		case "annotations":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("annotations"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -60655,8 +60159,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 				return it, err
 			}
 		case "labels":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -60666,8 +60168,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 				return it, err
 			}
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -60675,8 +60175,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 			}
 			it.Name = data
 		case "namespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -60704,8 +60202,6 @@ func (ec *executionContext) unmarshalInputNamespaceIn(ctx context.Context, obj i
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -60713,8 +60209,6 @@ func (ec *executionContext) unmarshalInputNamespaceIn(ctx context.Context, obj i
 			}
 			it.APIVersion = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -60722,8 +60216,6 @@ func (ec *executionContext) unmarshalInputNamespaceIn(ctx context.Context, obj i
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -60733,8 +60225,6 @@ func (ec *executionContext) unmarshalInputNamespaceIn(ctx context.Context, obj i
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__NamespaceSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceSpecIn(ctx, v)
 			if err != nil {
@@ -60744,8 +60234,6 @@ func (ec *executionContext) unmarshalInputNamespaceIn(ctx context.Context, obj i
 				return it, err
 			}
 		case "status":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__NamespaceStatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceStatusIn(ctx, v)
 			if err != nil {
@@ -60775,8 +60263,6 @@ func (ec *executionContext) unmarshalInputNodeIn(ctx context.Context, obj interf
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60784,8 +60270,6 @@ func (ec *executionContext) unmarshalInputNodeIn(ctx context.Context, obj interf
 			}
 			it.APIVersion = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -60793,8 +60277,6 @@ func (ec *executionContext) unmarshalInputNodeIn(ctx context.Context, obj interf
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -60802,8 +60284,6 @@ func (ec *executionContext) unmarshalInputNodeIn(ctx context.Context, obj interf
 			}
 			it.Metadata = data
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpecIn(ctx, v)
 			if err != nil {
@@ -60831,8 +60311,6 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -60840,8 +60318,6 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 			}
 			it.APIVersion = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -60849,8 +60325,6 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 			}
 			it.DisplayName = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -60858,8 +60332,6 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -60869,8 +60341,6 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecIn(ctx, v)
 			if err != nil {
@@ -60900,8 +60370,6 @@ func (ec *executionContext) unmarshalInputPersistentVolumeIn(ctx context.Context
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -60909,8 +60377,6 @@ func (ec *executionContext) unmarshalInputPersistentVolumeIn(ctx context.Context
 			}
 			it.APIVersion = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -60918,8 +60384,6 @@ func (ec *executionContext) unmarshalInputPersistentVolumeIn(ctx context.Context
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -60929,8 +60393,6 @@ func (ec *executionContext) unmarshalInputPersistentVolumeIn(ctx context.Context
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeSpecIn(ctx, v)
 			if err != nil {
@@ -60940,8 +60402,6 @@ func (ec *executionContext) unmarshalInputPersistentVolumeIn(ctx context.Context
 				return it, err
 			}
 		case "status":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeStatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeStatusIn(ctx, v)
 			if err != nil {
@@ -60971,8 +60431,6 @@ func (ec *executionContext) unmarshalInputSearchCluster(ctx context.Context, obj
 		}
 		switch k {
 		case "cloudProviderName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProviderName"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -60980,8 +60438,6 @@ func (ec *executionContext) unmarshalInputSearchCluster(ctx context.Context, obj
 			}
 			it.CloudProviderName = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -60989,8 +60445,6 @@ func (ec *executionContext) unmarshalInputSearchCluster(ctx context.Context, obj
 			}
 			it.IsReady = data
 		case "region":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -60998,8 +60452,6 @@ func (ec *executionContext) unmarshalInputSearchCluster(ctx context.Context, obj
 			}
 			it.Region = data
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61027,8 +60479,6 @@ func (ec *executionContext) unmarshalInputSearchClusterManagedService(ctx contex
 		}
 		switch k {
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61036,8 +60486,6 @@ func (ec *executionContext) unmarshalInputSearchClusterManagedService(ctx contex
 			}
 			it.IsReady = data
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61065,8 +60513,6 @@ func (ec *executionContext) unmarshalInputSearchDomainEntry(ctx context.Context,
 		}
 		switch k {
 		case "clusterName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61074,8 +60520,6 @@ func (ec *executionContext) unmarshalInputSearchDomainEntry(ctx context.Context,
 			}
 			it.ClusterName = data
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61103,8 +60547,6 @@ func (ec *executionContext) unmarshalInputSearchGlobalVPNDevices(ctx context.Con
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61112,8 +60554,6 @@ func (ec *executionContext) unmarshalInputSearchGlobalVPNDevices(ctx context.Con
 			}
 			it.Text = data
 		case "creationMethod":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creationMethod"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61141,8 +60581,6 @@ func (ec *executionContext) unmarshalInputSearchGlobalVPNs(ctx context.Context, 
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61170,8 +60608,6 @@ func (ec *executionContext) unmarshalInputSearchHelmRelease(ctx context.Context,
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61179,8 +60615,6 @@ func (ec *executionContext) unmarshalInputSearchHelmRelease(ctx context.Context,
 			}
 			it.Text = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61208,8 +60642,6 @@ func (ec *executionContext) unmarshalInputSearchNamespaces(ctx context.Context, 
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61237,8 +60669,6 @@ func (ec *executionContext) unmarshalInputSearchNodepool(ctx context.Context, ob
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61266,8 +60696,6 @@ func (ec *executionContext) unmarshalInputSearchPersistentVolumeClaims(ctx conte
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61295,8 +60723,6 @@ func (ec *executionContext) unmarshalInputSearchPersistentVolumes(ctx context.Co
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61324,8 +60750,6 @@ func (ec *executionContext) unmarshalInputSearchProviderSecret(ctx context.Conte
 		}
 		switch k {
 		case "cloudProviderName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProviderName"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61333,8 +60757,6 @@ func (ec *executionContext) unmarshalInputSearchProviderSecret(ctx context.Conte
 			}
 			it.CloudProviderName = data
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61362,8 +60784,6 @@ func (ec *executionContext) unmarshalInputSearchVolumeAttachments(ctx context.Co
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -61391,8 +60811,6 @@ func (ec *executionContext) unmarshalInputVolumeAttachmentIn(ctx context.Context
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -61400,8 +60818,6 @@ func (ec *executionContext) unmarshalInputVolumeAttachmentIn(ctx context.Context
 			}
 			it.APIVersion = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -61409,8 +60825,6 @@ func (ec *executionContext) unmarshalInputVolumeAttachmentIn(ctx context.Context
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -61420,8 +60834,6 @@ func (ec *executionContext) unmarshalInputVolumeAttachmentIn(ctx context.Context
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalNK8s__io___api___storage___v1__VolumeAttachmentSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSpecIn(ctx, v)
 			if err != nil {
@@ -61431,8 +60843,6 @@ func (ec *executionContext) unmarshalInputVolumeAttachmentIn(ctx context.Context
 				return it, err
 			}
 		case "status":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalOK8s__io___api___storage___v1__VolumeAttachmentStatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentStatusIn(ctx, v)
 			if err != nil {
@@ -61468,11 +60878,6 @@ func (ec *executionContext) _BYOKCluster(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = graphql.MarshalString("BYOKCluster")
 		case "accountName":
 			out.Values[i] = ec._BYOKCluster_accountName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "clusterPublicEndpoint":
-			out.Values[i] = ec._BYOKCluster_clusterPublicEndpoint(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -61610,6 +61015,42 @@ func (ec *executionContext) _BYOKCluster(ctx context.Context, sel ast.SelectionS
 					}
 				}()
 				res = ec._BYOKCluster_updateTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "visibility":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BYOKCluster_visibility(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -63475,6 +62916,47 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___inte
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials_cfParamRoleName(ctx, field, obj)
 		case "cfParamStackName":
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials_cfParamStackName(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityImplementors = []string{"Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility"}
+
+func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility")
+		case "mode":
+			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility_mode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "publicEndpoint":
+			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility_publicEndpoint(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -66192,6 +65674,11 @@ func (ec *executionContext) _GlobalVPN(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = ec._GlobalVPN_markedForDeletion(ctx, field, obj)
 		case "metadata":
 			out.Values[i] = ec._GlobalVPN_metadata(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "nonClusterUseAllowedIPs":
+			out.Values[i] = ec._GlobalVPN_nonClusterUseAllowedIPs(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -73652,6 +73139,40 @@ func (ec *executionContext) marshalNFieldSet2string(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility) graphql.Marshaler {
+	return ec._Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode, error) {
+	var res model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNGithub__com___kloudlite___api___apps___infra___internal___entities__InputField2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsInfraInternalEntitiesInputFieldᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GithubComKloudliteAPIAppsInfraInternalEntitiesInputField) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -75566,6 +75087,85 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNfederation__Policy2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Policy2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Policy2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Policy2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2ᚕᚕstringᚄ(ctx context.Context, v interface{}) ([][]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([][]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Policy2ᚕstringᚄ(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Policy2ᚕᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v [][]string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Policy2ᚕstringᚄ(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNfederation__Scope2string(ctx context.Context, v interface{}) (string, error) {
