@@ -45,8 +45,8 @@ type GlobalVPNConnection struct {
 
 	Visibility ClusterVisbility `json:"visibility" graphql:"noinput"`
 
-	ClusterPublicEndpoint string                 `json:"clusterPublicEndpoint" graphql:"noinput"`
-	DeviceRef             GlobalVPNConnDeviceRef `json:"deviceRef" graphql:"noinput"`
+	// ClusterPublicEndpoint string                 `json:"clusterPublicEndpoint" graphql:"noinput"`
+	DeviceRef GlobalVPNConnDeviceRef `json:"deviceRef" graphql:"noinput"`
 
 	// ParsedWgParams *wgv1.WgParams `json:"parsedWgParams" graphql:"ignore"`
 	ParsedWgParams *networkingv1.WireguardKeys `json:"parsedWgParams" graphql:"ignore"`

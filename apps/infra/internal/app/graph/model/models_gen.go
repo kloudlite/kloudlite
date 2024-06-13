@@ -125,6 +125,15 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn struct
 	AuthSecretKeys   *GithubComKloudliteAPIAppsInfraInternalEntitiesAWSAuthSecretKeysIn   `json:"authSecretKeys,omitempty"`
 }
 
+type GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility struct {
+	Mode           GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode `json:"mode"`
+	PublicEndpoint *string                                                             `json:"publicEndpoint,omitempty"`
+}
+
+type GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbilityIn struct {
+	Mode GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode `json:"mode"`
+}
+
 type GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentials struct {
 	ServiceAccountJSON string `json:"serviceAccountJSON"`
 }
@@ -1389,6 +1398,9 @@ type K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementIn struct {
 	Values   []string                                            `json:"values,omitempty"`
 }
 
+type Mutation struct {
+}
+
 type NamespaceEdge struct {
 	Cursor string              `json:"cursor"`
 	Node   *entities.Namespace `json:"node"`
@@ -1458,6 +1470,9 @@ type PersistentVolumePaginatedRecords struct {
 	TotalCount int                     `json:"totalCount"`
 }
 
+type Query struct {
+}
+
 type SearchCluster struct {
 	CloudProviderName *repos.MatchFilter `json:"cloudProviderName,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
@@ -1523,6 +1538,47 @@ type VolumeAttachmentPaginatedRecords struct {
 	Edges      []*VolumeAttachmentEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount int                     `json:"totalCount"`
+}
+
+type GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode string
+
+const (
+	GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityModePrivate GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode = "private"
+	GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityModePublic  GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode = "public"
+)
+
+var AllGithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode = []GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode{
+	GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityModePrivate,
+	GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityModePublic,
+}
+
+func (e GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode) IsValid() bool {
+	switch e {
+	case GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityModePrivate, GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityModePublic:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type GithubComKloudliteAPIPkgReposMatchType string

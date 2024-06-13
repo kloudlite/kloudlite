@@ -20,6 +20,11 @@ type Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecr
   cfParamStackName: String
 }
 
+type Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility @shareable {
+  mode: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode!
+  publicEndpoint: String
+}
+
 type Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentials @shareable {
   serviceAccountJSON: String!
 }
@@ -789,6 +794,10 @@ input Github__com___kloudlite___api___apps___infra___internal___entities__AWSSec
   authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn
 }
 
+input Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn {
+  mode: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode!
+}
+
 input Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentialsIn {
   serviceAccountJSON: String!
 }
@@ -1334,6 +1343,11 @@ input MetadataIn {
   labels: Map
   name: String!
   namespace: String
+}
+
+enum Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode {
+  private
+  public
 }
 
 enum Github__com___kloudlite___api___pkg___repos__MatchType {

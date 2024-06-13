@@ -18,7 +18,7 @@ const (
 
 type ClusterVisbility struct {
 	Mode           ClusterVisibilityMode `json:"mode"`
-	PublicEndpoint *string               `json:"publicEndpoint"`
+	PublicEndpoint *string               `json:"publicEndpoint" graphql:"noinput"`
 }
 
 type BYOKCluster struct {
@@ -26,11 +26,10 @@ type BYOKCluster struct {
 
 	metav1.ObjectMeta `json:"metadata"`
 
-	GlobalVPN             string `json:"globalVPN" graphql:"noinput"`
-	ClusterSvcCIDR        string `json:"clusterSvcCIDR" graphql:"noinput"`
-	ClusterPublicEndpoint string `json:"clusterPublicEndpoint" graphql:"noinput"`
+	GlobalVPN      string `json:"globalVPN" graphql:"noinput"`
+	ClusterSvcCIDR string `json:"clusterSvcCIDR" graphql:"noinput"`
 
-	Visibility ClusterVisbility `json:"visibility" graphql:"noinput"`
+	Visibility ClusterVisbility `json:"visibility"`
 
 	ClusterToken            string `json:"clusterToken" graphql:"noinput"`
 	MessageQueueTopicName   string `json:"messageQueueTopicName" graphql:"noinput"`
@@ -44,7 +43,7 @@ type BYOKCluster struct {
 }
 
 func (c *BYOKCluster) GetDisplayName() string {
-	return c.ResourceMetadata.DisplayName
+	return c.DisplayName
 }
 
 func (c *BYOKCluster) GetStatus() operator.Status {
