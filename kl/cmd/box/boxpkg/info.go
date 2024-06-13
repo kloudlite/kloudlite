@@ -17,11 +17,11 @@ func (c *client) Info(contName string) error {
 		conts, err := c.listContainer(map[string]string{
 			CONT_MARK_KEY: "true",
 		})
-		if err != nil && err != notFoundErr {
+		if err != nil && err != NotFoundErr {
 			return err
 		}
 
-		if err == notFoundErr && len(conts) == 0 {
+		if err == NotFoundErr && len(conts) == 0 {
 			return fmt.Errorf("no running container found")
 		}
 
@@ -35,16 +35,16 @@ func (c *client) Info(contName string) error {
 		contName = cName.Name
 	}
 
-	cr, err := c.getContainer(map[string]string{
+	cr, err := c.GetContainer(map[string]string{
 		CONT_MARK_KEY: "true",
 		CONT_NAME_KEY: contName,
 	})
 
-	if err != nil && err != notFoundErr {
+	if err != nil && err != NotFoundErr {
 		return err
 	}
 
-	if err == notFoundErr {
+	if err == NotFoundErr {
 		fn.Logf("no running container found")
 		return nil
 	}

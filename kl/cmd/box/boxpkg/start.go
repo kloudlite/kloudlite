@@ -9,10 +9,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/adrg/xdg"
 	"github.com/kloudlite/kl/constants"
 	cl "github.com/kloudlite/kl/domain/client"
-	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -29,11 +27,11 @@ func (c *client) Start() error {
 		fn.Logf("starting container in: %s", text.Blue(c.cwd))
 	}
 
-	cr, err := c.getContainer(map[string]string{
+	cr, err := c.GetContainer(map[string]string{
 		CONT_NAME_KEY: c.containerName,
 		CONT_MARK_KEY: "true",
 	})
-	if err != nil && err != notFoundErr {
+	if err != nil && err != NotFoundErr {
 		return err
 	}
 
@@ -74,15 +72,15 @@ func (c *client) Start() error {
 		return err
 	}
 
-	localEnv, err := cl.CurrentEnv()
+	localEnv, err := cl.EnvOfPath(c.cwd)
 	if err != nil {
 		return err
 	}
 
-	e, err := server.GetEnv(localEnv.Name)
-	if err != nil {
-		return err
-	}
+	// e, err := server.GetEnv(localEnv.Name)
+	// if err != nil {
+	// 	return err
+	// }
 
 	configuration, err := base64.StdEncoding.DecodeString(d.WireguardConfig.Value)
 	if err != nil {
@@ -114,7 +112,12 @@ func (c *client) Start() error {
 		// 	return err
 		// }
 
-		sshPath := path.Join(xdg.Home, ".ssh", "id_rsa.pub")
+		homeDir, err := cl.GetUserHomeDir()
+		if err != nil {
+			return err
+		}
+
+		sshPath := path.Join(homeDir, ".ssh", "id_rsa.pub")
 
 		akByte, err := os.ReadFile(sshPath)
 		if err != nil {
@@ -125,7 +128,7 @@ func (c *client) Start() error {
 
 		akTmpPath := path.Join(td, "authorized_keys")
 
-		akByte, err = os.ReadFile(path.Join(xdg.Home, ".ssh", "authorized_keys"))
+		akByte, err = os.ReadFile(path.Join(homeDir, ".ssh", "authorized_keys"))
 		if err == nil {
 			ak += fmt.Sprint("\n", string(akByte))
 		}
@@ -186,11 +189,16 @@ func (c *client) Start() error {
 			return err
 		}
 
+		// hostIp, err := GetDockerHostIp()
+		// if err != nil {
+		// 	return err
+		// }
+
 		if len(cfg.DNS) > 0 {
 			args = append(args, []string{
-				"--dns", cfg.DNS[0].To4().String(),
-				"--dns", "1.1.1.1",
-				"--dns-search", fmt.Sprintf("%s.svc.%s.local", e.Spec.TargetNamespace, e.ClusterName),
+				// "--dns", "127.0.0.2",
+				// "--dns", "1.1.1.1",
+				// "--dns-search", fmt.Sprintf("%s.svc.%s.local", e.Spec.TargetNamespace, e.ClusterName),
 			}...)
 		}
 
@@ -205,21 +213,21 @@ func (c *client) Start() error {
 			return err
 		}
 
-		s, err := proxy.GetHostIp()
-		if err != nil {
-			return err
-		}
+		// s, err := proxy.GetHostIp()
+		// if err != nil {
+		// 	return err
+		// }
 
 		args = append(args, []string{
 			"-v", fmt.Sprintf("%s:/tmp/ssh2/authorized_keys:ro", akTmpPath),
 			"-v", "kl-home-cache:/home:rw",
-			"-v", "kl-nix-cache:/nix:rw",
-			// "--network", "host",
+			"-v", "kl-nix-store:/nix:rw",
 			"-v", fmt.Sprintf("%s:/home/kl/workspace:z", c.cwd),
 			"-v", fmt.Sprintf("%s:/home/kl/.cache/.kl:z", configFolder),
 			"-e", fmt.Sprintf("SSH_PORT=%d", sshPort),
+			"-e", fmt.Sprintf("KL_WORKSPACE=%s", c.cwd),
 			"--add-host=box:127.0.0.1",
-			fmt.Sprintf("--add-host=%s.device.local:%s", d.Metadata.Name, s),
+			// fmt.Sprintf("--add-host=%s.device.local:%s", d.Metadata.Name, s),
 			"-p", fmt.Sprintf("%d:%d", sshPort, sshPort),
 			GetImageName(), "--",
 		}...)

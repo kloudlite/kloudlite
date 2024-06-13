@@ -15,6 +15,7 @@ import (
 	appconsts "github.com/kloudlite/kl/app-consts"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/sshclient"
+	"github.com/kloudlite/kl/types"
 )
 
 func GetUserHomeDir() (string, error) {
@@ -255,6 +256,25 @@ func (p *Proxy) ListPorts(chMsg sshclient.StartCh) ([]byte, error) {
 	}
 
 	b, err := p.MakeRequest("/list-proxy-ports", params)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func (p *Proxy) RestartContainer(rb types.RestartBody) ([]byte, error) {
+
+	if !p.Status() {
+		return nil, nil
+	}
+
+	params, err := json.Marshal(rb)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := p.MakeRequest("/restart-container", params)
 	if err != nil {
 		return nil, err
 	}

@@ -46,15 +46,19 @@ var InitCommand = &cobra.Command{
 				fn.Warn("no environment found, please create environments from dashboard")
 			}
 
+			accName, err := client.CurrentAccountName()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+
 			initFile = &client.KLFileType{
-				Version:    "v1",
-				DefaultEnv: defEnv,
-				Packages:   packages,
-				// Mres:       make([]client.ResType, 0),
-				// Configs:    make([]client.ResType, 0),
-				// Secrets:    make([]client.ResType, 0),
-				EnvVars: []client.EnvType{{Key: "SAMPLE", Value: fn.Ptr("sampleValue")}},
-				Mounts:  client.Mounts{},
+				AccountName: accName,
+				Version:     "v1",
+				DefaultEnv:  defEnv,
+				Packages:    packages,
+				EnvVars:     []client.EnvType{{Key: "SAMPLE", Value: fn.Ptr("sampleValue")}},
+				Mounts:      client.Mounts{},
 			}
 			if defEnv == "" {
 				fn.Warn("No environment found, Please create environments from dashboard\n")

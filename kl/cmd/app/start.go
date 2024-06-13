@@ -15,7 +15,7 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "start the kloudlite controller app",
 	Long:  `This is internal command`,
-	Run: func(c *cobra.Command, _ []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 
 		if runtime.GOOS != constants.RuntimeWindows {
 			if euid := os.Geteuid(); euid != 0 {
@@ -24,8 +24,13 @@ var startCmd = &cobra.Command{
 			}
 		}
 
-		if err := app.RunApp(c.Parent().Parent().Name()); err != nil {
+		if err := app.RunApp(cmd.Parent().Parent().Name(), cmd, args); err != nil {
 			fn.PrintError(err)
 		}
 	},
+}
+
+func init() {
+	startCmd.Flags().BoolP("verbose", "v", false, "run in verbose mode")
+	startCmd.Flags().BoolP("foreground", "f", false, "run in foreground mode")
 }

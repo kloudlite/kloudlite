@@ -111,7 +111,7 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	if err := client.SyncDevboxShellEnvFile(); err != nil {
+	if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
 		return err
 	}
 

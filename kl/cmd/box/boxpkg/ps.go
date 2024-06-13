@@ -8,19 +8,7 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
-func (c *client) ListBox() error {
-	conts, err := c.listContainer(map[string]string{
-		CONT_MARK_KEY: "true",
-	})
-	if err != nil && err != notFoundErr {
-		return err
-	}
-
-	if err == notFoundErr {
-		fn.Warnf("no running containers found in all workspaces")
-		return nil
-	}
-
+func (c *client) PrintBoxes(conts []Cntr) error {
 	header := table.Row{table.HeaderText("container name"), table.HeaderText("path"), table.HeaderText("state")}
 	rows := make([]table.Row, 0)
 
@@ -56,4 +44,10 @@ func (c *client) ListBox() error {
 	table.TotalResults(len(conts), true)
 
 	return nil
+}
+
+func (c *client) ListAllBoxes() ([]Cntr, error) {
+	return c.listContainer(map[string]string{
+		CONT_MARK_KEY: "true",
+	})
 }

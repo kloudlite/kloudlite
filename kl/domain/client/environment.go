@@ -38,6 +38,10 @@ func SelectEnv(ev Env) error {
 		return err
 	}
 
+	if InsideBox() {
+		dir = os.Getenv("KL_WORKSPACE")
+	}
+
 	if k.SelectedEnvs == nil {
 		k.SelectedEnvs = map[string]*Env{}
 	}
@@ -80,6 +84,7 @@ func EnvOfPath(pth string) (*Env, error) {
 }
 
 func CurrentEnv() (*Env, error) {
+
 	c, err := GetExtraData()
 	if err != nil {
 		return nil, err
@@ -88,6 +93,10 @@ func CurrentEnv() (*Env, error) {
 	dir, err := os.Getwd()
 	if err != nil {
 		return nil, err
+	}
+
+	if InsideBox() {
+		dir = os.Getenv("KL_WORKSPACE")
 	}
 
 	if c.SelectedEnvs == nil {

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/md5"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -9,8 +10,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/klbox-docker/devboxfile"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/kloudlite/kl/types"
+	"github.com/spf13/cobra"
 )
 
 type ResEnvType struct {
@@ -213,34 +218,80 @@ func (e *EnvVars) AddResTypes(rt []ResType, rtype resType) {
 	}
 }
 
-func SyncDevboxShellEnvFile() error {
+func SyncDevboxShellEnvFile(cmd *cobra.Command) error {
 	if !InsideBox() {
 		return nil
 	}
 
 	devBoxDir := filepath.Dir(DEVBOX_JSON_PATH)
 
+	b, _ := os.ReadFile(path.Join(devBoxDir, "devbox-env.sh"))
+
 	command := exec.Command("devbox", "shellenv")
+	command.Stderr = os.Stderr
 	command.Dir = devBoxDir
+
+	envs := map[string]string{
+		"HOME": os.Getenv("HOME"),
+		"PATH": "/home/kl/.nix-profile/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+	}
+
+	command.Env = []string{}
+	for k, v := range envs {
+		command.Env = append(command.Env, fmt.Sprintf("%s=%s", k, v))
+	}
 
 	out, err := command.Output()
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(path.Join(devBoxDir, "devbox-env.sh"), out, os.ModePerm)
+	if string(out) == string(b) {
+		return nil
+	}
+
+	if err := os.WriteFile(path.Join(devBoxDir, "devbox-env.sh"), out, os.ModePerm); err != nil {
+		return err
+	}
+
+	if err := func() error {
+		if !InsideBox() {
+			return nil
+		}
+
+		if fn.ParseBoolFlag(cmd, "skip-restart") {
+			return nil
+		}
+
+		fn.Printf(text.Yellow("enviroment variables are updated, to apply them want to restart the box?[Y/n]"))
+		if fn.Confirm("y", "y") {
+			p, err := proxy.NewProxy(true)
+			if err != nil {
+				return err
+			}
+
+			dir := os.Getenv("KL_WORKSPACE")
+
+			hash := md5.New()
+			hash.Write([]byte(dir))
+			contName := fmt.Sprintf("klbox-%s", fmt.Sprintf("%x", hash.Sum(nil))[:8])
+
+			if b, err := p.RestartContainer(types.RestartBody{Name: contName}); err != nil {
+				return err
+			} else {
+				fmt.Println(b)
+			}
+		}
+
+		return nil
+	}(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-/*
-Steps performed in ExecPackageCommand:
-1. Sync devbox.lock with kl.lock
-2. Update devbox.json by combining kl.json
-3. Run devbox command
-4. Copy devbox.json to workspace/kl.json
-5. Update workspace/kl.lock
-*/
-
-func ExecPackageCommand(cmd string) error {
+func ExecPackageCommand(cmdString string, cmd *cobra.Command) error {
 	if !InsideBox() {
 		return nil
 	}
@@ -271,7 +322,7 @@ func ExecPackageCommand(cmd string) error {
 		return err
 	}
 
-	r := csv.NewReader(strings.NewReader(cmd))
+	r := csv.NewReader(strings.NewReader(cmdString))
 	r.Comma = ' '
 	cmdArr, err := r.Read()
 	if err != nil {
@@ -302,7 +353,7 @@ func ExecPackageCommand(cmd string) error {
 		return err
 	}
 
-	return SyncDevboxShellEnvFile()
+	return SyncDevboxShellEnvFile(cmd)
 }
 
 func syncDevboxLock() func() {

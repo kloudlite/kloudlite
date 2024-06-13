@@ -7,7 +7,7 @@ func BackupDns() ([]string, error) {
 		return nil, err
 	}
 
-	return ed.DNS, nil
+	return ed.BackupDns, nil
 }
 
 func SetBackupDns(dns []string) error {
@@ -17,7 +17,7 @@ func SetBackupDns(dns []string) error {
 		return err
 	}
 
-	ed.DNS = dns
+	ed.BackupDns = dns
 
 	return SaveExtraData(ed)
 }

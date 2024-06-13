@@ -14,4 +14,5 @@ func init() {
 	Cmd.AddCommand(startCmd)
 	Cmd.AddCommand(stopCmd)
 	Cmd.AddCommand(statusCmd)
+	Cmd.AddCommand(dnsCmd)
 }

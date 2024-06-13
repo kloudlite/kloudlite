@@ -20,9 +20,11 @@ var reloadCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
+
 	},
 }
 
 func init() {
 	setBoxCommonFlags(reloadCmd)
+	reloadCmd.Flags().BoolP("skip-restart", "s", false, "skip restarting the box")
 }

@@ -20,6 +20,8 @@ const (
 	NoExistingSearchDomainError = "There aren't any Search Domains set on Wi-Fi."
 
 	ContainerVpnPort = 1729
+
+	DnsServerPort = 5353
 )
 
 var (

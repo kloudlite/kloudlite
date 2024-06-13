@@ -191,3 +191,15 @@ func WinSudoExec(cmdString string, env map[string]string) ([]byte, error) {
 
 	return Exec(fmt.Sprintf("powershell -Command Start-Process -WindowStyle Hidden -FilePath %s -ArgumentList %q -Verb RunAs", cmd.Path, quotedArgs), map[string]string{"PATH": os.Getenv("PATH")})
 }
+
+func Confirm(yes string, defaultValue string) bool {
+	var response string
+	_, _ = fmt.Scanln(&response)
+	if response == "" {
+		if defaultValue == "" {
+			return false
+		}
+		response = defaultValue
+	}
+	return strings.ToLower(response) == strings.ToLower(yes)
+}

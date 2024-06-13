@@ -37,11 +37,21 @@ var switchCmd = &cobra.Command{
 		fn.Log(text.Bold(text.Green("\nSelected Environment:")),
 			text.Blue(fmt.Sprintf("\n%s (%s)", env.DisplayName, env.Metadata.Name)),
 		)
+
+		if err := server.SyncDevboxJsonFile(); err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 	},
 }
 
 func init() {
-
 	switchCmd.Aliases = append(switchCmd.Aliases, "switch")
 
 	switchCmd.Flags().StringP("envname", "e", "", "environment name")

@@ -199,7 +199,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := client.SyncDevboxShellEnvFile(); err != nil {
+	if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
 		return err
 	}
 	return nil

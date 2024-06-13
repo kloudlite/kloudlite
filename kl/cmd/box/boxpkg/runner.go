@@ -41,7 +41,7 @@ type Cntr struct {
 	State  ContState
 }
 
-var notFoundErr = errors.New("container not found")
+var NotFoundErr = errors.New("container not found")
 
 func (c *client) listContainer(labels map[string]string) ([]Cntr, error) {
 	defer spinner.Client.UpdateMessage("fetching existing container")()
@@ -64,7 +64,7 @@ func (c *client) listContainer(labels map[string]string) ([]Cntr, error) {
 	}
 
 	if len(crlist) == 0 {
-		return nil, notFoundErr
+		return nil, NotFoundErr
 	}
 
 	defCrs := make([]Cntr, 0)
@@ -100,7 +100,7 @@ func (c *client) listContainer(labels map[string]string) ([]Cntr, error) {
 	return defCrs, nil
 }
 
-func (c *client) getContainer(labels map[string]string) (*Cntr, error) {
+func (c *client) GetContainer(labels map[string]string) (*Cntr, error) {
 	defer spinner.Client.UpdateMessage("fetching existing container")()
 
 	labelArgs := make([]filters.KeyValuePair, 0)
@@ -121,7 +121,7 @@ func (c *client) getContainer(labels map[string]string) (*Cntr, error) {
 	}
 
 	if len(crlist) == 0 {
-		return nil, notFoundErr
+		return nil, NotFoundErr
 	}
 
 	if len(crlist[0].Names) >= 1 {
@@ -177,11 +177,11 @@ func (c *client) runContainer(config ContainerConfig) error {
 		}
 		dockerArgs = append(dockerArgs, "--name", config.Name)
 
-		if err := os.WriteFile(stdOutPath, []byte(""), os.ModePerm); err != nil {
+		if err := writeOnUserScope(stdOutPath, []byte("")); err != nil {
 			return err
 		}
 
-		if err := os.WriteFile(stdErrPath, []byte(""), os.ModePerm); err != nil {
+		if err := writeOnUserScope(stdErrPath, []byte("")); err != nil {
 			return err
 		}
 
@@ -323,4 +323,22 @@ func (c *client) readTillLine(ctx context.Context, file string, desiredLine, str
 	}
 
 	return false, nil
+}
+
+func writeOnUserScope(name string, data []byte) error {
+	filePath := path.Join(name)
+
+	if err := os.WriteFile(filePath, data, 0644); err != nil {
+		return err
+	}
+
+	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
+		if err := fn.ExecCmd(
+			fmt.Sprintf("chown %s %s", usr, filePath), nil, false,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

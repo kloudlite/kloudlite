@@ -13,13 +13,12 @@ type KLFileType struct {
 	Version    string   `json:"version" yaml:"version"`
 	DefaultEnv string   `json:"defaultEnv" yaml:"defaultEnv"`
 	Packages   []string `json:"packages" yaml:"packages"`
-	// Mres       []ResType `json:"mres"`
-	// Configs    []ResType `json:"configs"`
-	// Secrets    []ResType `json:"secrets"`
-	EnvVars EnvVars `json:"envVars" yaml:"envVars"`
-	Mounts  Mounts  `json:"mounts" yaml:"mounts"`
+
+	EnvVars    EnvVars  `json:"envVars" yaml:"envVars"`
+	Mounts     Mounts   `json:"mounts" yaml:"mounts"`
 
 	InitScripts []string `json:"initScripts" yaml:"initScripts"`
+	AccountName string   `json:"accountName" yaml:"accountName"`
 }
 
 func (k *KLFileType) ToJson() ([]byte, error) {

@@ -10,7 +10,7 @@ tasks:
       - |+
         docker rmi -f {{.ImageRegistry}}:v1.0.0-nightly || echo "image already removed"
         docker volume rm kl-home-cache || echo "kl-home-cache already removed"
-        # docker volume rm kl-nix-cache || echo "nix-store already removed"
+        # docker volume rm kl-nix-store || echo "nix-store already removed"
 
   # ssh:
   #   cmds:

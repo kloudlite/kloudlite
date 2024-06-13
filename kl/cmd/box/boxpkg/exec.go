@@ -9,7 +9,7 @@ import (
 )
 
 func (c *client) Exec() error {
-	cr, err := c.getContainer(map[string]string{CONT_NAME_KEY: c.containerName})
+	cr, err := c.GetContainer(map[string]string{CONT_NAME_KEY: c.containerName})
 	if err != nil {
 		return err
 	}

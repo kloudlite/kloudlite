@@ -6,6 +6,26 @@ set -o pipefail
 
 trap "echo kloudlite-entrypoint:CRASHED >&2" EXIT SIGINT SIGTERM
 
+export IN_DEV_BOX="true"
+export KL_WORKSPACE=$KL_WORKSPACE
+
+mkdir -p /home/kl/.kl/
+cat <<EOL > /home/kl/.kl/global-profile
+export SSH_PORT=$SSH_PORT
+export IN_DEV_BOX="true"
+export KL_WORKSPACE=$KL_WORKSPACE
+export MAIN_PATH=$PATH
+EOL
+
+kl app start-dns &
+
+cat > /tmp/resolv.conf <<'EOF'
+nameserver 127.0.0.2
+EOF
+
+sudo cp /tmp/resolv.conf /etc/resolv.conf
+
+
 # KL_LOCK_PATH=/home/kl/workspace/kl.lock
 #
 KL_DEVBOX_PATH=$HOME/.kl/devbox
@@ -26,15 +46,12 @@ if [ ! -f "$entrypoint_executed" ]; then
 fi
 
 shift
-# echo "$@" | jq -r > $KL_DEVBOX_JSON_PATH
 
 PATH=$PATH:$HOME/.nix-profile/bin
-# cd $KL_DEVBOX_PATH
-export IN_DEV_BOX="true"
 
 pushd "$HOME/workspace"
 echo "kloudlite-entrypoint:INSTALLING_PACKAGES"
-kl box reload && echo 'echo kloudlite-entrypoint:INSTALLING_PACKAGES_DONE'
+kl box reload -s && echo 'echo kloudlite-entrypoint:INSTALLING_PACKAGES_DONE'
 popd
 
 if [ -d "/tmp/ssh2" ]; then
@@ -45,11 +62,8 @@ if [ -d "/tmp/ssh2" ]; then
 fi 
 
 # sudo /mounter --conf $KL_DEVBOX_JSON_PATH
-cat <<EOL > /home/kl/.kl/global-profile
-export SSH_PORT=$SSH_PORT
-export IN_DEV_BOX="true"
-EOL
 
+export SSH_PORT=$SSH_PORT
 # trap - EXIT SIGTERM SIGINT
 echo "kloudlite-entrypoint: SETUP_COMPLETE"
 sudo /usr/sbin/sshd -D -p "$SSH_PORT" 

@@ -42,15 +42,22 @@ RUN mkdir -m 0755 /nix && chown kl /nix
 USER kl
 RUN curl -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-profile
 
+RUN mkdir -p "/home/kl/.config/zsh"
+RUN git clone https://github.com/sindresorhus/pure.git "/home/kl/.config/zsh/pure"
+
 USER root
 
 RUN curl -fsSL https://get.jetify.com/devbox > /tmp/devbox.sh && chmod +x /tmp/devbox.sh 
 RUN /tmp/devbox.sh -f && rm /tmp/devbox.sh && sudo chown kl:kl /usr/local/bin/devbox
 
-RUN cd /tmp
-RUN devbox init
 
 RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git  "/usr/share/zsh/plugins/zsh-syntax-highlighting"
+
+USER kl
+
+RUN cd /tmp && devbox init
+
+USER root
 
 # RUN rm /tmp/devbox.lock /tmp/devbox.json
 
@@ -69,11 +76,6 @@ EOF
 
 COPY .bashrc .profile .zshrc aliasrc /tmp/
 
-COPY --from=builder /kl-app/bin/mounter /mounter
-COPY --from=builder /kl-app/bin/kl /usr/local/bin/kl
-
-
-SHELL ["/bin/zsh", "-c"]
 
 RUN chsh -s /bin/zsh kl
 
@@ -83,10 +85,9 @@ COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /start.sh
 RUN chmod +x /entrypoint.sh
 
+COPY --from=builder /kl-app/bin/mounter /mounter
+COPY --from=builder /kl-app/bin/kl /usr/local/bin/kl
+
 USER kl
-
-RUN mkdir -p "/home/kl/.config/zsh"
-RUN git clone https://github.com/sindresorhus/pure.git "/home/kl/.config/zsh/pure"
-
 
 ENTRYPOINT ["/entrypoint.sh"]

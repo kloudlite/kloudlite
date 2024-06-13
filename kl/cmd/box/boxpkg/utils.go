@@ -1,6 +1,7 @@
 package boxpkg
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -16,6 +17,10 @@ import (
 type Container struct {
 	Name string
 	Path string
+}
+
+func (c *client) SetCwd(cwd string) {
+	c.cwd = cwd
 }
 
 func (c *client) getVPNContainer() (Container, error) {
@@ -67,47 +72,31 @@ func (c *client) ensurePublicKey() error {
 	return nil
 }
 func (c *client) ensureCacheExist() error {
-	vlist, err := c.cli.VolumeList(c.cmd.Context(), volume.ListOptions{
-		Filters: filters.NewArgs(filters.KeyValuePair{
-			Key:   "label",
-			Value: "kl-box-nix-store=true",
-		}),
-	})
-	if err != nil {
-		return err
-	}
 
-	if len(vlist.Volumes) == 0 {
-		if _, err := c.cli.VolumeCreate(c.cmd.Context(), volume.CreateOptions{
-			Labels: map[string]string{
-				"kl-box-nix-store": "true",
-			},
-			Name: "kl-nix-cache",
-		}); err != nil {
+	caches := []string{"kl-nix-store", "kl-nix-home-cache"}
+
+	for _, cache := range caches {
+		vlist, err := c.cli.VolumeList(c.cmd.Context(), volume.ListOptions{
+			Filters: filters.NewArgs(filters.KeyValuePair{
+				Key:   "label",
+				Value: fmt.Sprintf("%s=true", cache),
+			}),
+		})
+		if err != nil {
 			return err
 		}
-	}
 
-	vlist, err = c.cli.VolumeList(c.cmd.Context(), volume.ListOptions{
-		Filters: filters.NewArgs(filters.KeyValuePair{
-			Key:   "label",
-			Value: "kl-box-nix-home-cache=true",
-		}),
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if len(vlist.Volumes) == 0 {
-		if _, err := c.cli.VolumeCreate(c.cmd.Context(), volume.CreateOptions{
-			Labels: map[string]string{
-				"kl-box-nix-home-cache": "true",
-			},
-			Name: "kl-nix-cache",
-		}); err != nil {
-			return err
+		if len(vlist.Volumes) == 0 {
+			if _, err := c.cli.VolumeCreate(c.cmd.Context(), volume.CreateOptions{
+				Labels: map[string]string{
+					cache: "true",
+				},
+				Name: cache,
+			}); err != nil {
+				return err
+			}
 		}
+
 	}
 
 	return nil

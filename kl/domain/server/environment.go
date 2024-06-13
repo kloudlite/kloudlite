@@ -88,6 +88,7 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 }
 
 func SelectEnv(envName string, options ...fn.Option) (*Env, error) {
+
 	persistSelectedEnv := func(env client.Env) error {
 		err := client.SelectEnv(env)
 		if err != nil {
@@ -101,12 +102,21 @@ func SelectEnv(envName string, options ...fn.Option) (*Env, error) {
 		return nil, err
 	}
 
+	oldEnv, _ := client.CurrentEnv()
+
 	if envName != "" {
 		for _, a := range envs {
 			if a.Metadata.Name == envName {
+				port := 0
+				if oldEnv != nil {
+					port = oldEnv.SSHPort
+				}
+
 				if err := persistSelectedEnv(client.Env{
-					Name:     a.Metadata.Name,
-					TargetNs: a.Spec.TargetNamespace,
+					Name:        a.Metadata.Name,
+					SSHPort:     port,
+					TargetNs:    a.Spec.TargetNamespace,
+					ClusterName: a.ClusterName,
 				}); err != nil {
 					return nil, err
 				}
@@ -129,8 +139,10 @@ func SelectEnv(envName string, options ...fn.Option) (*Env, error) {
 	}
 
 	if err := persistSelectedEnv(client.Env{
-		Name:     env.Metadata.Name,
-		TargetNs: env.Spec.TargetNamespace,
+		Name:        env.Metadata.Name,
+		TargetNs:    env.Spec.TargetNamespace,
+		SSHPort:     oldEnv.SSHPort,
+		ClusterName: env.ClusterName,
 	}); err != nil {
 		return nil, err
 	}

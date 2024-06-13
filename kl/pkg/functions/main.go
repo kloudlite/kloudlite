@@ -153,12 +153,8 @@ func JsonConversion(from any, to any) error {
 }
 
 func ParseStringFlag(cmd *cobra.Command, flag string) string {
-	if cmd.Flags().Changed(flag) {
-		v, _ := cmd.Flags().GetString(flag)
-		return v
-	}
-
-	return ""
+	v, _ := cmd.Flags().GetString(flag)
+	return v
 }
 
 func ParseIntFlag(cmd *cobra.Command, flag string) int {
@@ -167,12 +163,8 @@ func ParseIntFlag(cmd *cobra.Command, flag string) int {
 }
 
 func ParseBoolFlag(cmd *cobra.Command, flag string) bool {
-	if cmd.Flags().Changed(flag) {
-		v, _ := cmd.Flags().GetBool(flag)
-		return v
-	}
-
-	return false
+	v, _ := cmd.Flags().GetBool(flag)
+	return v
 }
 
 func WithOutputVariant(cmd *cobra.Command) {

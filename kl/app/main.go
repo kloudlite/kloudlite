@@ -7,13 +7,15 @@ import (
 	"time"
 
 	// "github.com/kloudlite/kl/app/handler"
+
 	"github.com/kloudlite/kl/app/server"
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/spf13/cobra"
 )
 
-func RunApp(binName string) error {
+func RunApp(binName string, cmd *cobra.Command, args []string) error {
 	fn.Log("kl vpn and proxy controller")
 
 	// onExit := func() {
@@ -66,7 +68,7 @@ func RunApp(binName string) error {
 	}()
 
 	go func() {
-		s := server.New(binName)
+		s := server.New(binName, cmd, args)
 		ch <- s.Start(ctx)
 	}()
 

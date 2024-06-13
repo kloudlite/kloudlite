@@ -25,9 +25,10 @@ const (
 )
 
 type Env struct {
-	Name     string `json:"name"`
-	TargetNs string `json:"targetNamespace"`
-	SSHPort  int    `json:"sshPort"`
+	Name        string `json:"name"`
+	TargetNs    string `json:"targetNamespace"`
+	SSHPort     int    `json:"sshPort"`
+	ClusterName string `json:"clusterName"`
 }
 
 type Session struct {
@@ -42,10 +43,11 @@ type MainContext struct {
 type DeviceContext struct {
 	DeviceName string `json:"deviceName"`
 
-	PrivateKey []byte `json:"privateKey"`
-	DeviceIp   net.IP `json:"deviceIp"`
+	// PrivateKey []byte `json:"privateKey"`
+	DeviceIp  net.IP   `json:"deviceIp"`
+	DeviceDns []string `json:"deviceDns"`
 
-	HostPublicKey []byte `json:"hostPublicKey"`
+	SearchDomain string `json:"searchDomain"`
 }
 
 type InfraContext struct {
@@ -64,9 +66,10 @@ type ExtraData struct {
 	BaseUrl      string          `json:"baseUrl"`
 	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
 	DeviceDns    string          `json:"deviceDns"`
-	DNS          []string        `json:"dns"`
-	Loading      bool            `json:"loading"`
-	VpnConnected bool            `json:"vpnConnected"`
+	// backupDns
+	BackupDns    []string `json:"dns"`
+	Loading      bool     `json:"loading"`
+	VpnConnected bool     `json:"vpnConnected"`
 
 	// TODO: don't have any idea about this field, needs to remove if not required
 	ActiveCluster string `json:"activeCluster"`
@@ -131,7 +134,7 @@ func GetDns() ([]string, error) {
 		return nil, err
 	}
 
-	return extraData.DNS, nil
+	return extraData.BackupDns, nil
 }
 
 func SetDns(dns []string) error {
@@ -140,7 +143,7 @@ func SetDns(dns []string) error {
 		return err
 	}
 
-	extraData.DNS = dns
+	extraData.BackupDns = dns
 
 	file, err := yaml.Marshal(extraData)
 	if err != nil {

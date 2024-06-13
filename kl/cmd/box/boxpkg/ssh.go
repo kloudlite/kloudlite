@@ -47,7 +47,7 @@ func (c *client) Ssh() error {
 				CONT_MARK_KEY: "true",
 			})
 
-			if err != nil && err == notFoundErr {
+			if err != nil && err == NotFoundErr {
 				return fmt.Errorf("kl.yml in current dir not found, and also no any running container found")
 			}
 
@@ -69,15 +69,15 @@ func (c *client) Ssh() error {
 		return err2
 	}
 
-	cr, err := c.getContainer(map[string]string{
+	cr, err := c.GetContainer(map[string]string{
 		CONT_NAME_KEY: c.containerName,
 		CONT_PATH_KEY: c.cwd,
 	})
-	if err != nil && err != notFoundErr {
+	if err != nil && err != NotFoundErr {
 		return err
 	}
 
-	if err == notFoundErr || (err == nil && c.containerName != cr.Name) || (cr.State == ContStateExited || cr.State == ContStateCreated) {
+	if err == NotFoundErr || (err == nil && c.containerName != cr.Name) || (cr.State == ContStateExited || cr.State == ContStateCreated) {
 		err := c.Start()
 
 		if err != nil && err != errContainerNotStarted {
@@ -137,11 +137,11 @@ func (c *client) Ssh() error {
 }
 
 func (c *client) doSSHWithCname(name string) error {
-	cr, err := c.getContainer(map[string]string{
+	cr, err := c.GetContainer(map[string]string{
 		CONT_NAME_KEY: name,
 	})
 
-	if err == notFoundErr {
+	if err == NotFoundErr {
 		return fmt.Errorf("no container running with name %s", name)
 	}
 

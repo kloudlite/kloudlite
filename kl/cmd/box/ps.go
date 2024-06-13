@@ -10,13 +10,20 @@ var psCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "list all running boxes",
 	Run: func(cmd *cobra.Command, args []string) {
+
 		c, err := boxpkg.NewClient(cmd, args)
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		if err := c.ListBox(); err != nil {
+		conts, err := c.ListAllBoxes()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if err := c.PrintBoxes(conts); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -24,6 +31,6 @@ var psCmd = &cobra.Command{
 }
 
 func init() {
-	psCmd.Aliases = append(psCmd.Aliases, "ls")
+	psCmd.Aliases = append(psCmd.Aliases, "ps")
 	setBoxCommonFlags(psCmd)
 }

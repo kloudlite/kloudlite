@@ -42,7 +42,7 @@ func rmPackages(cmd *cobra.Command, args []string) error {
 			return ""
 		}
 		return " -q"
-	}()))
+	}()), cmd)
 	stopSp()
 	if err != nil {
 		return err

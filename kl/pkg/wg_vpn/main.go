@@ -78,6 +78,12 @@ func Configure(
 	verbose bool,
 ) error {
 
+	// client.GetDeviceDns()
+	dc, err := client.GetDeviceContext()
+	if err != nil {
+		return err
+	}
+
 	stopSpinner := spinner.Client.UpdateMessage("validating configuration")
 	cfg := wgc.Config{}
 
@@ -172,6 +178,20 @@ func Configure(
 	// }
 
 	// fn.Log(cfg.PrivateKey.String(), cfg.Address[0].IP.To4().String())
+
+	dc.DeviceDns = func() []string {
+		var dns []string
+
+		for _, d := range cfg.DNS {
+			dns = append(dns, d.To4().String())
+		}
+
+		return dns
+	}()
+
+	if err := client.WriteDeviceContext(dc); err != nil {
+		return err
+	}
 
 	if err := SetDnsServers(cfg.DNS, interfaceName, verbose); err != nil {
 		return err

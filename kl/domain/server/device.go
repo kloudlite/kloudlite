@@ -110,9 +110,8 @@ func EnsureDevice(options ...fn.Option) (*Device, error) {
 
 	d, err := getVPNDevice(dc.DeviceName, options...)
 	if err != nil {
-		fn.Warnf("Failed to get VPN device: %s", err)
+		fn.Warnf("failed to get VPN device: %s", err.Error())
 		return createDevice(hostName)
-
 	}
 
 	return d, nil
@@ -124,7 +123,7 @@ type CheckName struct {
 }
 
 const (
-	VPNDeviceType = "vpn_device"
+	VPNDeviceType = "global_vpn_device"
 )
 
 func getDeviceName(devName string) (*CheckName, error) {
@@ -138,7 +137,7 @@ func getDeviceName(devName string) (*CheckName, error) {
 		return nil, err
 	}
 
-	respData, err := klFetch("cli_coreCheckNameAvailability", map[string]any{
+	respData, err := klFetch("cli_infraCheckNameAvailability", map[string]any{
 		"resType": VPNDeviceType,
 		"name":    devName,
 	}, &cookie)

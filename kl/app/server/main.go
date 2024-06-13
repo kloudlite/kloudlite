@@ -13,19 +13,26 @@ import (
 	"time"
 
 	appconsts "github.com/kloudlite/kl/app-consts"
+	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/kloudlite/kl/types"
+	"github.com/spf13/cobra"
 )
 
 type Server struct {
-	bin string
+	bin  string
+	cmd  *cobra.Command
+	args []string
 }
 
-func New(binName string) *Server {
+func New(binName string, cmd *cobra.Command, args []string) *Server {
 	return &Server{
-		bin: binName,
+		bin:  binName,
+		cmd:  cmd,
+		args: args,
 	}
 }
 func portAvailable(port string) bool {
@@ -68,6 +75,51 @@ func (s *Server) Start(ctx context.Context) error {
 			w.WriteHeader(http.StatusOK)
 			return
 
+		case "restart-container":
+			if err := func() error {
+				var rp types.RestartBody
+				err := json.NewDecoder(req.Body).Decode(&rp)
+				if err != nil {
+					return err
+				}
+
+				fn.Logf("restarting container %s", rp.Name)
+				c, err := boxpkg.NewClient(s.cmd, s.args)
+				if err != nil {
+					return err
+				}
+
+				cr, err := c.GetContainer(map[string]string{
+					boxpkg.CONT_NAME_KEY: rp.Name,
+				})
+
+				if err != nil && err != boxpkg.NotFoundErr {
+					return err
+				}
+
+				if err == boxpkg.NotFoundErr {
+					return fmt.Errorf("no container running with name %s", rp.Name)
+				}
+
+				if err := c.StopCont(cr); err != nil {
+					return err
+				}
+				pth, ok := cr.Labels[boxpkg.CONT_PATH_KEY]
+				if !ok {
+					return fmt.Errorf("container workspace not found for %s", rp.Name)
+				}
+
+				c.SetCwd(pth)
+
+				if err := c.Start(); err != nil {
+					return err
+				}
+
+				return nil
+			}(); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 		case "exit":
 			w.WriteHeader(http.StatusOK)
 			exitCh <- struct{}{}
