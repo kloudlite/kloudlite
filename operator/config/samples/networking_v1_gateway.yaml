@@ -1,0 +1,12 @@
+apiVersion: networking.kloudlite.io/v1
+kind: Gateway
+metadata:
+  labels:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/instance: gateway-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
+  name: gateway-sample
+spec:
+  # TODO(user): Add fields here

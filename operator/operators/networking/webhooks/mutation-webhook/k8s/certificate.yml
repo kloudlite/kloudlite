@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pod-mutating-webhook-certificate
+spec:
+  secretName: pod-mutating-webhook-certificate
+  dnsNames:
+  - pod-mutating-webhook.default
+  - pod-mutating-webhook.default.svc
+  issuerRef:
+    name: selfsigned
+---

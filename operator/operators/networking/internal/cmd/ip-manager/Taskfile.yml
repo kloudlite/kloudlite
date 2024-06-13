@@ -1,0 +1,59 @@
+version: 3
+
+dotenv: 
+  - .secrets/env
+
+includes:
+  go: ../../../../../.tools/taskfiles/go-build.Taskfile.yml
+
+vars:
+  binary: ip-manager
+
+tasks:
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          Out: "./bin/{{.binary}}-{{.GOARCH}}"
+
+  run:
+    cmds:
+      - task: build
+      - ./bin/{{.binary}} --addr :8090 --dev
+
+  debug:
+    dotenv: 
+      - .secrets/env
+    vars:
+      binary: __debug-{{.binary}}
+    cmds:
+      - |+
+        trap "echo closing; rm {{.binary}}" EXIT
+        if [ -n "{{.hotreload}}" ]; then
+          fwatcher --exec 'go build -o {{.binary}} .; ./{{.binary}} --addr :8090 --dev' --ext .go
+        else
+          go build -o {{.binary}} .
+          ./{{.binary}} --addr :8090 --dev
+        fi
+
+
+  local:build-and-push:
+    preconditions: 
+      - sh: '[ -n "{{.image}}" ]'
+        msg: "image must be set"
+    cmds:
+      - task: build
+        vars:
+          GOARCH: amd64
+      - task: build
+        vars:
+          GOARCH: arm64
+      - docker buildx build --build-arg BINARY=./bin/{{.binary}} --platform linux/amd64,linux/arm64 --output=type=image,compression=zstd,compression-level=10,force-compression=true,push=true -t {{.image}} .
+
+  container:build:
+    preconditions: 
+      - sh: '[ -n "{{.image}}" ]'
+        msg: "image must be set"
+    cmds:
+      - task: build
+      - docker buildx build --build-arg BINARY=./bin/{{.binary}} --output=type=image,compression=zstd,compression-level=10,force-compression=true,push=true -t {{.image}} .
