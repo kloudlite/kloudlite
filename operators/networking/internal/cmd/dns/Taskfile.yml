@@ -1,0 +1,42 @@
+version: 3
+
+includes:
+  go: ../../../../../.tools/taskfiles/go-build.Taskfile.yml
+
+tasks:
+  run:
+    vars:
+      wg_dns_port: 5959
+      cluster_internal_port: 5960
+    cmds:
+      - go run main.go 
+          --wg-dns-addr ":{{.wg_dns_port}}" 
+          --local-dns-addr ":{{.cluster_internal_port}}" 
+          --local-gateway-dns sample.example.local 
+          --http-addr ":8081" 
+          --debug
+
+  test:
+    vars:
+      port: 5959
+    cmds:
+      - dog {{.domain}} @localhost:{{.port}}
+
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          Out: ./bin/dns-{{.GOARCH}}
+
+  container:build-and-push:
+    preconditions:
+      - sh: test -n "{{.image}}"
+        msg: "arg 'image' must be set"
+    cmds:
+      - task: build
+        vars:
+          GOARCH: amd64
+      - task: build
+        vars:
+          GOARCH: arm64
+      - docker buildx build --platform linux/amd64,linux/arm64 -t {{.image}} --output=type=image,compression=zstd,compression-level=12,force-compression=true,push=true --build-arg BINARY=./bin/dns .

@@ -76,6 +76,34 @@ tasks:
           # echo "---"
         done
 
+  yaml:primary-crds:
+    cmds:
+      - |+
+        [ -f config/crd/bases/_.yaml ] && rm config/crd/bases/_.yaml
+        for file in $(ls config/crd/bases/crds.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        for file in $(ls config/crd/bases/clusters.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        for file in $(ls config/crd/bases/networking.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        for file in $(ls config/crd/bases/distribution.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        for file in $(ls config/crd/bases/wireguard.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        for file in $(ls config/crd/bases/mongodb.msvc.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
   yaml:operator:
     summary: |+
       template args

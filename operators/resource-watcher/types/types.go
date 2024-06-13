@@ -61,4 +61,5 @@ const (
 	KeyVPNDeviceConfig = "resource-watcher-wireguard-config"
 
 	KeyGlobalVPNWgParams = "resource-watcher-gvpn-wg-params"
+	KeyGatewayWgParams   = "resource-watcher-gateway-wg-params"
 )

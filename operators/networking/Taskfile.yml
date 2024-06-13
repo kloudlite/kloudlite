@@ -1,0 +1,43 @@
+version: 3
+
+dotenv:
+  - .secrets/env
+
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+
+vars:
+  binary: networking
+
+tasks:
+  run:
+    cmds:
+      - go build -o ./bin/networking .
+      - ./bin/networking --dev
+
+  build:
+    cmds:
+      - task: go:build
+        vars:
+          Out: "./bin/{{.binary}}"
+
+  container:build:
+    cmds:
+      - task: build
+      - docker buildx build -t ghcr.io/kloudlite/operator/networking:v1.0.7-nightly --output=type=image,compression=zstd,force-compression=true,compression-level=10,push=true --build-arg BINARY="./bin/{{.binary}}" .
+
+  k8s:apply:
+    vars:
+      namespace: "test-kl-networking"
+    cmds:
+      - nxt template parse -f ./k8s/namespace.yml --set namespace="{{.namespace}}" | kubectl apply -f -
+      - nxt template parse -f ./k8s/service-account.yml --set namespace="{{.namespace}}" | kubectl apply -f -
+      - nxt template parse -f ./k8s/operator.yml --set namespace="{{.namespace}}" | kubectl apply -f -
+
+  k8s:delete:
+    vars:
+      namespace: "test-kl-networking"
+    cmds:
+      - nxt template parse -f ./k8s/service-account.yml --set namespace="{{.namespace}}" | kubectl delete -f -
+      - nxt template parse -f ./k8s/operator.yml --set namespace="{{.namespace}}" | kubectl delete -f -
+      - nxt template parse -f ./k8s/namespace.yml --set namespace="{{.namespace}}" | kubectl delete -f -
