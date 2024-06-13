@@ -10,6 +10,7 @@ type GlobalVPN @shareable {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
+  nonClusterUseAllowedIPs: [String!]!
   numAllocatedClusterCIDRs: Int!
   numAllocatedDevices: Int!
   numReservedIPsForNonClusterUse: Int!
@@ -40,6 +41,7 @@ input GlobalVPNIn {
   displayName: String!
   kloudliteDevice: GlobalVPNKloudliteDeviceIn!
   metadata: MetadataIn!
+  nonClusterUseAllowedIPs: [String!]!
   numAllocatedClusterCIDRs: Int!
   numAllocatedDevices: Int!
   numReservedIPsForNonClusterUse: Int!

@@ -7,16 +7,17 @@ global:
 ---
 label: Check Name Availability
 query: |+ #graphql
-  query Infra_checkNameAvailability($resType: ResType!, $clusterName: String!,  $name: String!) {
-    infra_checkNameAvailability(resType: $resType,clusterName: $clusterName, name: $name) {
+  query Infra_checkNameAvailability($resType: ResType!,  $name: String!) {
+    infra_checkNameAvailability(resType: $resType,name: $name) {
       result
       suggestedNames
     }
   }
 variables:
-  resType: cluster_managed_service
-  clusterName: "{{.clusterName}}"
-  name: sample
+  # resType: cluster_managed_service
+  resType: global_vpn_device
+  # clusterName: "{{.clusterName}}"
+  name: arch
 ---
 
 label: Check Name Availability, with ClusterName
