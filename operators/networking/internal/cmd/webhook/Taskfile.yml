@@ -31,7 +31,7 @@ tasks:
   container:build-and-push:
     preconditions:
       - sh: '[[ -n "{{.image}}" ]]'
-        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+        msg: "var image must have a value, of format 'image_repository:image_tag'"
     cmds:
       - task: build
         vars:
