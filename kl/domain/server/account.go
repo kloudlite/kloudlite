@@ -83,12 +83,12 @@ func SelectAccount(accountName string) (*Account, error) {
 func EnsureAccount(options ...fn.Option) (string, error) {
 	accountName := fn.GetOption(options, "accountName")
 
-	kt, err := client.GetKlFile("")
-	if err != nil {
-		return "", err
-	}
-
 	returnAcc := func(an string) (string, error) {
+		kt, err := client.GetKlFile("")
+		if err != nil {
+			return an, nil
+		}
+
 		if kt.AccountName != "" && kt.AccountName != an {
 			return "", fmt.Errorf("selected account(%s) is not same as current workspace account (%s), please select account using '%s'", text.Yellow(an), text.Yellow(kt.AccountName), text.Bold("kl use account"))
 		}
