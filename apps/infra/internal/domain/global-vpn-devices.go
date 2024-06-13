@@ -268,10 +268,9 @@ func (d *domain) GetGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnD
 }
 
 func (d *domain) buildGlobalVPNDeviceWgBaseParams(ctx InfraContext, gvpnConns []*entities.GlobalVPNConnection, gvpnDevice *entities.GlobalVPNDevice) (*wgutils.WgConfigParams, error) {
-	gvpnConnPeers, err := d.getGlobalVPNConnectionPeers(ctx, gvpnConns)
-	if err != nil {
-		return nil, err
-	}
+	gvpnConnPeers := d.getGlobalVPNConnectionPeers(getGlobalVPNConnectionPeersArgs{
+		GlobalVPNConnections: gvpnConns,
+	})
 
 	pubPeers, privPeers, err := d.buildPeersFromGlobalVPNDevices(ctx, gvpnDevice.GlobalVPNName)
 	if err != nil {
@@ -286,6 +285,7 @@ func (d *domain) buildGlobalVPNDeviceWgBaseParams(ctx InfraContext, gvpnConns []
 			continue
 		}
 		if peer.PublicEndpoint == nil {
+			privPeers = append(privPeers, peer)
 			continue
 		}
 		publicPeers = append(publicPeers, wgutils.PublicPeer{
