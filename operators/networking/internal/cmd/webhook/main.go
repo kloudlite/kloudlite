@@ -46,15 +46,24 @@ const (
 	svcBindingUID string = "kloudlite.io/servicebinding.uid"
 )
 
+const (
+	debugWebhookAnnotation string = "kloudlite.io/networking.webhook.debug"
+)
+
 type Env struct {
 	GatewayAdminApiAddr string `env:"GATEWAY_ADMIN_API_ADDR" required:"true"`
+}
+
+type Flags struct {
+	WgImage           string
+	WgImagePullPolicy string
 }
 
 type HandlerContext struct {
 	context.Context
 	Env
+	Flags
 	Resource
-	IsDebug bool
 	*slog.Logger
 }
 
@@ -64,28 +73,31 @@ func main() {
 		panic(err)
 	}
 
-	var debug bool
-	flag.BoolVar(&debug, "debug", false, "--debug")
-
 	var addr string
 	flag.StringVar(&addr, "addr", "", "--addr <host:port>")
+
+	var flags Flags
+
+	flag.StringVar(&flags.WgImage, "wg-image", "ghcr.io/kloudlite/hub/wireguard:latest", "--wg-image <image>")
+
+	flag.StringVar(&flags.WgImagePullPolicy, "wg-image-pull-policy", "IfNotPresent", "--wg-image-pull-policy <image-pull-policy>")
+
 	flag.Parse()
 
 	log := log.NewWithOptions(os.Stderr, log.Options{ReportCaller: true})
 	logger := slog.New(log)
 
 	r := chi.NewRouter()
-	// r.Use(httplog.RequestLogger(&httplog.Logger{Logger: logger, Options: httplog.Options{RequestHeaders: false}}))
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.HandleFunc("/mutate/pod", func(w http.ResponseWriter, r *http.Request) {
 		requestID := middleware.GetReqID(r.Context())
-		handleMutate(HandlerContext{Context: r.Context(), Env: ev, Resource: ResourcePod, IsDebug: debug, Logger: logger.With("request-id", requestID)}, w, r)
+		handleMutate(HandlerContext{Context: r.Context(), Env: ev, Flags: flags, Resource: ResourcePod, Logger: logger.With("request-id", requestID)}, w, r)
 	})
 
 	r.HandleFunc("/mutate/service", func(w http.ResponseWriter, r *http.Request) {
 		requestID := middleware.GetReqID(r.Context())
-		handleMutate(HandlerContext{Context: r.Context(), Env: ev, Resource: ResourceService, IsDebug: debug, Logger: logger.With("request-id", requestID)}, w, r)
+		handleMutate(HandlerContext{Context: r.Context(), Env: ev, Flags: flags, Resource: ResourceService, Logger: logger.With("request-id", requestID)}, w, r)
 	})
 
 	server := &http.Server{
@@ -164,21 +176,23 @@ func processPodAdmission(ctx HandlerContext, review admissionv1.AdmissionReview)
 				return errResponse(ctx, err, review.Request.UID)
 			}
 
+			isDebugMode := pod.GetAnnotations()[debugWebhookAnnotation] == "true"
+
 			wgContainer := corev1.Container{
-				Name:  "wg",
-				Image: "linuxserver/wireguard",
+				Name:            "wg",
+				Image:           ctx.WgImage,
+				ImagePullPolicy: corev1.PullPolicy(ctx.WgImagePullPolicy),
 				Command: []string{
 					"sh",
 					"-c",
 					fmt.Sprintf(`
-mkdir -p /config/wg_confs
-curl -X PUT --silent %q > /config/wg_confs/wg0.conf
-wg-quick down wg0 || echo "starting wireguard"
+curl -X PUT --silent %q > /etc/wireguard/wg0.conf
+wg-quick down wg0 || echo "[starting] wireguard wg0 intrerface"
 wg-quick up wg0
 %s
 `, fmt.Sprintf("%s/pod/$POD_NAMESPACE/$POD_NAME/$POD_IP/$PODBINDING_RESERVATION_TOKEN", ctx.GatewayAdminApiAddr),
 						func() string {
-							if ctx.IsDebug {
+							if isDebugMode {
 								return "tail -f /dev/null"
 							}
 							return ""
@@ -224,7 +238,7 @@ wg-quick up wg0
 				},
 			}
 
-			if ctx.IsDebug {
+			if isDebugMode {
 				pod.Spec.Containers = append(pod.Spec.Containers, wgContainer)
 			} else {
 				pod.Spec.InitContainers = append(pod.Spec.InitContainers, wgContainer)
