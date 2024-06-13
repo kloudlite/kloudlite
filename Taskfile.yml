@@ -1,6 +1,10 @@
 version: 3
 
 tasks:
+  go:upgrade:github.com/kloudlite/operator:
+    cmds:
+      - go list -m -json github.com/kloudlite/operator@{{.commit}} | jq '.|"\(.Path) \(.Version)"'
+
   mocks:
     cmds:
       - |+

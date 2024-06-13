@@ -16,6 +16,7 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.5.0
+	github.com/kloudlite/operator v0.0.0-20240613111900-763b2ca773e3
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.29.1
@@ -42,7 +43,6 @@ require (
 
 require (
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
-	github.com/kloudlite/operator v1.0.4-0.20240527133630-1d49143c0ba2
 	github.com/nats-io/nats.go v1.31.0
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
@@ -50,7 +50,7 @@ require (
 	github.com/shamaton/msgpack/v2 v2.2.0
 	github.com/stretchr/testify v1.9.0
 	github.com/ztrue/tracerr v0.4.0
-	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/net v0.23.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
 )

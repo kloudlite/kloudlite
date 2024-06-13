@@ -340,7 +340,8 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	cluster.Spec.AccountName = ctx.AccountName
 	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
-	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, *cluster.GlobalVPN, cluster.Spec.PublicDNSHost)
+	// FIXME: removing public DNS host for now
+	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, *cluster.GlobalVPN)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}

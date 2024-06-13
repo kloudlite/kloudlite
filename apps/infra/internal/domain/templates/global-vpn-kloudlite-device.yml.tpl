@@ -39,7 +39,7 @@ spec:
     metadata:
       labels: *labels
       annotations:
-        "secret-ref": "{{.WgConfig | b64enc | sha256sum}}"
+        "wg-secret-ref": "{{.WgConfig | b64enc | sha256sum}}"
     spec:
       {{- if not $isDebug }}
       initContainers:

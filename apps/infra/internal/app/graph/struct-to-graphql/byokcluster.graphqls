@@ -1,6 +1,5 @@
 type BYOKCluster @shareable {
   accountName: String!
-  clusterPublicEndpoint: String!
   clusterSvcCIDR: String!
   clusterToken: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -15,6 +14,7 @@ type BYOKCluster @shareable {
   recordVersion: Int!
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
+  visibility: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility!
 }
 
 type BYOKClusterEdge @shareable {
@@ -31,5 +31,6 @@ type BYOKClusterPaginatedRecords @shareable {
 input BYOKClusterIn {
   displayName: String!
   metadata: MetadataIn!
+  visibility: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn!
 }
 
