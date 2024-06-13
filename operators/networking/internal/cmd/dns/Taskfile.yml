@@ -39,4 +39,4 @@ tasks:
       - task: build
         vars:
           GOARCH: arm64
-      - docker buildx build --platform linux/amd64,linux/arm64 -t {{.image}} --output=type=image,compression=zstd,compressoin-level=12,force-compression=true,push=true --build-arg BINARY=./bin/dns .
+      - docker buildx build --platform linux/amd64,linux/arm64 -t {{.image}} --output=type=image,compression=zstd,compression-level=12,force-compression=true,push=true --build-arg BINARY=./bin/dns .

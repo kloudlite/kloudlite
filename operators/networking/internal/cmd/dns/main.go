@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/charmbracelet/log"
 	"github.com/go-chi/chi/v5"
@@ -168,16 +169,23 @@ func main() {
 	var (
 		isDebug         bool
 		wgDNSAddr       string
-		localDNSAddr    string
 		localGatewayDNS string
-		httpAddr        string
-		dnsServers      string
+
+		enableLocalDNS bool
+		localDNSAddr   string
+
+		enableHTTP bool
+		httpAddr   string
+
+		dnsServers string
 	)
 
 	flag.BoolVar(&isDebug, "debug", false, "--debug")
 	flag.StringVar(&wgDNSAddr, "wg-dns-addr", ":53", "--wg-dns-addr <host>:<port>")
+	flag.BoolVar(&enableLocalDNS, "enable-local-dns", false, "--enable-local-dns")
 	flag.StringVar(&localDNSAddr, "local-dns-addr", ":54", "--local-dns-addr <host>:<port>")
 	flag.StringVar(&localGatewayDNS, "local-gateway-dns", "svc.cluster.local", "--local-gateway-dns <alias>")
+	flag.BoolVar(&enableHTTP, "enable-http", false, "--enable-http")
 	flag.StringVar(&httpAddr, "http-addr", ":8080", "--http-addr <host>:<port>")
 	flag.StringVar(&dnsServers, "dns-servers", "", "--dns-servers dns_suffix=ip[,dns_suffix2=ip2,dns_suffix3=ip3...]")
 	flag.Parse()
@@ -197,7 +205,29 @@ func main() {
 		log.Info("registered gateway", "dns-suffix", s[0], "gateway-addr", s[1])
 	}
 
-	go dnsServer(localDNSAddr, &dnsHandler{AnswerClusterLocalIPs: true, localGatewayDNS: localGatewayDNS})
-	go dnsServer(wgDNSAddr, &dnsHandler{localGatewayDNS: localGatewayDNS})
-	httpServer(httpAddr)
+	var wg sync.WaitGroup
+
+	if enableLocalDNS {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			dnsServer(localDNSAddr, &dnsHandler{AnswerClusterLocalIPs: true, localGatewayDNS: localGatewayDNS})
+		}()
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		dnsServer(wgDNSAddr, &dnsHandler{localGatewayDNS: localGatewayDNS})
+	}()
+
+	if enableHTTP {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			httpServer(httpAddr)
+		}()
+	}
+
+	wg.Wait()
 }
