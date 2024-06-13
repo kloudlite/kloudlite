@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	fn "github.com/kloudlite/api/pkg/functions"
-
 	"github.com/kloudlite/api/common/fields"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 
@@ -40,39 +38,17 @@ func (d *domain) findEnvironment(ctx ConsoleContext, name string) (*entities.Env
 }
 
 func (d *domain) getClusterAttachedToEnvironment(ctx K8sContext, name string) (*string, error) {
-	cacheKey := fmt.Sprintf("account_name_%s-cluster_name_%s", ctx.GetAccountName(), name)
-
-	clusterName, err := d.consoleCacheStore.Get(ctx, cacheKey)
-	if err != nil && !d.consoleCacheStore.ErrKeyNotFound(err) {
-		return nil, err
+	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{
+		fields.AccountName:  ctx.GetAccountName(),
+		fields.MetadataName: name,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
 	}
-
-	if len(clusterName) == 0 {
-		env, err := d.environmentRepo.FindOne(ctx, repos.Filter{
-			fields.AccountName:  ctx.GetAccountName(),
-			fields.MetadataName: name,
-		})
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
-		if env == nil {
-			return nil, errors.Newf("no cluster attached to this environment")
-		}
-
-		defer func() {
-			if err := d.consoleCacheStore.Set(ctx, cacheKey, []byte(env.ClusterName)); err != nil {
-				d.logger.Infof("failed to set env cluster map: %v", err)
-			}
-		}()
-
-		return &env.ClusterName, nil
+	if env == nil {
+		return nil, errors.Newf("no cluster attached to this environment")
 	}
-
-	if clusterName == nil {
-		return nil, nil
-	}
-
-	return fn.New(string(clusterName)), nil
+	return &env.ClusterName, nil
 }
 
 func (d *domain) envTargetNamespace(ctx ConsoleContext, envName string) (string, error) {
