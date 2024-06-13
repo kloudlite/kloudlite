@@ -1,0 +1,9 @@
+apiVersion: networking.kloudlite.io/v1
+kind: Gateway
+metadata:
+  name: gateway
+spec:
+  globalIP: 100.64.128.1
+  clusterCIDR: "100.64.128.0/18"
+  svcCIDR: "100.64.128.0/20"
+  dnsSuffix: svc.my-cluster.local

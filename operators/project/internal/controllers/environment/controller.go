@@ -57,8 +57,8 @@ var (
 		{Name: patchDefaults, Title: "Patching Defaults"},
 		{Name: ensureNamespace, Title: "Ensuring Namespace"},
 		{Name: ensureNamespaceRBACs, Title: "Ensuring Namespace RBACs"},
-		{Name: setupEnvIngress, Title: "Setting up Environment Ingress"},
-		{Name: updateRouterIngress, Title: "Updating Router Ingress"},
+		// {Name: setupEnvIngress, Title: "Setting up Environment Ingress"},
+		// {Name: updateRouterIngress, Title: "Updating Router Ingress"},
 	}
 
 	DestroyChecklist = []rApi.CheckMeta{
@@ -118,13 +118,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.setupEnvIngressController(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.updateRouterIngressClasses(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := r.setupEnvIngressController(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
+	//
+	// if step := r.updateRouterIngressClasses(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
@@ -271,6 +271,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 		}
 
 		ns.Labels[constants.EnvironmentNameKey] = obj.Name
+		ns.Labels[constants.KloudliteGatewayEnabledLabel] = "true"
 
 		if ns.Annotations == nil {
 			ns.Annotations = make(map[string]string, 1)

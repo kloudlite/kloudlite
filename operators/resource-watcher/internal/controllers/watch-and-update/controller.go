@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/types"
@@ -233,6 +234,32 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			})
 		}
 
+	case GatewayGVK.String():
+		{
+			var gateway networkingv1.Gateway
+			if err := unmarshalUnstructured(obj, &gateway); err != nil {
+				return err
+			}
+
+			s, err := rApi.Get(ctx, r.Client, fn.NN(gateway.Spec.WireguardKeysRef.Namespace, gateway.Spec.WireguardKeysRef.Name), &corev1.Secret{})
+			if err != nil {
+				return err
+			}
+
+			wp, err := fn.ParseFromSecret[*networkingv1.WireguardKeys](s)
+			if err != nil {
+				return err
+			}
+
+			if wp != nil {
+				obj.Object[t.KeyGatewayWgParams] = wp
+			}
+
+			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+				Object: obj.Object,
+			})
+		}
+
 	case NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String(), NamespaceGVK.String():
 		{
 			// dispatch to infra
@@ -370,6 +397,7 @@ var (
 	NodePoolGVK              = newGVK("clusters.kloudlite.io/v1", "NodePool")
 	DeviceGVK                = newGVK("wireguard.kloudlite.io/v1", "Device")
 	GlobalVPNGVK             = newGVK("wireguard.kloudlite.io/v1", "GlobalVPN")
+	GatewayGVK               = newGVK("networking.kloudlite.io/v1", "Gateway")
 	BuildRunGVK              = newGVK("distribution.kloudlite.io/v1", "BuildRun")
 	ClusterManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ClusterManagedService")
 	HelmChartGVK             = newGVK("crds.kloudlite.io/v1", "HelmChart")
@@ -404,6 +432,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		RouterGVK,
 
 		GlobalVPNGVK,
+		GatewayGVK,
 		BuildRunGVK,
 
 		DeviceGVK,
