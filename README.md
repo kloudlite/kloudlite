@@ -26,6 +26,4 @@ from code to cloud deployment.
 + [Infrastructure As Code](https://github.com/kloudlite/infrastructure-as-code)
 
 
-## Architecture
-
-![Kloudlite InfraOps](https://github.com/kloudlite/kloudlite/assets/1580519/facdfc5d-dc35-47f8-9678-afff9e3b8636)
+## [Architecture](https://kloudlite.io/docs/architecture)
