@@ -93,9 +93,10 @@ spec:
             value: {{$gatewayAdminApiAddr}}
             {{- /* value: http://$(POD_IP):{{$gatewayAdminHttpPort}} */}}
         args:
-          - --debug
           - --addr
           - $(POD_IP):{{$webhookServerHttpPort}}
+          - --wg-image
+          - ghcr.io/kloudlite/hub/wireguard:latest
         resources:
           requests:
             cpu: 50m
@@ -226,14 +227,17 @@ spec:
         imagePullPolicy: Always
         args:
           - --wg-dns-addr
-          {{- /* - $(POD_IP):{{$dnsUDPPortWg}} */}}
           - :{{$dnsUDPPortWg}}
+
+          - --enable-local-dns
+
           - --local-dns-addr
-          {{- /* - "$(POD_IP):{{$dnsUDPPortLocal}}" */}}
-          {{- /* - "{{.GatewayInternalDNSNameserver}}:{{$dnsUDPPortLocal}}" */}}
           - "{{.GatewayInternalDNSNameserver}}:{{$dnsUDPPortWg}}"
+
           - --local-gateway-dns
           - "{{.GatewayDNSSuffix}}"
+
+          - --enable-http
           - --http-addr
           - $(POD_IP):{{$dnsHttpPort}}
 

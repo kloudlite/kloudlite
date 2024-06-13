@@ -361,7 +361,8 @@ func (r *Reconciler) setupMutationWebhooks(req *rApi.Request[*networkingv1.Gatew
 		WebhookServerImage:        "ghcr.io/kloudlite/operator/wireguard/apps/mutation-webhook:v1.0.7-nightly",
 		WebhookServerCertCABundle: string(webhookCert.Data["ca.crt"]),
 
-		ServiceName: obj.Name,
+		WebhookNamespaceSelectorKey: constants.KloudliteGatewayEnabledLabel,
+		ServiceName:                 obj.Name,
 	})
 	if err != nil {
 		return check.Failed(err)

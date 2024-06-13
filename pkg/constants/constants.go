@@ -334,3 +334,5 @@ const (
 )
 
 const KloudliteLabelPrefix = "kloudlite.io"
+
+const KloudliteGatewayEnabledLabel = "kloudlite.io/gateway.enabled"

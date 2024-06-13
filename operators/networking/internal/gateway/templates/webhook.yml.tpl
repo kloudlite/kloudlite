@@ -52,7 +52,7 @@ webhooks:
 
   namespaceSelector:
     matchExpressions:
-      - key: kloudlite.io/webhooks.enabled
+      - key: {{.WebhookNamespaceSelectorKey}}
         operator: In
         values: ["true"]
   admissionReviewVersions: ["v1"]
@@ -75,7 +75,7 @@ webhooks:
 
   namespaceSelector:
     matchExpressions:
-      - key: kloudlite.io/webhooks.enabled
+      - key: {{.WebhookNamespaceSelectorKey}}
         operator: In
         values: ["true"]
   admissionReviewVersions: ["v1"]
