@@ -80,7 +80,7 @@ func (d *domain) CreateBYOKCluster(ctx InfraContext, cluster entities.BYOKCluste
 
 	cluster.MessageQueueTopicName = common.GetTenantClusterMessagingTopic(ctx.AccountName, cluster.Name)
 
-	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, cluster.GlobalVPN, cluster.ClusterPublicEndpoint)
+	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, cluster.GlobalVPN)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -181,7 +181,7 @@ func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string) 
 		{Title: "Add Helm Repo", Command: "helm repo add kloudlite https://kloudlite.github.io/helm-charts"},
 		{Title: "Update Kloudlite Repo", Command: "helm repo update kloudlite"},
 		{Title: "Install kloudlite CRDs", Command: fmt.Sprintf("kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/%s/crds-all.yml --server-side", d.env.KloudliteRelease)},
-		{Title: "Install Kloudlite Agent", Command: fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --version %s --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set byok.enabled=true --set helmCharts.ingressNginx.enabled=true --set helmCharts.certManager.enabled=true`, d.env.KloudliteRelease, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr)},
+		{Title: "Install Kloudlite Agent", Command: fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --version %s --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set byok.enabled=true`, d.env.KloudliteRelease, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr)},
 	}, nil
 }
 
