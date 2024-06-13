@@ -36,14 +36,17 @@ const (
 
 // constant vars generated for struct BYOKCluster
 const (
-	BYOKClusterClusterPublicEndpoint = "clusterPublicEndpoint"
-	BYOKClusterClusterSvcCIDR        = "clusterSvcCIDR"
-	BYOKClusterClusterToken          = "clusterToken"
-	BYOKClusterGlobalVPN             = "globalVPN"
-	BYOKClusterKubeconfig            = "kubeconfig"
-	BYOKClusterKubeconfigEncoding    = "kubeconfig.encoding"
-	BYOKClusterKubeconfigValue       = "kubeconfig.value"
-	BYOKClusterMessageQueueTopicName = "messageQueueTopicName"
+	BYOKClusterClusterPublicEndpoint    = "clusterPublicEndpoint"
+	BYOKClusterClusterSvcCIDR           = "clusterSvcCIDR"
+	BYOKClusterClusterToken             = "clusterToken"
+	BYOKClusterGlobalVPN                = "globalVPN"
+	BYOKClusterKubeconfig               = "kubeconfig"
+	BYOKClusterKubeconfigEncoding       = "kubeconfig.encoding"
+	BYOKClusterKubeconfigValue          = "kubeconfig.value"
+	BYOKClusterMessageQueueTopicName    = "messageQueueTopicName"
+	BYOKClusterVisibility               = "visibility"
+	BYOKClusterVisibilityMode           = "visibility.mode"
+	BYOKClusterVisibilityPublicEndpoint = "visibility.publicEndpoint"
 )
 
 // constant vars generated for struct ClaimClusterSvcCIDR
@@ -188,6 +191,12 @@ const (
 	ClusterManagedServiceSyncedOutputSecretRefType                               = "syncedOutputSecretRef.type"
 )
 
+// constant vars generated for struct ClusterVisbility
+const (
+	ClusterVisbilityMode           = "mode"
+	ClusterVisbilityPublicEndpoint = "publicEndpoint"
+)
+
 // constant vars generated for struct DomainEntry
 const (
 	DomainEntryDomainName = "domainName"
@@ -217,6 +226,7 @@ const (
 	GlobalVPNKloudliteDevice                = "kloudliteDevice"
 	GlobalVPNKloudliteDeviceIpAddr          = "kloudliteDevice.ipAddr"
 	GlobalVPNKloudliteDeviceName            = "kloudliteDevice.name"
+	GlobalVPNNonClusterUseAllowedIPs        = "nonClusterUseAllowedIPs"
 	GlobalVPNNumAllocatedClusterCIDRs       = "numAllocatedClusterCIDRs"
 	GlobalVPNNumAllocatedDevices            = "numAllocatedDevices"
 	GlobalVPNNumReservedIPsForNonClusterUse = "numReservedIPsForNonClusterUse"
@@ -231,34 +241,30 @@ const (
 
 // constant vars generated for struct GlobalVPNConnection
 const (
-	GlobalVPNConnectionClusterPublicEndpoint            = "clusterPublicEndpoint"
-	GlobalVPNConnectionClusterSvcCIDR                   = "clusterSvcCIDR"
-	GlobalVPNConnectionDeviceRef                        = "deviceRef"
-	GlobalVPNConnectionDeviceRefIpAddr                  = "deviceRef.ipAddr"
-	GlobalVPNConnectionDeviceRefName                    = "deviceRef.name"
-	GlobalVPNConnectionGlobalVPNName                    = "globalVPNName"
-	GlobalVPNConnectionParsedWgParams                   = "parsedWgParams"
-	GlobalVPNConnectionParsedWgParamsDnsServer          = "parsedWgParams.dnsServer"
-	GlobalVPNConnectionParsedWgParamsIp                 = "parsedWgParams.ip"
-	GlobalVPNConnectionParsedWgParamsPublicGatewayHosts = "parsedWgParams.publicGatewayHosts"
-	GlobalVPNConnectionParsedWgParamsPublicGatewayPort  = "parsedWgParams.publicGatewayPort"
-	GlobalVPNConnectionParsedWgParamsVirtualCidr        = "parsedWgParams.virtualCidr"
-	GlobalVPNConnectionParsedWgParamsWgPrivateKey       = "parsedWgParams.wg_private_key"
-	GlobalVPNConnectionParsedWgParamsWgPublicKey        = "parsedWgParams.wg_public_key"
-	GlobalVPNConnectionSpec                             = "spec"
-	GlobalVPNConnectionSpecAgentsResources              = "spec.agentsResources"
-	GlobalVPNConnectionSpecAgentsResourcesClaims        = "spec.agentsResources.claims"
-	GlobalVPNConnectionSpecAgentsResourcesLimits        = "spec.agentsResources.limits"
-	GlobalVPNConnectionSpecAgentsResourcesRequests      = "spec.agentsResources.requests"
-	GlobalVPNConnectionSpecGatewayResources             = "spec.gatewayResources"
-	GlobalVPNConnectionSpecGatewayResourcesClaims       = "spec.gatewayResources.claims"
-	GlobalVPNConnectionSpecGatewayResourcesLimits       = "spec.gatewayResources.limits"
-	GlobalVPNConnectionSpecGatewayResourcesRequests     = "spec.gatewayResources.requests"
-	GlobalVPNConnectionSpecPeers                        = "spec.peers"
-	GlobalVPNConnectionSpecWg                           = "spec.wg"
-	GlobalVPNConnectionSpecWgName                       = "spec.wg.name"
-	GlobalVPNConnectionSpecWgNamespace                  = "spec.wg.namespace"
-	GlobalVPNConnectionSpecWgInterface                  = "spec.wgInterface"
+	GlobalVPNConnectionClusterSvcCIDR                = "clusterSvcCIDR"
+	GlobalVPNConnectionDeviceRef                     = "deviceRef"
+	GlobalVPNConnectionDeviceRefIpAddr               = "deviceRef.ipAddr"
+	GlobalVPNConnectionDeviceRefName                 = "deviceRef.name"
+	GlobalVPNConnectionGlobalVPNName                 = "globalVPNName"
+	GlobalVPNConnectionParsedWgParams                = "parsedWgParams"
+	GlobalVPNConnectionParsedWgParamsPrivateKey      = "parsedWgParams.private_key"
+	GlobalVPNConnectionParsedWgParamsPublicKey       = "parsedWgParams.public_key"
+	GlobalVPNConnectionSpec                          = "spec"
+	GlobalVPNConnectionSpecAdminNamespace            = "spec.adminNamespace"
+	GlobalVPNConnectionSpecClusterCIDR               = "spec.clusterCIDR"
+	GlobalVPNConnectionSpecDnsSuffix                 = "spec.dnsSuffix"
+	GlobalVPNConnectionSpecGlobalIP                  = "spec.globalIP"
+	GlobalVPNConnectionSpecLoadBalancer              = "spec.loadBalancer"
+	GlobalVPNConnectionSpecLoadBalancerHosts         = "spec.loadBalancer.hosts"
+	GlobalVPNConnectionSpecLoadBalancerPort          = "spec.loadBalancer.port"
+	GlobalVPNConnectionSpecPeers                     = "spec.peers"
+	GlobalVPNConnectionSpecSvcCIDR                   = "spec.svcCIDR"
+	GlobalVPNConnectionSpecWireguardKeysRef          = "spec.wireguardKeysRef"
+	GlobalVPNConnectionSpecWireguardKeysRefName      = "spec.wireguardKeysRef.name"
+	GlobalVPNConnectionSpecWireguardKeysRefNamespace = "spec.wireguardKeysRef.namespace"
+	GlobalVPNConnectionVisibility                    = "visibility"
+	GlobalVPNConnectionVisibilityMode                = "visibility.mode"
+	GlobalVPNConnectionVisibilityPublicEndpoint      = "visibility.publicEndpoint"
 )
 
 // constant vars generated for struct GlobalVPNDevice
@@ -811,6 +817,17 @@ const (
 	VolumeAttachmentSpecSourceInlineVolumeSpecVsphereVolumeStoragePolicyName         = "spec.source.inlineVolumeSpec.vsphereVolume.storagePolicyName"
 	VolumeAttachmentSpecSourceInlineVolumeSpecVsphereVolumeVolumePath                = "spec.source.inlineVolumeSpec.vsphereVolume.volumePath"
 	VolumeAttachmentSpecSourcePersistentVolumeName                                   = "spec.source.persistentVolumeName"
+)
+
+// constant vars generated for struct WgParams
+const (
+	WgParamsDnsServer          = "dnsServer"
+	WgParamsIp                 = "ip"
+	WgParamsPublicGatewayHosts = "publicGatewayHosts"
+	WgParamsPublicGatewayPort  = "publicGatewayPort"
+	WgParamsVirtualCidr        = "virtualCidr"
+	WgParamsWgPrivateKey       = "wg_private_key"
+	WgParamsWgPublicKey        = "wg_public_key"
 )
 
 // constant vars generated for struct
