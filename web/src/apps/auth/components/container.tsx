@@ -1,39 +1,25 @@
-import { Link } from '@remix-run/react';
 import { ReactNode } from 'react';
-import { Button } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
+import Header from './header';
+import Footer from './footer';
 
-interface ContainerProps {
+interface IContainer {
   children: ReactNode;
-  footer?: {
-    message: string;
-    buttonText: string;
-    to: string;
-  };
+  headerExtra?: ReactNode;
 }
 
-const Container = ({ children, footer }: ContainerProps) => {
+const Container = ({ children, headerExtra }: IContainer) => {
   return (
-    <div className={cn('flex flex-col items-center justify-start h-full')}>
+    <div className="flex flex-col h-full">
+      <Header headerExtra={headerExtra} />
       <div
         className={cn(
-          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl py-10xl'
+          'flex flex-1 flex-col md:items-center self-stretch justify-center px-3xl py-9xl'
         )}
       >
         {children}
       </div>
-      {footer && (
-        <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch border-t border-border-default sticky bottom-0 bg-surface-basic-default z-50">
-          <div className="bodyMd text-text-default">{footer?.message}</div>
-          <Button
-            content={footer?.buttonText}
-            variant="primary-plain"
-            size="md"
-            to={footer?.to}
-            linkComponent={Link}
-          />
-        </div>
-      )}
+      <Footer />
     </div>
   );
 };
