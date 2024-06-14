@@ -165,7 +165,6 @@ type BuildRunPaginatedRecords {
 type BYOKCluster {
   accountName: String!
   clusterDNSSuffix: String!
-  clusterPublicEndpoint: String!
   clusterSvcCIDR: String!
   clusterToken: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -180,6 +179,7 @@ type BYOKCluster {
   recordVersion: Int!
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
+  visibility: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility!
 }
 
 type BYOKClusterEdge {
@@ -190,6 +190,7 @@ type BYOKClusterEdge {
 input BYOKClusterIn {
   displayName: String!
   metadata: MetadataIn!
+  visibility: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn!
 }
 
 type BYOKClusterPaginatedRecords {
@@ -870,6 +871,20 @@ input Github__com___kloudlite___api___apps___infra___internal___entities__AWSSec
   assumeRoleParams: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn
   authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
   authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbility {
+  mode: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode!
+  publicEndpoint: String
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisbilityIn {
+  mode: Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode!
+}
+
+enum Github__com___kloudlite___api___apps___infra___internal___entities__ClusterVisibilityMode {
+  private
+  public
 }
 
 type Github__com___kloudlite___api___apps___infra___internal___entities__GCPSecretCredentials {
@@ -2048,6 +2063,7 @@ type GlobalVPN {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
+  nonClusterUseAllowedIPs: [String!]!
   numAllocatedClusterCIDRs: Int!
   numAllocatedDevices: Int!
   numReservedIPsForNonClusterUse: Int!
@@ -2105,6 +2121,7 @@ input GlobalVPNIn {
   displayName: String!
   kloudliteDevice: GlobalVPNKloudliteDeviceIn!
   metadata: MetadataIn!
+  nonClusterUseAllowedIPs: [String!]!
   numAllocatedClusterCIDRs: Int!
   numAllocatedDevices: Int!
   numReservedIPsForNonClusterUse: Int!
@@ -3576,6 +3593,7 @@ type Mutation {
   cr_deleteRepo(name: String!): Boolean!
   cr_triggerBuild(id: ID!): Boolean!
   cr_updateBuild(build: BuildIn!, id: ID!): Build
+  infra_cloneClusterManagedService(clusterName: String!, destinationMsvcName: String!, displayName: String!, sourceMsvcName: String!): ClusterManagedService
   infra_createBYOKCluster(cluster: BYOKClusterIn!): BYOKCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
   infra_createClusterManagedService(service: ClusterManagedServiceIn!): ClusterManagedService

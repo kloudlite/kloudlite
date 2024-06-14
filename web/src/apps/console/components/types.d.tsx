@@ -35,7 +35,7 @@ export type IShowDialog<T = null> = {
 export interface IDialog<A = null, T = null> {
   show: IShowDialog<A>;
   setShow: React.Dispatch<React.SetStateAction<IShowDialog<A>>>;
-  onSubmit?: (data: T) => void;
+  onSubmit?: (data: T, extra?: any) => void;
 }
 
 // Subheader action types

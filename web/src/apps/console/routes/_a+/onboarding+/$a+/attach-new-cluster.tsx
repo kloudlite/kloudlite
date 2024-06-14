@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from '@remix-run/react';
 import { toast } from '~/components/molecule/toast';
-import useForm from '~/root/lib/client/hooks/use-form';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -11,6 +11,8 @@ import MultiStepProgress, {
 } from '~/console/components/multi-step-progress';
 import { BottomNavigation } from '~/console/components/commons';
 import FillerCloudProvider from '~/console/assets/filler-cloud-provider';
+import { Checkbox } from '~/components/atoms/checkbox';
+import Banner from '~/components/molecule/banner';
 
 const AttachNewCluster = () => {
   const { a: accountName } = useParams();
@@ -21,6 +23,7 @@ const AttachNewCluster = () => {
     initialValues: {
       name: '',
       displayName: '',
+      visibilityMode: true,
       isNameError: false,
     },
     validationSchema: Yup.object({
@@ -34,6 +37,9 @@ const AttachNewCluster = () => {
             displayName: val.displayName,
             metadata: {
               name: val.name,
+            },
+            visibility: {
+              mode: val.visibilityMode ? 'public' : 'private',
             },
           },
         });
@@ -78,7 +84,7 @@ const AttachNewCluster = () => {
           />
           <MultiStepProgress.Step step={2} label="Attach Kubernetes Cluster">
             <div className="flex flex-col gap-3xl">
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-2xl">
                 <NameIdView
                   resType="cluster"
                   displayName={values.displayName}
@@ -88,6 +94,23 @@ const AttachNewCluster = () => {
                   errors={errors.name}
                   handleChange={handleChange}
                   nameErrorLabel="isNameError"
+                />
+                <Checkbox
+                  label="Public"
+                  checked={values.visibilityMode}
+                  onChange={(val) => {
+                    handleChange('visibilityMode')(dummyEvent(val));
+                  }}
+                />
+                <Banner
+                  type="info"
+                  body={
+                    <span className="bodyMd-medium">
+                      {values.visibilityMode === true
+                        ? 'Public mode assumes cluster is accessible to public internet'
+                        : 'In Private mode traffic is routed via a kloudlite gateway'}
+                    </span>
+                  }
                 />
               </div>
               <BottomNavigation

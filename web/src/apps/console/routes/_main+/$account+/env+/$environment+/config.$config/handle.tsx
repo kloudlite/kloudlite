@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { IDialog, IModifiedItem } from '~/console/components/types.d';
@@ -15,7 +16,7 @@ export interface IConfigValue {
 
 interface IUpdateConfig {
   api: ConsoleApiType;
-  
+
   environment: string;
   config: ConfigIn;
   data: any;
@@ -24,7 +25,7 @@ interface IUpdateConfig {
 
 export const updateConfig = async ({
   api,
-  
+
   environment,
   config,
   data,
@@ -33,7 +34,7 @@ export const updateConfig = async ({
   try {
     const { errors: e } = await api.updateConfig({
       envName: environment,
-      
+
       config: {
         metadata: {
           name: parseName(config),
@@ -55,32 +56,61 @@ const Handle = ({
   show,
   setShow,
   onSubmit,
-}: IDialog<IModifiedItem, IConfigValue>) => {
-  const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
-    useForm({
-      initialValues: {
-        key: '',
-        value: '',
-      },
-      validationSchema: Yup.object({
-        key: Yup.string()
-          .required()
-          .test('is-valid', 'Key already exists.', (value) => {
-            return !show?.data?.[value];
-          }),
-        value: Yup.string().required(),
-      }),
-      onSubmit: async (val) => {
-        try {
-          if (onSubmit) {
-            onSubmit(val);
-            resetValues();
+  isUpdate,
+}: IDialog<IModifiedItem, IConfigValue> & { isUpdate?: boolean }) => {
+  console.log(show?.data, isUpdate);
+  const {
+    values,
+    errors,
+    handleChange,
+    handleSubmit,
+    resetValues,
+    isLoading,
+    setValues,
+  } = useForm({
+    initialValues: {
+      key: '',
+      value: '',
+    },
+    validationSchema: Yup.object({
+      key: Yup.string()
+        .required()
+        .test('is-valid', 'Key already exists.', (value) => {
+          if (isUpdate) {
+            return true;
           }
-        } catch (err) {
-          handleError(err);
+          return !show?.data?.[value];
+        }),
+      value: Yup.string().required(),
+    }),
+    onSubmit: async (val) => {
+      try {
+        if (onSubmit) {
+          const value = Object.values(show?.data || {})?.[0];
+          onSubmit(val, value);
+          resetValues();
         }
-      },
-    });
+      } catch (err) {
+        handleError(err);
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (isUpdate && show) {
+      const { data } = show;
+      const key = Object.keys(data)?.[0];
+      const value = Object.values(data)?.[0];
+      const newVal = value.newvalue || value.value;
+      // @ts-ignore
+      setValues((v) => ({
+        // @ts-ignore
+        ...v,
+        key,
+        value: newVal,
+      }));
+    }
+  }, [isUpdate, show]);
 
   return (
     <Popup.Root
@@ -93,7 +123,7 @@ const Handle = ({
         setShow(e);
       }}
     >
-      <Popup.Header>Add new entry</Popup.Header>
+      <Popup.Header>{isUpdate ? 'Update entry' : 'Add new entry'}</Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
           <div className="flex flex-col gap-2xl">
@@ -103,6 +133,7 @@ const Handle = ({
               onChange={handleChange('key')}
               error={!!errors.key}
               message={errors.key}
+              disabled={isUpdate}
             />
             <TextArea
               label="Value"
@@ -118,7 +149,7 @@ const Handle = ({
           <Popup.Button
             loading={isLoading}
             type="submit"
-            content="Create"
+            content={isUpdate ? 'Update' : 'Create'}
             variant="primary"
           />
         </Popup.Footer>

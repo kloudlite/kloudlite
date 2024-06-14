@@ -5,12 +5,12 @@ import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
 import { BottomNavigation, GitDetailRaw } from '~/console/components/commons';
-import { registryHost } from '~/lib/configs/base-url.cjs';
+// import { registryHost } from '~/lib/configs/base-url.cjs';
 import { useOutletContext } from '@remix-run/react';
-import RepoSelector from '~/console/page-components/app/components';
+// import RepoSelector from '~/console/page-components/app/components';
 import AppBuildIntegration from '~/console/page-components/app/app-build-integration';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
-import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+// import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { constants } from '~/console/server/utils/constants';
 import { Button } from '~/components/atoms/button';
 import { useEffect, useState } from 'react';
@@ -21,6 +21,7 @@ import {
   GitMerge,
   PencilSimple,
 } from '~/console/components/icons';
+import { TextInput } from '~/components/atoms/input';
 import { IEnvironmentContext } from '../_layout';
 import { getImageTag } from './app-utils';
 import BuildSelectionDialog from './app-build-selection-dialog';
@@ -99,11 +100,14 @@ const AppDetail = () => {
       validationSchema: Yup.object({
         name: Yup.string().required(),
         displayName: Yup.string().required(),
-        imageUrl: Yup.string(),
+        imageUrl: Yup.string().matches(
+          /^\w(\w|[-/])+?(?::(\w|[-])+)?\w$/,
+          'Invalid image format'
+        ),
         manualRepo: Yup.string().when(
           ['imageUrl', 'imageMode'],
           ([imageUrl, imageMode], schema) => {
-            const regex = /[a-z0-9-/.]+[:][a-z0-9-.]+[a-z0-9]/;
+            const regex = /^\w(\w|[-/])+?(?::(\w|[-])+)?\w$/;
             if (imageMode === 'git') {
               return schema;
             }
@@ -256,7 +260,17 @@ const AppDetail = () => {
             size="sm"
           /> */}
 
-          {values.imageMode === 'default' && (
+          <TextInput
+            size="lg"
+            label="Image name"
+            placeholder="Enter Image name"
+            value={values.imageUrl}
+            onChange={handleChange('imageUrl')}
+            error={!!errors.imageUrl}
+            message={errors.imageUrl}
+          />
+
+          {/* {values.imageMode === 'default' && (
             <RepoSelector
               tag={values.imageUrl.split(':')[1]}
               repo={
@@ -285,7 +299,7 @@ const AppDetail = () => {
               }}
               error={errors.manualRepo}
             />
-          )}
+          )} */}
           {buildData?.name && values.imageMode === 'git' && (
             <GitDetailRaw
               provider={buildData.source.provider}

@@ -123,7 +123,6 @@ export const byokClusterQueries = (executor: IExecutor) => ({
             syncScheduledAt
           }
           updateTime
-          clusterPublicEndpoint
           clusterSvcCIDR
           globalVPN
         }
@@ -146,7 +145,6 @@ export const byokClusterQueries = (executor: IExecutor) => ({
             cursor
             node {
               accountName
-              clusterPublicEndpoint
               clusterSvcCIDR
               createdBy {
                 userEmail

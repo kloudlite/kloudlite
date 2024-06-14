@@ -8,14 +8,21 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
+import { useEffect } from 'react';
+import { getPagination, getSearch } from '~/console/server/utils/common';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import Tools from './tools';
 import BackendServicesResourcesV2 from './backend-services-resources-V2';
 
 export const loader = (ctx: IRemixCtx) => {
+  ensureAccountSet(ctx);
   const promise = pWrapper(async () => {
     const { data: mData, errors: mErrors } = await GQLServerHandler(
       ctx.request
-    ).listClusterMSvs({});
+    ).listClusterMSvs({
+      pagination: getPagination(ctx),
+      search: getSearch(ctx),
+    });
 
     const { data: msvTemplates, errors: msvError } = await GQLServerHandler(
       ctx.request
@@ -36,6 +43,10 @@ export const loader = (ctx: IRemixCtx) => {
 
 const KlOperatorServices = () => {
   const { promise } = useLoaderData<typeof loader>();
+
+  useEffect(() => {
+    console.log(promise);
+  }, [promise]);
 
   return (
     <LoadingComp

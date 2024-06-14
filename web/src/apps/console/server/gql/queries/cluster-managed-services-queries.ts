@@ -12,6 +12,8 @@ import {
   ConsoleUpdateClusterMSvMutationVariables,
   ConsoleDeleteClusterMSvMutation,
   ConsoleDeleteClusterMSvMutationVariables,
+  ConsoleCloneClusterMSvMutation,
+  ConsoleCloneClusterMSvMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IClusterMSv = NN<
@@ -92,6 +94,30 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleCreateClusterMSvMutation) =>
         data.infra_createClusterManagedService,
       vars(_: ConsoleCreateClusterMSvMutationVariables) {},
+    }
+  ),
+  cloneClusterMSv: executor(
+    gql`
+      mutation Infra_cloneClusterManagedService(
+        $clusterName: String!
+        $sourceMsvcName: String!
+        $destinationMsvcName: String!
+        $displayName: String!
+      ) {
+        infra_cloneClusterManagedService(
+          clusterName: $clusterName
+          sourceMsvcName: $sourceMsvcName
+          destinationMsvcName: $destinationMsvcName
+          displayName: $displayName
+        ) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleCloneClusterMSvMutation) =>
+        data.infra_cloneClusterManagedService,
+      vars(_: ConsoleCloneClusterMSvMutationVariables) {},
     }
   ),
   updateClusterMSv: executor(

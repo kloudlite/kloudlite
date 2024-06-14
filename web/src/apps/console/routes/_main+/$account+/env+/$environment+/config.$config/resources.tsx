@@ -1,42 +1,25 @@
-import { DotsThreeVerticalFill, SmileySad, Trash } from '~/console/components/icons';
+import { PencilLine, SmileySad, Trash } from '~/console/components/icons';
 import { useEffect, useState } from 'react';
-import AnimateHide from '~/components/atoms/animate-hide';
-import { IconButton } from '~/components/atoms/button';
-import { TextArea } from '~/components/atoms/input';
-import OptionList from '~/components/atoms/option-list';
-import { cn, generateKey } from '~/components/utils';
-import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
+import { cn } from '~/components/utils';
 import ListGridView from '~/console/components/list-grid-view';
 import NoResultsFound from '~/console/components/no-results-found';
 import {
   ICSBase,
   ICSValueExtended,
   IModifiedItem,
+  IShowDialog,
 } from '~/console/components/types.d';
+import ListV2 from '~/console/components/listV2';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { ListItem } from '~/console/components/console-list-components';
+import Handle from './handle';
 
-const RESOURCE_NAME = 'config';
-
-interface IRenderItem {
-  item: ICSBase;
-  onDelete: () => void;
-  onEdit: (value: string) => void;
-  onRestore: () => void;
-  edit: boolean;
-  listMode?: boolean;
-}
-
-interface IResource {
+interface IResourceBase {
   modifiedItems: IModifiedItem;
   editItem: (item: ICSBase, value: string) => void;
   deleteItem: (item: ICSBase) => void;
   restoreItem: (item: ICSBase) => void;
   searchText: string;
-}
-
-interface IResourceItemExtraOptions {
-  onDelete: (() => void) | null;
-  onRestore: (() => void) | null;
 }
 
 const cc = (item: ICSValueExtended): string =>
@@ -47,251 +30,180 @@ const cc = (item: ICSValueExtended): string =>
     '!text-text-success': item.insert,
   });
 
-const ResourceItemExtraOptions = ({
-  onDelete,
-  onRestore,
-}: IResourceItemExtraOptions) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <OptionList.Root open={open} onOpenChange={setOpen}>
-      <OptionList.Trigger>
-        <IconButton
-          variant="plain"
-          icon={<DotsThreeVerticalFill />}
-          selected={open}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-          }}
-        />
-      </OptionList.Trigger>
-      <OptionList.Content>
-        {onRestore && (
-          <OptionList.Item onClick={onRestore}>
-            <Trash size={16} />
-            <span>Restore</span>
-          </OptionList.Item>
-        )}
-        {onRestore && onDelete && <OptionList.Separator />}
-        {onDelete && (
-          <OptionList.Item
-            className="!text-text-critical"
-            onClick={() => {
-              onDelete();
-            }}
-          >
-            <Trash size={16} />
-            <span>Delete</span>
-          </OptionList.Item>
-        )}
-      </OptionList.Content>
-    </OptionList.Root>
-  );
-};
-
-const ValueComponent = ({
+type OnAction = ({
+  action,
   item,
-  listMode,
 }: {
-  item: ICSBase;
-  listMode: boolean;
-}) => {
-  return (
-    <div
-      className={cn(
-        'bodyMd text-text-soft flex-1',
+  action: 'delete' | 'edit' | 'restore';
+  item: [string, ICSValueExtended];
+}) => void;
+
+type IExtraButton = {
+  onAction: OnAction;
+  item: [string, ICSValueExtended];
+};
+
+const ExtraButton = ({ onAction, item }: IExtraButton) => {
+  const iconSize = 16;
+
+  return item[1].newvalue || item[1].delete ? (
+    <ResourceExtraAction
+      options={[
         {
-          'line-clamp-2': !listMode,
-          'line-clamp-1': listMode,
+          label: 'Restore',
+          type: 'item',
+          key: 'restore',
+          icon: <PencilLine size={iconSize} />,
+          onClick: () => onAction({ action: 'restore', item }),
         },
-        cc(item.value)
-      )}
-    >
-      {item.value.newvalue != null ? item.value.newvalue : item.value.value}
-    </div>
-  );
-};
-const RenderItem = ({
-  item,
-  onDelete,
-  onEdit,
-  onRestore,
-  edit,
-  listMode = true,
-}: IRenderItem) => {
-  const [showDelete, setShowDelete] = useState(false);
-  const [showRestore, setShowRestore] = useState(false);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setShowRestore(
-        item.value.delete ||
-          (item.value.newvalue != null &&
-            item.value.newvalue !== item.value.value)
-      );
-      setShowDelete(!item.value.delete);
-    }, 100);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [item]);
-
-  return (
-    <div className={cn('flex flex-col')}>
-      <div className="flex flex-col gap-lg">
-        <div className={cn('flex flex-row items-center gap-3xl')}>
-          <div
-            className={cn(
-              'bodyMd-semibold text-text-default w-[300px]',
-              cc(item.value)
-            )}
-          >
-            {item.key}
-          </div>
-          {listMode && <ValueComponent item={item} listMode={listMode} />}
-          <ResourceItemExtraOptions
-            onDelete={showDelete ? onDelete : null}
-            onRestore={showRestore ? onRestore : null}
-          />
-        </div>
-        {!listMode && <ValueComponent item={item} listMode={listMode} />}
-      </div>
-      <AnimateHide show={edit && !item.value.delete}>
-        <div
-          className={cn({
-            'pt-xl': listMode,
-            'pt-3xl': !listMode,
-          })}
-        >
-          <TextArea
-            label="value"
-            resize={false}
-            rows="4"
-            value={
-              item.value.newvalue != null
-                ? item.value.newvalue
-                : item.value.value
-            }
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-            }}
-            onChange={({ target }) => onEdit(target.value)}
-          />
-        </div>
-      </AnimateHide>
-    </div>
+        {
+          label: 'Edit',
+          type: 'item',
+          key: 'edit',
+          icon: <PencilLine size={iconSize} />,
+          onClick: () => onAction({ action: 'edit', item }),
+        },
+        {
+          label: 'Delete',
+          type: 'item',
+          key: 'delete',
+          icon: <Trash size={iconSize} />,
+          onClick: () => onAction({ action: 'delete', item }),
+          className: '!text-text-critical',
+        },
+      ]}
+    />
+  ) : (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Edit',
+          type: 'item',
+          key: 'edit',
+          icon: <PencilLine size={iconSize} />,
+          onClick: () => onAction({ action: 'edit', item }),
+        },
+        {
+          label: 'Delete',
+          type: 'item',
+          key: 'delete',
+          icon: <Trash size={iconSize} />,
+          onClick: () => onAction({ action: 'delete', item }),
+          className: '!text-text-critical',
+        },
+      ]}
+    />
   );
 };
 
-const GridView = ({
-  editItem,
-  restoreItem,
-  deleteItem,
-  items,
-}: Omit<IResource, 'modifiedItems' | 'searchText'> & {
+type IResource = Omit<IResourceBase, 'modifiedItems' | 'searchText'> & {
   items: [string, ICSValueExtended][];
-}) => {
-  const [selected, setSelected] = useState('');
+  onAction: OnAction;
+};
 
+// const GridView = ({ editItem, restoreItem, deleteItem, items }: IResource) => {
+//   const [selected, setSelected] = useState('');
+
+//   return (
+//     <Grid.Root>
+//       {items.map(([key, value], index) => {
+//         const keyPrefix = `${RESOURCE_NAME}-${key}-${index}`;
+//         return (
+//           <Grid.Column
+//             key={key}
+//             pressed={selected === key}
+//             onClick={() => {
+//               setSelected((prev) => (prev === key ? '' : key));
+//             }}
+//             className="h-fit min-h-[118px]"
+//             rows={[
+//               {
+//                 key: generateKey(keyPrefix + key),
+//                 render: () => (
+//                   <RenderItem
+//                     edit={selected === key}
+//                     item={{ key, value }}
+//                     onDelete={() => deleteItem({ key, value })}
+//                     // onEdit={(val: string) => editItem({ key, value }, val)}
+//                     onRestore={() => {
+//                       restoreItem({ key, value });
+//                       setSelected('');
+//                     }}
+//                     listMode={false}
+//                   />
+//                 ),
+//               },
+//             ]}
+//           />
+//         );
+//       })}
+//     </Grid.Root>
+//   );
+// };
+
+const ListView = ({ items, onAction }: IResource) => {
   return (
-    <Grid.Root>
-      {items.map(([key, value], index) => {
-        const keyPrefix = `${RESOURCE_NAME}-${key}-${index}`;
-        return (
-          <Grid.Column
-            key={key}
-            pressed={selected === key}
-            onClick={() => {
-              setSelected((prev) => (prev === key ? '' : key));
-            }}
-            className="h-fit min-h-[118px]"
-            rows={[
-              {
-                key: generateKey(keyPrefix + key),
+    <ListV2.Root
+      data={{
+        headers: [
+          {
+            render: () => 'Key',
+            name: 'key',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Value',
+            name: 'value',
+            className: 'flex-1',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((item) => {
+          return {
+            columns: {
+              key: {
                 render: () => (
-                  <RenderItem
-                    edit={selected === key}
-                    item={{ key, value }}
-                    onDelete={() => deleteItem({ key, value })}
-                    onEdit={(val: string) => editItem({ key, value }, val)}
-                    onRestore={() => {
-                      restoreItem({ key, value });
-                      setSelected('');
-                    }}
-                    listMode={false}
+                  <ListItem
+                    data={<span className={cc(item[1])}>{item[0]}</span>}
                   />
                 ),
               },
-            ]}
-          />
-        );
-      })}
-    </Grid.Root>
-  );
-};
-
-const ListView = ({
-  editItem,
-  restoreItem,
-  deleteItem,
-  items,
-}: Omit<IResource, 'modifiedItems' | 'searchText'> & {
-  items: [string, ICSValueExtended][];
-}) => {
-  const [selected, setSelected] = useState('');
-
-  return (
-    <List.Root>
-      {items.map(([key, value]) => {
-        return (
-          <List.Row
-            key={key}
-            pressed={selected === key}
-            onClick={() => {
-              setSelected((prev) => (prev === key ? '' : key));
-            }}
-            columns={[
-              {
-                key: 1,
-                className: 'flex-1',
+              value: {
                 render: () => (
-                  <RenderItem
-                    edit={selected === key}
-                    item={{ key, value }}
-                    onDelete={() => deleteItem({ key, value })}
-                    onEdit={(val: string) => editItem({ key, value }, val)}
-                    onRestore={() => {
-                      restoreItem({ key, value });
-                      setSelected('');
-                    }}
+                  <ListItem
+                    data={
+                      <span className={cc(item[1])}>
+                        {item[1].newvalue || item[1].value}
+                      </span>
+                    }
                   />
                 ),
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+              action: {
+                render: () => <ExtraButton onAction={onAction} item={item} />,
+              },
+            },
+          };
+        }),
+      }}
+    />
   );
 };
+
 const ConfigItemResources = ({
   modifiedItems,
   searchText,
   deleteItem,
   editItem,
   restoreItem,
-}: IResource) => {
+}: IResourceBase) => {
   const [items, setItems] = useState<[string, ICSValueExtended][]>([]);
+  const [showHandleConfig, setShowHandleConfig] =
+    useState<IShowDialog<IModifiedItem>>(null);
 
   useEffect(() => {
     setItems(
@@ -307,18 +219,41 @@ const ConfigItemResources = ({
     );
   }, [searchText, modifiedItems]);
 
-  const props = {
+  const props: IResource = {
     items,
     deleteItem,
     editItem,
     restoreItem,
+    onAction: ({ action, item }) => {
+      console.log('eee', action, item);
+
+      const data = {
+        key: item[0],
+        value: item[1],
+      };
+      switch (action) {
+        case 'edit':
+          setShowHandleConfig({
+            type: 'edit',
+            data: { [item[0]]: item[1] },
+          });
+          break;
+        case 'delete':
+          deleteItem(data);
+          break;
+        case 'restore':
+          restoreItem(data);
+          break;
+        default:
+      }
+    },
   };
   return (
     <>
       {(!searchText || (searchText && items.length > 0)) && (
         <ListGridView
           listView={<ListView {...props} />}
-          gridView={<GridView {...props} />}
+          gridView={<ListView {...props} />}
         />
       )}
       {!!searchText && items.length === 0 && (
@@ -328,6 +263,16 @@ const ConfigItemResources = ({
           image={<SmileySad size={40} />}
         />
       )}
+      <Handle
+        show={showHandleConfig}
+        setShow={setShowHandleConfig}
+        onSubmit={(v, d) => {
+          console.log(v, d);
+          setShowHandleConfig(null);
+          editItem({ key: v.key, value: d }, v.value);
+        }}
+        isUpdate
+      />
     </>
   );
 };

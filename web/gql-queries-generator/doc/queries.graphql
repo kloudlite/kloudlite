@@ -121,7 +121,6 @@ query consoleListAllClusters($search: SearchCluster, $pagination: CursorPaginati
       cursor
       node {
         accountName
-        clusterPublicEndpoint
         clusterSvcCIDR
         createdBy {
           userEmail
@@ -3172,6 +3171,17 @@ mutation consoleCreateClusterMSv($service: ClusterManagedServiceIn!) {
   }
 }
 
+mutation consoleCloneClusterMSv($clusterName: String!, $sourceMsvcName: String!, $destinationMsvcName: String!, $displayName: String!) {
+  infra_cloneClusterManagedService(
+    clusterName: $clusterName
+    sourceMsvcName: $sourceMsvcName
+    destinationMsvcName: $destinationMsvcName
+    displayName: $displayName
+  ) {
+    id
+  }
+}
+
 mutation consoleUpdateClusterMSv($service: ClusterManagedServiceIn!) {
   infra_updateClusterManagedService(service: $service) {
     id
@@ -3335,7 +3345,6 @@ query consoleGetByokCluster($name: String!) {
       syncScheduledAt
     }
     updateTime
-    clusterPublicEndpoint
     clusterSvcCIDR
     globalVPN
   }
@@ -3347,7 +3356,6 @@ query consoleListByokClusters($search: SearchCluster, $pagination: CursorPaginat
       cursor
       node {
         accountName
-        clusterPublicEndpoint
         clusterSvcCIDR
         createdBy {
           userEmail
@@ -4282,6 +4290,119 @@ query consoleListGlobalVpnDevices($gvpn: String!, $search: SearchGlobalVPNDevice
         }
         privateKey
         publicKey
+        recordVersion
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleUpdateNotificationConfig($config: NotificationConfIn!) {
+  comms_updateNotificationConfig(config: $config) {
+    id
+  }
+}
+
+mutation consoleUpdateSubscriptionConfig($config: SubscriptionIn!, $commsUpdateSubscriptionConfigId: ID!) {
+  comms_updateSubscriptionConfig(
+    config: $config
+    id: $commsUpdateSubscriptionConfigId
+  ) {
+    id
+  }
+}
+
+mutation consoleMarkAllNotificationAsRead {
+  comms_markAllNotificationAsRead
+}
+
+query consoleGetNotificationConfig {
+  comms_getNotificationConfig {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    email {
+      enabled
+      mailAddress
+    }
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    recordVersion
+    slack {
+      enabled
+      url
+    }
+    telegram {
+      chatId
+      enabled
+      token
+    }
+    updateTime
+    webhook {
+      enabled
+      url
+    }
+  }
+}
+
+query consoleGetSubscriptionConfig($commsGetSubscriptionConfigId: ID!) {
+  comms_getSubscriptionConfig(id: $commsGetSubscriptionConfigId) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    enabled
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    mailAddress
+    markedForDeletion
+    recordVersion
+    updateTime
+  }
+}
+
+query consoleListNotifications($pagination: CursorPaginationIn) {
+  comms_listNotifications(pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        content {
+          body
+          image
+          link
+          subject
+          title
+        }
+        creationTime
+        id
+        markedForDeletion
+        notificationType
+        priority
+        read
         recordVersion
         updateTime
       }

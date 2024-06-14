@@ -107,7 +107,6 @@ export const clusterQueries = (executor: IExecutor) => ({
             cursor
             node {
               accountName
-              clusterPublicEndpoint
               clusterSvcCIDR
               createdBy {
                 userEmail

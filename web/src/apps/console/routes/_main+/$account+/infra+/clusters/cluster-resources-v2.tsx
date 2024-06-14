@@ -50,6 +50,7 @@ import { LoadingPlaceHolder } from '~/console/components/loading';
 import { Badge } from '~/components/atoms/badge';
 import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
 import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
+import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
@@ -109,6 +110,8 @@ const ByokInstructionsPopup = ({
   onClose: () => void;
   clusterName: string;
 }) => {
+  const params = useParams();
+  ensureAccountClientSide(params);
   const api = useConsoleApi();
 
   const { data, isLoading, error } = useCustomSwr(
@@ -170,6 +173,8 @@ const ByokInstructionsPopup = ({
 
 const ByokButton = ({ item }: { item: CombinedBaseType }) => {
   const [show, setShow] = useState(false);
+
+  console.log('item', item);
 
   return (
     <div>
