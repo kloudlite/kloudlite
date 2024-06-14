@@ -223,7 +223,7 @@ func SyncDevboxShellEnvFile(cmd *cobra.Command) error {
 		return nil
 	}
 
-	devBoxDir := filepath.Dir(DEVBOX_JSON_PATH)
+	devBoxDir := filepath.Dir(DevBoxJsonPath())
 
 	b, _ := os.ReadFile(path.Join(devBoxDir, "devbox-env.sh"))
 
@@ -299,7 +299,7 @@ func ExecPackageCommand(cmdString string, cmd *cobra.Command) error {
 
 	devboxContext := devboxfile.DevboxConfig{}
 
-	devboxJsonConfig, err := os.ReadFile(DEVBOX_JSON_PATH)
+	devboxJsonConfig, err := os.ReadFile(DevBoxJsonPath())
 	if err == nil {
 		if err := devboxContext.ParseJson(devboxJsonConfig); err != nil {
 			return err
@@ -318,7 +318,7 @@ func ExecPackageCommand(cmdString string, cmd *cobra.Command) error {
 		return err
 	}
 
-	if err := os.WriteFile(DEVBOX_JSON_PATH, devboxConfig, os.ModePerm); err != nil {
+	if err := os.WriteFile(DevBoxJsonPath(), devboxConfig, os.ModePerm); err != nil {
 		return err
 	}
 
@@ -332,13 +332,13 @@ func ExecPackageCommand(cmdString string, cmd *cobra.Command) error {
 	command := exec.Command(cmdArr[0], cmdArr[1:]...)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
-	command.Dir = filepath.Dir(DEVBOX_JSON_PATH)
+	command.Dir = filepath.Dir(DevBoxJsonPath())
 
 	if err = command.Run(); err != nil {
 		return err
 	}
 
-	b, err := os.ReadFile(DEVBOX_JSON_PATH)
+	b, err := os.ReadFile(DevBoxJsonPath())
 	if err != nil {
 		return err
 	}
@@ -357,12 +357,12 @@ func ExecPackageCommand(cmdString string, cmd *cobra.Command) error {
 }
 
 func syncDevboxLock() func() {
-	if err := fn.CopyFile(KL_LOCK_PATH, DEVBOX_LOCK_PATH); err != nil {
+	if err := fn.CopyFile(KL_LOCK_PATH, DevBoxLockPath()); err != nil {
 		fn.Warn(err)
 	}
 
 	return func() {
-		if err := fn.CopyFile(DEVBOX_LOCK_PATH, KL_LOCK_PATH); err != nil {
+		if err := fn.CopyFile(DevBoxLockPath(), KL_LOCK_PATH); err != nil {
 			fn.Warn(err)
 		}
 	}

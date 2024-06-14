@@ -10,6 +10,7 @@ HISTCONTROL=ignoreboth
 
 HISTSIZE=1000
 HISTFILESIZE=2000
+HISTFILE="$HOME/.zsh_history"
 
 # zsh pure prompt setup
 fpath+=($HOME/.config/zsh/pure)

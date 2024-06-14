@@ -346,7 +346,7 @@ func SyncDevboxJsonFile() error {
 		return err
 	}
 
-	if err := os.WriteFile(client.DEVBOX_JSON_PATH, b, os.ModePerm); err != nil {
+	if err := os.WriteFile(client.DevBoxJsonPath(), b, os.ModePerm); err != nil {
 		return err
 	}
 

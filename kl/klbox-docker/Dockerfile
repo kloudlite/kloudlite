@@ -82,6 +82,8 @@ RUN chsh -s /bin/zsh kl
 COPY ./start.sh /start.sh
 COPY ./entrypoint.sh /entrypoint.sh
 
+RUN mkdir /kl-tmp && chown -R kl:kl /kl-tmp
+
 RUN chmod +x /start.sh
 RUN chmod +x /entrypoint.sh
 

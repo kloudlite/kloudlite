@@ -6,14 +6,15 @@ set -o pipefail
 trap "echo kloudlite-entrypoint:CRASHED >&2" EXIT SIGINT SIGTERM
 
 export IN_DEV_BOX="true"
-export KL_WORKSPACE=$KL_WORKSPACE
+export KL_WORKSPACE="$KL_WORKSPACE"
+export KL_TMP_PATH="/kl-tmp"
 
-mkdir -p /home/kl/.kl/
-cat <<EOL > /home/kl/.kl/global-profile
+cat <<EOL > /kl-tmp/global-profile
 export SSH_PORT=$SSH_PORT
 export IN_DEV_BOX="true"
 export KL_WORKSPACE="$KL_WORKSPACE"
 export MAIN_PATH=$PATH
+export KL_TMP_PATH="/kl-tmp"
 EOL
 
 kl app start-dns &
@@ -29,11 +30,8 @@ sudo cp /tmp/resolv.conf /etc/resolv.conf
 
 # KL_LOCK_PATH=/home/kl/workspace/kl.lock
 #
-KL_DEVBOX_PATH=$HOME/.kl/devbox
-
+KL_DEVBOX_PATH=/kl-tmp/devbox
 mkdir -p "$KL_DEVBOX_PATH"
-
-chown kl:kl "$HOME/.kl"
 
 entrypoint_executed="/home/kl/.kloudlite_entrypoint_executed"
 if [ ! -f "$entrypoint_executed" ]; then
