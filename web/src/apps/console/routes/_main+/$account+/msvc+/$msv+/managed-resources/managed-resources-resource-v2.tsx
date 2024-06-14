@@ -154,17 +154,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           {
             render: () => 'Resource Type',
             name: 'resource',
-            className: 'w-[100px]',
-          },
-          {
-            render: () => '',
-            name: 'flex-pre',
-            className: 'flex-1',
-          },
-          {
-            render: () => 'Managed Service',
-            name: 'service',
-            className: 'w-[200px]',
+            className: 'w-[80px]',
           },
           {
             render: () => '',
@@ -188,7 +178,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const { name, id, logo, updateInfo } = parseItem(i, templates);
+          const { name, id, updateInfo } = parseItem(i, templates);
           return {
             columns: {
               name: {
@@ -209,24 +199,6 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
               resource: {
                 render: () => (
                   <ListItem data={`${i.spec?.resourceTemplate?.kind}`} />
-                ),
-              },
-              service: {
-                render: () => (
-                  <ListItem
-                    data={
-                      <div className="flex flex-row gap-xl">
-                        <span>
-                          <img
-                            src={logo}
-                            alt={`${i.spec?.resourceTemplate?.msvcRef?.name}`}
-                            className="w-4xl h-4xl"
-                          />
-                        </span>
-                        <span>{`${i.spec?.resourceTemplate?.msvcRef?.name}`}</span>
-                      </div>
-                    }
-                  />
                 ),
               },
               status: {
