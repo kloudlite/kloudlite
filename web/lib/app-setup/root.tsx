@@ -196,6 +196,22 @@ const Root = ({
               `,
           }}
         />
+
+        <script
+          // @ts-ignore
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{
+            __html: `
+                try {
+                  if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.querySelector('html').setAttribute('data-theme', 'dark')
+                  } else {
+                    document.querySelector('html').setAttribute('data-theme', 'light')                  
+                  }
+                } catch (_) {}
+              `,
+          }}
+        />
       </head>
       <body className="antialiased">
         <div
