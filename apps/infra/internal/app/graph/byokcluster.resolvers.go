@@ -6,9 +6,8 @@ package graph
 
 import (
 	"context"
-	"time"
-
 	"github.com/kloudlite/api/pkg/errors"
+	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
@@ -72,7 +71,5 @@ func (r *Resolver) BYOKCluster() generated.BYOKClusterResolver { return &bYOKClu
 // BYOKClusterIn returns generated.BYOKClusterInResolver implementation.
 func (r *Resolver) BYOKClusterIn() generated.BYOKClusterInResolver { return &bYOKClusterInResolver{r} }
 
-type (
-	bYOKClusterResolver   struct{ *Resolver }
-	bYOKClusterInResolver struct{ *Resolver }
-)
+type bYOKClusterResolver struct{ *Resolver }
+type bYOKClusterInResolver struct{ *Resolver }

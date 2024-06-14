@@ -1152,6 +1152,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		InfraCloneClusterManagedService  func(childComplexity int, clusterName string, sourceMsvcName string, destinationMsvcName string, displayName string) int
 		InfraCreateBYOKCluster           func(childComplexity int, cluster entities.BYOKCluster) int
 		InfraCreateCluster               func(childComplexity int, cluster entities.Cluster) int
 		InfraCreateClusterManagedService func(childComplexity int, service entities.ClusterManagedService) int
@@ -1541,6 +1542,7 @@ type MutationResolver interface {
 	InfraCreateClusterManagedService(ctx context.Context, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
 	InfraUpdateClusterManagedService(ctx context.Context, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
 	InfraDeleteClusterManagedService(ctx context.Context, name string) (bool, error)
+	InfraCloneClusterManagedService(ctx context.Context, clusterName string, sourceMsvcName string, destinationMsvcName string, displayName string) (*entities.ClusterManagedService, error)
 	InfraCreateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error)
 	InfraUpdateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error)
 	InfraDeleteHelmRelease(ctx context.Context, clusterName string, releaseName string) (bool, error)
@@ -6298,6 +6300,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MsvcTemplate.Items(childComplexity), true
 
+	case "Mutation.infra_cloneClusterManagedService":
+		if e.complexity.Mutation.InfraCloneClusterManagedService == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_cloneClusterManagedService_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraCloneClusterManagedService(childComplexity, args["clusterName"].(string), args["sourceMsvcName"].(string), args["destinationMsvcName"].(string), args["displayName"].(string)), true
+
 	case "Mutation.infra_createBYOKCluster":
 		if e.complexity.Mutation.InfraCreateBYOKCluster == nil {
 			break
@@ -8309,6 +8323,7 @@ type Mutation {
     infra_createClusterManagedService(service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
     infra_updateClusterManagedService(service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
     infra_deleteClusterManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    infra_cloneClusterManagedService(clusterName: String!, sourceMsvcName: String!, destinationMsvcName: String!, displayName: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
 
     infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
     infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
@@ -10498,6 +10513,48 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_infra_cloneClusterManagedService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["sourceMsvcName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceMsvcName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["sourceMsvcName"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["destinationMsvcName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationMsvcName"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["destinationMsvcName"] = arg2
+	var arg3 string
+	if tmp, ok := rawArgs["displayName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["displayName"] = arg3
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_infra_createBYOKCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -44083,6 +44140,118 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteClusterManagedServ
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_infra_cloneClusterManagedService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_cloneClusterManagedService(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraCloneClusterManagedService(rctx, fc.Args["clusterName"].(string), fc.Args["sourceMsvcName"].(string), fc.Args["destinationMsvcName"].(string), fc.Args["displayName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.ClusterManagedService); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.ClusterManagedService`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.ClusterManagedService)
+	fc.Result = res
+	return ec.marshalOClusterManagedService2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐClusterManagedService(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_infra_cloneClusterManagedService(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_ClusterManagedService_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_ClusterManagedService_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_ClusterManagedService_clusterName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_ClusterManagedService_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_ClusterManagedService_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_ClusterManagedService_displayName(ctx, field)
+			case "id":
+				return ec.fieldContext_ClusterManagedService_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_ClusterManagedService_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_ClusterManagedService_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_ClusterManagedService_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_ClusterManagedService_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_ClusterManagedService_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_ClusterManagedService_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_ClusterManagedService_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_ClusterManagedService_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_ClusterManagedService_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ClusterManagedService", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_infra_cloneClusterManagedService_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_infra_createHelmRelease(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_infra_createHelmRelease(ctx, field)
 	if err != nil {
@@ -69578,6 +69747,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "infra_cloneClusterManagedService":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_cloneClusterManagedService(ctx, field)
+			})
 		case "infra_createHelmRelease":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_createHelmRelease(ctx, field)

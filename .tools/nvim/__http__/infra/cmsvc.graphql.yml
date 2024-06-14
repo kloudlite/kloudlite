@@ -1,0 +1,20 @@
+---
+label: "Clone Cluster Managed Service"
+query: |+
+  mutation Infra_cloneClusterManagedService($clusterName: String!, $sourceMsvcName: String!, $destinationMsvcName: String!, $displayName: String!) {
+    infra_cloneClusterManagedService(clusterName: $clusterName, sourceMsvcName: $sourceMsvcName, destinationMsvcName: $destinationMsvcName, displayName: $displayName) {
+      id
+      displayName
+      metadata {
+        name
+      }
+    }
+  }
+variables:
+  {
+    "clusterName": "test-cluster1",
+    "sourceMsvcName": "msvc-one",
+    "destinationMsvcName": "msvc-one-clone2",
+    "displayName": "msvc one clone2"
+  }
+---
