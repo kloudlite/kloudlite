@@ -121,7 +121,6 @@ query consoleListAllClusters($search: SearchCluster, $pagination: CursorPaginati
       cursor
       node {
         accountName
-        clusterPublicEndpoint
         clusterSvcCIDR
         createdBy {
           userEmail
@@ -3172,6 +3171,17 @@ mutation consoleCreateClusterMSv($service: ClusterManagedServiceIn!) {
   }
 }
 
+mutation consoleCloneClusterMSv($clusterName: String!, $sourceMsvcName: String!, $destinationMsvcName: String!, $displayName: String!) {
+  infra_cloneClusterManagedService(
+    clusterName: $clusterName
+    sourceMsvcName: $sourceMsvcName
+    destinationMsvcName: $destinationMsvcName
+    displayName: $displayName
+  ) {
+    id
+  }
+}
+
 mutation consoleUpdateClusterMSv($service: ClusterManagedServiceIn!) {
   infra_updateClusterManagedService(service: $service) {
     id
@@ -3335,7 +3345,6 @@ query consoleGetByokCluster($name: String!) {
       syncScheduledAt
     }
     updateTime
-    clusterPublicEndpoint
     clusterSvcCIDR
     globalVPN
   }
@@ -3347,7 +3356,6 @@ query consoleListByokClusters($search: SearchCluster, $pagination: CursorPaginat
       cursor
       node {
         accountName
-        clusterPublicEndpoint
         clusterSvcCIDR
         createdBy {
           userEmail

@@ -1,4 +1,4 @@
-import { GearSix } from '~/console/components/icons';
+import { Copy, GearSix } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -19,7 +19,11 @@ import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { SyncStatusV2 } from '~/console/components/sync-status';
 import ListV2 from '~/console/components/listV2';
 import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
+import { useWatchReload } from '~/root/lib/client/helpers/socket/useWatch';
+import { useState } from 'react';
 import { IAccountContext } from '../_layout';
+import { IClusterContext } from '../infra+/$cluster+/_layout';
+import CloneManagedService from './clone-managed-service';
 
 const RESOURCE_NAME = 'managed service';
 type BaseType = ExtractNodeType<IClusterMSvs>;
@@ -41,17 +45,31 @@ const parseItem = (item: BaseType, templates: IMSvTemplates) => {
   };
 };
 
-const ExtraButton = ({ managedService }: { managedService: BaseType }) => {
+type OnAction = ({ action, item }: { action: 'clone'; item: BaseType }) => void;
+
+type IExtraButton = {
+  onAction: OnAction;
+  item: BaseType;
+};
+
+const ExtraButton = ({ item, onAction }: IExtraButton) => {
   const { account } = useParams();
   return (
     <ResourceExtraAction
       options={[
         {
+          label: 'Clone',
+          icon: <Copy size={16} />,
+          type: 'item',
+          key: 'clone',
+          onClick: () => onAction({ action: 'clone', item }),
+        },
+        {
           label: 'Settings',
           icon: <GearSix size={16} />,
           type: 'item',
 
-          to: `/${account}/msvc/${parseName(managedService)}/settings`,
+          to: `/${account}/msvc/${parseName(item)}/settings`,
           key: 'settings',
         },
       ]}
@@ -59,13 +77,13 @@ const ExtraButton = ({ managedService }: { managedService: BaseType }) => {
   );
 };
 
-const GridView = ({
-  items,
-  templates,
-}: {
+interface IResource {
   items: BaseType[];
   templates: IMSvTemplates;
-}) => {
+  onAction: OnAction;
+}
+
+const GridView = ({ items, templates, onAction }: IResource) => {
   const { account, project } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
@@ -84,19 +102,19 @@ const GridView = ({
                     title={name}
                     subtitle={id}
                     action={
-                      <ResourceExtraAction
-                        options={[
-                          {
-                            key: 'managed-services-resource-extra-action-1',
-                            to: `/${account}/${project}/msvc/${id}/logs-n-metrics`,
-                            icon: <GearSix size={16} />,
-                            label: 'logs & metrics',
-                            type: 'item',
-                          },
-                        ]}
-                      />
+                      <ExtraButton item={item} onAction={onAction} />
+                      // <ResourceExtraAction
+                      //   options={[
+                      //     {
+                      //       key: 'managed-services-resource-extra-action-1',
+                      //       to: `/${account}/${project}/msvc/${id}/logs-n-metrics`,
+                      //       icon: <GearSix size={16} />,
+                      //       label: 'logs & metrics',
+                      //       type: 'item',
+                      //     },
+                      //   ]}
+                      // />
                     }
-                    // action={<ExtraButton onAction={onAction} item={item} />}
                     avatar={
                       <img src={logo} alt={name} className="w-4xl h-4xl" />
                     }
@@ -120,13 +138,7 @@ const GridView = ({
   );
 };
 
-const ListView = ({
-  items,
-  templates,
-}: {
-  items: BaseType[];
-  templates: IMSvTemplates;
-}) => {
+const ListView = ({ items, templates, onAction }: IResource) => {
   const { account } = useOutletContext<IAccountContext>();
   return (
     <ListV2.Root
@@ -196,7 +208,7 @@ const ListView = ({
                 ),
               },
               action: {
-                render: () => <ExtraButton managedService={i} />,
+                render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
             to: `/${parseName(account)}/msvc/${id}/managed-resources`,
@@ -214,11 +226,48 @@ const BackendServicesResourcesV2 = ({
   items: BaseType[];
   templates: IMSvTemplates;
 }) => {
+  const { cluster, account } = useOutletContext<IClusterContext>();
+  useWatchReload(
+    items.map((i) => {
+      return `account:${parseName(account)}.cluster:${parseName(
+        cluster
+      )}.cluster_managed_service:${parseName(i)}`;
+    })
+  );
+
+  const [visible, setVisible] = useState<BaseType | null>(null);
+
+  const props: IResource = {
+    items,
+    templates,
+    onAction: ({ action, item }) => {
+      switch (action) {
+        case 'clone':
+          setVisible(item);
+          break;
+        default:
+          break;
+      }
+    },
+  };
+
   return (
-    <ListGridView
-      listView={<ListView items={items} templates={templates} />}
-      gridView={<GridView items={items} templates={templates} />}
-    />
+    <>
+      <ListGridView
+        listView={<ListView {...props} />}
+        gridView={<GridView {...props} />}
+      />
+      <CloneManagedService
+        {...{
+          isUpdate: true,
+          visible: !!visible,
+          setVisible: () => {
+            setVisible(null);
+          },
+          data: visible!,
+        }}
+      />
+    </>
   );
 };
 

@@ -242,6 +242,9 @@ export type ResType =
   | 'nodepool'
   | 'providersecret';
 
+export type Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__ClusterVisibilityMode =
+  'private' | 'public';
+
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode =
   'dev' | 'HA';
 
@@ -949,7 +952,13 @@ export type RepositoryIn = {
 export type ByokClusterIn = {
   displayName: Scalars['String']['input'];
   metadata: MetadataIn;
+  visibility: Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__ClusterVisbilityIn;
 };
+
+export type Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__ClusterVisbilityIn =
+  {
+    mode: Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__ClusterVisibilityMode;
+  };
 
 export type ClusterIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
@@ -1040,6 +1049,7 @@ export type GlobalVpnIn = {
   displayName: Scalars['String']['input'];
   kloudliteDevice: GlobalVpnKloudliteDeviceIn;
   metadata: MetadataIn;
+  nonClusterUseAllowedIPs: Array<Scalars['String']['input']>;
   numAllocatedClusterCIDRs: Scalars['Int']['input'];
   numAllocatedDevices: Scalars['Int']['input'];
   numReservedIPsForNonClusterUse: Scalars['Int']['input'];
@@ -1909,7 +1919,6 @@ export type ConsoleListAllClustersQuery = {
       cursor: string;
       node: {
         accountName: string;
-        clusterPublicEndpoint: string;
         clusterSvcCIDR: string;
         creationTime: any;
         displayName: string;
@@ -4782,6 +4791,17 @@ export type ConsoleCreateClusterMSvMutation = {
   infra_createClusterManagedService?: { id: string };
 };
 
+export type ConsoleCloneClusterMSvMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  sourceMsvcName: Scalars['String']['input'];
+  destinationMsvcName: Scalars['String']['input'];
+  displayName: Scalars['String']['input'];
+}>;
+
+export type ConsoleCloneClusterMSvMutation = {
+  infra_cloneClusterManagedService?: { id: string };
+};
+
 export type ConsoleUpdateClusterMSvMutationVariables = Exact<{
   service: ClusterManagedServiceIn;
 }>;
@@ -4932,7 +4952,6 @@ export type ConsoleGetByokClusterQuery = {
     markedForDeletion?: boolean;
     recordVersion: number;
     updateTime: any;
-    clusterPublicEndpoint: string;
     clusterSvcCIDR: string;
     globalVPN: string;
     createdBy: { userEmail: string; userId: string; userName: string };
@@ -4969,7 +4988,6 @@ export type ConsoleListByokClustersQuery = {
       cursor: string;
       node: {
         accountName: string;
-        clusterPublicEndpoint: string;
         clusterSvcCIDR: string;
         creationTime: any;
         displayName: string;

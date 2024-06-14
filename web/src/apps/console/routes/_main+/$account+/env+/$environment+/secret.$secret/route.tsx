@@ -55,6 +55,8 @@ const ConfigBody = ({ secret }: { secret: ISecret }) => {
   const [modifiedItems, setModifiedItems] = useState<IModifiedItem>({});
 
   const [configUpdating, setConfigUpdating] = useState(false);
+  // const [success, setSuccess] = useState(false);
+
   const { account, environment } = useParams();
   const api = useConsoleApi();
   const reload = useReload();
@@ -147,6 +149,7 @@ const ConfigBody = ({ secret }: { secret: ISecret }) => {
                       reload,
                     });
                     setConfigUpdating(false);
+                    // setSuccess(false);
                   }}
                 />
               )}
@@ -226,6 +229,7 @@ const ConfigBody = ({ secret }: { secret: ISecret }) => {
           }));
           setShowHandleConfig(null);
         }}
+        isUpdate={false}
       />
     </>
   );

@@ -2,7 +2,7 @@
 import { toast } from 'react-toastify';
 import Popup from '~/components/molecule/popup';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import useForm from '~/root/lib/client/hooks/use-form';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { IDialogBase } from '~/console/components/types.d';
@@ -10,6 +10,8 @@ import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
+import { Checkbox } from '~/components/atoms/checkbox';
+import Banner from '~/components/molecule/banner';
 
 type IDialog = IDialogBase<ExtractNodeType<IByocClusters>>;
 
@@ -25,11 +27,13 @@ const Root = (props: IDialog) => {
         ? {
             displayName: props.data.displayName,
             name: parseName(props.data),
+            visibilityMode: true,
             isNameError: false,
           }
         : {
             name: '',
             displayName: '',
+            visibilityMode: true,
             isNameError: false,
           },
       validationSchema: Yup.object({
@@ -44,6 +48,9 @@ const Root = (props: IDialog) => {
                 displayName: val.displayName,
                 metadata: {
                   name: val.name,
+                },
+                visibility: {
+                  mode: val.visibilityMode ? 'public' : 'private',
                 },
               },
             });
@@ -94,6 +101,27 @@ const Root = (props: IDialog) => {
             nameErrorLabel="isNameError"
             isUpdate={isUpdate}
           />
+          {!isUpdate && (
+            <>
+              <Checkbox
+                label="Public"
+                checked={values.visibilityMode}
+                onChange={(val) => {
+                  handleChange('visibilityMode')(dummyEvent(val));
+                }}
+              />
+              <Banner
+                type="info"
+                body={
+                  <span className="bodyMd-medium">
+                    {values.visibilityMode === true
+                      ? 'Public mode assumes cluster is accessible to public internet'
+                      : 'In Private mode traffic is routed via a kloudlite gateway'}
+                  </span>
+                }
+              />
+            </>
+          )}
         </div>
       </Popup.Content>
       <Popup.Footer>

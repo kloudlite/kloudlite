@@ -219,14 +219,14 @@ const ClusterManagedServiceSettingGeneral = () => {
         </Box>
 
         <DeleteContainer
-          title="Delete Deployment"
+          title="Delete Managed Service"
           action={() => {
             setDeleteClusterMsvc(true);
           }}
         >
-          Permanently remove your Deployment and all of its contents from the
-          Kloudlite platform. This action is not reversible — please continue
-          with caution.
+          Permanently remove your Managed service and all of its contents from
+          the Kloudlite platform. This action is not reversible — please
+          continue with caution.
         </DeleteContainer>
         <DeleteDialog
           resourceName={parseName(managedService)}

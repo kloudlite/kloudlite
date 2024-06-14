@@ -56,6 +56,8 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
   const [modifiedItems, setModifiedItems] = useState<IModifiedItem>({});
 
   const [configUpdating, setConfigUpdating] = useState(false);
+  // const [success, setSuccess] = useState(false);
+
   const { account, environment } = useParams();
   const api = useConsoleApi();
   const reload = useReload();
@@ -149,6 +151,7 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
                       reload,
                     });
                     setConfigUpdating(false);
+                    // setSuccess(true);
                   }}
                 />
               )}
@@ -180,6 +183,7 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
                 [item.key]: { ...item.value, value },
               }));
             } else {
+              console.log('edit', item, value);
               setModifiedItems((prev) => ({
                 ...prev,
                 [item.key]: { ...item.value, newvalue: value },
@@ -228,6 +232,7 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
           }));
           setShowHandleConfig(null);
         }}
+        isUpdate={false}
       />
     </>
   );

@@ -252,7 +252,6 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const props: IResource = {
     items,
     onAction: ({ action, item }) => {
-      console.log('heeloo');
       switch (action) {
         case 'clone':
           setVisible(item);
