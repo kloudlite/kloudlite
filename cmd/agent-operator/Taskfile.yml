@@ -42,9 +42,11 @@ tasks:
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
       - |+
+        echo "starting build @ $(date)"
         GOARCH=arm64 task local:build upx={{.upx}} &
         pip="$pid $!"
         GOARCH=amd64 task local:build upx={{.upx}} &
         pip="$pid $!"
         eval wait $pid
       - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
+      - echo "finished build @ $(date)"
