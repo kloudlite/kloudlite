@@ -15,6 +15,8 @@ import { ReactNode, useEffect } from 'react';
 import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
 import styleReactPulsable from 'react-pulsable/index.css';
 import reactToast from 'react-toastify/dist/ReactToastify.css';
+import styleZenerSelect from '@oshq/react-select/index.css';
+import rcss from 'react-highlightjs-logs/dist/index.css';
 import Container from '~/components/atoms/container';
 import ProgressContainer, {
   useProgress,
@@ -23,9 +25,7 @@ import Tooltip from '~/components/atoms/tooltip';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { ToastContainer } from '~/components/molecule/toast';
 import { TopBar } from '~/components/organisms/top-bar';
-import styleZenerSelect from '@oshq/react-select/index.css';
 import stylesUrl from '~/design-system/index.css';
-import rcss from 'react-highlightjs-logs/dist/index.css';
 import tailwindBase from '~/design-system/tailwind-base.js';
 import { ReloadIndicator } from '~/lib/client/components/reload-indicator';
 import { isDev } from '~/lib/client/helpers/log';
