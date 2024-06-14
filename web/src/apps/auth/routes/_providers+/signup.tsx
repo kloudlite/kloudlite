@@ -1,9 +1,6 @@
-import classNames from 'classnames';
-import { BrandLogo } from '~/components/branding/brand-logo.jsx';
 import { Button } from '~/components/atoms/button.jsx';
 import {
   Envelope,
-  EnvelopeFill,
   GithubLogoFill,
   GitlabLogoFill,
   GoogleLogo,
@@ -20,7 +17,9 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
-import { ArrowLeft } from '~/components/icons';
+import { ArrowLeft, ArrowRight } from '~/components/icons';
+import { cn } from '~/components/utils';
+import { mainUrl } from '~/auth/consts';
 import Container from '../../components/container';
 import { IProviderContext } from './_layout';
 
@@ -56,7 +55,7 @@ const SignUpWithEmail = () => {
         if (_errors) {
           throw _errors[0];
         }
-        toast.success('signed up successfully');
+        toast.success('Signed up successfully');
         navigate('/');
       } catch (err) {
         handleError(err);
@@ -67,7 +66,7 @@ const SignUpWithEmail = () => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col items-stretch gap-6xl"
+      className="flex flex-col items-stretch gap-3xl"
     >
       <div className="flex flex-col items-stretch gap-3xl">
         <TextInput
@@ -79,6 +78,7 @@ const SignUpWithEmail = () => {
           label="Name"
           placeholder="Full name"
           size="lg"
+          className="h-[48px]"
         />
         <TextInput
           name="email"
@@ -89,6 +89,7 @@ const SignUpWithEmail = () => {
           label="Email"
           placeholder="ex: john@company.com"
           size="lg"
+          className="h-[48px]"
         />
         <PasswordInput
           name="password"
@@ -99,6 +100,7 @@ const SignUpWithEmail = () => {
           placeholder="XXXXXX"
           size="lg"
           message={errors.password}
+          className="h-[48px]"
         />
 
         <PasswordInput
@@ -109,17 +111,17 @@ const SignUpWithEmail = () => {
           placeholder="XXXXXX"
           size="lg"
           message={errors.c_password}
+          className="h-[48px]"
         />
       </div>
-
       <Button
-        size="2xl"
         loading={isLoading}
-        type="submit"
+        size="lg"
         variant="primary"
-        content={<span className="bodyLg-medium">Continue with Email</span>}
-        prefix={<EnvelopeFill />}
+        content={<span className="bodyLg-medium">Continue with email</span>}
+        suffix={<ArrowRight />}
         block
+        type="submit"
       />
     </form>
   );
@@ -131,31 +133,32 @@ const Signup = () => {
   const [searchParams, _setSearchParams] = useSearchParams();
   return (
     <Container
-      footer={{
-        message: 'Already have an account?',
-        buttonText: 'Login',
-        to: '/login',
-      }}
+      headerExtra={
+        <Button
+          variant="outline"
+          content="Sign in"
+          linkComponent={Link}
+          to="/login"
+        />
+      }
     >
-      <div className="flex flex-col items-stretch justify-center gap-7xl md:w-[400px]">
-        <div className="flex flex-col gap-5xl">
-          <BrandLogo darkBg={false} size={60} />
-          <div className="flex flex-col items-stretch gap-5xl border-b pb-5xl border-border-default">
-            <div className="flex flex-col gap-lg items-center md:px-7xl">
-              <div
-                className={classNames(
-                  'text-text-strong heading3xl text-center'
-                )}
-              >
-                Signup to Kloudlite
-              </div>
-            </div>
+      <div className="flex flex-col gap-6xl md:w-[500px] px-3xl py-5xl md:px-9xl">
+        <div className="flex flex-col gap-lg items-center text-center">
+          <div className={cn('text-text-strong headingXl text-center')}>
+            Create your Kloudlite.io account
+          </div>
+          <div className="bodyMd-medium text-text-soft">
+            Get started for free. No credit card required.
+          </div>
+        </div>
+        <div className="flex flex-col gap-3xl">
+          <div className="flex flex-col items-stretch">
             {searchParams.get('mode') === 'email' ? (
               <SignUpWithEmail />
             ) : (
               <div className="flex flex-col items-stretch gap-3xl">
                 <Button
-                  size="2xl"
+                  size="lg"
                   variant="tertiary"
                   content={
                     <span className="bodyLg-medium">Continue with GitHub</span>
@@ -167,7 +170,7 @@ const Signup = () => {
                   linkComponent={Link}
                 />
                 <Button
-                  size="2xl"
+                  size="lg"
                   variant="purple"
                   content={
                     <span className="bodyLg-medium">Continue with GitLab</span>
@@ -179,7 +182,7 @@ const Signup = () => {
                   linkComponent={Link}
                 />
                 <Button
-                  size="2xl"
+                  size="lg"
                   variant="primary"
                   content={
                     <span className="bodyLg-medium">Continue with Google</span>
@@ -195,10 +198,10 @@ const Signup = () => {
           </div>
           {searchParams.get('mode') === 'email' ? (
             <Button
-              size="2xl"
-              variant="outline"
+              size="lg"
+              variant="plain"
               content={
-                <span className="bodyLg-medium">Other Signup options</span>
+                <span className="bodyLg-medium">Other sign up options</span>
               }
               prefix={<ArrowLeft />}
               to="/signup"
@@ -207,9 +210,11 @@ const Signup = () => {
             />
           ) : (
             <Button
-              size="2xl"
+              size="lg"
               variant="outline"
-              content={<span className="bodyLg-medium">Signup with Email</span>}
+              content={
+                <span className="bodyLg-medium">Continue with email</span>
+              }
               prefix={<Envelope />}
               to="/signup/?mode=email"
               block
@@ -217,20 +222,37 @@ const Signup = () => {
             />
           )}
         </div>
-
-        <div className="bodyMd text-text-soft text-center">
-          By signing up, you agree to the{' '}
-          <Link
-            to="https://kloudlite.io/terms-and-conditions"
-            className="underline"
-          >
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link className="underline" to="https://kloudlite.io/privacy-policy">
-            Privacy Policy
-          </Link>
-          .
+        <div className="inline text-center">
+          <span className="text-text-soft bodyLg">
+            By continuing, you agree Kloudlite’s
+          </span>
+          <br />
+          <span>
+            <Button
+              to={`${mainUrl}/terms-of-services`}
+              linkComponent={Link}
+              className="!inline-block align-bottom"
+              variant="plain"
+              content={
+                <span className="bodyLg-underline text-text-strong">
+                  Terms of Service
+                </span>
+              }
+            />
+            <span> and </span>
+            <Button
+              to={`${mainUrl}/privacy-policy`}
+              linkComponent={Link}
+              className="!inline-block align-bottom"
+              variant="plain"
+              content={
+                <span className="bodyLg-underline text-text-strong">
+                  Privacy Policy
+                </span>
+              }
+            />
+            .
+          </span>
         </div>
       </div>
     </Container>

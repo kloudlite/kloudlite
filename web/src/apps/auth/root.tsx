@@ -1,5 +1,6 @@
 import Root, { links as baseLinks } from '~/lib/app-setup/root.jsx';
 import { ChildrenProps } from '~/components/types';
+import ThemeProvider from '~/root/lib/client/hooks/useTheme';
 import authStylesUrl from './styles/index.css';
 
 export { loader } from '~/lib/app-setup/root.jsx';
@@ -22,7 +23,11 @@ const Layout = ({ children }: ChildrenProps) => {
 
 const _Root = ({ ...props }) => {
   // @ts-ignore
-  return <Root {...props} Wrapper={Layout} />;
+  return (
+    <ThemeProvider>
+      <Root {...props} Wrapper={Layout} />
+    </ThemeProvider>
+  );
 };
 
 export default _Root;

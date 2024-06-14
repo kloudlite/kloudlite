@@ -87,7 +87,7 @@ const Wrapper = ({
                       y="0.970703"
                       width="226"
                       height="226"
-                      fill="#F4F4F5"
+                      className="fill-surface-basic-subdued"
                     />
                   </svg>
                 )

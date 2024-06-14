@@ -1,7 +1,5 @@
-import { BrandLogo } from '~/components/branding/brand-logo';
 import { Button } from '~/components/atoms/button';
 import { PasswordInput } from '~/components/atoms/input';
-import { GoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -13,6 +11,7 @@ import { handleError } from '~/root/lib/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
 import { ArrowRight } from '~/components/icons';
+import Container from '~/auth/components/container';
 
 const ForgetPassword = () => {
   const { token } = useLoaderData();
@@ -49,67 +48,62 @@ const ForgetPassword = () => {
     },
   });
   return (
-    <div className={cn('flex flex-col items-center justify-center h-full')}>
+    <Container
+      headerExtra={
+        <Button
+          variant="outline"
+          content="Sign in"
+          linkComponent={Link}
+          to="/login"
+        />
+      }
+    >
       <form
-        className={cn(
-          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl pb-5xl'
-        )}
+        className="flex flex-col gap-6xl md:w-[500px] px-3xl py-5xl md:px-9xl"
         onSubmit={handleSubmit}
       >
-        <div className="flex flex-col items-stretch justify-center gap-5xl md:w-[400px]">
-          <BrandLogo darkBg={false} size={60} />
-          <div className="flex flex-col items-stretch gap-5xl pb-5xl">
-            <div className="flex flex-col gap-lg items-center md:px-7xl">
-              <div className={cn('text-text-strong heading3xl text-center')}>
-                Reset password
-              </div>
-              <div className="text-text-soft bodySm text-center">
-                Please provide the new password of your choice.
-              </div>
-            </div>
-            <div className="flex flex-col items-stretch gap-3xl">
-              <PasswordInput
-                label="Password"
-                size="lg"
-                value={values.password}
-                error={!!errors.password}
-                message={errors.password}
-                onChange={handleChange('password')}
-              />
-
-              <PasswordInput
-                label="Confirm Password"
-                size="lg"
-                value={values.c_password}
-                error={!!errors.c_password}
-                message={errors.c_password}
-                onChange={handleChange('c_password')}
-              />
-              <Button
-                size="2xl"
-                variant="primary"
-                content={<span className="bodyLg-medium">Reset</span>}
-                suffix={<ArrowRight />}
-                block
-                type="submit"
-                loading={isLoading}
-              />
-            </div>
+        <div className="flex flex-col gap-lg items-center text-center">
+          <div className={cn('text-text-strong headingXl text-center')}>
+            Reset password
+          </div>
+          <div className="bodyMd-medium text-text-soft">
+            Your identity has been verified! Set your new password
           </div>
         </div>
-        <GoogleReCaptcha onVerify={() => {}} />
+        <div className="flex flex-col gap-3xl">
+          <PasswordInput
+            label="Password"
+            size="lg"
+            className="h-[48px]"
+            value={values.password}
+            error={!!errors.password}
+            message={errors.password}
+            onChange={handleChange('password')}
+            placeholder="New password"
+          />
+
+          <PasswordInput
+            label="Confirm Password"
+            size="lg"
+            className="h-[48px]"
+            value={values.c_password}
+            error={!!errors.c_password}
+            message={errors.c_password}
+            onChange={handleChange('c_password')}
+            placeholder="Confirm password"
+          />
+          <Button
+            size="lg"
+            variant="primary"
+            content={<span className="bodyLg-medium">Reset</span>}
+            suffix={<ArrowRight />}
+            block
+            type="submit"
+            loading={isLoading}
+          />
+        </div>
       </form>
-      <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch border-t border-border-default sticky bottom-0 bg-surface-basic-default">
-        <div className="bodyMd text-text-default">Remember password?</div>
-        <Button
-          content="Login"
-          variant="primary-plain"
-          size="md"
-          to="/login"
-          linkComponent={Link}
-        />
-      </div>
-    </div>
+    </Container>
   );
 };
 

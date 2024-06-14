@@ -30,9 +30,9 @@ const LogoutPage = () => {
     []
   );
   return (
-    <div className="flex flex-col items-center justify-center gap-7xl h-full">
-      <BrandLogo detailed={false} size={100} />
-      <span className="heading2xl text-text-strong">Logging out...</span>
+    <div className="flex flex-col items-center justify-center gap-3xl h-full">
+      <BrandLogo detailed={false} size={56} />
+      <span className="headingLg text-text-strong">Logging out...</span>
     </div>
   );
 };
