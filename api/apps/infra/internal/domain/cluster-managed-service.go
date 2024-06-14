@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
@@ -9,7 +10,9 @@ import (
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (d *domain) ListClusterManagedServices(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error) {
@@ -112,6 +115,75 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, cmsvc entities.Cl
 	d.resourceEventPublisher.PublishResourceEvent(ctx, cmsvc.ClusterName, ResourceTypeClusterManagedService, ncms.Name, PublishAdd)
 
 	return ncms, nil
+}
+
+type CloneManagedServiceArgs struct {
+	SourceMsvcName      string
+	DestinationMsvcName string
+	DisplayName         string
+	ClusterName         string
+}
+
+func (d *domain) getClusterManagedServiceTargetNamespace(msvcName string) string {
+	return fmt.Sprintf("cmsvc-%s", msvcName)
+}
+
+func (d *domain) CloneClusterManagedService(ctx InfraContext, args CloneManagedServiceArgs) (*entities.ClusterManagedService, error) {
+
+	if err := d.canPerformActionInAccount(ctx, iamT.CloneClusterManagedService); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	sourceMsvc, err := d.findClusterManagedService(ctx, args.SourceMsvcName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	destMsvc := &entities.ClusterManagedService{
+		ClusterManagedService: crdsv1.ClusterManagedService{
+			TypeMeta: sourceMsvc.TypeMeta,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      args.DestinationMsvcName,
+				Namespace: sourceMsvc.Namespace,
+			},
+			Spec: crdsv1.ClusterManagedServiceSpec{
+				TargetNamespace: d.getClusterManagedServiceTargetNamespace(args.DestinationMsvcName),
+				MSVCSpec:        sourceMsvc.Spec.MSVCSpec,
+			},
+		},
+		AccountName:           ctx.AccountName,
+		ClusterName:           args.ClusterName,
+		SyncedOutputSecretRef: sourceMsvc.SyncedOutputSecretRef,
+		ResourceMetadata: common.ResourceMetadata{
+			DisplayName: args.DisplayName,
+			CreatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+			LastUpdatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+		},
+		SyncStatus: t.GenSyncStatus(t.SyncActionApply, 0),
+	}
+
+	if err := d.k8sClient.ValidateObject(ctx, &destMsvc.ClusterManagedService); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	destMsvc, err = d.clusterManagedServiceRepo.Create(ctx, destMsvc)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if err := d.applyClusterManagedService(ctx, destMsvc); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return destMsvc, nil
 }
 
 func (d *domain) UpdateClusterManagedService(ctx InfraContext, cmsvc entities.ClusterManagedService) (*entities.ClusterManagedService, error) {

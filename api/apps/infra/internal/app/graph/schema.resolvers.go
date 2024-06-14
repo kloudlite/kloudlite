@@ -331,6 +331,21 @@ func (r *mutationResolver) InfraDeleteClusterManagedService(ctx context.Context,
 	return true, nil
 }
 
+// InfraCloneClusterManagedService is the resolver for the infra_cloneClusterManagedService field.
+func (r *mutationResolver) InfraCloneClusterManagedService(ctx context.Context, clusterName string, sourceMsvcName string, destinationMsvcName string, displayName string) (*entities.ClusterManagedService, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.CloneClusterManagedService(ictx, domain.CloneManagedServiceArgs{
+		ClusterName:         clusterName,
+		SourceMsvcName:      sourceMsvcName,
+		DestinationMsvcName: destinationMsvcName,
+		DisplayName:         displayName,
+	})
+}
+
 // InfraCreateHelmRelease is the resolver for the infra_createHelmRelease field.
 func (r *mutationResolver) InfraCreateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error) {
 	ictx, err := toInfraContext(ctx)

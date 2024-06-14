@@ -10,33 +10,8 @@ global:
 
 label: List BYOC Clusters
 query: |+
-  query Infra_listBYOCClusters {
-    infra_listBYOCClusters {
-      edges {
-        cursor
-        node {
-          creationTime
-          apiVersion
-          # clusterToken
-          kind
-          metadata {
-            name
-            namespace
-            generation
-          }
-          syncStatus {
-            state
-            action
-            recordVersion
-          }
-        }
-      }
-      pageInfo {
-        endCursor
-        hasNextPage
-        hasPreviousPage
-        startCursor
-      }
+  query Infra_listBYOKClusters {
+    infra_listBYOKClusters {
       totalCount
     }
   }
