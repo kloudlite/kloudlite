@@ -70,6 +70,7 @@ const (
 
 	// cluster managed services
 	CreateClusterManagedService Action = "create-cluster-managed-service"
+	CloneClusterManagedService  Action = "clone-cluster-managed-service"
 	DeleteClusterManagedService Action = "delete-cluster-managed-service"
 	ListClusterManagedServices  Action = "list-cluster-managed-services"
 	GetClusterManagedService    Action = "get-cluster-managed-service"
