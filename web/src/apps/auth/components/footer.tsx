@@ -8,6 +8,7 @@ import { Button } from '~/components/atoms/button';
 import { Link } from '@remix-run/react';
 import Wrapper from './wrapper';
 import { mainUrl } from '../consts';
+import ThemeSwitcher from './theme-switcher';
 
 const linkedinUrl = 'https://linkedin.com/company/kloudlite-io';
 const gitUrl = 'https://github.com/kloudlite/kloudlite';
@@ -78,8 +79,11 @@ const Footer = () => {
               © {new Date().getFullYear()}
             </span>
           </div>
-          <div className="hidden md:block lg:hidden">
-            <SocialMenu />
+          <div className="flex flex-row items-center gap-3xl">
+            <div className="hidden md:block lg:hidden">
+              <SocialMenu />
+            </div>
+            <ThemeSwitcher />
           </div>
         </div>
         <div className="flex flex-col-reverse gap-4xl md:gap-0 md:flex-row md:items-center lg:justify-between">

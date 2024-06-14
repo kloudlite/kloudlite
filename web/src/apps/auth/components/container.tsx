@@ -14,7 +14,7 @@ const Container = ({ children, headerExtra }: IContainer) => {
       <Header headerExtra={headerExtra} />
       <div
         className={cn(
-          'flex flex-1 flex-col md:items-center self-stretch justify-center px-3xl py-9xl'
+          'flex flex-1 flex-col md:items-center self-stretch justify-center px-3xl py-5xl md:py-9xl'
         )}
       >
         {children}
