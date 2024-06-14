@@ -191,22 +191,26 @@ func CheckDeviceStatus() bool {
 
 	logF := func(format string, v ...interface{}) {
 		if verbose {
-			fn.Logf(format, v)
+			if len(v) > 0 {
+				fn.Log(format, v)
+			} else {
+				fn.Log(format)
+			}
 		}
 	}
 
-	s, err := client.GetDeviceDns()
+	s, err := client.GetDeviceContext()
 	if err != nil {
 		logF(err.Error())
 		return false
 	}
 
-	if s == "" {
+	if len(s.DeviceDns) == 0 {
 		logF("No DNS record found for device")
 		return false
 	}
 
-	dnsServer := s
+	dnsServer := s.DeviceDns[0]
 
 	client := new(dns.Client)
 
@@ -214,7 +218,7 @@ func CheckDeviceStatus() bool {
 
 	// Create a new DNS message
 	message := new(dns.Msg)
-	message.SetQuestion(dns.Fqdn("kube-dns.kube-system.svc.cluster.local"), dns.TypeA)
+	message.SetQuestion(dns.Fqdn("one.one.one.one"), dns.TypeA)
 	message.RecursionDesired = true
 
 	// Send the DNS query

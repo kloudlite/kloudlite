@@ -69,6 +69,15 @@ func disconnect(verbose bool) error {
 		}
 	}
 
-	client.SetDeviceDns("")
+	dc, err := client.GetDeviceContext()
+	if err != nil {
+		return err
+	}
+
+	dc.DeviceDns = []string{}
+
+	if err := client.WriteDeviceContext(dc); err != nil {
+		return err
+	}
 	return nil
 }

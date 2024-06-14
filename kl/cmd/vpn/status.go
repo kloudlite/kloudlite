@@ -68,7 +68,7 @@ Example:
 			if len(res) == 0 {
 				n = "not "
 			}
-			fn.Logf(text.Bold("\n[#] device %s%s"), text.Red(d), text.Bold(fmt.Sprintf("is %sconnected", n)))
+			fn.Logf(text.Bold("\n[#] device %s%s"), text.Blue(d), text.Bold(fmt.Sprintf("is %sconnected", n)))
 		}
 
 		s, _ := client.CurrentDeviceName()

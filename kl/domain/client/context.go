@@ -65,7 +65,7 @@ type InfraContexts struct {
 type ExtraData struct {
 	BaseUrl      string          `json:"baseUrl"`
 	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
-	DeviceDns    string          `json:"deviceDns"`
+	// DeviceDns    string          `json:"deviceDns"`
 	// backupDns
 	BackupDns    []string `json:"dns"`
 	Loading      bool     `json:"loading"`
@@ -78,30 +78,30 @@ type ExtraData struct {
 	// DnsValues         []string        `json:"dnsValues"`
 }
 
-func GetDeviceDns() (string, error) {
-	extraData, err := GetExtraData()
-	if err != nil {
-		return "", err
-	}
+// func GetDeviceDns() (string, error) {
+// 	extraData, err := GetExtraData()
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	return extraData.DeviceDns, nil
-}
+// 	return extraData.DeviceDns, nil
+// }
 
-func SetDeviceDns(dns string) error {
-	extraData, err := GetExtraData()
-	if err != nil {
-		return err
-	}
+// func SetDeviceDns(dns string) error {
+// 	extraData, err := GetExtraData()
+// 	if err != nil {
+// 		return err
+// 	}
 
-	extraData.DeviceDns = dns
+// 	extraData.DeviceDns = dns
 
-	file, err := yaml.Marshal(extraData)
-	if err != nil {
-		return err
-	}
+// 	file, err := yaml.Marshal(extraData)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return writeOnUserScope(ExtraDataFileName, file)
-}
+// 	return writeOnUserScope(ExtraDataFileName, file)
+// }
 
 func GetActiveCluster() (string, error) {
 	extraData, err := GetExtraData()

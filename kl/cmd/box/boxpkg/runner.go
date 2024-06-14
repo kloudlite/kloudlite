@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -162,6 +163,10 @@ func (c *client) runContainer(config ContainerConfig) error {
 		return err
 	}
 
+	if err := userOwn(td); err != nil {
+		return err
+	}
+
 	// defer func() {
 	// 	os.RemoveAll(td)
 	// }()
@@ -203,6 +208,16 @@ func (c *client) runContainer(config ContainerConfig) error {
 
 		dockerArgs = append(dockerArgs, labelArgs...)
 		dockerArgs = append(dockerArgs, config.args...)
+
+		// var command *exec.Cmd
+		// if _, ok := os.LookupEnv("SUDO_USER"); ok {
+		// 	sudoUser := []string{"-u", os.Getenv("SUDO_USER"), "docker"}
+		// 	sudoUser = append(sudoUser, dockerArgs...)
+
+		// 	command = exec.Command("sudo", sudoUser...)
+
+		// } else {
+		// }
 
 		command := exec.Command("docker", dockerArgs...)
 
@@ -325,16 +340,26 @@ func (c *client) readTillLine(ctx context.Context, file string, desiredLine, str
 	return false, nil
 }
 
-func writeOnUserScope(name string, data []byte) error {
-	filePath := path.Join(name)
-
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
+func writeOnUserScope(fpath string, data []byte) error {
+	if err := os.WriteFile(fpath, data, 0644); err != nil {
 		return err
 	}
 
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
 		if err := fn.ExecCmd(
-			fmt.Sprintf("chown %s %s", usr, filePath), nil, false,
+			fmt.Sprintf("chown -R %s %s", usr, filepath.Dir(fpath)), nil, false,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func userOwn(fpath string) error {
+	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
+		if err := fn.ExecCmd(
+			fmt.Sprintf("chown -R %s %s", usr, filepath.Dir(fpath)), nil, false,
 		); err != nil {
 			return err
 		}

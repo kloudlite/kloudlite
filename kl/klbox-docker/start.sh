@@ -1,6 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # shellcheck source=/dev/null
-
 set -o errexit
 set -o pipefail
 
@@ -13,7 +12,7 @@ mkdir -p /home/kl/.kl/
 cat <<EOL > /home/kl/.kl/global-profile
 export SSH_PORT=$SSH_PORT
 export IN_DEV_BOX="true"
-export KL_WORKSPACE=$KL_WORKSPACE
+export KL_WORKSPACE="$KL_WORKSPACE"
 export MAIN_PATH=$PATH
 EOL
 
@@ -22,6 +21,8 @@ kl app start-dns &
 cat > /tmp/resolv.conf <<'EOF'
 nameserver 127.0.0.2
 EOF
+
+echo "kloudlite-entrypoint:SETUP"
 
 sudo cp /tmp/resolv.conf /etc/resolv.conf
 
@@ -45,7 +46,7 @@ if [ ! -f "$entrypoint_executed" ]; then
     echo "successfully initialized .profile and .bashrc" >> $entrypoint_executed
 fi
 
-shift
+# shift
 
 PATH=$PATH:$HOME/.nix-profile/bin
 

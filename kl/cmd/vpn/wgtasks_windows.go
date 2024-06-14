@@ -12,6 +12,7 @@ import (
 
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 
 	"github.com/kloudlite/kl/domain/client"
 )
@@ -45,15 +46,43 @@ func connect(verbose bool, options ...fn.Option) error {
 			return err
 		}
 
-		pth := path.Join(f, fmt.Sprintf("%s.conf", ifName))
-
-		if err := os.WriteFile(pth, configuration, os.ModePerm); err != nil {
+		// client.GetDeviceDns()
+		dc, err := client.GetDeviceContext()
+		if err != nil {
 			return err
 		}
 
-		// defer func() {
-		// 	os.RemoveAll(td)
-		// }()
+		cfg := wgc.Config{}
+
+		if verbose {
+			fn.Log("[#] validating configuration")
+		}
+		if e := cfg.UnmarshalText(configuration); e != nil {
+			return e
+		}
+
+		if verbose {
+			fn.Log("[#] setting up connection")
+		}
+
+		dc.DeviceDns = func() []string {
+			var dns []string
+
+			for _, d := range cfg.DNS {
+				dns = append(dns, d.To4().String())
+			}
+
+			return dns
+		}()
+
+		if err := client.WriteDeviceContext(dc); err != nil {
+			return err
+		}
+
+		pth := path.Join(f, fmt.Sprintf("%s.conf", ifName))
+		if err := os.WriteFile(pth, configuration, os.ModePerm); err != nil {
+			return err
+		}
 
 		if _, err := exec.LookPath("wireguard"); err != nil {
 			return fmt.Errorf("can't find wireguard in path, please ensure it's installed. installation link %s", text.Blue("https://www.wireguard.com/install"))

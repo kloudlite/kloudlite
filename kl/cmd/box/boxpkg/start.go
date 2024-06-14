@@ -3,7 +3,6 @@ package boxpkg
 import (
 	"encoding/base64"
 	"fmt"
-	"io/fs"
 	"os"
 	"path"
 	"runtime"
@@ -101,6 +100,9 @@ func (c *client) Start() error {
 	if err != nil {
 		return err
 	}
+	if err := userOwn(td); err != nil {
+		return err
+	}
 
 	defer func() {
 		os.RemoveAll(td)
@@ -171,7 +173,7 @@ func (c *client) Start() error {
 			return err
 		}
 
-		if err := os.WriteFile(akTmpPath, []byte(ak), fs.ModePerm); err != nil {
+		if err := writeOnUserScope(akTmpPath, []byte(ak)); err != nil {
 			return err
 		}
 
@@ -229,7 +231,7 @@ func (c *client) Start() error {
 			"--add-host=box:127.0.0.1",
 			// fmt.Sprintf("--add-host=%s.device.local:%s", d.Metadata.Name, s),
 			"-p", fmt.Sprintf("%d:%d", sshPort, sshPort),
-			GetImageName(), "--",
+			GetImageName(),
 		}...)
 
 		if err := c.runContainer(ContainerConfig{
