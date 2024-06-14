@@ -218,7 +218,7 @@ const Accounts = () => {
                     key={name}
                     plain
                     className={cn(
-                      'group/team p-3xl [&:not(:last-child)]:border-b border-border-disabled last:rounded',
+                      'group/team p-3xl [&:not(:last-child)]:border-b border-border-default last:rounded',
                       {
                         '!cursor-default': isInvite,
                       }
