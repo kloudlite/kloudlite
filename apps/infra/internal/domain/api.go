@@ -134,6 +134,7 @@ type Domain interface {
 	ListClusterManagedServices(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error)
 	GetClusterManagedService(ctx InfraContext, serviceName string) (*entities.ClusterManagedService, error)
 	CreateClusterManagedService(ctx InfraContext, cmsvc entities.ClusterManagedService) (*entities.ClusterManagedService, error)
+	CloneClusterManagedService(ctx InfraContext, args CloneManagedServiceArgs) (*entities.ClusterManagedService, error)
 	UpdateClusterManagedService(ctx InfraContext, cmsvc entities.ClusterManagedService) (*entities.ClusterManagedService, error)
 	DeleteClusterManagedService(ctx InfraContext, name string) error
 
