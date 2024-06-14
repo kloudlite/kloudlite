@@ -11,7 +11,10 @@ import {
 } from '~/console/components/types.d';
 import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { ListItem } from '~/console/components/console-list-components';
+import {
+  ListItem,
+  ListTitle,
+} from '~/console/components/console-list-components';
 import Handle from './handle';
 
 interface IResourceBase {
@@ -149,7 +152,7 @@ const ListView = ({ items, onAction }: IResource) => {
           {
             render: () => 'Key',
             name: 'key',
-            className: 'w-[180px]',
+            className: 'w-[280px]',
           },
           {
             render: () => 'Value',
@@ -167,15 +170,15 @@ const ListView = ({ items, onAction }: IResource) => {
             columns: {
               key: {
                 render: () => (
-                  <ListItem
-                    data={<span className={cc(item[1])}>{item[0]}</span>}
+                  <ListTitle
+                    title={<span className={cc(item[1])}>{item[0]}</span>}
                   />
                 ),
               },
               value: {
                 render: () => (
                   <ListItem
-                    data={
+                    subtitle={
                       <span className={cc(item[1])}>
                         {item[1].newvalue || item[1].value}
                       </span>

@@ -56,7 +56,7 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
   const [modifiedItems, setModifiedItems] = useState<IModifiedItem>({});
 
   const [configUpdating, setConfigUpdating] = useState(false);
-  // const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const { account, environment } = useParams();
   const api = useConsoleApi();
@@ -68,7 +68,7 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
     setOriginalItems(config.data);
   }, [config.data]);
 
-  useEffect(() => {
+  const restoreModifiedItems = () => {
     try {
       setModifiedItems(
         Object.entries(originalItems).reduce((acc, [key, value]) => {
@@ -87,6 +87,10 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
     } catch {
       //
     }
+  };
+
+  useEffect(() => {
+    restoreModifiedItems();
   }, [originalItems]);
 
   const changesCount = () => {
@@ -97,6 +101,10 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
         (mi.newvalue != null && mi.newvalue !== mi.value)
     ).length;
   };
+
+  useEffect(() => {
+    setSuccess(false);
+  }, [config]);
 
   return (
     <>
@@ -116,11 +124,18 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
                     data: modifiedItems,
                   })
                 }
+                disabled={success}
               />
-              {changesCount() > 0 && (
-                <Button variant="basic" content="Discard" />
+              {changesCount() > 0 && !success && (
+                <Button
+                  variant="basic"
+                  content="Discard"
+                  onClick={() => {
+                    restoreModifiedItems();
+                  }}
+                />
               )}
-              {changesCount() > 0 && (
+              {changesCount() > 0 && !success && (
                 <Button
                   variant="primary"
                   content={`Commit ${changesCount()} changes`}
@@ -151,7 +166,7 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
                       reload,
                     });
                     setConfigUpdating(false);
-                    // setSuccess(true);
+                    setSuccess(true);
                   }}
                 />
               )}

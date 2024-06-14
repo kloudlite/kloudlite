@@ -11,7 +11,7 @@ import {
   IShowDialog,
 } from '~/console/components/types.d';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { ListItem } from '~/console/components/console-list-components';
+import { ListTitle } from '~/console/components/console-list-components';
 import ListV2 from '~/console/components/listV2';
 import Handle from './handle';
 
@@ -181,15 +181,7 @@ const ValueComponent = ({
 //   );
 // };
 
-const ListView = ({
-  // editItem,
-  // restoreItem,
-  // deleteItem,
-  // onShow,
-  items,
-  onAction,
-  onShow,
-}: IResource) => {
+const ListView = ({ items, onAction, onShow }: IResource) => {
   return (
     <ListV2.Root
       data={{
@@ -197,7 +189,7 @@ const ListView = ({
           {
             render: () => 'Key',
             name: 'key',
-            className: 'w-[180px]',
+            className: 'w-[280px]',
           },
           {
             render: () => 'Value',
@@ -215,8 +207,8 @@ const ListView = ({
             columns: {
               key: {
                 render: () => (
-                  <ListItem
-                    data={<span className={cc(item[1])}>{item[0]}</span>}
+                  <ListTitle
+                    title={<span className={cc(item[1])}>{item[0]}</span>}
                   />
                 ),
               },
