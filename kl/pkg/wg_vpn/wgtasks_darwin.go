@@ -144,7 +144,7 @@ func StartService(_ string, verbose bool) error {
 }
 
 func StopService(verbose bool) error {
-	cmd := exec.Command("pgrep", "-f", fmt.Sprintf("%s %s", flags.CliName, "vpn start-fg"))
+	cmd := exec.Command("pgrep", "-f", fmt.Sprintf("%s %s", flags.GetCliPath(), "vpn start-fg"))
 	output, err := cmd.Output()
 	if err != nil {
 		return err

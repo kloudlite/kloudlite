@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/kloudlite/kl/flags"
+	// "github.com/kloudlite/kl/flags"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/martinlindhe/notify"
 	"github.com/spf13/cobra"
@@ -219,7 +219,8 @@ func Notify(name string, str ...interface{}) {
 }
 
 func Desc(str string) string {
-	return strings.Replace(str, "{cmd}", flags.CliName, -1)
+	return ""
+	// return strings.Replace(str, "{cmd}", flags.CliName, -1)
 }
 
 func notification(title string, txt string, iconPath string) {
@@ -267,7 +268,6 @@ func Ptr[T any](v T) *T {
 }
 
 func TrimePref(s string, length int) string {
-
 	if len(s) < length {
 		return s
 	}
@@ -297,7 +297,6 @@ func MultiLine(s string, length int) string {
 }
 
 func CopyFile(src, dst string) error {
-
 	// Open the source file
 	sourceFile, err := os.Open(src)
 	if err != nil {

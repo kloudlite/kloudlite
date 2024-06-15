@@ -49,13 +49,13 @@ func ExecCmd(cmdString string, verbose bool) error {
 }
 
 func StartServiceInBg(devName string, configFolder string) error {
-	command := exec.Command(flags.CliName, "vpn", "start-fg", "-d", devName)
+	command := exec.Command(flags.GetCliPath(), "vpn", "start-fg", "-d", devName)
 	err := command.Start()
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(configFolder+"/wgpid", []byte(fmt.Sprintf("%d", command.Process.Pid)), 0644)
+	err = os.WriteFile(configFolder+"/wgpid", []byte(fmt.Sprintf("%d", command.Process.Pid)), 0o644)
 	if err != nil {
 		fn.PrintError(err)
 		return err
@@ -77,7 +77,6 @@ func Configure(
 	interfaceName string,
 	verbose bool,
 ) error {
-
 	// client.GetDeviceDns()
 	dc, err := client.GetDeviceContext()
 	if err != nil {
@@ -126,11 +125,13 @@ func Configure(
 	}
 
 	if err := SetDnsServers(cfg.DNS, interfaceName, verbose); err != nil {
+		fn.Log("[#] error setting dns servers: " + err.Error())
 		return err
 	}
 
 	err = wg.ConfigureDevice(interfaceName, cfg.Config)
 	if err != nil {
+		fn.Log("[#] error configuring device: " + err.Error())
 		return err
 	}
 
@@ -138,6 +139,7 @@ func Configure(
 		for _, i2 := range pc.AllowedIPs {
 			err = ipRouteAdd(i2.String(), cfg.Address[0].IP.String(), interfaceName, verbose)
 			if err != nil {
+				fn.Log("[#] error adding route: " + err.Error())
 				return err
 			}
 		}

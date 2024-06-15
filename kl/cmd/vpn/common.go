@@ -3,7 +3,6 @@ package vpn
 import (
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"runtime"
 
 	"github.com/kloudlite/kl/constants"
@@ -42,18 +41,6 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 
 	if err := wg_vpn.Configure(configuration, ifName, verbose); err != nil {
 		return err
-	}
-
-	if wg_vpn.IsSystemdReslov() {
-		if err := wg_vpn.ExecCmd(fmt.Sprintf("resolvectl domain %s %s", device.Metadata.Name, func() string {
-			if device.EnvironmentName != "" {
-				return fmt.Sprintf("%s.svc.cluster.local", device.EnvironmentName)
-			}
-
-			return "~."
-		}()), false); err != nil {
-			return err
-		}
 	}
 
 	return nil

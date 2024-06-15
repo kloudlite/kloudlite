@@ -59,7 +59,6 @@ func (c *client) listContainer(labels map[string]string) ([]Cntr, error) {
 		),
 		All: true,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +115,6 @@ func (c *client) GetContainer(labels map[string]string) (*Cntr, error) {
 		),
 		All: true,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +173,6 @@ func (c *client) runContainer(config ContainerConfig) error {
 	stdOutPath := path.Join(td, "stdout.log")
 
 	if err := func() error {
-
 		dockerArgs := []string{"run"}
 		if !c.foreground {
 			dockerArgs = append(dockerArgs, "-d")
@@ -199,10 +196,14 @@ func (c *client) runContainer(config ContainerConfig) error {
 			"--hostname", "box",
 		)
 
+		mountBindFlag := "rw"
+		if runtime.GOOS == constants.RuntimeLinux {
+			mountBindFlag = "Z"
+		}
 		if config.trackLogs {
 			dockerArgs = append(dockerArgs,
-				"-v", fmt.Sprintf("%s:/tmp/stdout.log:rw", stdOutPath),
-				"-v", fmt.Sprintf("%s:/tmp/stderr.log:rw", stdErrPath),
+				"-v", fmt.Sprintf("%s:/tmp/stdout.log:%s", stdOutPath, mountBindFlag),
+				"-v", fmt.Sprintf("%s:/tmp/stderr.log:%s", stdErrPath, mountBindFlag),
 			)
 		}
 
@@ -239,7 +240,6 @@ func (c *client) runContainer(config ContainerConfig) error {
 		}
 
 		return nil
-
 	}(); err != nil {
 		return err
 	}
@@ -305,9 +305,7 @@ func (c *client) runContainer(config ContainerConfig) error {
 }
 
 func (c *client) readTillLine(ctx context.Context, file string, desiredLine, stream string, follow bool) (bool, error) {
-
 	t, err := tail.TailFile(file, tail.Config{Follow: follow, ReOpen: follow, Poll: runtime.GOOS == constants.RuntimeWindows})
-
 	if err != nil {
 		return false, err
 	}
@@ -341,7 +339,7 @@ func (c *client) readTillLine(ctx context.Context, file string, desiredLine, str
 }
 
 func writeOnUserScope(fpath string, data []byte) error {
-	if err := os.WriteFile(fpath, data, 0644); err != nil {
+	if err := os.WriteFile(fpath, data, 0o644); err != nil {
 		return err
 	}
 
