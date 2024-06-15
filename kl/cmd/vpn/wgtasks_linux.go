@@ -11,7 +11,6 @@ import (
 )
 
 func connect(verbose bool, options ...fn.Option) error {
-
 	client.SetLoading(true)
 
 	success := false

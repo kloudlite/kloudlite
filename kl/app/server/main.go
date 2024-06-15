@@ -15,6 +15,7 @@ import (
 	appconsts "github.com/kloudlite/kl/app-consts"
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -30,11 +31,12 @@ type Server struct {
 
 func New(binName string, cmd *cobra.Command, args []string) *Server {
 	return &Server{
-		bin:  binName,
+		bin:  flags.GetCliPath(),
 		cmd:  cmd,
 		args: args,
 	}
 }
+
 func portAvailable(port string) bool {
 	address := fmt.Sprintf(":%s", port)
 	listener, err := net.Listen("tcp", address)
@@ -46,7 +48,6 @@ func portAvailable(port string) bool {
 }
 
 func (s *Server) Start(ctx context.Context) error {
-
 	ch := make(chan error)
 
 	hdir, err := client.GetUserHomeDir()
@@ -182,8 +183,9 @@ func (s *Server) Start(ctx context.Context) error {
 				}
 			}
 
-		case "start", "stop", "status", "restart":
 
+		case "start", "stop", "status", "restart":
+      fmt.Println("binpath", s.bin)
 			go fn.StreamOutput(fmt.Sprintf("%s vpn %s", s.bin, command), map[string]string{"KL_APP": "true"}, outputCh, errCh)
 
 			for {

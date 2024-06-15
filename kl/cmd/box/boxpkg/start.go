@@ -137,7 +137,6 @@ func (c *client) Start() error {
 
 		// for wsl
 		if err := func() error {
-
 			if runtime.GOOS != constants.RuntimeLinux {
 				return nil
 			}
@@ -220,10 +219,15 @@ func (c *client) Start() error {
 		// 	return err
 		// }
 
+		mountBindFlag := "rw"
+		if runtime.GOOS == constants.RuntimeLinux {
+			mountBindFlag = "z"
+		}
+
 		args = append(args, []string{
-			"-v", fmt.Sprintf("%s:/tmp/ssh2/authorized_keys:ro", akTmpPath),
-			"-v", "kl-home-cache:/home:rw",
-			"-v", "kl-nix-store:/nix:rw",
+			"-v", fmt.Sprintf("%s:/tmp/ssh2/authorized_keys:%s", akTmpPath, mountBindFlag),
+			"-v", fmt.Sprintf("kl-home-cache:/home:%s", mountBindFlag),
+			"-v", fmt.Sprintf("kl-nix-store:/nix:%s", mountBindFlag),
 			"-v", fmt.Sprintf("%s:/home/kl/workspace:z", c.cwd),
 			"-v", fmt.Sprintf("%s:/home/kl/.cache/.kl:z", configFolder),
 			"-e", fmt.Sprintf("SSH_PORT=%d", sshPort),

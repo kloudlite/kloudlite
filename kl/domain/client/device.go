@@ -81,11 +81,12 @@ func EnsureAppRunning() error {
 			if err != nil {
 				return err
 			}
-			command := exec.Command("sudo", flags.CliName, "app", "start")
+
+			command := exec.Command("sudo", flags.GetCliPath(), "app", "start")
 			_ = command.Start()
 
 		} else {
-			_, err = functions.WinSudoExec(fmt.Sprintf("%s app start", flags.CliName), nil)
+			_, err = functions.WinSudoExec(fmt.Sprintf("%s app start", flags.GetCliPath()), nil)
 			if err != nil {
 				functions.PrintError(err)
 			}

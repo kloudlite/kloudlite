@@ -9,31 +9,13 @@ alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
-alias ..="cd .."
-
-alias rm='rm -i'
-alias cp='cp -i'
-alias mv='mv -i'
-
-alias df='df -h'
-alias du='du -h'
-
-alias top='top -b'
-alias ps='ps aux'
-alias kill='kill -9'
-
-alias date='date +%Y-%m-%d\ %H:%M:%S'
-alias time='date +%H:%M:%S'
-
-alias cls='clear'
-
 # alias for ls
 if [ -x /usr/bin/ls ]; then
-  if [ `id -u` -eq 0 ]; then
-    alias ls='ls --color=auto -F'
-  else
-    alias ls='ls --color=auto -FH'
-  fi
+	if [ $(id -u) -eq 0 ]; then
+		alias ls='ls --color=auto -F'
+	else
+		alias ls='ls --color=auto -FH'
+	fi
 fi
 
 export EDITOR=nano
