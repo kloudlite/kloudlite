@@ -30,11 +30,6 @@ variable "nodes" {
   description = "map of node name to its availability_zone and k3s role"
 }
 
-variable "use_as_longhorn_storage_nodes" {
-  type    = bool
-  default = false
-}
-
 variable "machine_type" {
   description = "machine_type"
   type        = string
@@ -43,6 +38,7 @@ variable "machine_type" {
 variable "k3s_service_cidr" {
   type        = string
   description = "k3s service CIDR to use for this cluster, as specified in https://docs.k3s.io/networking/basic-network-options?_highlight=cidr#dual-stack-ipv4--ipv6-networking"
+  default     = ""
 }
 
 variable "cluster_internal_dns_host" {
@@ -107,12 +103,6 @@ variable "save_ssh_key_to_path" {
 variable "save_kubeconfig_to_path" {
   description = "save kubeconfig to this path"
   type        = string
-  default     = ""
-}
-
-variable "label_cloudprovider_region" {
-  type        = string
-  description = "cloudprovider region"
   default     = ""
 }
 

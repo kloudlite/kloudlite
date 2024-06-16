@@ -88,25 +88,12 @@ resource "ssh_resource" "k3s_primary_master" {
     permissions = 0755
   }
 
-  # runAs: primaryMaster
-  # primaryMaster:
-  #   publicIP: ${each.value.public_ip}
-  #   token: ${random_password.k3s_server_token.result}
-  #   nodeName: ${each.key}
-  #   labels: ${jsonencode(each.value.node_labels)}
-  #   SANs: ${jsonencode([var.public_dns_host, each.value.public_ip])}
-  #   taints: ${jsonencode(local.node_taints)}
-  #   extraServerArgs: ${jsonencode(concat(
-  #       local.k3s_server_extra_args[each.key],
-  #     )
-  # )}
-
   commands = [
     <<-EOT
     echo "setting up k3s on primary master"
     cat > /tmp/runner-config.yml <<EOF2
-k3s_flags: ${jsonencode(
-    concat([
+k3s_flags: ${jsonencode(concat(
+    [
       "server",
       "--cluster-init",
       "--flannel-backend", "wireguard-native",
@@ -115,9 +102,10 @@ k3s_flags: ${jsonencode(
       "--node-label", "kloudlite.io/node.name=${each.key}",
       "--tls-san", var.public_dns_host,
       "--tls-san", each.value.public_ip,
-      ],
-    local.k3s_server_extra_args[each.key])
-)}
+    ],
+    flatten([for k, v in each.value.node_labels : ["--node-label", "${k}=${v}"]]),
+    local.k3s_server_extra_args[each.key],
+))}
 
 EOF2
 
@@ -250,17 +238,6 @@ resource "ssh_resource" "k3s_secondary_masters" {
   timeout     = "2m"
   retry_delay = "2s"
 
-  # runAs: secondaryMaster
-  # secondaryMaster:
-  #   publicIP: ${each.value.public_ip}
-  #   serverIP: ${var.master_nodes[local.primary_master_node_name].public_ip}
-  #   token: ${random_password.k3s_server_token.result}
-  #   nodeName: ${each.key}
-  #   labels: ${jsonencode(each.value.node_labels)}
-  #   taints: ${jsonencode(local.node_taints)}
-  #   SANs: ${jsonencode([var.public_dns_host, each.value.public_ip])}
-  #   extraServerArgs: ${jsonencode(local.k3s_server_extra_args[each.key])}
-
   commands = [
     <<EOT
 if [ "${var.restore_from_latest_s3_snapshot}" == "true" ]; then
@@ -270,15 +247,19 @@ if [ "${var.restore_from_latest_s3_snapshot}" == "true" ]; then
 fi
 
 cat > /tmp/runner-config.yml<<EOF2
-k3s_flags: ${jsonencode(concat([
-    "server", "--server", "https://${var.master_nodes[local.primary_master_node_name].public_ip}:6443",
-    "--flannel-backend", "wireguard-native",
-    "--write-kubeconfig-mode", "6444",
-    "--node-label", "kloudlite.io/node.public-ip=${each.value.public_ip}",
-    "--node-label", "kloudlite.io/node.name=${each.key}",
-    "--tls-san", var.public_dns_host,
-    "--tls-san", each.value.public_ip,
-], local.k3s_server_extra_args[each.key]))}
+k3s_flags: ${jsonencode(concat(
+    [
+      "server", "--server", "https://${var.master_nodes[local.primary_master_node_name].public_ip}:6443",
+      "--flannel-backend", "wireguard-native",
+      "--write-kubeconfig-mode", "6444",
+      "--node-label", "kloudlite.io/node.public-ip=${each.value.public_ip}",
+      "--node-label", "kloudlite.io/node.name=${each.key}",
+      "--tls-san", var.public_dns_host,
+      "--tls-san", each.value.public_ip,
+    ],
+    flatten([for k, v in each.value.node_labels : ["--node-label", "${k}=${v}"]]),
+    local.k3s_server_extra_args[each.key],
+))}
 EOF2
 
 sudo mv /tmp/runner-config.yml ${module.kloudlite-k3s-templates.kloudlite_config_directory}/runner-config.yml
