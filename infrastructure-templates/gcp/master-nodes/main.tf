@@ -18,8 +18,8 @@ module "master-nodes-on-gcp" {
   cloudflare                    = var.cloudflare
   public_dns_host               = var.public_dns_host
   save_kubeconfig_to_path       = var.save_kubeconfig_to_path
+  cluster_internal_dns_host     = var.cluster_internal_dns_host
   labels                        = var.labels
-  label_cloudprovider_region    = var.gcp_region
   network                       = var.network
   service_account               = var.service_account
   machine_state                 = var.machine_state
