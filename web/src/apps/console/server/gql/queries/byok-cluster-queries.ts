@@ -146,6 +146,7 @@ export const byokClusterQueries = (executor: IExecutor) => ({
             node {
               accountName
               clusterSvcCIDR
+              lastOnlineAt
               createdBy {
                 userEmail
                 userId

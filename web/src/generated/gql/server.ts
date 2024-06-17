@@ -1920,6 +1920,7 @@ export type ConsoleListAllClustersQuery = {
       node: {
         accountName: string;
         clusterSvcCIDR: string;
+        lastOnlineAt?: any;
         creationTime: any;
         displayName: string;
         globalVPN: string;
@@ -1968,6 +1969,7 @@ export type ConsoleListAllClustersQuery = {
       node: {
         id: string;
         displayName: string;
+        lastOnlineAt?: any;
         markedForDeletion?: boolean;
         creationTime: any;
         updateTime: any;
@@ -2066,6 +2068,7 @@ export type ConsoleListClustersQuery = {
         id: string;
         displayName: string;
         markedForDeletion?: boolean;
+        lastOnlineAt?: any;
         creationTime: any;
         updateTime: any;
         recordVersion: number;
@@ -2515,6 +2518,7 @@ export type ConsoleGetEnvironmentQuery = {
     creationTime: any;
     displayName: string;
     clusterName: string;
+    isArchived?: boolean;
     markedForDeletion?: boolean;
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
@@ -2596,6 +2600,7 @@ export type ConsoleListEnvironmentsQuery = {
         creationTime: any;
         displayName: string;
         clusterName: string;
+        isArchived?: boolean;
         markedForDeletion?: boolean;
         recordVersion: number;
         updateTime: any;
@@ -4989,6 +4994,7 @@ export type ConsoleListByokClustersQuery = {
       node: {
         accountName: string;
         clusterSvcCIDR: string;
+        lastOnlineAt?: any;
         creationTime: any;
         displayName: string;
         globalVPN: string;

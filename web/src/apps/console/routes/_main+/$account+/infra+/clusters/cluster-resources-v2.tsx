@@ -35,7 +35,7 @@ import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 
 import { useState } from 'react';
-import { SyncStatusV2 } from '~/console/components/sync-status';
+// import { SyncStatusV2 } from '~/console/components/sync-status';
 import { Button } from '~/components/atoms/button';
 import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
 import DeleteDialog from '~/console/components/delete-dialog';
@@ -51,6 +51,7 @@ import { Badge } from '~/components/atoms/badge';
 import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
 import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
+import Tooltip from '~/components/atoms/tooltip';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
@@ -228,22 +229,66 @@ const GetByokClusterMessage = ({
   }
 };
 
-const GetByokClusterSyncStatus = ({
-  syncStatusState,
-}: {
-  syncStatusState: SyncStatusState;
-}) => {
-  switch (syncStatusState) {
-    case 'UPDATED_AT_AGENT':
-      return <Badge type="success">Online</Badge>;
-    case 'ERRORED_AT_AGENT':
-      return <Badge type="critical">Not Connected</Badge>;
-    case 'APPLIED_AT_AGENT':
-      return <Badge type="warning">Offline</Badge>;
-    case 'DELETING_AT_AGENT':
-      return <Badge type="critical">Deleting</Badge>;
+const GetSyncStatus = ({ lastOnlioneAt }: { lastOnlioneAt: string }) => {
+  if (lastOnlioneAt === null) {
+    return <Badge type="warning">Offline</Badge>;
+  }
+
+  const lastTime = new Date(lastOnlioneAt);
+  const currentTime = new Date();
+
+  const timeDifference =
+    (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
+
+  switch (true) {
+    case timeDifference <= 2:
+      return (
+        <Tooltip.Root
+          className="!w-fit !max-w-[500px]"
+          side="top"
+          content={
+            <div className="flex-1 bodySm text-text-strong pulsable whitespace-normal">
+              Last seen ({Math.floor(timeDifference * 60)}s ago)
+            </div>
+          }
+        >
+          <div>
+            <Badge type="success">Online</Badge>
+          </div>
+        </Tooltip.Root>
+      );
+    case timeDifference > 2:
+      return (
+        <Tooltip.Root
+          className="!w-fit !max-w-[500px]"
+          side="top"
+          content={
+            <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
+              {lastOnlioneAt} ({timeDifference * 60}s ago)
+            </div>
+          }
+        >
+          <div>
+            <Badge type="warning">Offline</Badge>
+          </div>
+        </Tooltip.Root>
+      );
     default:
-      return <Badge type="critical">Not Connected</Badge>;
+      return (
+        <Tooltip.Root
+          className="!w-fit !max-w-[500px]"
+          side="top"
+          content={
+            <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
+              {lastOnlioneAt}
+            </div>
+          }
+        >
+          <div>
+            <Badge type="warning">Offline</Badge>
+          </div>
+        </Tooltip.Root>
+      );
   }
 };
 
@@ -441,14 +486,7 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
                   ),
               },
               status: {
-                render: () =>
-                  i.type === 'normal' ? (
-                    <SyncStatusV2 item={i} resourceType={i.type} />
-                  ) : (
-                    <GetByokClusterSyncStatus
-                      syncStatusState={i.syncStatus.state}
-                    />
-                  ),
+                render: () => <GetSyncStatus lastOnlioneAt={i.lastOnlineAt} />,
               },
               updated: {
                 render: () => (

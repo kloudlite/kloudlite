@@ -172,6 +172,7 @@ type BYOKCluster {
   displayName: String!
   globalVPN: String!
   id: ID!
+  lastOnlineAt: Date
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   messageQueueTopicName: String!
@@ -265,6 +266,7 @@ type Cluster {
   globalVPN: String
   id: ID!
   kind: String
+  lastOnlineAt: Date
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
@@ -598,6 +600,7 @@ type Environment {
   creationTime: Date!
   displayName: String!
   id: ID!
+  isArchived: Boolean
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
