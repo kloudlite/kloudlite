@@ -6,13 +6,17 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/kloudlite/api/grpc-interfaces/infra"
 	klErrors "github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/grpc"
 
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	msgOfficeT "github.com/kloudlite/api/apps/message-office/types"
 	"github.com/kloudlite/api/pkg/messaging"
@@ -28,9 +32,13 @@ import (
 
 type (
 	UpdatesProducer messaging.Producer
-	grpcServer      struct {
+	InfraGRPCClient grpc.Client
+
+	grpcServer struct {
 		messages.UnimplementedMessageDispatchServiceServer
 		logger logging.Logger
+
+		infraClient infra.InfraClient
 
 		updatesProducer UpdatesProducer
 		consumers       map[string]messaging.Consumer
@@ -50,7 +58,7 @@ type (
 
 // ReceiveConsoleResourceUpdate implements messages.MessageDispatchServiceServer.
 func (g *grpcServer) ReceiveConsoleResourceUpdate(ctx context.Context, msg *messages.ResourceUpdate) (*messages.Empty, error) {
-	accountName, clusterName, err := validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +77,7 @@ func (g *grpcServer) ReceiveConsoleResourceUpdate(ctx context.Context, msg *mess
 
 // ReceiveContainerRegistryUpdate implements messages.MessageDispatchServiceServer.
 func (g *grpcServer) ReceiveContainerRegistryUpdate(ctx context.Context, msg *messages.ResourceUpdate) (*messages.Empty, error) {
-	accountName, clusterName, err := validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +97,7 @@ func (g *grpcServer) ReceiveContainerRegistryUpdate(ctx context.Context, msg *me
 
 // ReceiveError implements messages.MessageDispatchServiceServer.
 func (g *grpcServer) ReceiveError(ctx context.Context, msg *messages.ErrorData) (*messages.Empty, error) {
-	accountName, clusterName, err := validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +119,7 @@ func (g *grpcServer) ReceiveError(ctx context.Context, msg *messages.ErrorData) 
 
 // ReceiveInfraResourceUpdate implements messages.MessageDispatchServiceServer.
 func (g *grpcServer) ReceiveInfraResourceUpdate(ctx context.Context, msg *messages.ResourceUpdate) (*messages.Empty, error) {
-	accountName, clusterName, err := validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -233,17 +241,12 @@ func (g *grpcServer) validateAndDecodeFromGrpcContext(grpcServerCtx context.Cont
 }
 
 func (g *grpcServer) ValidateAccessToken(ctx context.Context, msg *messages.ValidateAccessTokenIn) (*messages.ValidateAccessTokenOut, error) {
-	g.logger.Debugf("request received for access token validation")
-	accountName, clusterName, err := validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
 	if err != nil {
 		return nil, err
 	}
 
-	logger := g.logger.WithKV("accountName", accountName).WithKV("cluster", clusterName)
-	defer func() {
-		logger.Debugf("is access token valid? (%v)", true)
-	}()
-
+	g.logger.WithKV("account", accountName).WithKV("cluster", clusterName).Infof("validated access token")
 	return &messages.ValidateAccessTokenOut{Valid: true}, nil
 }
 
@@ -334,7 +337,16 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 		return klErrors.NewE(err)
 	}
 
+	// TODO: implement cluster online feature, so that we can mark the cluster as online/offline
 	logger.Infof("consumer is available now")
+
+	if _, err := g.infraClient.MarkClusterOnlineAt(server.Context(), &infra.MarkClusterOnlineAtIn{
+		AccountName: accountName,
+		ClusterName: clusterName,
+		Timestamp:   timestamppb.New(time.Now()),
+	}); err != nil {
+		return klErrors.NewE(err)
+	}
 
 	go func() {
 		<-server.Context().Done()
@@ -469,12 +481,13 @@ func (g *grpcServer) processContainerRegistryResourceUpdate(ctx context.Context,
 	return nil
 }
 
-func NewMessageOfficeServer(producer UpdatesProducer, jc *nats.JetstreamClient, ev *env.Env, d domain.Domain, logger logging.Logger) (messages.MessageDispatchServiceServer, error) {
+func NewMessageOfficeServer(producer UpdatesProducer, jc *nats.JetstreamClient, ev *env.Env, d domain.Domain, logger logging.Logger, infraConn InfraGRPCClient) (messages.MessageDispatchServiceServer, error) {
 	return &grpcServer{
 		UnimplementedMessageDispatchServiceServer: messages.UnimplementedMessageDispatchServiceServer{},
+		infraClient:     infra.NewInfraClient(infraConn),
 		logger:          logger,
 		updatesProducer: producer,
-		consumers:       map[string]messaging.Consumer{},
+		consumers:       make(map[string]messaging.Consumer),
 		ev:              ev,
 		domain:          d,
 		createConsumer: func(ctx context.Context, accountName string, clusterName string) (messaging.Consumer, error) {

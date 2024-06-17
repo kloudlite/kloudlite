@@ -151,6 +151,16 @@ func (g *grpcServer) GetClusterManagedService(ctx context.Context, in *infra.Get
 	}, nil
 }
 
+// MarkClusterAsOnline implements infra.InfraServer.
+func (g *grpcServer) MarkClusterOnlineAt(ctx context.Context, in *infra.MarkClusterOnlineAtIn) (*infra.MarkClusterOnlineAtOut, error) {
+	ictx := domain.InfraContext{Context: ctx, AccountName: in.AccountName}
+	if err := g.d.MarkClusterOnlineAt(ictx, in.ClusterName, fn.New(in.Timestamp.AsTime())); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return &infra.MarkClusterOnlineAtOut{}, nil
+}
+
 func newGrpcServer(d domain.Domain, kcli k8s.Client) infra.InfraServer {
 	return &grpcServer{
 		d:    d,
