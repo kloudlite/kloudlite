@@ -92,7 +92,7 @@ func (c *Client) UpdateUserPassword(ctx context.Context, dbName string, userName
 }
 
 func (c *Client) DeleteUser(ctx context.Context, dbName string, username string) error {
-	if exists, _ := c.userExists(ctx, "", username); !exists {
+	if exists, _ := c.userExists(ctx, dbName, username); !exists {
 		return nil
 	}
 	db := c.conn.Database(dbName)

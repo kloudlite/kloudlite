@@ -32,8 +32,8 @@ tasks:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
-      - GOARCH=arm64 task local:build upx=false
-      - GOARCH=amd64 task local:build upx=false
+      - GOARCH=arm64 task local:build upx=true
+      - GOARCH=amd64 task local:build upx=true
       - docker buildx build -f ./Containerfile --platform linux/amd64,linux/arm64 -t {{.Image}} . --output=type=image,force-compression=true,compression=zstd,compression-level=14,push=true --build-arg BINARY={{.app}}
 
   container:build-and-push:
@@ -42,9 +42,11 @@ tasks:
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
       - |+
+        echo "starting build @ $(date)"
         GOARCH=arm64 task local:build upx={{.upx}} &
         pip="$pid $!"
         GOARCH=amd64 task local:build upx={{.upx}} &
         pip="$pid $!"
         eval wait $pid
       - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
+      - echo "finished build @ $(date)"
