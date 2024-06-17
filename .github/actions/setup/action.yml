@@ -11,6 +11,10 @@ inputs:
     description: 'Path to flake.lock'
     required: true
 
+  enable_docker:
+    description: 'Path to flake.lock'
+    required: true
+
   github_token:
     description: 'GitHub Token'
     required: true
@@ -18,6 +22,14 @@ inputs:
   git_directory:
     description: "git directory"
     default: "./"
+
+  cache_key: 
+    description: "cache key"
+    default: ""
+
+  cache_restore_key: 
+    description: "cache restore key"
+    default: ""
 
 outputs:
   image_tag: 
@@ -31,6 +43,17 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Setup go cache
+      uses: actions/cache@v4
+      if: ${{ inputs.go_mod_cache == 'true' }}
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: ${{ inputs.cache_key }}
+        save-always: true
+        restore-keys: ${{ inputs.cache_restore_key }}
+
     - name: Install NIX
       uses: DeterminateSystems/nix-installer-action@main
 

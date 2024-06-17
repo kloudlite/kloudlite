@@ -7,7 +7,8 @@ import (
 )
 
 type Peer struct {
-	DisplayName string `json:"displayName,omitempty"`
+	DNSHostname string `json:"dnsHostname,omitempty"`
+	Comments    string `json:"comments,omitempty"`
 
 	PublicKey      string  `json:"publicKey"`
 	PublicEndpoint *string `json:"publicEndpoint,omitempty"`
