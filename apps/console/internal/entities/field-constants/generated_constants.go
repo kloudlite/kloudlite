@@ -76,7 +76,7 @@ const (
 
 // constant vars generated for struct Environment
 const (
-	EnvironmentIsArchived                     = "IsArchived"
+	EnvironmentIsArchived                     = "isArchived"
 	EnvironmentSpec                           = "spec"
 	EnvironmentSpecRouting                    = "spec.routing"
 	EnvironmentSpecRoutingMode                = "spec.routing.mode"
