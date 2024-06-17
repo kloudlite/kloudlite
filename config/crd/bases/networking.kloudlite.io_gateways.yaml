@@ -83,7 +83,9 @@ spec:
                       items:
                         type: string
                       type: array
-                    displayName:
+                    comments:
+                      type: string
+                    dnsHostname:
                       type: string
                     dnsSuffix:
                       type: string

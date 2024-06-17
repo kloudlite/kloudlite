@@ -8,7 +8,7 @@ import (
 	lifecycle "github.com/kloudlite/operator/operators/lifecycle/controller"
 	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
 	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
-	msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
+	// msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
 	nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	project "github.com/kloudlite/operator/operators/project/controller"
 	routers "github.com/kloudlite/operator/operators/routers/controller"
@@ -25,7 +25,7 @@ func main() {
 	helmCharts.RegisterInto(mgr)
 
 	msvcMongo.RegisterInto(mgr)
-	msvcRedis.RegisterInto(mgr)
+	// msvcRedis.RegisterInto(mgr)
 	msvcAndMres.RegisterInto(mgr)
 
 	lifecycle.RegisterInto(mgr)
