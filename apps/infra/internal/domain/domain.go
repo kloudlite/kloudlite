@@ -2,10 +2,11 @@ package domain
 
 import (
 	"fmt"
-	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"io"
 	"os"
 	"strconv"
+
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 
 	"sigs.k8s.io/yaml"
 
@@ -202,6 +203,7 @@ var Module = fx.Module("domain",
 			msgOfficeInternalClient message_office_internal.MessageOfficeInternalClient,
 			logger logging.Logger,
 			resourceEventPublisher ResourceEventPublisher,
+
 		) (Domain, error) {
 			open, err := os.Open(env.MsvcTemplateFilePath)
 			if err != nil {

@@ -56,7 +56,8 @@ func (d *domain) getGlobalVPNConnectionPeers(args getGlobalVPNConnectionPeersArg
 			}
 
 			peer := networkingv1.Peer{
-				DisplayName: fmt.Sprintf("gateway/%s/%s", c.GlobalVPNName, c.ClusterName),
+				DNSHostname: fmt.Sprintf("%s.device.local", c.Name),
+				Comments:    fmt.Sprintf("gateway/%s/%s", c.GlobalVPNName, c.ClusterName),
 				PublicKey:   c.ParsedWgParams.PublicKey,
 				AllowedIPs:  []string{c.ClusterCIDR, fmt.Sprintf("%s/32", c.DeviceRef.IPAddr)},
 				IP:          c.Spec.GlobalIP,
@@ -326,6 +327,11 @@ func (d *domain) deleteGlobalVPNConnection(ctx InfraContext, clusterName string,
 		}
 	}
 
+	if gv == nil {
+		// INFO: global vpn connection not found, nothing to do
+		return nil
+	}
+
 	if err := d.deleteGlobalVPNDevice(ctx, gvpnName, gv.DeviceRef.Name); err != nil {
 		return errors.NewE(err)
 	}
@@ -418,7 +424,7 @@ func (d *domain) findGlobalVPNConnection(ctx InfraContext, clusterName string, g
 		return nil, errors.NewE(err)
 	}
 	if cc == nil {
-		return nil, errors.Newf("global vpn with name (%s) not found, for cluster (%s)", groupName, clusterName)
+		return nil, errors.ErrNotFound{Message: "global vpn connection not found"}
 	}
 	return cc, nil
 }
