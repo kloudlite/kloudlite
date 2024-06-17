@@ -7,6 +7,7 @@ type BYOKCluster @shareable {
   displayName: String!
   globalVPN: String!
   id: ID!
+  lastOnlineAt: Date
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   messageQueueTopicName: String!

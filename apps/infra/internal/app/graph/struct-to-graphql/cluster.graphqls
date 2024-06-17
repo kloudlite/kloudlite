@@ -7,6 +7,7 @@ type Cluster @shareable {
   globalVPN: String
   id: ID!
   kind: String
+  lastOnlineAt: Date
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")

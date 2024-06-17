@@ -1,6 +1,8 @@
 package entities
 
 import (
+	"time"
+
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
@@ -21,6 +23,8 @@ type Cluster struct {
 
 	AccountName string       `json:"accountName" graphql:"noinput"`
 	SyncStatus  t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+
+	LastOnlineAt *time.Time `json:"lastOnlineAt,omitempty" graphql:"noinput"`
 }
 
 func (c *Cluster) GetDisplayName() string {

@@ -1,6 +1,8 @@
 package entities
 
 import (
+	"time"
+
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
@@ -40,6 +42,8 @@ type BYOKCluster struct {
 
 	// to be set post sync
 	Kubeconfig t.EncodedString `json:"kubeconfig" graphql:"ignore"`
+
+	LastOnlineAt *time.Time `json:"lastOnlineAt,omitempty" graphql:"noinput"`
 }
 
 func (c *BYOKCluster) GetDisplayName() string {

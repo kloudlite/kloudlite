@@ -48,7 +48,8 @@ tasks:
     env:
       CGO_ENABLED: 0
     cmds:
-      - go run ./main.go --dev
+      - go build -o bin/console ./main.go
+      - ./bin/console --dev
 
   gen:constants:
     cmds:
