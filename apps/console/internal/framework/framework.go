@@ -3,7 +3,6 @@ package framework
 import (
 	"context"
 	"fmt"
-
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
@@ -17,6 +16,8 @@ import (
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/nats"
 	mongoDb "github.com/kloudlite/api/pkg/repos"
+
+	"github.com/kloudlite/api/pkg/grpc"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
 )
@@ -87,6 +88,29 @@ var Module = fx.Module("framework",
 	}),
 
 	app.Module,
+
+	fx.Provide(func(logr logging.Logger) (app.ConsoleGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{
+			Logger: logr,
+		})
+	}),
+
+	fx.Invoke(func(ev *env.Env, server app.ConsoleGrpcServer, lf fx.Lifecycle, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go func() {
+					if err := server.Listen(fmt.Sprintf(":%d", ev.GrpcPort)); err != nil {
+						logger.Errorf(err, "while starting grpc server")
+					}
+				}()
+				return nil
+			},
+			OnStop: func(context.Context) error {
+				server.Stop()
+				return nil
+			},
+		})
+	}),
 
 	fx.Provide(func(logger logging.Logger, e *env.Env) httpServer.Server {
 		corsOrigins := "https://studio.apollographql.com"
