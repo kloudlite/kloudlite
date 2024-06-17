@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/pkg/errors"
@@ -35,6 +36,7 @@ type (
 	IAMGrpcClient                   grpc.Client
 	AccountGrpcClient               grpc.Client
 	MessageOfficeInternalGrpcClient grpc.Client
+	ConsoleGrpcClient               grpc.Client
 )
 
 type (
@@ -82,6 +84,12 @@ var Module = fx.Module(
 	fx.Provide(func(client MessageOfficeInternalGrpcClient) message_office_internal.MessageOfficeInternalClient {
 		return message_office_internal.NewMessageOfficeInternalClient(client)
 	}),
+
+	fx.Provide(
+		func(conn ConsoleGrpcClient) console.ConsoleClient {
+			return console.NewConsoleClient(conn)
+		},
+	),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, logger logging.Logger) SendTargetClusterMessagesProducer {
 		return msg_nats.NewJetstreamProducer(jsc)
