@@ -21,6 +21,7 @@ type Env struct {
 
 	IAMGrpcAddr      string `env:"IAM_GRPC_ADDR" required:"true"`
 	AccountsGrpcAddr string `env:"ACCOUNTS_GRPC_ADDR" required:"true"`
+	ConsoleGrpcAddr  string `env:"CONSOLE_GRPC_ADDR" required:"true"`
 
 	MessageOfficeInternalGrpcAddr string `env:"MESSAGE_OFFICE_INTERNAL_GRPC_ADDR" required:"true"`
 	MessageOfficeExternalGrpcAddr string `env:"MESSAGE_OFFICE_EXTERNAL_GRPC_ADDR" required:"true"`
