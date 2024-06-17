@@ -419,11 +419,7 @@ func (d *domain) ArchiveEnvironmentsForCluster(ctx ConsoleContext, clusterName s
 			fields.MetadataName: envs[i].Name,
 		}
 
-		_, err := d.environmentRepo.Patch(
-			ctx,
-			patchFilter,
-			patchForUpdate,
-		)
+		_, err := d.environmentRepo.Patch(ctx, patchFilter, patchForUpdate)
 		if err != nil {
 			return false, errors.NewE(err)
 		}

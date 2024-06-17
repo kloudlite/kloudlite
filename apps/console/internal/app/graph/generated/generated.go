@@ -226,6 +226,7 @@ type ComplexityRoot struct {
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
 		Id                func(childComplexity int) int
+		IsArchived        func(childComplexity int) int
 		Kind              func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
@@ -1765,6 +1766,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Environment.Id(childComplexity), true
+
+	case "Environment.isArchived":
+		if e.complexity.Environment.IsArchived == nil {
+			break
+		}
+
+		return e.complexity.Environment.IsArchived(childComplexity), true
 
 	case "Environment.kind":
 		if e.complexity.Environment.Kind == nil {
@@ -6348,6 +6356,7 @@ directive @goField(
   creationTime: Date!
   displayName: String!
   id: ID!
+  isArchived: Boolean
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -6695,7 +6704,13 @@ input SecretKeyValueRefIn {
 	  | UNION
 	directive @interfaceObject on OBJECT
 	directive @link(import: [String!], url: String!) repeatable on SCHEMA
-	directive @override(from: String!) on FIELD_DEFINITION
+	directive @override(from: String!, label: String) on FIELD_DEFINITION
+	directive @policy(policies: [[federation__Policy!]!]!) on 
+	  | FIELD_DEFINITION
+	  | OBJECT
+	  | INTERFACE
+	  | SCALAR
+	  | ENUM
 	directive @provides(fields: FieldSet!) on FIELD_DEFINITION
 	directive @requires(fields: FieldSet!) on FIELD_DEFINITION
 	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on 
@@ -6718,6 +6733,7 @@ input SecretKeyValueRefIn {
 	  | UNION
 	scalar _Any
 	scalar FieldSet
+	scalar federation__Policy
 	scalar federation__Scope
 `, BuiltIn: true},
 	{Name: "../../federation/entity.graphql", Input: `
@@ -12890,6 +12906,47 @@ func (ec *executionContext) fieldContext_Environment_id(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Environment_isArchived(ctx context.Context, field graphql.CollectedField, obj *entities.Environment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Environment_isArchived(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsArchived, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Environment_isArchived(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Environment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Environment_kind(ctx context.Context, field graphql.CollectedField, obj *entities.Environment) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Environment_kind(ctx, field)
 	if err != nil {
@@ -13428,6 +13485,8 @@ func (ec *executionContext) fieldContext_EnvironmentEdge_node(ctx context.Contex
 				return ec.fieldContext_Environment_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_Environment_id(ctx, field)
+			case "isArchived":
+				return ec.fieldContext_Environment_isArchived(ctx, field)
 			case "kind":
 				return ec.fieldContext_Environment_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -26147,6 +26206,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createEnvironment(ctx con
 				return ec.fieldContext_Environment_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_Environment_id(ctx, field)
+			case "isArchived":
+				return ec.fieldContext_Environment_isArchived(ctx, field)
 			case "kind":
 				return ec.fieldContext_Environment_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -26259,6 +26320,8 @@ func (ec *executionContext) fieldContext_Mutation_core_updateEnvironment(ctx con
 				return ec.fieldContext_Environment_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_Environment_id(ctx, field)
+			case "isArchived":
+				return ec.fieldContext_Environment_isArchived(ctx, field)
 			case "kind":
 				return ec.fieldContext_Environment_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -26452,6 +26515,8 @@ func (ec *executionContext) fieldContext_Mutation_core_cloneEnvironment(ctx cont
 				return ec.fieldContext_Environment_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_Environment_id(ctx, field)
+			case "isArchived":
+				return ec.fieldContext_Environment_isArchived(ctx, field)
 			case "kind":
 				return ec.fieldContext_Environment_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -30186,6 +30251,8 @@ func (ec *executionContext) fieldContext_Query_core_getEnvironment(ctx context.C
 				return ec.fieldContext_Environment_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_Environment_id(ctx, field)
+			case "isArchived":
+				return ec.fieldContext_Environment_isArchived(ctx, field)
 			case "kind":
 				return ec.fieldContext_Environment_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -37519,8 +37586,6 @@ func (ec *executionContext) unmarshalInputAppIn(ctx context.Context, obj interfa
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -37528,8 +37593,6 @@ func (ec *executionContext) unmarshalInputAppIn(ctx context.Context, obj interfa
 			}
 			it.APIVersion = data
 		case "ciBuildId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ciBuildId"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, v)
 			if err != nil {
@@ -37537,8 +37600,6 @@ func (ec *executionContext) unmarshalInputAppIn(ctx context.Context, obj interfa
 			}
 			it.CIBuildId = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -37546,8 +37607,6 @@ func (ec *executionContext) unmarshalInputAppIn(ctx context.Context, obj interfa
 			}
 			it.DisplayName = data
 		case "enabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -37555,8 +37614,6 @@ func (ec *executionContext) unmarshalInputAppIn(ctx context.Context, obj interfa
 			}
 			it.Enabled = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -37564,8 +37621,6 @@ func (ec *executionContext) unmarshalInputAppIn(ctx context.Context, obj interfa
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -37575,8 +37630,6 @@ func (ec *executionContext) unmarshalInputAppIn(ctx context.Context, obj interfa
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__AppSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppSpecIn(ctx, v)
 			if err != nil {
@@ -37606,8 +37659,6 @@ func (ec *executionContext) unmarshalInputConfigIn(ctx context.Context, obj inte
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -37615,8 +37666,6 @@ func (ec *executionContext) unmarshalInputConfigIn(ctx context.Context, obj inte
 			}
 			it.APIVersion = data
 		case "binaryData":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("binaryData"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -37626,8 +37675,6 @@ func (ec *executionContext) unmarshalInputConfigIn(ctx context.Context, obj inte
 				return it, err
 			}
 		case "data":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -37637,8 +37684,6 @@ func (ec *executionContext) unmarshalInputConfigIn(ctx context.Context, obj inte
 				return it, err
 			}
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -37646,8 +37691,6 @@ func (ec *executionContext) unmarshalInputConfigIn(ctx context.Context, obj inte
 			}
 			it.DisplayName = data
 		case "immutable":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("immutable"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -37655,8 +37698,6 @@ func (ec *executionContext) unmarshalInputConfigIn(ctx context.Context, obj inte
 			}
 			it.Immutable = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -37664,8 +37705,6 @@ func (ec *executionContext) unmarshalInputConfigIn(ctx context.Context, obj inte
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -37695,8 +37734,6 @@ func (ec *executionContext) unmarshalInputConfigKeyRefIn(ctx context.Context, ob
 		}
 		switch k {
 		case "configName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("configName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -37704,8 +37741,6 @@ func (ec *executionContext) unmarshalInputConfigKeyRefIn(ctx context.Context, ob
 			}
 			it.ConfigName = data
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -37733,8 +37768,6 @@ func (ec *executionContext) unmarshalInputConfigKeyValueRefIn(ctx context.Contex
 		}
 		switch k {
 		case "configName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("configName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -37742,8 +37775,6 @@ func (ec *executionContext) unmarshalInputConfigKeyValueRefIn(ctx context.Contex
 			}
 			it.ConfigName = data
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -37751,8 +37782,6 @@ func (ec *executionContext) unmarshalInputConfigKeyValueRefIn(ctx context.Contex
 			}
 			it.Key = data
 		case "value":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -37780,8 +37809,6 @@ func (ec *executionContext) unmarshalInputConsoleVPNDeviceIn(ctx context.Context
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -37789,8 +37816,6 @@ func (ec *executionContext) unmarshalInputConsoleVPNDeviceIn(ctx context.Context
 			}
 			it.APIVersion = data
 		case "clusterName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -37798,8 +37823,6 @@ func (ec *executionContext) unmarshalInputConsoleVPNDeviceIn(ctx context.Context
 			}
 			it.ClusterName = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -37807,8 +37830,6 @@ func (ec *executionContext) unmarshalInputConsoleVPNDeviceIn(ctx context.Context
 			}
 			it.DisplayName = data
 		case "environmentName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("environmentName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -37816,8 +37837,6 @@ func (ec *executionContext) unmarshalInputConsoleVPNDeviceIn(ctx context.Context
 			}
 			it.EnvironmentName = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -37825,8 +37844,6 @@ func (ec *executionContext) unmarshalInputConsoleVPNDeviceIn(ctx context.Context
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -37836,8 +37853,6 @@ func (ec *executionContext) unmarshalInputConsoleVPNDeviceIn(ctx context.Context
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecIn(ctx, v)
 			if err != nil {
@@ -37867,8 +37882,6 @@ func (ec *executionContext) unmarshalInputCoreSearchVPNDevices(ctx context.Conte
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -37876,8 +37889,6 @@ func (ec *executionContext) unmarshalInputCoreSearchVPNDevices(ctx context.Conte
 			}
 			it.Text = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -37885,8 +37896,6 @@ func (ec *executionContext) unmarshalInputCoreSearchVPNDevices(ctx context.Conte
 			}
 			it.IsReady = data
 		case "markedForDeletion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -37921,8 +37930,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 		}
 		switch k {
 		case "after":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -37930,8 +37937,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 			}
 			it.After = data
 		case "before":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -37939,8 +37944,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 			}
 			it.Before = data
 		case "first":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
 			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
 			if err != nil {
@@ -37948,8 +37951,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 			}
 			it.First = data
 		case "last":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
 			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
 			if err != nil {
@@ -37957,8 +37958,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 			}
 			it.Last = data
 		case "orderBy":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -37966,8 +37965,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 			}
 			it.OrderBy = data
 		case "sortDirection":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortDirection"))
 			data, err := ec.unmarshalOCursorPaginationSortDirection2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐSortDirection(ctx, v)
 			if err != nil {
@@ -37995,8 +37992,6 @@ func (ec *executionContext) unmarshalInputEnvironmentIn(ctx context.Context, obj
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -38004,8 +37999,6 @@ func (ec *executionContext) unmarshalInputEnvironmentIn(ctx context.Context, obj
 			}
 			it.APIVersion = data
 		case "clusterName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38013,8 +38006,6 @@ func (ec *executionContext) unmarshalInputEnvironmentIn(ctx context.Context, obj
 			}
 			it.ClusterName = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38022,8 +38013,6 @@ func (ec *executionContext) unmarshalInputEnvironmentIn(ctx context.Context, obj
 			}
 			it.DisplayName = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -38031,8 +38020,6 @@ func (ec *executionContext) unmarshalInputEnvironmentIn(ctx context.Context, obj
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -38042,8 +38029,6 @@ func (ec *executionContext) unmarshalInputEnvironmentIn(ctx context.Context, obj
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1EnvironmentSpecIn(ctx, v)
 			if err != nil {
@@ -38073,8 +38058,6 @@ func (ec *executionContext) unmarshalInputExternalAppIn(ctx context.Context, obj
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -38082,8 +38065,6 @@ func (ec *executionContext) unmarshalInputExternalAppIn(ctx context.Context, obj
 			}
 			it.APIVersion = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38091,8 +38072,6 @@ func (ec *executionContext) unmarshalInputExternalAppIn(ctx context.Context, obj
 			}
 			it.DisplayName = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -38100,8 +38079,6 @@ func (ec *executionContext) unmarshalInputExternalAppIn(ctx context.Context, obj
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -38111,8 +38088,6 @@ func (ec *executionContext) unmarshalInputExternalAppIn(ctx context.Context, obj
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__ExternalAppSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ExternalAppSpecIn(ctx, v)
 			if err != nil {
@@ -38122,8 +38097,6 @@ func (ec *executionContext) unmarshalInputExternalAppIn(ctx context.Context, obj
 				return it, err
 			}
 		case "status":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___pkg___operator__StatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgOperatorStatusIn(ctx, v)
 			if err != nil {
@@ -38153,8 +38126,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38162,8 +38133,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.APIVersion = data
 		case "clusterName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38171,8 +38140,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ClusterName = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38180,8 +38147,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Kind = data
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38189,8 +38154,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Name = data
 		case "namespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38218,8 +38181,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "args":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("args"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -38227,8 +38188,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Args = data
 		case "command":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("command"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -38236,8 +38195,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Command = data
 		case "env":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("env"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__ContainerEnvIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ContainerEnvInᚄ(ctx, v)
 			if err != nil {
@@ -38245,8 +38202,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Env = data
 		case "envFrom":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envFrom"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvFromIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1EnvFromInᚄ(ctx, v)
 			if err != nil {
@@ -38254,8 +38209,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.EnvFrom = data
 		case "image":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38263,8 +38216,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Image = data
 		case "imagePullPolicy":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imagePullPolicy"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38272,8 +38223,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ImagePullPolicy = data
 		case "livenessProbe":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("livenessProbe"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__ProbeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ProbeIn(ctx, v)
 			if err != nil {
@@ -38281,8 +38230,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.LivenessProbe = data
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38290,8 +38237,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Name = data
 		case "readinessProbe":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readinessProbe"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__ProbeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ProbeIn(ctx, v)
 			if err != nil {
@@ -38299,8 +38244,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ReadinessProbe = data
 		case "resourceCpu":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceCpu"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ContainerResourceIn(ctx, v)
 			if err != nil {
@@ -38308,8 +38251,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ResourceCPU = data
 		case "resourceMemory":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceMemory"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ContainerResourceIn(ctx, v)
 			if err != nil {
@@ -38317,8 +38258,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ResourceMemory = data
 		case "volumes":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumes"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__ContainerVolumeIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ContainerVolumeInᚄ(ctx, v)
 			if err != nil {
@@ -38346,8 +38285,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "appPort":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appPort"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -38357,8 +38294,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 		case "devicePort":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("devicePort"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -38388,8 +38323,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "backendProtocol":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backendProtocol"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38397,8 +38330,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.BackendProtocol = data
 		case "basicAuth":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("basicAuth"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__BasicAuthIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1BasicAuthIn(ctx, v)
 			if err != nil {
@@ -38406,8 +38337,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.BasicAuth = data
 		case "cors":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cors"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__CorsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1CorsIn(ctx, v)
 			if err != nil {
@@ -38415,8 +38344,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Cors = data
 		case "domains":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domains"))
 			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -38424,8 +38351,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Domains = data
 		case "https":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("https"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__HttpsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HTTPSIn(ctx, v)
 			if err != nil {
@@ -38433,8 +38358,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.HTTPS = data
 		case "ingressClass":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ingressClass"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38442,8 +38365,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.IngressClass = data
 		case "maxBodySizeInMB":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxBodySizeInMB"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -38451,8 +38372,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.MaxBodySizeInMb = data
 		case "rateLimit":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateLimit"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__RateLimitIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RateLimitIn(ctx, v)
 			if err != nil {
@@ -38460,8 +38379,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.RateLimit = data
 		case "routes":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("routes"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__RouteIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RouteInᚄ(ctx, v)
 			if err != nil {
@@ -38489,8 +38406,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "containers":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("containers"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__AppContainerIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppContainerInᚄ(ctx, v)
 			if err != nil {
@@ -38498,8 +38413,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Containers = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38507,8 +38420,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.DisplayName = data
 		case "freeze":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freeze"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -38516,8 +38427,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Freeze = data
 		case "hpa":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hpa"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__HPAIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HPAIn(ctx, v)
 			if err != nil {
@@ -38525,8 +38434,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Hpa = data
 		case "intercept":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intercept"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__InterceptIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1InterceptIn(ctx, v)
 			if err != nil {
@@ -38534,8 +38441,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Intercept = data
 		case "nodeSelector":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelector"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -38543,8 +38448,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.NodeSelector = data
 		case "region":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38552,8 +38455,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Region = data
 		case "replicas":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("replicas"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -38561,8 +38462,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Replicas = data
 		case "router":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("router"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppRouterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppRouterIn(ctx, v)
 			if err != nil {
@@ -38570,8 +38469,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Router = data
 		case "serviceAccount":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceAccount"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38579,8 +38476,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ServiceAccount = data
 		case "services":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("services"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppSvcIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppSvcInᚄ(ctx, v)
 			if err != nil {
@@ -38588,8 +38483,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Services = data
 		case "tolerations":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tolerations"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__TolerationIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationInᚄ(ctx, v)
 			if err != nil {
@@ -38597,8 +38490,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Tolerations = data
 		case "topologySpreadConstraints":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topologySpreadConstraints"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__TopologySpreadConstraintIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TopologySpreadConstraintInᚄ(ctx, v)
 			if err != nil {
@@ -38626,8 +38517,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "port":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -38635,8 +38524,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Port = data
 		case "protocol":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("protocol"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38664,8 +38551,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "enabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -38673,8 +38558,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Enabled = data
 		case "secretName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38682,8 +38565,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.SecretName = data
 		case "username":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38711,8 +38592,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38720,8 +38599,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Key = data
 		case "optional":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("optional"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -38729,8 +38606,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Optional = data
 		case "refKey":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("refKey"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38738,8 +38613,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.RefKey = data
 		case "refName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("refName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38747,8 +38620,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.RefName = data
 		case "type":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ConfigOrSecret(ctx, v)
 			if err != nil {
@@ -38756,8 +38627,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Type = data
 		case "value":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38785,8 +38654,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "max":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("max"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38794,8 +38661,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Max = data
 		case "min":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("min"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38823,8 +38688,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "items":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("items"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItemIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ContainerVolumeItemInᚄ(ctx, v)
 			if err != nil {
@@ -38832,8 +38695,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Items = data
 		case "mountPath":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mountPath"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38841,8 +38702,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.MountPath = data
 		case "refName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("refName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38850,8 +38709,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.RefName = data
 		case "type":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ConfigOrSecret(ctx, v)
 			if err != nil {
@@ -38879,8 +38736,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "fileName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fileName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -38888,8 +38743,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.FileName = data
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38917,8 +38770,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "allowCredentials":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowCredentials"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -38926,8 +38777,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.AllowCredentials = data
 		case "enabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -38935,8 +38784,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Enabled = data
 		case "origins":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("origins"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -38964,8 +38811,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "refName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("refName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -38973,8 +38818,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.RefName = data
 		case "type":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ConfigOrSecret(ctx, v)
 			if err != nil {
@@ -39002,8 +38845,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "mode":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx, v)
 			if err != nil {
@@ -39031,8 +38872,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "routing":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("routing"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingIn(ctx, v)
 			if err != nil {
@@ -39040,8 +38879,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Routing = data
 		case "targetNamespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetNamespace"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39069,8 +38906,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "intercept":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intercept"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__InterceptIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1InterceptIn(ctx, v)
 			if err != nil {
@@ -39078,8 +38913,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Intercept = data
 		case "record":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("record"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -39087,8 +38920,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Record = data
 		case "recordType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recordType"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ExternalAppRecordType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType(ctx, v)
 			if err != nil {
@@ -39116,8 +38947,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "enabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -39125,8 +38954,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Enabled = data
 		case "maxReplicas":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxReplicas"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39134,8 +38961,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.MaxReplicas = data
 		case "minReplicas":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minReplicas"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39143,8 +38968,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.MinReplicas = data
 		case "thresholdCpu":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("thresholdCpu"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39152,8 +38975,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ThresholdCPU = data
 		case "thresholdMemory":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("thresholdMemory"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39181,8 +39002,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "httpHeaders":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("httpHeaders"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -39190,8 +39009,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.HTTPHeaders = data
 		case "path":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -39199,8 +39016,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Path = data
 		case "port":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -39228,8 +39043,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "clusterIssuer":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterIssuer"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39237,8 +39050,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ClusterIssuer = data
 		case "enabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -39246,8 +39057,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Enabled = data
 		case "forceRedirect":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("forceRedirect"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -39275,8 +39084,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "enabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -39284,8 +39091,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Enabled = data
 		case "portMappings":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portMappings"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐAppInterceptPortMappingsᚄ(ctx, v)
 			if err != nil {
@@ -39293,8 +39098,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.PortMappings = data
 		case "toDevice":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toDevice"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -39322,8 +39125,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "resourceNamePrefix":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceNamePrefix"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39331,8 +39132,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ResourceNamePrefix = data
 		case "resourceTemplate":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceTemplate"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn(ctx, v)
 			if err != nil {
@@ -39360,8 +39159,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -39369,8 +39166,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.APIVersion = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -39378,8 +39173,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Kind = data
 		case "msvcRef":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcRef"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__MsvcRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMsvcRefIn(ctx, v)
 			if err != nil {
@@ -39387,8 +39180,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.MsvcRef = data
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalNMap2map(ctx, v)
 			if err != nil {
@@ -39416,8 +39207,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "failureThreshold":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("failureThreshold"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39425,8 +39214,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.FailureThreshold = data
 		case "httpGet":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("httpGet"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HTTPGetProbeIn(ctx, v)
 			if err != nil {
@@ -39434,8 +39221,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.HTTPGet = data
 		case "initialDelay":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("initialDelay"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39443,8 +39228,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.InitialDelay = data
 		case "interval":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("interval"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39452,8 +39235,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Interval = data
 		case "shell":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shell"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__ShellProbeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ShellProbeIn(ctx, v)
 			if err != nil {
@@ -39461,8 +39242,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Shell = data
 		case "tcp":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tcp"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__TcpProbeIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1TCPProbeIn(ctx, v)
 			if err != nil {
@@ -39470,8 +39249,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.TCP = data
 		case "type":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -39499,8 +39276,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "connections":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("connections"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39508,8 +39283,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Connections = data
 		case "enabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -39517,8 +39290,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Enabled = data
 		case "rpm":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rpm"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39526,8 +39297,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Rpm = data
 		case "rps":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rps"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39555,8 +39324,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "app":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("app"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -39564,8 +39331,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.App = data
 		case "path":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -39573,8 +39338,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Path = data
 		case "port":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -39582,8 +39345,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Port = data
 		case "rewrite":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rewrite"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -39611,8 +39372,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "backendProtocol":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backendProtocol"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39620,8 +39379,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.BackendProtocol = data
 		case "basicAuth":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("basicAuth"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__BasicAuthIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1BasicAuthIn(ctx, v)
 			if err != nil {
@@ -39629,8 +39386,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.BasicAuth = data
 		case "cors":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cors"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__CorsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1CorsIn(ctx, v)
 			if err != nil {
@@ -39638,8 +39393,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Cors = data
 		case "domains":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domains"))
 			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -39647,8 +39400,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Domains = data
 		case "https":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("https"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__HttpsIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HTTPSIn(ctx, v)
 			if err != nil {
@@ -39656,8 +39407,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.HTTPS = data
 		case "ingressClass":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ingressClass"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39665,8 +39414,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.IngressClass = data
 		case "maxBodySizeInMB":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxBodySizeInMB"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39674,8 +39421,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.MaxBodySizeInMb = data
 		case "rateLimit":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateLimit"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__RateLimitIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RateLimitIn(ctx, v)
 			if err != nil {
@@ -39683,8 +39428,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.RateLimit = data
 		case "routes":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("routes"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__RouteIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RouteInᚄ(ctx, v)
 			if err != nil {
@@ -39712,8 +39455,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "command":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("command"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -39741,8 +39482,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "port":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -39770,8 +39509,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "host":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("host"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39779,8 +39516,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Host = data
 		case "target":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("target"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39808,8 +39543,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "activeNamespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("activeNamespace"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39817,8 +39550,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.ActiveNamespace = data
 		case "cnameRecords":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cnameRecords"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1CNameRecordInᚄ(ctx, v)
 			if err != nil {
@@ -39826,8 +39557,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.CnameRecords = data
 		case "ports":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ports"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___wireguard___v1__PortIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1PortInᚄ(ctx, v)
 			if err != nil {
@@ -39855,8 +39584,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		}
 		switch k {
 		case "port":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39864,8 +39591,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			}
 			it.Port = data
 		case "targetPort":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPort"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39893,8 +39618,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 		}
 		switch k {
 		case "debug":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39902,8 +39625,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Debug = data
 		case "error":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("error"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39911,8 +39632,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Error = data
 		case "generation":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("generation"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -39920,8 +39639,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Generation = data
 		case "info":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("info"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39929,8 +39646,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Info = data
 		case "message":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -39938,8 +39653,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Message = data
 		case "startedAt":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startedAt"))
 			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
@@ -39947,8 +39660,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.StartedAt = data
 		case "state":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___pkg___operator__State2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgOperatorState(ctx, v)
 			if err != nil {
@@ -39956,8 +39667,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.State = data
 		case "status":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -39985,8 +39694,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 		}
 		switch k {
 		case "debug":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -39994,8 +39701,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Debug = data
 		case "description":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -40003,8 +39708,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Description = data
 		case "hide":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hide"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -40012,8 +39715,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Hide = data
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40021,8 +39722,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Name = data
 		case "title":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40050,8 +39749,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40059,8 +39756,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.APIVersion = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40068,8 +39763,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Kind = data
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40077,8 +39770,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Name = data
 		case "namespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40106,8 +39797,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 		}
 		switch k {
 		case "checkList":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("checkList"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___pkg___operator__CheckMetaIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgOperatorCheckMetaInᚄ(ctx, v)
 			if err != nil {
@@ -40115,8 +39804,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.CheckList = data
 		case "checks":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("checks"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -40124,8 +39811,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Checks = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -40133,8 +39818,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.IsReady = data
 		case "lastReadyGeneration":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastReadyGeneration"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -40142,8 +39825,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.LastReadyGeneration = data
 		case "lastReconcileTime":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastReconcileTime"))
 			data, err := ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
@@ -40151,8 +39832,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.LastReconcileTime = data
 		case "message":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___pkg___raw____json__RawJsonIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgRawJSONRawJSONIn(ctx, v)
 			if err != nil {
@@ -40160,8 +39839,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			}
 			it.Message = data
 		case "resources":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resources"))
 			data, err := ec.unmarshalOGithub__com___kloudlite___operator___pkg___operator__ResourceRefIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgOperatorResourceRefInᚄ(ctx, v)
 			if err != nil {
@@ -40189,8 +39866,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 		}
 		switch k {
 		case "RawMessage":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("RawMessage"))
 			data, err := ec.unmarshalOAny2interface(ctx, v)
 			if err != nil {
@@ -40218,8 +39893,6 @@ func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context,
 		}
 		switch k {
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40227,8 +39900,6 @@ func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context,
 			}
 			it.DisplayName = data
 		case "dockerConfigJson":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dockerConfigJson"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -40236,8 +39907,6 @@ func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context,
 			}
 			it.DockerConfigJson = data
 		case "environments":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("environments"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -40245,8 +39914,6 @@ func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context,
 			}
 			it.Environments = data
 		case "format":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("format"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat(ctx, v)
 			if err != nil {
@@ -40256,8 +39923,6 @@ func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context,
 				return it, err
 			}
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -40267,8 +39932,6 @@ func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context,
 				return it, err
 			}
 		case "registryPassword":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("registryPassword"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -40276,8 +39939,6 @@ func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context,
 			}
 			it.RegistryPassword = data
 		case "registryURL":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("registryURL"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -40285,8 +39946,6 @@ func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context,
 			}
 			it.RegistryURL = data
 		case "registryUsername":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("registryUsername"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -40314,8 +39973,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationI
 		}
 		switch k {
 		case "effect":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effect"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__TaintEffect2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TaintEffect(ctx, v)
 			if err != nil {
@@ -40323,8 +39980,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationI
 			}
 			it.Effect = data
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -40332,8 +39987,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationI
 			}
 			it.Key = data
 		case "operator":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__TolerationOperator2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationOperator(ctx, v)
 			if err != nil {
@@ -40341,8 +39994,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationI
 			}
 			it.Operator = data
 		case "tolerationSeconds":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tolerationSeconds"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -40350,8 +40001,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TolerationI
 			}
 			it.TolerationSeconds = data
 		case "value":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -40379,8 +40028,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TopologySpr
 		}
 		switch k {
 		case "labelSelector":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labelSelector"))
 			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorIn(ctx, v)
 			if err != nil {
@@ -40388,8 +40035,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TopologySpr
 			}
 			it.LabelSelector = data
 		case "matchLabelKeys":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchLabelKeys"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -40397,8 +40042,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TopologySpr
 			}
 			it.MatchLabelKeys = data
 		case "maxSkew":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxSkew"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -40406,8 +40049,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TopologySpr
 			}
 			it.MaxSkew = data
 		case "minDomains":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minDomains"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
@@ -40415,8 +40056,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TopologySpr
 			}
 			it.MinDomains = data
 		case "nodeAffinityPolicy":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeAffinityPolicy"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -40424,8 +40063,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TopologySpr
 			}
 			it.NodeAffinityPolicy = data
 		case "nodeTaintsPolicy":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeTaintsPolicy"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -40433,8 +40070,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TopologySpr
 			}
 			it.NodeTaintsPolicy = data
 		case "topologyKey":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topologyKey"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40442,8 +40077,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TopologySpr
 			}
 			it.TopologyKey = data
 		case "whenUnsatisfiable":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("whenUnsatisfiable"))
 			data, err := ec.unmarshalNK8s__io___api___core___v1__UnsatisfiableConstraintAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1UnsatisfiableConstraintAction(ctx, v)
 			if err != nil {
@@ -40471,8 +40104,6 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 		}
 		switch k {
 		case "matchExpressions":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchExpressions"))
 			data, err := ec.unmarshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementInᚄ(ctx, v)
 			if err != nil {
@@ -40480,8 +40111,6 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 			}
 			it.MatchExpressions = data
 		case "matchLabels":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchLabels"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -40509,8 +40138,6 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 		}
 		switch k {
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40518,8 +40145,6 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 			}
 			it.Key = data
 		case "operator":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
 			data, err := ec.unmarshalNK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorOperator(ctx, v)
 			if err != nil {
@@ -40527,8 +40152,6 @@ func (ec *executionContext) unmarshalInputK8s__io___apimachinery___pkg___apis___
 			}
 			it.Operator = data
 		case "values":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -40556,8 +40179,6 @@ func (ec *executionContext) unmarshalInputManagedResourceIn(ctx context.Context,
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -40565,8 +40186,6 @@ func (ec *executionContext) unmarshalInputManagedResourceIn(ctx context.Context,
 			}
 			it.APIVersion = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40574,8 +40193,6 @@ func (ec *executionContext) unmarshalInputManagedResourceIn(ctx context.Context,
 			}
 			it.DisplayName = data
 		case "enabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -40583,8 +40200,6 @@ func (ec *executionContext) unmarshalInputManagedResourceIn(ctx context.Context,
 			}
 			it.Enabled = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -40592,8 +40207,6 @@ func (ec *executionContext) unmarshalInputManagedResourceIn(ctx context.Context,
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -40603,8 +40216,6 @@ func (ec *executionContext) unmarshalInputManagedResourceIn(ctx context.Context,
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn(ctx, v)
 			if err != nil {
@@ -40634,8 +40245,6 @@ func (ec *executionContext) unmarshalInputManagedResourceKeyRefIn(ctx context.Co
 		}
 		switch k {
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40643,8 +40252,6 @@ func (ec *executionContext) unmarshalInputManagedResourceKeyRefIn(ctx context.Co
 			}
 			it.Key = data
 		case "mresName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mresName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40672,8 +40279,6 @@ func (ec *executionContext) unmarshalInputManagedResourceKeyValueRefIn(ctx conte
 		}
 		switch k {
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40681,8 +40286,6 @@ func (ec *executionContext) unmarshalInputManagedResourceKeyValueRefIn(ctx conte
 			}
 			it.Key = data
 		case "mresName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mresName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40690,8 +40293,6 @@ func (ec *executionContext) unmarshalInputManagedResourceKeyValueRefIn(ctx conte
 			}
 			it.MresName = data
 		case "value":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40719,8 +40320,6 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 		}
 		switch k {
 		case "array":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("array"))
 			data, err := ec.unmarshalOAny2ᚕinterfaceᚄ(ctx, v)
 			if err != nil {
@@ -40728,8 +40327,6 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 			}
 			it.Array = data
 		case "exact":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exact"))
 			data, err := ec.unmarshalOAny2interface(ctx, v)
 			if err != nil {
@@ -40737,8 +40334,6 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 			}
 			it.Exact = data
 		case "matchType":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchType"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx, v)
 			if err != nil {
@@ -40748,8 +40343,6 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 				return it, err
 			}
 		case "notInArray":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notInArray"))
 			data, err := ec.unmarshalOAny2ᚕinterfaceᚄ(ctx, v)
 			if err != nil {
@@ -40757,8 +40350,6 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 			}
 			it.NotInArray = data
 		case "regex":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("regex"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -40786,8 +40377,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 		}
 		switch k {
 		case "annotations":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("annotations"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -40797,8 +40386,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 				return it, err
 			}
 		case "labels":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -40808,8 +40395,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 				return it, err
 			}
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40817,8 +40402,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 			}
 			it.Name = data
 		case "namespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -40846,8 +40429,6 @@ func (ec *executionContext) unmarshalInputPortIn(ctx context.Context, obj interf
 		}
 		switch k {
 		case "port":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
 			data, err := ec.unmarshalOInt2int32(ctx, v)
 			if err != nil {
@@ -40855,8 +40436,6 @@ func (ec *executionContext) unmarshalInputPortIn(ctx context.Context, obj interf
 			}
 			it.Port = data
 		case "targetPort":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPort"))
 			data, err := ec.unmarshalOInt2int32(ctx, v)
 			if err != nil {
@@ -40884,8 +40463,6 @@ func (ec *executionContext) unmarshalInputRouterIn(ctx context.Context, obj inte
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -40893,8 +40470,6 @@ func (ec *executionContext) unmarshalInputRouterIn(ctx context.Context, obj inte
 			}
 			it.APIVersion = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -40902,8 +40477,6 @@ func (ec *executionContext) unmarshalInputRouterIn(ctx context.Context, obj inte
 			}
 			it.DisplayName = data
 		case "enabled":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
 			data, err := ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
@@ -40911,8 +40484,6 @@ func (ec *executionContext) unmarshalInputRouterIn(ctx context.Context, obj inte
 			}
 			it.Enabled = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -40920,8 +40491,6 @@ func (ec *executionContext) unmarshalInputRouterIn(ctx context.Context, obj inte
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -40931,8 +40500,6 @@ func (ec *executionContext) unmarshalInputRouterIn(ctx context.Context, obj inte
 				return it, err
 			}
 		case "spec":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__RouterSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RouterSpecIn(ctx, v)
 			if err != nil {
@@ -40962,8 +40529,6 @@ func (ec *executionContext) unmarshalInputSearchApps(ctx context.Context, obj in
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -40971,8 +40536,6 @@ func (ec *executionContext) unmarshalInputSearchApps(ctx context.Context, obj in
 			}
 			it.Text = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -40980,8 +40543,6 @@ func (ec *executionContext) unmarshalInputSearchApps(ctx context.Context, obj in
 			}
 			it.IsReady = data
 		case "markedForDeletion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41009,8 +40570,6 @@ func (ec *executionContext) unmarshalInputSearchConfigs(ctx context.Context, obj
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41018,8 +40577,6 @@ func (ec *executionContext) unmarshalInputSearchConfigs(ctx context.Context, obj
 			}
 			it.Text = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41027,8 +40584,6 @@ func (ec *executionContext) unmarshalInputSearchConfigs(ctx context.Context, obj
 			}
 			it.IsReady = data
 		case "markedForDeletion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41056,8 +40611,6 @@ func (ec *executionContext) unmarshalInputSearchEnvironments(ctx context.Context
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41065,8 +40618,6 @@ func (ec *executionContext) unmarshalInputSearchEnvironments(ctx context.Context
 			}
 			it.Text = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41074,8 +40625,6 @@ func (ec *executionContext) unmarshalInputSearchEnvironments(ctx context.Context
 			}
 			it.IsReady = data
 		case "markedForDeletion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41103,8 +40652,6 @@ func (ec *executionContext) unmarshalInputSearchExternalApps(ctx context.Context
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41112,8 +40659,6 @@ func (ec *executionContext) unmarshalInputSearchExternalApps(ctx context.Context
 			}
 			it.Text = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41121,8 +40666,6 @@ func (ec *executionContext) unmarshalInputSearchExternalApps(ctx context.Context
 			}
 			it.IsReady = data
 		case "markedForDeletion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41150,8 +40693,6 @@ func (ec *executionContext) unmarshalInputSearchImagePullSecrets(ctx context.Con
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41159,8 +40700,6 @@ func (ec *executionContext) unmarshalInputSearchImagePullSecrets(ctx context.Con
 			}
 			it.Text = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41168,8 +40707,6 @@ func (ec *executionContext) unmarshalInputSearchImagePullSecrets(ctx context.Con
 			}
 			it.IsReady = data
 		case "markedForDeletion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41197,8 +40734,6 @@ func (ec *executionContext) unmarshalInputSearchManagedResources(ctx context.Con
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41206,8 +40741,6 @@ func (ec *executionContext) unmarshalInputSearchManagedResources(ctx context.Con
 			}
 			it.Text = data
 		case "managedServiceName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("managedServiceName"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41215,8 +40748,6 @@ func (ec *executionContext) unmarshalInputSearchManagedResources(ctx context.Con
 			}
 			it.ManagedServiceName = data
 		case "envName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41224,8 +40755,6 @@ func (ec *executionContext) unmarshalInputSearchManagedResources(ctx context.Con
 			}
 			it.EnvName = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41233,8 +40762,6 @@ func (ec *executionContext) unmarshalInputSearchManagedResources(ctx context.Con
 			}
 			it.IsReady = data
 		case "markedForDeletion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41262,8 +40789,6 @@ func (ec *executionContext) unmarshalInputSearchProjectManagedService(ctx contex
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41271,8 +40796,6 @@ func (ec *executionContext) unmarshalInputSearchProjectManagedService(ctx contex
 			}
 			it.Text = data
 		case "managedServiceName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("managedServiceName"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41280,8 +40803,6 @@ func (ec *executionContext) unmarshalInputSearchProjectManagedService(ctx contex
 			}
 			it.ManagedServiceName = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41289,8 +40810,6 @@ func (ec *executionContext) unmarshalInputSearchProjectManagedService(ctx contex
 			}
 			it.IsReady = data
 		case "markedForDeletion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41318,8 +40837,6 @@ func (ec *executionContext) unmarshalInputSearchProjects(ctx context.Context, ob
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41327,8 +40844,6 @@ func (ec *executionContext) unmarshalInputSearchProjects(ctx context.Context, ob
 			}
 			it.Text = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41336,8 +40851,6 @@ func (ec *executionContext) unmarshalInputSearchProjects(ctx context.Context, ob
 			}
 			it.IsReady = data
 		case "markedForDeletion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41365,8 +40878,6 @@ func (ec *executionContext) unmarshalInputSearchRouters(ctx context.Context, obj
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41374,8 +40885,6 @@ func (ec *executionContext) unmarshalInputSearchRouters(ctx context.Context, obj
 			}
 			it.Text = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41383,8 +40892,6 @@ func (ec *executionContext) unmarshalInputSearchRouters(ctx context.Context, obj
 			}
 			it.IsReady = data
 		case "markedForDeletion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41412,8 +40919,6 @@ func (ec *executionContext) unmarshalInputSearchSecrets(ctx context.Context, obj
 		}
 		switch k {
 		case "text":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41421,8 +40926,6 @@ func (ec *executionContext) unmarshalInputSearchSecrets(ctx context.Context, obj
 			}
 			it.Text = data
 		case "isReady":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41430,8 +40933,6 @@ func (ec *executionContext) unmarshalInputSearchSecrets(ctx context.Context, obj
 			}
 			it.IsReady = data
 		case "markedForDeletion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
 			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
@@ -41459,8 +40960,6 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 		}
 		switch k {
 		case "apiVersion":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -41468,8 +40967,6 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 			}
 			it.APIVersion = data
 		case "data":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -41479,8 +40976,6 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 				return it, err
 			}
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -41488,8 +40983,6 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 			}
 			it.DisplayName = data
 		case "immutable":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("immutable"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
@@ -41497,8 +40990,6 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 			}
 			it.Immutable = data
 		case "kind":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -41506,8 +40997,6 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 			}
 			it.Kind = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -41517,8 +41006,6 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 				return it, err
 			}
 		case "stringData":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stringData"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -41528,8 +41015,6 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 				return it, err
 			}
 		case "type":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretType2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretType(ctx, v)
 			if err != nil {
@@ -41559,8 +41044,6 @@ func (ec *executionContext) unmarshalInputSecretKeyRefIn(ctx context.Context, ob
 		}
 		switch k {
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -41568,8 +41051,6 @@ func (ec *executionContext) unmarshalInputSecretKeyRefIn(ctx context.Context, ob
 			}
 			it.Key = data
 		case "secretName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -41597,8 +41078,6 @@ func (ec *executionContext) unmarshalInputSecretKeyValueRefIn(ctx context.Contex
 		}
 		switch k {
 		case "key":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -41606,8 +41085,6 @@ func (ec *executionContext) unmarshalInputSecretKeyValueRefIn(ctx context.Contex
 			}
 			it.Key = data
 		case "secretName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -41615,8 +41092,6 @@ func (ec *executionContext) unmarshalInputSecretKeyValueRefIn(ctx context.Contex
 			}
 			it.SecretName = data
 		case "value":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -42963,6 +42438,8 @@ func (ec *executionContext) _Environment(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "isArchived":
+			out.Values[i] = ec._Environment_isArchived(ctx, field, obj)
 		case "kind":
 			out.Values[i] = ec._Environment_kind(ctx, field, obj)
 		case "lastUpdatedBy":
@@ -50808,6 +50285,85 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) unmarshalNfederation__Policy2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNfederation__Policy2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Policy2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Policy2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Policy2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2ᚕᚕstringᚄ(ctx context.Context, v interface{}) ([][]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([][]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Policy2ᚕstringᚄ(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Policy2ᚕᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v [][]string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Policy2ᚕstringᚄ(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNfederation__Scope2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -50887,7 +50443,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -50895,7 +50451,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -9,6 +9,7 @@ import (
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
@@ -208,6 +209,16 @@ func (d *domain) DeleteBYOKCluster(ctx InfraContext, name string) error {
 		if err := d.deleteGlobalVPNConnection(ctx, cluster.Name, cluster.GlobalVPN); err != nil {
 			return errors.NewE(err)
 		}
+	}
+
+	if _, err := d.consoleClient.ArchiveEnvironmentsForCluster(ctx, &console.ArchiveEnvironmentsForClusterIn{
+		UserId:      string(ctx.UserId),
+		UserName:    ctx.UserName,
+		UserEmail:   ctx.UserEmail,
+		AccountName: ctx.AccountName,
+		ClusterName: name,
+	}); err != nil {
+		return errors.NewE(err)
 	}
 
 	if err := d.byokClusterRepo.DeleteOne(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, name)); err != nil {
