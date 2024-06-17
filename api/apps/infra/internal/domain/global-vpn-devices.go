@@ -194,7 +194,8 @@ func (d *domain) buildPeerFromGlobalVPNDevice(ctx InfraContext, gvpn *entities.G
 	}
 
 	return &networkingv1.Peer{
-		DisplayName:    fmt.Sprintf("device/%s/%s", device.GlobalVPNName, device.Name),
+		Comments:       fmt.Sprintf("device/%s/%s", device.GlobalVPNName, device.Name),
+		DNSHostname:    fmt.Sprintf("%s.device.local", device.Name),
 		PublicKey:      device.PublicKey,
 		PublicEndpoint: device.PublicEndpoint,
 		IP:             device.IPAddr,
@@ -233,7 +234,8 @@ func (d *domain) buildPeersFromGlobalVPNDevices(ctx InfraContext, gvpn string) (
 			}
 
 			publicPeers = append(publicPeers, networkingv1.Peer{
-				DisplayName:    fmt.Sprintf("device/%s/%s", devices[i].GlobalVPNName, devices[i].Name),
+				Comments:       fmt.Sprintf("device/%s/%s", devices[i].GlobalVPNName, devices[i].Name),
+				DNSHostname:    fmt.Sprintf("%s.device.local", devices[i].Name),
 				PublicKey:      devices[i].PublicKey,
 				PublicEndpoint: devices[i].PublicEndpoint,
 				IP:             devices[i].IPAddr,
@@ -244,7 +246,8 @@ func (d *domain) buildPeersFromGlobalVPNDevices(ctx InfraContext, gvpn string) (
 		}
 
 		privatePeers = append(privatePeers, networkingv1.Peer{
-			DisplayName: fmt.Sprintf("device/%s/%s", devices[i].GlobalVPNName, devices[i].Name),
+			Comments:    fmt.Sprintf("device/%s/%s", devices[i].GlobalVPNName, devices[i].Name),
+			DNSHostname: fmt.Sprintf("%s.device.local", devices[i].Name),
 			PublicKey:   devices[i].PublicKey,
 			IP:          devices[i].IPAddr,
 			DNSSuffix:   nil,
@@ -267,21 +270,24 @@ func (d *domain) GetGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnD
 	return d.getGlobalVPNDeviceWgConfig(ctx, gvpn, gvpnDevice, nil)
 }
 
-func (d *domain) buildGlobalVPNDeviceWgBaseParams(ctx InfraContext, gvpnConns []*entities.GlobalVPNConnection, gvpnDevice *entities.GlobalVPNDevice) (*wgutils.WgConfigParams, error) {
+func (d *domain) buildGlobalVPNDeviceWgBaseParams(ctx InfraContext, gvpnConns []*entities.GlobalVPNConnection, gvpnDevice *entities.GlobalVPNDevice) (wgparams *wgutils.WgConfigParams, deviceHosts map[string]string, err error) {
 	gvpnConnPeers := d.getGlobalVPNConnectionPeers(getGlobalVPNConnectionPeersArgs{
 		GlobalVPNConnections: gvpnConns,
 	})
 
+	deviceHosts = make(map[string]string)
+
 	pubPeers, privPeers, err := d.buildPeersFromGlobalVPNDevices(ctx, gvpnDevice.GlobalVPNName)
 	if err != nil {
-		return nil, err
+		return nil, deviceHosts, err
 	}
 
 	pubPeers = append(gvpnConnPeers, pubPeers...)
 
 	publicPeers := make([]wgutils.PublicPeer, 0, len(pubPeers))
 	for _, peer := range pubPeers {
-		if peer.DisplayName == fmt.Sprintf("device/%s/%s", gvpnDevice.GlobalVPNName, gvpnDevice.Name) || peer.DisplayName == fmt.Sprintf("gateway/%s/%s", gvpnDevice.GlobalVPNName, gvpnDevice.Name) {
+		deviceHosts[peer.DNSHostname] = peer.IP
+		if peer.DNSHostname == fmt.Sprintf("%s.device.local", gvpnDevice.Name) {
 			continue
 		}
 		if peer.PublicEndpoint == nil {
@@ -289,7 +295,7 @@ func (d *domain) buildGlobalVPNDeviceWgBaseParams(ctx InfraContext, gvpnConns []
 			continue
 		}
 		publicPeers = append(publicPeers, wgutils.PublicPeer{
-			DisplayName: peer.DisplayName,
+			DisplayName: peer.DNSHostname,
 			PublicKey:   peer.PublicKey,
 			AllowedIPs:  peer.AllowedIPs,
 			Endpoint:    *peer.PublicEndpoint,
@@ -298,11 +304,12 @@ func (d *domain) buildGlobalVPNDeviceWgBaseParams(ctx InfraContext, gvpnConns []
 
 	privatePeers := make([]wgutils.PrivatePeer, 0, len(privPeers))
 	for _, peer := range privPeers {
-		if peer.DisplayName == fmt.Sprintf("%s/%s", gvpnDevice.GlobalVPNName, gvpnDevice.Name) {
+		deviceHosts[peer.DNSHostname] = peer.IP
+		if peer.DNSHostname == fmt.Sprintf("%s.device.local", gvpnDevice.Name) {
 			continue
 		}
 		privatePeers = append(privatePeers, wgutils.PrivatePeer{
-			DisplayName: peer.DisplayName,
+			DisplayName: peer.DNSHostname,
 			PublicKey:   peer.PublicKey,
 			AllowedIPs:  peer.AllowedIPs,
 		})
@@ -313,7 +320,7 @@ func (d *domain) buildGlobalVPNDeviceWgBaseParams(ctx InfraContext, gvpnConns []
 		PrivateKey:   gvpnDevice.PrivateKey,
 		PublicPeers:  publicPeers,
 		PrivatePeers: privatePeers,
-	}, nil
+	}, deviceHosts, nil
 }
 
 func (d *domain) getGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnDevice string, postUp []string) (string, error) {

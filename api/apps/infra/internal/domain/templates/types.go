@@ -9,5 +9,6 @@ type GVPNKloudliteDeviceTemplateVars struct {
 	KubeReverseProxyImage string
 	AuthzToken            string
 
-	GatewayDNSServers string
+	GatewayDNSServers   string
+	GatewayServiceHosts string
 }
