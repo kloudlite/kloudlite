@@ -345,6 +345,7 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 		ClusterName: clusterName,
 		Timestamp:   timestamppb.New(time.Now()),
 	}); err != nil {
+		logger.Errorf(err, "marking cluster online")
 		return klErrors.NewE(err)
 	}
 
