@@ -6,8 +6,9 @@ package graph
 
 import (
 	"context"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
@@ -31,6 +32,15 @@ func (r *bYOKClusterResolver) ID(ctx context.Context, obj *entities.BYOKCluster)
 		return "", errors.Newf("cluster obj is nil")
 	}
 	return obj.Id, nil
+}
+
+// LastOnlineAt is the resolver for the lastOnlineAt field.
+func (r *bYOKClusterResolver) LastOnlineAt(ctx context.Context, obj *entities.BYOKCluster) (*string, error) {
+	if obj == nil || obj.LastOnlineAt == nil {
+		return nil, nil
+	}
+
+	return fn.New(obj.LastOnlineAt.Format(time.RFC3339)), nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
@@ -71,5 +81,7 @@ func (r *Resolver) BYOKCluster() generated.BYOKClusterResolver { return &bYOKClu
 // BYOKClusterIn returns generated.BYOKClusterInResolver implementation.
 func (r *Resolver) BYOKClusterIn() generated.BYOKClusterInResolver { return &bYOKClusterInResolver{r} }
 
-type bYOKClusterResolver struct{ *Resolver }
-type bYOKClusterInResolver struct{ *Resolver }
+type (
+	bYOKClusterResolver   struct{ *Resolver }
+	bYOKClusterInResolver struct{ *Resolver }
+)

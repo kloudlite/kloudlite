@@ -75,6 +75,10 @@ var Module = fx.Module("framework",
 		})
 	}),
 
+	fx.Provide(func(ev *env.Env) (app.InfraGRPCClient, error) {
+		return grpc.NewGrpcClient(ev.InfraGRPCAddr)
+	}),
+
 	fx.Provide(func(logr logging.Logger) (app.ExternalGrpcServer, error) {
 		return grpc.NewGrpcServer(grpc.ServerOpts{
 			Logger: logr.WithName("external-grpc-server"),

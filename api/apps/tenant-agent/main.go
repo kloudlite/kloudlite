@@ -14,7 +14,6 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +40,10 @@ type grpcHandler struct {
 	msgDispatchCli messages.MessageDispatchServiceClient
 	isDev          bool
 }
+
+const (
+	MaxConnectionDuration = 45 * time.Second
+)
 
 func (g *grpcHandler) handleErrorOnApply(ctx context.Context, err error, msg t.AgentMessage) error {
 	g.logger.Debugf("[ERROR]: %s", err.Error())
@@ -222,7 +225,9 @@ func (g *grpcHandler) ensureAccessToken() error {
 }
 
 func (g *grpcHandler) run() error {
-	ctx := NewAuthorizedGrpcContext(context.TODO(), g.ev.AccessToken)
+	tctx, cf := context.WithTimeout(context.TODO(), MaxConnectionDuration)
+	defer cf()
+	ctx := NewAuthorizedGrpcContext(tctx, g.ev.AccessToken)
 
 	g.logger.Infof("asking message office to start sending actions")
 	msgActionsCli, err := g.msgDispatchCli.SendActions(ctx, &messages.Empty{})
@@ -232,8 +237,7 @@ func (g *grpcHandler) run() error {
 
 	for {
 		if err := ctx.Err(); err != nil {
-			g.logger.Infof("connection context cancelled, will retry now...")
-			return errors.NewE(err)
+			return err
 		}
 
 		var msg t.AgentMessage
@@ -243,8 +247,11 @@ func (g *grpcHandler) run() error {
 				g.logger.Infof("server unavailable, (may be, Gateway Timed Out 504), reconnecting ...")
 				return nil
 			}
-			g.logger.Errorf(err, "[ERROR] while receiving message")
-			return errors.NewE(err)
+			if status.Code(err) == codes.DeadlineExceeded {
+				g.logger.Infof("Connection Timed Out, reconnecting ...")
+				return nil
+			}
+			return err
 		}
 
 		if err := json.Unmarshal(a.Message, &msg); err != nil {
@@ -310,7 +317,7 @@ func main() {
 	common.PrintReadyBanner()
 
 	for {
-		logger.Infof("trying to connect to message office grpc (%s)", ev.GrpcAddr)
+		logger.Debugf("trying to connect to message office grpc (%s)", ev.GrpcAddr)
 		cc, err := func() (*grpc.ClientConn, error) {
 			// if isDev {
 			// 	logger.Infof("attempting grpc connect over %s", ev.GrpcAddr)
@@ -341,13 +348,8 @@ func main() {
 			logger.Errorf(err, "running grpc sendActions")
 		}
 
-		connState := cc.GetState()
-		for connState != connectivity.Ready && connState != connectivity.Shutdown {
-			log.Printf("Connection lost, trying to reconnect...")
-			break
-		}
 		if err = cc.Close(); err != nil {
-			log.Fatalf("Failed to close connection: %v", err)
+			logger.Errorf(err, "Failed to close connection")
 		}
 	}
 }
