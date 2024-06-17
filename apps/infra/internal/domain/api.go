@@ -92,6 +92,8 @@ type Domain interface {
 	OnClusterDeleteMessage(ctx InfraContext, cluster entities.Cluster) error
 	OnClusterUpdateMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
+	MarkClusterOnlineAt(ctx InfraContext, clusterName string, timestamp *time.Time) error
+
 	CreateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
 	UpdateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
 	DeleteProviderSecret(ctx InfraContext, secretName string) error

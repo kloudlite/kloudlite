@@ -670,6 +670,7 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 				ResourceMetadata: byokCluster.ResourceMetadata,
 				AccountName:      byokCluster.AccountName,
 				GlobalVPN:        &byokCluster.GlobalVPN,
+				LastOnlineAt:     byokCluster.LastOnlineAt,
 			}, nil
 		}
 		return nil, errors.NewE(err)
@@ -730,14 +731,6 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 	}
 	if npCount != 0 {
 		return errors.Newf("delete nodepool first, aborting cluster deletion")
-	}
-
-	pvCount, err := d.pvRepo.Count(ctx, filter)
-	if err != nil {
-		return errors.NewE(err)
-	}
-	if pvCount != 0 {
-		return errors.Newf("delete pvs first, aborting cluster deletion")
 	}
 
 	ucluster, err := d.clusterRepo.Patch(
@@ -860,4 +853,25 @@ func (d *domain) findCluster(ctx InfraContext, clusterName string) (*entities.Cl
 		return nil, ErrClusterNotFound
 	}
 	return cluster, nil
+}
+
+func (d *domain) MarkClusterOnlineAt(ctx InfraContext, clusterName string, timestamp *time.Time) error {
+	if d.isBYOKCluster(ctx, clusterName) {
+		if _, err := d.byokClusterRepo.Patch(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, clusterName), repos.Document{
+			fc.BYOKClusterLastOnlineAt: timestamp,
+		}); err != nil {
+			return errors.NewEf(err, "failed to patch last online time for byok cluster %q,", clusterName)
+		}
+	}
+
+	if _, err := d.clusterRepo.Patch(ctx, repos.Filter{
+		fc.AccountName:  ctx.AccountName,
+		fc.MetadataName: clusterName,
+	}, repos.Document{
+		fc.ClusterLastOnlineAt: timestamp,
+	}); err != nil {
+		return errors.NewEf(err, "failed to patch last online time for cluster %q", clusterName)
+	}
+
+	return nil
 }
