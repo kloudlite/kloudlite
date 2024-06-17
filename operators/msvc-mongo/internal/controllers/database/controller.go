@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-mongo/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-mongo/internal/types"
@@ -131,6 +133,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepRe
 
 	mctx, cancel := r.newMongoContext(ctx)
 	defer cancel()
+
 	uri := msvcOutput.ClusterLocalURI
 	if obj.IsGlobalVPNEnabled() {
 		uri = msvcOutput.GlobalVpnURI
@@ -143,6 +146,11 @@ func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepRe
 
 	if err := mongoCli.DeleteUser(ctx, obj.Name, obj.Name); err != nil {
 		return check.Failed(err)
+	}
+
+	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+		r.logger.Infof("waiting for owned resources to get deleted first")
+		return step
 	}
 
 	return req.Finalize()
@@ -370,12 +378,13 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 				return baseURI
 			}()
 		}
+		mresOutput.URI = mresOutput.ClusterLocalURI
 
 		b2, err := templates.Parse(
 			templates.Secret, map[string]any{
 				"name":        secretName,
 				"namespace":   secretNamespace,
-				"owner-refs":  obj.GetOwnerReferences(),
+				"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"string-data": mresOutput,
 			},
 		)
@@ -383,9 +392,12 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 			return check.Failed(err).Err(nil)
 		}
 
-		if _, err := r.yamlClient.ApplyYAML(ctx, b2); err != nil {
+		rr, err := r.yamlClient.ApplyYAML(ctx, b2)
+		if err != nil {
 			return check.Failed(err)
 		}
+
+		req.AddToOwnedResources(rr...)
 
 		mctx, cancel := r.newMongoContext(ctx)
 		defer cancel()

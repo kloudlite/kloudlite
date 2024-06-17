@@ -31,10 +31,6 @@ inputs:
     description: "cache restore key"
     default: ""
 
-  cache_paths:
-    description: "cache paths"
-    default: ""
-
 outputs:
   image_tag: 
     description: "docker image tag to use"
@@ -47,15 +43,16 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    # - name: Setup Caches
-    #   uses: actions/cache@v4
-    #   if: ${{ inputs.cache_paths != '' }}
-    #   with:
-    #     path: |+
-    #       ${{ inputs.cache_paths }}
-    #     key: ${{ inputs.cache_key }}
-    #     save-always: true
-    #     restore-keys: ${{ inputs.cache_restore_key }}
+    - name: Setup go cache
+      uses: actions/cache@v4
+      if: ${{ inputs.go_mod_cache == 'true' }}
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: ${{ inputs.cache_key }}
+        save-always: true
+        restore-keys: ${{ inputs.cache_restore_key }}
 
     - name: Install NIX
       uses: DeterminateSystems/nix-installer-action@main

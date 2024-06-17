@@ -56,6 +56,10 @@ func (h *dnsHandler) resolver(ctx ResolverCtx, domain string, qtype uint16) []dn
 		gatewayMap.Debug()
 		serviceMap.Debug()
 
+		if r := serviceMap.Get(qdomain); r != nil {
+			result = append(result, r...)
+		}
+
 		for _, k := range gatewayMap.Keys() {
 			ctx.logger.Debug("checking for question", "domain", domain, "dns-suffix", k, "local-gateway-dns", h.localGatewayDNS)
 
@@ -177,7 +181,8 @@ func main() {
 		enableHTTP bool
 		httpAddr   string
 
-		dnsServers string
+		dnsServers   string
+		serviceHosts string
 	)
 
 	flag.BoolVar(&isDebug, "debug", false, "--debug")
@@ -188,6 +193,7 @@ func main() {
 	flag.BoolVar(&enableHTTP, "enable-http", false, "--enable-http")
 	flag.StringVar(&httpAddr, "http-addr", ":8080", "--http-addr <host>:<port>")
 	flag.StringVar(&dnsServers, "dns-servers", "", "--dns-servers dns_suffix=ip[,dns_suffix2=ip2,dns_suffix3=ip3...]")
+	flag.StringVar(&serviceHosts, "service-hosts", "", "--service-hosts service_host=ip[,service_host2=ip2,service_host3=ip3...]")
 	flag.Parse()
 
 	if isDebug {
@@ -203,6 +209,20 @@ func main() {
 
 		gatewayMap.Set(s[0], s[1])
 		log.Info("registered gateway", "dns-suffix", s[0], "gateway-addr", s[1])
+	}
+
+	for _, serviceHost := range strings.Split(serviceHosts, ",") {
+		s := strings.SplitN(serviceHost, "=", 2)
+		if len(s) != 2 {
+			continue
+		}
+
+		rr, err := dns.NewRR(fmt.Sprintf("%s. 5 IN A %s", s[0], s[1]))
+		if err != nil {
+			panic(err)
+		}
+		serviceMap.Set(s[0]+".", []dns.RR{rr})
+		log.Info("registered service", "host", s[0], "ip", s[1])
 	}
 
 	var wg sync.WaitGroup
