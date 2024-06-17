@@ -63,6 +63,9 @@ type DatabaseOutput struct {
 	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
 	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
 
+	// just an alias to ClusterLocalURI/GlobalVpnURI
+	URI string `json:"URI"`
+
 	GlobalVPNHosts string `json:"GLOBAL_VPN_HOSTS,omitempty"`
 	GlobalVpnURI   string `json:"GLOBAL_VPN_URI,omitempty"`
 }

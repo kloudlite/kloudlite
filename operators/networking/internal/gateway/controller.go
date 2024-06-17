@@ -259,6 +259,9 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 		if peer.DNSSuffix != nil {
 			gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", *peer.DNSSuffix, peer.IP))
 		}
+		if peer.DNSHostname == "kloudlite-global-vpn-device.device.local" {
+			gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", "device.local", peer.IP))
+		}
 	}
 
 	gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", obj.Spec.DNSSuffix, obj.Spec.GlobalIP))

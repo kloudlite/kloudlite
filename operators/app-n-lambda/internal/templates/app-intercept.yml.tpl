@@ -30,9 +30,15 @@ spec:
         eval wait $pid
     securityContext:
       capabilities:
+        add:
+          - NET_BIND_SERVICE
+          - SETGID
         drop:
-          - ALL
+          - all
     resources:
       limits:
-        memory: "20Mi"
-        cpu: "20m"
+        memory: "50Mi"
+        cpu: "50m"
+      requests:
+        memory: "50Mi"
+        cpu: "50m"
