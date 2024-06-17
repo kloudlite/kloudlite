@@ -6,8 +6,9 @@ package graph
 
 import (
 	"context"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
@@ -31,6 +32,15 @@ func (r *clusterResolver) ID(ctx context.Context, obj *entities.Cluster) (repos.
 		return "", errors.Newf("cluster obj is nil")
 	}
 	return obj.Id, nil
+}
+
+// LastOnlineAt is the resolver for the lastOnlineAt field.
+func (r *clusterResolver) LastOnlineAt(ctx context.Context, obj *entities.Cluster) (*string, error) {
+	if obj == nil || obj.LastOnlineAt == nil {
+		return nil, nil
+	}
+
+	return fn.New(obj.LastOnlineAt.Format(time.RFC3339)), nil
 }
 
 // Spec is the resolver for the spec field.
@@ -86,5 +96,7 @@ func (r *Resolver) Cluster() generated.ClusterResolver { return &clusterResolver
 // ClusterIn returns generated.ClusterInResolver implementation.
 func (r *Resolver) ClusterIn() generated.ClusterInResolver { return &clusterInResolver{r} }
 
-type clusterResolver struct{ *Resolver }
-type clusterInResolver struct{ *Resolver }
+type (
+	clusterResolver   struct{ *Resolver }
+	clusterInResolver struct{ *Resolver }
+)

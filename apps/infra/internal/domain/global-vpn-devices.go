@@ -118,7 +118,7 @@ func (d *domain) deleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName
 		return err
 	}
 
-	if err := d.reconGlobalVPNConnections(ctx, device.GlobalVPNName); err != nil {
+	if err := d.syncKloudliteDeviceOnCluster(ctx, gvpn); err != nil {
 		return err
 	}
 
@@ -179,7 +179,7 @@ func (d *domain) createGlobalVPNDevice(ctx InfraContext, gvpnDevice entities.Glo
 		return nil, err
 	}
 
-	if err := d.reconGlobalVPNConnections(ctx, gvpnDevice.GlobalVPNName); err != nil {
+	if err := d.syncKloudliteDeviceOnCluster(ctx, gvpnDevice.GlobalVPNName); err != nil {
 		return nil, err
 	}
 
