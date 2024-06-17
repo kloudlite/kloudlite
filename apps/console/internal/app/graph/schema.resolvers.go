@@ -884,16 +884,16 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, search *mo
 		}
 
 		if search.ManagedServiceName != nil {
-			filter["managedServiceName"] = *search.ManagedServiceName
+			filter[fc.ManagedResourceManagedServiceName] = *search.ManagedServiceName
 		}
 
 		if search.EnvName != nil {
 			filter["environmentName"] = *search.EnvName
-		} else {
-			filter[fc.ManagedResourceIsImported] = repos.MatchFilter{
-				MatchType: repos.MatchTypeExact,
-				Exact:     true,
-			}
+		}
+
+		filter[fc.ManagedResourceIsImported] = repos.MatchFilter{
+			MatchType: repos.MatchTypeExact,
+			Exact:     search.EnvName != nil,
 		}
 	}
 
