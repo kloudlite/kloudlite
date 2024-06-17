@@ -52,24 +52,11 @@ func (d *domain) getClusterAttachedToEnvironment(ctx K8sContext, name string) (*
 }
 
 func (d *domain) envTargetNamespace(ctx ConsoleContext, envName string) (string, error) {
-	key := fmt.Sprintf("environment-namespace.%s/%s", ctx.AccountName, envName)
-	b, err := d.consoleCacheStore.Get(ctx, key)
+	env, err := d.findEnvironment(ctx, envName)
 	if err != nil {
-		if d.consoleCacheStore.ErrKeyNotFound(err) {
-			env, err := d.findEnvironment(ctx, envName)
-			if err != nil {
-				return "", err
-			}
-			defer func() {
-				if err := d.consoleCacheStore.Set(ctx, key, []byte(env.Spec.TargetNamespace)); err != nil {
-					d.logger.Errorf(err, "while caching environment target namespace")
-				}
-			}()
-			return env.Spec.TargetNamespace, nil
-		}
+		return "", err
 	}
-
-	return string(b), nil
+	return env.Spec.TargetNamespace, nil
 }
 
 func (d *domain) GetEnvironment(ctx ConsoleContext, name string) (*entities.Environment, error) {
