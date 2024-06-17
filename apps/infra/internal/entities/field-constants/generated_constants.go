@@ -42,6 +42,7 @@ const (
 	BYOKClusterKubeconfig               = "kubeconfig"
 	BYOKClusterKubeconfigEncoding       = "kubeconfig.encoding"
 	BYOKClusterKubeconfigValue          = "kubeconfig.value"
+	BYOKClusterLastOnlineAt             = "lastOnlineAt"
 	BYOKClusterMessageQueueTopicName    = "messageQueueTopicName"
 	BYOKClusterVisibility               = "visibility"
 	BYOKClusterVisibilityMode           = "visibility.mode"
@@ -86,6 +87,7 @@ const (
 // constant vars generated for struct Cluster
 const (
 	ClusterGlobalVPN                               = "globalVPN"
+	ClusterLastOnlineAt                            = "lastOnlineAt"
 	ClusterSpec                                    = "spec"
 	ClusterSpecAccountId                           = "spec.accountId"
 	ClusterSpecAccountName                         = "spec.accountName"

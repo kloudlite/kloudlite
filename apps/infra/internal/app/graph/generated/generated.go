@@ -101,6 +101,7 @@ type ComplexityRoot struct {
 		DisplayName           func(childComplexity int) int
 		GlobalVPN             func(childComplexity int) int
 		ID                    func(childComplexity int) int
+		LastOnlineAt          func(childComplexity int) int
 		LastUpdatedBy         func(childComplexity int) int
 		MarkedForDeletion     func(childComplexity int) int
 		MessageQueueTopicName func(childComplexity int) int
@@ -175,6 +176,7 @@ type ComplexityRoot struct {
 		GlobalVPN         func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Kind              func(childComplexity int) int
+		LastOnlineAt      func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
@@ -1412,6 +1414,7 @@ type BYOKClusterResolver interface {
 	CreationTime(ctx context.Context, obj *entities.BYOKCluster) (string, error)
 
 	ID(ctx context.Context, obj *entities.BYOKCluster) (repos.ID, error)
+	LastOnlineAt(ctx context.Context, obj *entities.BYOKCluster) (*string, error)
 
 	UpdateTime(ctx context.Context, obj *entities.BYOKCluster) (string, error)
 	Visibility(ctx context.Context, obj *entities.BYOKCluster) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisbility, error)
@@ -1432,6 +1435,8 @@ type ClusterResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Cluster) (string, error)
 
 	ID(ctx context.Context, obj *entities.Cluster) (repos.ID, error)
+
+	LastOnlineAt(ctx context.Context, obj *entities.Cluster) (*string, error)
 
 	Spec(ctx context.Context, obj *entities.Cluster) (*model.GithubComKloudliteOperatorApisClustersV1ClusterSpec, error)
 
@@ -1778,6 +1783,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BYOKCluster.ID(childComplexity), true
 
+	case "BYOKCluster.lastOnlineAt":
+		if e.complexity.BYOKCluster.LastOnlineAt == nil {
+			break
+		}
+
+		return e.complexity.BYOKCluster.LastOnlineAt(childComplexity), true
+
 	case "BYOKCluster.lastUpdatedBy":
 		if e.complexity.BYOKCluster.LastUpdatedBy == nil {
 			break
@@ -2106,6 +2118,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Cluster.Kind(childComplexity), true
+
+	case "Cluster.lastOnlineAt":
+		if e.complexity.Cluster.LastOnlineAt == nil {
+			break
+		}
+
+		return e.complexity.Cluster.LastOnlineAt(childComplexity), true
 
 	case "Cluster.lastUpdatedBy":
 		if e.complexity.Cluster.LastUpdatedBy == nil {
@@ -8359,6 +8378,7 @@ extend type GlobalVPNDevice {
   displayName: String!
   globalVPN: String!
   id: ID!
+  lastOnlineAt: Date
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   messageQueueTopicName: String!
@@ -8443,6 +8463,7 @@ input CloudProviderSecretIn {
   globalVPN: String
   id: ID!
   kind: String
+  lastOnlineAt: Date
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
@@ -12205,6 +12226,47 @@ func (ec *executionContext) fieldContext_BYOKCluster_id(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _BYOKCluster_lastOnlineAt(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOKCluster_lastOnlineAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.BYOKCluster().LastOnlineAt(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOKCluster_lastOnlineAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOKCluster",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BYOKCluster_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.BYOKCluster) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BYOKCluster_lastUpdatedBy(ctx, field)
 	if err != nil {
@@ -12741,6 +12803,8 @@ func (ec *executionContext) fieldContext_BYOKClusterEdge_node(ctx context.Contex
 				return ec.fieldContext_BYOKCluster_globalVPN(ctx, field)
 			case "id":
 				return ec.fieldContext_BYOKCluster_id(ctx, field)
+			case "lastOnlineAt":
+				return ec.fieldContext_BYOKCluster_lastOnlineAt(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_BYOKCluster_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -14403,6 +14467,47 @@ func (ec *executionContext) fieldContext_Cluster_kind(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Cluster_lastOnlineAt(ctx context.Context, field graphql.CollectedField, obj *entities.Cluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Cluster_lastOnlineAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Cluster().LastOnlineAt(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Cluster_lastOnlineAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cluster",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Cluster_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.Cluster) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Cluster_lastUpdatedBy(ctx, field)
 	if err != nil {
@@ -15027,6 +15132,8 @@ func (ec *executionContext) fieldContext_ClusterEdge_node(ctx context.Context, f
 				return ec.fieldContext_Cluster_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_Cluster_kind(ctx, field)
+			case "lastOnlineAt":
+				return ec.fieldContext_Cluster_lastOnlineAt(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_Cluster_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -41705,6 +41812,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createCluster(ctx contex
 				return ec.fieldContext_Cluster_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_Cluster_kind(ctx, field)
+			case "lastOnlineAt":
+				return ec.fieldContext_Cluster_lastOnlineAt(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_Cluster_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -41821,6 +41930,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateCluster(ctx contex
 				return ec.fieldContext_Cluster_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_Cluster_kind(ctx, field)
+			case "lastOnlineAt":
+				return ec.fieldContext_Cluster_lastOnlineAt(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_Cluster_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -42640,6 +42751,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createBYOKCluster(ctx co
 				return ec.fieldContext_BYOKCluster_globalVPN(ctx, field)
 			case "id":
 				return ec.fieldContext_BYOKCluster_id(ctx, field)
+			case "lastOnlineAt":
+				return ec.fieldContext_BYOKCluster_lastOnlineAt(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_BYOKCluster_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -42754,6 +42867,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateBYOKCluster(ctx co
 				return ec.fieldContext_BYOKCluster_globalVPN(ctx, field)
 			case "id":
 				return ec.fieldContext_BYOKCluster_id(ctx, field)
+			case "lastOnlineAt":
+				return ec.fieldContext_BYOKCluster_lastOnlineAt(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_BYOKCluster_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -50081,6 +50196,8 @@ func (ec *executionContext) fieldContext_Query_infra_getCluster(ctx context.Cont
 				return ec.fieldContext_Cluster_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_Cluster_kind(ctx, field)
+			case "lastOnlineAt":
+				return ec.fieldContext_Cluster_lastOnlineAt(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_Cluster_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -50283,6 +50400,8 @@ func (ec *executionContext) fieldContext_Query_infra_getBYOKCluster(ctx context.
 				return ec.fieldContext_BYOKCluster_globalVPN(ctx, field)
 			case "id":
 				return ec.fieldContext_BYOKCluster_id(ctx, field)
+			case "lastOnlineAt":
+				return ec.fieldContext_BYOKCluster_lastOnlineAt(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_BYOKCluster_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -61147,6 +61266,39 @@ func (ec *executionContext) _BYOKCluster(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "lastOnlineAt":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BYOKCluster_lastOnlineAt(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "lastUpdatedBy":
 			out.Values[i] = ec._BYOKCluster_lastUpdatedBy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -62000,6 +62152,39 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "kind":
 			out.Values[i] = ec._Cluster_kind(ctx, field, obj)
+		case "lastOnlineAt":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Cluster_lastOnlineAt(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "lastUpdatedBy":
 			out.Values[i] = ec._Cluster_lastUpdatedBy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

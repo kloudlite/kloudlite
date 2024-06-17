@@ -13,6 +13,8 @@ type Env struct {
 	DbName string `env:"MONGO_DB_NAME" required:"true"`
 	DbUri  string `env:"MONGO_URI"  required:"true"`
 
+	InfraGRPCAddr string `env:"INFRA_GRPC_ADDR" required:"true"`
+
 	ExternalGrpcPort uint16 `env:"EXTERNAL_GRPC_PORT" required:"true"`
 	InternalGrpcPort uint16 `env:"INTERNAL_GRPC_PORT" required:"true"`
 

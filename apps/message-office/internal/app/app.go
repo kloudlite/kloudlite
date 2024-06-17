@@ -8,6 +8,7 @@ import (
 	proto_rpc "github.com/kloudlite/api/apps/message-office/internal/app/proto-rpc"
 	"github.com/kloudlite/api/apps/message-office/internal/domain"
 	"github.com/kloudlite/api/apps/message-office/internal/env"
+	"github.com/kloudlite/api/grpc-interfaces/infra"
 	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
@@ -46,8 +47,14 @@ var Module = fx.Module("app",
 
 	domain.Module,
 
-	fx.Provide(func(logger logging.Logger, jc *nats.JetstreamClient, producer UpdatesProducer, ev *env.Env, d domain.Domain) (messages.MessageDispatchServiceServer, error) {
-		return NewMessageOfficeServer(producer, jc, ev, d, logger.WithName("message-office"))
+	fx.Provide(
+		func(conn InfraGRPCClient) infra.InfraClient {
+			return infra.NewInfraClient(conn)
+		},
+	),
+
+	fx.Provide(func(logger logging.Logger, jc *nats.JetstreamClient, producer UpdatesProducer, ev *env.Env, d domain.Domain, infraConn InfraGRPCClient) (messages.MessageDispatchServiceServer, error) {
+		return NewMessageOfficeServer(producer, jc, ev, d, logger.WithName("message-office"), infraConn)
 	}),
 
 	fx.Provide(func(conn RealVectorGrpcClient) proto_rpc.VectorClient {
