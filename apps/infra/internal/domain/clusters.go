@@ -767,6 +767,22 @@ func (d *domain) OnClusterDeleteMessage(ctx InfraContext, cluster entities.Clust
 		return errors.NewE(err)
 	}
 
+	//TODO: Archive environment for cluster:
+	//archiveStatus, err := d.consoleClient.ArchiveEnvironmentsForCluster(ctx, &console.ArchiveEnvironmentsForClusterIn{
+	//	UserId:      string(ctx.UserId),
+	//	UserName:    ctx.UserName,
+	//	UserEmail:   ctx.UserEmail,
+	//	AccountName: ctx.AccountName,
+	//	ClusterName: xcluster.Name,
+	//})
+	//if err != nil {
+	//	return errors.NewE(err)
+	//}
+	//
+	//if !archiveStatus {
+	//	return errors.Newf("failed to archive environments for cluster %q", xcluster.Name)
+	//}
+
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, cluster.Name, PublishDelete)
 
 	if xcluster.GlobalVPN != nil {

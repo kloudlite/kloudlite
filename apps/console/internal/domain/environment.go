@@ -395,6 +395,43 @@ func (d *domain) getEnvironmentTargetNamespace(envName string) string {
 	return fmt.Sprintf("env-%s", envName)
 }
 
+func (d *domain) ArchiveEnvironmentsForCluster(ctx ConsoleContext, clusterName string) (bool, error) {
+	filters := repos.Filter{
+		fields.AccountName: ctx.AccountName,
+		fields.ClusterName: clusterName,
+	}
+
+	envs, err := d.environmentRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Sort:   nil,
+	})
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	for i := range envs {
+		patchForUpdate := repos.Document{
+			fc.EnvironmentIsArchived: true,
+		}
+		patchFilter := repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.ClusterName:  clusterName,
+			fields.MetadataName: envs[i].Name,
+		}
+
+		_, err := d.environmentRepo.Patch(
+			ctx,
+			patchFilter,
+			patchForUpdate,
+		)
+		if err != nil {
+			return false, errors.NewE(err)
+		}
+	}
+
+	return true, nil
+}
+
 func (d *domain) UpdateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateEnvironment); err != nil {
 		return nil, errors.NewE(err)
