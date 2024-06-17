@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "./infra";
 
 service Infra {
@@ -8,6 +10,7 @@ service Infra {
   rpc ClusterExists(ClusterExistsIn) returns (ClusterExistsOut);
   rpc GetClusterKubeconfig(GetClusterIn) returns (GetClusterKubeconfigOut);
   rpc GetClusterManagedService(GetClusterManagedServiceIn) returns (GetClusterManagedServiceOut);
+  rpc MarkClusterOnlineAt(MarkClusterOnlineAtIn) returns (MarkClusterOnlineAtOut);
 }
 
 message GetClusterIn {
@@ -72,3 +75,11 @@ message GetClusterManagedServiceOut {
   string targetNamespace = 1;
   string clusterName = 2;
 }
+
+message MarkClusterOnlineAtIn {
+  string accountName = 1;
+  string clusterName = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+message MarkClusterOnlineAtOut {}
