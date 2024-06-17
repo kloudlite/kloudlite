@@ -1,5 +1,10 @@
 version: 3
 
+includes:
+  grpc: 
+    taskfile: ./grpc-interfaces/Taskfile.yml
+    dir: ./grpc-interfaces
+
 tasks:
   go:upgrade:github.com/kloudlite/operator:
     cmds:
