@@ -104,7 +104,7 @@ const Root = (props: IDialog) => {
           {!isUpdate && (
             <>
               <Checkbox
-                label="Private"
+                label="Private Cluster"
                 checked={values.visibilityMode}
                 onChange={(val) => {
                   handleChange('visibilityMode')(dummyEvent(val));
@@ -113,11 +113,14 @@ const Root = (props: IDialog) => {
               <Banner
                 type="info"
                 body={
-                  <span className="bodyMd-medium">
-                    {values.visibilityMode === false
-                      ? 'Public mode assumes cluster is accessible to public internet'
-                      : 'In Private mode traffic is routed via a kloudlite gateway'}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="bodyMd-medium">
+                      Private clusters are those who are hosted behind a NAT.
+                    </span>
+                    <span className="bodyMd">
+                      Ex: Cluster running on your local machine
+                    </span>
+                  </div>
                 }
               />
             </>
@@ -142,7 +145,9 @@ const HandleByokCluster = (props: IDialog) => {
 
   return (
     <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
-      <Popup.Header>{isUpdate ? 'Edit Cluster' : 'Add Cluster'}</Popup.Header>
+      <Popup.Header>
+        {isUpdate ? 'Edit Cluster' : 'Attach Cluster'}
+      </Popup.Header>
       {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>
   );

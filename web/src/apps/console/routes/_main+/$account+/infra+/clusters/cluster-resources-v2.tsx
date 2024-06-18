@@ -129,7 +129,7 @@ const ByokInstructionsPopup = ({
 
   return (
     <Popup.Root onOpenChange={onClose} show={show} className="!w-[800px]">
-      <Popup.Header>{`${clusterName} setup instructions:`}</Popup.Header>
+      <Popup.Header>Instructions to attach cluster</Popup.Header>
       <Popup.Content>
         <form className="flex flex-col gap-2xl">
           {error && (

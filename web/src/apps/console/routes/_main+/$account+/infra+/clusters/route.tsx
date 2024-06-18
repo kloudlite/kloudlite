@@ -1,14 +1,10 @@
 import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
-import { Link, useLoaderData, useParams } from '@remix-run/react';
+import { useLoaderData } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
 import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
-import {
-  base64Encrypt,
-  getPagination,
-  getSearch,
-} from '~/console/server/utils/common';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
@@ -16,7 +12,6 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { useState } from 'react';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
-import OptionList from '~/components/atoms/option-list';
 import fake from '~/root/fake-data-generator/fake';
 import { EmptyClusterImage } from '~/console/components/empty-resource-images';
 import Tools from './tools';
@@ -60,53 +55,19 @@ export const loader = async (ctx: IRemixCtx) => {
   return defer({ promise });
 };
 
-const CreateClusterButton = ({
-  cpSecretsCount,
-}: {
-  cpSecretsCount?: number;
-}) => {
-  const { account } = useParams();
-
+const CreateClusterButton = () => {
   const [visible, setVisible] = useState(false);
 
   return (
     <>
-      <OptionList.Root>
-        <OptionList.Trigger>
-          <Button
-            content={
-              cpSecretsCount === 0
-                ? 'setup cloud provider and cluster'
-                : 'Add cluster'
-            }
-            variant="primary"
-            prefix={<Plus />}
-          />
-        </OptionList.Trigger>
-        <OptionList.Content>
-          <OptionList.Link
-            to={
-              cpSecretsCount === 0
-                ? `/onboarding/${account}/new-cloud-provider?f=${base64Encrypt(
-                    'infra'
-                  )}`
-                : `/${account}/new-cluster`
-            }
-            LinkComponent={Link}
-          >
-            {cpSecretsCount === 0
-              ? 'Setup cloud provider and cluster'
-              : 'New Cluster'}
-          </OptionList.Link>
-          <OptionList.Item
-            onClick={() => {
-              setVisible(true);
-            }}
-          >
-            Attach existing cluster
-          </OptionList.Item>
-        </OptionList.Content>
-      </OptionList.Root>
+      <Button
+        content="Attach cluster"
+        variant="primary"
+        prefix={<Plus />}
+        onClick={() => {
+          setVisible(true);
+        }}
+      />
       <HandleByokCluster
         {...{
           visible,
@@ -163,9 +124,7 @@ const ClusterComponent = ({
             attch your own cluster, before starting working with clusters
           </p>
         ),
-        action: (
-          <CreateClusterButton cpSecretsCount={cloudProviderSecretsCount} />
-        ),
+        action: <CreateClusterButton />,
       };
     }
 
@@ -200,7 +159,7 @@ const ClusterComponent = ({
       secondaryHeader={{
         title: 'Clusters',
         action: (clusters.length > 0 || byokClusters.length > 0) && (
-          <CreateClusterButton cpSecretsCount={secretsCount} />
+          <CreateClusterButton />
         ),
       }}
       empty={getEmptyState({
