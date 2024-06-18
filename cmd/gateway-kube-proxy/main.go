@@ -3,11 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httputil"
 	"strings"
-	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
@@ -23,20 +25,29 @@ func main() {
 	flag.Parse()
 
 	if authz == "" {
-		log.Fatal("authz token, must be provided")
+		panic("authz token is required")
 	}
+
+	logger := slog.Default()
 
 	reverseProxyMap := make(map[string]*httputil.ReverseProxy)
 
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/healthy" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			middleware.Logger(next).ServeHTTP(w, r)
+		})
+	})
 
 	kloudliteAuthzHeader := "X-Kloudlite-Authz"
 
-	counter := 1
-	mux.HandleFunc("/clusters/", func(w http.ResponseWriter, req *http.Request) {
+	r.HandleFunc("/clusters/{cluster_name}/*", func(w http.ResponseWriter, req *http.Request) {
 		token := strings.TrimPrefix(req.Header.Get(kloudliteAuthzHeader), "Bearer ")
-		fmt.Println("HERE", token)
-
+		logger.Info("request", "method", req.Method, "url", req.URL, "token", token)
 		if len(token) != len(authz) || token != authz {
 			http.Error(w, "UnAuthorized", http.StatusUnauthorized)
 			return
@@ -48,30 +59,21 @@ func main() {
 			return
 		}
 
-		clusterName := sp[0]
+		// clusterName := sp[0]
+		clusterName := chi.URLParam(req, "cluster_name")
 
-		start := time.Now()
-		if debug {
-			log.Printf("[%d] request received /%s\n", counter, strings.Join(sp[1:], "/"))
-		}
-		defer func() {
-			log.Printf("[%d] (took %.2fs) /%s\n", counter, time.Since(start).Seconds(), strings.Join(sp[1:], "/"))
-			counter = counter + 1
-		}()
-
-		if clusterName == "" {
-			http.Error(w, "kloudlite-cluster is missing", http.StatusForbidden)
-			return
-		}
+		urlh := strings.ReplaceAll(proxyAddr, "{{.CLUSTER_NAME}}", clusterName)
+		urlp := fmt.Sprintf("/%s", strings.Join(sp[1:], "/"))
 
 		reverseProxy, ok := reverseProxyMap[clusterName]
 		if !ok {
 			reverseProxy = &httputil.ReverseProxy{
 				Director: func(req *http.Request) {
 					req.URL.Scheme = "http"
-					req.URL.Host = strings.ReplaceAll(proxyAddr, "{{.CLUSTER_NAME}}", clusterName)
-					req.URL.Path = fmt.Sprintf("/%s", strings.Join(sp[1:], "/"))
+					req.URL.Host = urlh
+					req.URL.Path = urlp
 					req.Header.Del(kloudliteAuthzHeader)
+					logger.Info("reverse proxy enabled for", "cluster", clusterName, "to-host", urlh, "at path", urlp)
 				},
 			}
 		}
@@ -79,5 +81,8 @@ func main() {
 		reverseProxy.ServeHTTP(w, req)
 	})
 
-	log.Fatal(http.ListenAndServe(addr, mux))
+	logger.Info("starting http server", "addr", addr)
+	if err := http.ListenAndServe(addr, r); err != nil {
+		panic(err)
+	}
 }
