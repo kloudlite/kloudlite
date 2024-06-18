@@ -18,6 +18,7 @@ import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { constants } from '~/console/server/utils/constants';
 import { useReload } from '~/lib/client/helpers/reloader';
 import { IRemixCtx } from '~/lib/types/common';
+import { EmptyConfigEntryImage } from '~/console/components/empty-resource-images';
 import Handle, { updateConfig } from './handle';
 import Resources from './resources';
 import Tools from './tools';
@@ -174,10 +175,14 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
           ),
         }}
         empty={{
+          image: <EmptyConfigEntryImage />,
           is: Object.keys(modifiedItems).length === 0,
-          title: 'This is where you’ll manage your projects.',
+          title: 'This is where you’ll manage your Config Entries.',
           content: (
-            <p>You can create a new project and manage the listed project.</p>
+            <p>
+              You can create a new config entries and manage the listed config
+              entries.
+            </p>
           ),
           action: {
             content: 'Add new entry',

@@ -1,4 +1,4 @@
-import { Plus } from '~/console/components/icons';
+import { Globe, Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
@@ -46,6 +46,7 @@ const Devices = () => {
   const getEmptyState = ({ deviceCount }: { deviceCount: number }) => {
     if (deviceCount === 0) {
       return {
+        image: <Globe size={48} />,
         is: true,
         title: 'This is where you’ll manage your devices.',
         content: (

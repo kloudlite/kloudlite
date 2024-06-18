@@ -1,7 +1,7 @@
 import { useNavigate } from '@remix-run/react';
 import { toast } from '~/components/molecule/toast';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
-import useForm from '~/root/lib/client/hooks/use-form';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -18,6 +18,7 @@ import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import { Button } from '~/components/atoms/button';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import Select from '~/components/atoms/select';
 
 const NewAccount = () => {
   const api = useConsoleApi();
@@ -28,10 +29,50 @@ const NewAccount = () => {
     return api.listAccounts({});
   });
 
+  const regions = [
+    {
+      label: 'ap-south-1',
+      value: 'ap-south-1',
+      render: () => (
+        <div className="flex flex-row gap-lg items-center">
+          <div>ap-south-1</div>
+        </div>
+      ),
+    },
+    {
+      label: 'eu-north-1',
+      value: 'eu-north-1',
+      render: () => (
+        <div className="flex flex-row gap-lg items-center">
+          <div>eu-north-1</div>
+        </div>
+      ),
+    },
+    {
+      label: 'eu-west-3',
+      value: 'eu-west-3',
+      render: () => (
+        <div className="flex flex-row gap-lg items-center">
+          <div>eu-west-3</div>
+        </div>
+      ),
+    },
+    {
+      label: 'eu-west-2',
+      value: 'eu-west-2',
+      render: () => (
+        <div className="flex flex-row gap-lg items-center">
+          <div>eu-west-2</div>
+        </div>
+      ),
+    },
+  ];
+
   const { values, handleChange, errors, isLoading, handleSubmit } = useForm({
     initialValues: {
       name: '',
       displayName: '',
+      region: regions[0].value,
       isNameError: false,
     },
     validationSchema: Yup.object({
@@ -110,6 +151,18 @@ const NewAccount = () => {
                 handleChange={handleChange}
                 nameErrorLabel="isNameError"
               />
+              {/* <Select
+                error={!!errors.region}
+                size="lg"
+                message={errors.region}
+                value={values.region}
+                label="Region"
+                placeholder="Select region"
+                onChange={(_, value) => {
+                  handleChange('region')(dummyEvent(value));
+                }}
+                options={async () => regions}
+              /> */}
               <BottomNavigation
                 primaryButton={{
                   variant: 'primary',

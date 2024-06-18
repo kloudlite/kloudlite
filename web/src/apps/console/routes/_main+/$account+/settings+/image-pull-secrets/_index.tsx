@@ -1,4 +1,4 @@
-import { Plus } from '~/console/components/icons';
+import { Plus, StackSimple } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
@@ -14,7 +14,6 @@ import { IRemixCtx } from '~/lib/types/common';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import Tools from './tools';
-import ImagePullSecretsResources from './image-pull-secrets-resources';
 import HandleImagePullSecret from './handle-image-pull-secret';
 import ImagePullSecretsResourcesV2 from './image-pull-secrets-resource-v2';
 
@@ -67,6 +66,7 @@ const Routers = () => {
                 ),
               }}
               empty={{
+                image: <StackSimple size={48} />,
                 is: imagePullSecrets.length === 0,
                 title: 'This is where you’ll manage your image pull secrets.',
                 content: (

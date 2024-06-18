@@ -18,6 +18,7 @@ import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
 import OptionList from '~/components/atoms/option-list';
 import fake from '~/root/fake-data-generator/fake';
+import { EmptyClusterImage } from '~/console/components/empty-resource-images';
 import Tools from './tools';
 import ClusterResourcesV2 from './cluster-resources-v2';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
@@ -152,6 +153,7 @@ const ClusterComponent = ({
 
     if (cloudProviderSecretsCount === 0) {
       return {
+        image: <EmptyClusterImage />,
         is: true,
         title:
           'please setup your cloud provider first or attach your own cluster',
@@ -169,6 +171,7 @@ const ClusterComponent = ({
 
     if (clustersCount === 0 && byokClustersCount === 0) {
       return {
+        image: <EmptyClusterImage />,
         is: true,
         title: 'This is where you’ll manage your cluster.',
         content: (

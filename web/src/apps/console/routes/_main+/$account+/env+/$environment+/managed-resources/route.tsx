@@ -10,6 +10,7 @@ import fake from '~/root/fake-data-generator/fake';
 import { Button } from '~/components/atoms/button';
 import { useState } from 'react';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { EmptyManagedResourceImage } from '~/console/components/empty-resource-images';
 import Tools from './tools';
 import ManagedResourceResourcesV2 from './managed-resources-resource-v2';
 import HandleManagedResourceV2 from './handle-managed-resource-v2';
@@ -70,11 +71,12 @@ const KlOperatorServices = () => {
                 ),
               }}
               empty={{
+                image: <EmptyManagedResourceImage />,
                 is: managedResources.length === 0,
                 title: 'This is where you’ll manage your Managed resources.',
                 content: (
                   <p>
-                    You can create a new backing resource and manage the listed
+                    You can import a new backing resource and manage the listed
                     backing resource.
                   </p>
                 ),

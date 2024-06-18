@@ -13,6 +13,7 @@ import {
 import { IRemixCtx } from '~/root/lib/types/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import fake from '~/root/fake-data-generator/fake';
+import { EmptyNodepoolImage } from '~/console/components/empty-resource-images';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
 import NodepoolResourcesV2 from './nodepool-resources-v2';
@@ -76,6 +77,7 @@ const Nodepools = () => {
                 ),
               }}
               empty={{
+                image: <EmptyNodepoolImage />,
                 is: nodepools.length === 0,
                 title: 'This is where you’ll manage your nodepools',
                 content: (

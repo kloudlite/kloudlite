@@ -133,4 +133,6 @@ export {
   BellFill,
   UserCircle,
   Sliders,
+  FileLock,
+  StackSimple,
 } from '@jengaicons/react';

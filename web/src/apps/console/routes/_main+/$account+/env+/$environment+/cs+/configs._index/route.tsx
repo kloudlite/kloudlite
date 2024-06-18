@@ -17,6 +17,7 @@ import { DIALOG_TYPE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import ConfigResourcesV2 from '~/console/page-components/config-resource-v2';
+import { EmptyConfigImage } from '~/console/components/empty-resource-images';
 import HandleConfig from './handle-config';
 import Tools from './tools';
 
@@ -27,7 +28,6 @@ export const loader = async (ctx: IRemixCtx) => {
 
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listConfigs({
-      
       envName: environment,
       pq: getPagination(ctx),
       search: getSearch(ctx),
@@ -73,6 +73,7 @@ const Configs = () => {
                 ),
               }}
               empty={{
+                image: <EmptyConfigImage />,
                 is: configs.length === 0,
                 title: 'This is where you’ll manage your Config.',
                 content: (

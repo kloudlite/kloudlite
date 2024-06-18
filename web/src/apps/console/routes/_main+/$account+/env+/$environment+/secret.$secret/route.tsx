@@ -1,4 +1,4 @@
-import { Plus } from '~/console/components/icons';
+import { FileLock, Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData, useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
@@ -172,10 +172,14 @@ const ConfigBody = ({ secret }: { secret: ISecret }) => {
           ),
         }}
         empty={{
+          image: <FileLock size={48} />,
           is: Object.keys(modifiedItems).length === 0,
           title: 'This is where you’ll manage your secrets.',
           content: (
-            <p>You can create a new project and manage the listed project.</p>
+            <p>
+              You can create a new secret entries and manage the listed secret
+              entries.
+            </p>
           ),
           action: {
             content: 'Add new entry',

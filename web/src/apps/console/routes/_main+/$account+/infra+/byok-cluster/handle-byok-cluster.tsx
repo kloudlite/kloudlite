@@ -27,13 +27,13 @@ const Root = (props: IDialog) => {
         ? {
             displayName: props.data.displayName,
             name: parseName(props.data),
-            visibilityMode: true,
+            visibilityMode: false,
             isNameError: false,
           }
         : {
             name: '',
             displayName: '',
-            visibilityMode: true,
+            visibilityMode: false,
             isNameError: false,
           },
       validationSchema: Yup.object({
@@ -50,7 +50,7 @@ const Root = (props: IDialog) => {
                   name: val.name,
                 },
                 visibility: {
-                  mode: val.visibilityMode ? 'public' : 'private',
+                  mode: val.visibilityMode ? 'private' : 'public',
                 },
               },
             });
@@ -104,7 +104,7 @@ const Root = (props: IDialog) => {
           {!isUpdate && (
             <>
               <Checkbox
-                label="Public"
+                label="Private"
                 checked={values.visibilityMode}
                 onChange={(val) => {
                   handleChange('visibilityMode')(dummyEvent(val));
@@ -114,7 +114,7 @@ const Root = (props: IDialog) => {
                 type="info"
                 body={
                   <span className="bodyMd-medium">
-                    {values.visibilityMode === true
+                    {values.visibilityMode === false
                       ? 'Public mode assumes cluster is accessible to public internet'
                       : 'In Private mode traffic is routed via a kloudlite gateway'}
                   </span>

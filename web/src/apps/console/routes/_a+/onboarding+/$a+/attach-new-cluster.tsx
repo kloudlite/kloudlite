@@ -23,7 +23,7 @@ const AttachNewCluster = () => {
     initialValues: {
       name: '',
       displayName: '',
-      visibilityMode: true,
+      visibilityMode: false,
       isNameError: false,
     },
     validationSchema: Yup.object({
@@ -39,7 +39,7 @@ const AttachNewCluster = () => {
               name: val.name,
             },
             visibility: {
-              mode: val.visibilityMode ? 'public' : 'private',
+              mode: val.visibilityMode ? 'private' : 'public',
             },
           },
         });
@@ -96,7 +96,7 @@ const AttachNewCluster = () => {
                   nameErrorLabel="isNameError"
                 />
                 <Checkbox
-                  label="Public"
+                  label="Private"
                   checked={values.visibilityMode}
                   onChange={(val) => {
                     handleChange('visibilityMode')(dummyEvent(val));
@@ -106,7 +106,7 @@ const AttachNewCluster = () => {
                   type="info"
                   body={
                     <span className="bodyMd-medium">
-                      {values.visibilityMode === true
+                      {values.visibilityMode === false
                         ? 'Public mode assumes cluster is accessible to public internet'
                         : 'In Private mode traffic is routed via a kloudlite gateway'}
                     </span>
