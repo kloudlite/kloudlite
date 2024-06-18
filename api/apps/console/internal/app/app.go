@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
+	"github.com/kloudlite/api/pkg/k8s"
 
 	"github.com/kloudlite/api/pkg/errors"
 
@@ -30,6 +32,10 @@ import (
 type (
 	IAMGrpcClient grpc.Client
 	InfraClient   grpc.Client
+)
+
+type (
+	ConsoleGrpcServer grpc.Server
 )
 
 func toConsoleContext(requestCtx context.Context, accountCookieName string) (domain.ConsoleContext, error) {
@@ -141,6 +147,14 @@ var Module = fx.Module("app",
 	}),
 
 	domain.Module,
+
+	fx.Provide(func(d domain.Domain, kcli k8s.Client) console.ConsoleServer {
+		return newConsoleGrpcServer(d, kcli)
+	}),
+
+	fx.Invoke(func(gserver ConsoleGrpcServer, srv console.ConsoleServer) {
+		console.RegisterConsoleServer(gserver, srv)
+	}),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
 		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)

@@ -692,6 +692,9 @@ type ManagedResourcePaginatedRecords struct {
 	TotalCount int                    `json:"totalCount"`
 }
 
+type Mutation struct {
+}
+
 type PageInfo struct {
 	EndCursor       *string `json:"endCursor,omitempty"`
 	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
@@ -702,6 +705,9 @@ type PageInfo struct {
 type Port struct {
 	Port       *int `json:"port,omitempty"`
 	TargetPort *int `json:"targetPort,omitempty"`
+}
+
+type Query struct {
 }
 
 type RouterEdge struct {
