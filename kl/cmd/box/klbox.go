@@ -30,7 +30,7 @@ func init() {
 	client.OnlyOutsideBox(execCmd)
 	BoxCmd.AddCommand(execCmd)
 
-	client.OnlyOutsideBox(psCmd)
+	client.OnlyOutsideBox(stopCmd)
 	BoxCmd.AddCommand(stopCmd)
 
 	client.OnlyOutsideBox(psCmd)

@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"os"
-
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	fn "github.com/kloudlite/kl/pkg/functions"
 
@@ -41,16 +39,16 @@ var logoutCmd = &cobra.Command{
 			return
 		}
 
-		configFolder, err := client.GetConfigFolder()
-		if err != nil {
-			fn.Log(err)
-			return
-		}
+		//configFolder, err := client.GetConfigFolder()
+		//if err != nil {
+		//	fn.Log(err)
+		//	return
+		//}
 
-		if err := os.RemoveAll(configFolder); err != nil {
-			fn.Log(err)
-			return
-		}
+		//if err := os.RemoveAll(configFolder); err != nil {
+		//	fn.Log(err)
+		//	return
+		//}
 
 		fn.Log(`successfully logged out.
 
