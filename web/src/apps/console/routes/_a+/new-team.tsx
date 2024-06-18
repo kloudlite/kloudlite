@@ -29,50 +29,32 @@ const NewAccount = () => {
     return api.listAccounts({});
   });
 
-  const regions = [
-    {
-      label: 'ap-south-1',
-      value: 'ap-south-1',
+  const { data: kloudliteRegionsData, isLoading: klRegionIsLoading } =
+    useCustomSwr(
+      'kloudliteRegions',
+      async () => api.getAvailableKloudliteRegions({}),
+      true
+    );
+
+  console.log('klRegionIsLoading', kloudliteRegionsData);
+
+  const klRegionData = kloudliteRegionsData?.map((d) => {
+    return {
+      label: d.displayName,
+      value: d.id,
       render: () => (
         <div className="flex flex-row gap-lg items-center">
-          <div>ap-south-1</div>
+          <div>{d.displayName}</div>
         </div>
       ),
-    },
-    {
-      label: 'eu-north-1',
-      value: 'eu-north-1',
-      render: () => (
-        <div className="flex flex-row gap-lg items-center">
-          <div>eu-north-1</div>
-        </div>
-      ),
-    },
-    {
-      label: 'eu-west-3',
-      value: 'eu-west-3',
-      render: () => (
-        <div className="flex flex-row gap-lg items-center">
-          <div>eu-west-3</div>
-        </div>
-      ),
-    },
-    {
-      label: 'eu-west-2',
-      value: 'eu-west-2',
-      render: () => (
-        <div className="flex flex-row gap-lg items-center">
-          <div>eu-west-2</div>
-        </div>
-      ),
-    },
-  ];
+    };
+  });
 
   const { values, handleChange, errors, isLoading, handleSubmit } = useForm({
     initialValues: {
       name: '',
       displayName: '',
-      region: regions[0].value,
+      region: '',
       isNameError: false,
     },
     validationSchema: Yup.object({
@@ -86,6 +68,7 @@ const NewAccount = () => {
             metadata: { name: v.name },
             displayName: v.displayName,
             contactEmail: user.email,
+            kloudliteGatewayRegion: v.region,
           },
         });
         if (_errors) {
@@ -151,18 +134,21 @@ const NewAccount = () => {
                 handleChange={handleChange}
                 nameErrorLabel="isNameError"
               />
-              {/* <Select
-                error={!!errors.region}
+              <Select
                 size="lg"
-                message={errors.region}
                 value={values.region}
                 label="Region"
                 placeholder="Select region"
                 onChange={(_, value) => {
                   handleChange('region')(dummyEvent(value));
                 }}
-                options={async () => regions}
-              /> */}
+                options={async () => [
+                  ...((klRegionData && klRegionData) || []),
+                ]}
+                error={!!errors.region}
+                message={errors.region}
+                loading={klRegionIsLoading}
+              />
               <BottomNavigation
                 primaryButton={{
                   variant: 'primary',

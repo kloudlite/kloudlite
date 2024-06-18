@@ -104,12 +104,10 @@ const ByokInstructionsPopup = ({
   show,
   item,
   onClose,
-  clusterName,
 }: {
   show: boolean;
   item: CombinedBaseType;
   onClose: () => void;
-  clusterName: string;
 }) => {
   const params = useParams();
   ensureAccountClientSide(params);
@@ -181,7 +179,6 @@ const ByokButton = ({ item }: { item: CombinedBaseType }) => {
     <div>
       {show ? (
         <ByokInstructionsPopup
-          clusterName={item.displayName || ''}
           show={show}
           onClose={() => {
             setShow(false);

@@ -48,6 +48,13 @@ mutation consoleCreateAccount($account: AccountIn!) {
   }
 }
 
+query consoleGetAvailableKloudliteRegions {
+  accounts_availableKloudliteRegions {
+    displayName
+    id
+  }
+}
+
 query consoleListAccounts {
   accounts_listAccounts {
     id
@@ -57,6 +64,7 @@ query consoleListAccounts {
     }
     updateTime
     displayName
+    kloudliteGatewayRegion
   }
 }
 
@@ -76,6 +84,7 @@ query consoleGetAccount($accountName: String!) {
     updateTime
     contactEmail
     displayName
+    kloudliteGatewayRegion
   }
 }
 

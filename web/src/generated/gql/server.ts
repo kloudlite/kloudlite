@@ -398,6 +398,7 @@ export type AccountIn = {
   contactEmail?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  kloudliteGatewayRegion: Scalars['String']['input'];
   logo?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
 };
@@ -1316,6 +1317,11 @@ export type AccountMembershipIn = {
   userId: Scalars['String']['input'];
 };
 
+export type AvailableKloudliteRegionIn = {
+  displayName: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+};
+
 export type BuildRunIn = {
   displayName: Scalars['String']['input'];
 };
@@ -1833,6 +1839,17 @@ export type ConsoleCreateAccountMutation = {
   accounts_createAccount: { displayName: string };
 };
 
+export type ConsoleGetAvailableKloudliteRegionsQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type ConsoleGetAvailableKloudliteRegionsQuery = {
+  accounts_availableKloudliteRegions?: Array<{
+    displayName: string;
+    id: string;
+  }>;
+};
+
 export type ConsoleListAccountsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type ConsoleListAccountsQuery = {
@@ -1840,6 +1857,7 @@ export type ConsoleListAccountsQuery = {
     id: string;
     updateTime: any;
     displayName: string;
+    kloudliteGatewayRegion: string;
     metadata?: { name: string; annotations?: any };
   }>;
 };
@@ -1862,6 +1880,7 @@ export type ConsoleGetAccountQuery = {
     updateTime: any;
     contactEmail?: string;
     displayName: string;
+    kloudliteGatewayRegion: string;
     metadata?: { name: string; annotations?: any };
   };
 };

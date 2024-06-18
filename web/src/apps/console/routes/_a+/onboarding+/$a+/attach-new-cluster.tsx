@@ -96,7 +96,7 @@ const AttachNewCluster = () => {
                   nameErrorLabel="isNameError"
                 />
                 <Checkbox
-                  label="Private"
+                  label="Private Cluster"
                   checked={values.visibilityMode}
                   onChange={(val) => {
                     handleChange('visibilityMode')(dummyEvent(val));
@@ -105,11 +105,14 @@ const AttachNewCluster = () => {
                 <Banner
                   type="info"
                   body={
-                    <span className="bodyMd-medium">
-                      {values.visibilityMode === false
-                        ? 'Public mode assumes cluster is accessible to public internet'
-                        : 'In Private mode traffic is routed via a kloudlite gateway'}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="bodyMd-medium">
+                        Private clusters are those who are hosted behind a NAT.
+                      </span>
+                      <span className="bodyMd">
+                        Ex: Cluster running on your local machine
+                      </span>
+                    </div>
                   }
                 />
               </div>
