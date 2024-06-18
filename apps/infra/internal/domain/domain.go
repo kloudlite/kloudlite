@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
+
 	"sigs.k8s.io/yaml"
 
 	"github.com/kloudlite/api/pkg/errors"
@@ -56,6 +58,7 @@ type domain struct {
 	volumeAttachmentRepo repos.DbRepo[*entities.VolumeAttachment]
 
 	iamClient                   iam.IAMClient
+	consoleClient               console.ConsoleClient
 	accountsSvc                 AccountsSvc
 	messageOfficeInternalClient message_office_internal.MessageOfficeInternalClient
 	resDispatcher               ResourceDispatcher
@@ -195,10 +198,12 @@ var Module = fx.Module("domain",
 			k8sClient k8s.Client,
 
 			iamClient iam.IAMClient,
+			consoleClient console.ConsoleClient,
 			accountsSvc AccountsSvc,
 			msgOfficeInternalClient message_office_internal.MessageOfficeInternalClient,
 			logger logging.Logger,
 			resourceEventPublisher ResourceEventPublisher,
+
 		) (Domain, error) {
 			open, err := os.Open(env.MsvcTemplateFilePath)
 			if err != nil {
@@ -253,6 +258,7 @@ var Module = fx.Module("domain",
 				resDispatcher:               resourceDispatcher,
 				k8sClient:                   k8sClient,
 				iamClient:                   iamClient,
+				consoleClient:               consoleClient,
 				accountsSvc:                 accountsSvc,
 				messageOfficeInternalClient: msgOfficeInternalClient,
 				resourceEventPublisher:      resourceEventPublisher,

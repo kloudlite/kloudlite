@@ -18,6 +18,8 @@ type Environment struct {
 	AccountName string `json:"accountName" graphql:"noinput"`
 	ClusterName string `json:"clusterName"`
 
+	IsArchived *bool `json:"isArchived,omitempty" graphql:"noinput"`
+
 	common.ResourceMetadata `json:",inline"`
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }

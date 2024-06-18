@@ -224,10 +224,9 @@ func (g *grpcHandler) ensureAccessToken() error {
 	return nil
 }
 
-func (g *grpcHandler) run() error {
-	tctx, cf := context.WithTimeout(context.TODO(), MaxConnectionDuration)
+func (g *grpcHandler) run(rctx context.Context, cf context.CancelFunc) error {
 	defer cf()
-	ctx := NewAuthorizedGrpcContext(tctx, g.ev.AccessToken)
+	ctx := NewAuthorizedGrpcContext(rctx, g.ev.AccessToken)
 
 	g.logger.Infof("asking message office to start sending actions")
 	msgActionsCli, err := g.msgDispatchCli.SendActions(ctx, &messages.Empty{})
@@ -301,6 +300,7 @@ func main() {
 		realVectorClient: nil,
 		logger:           logger,
 		accessToken:      ev.AccessToken,
+		errCh:            nil,
 	}
 
 	gs := libGrpc.NewGrpcServer(libGrpc.GrpcServerOpts{Logger: logger})
@@ -341,11 +341,28 @@ func main() {
 			logger.Errorf(err, "ensuring access token")
 		}
 
+		ctx, cf := context.WithTimeout(context.TODO(), MaxConnectionDuration)
+
 		vps.accessToken = g.ev.AccessToken
 		vps.realVectorClient = proto_rpc.NewVectorClient(cc)
+		vps.errCh = make(chan error, 1)
 
-		if err := g.run(); err != nil {
-			logger.Errorf(err, "running grpc sendActions")
+		go func() {
+			if err := g.run(ctx, cf); err != nil {
+				logger.Errorf(err, "running grpc sendActions")
+			}
+		}()
+
+		select {
+		case err := <-vps.errCh:
+			{
+				logger.Errorf(err, "error from vector grpc proxy server")
+				cf()
+			}
+		case <-ctx.Done():
+			{
+				logger.Debugf("run context done, reconnecting ...")
+			}
 		}
 
 		if err = cc.Close(); err != nil {
