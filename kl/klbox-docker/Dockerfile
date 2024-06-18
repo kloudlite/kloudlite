@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq ip
 
 RUN mkdir /var/run/sshd
 
-RUN userdel ubuntu
+RUN userdel ubuntu || echo "ubuntu user already deleted"
 
 RUN groupadd -g 1000 kl && useradd -u 1000 -g 1000 -m kl && usermod -aG sudo kl && chsh -s /bin/bash kl && \
   echo "kl ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kl

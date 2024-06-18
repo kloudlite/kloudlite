@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"os"
 	"path"
 	"slices"
@@ -78,7 +79,7 @@ func currentWorkingDir() string {
 }
 
 func SyncBoxHash() error {
-	fn.Printf("environments may have been updated. to reflect the changes, do you want to restart the container? Y/n`.")
+	fn.Printf(text.Yellow("environments may have been updated. to reflect the changes, do you want to restart the container? [Y/n] "))
 	if !fn.Confirm("Y", "Y") {
 		return nil
 	}
