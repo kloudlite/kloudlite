@@ -3,11 +3,11 @@ package packages
 import (
 	"errors"
 	"fmt"
-
 	"github.com/kloudlite/kl/domain/client"
-	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
+	"github.com/kloudlite/kl/domain/server"
+	"strings"
 
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
 
@@ -32,23 +32,24 @@ func rmPackages(cmd *cobra.Command, args []string) error {
 		return errors.New("name is required")
 	}
 
-	verbose := fn.ParseBoolFlag(cmd, "verbose")
-
-	stopSp := spinner.Client.Start(fmt.Sprintf("removing package %s", name))
-	defer stopSp()
-
-	err := client.ExecPackageCommand(fmt.Sprintf("devbox rm %s%s", name, func() string {
-		if verbose {
-			return ""
+	klConf, err := client.GetKlFile("")
+	splits := strings.Split(name, "@")
+	for i, v := range klConf.Packages {
+		valSplits := strings.Split(v, "@")
+		if splits[0] == valSplits[0] {
+			klConf.Packages = append(klConf.Packages[:i], klConf.Packages[i+1:]...)
+			break
 		}
-		return " -q"
-	}()), cmd)
-	stopSp()
+	}
+	err = client.WriteKLFile(*klConf)
 	if err != nil {
 		return err
 	}
 
-	fn.Logf("removed package %s", name)
+	fn.Println(fmt.Sprintf("Package %s is deleted", name))
+	if err := server.SyncBoxHash(); err != nil {
+		return err
+	}
 	return nil
 }
 

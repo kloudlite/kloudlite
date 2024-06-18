@@ -1,15 +1,21 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/fs"
-	"os"
-	"path/filepath"
-
+	"github.com/briandowns/spinner"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/klbox-docker/devboxfile"
 	"github.com/kloudlite/kl/pkg/functions"
+	"io"
+	"io/fs"
+	"net/http"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+	"time"
 )
 
 type SecretEnv struct {
@@ -283,8 +289,78 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 	return result, mountMap, nil
 }
 
-// this function will fetch real envs from api and return DevboxKlfile with real envs
+func syncLockfile(config *devboxfile.DevboxConfig) (map[string]string, error) {
+	// check if kl.lock file exists
+	_, err := os.Stat("kl.lock")
+	packages := map[string]string{}
+	if err == nil {
+		file, err := os.ReadFile("kl.lock")
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(file, &packages)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for p := range config.Packages {
+		splits := strings.Split(config.Packages[p], "@")
+		if len(splits) == 1 {
+			splits = append(splits, "latest")
+		}
+		if _, ok := packages[splits[0]+"@"+splits[1]]; ok {
+			continue
+		}
+		resp, err := http.Get(fmt.Sprintf("https://search.devbox.sh/v1/resolve?name=%s&version=%s", splits[0], splits[1]))
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode != 200 {
+			return nil, fmt.Errorf("failed to fetch package %s", config.Packages[p])
+		}
+		all, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		type Res struct {
+			CommitHash string `json:"commit_hash"`
+			Version    string `json:"version"`
+		}
+		var res Res
+		err = json.Unmarshal(all, &res)
+		if err != nil {
+			return nil, err
+		}
+		packages[splits[0]+"@"+res.Version] = fmt.Sprintf("nixpkgs/%s#%s", res.CommitHash, splits[0])
+	}
+	for k, _ := range packages {
+		splits := strings.Split(k, "@")
+		if !slices.Contains(config.Packages, splits[0]) && !slices.Contains(config.Packages, k) && !slices.Contains(config.Packages, splits[0]+"@latest") {
+			delete(packages, k)
+		}
+	}
+	marshal, err := json.Marshal(packages)
+	if err != nil {
+		return nil, err
+	}
+	bjson := new(bytes.Buffer)
+	if err = json.Indent(bjson, marshal, "", "  "); err != nil {
+		return nil, err
+	}
+	if err = os.WriteFile("kl.lock", bjson.Bytes(), 0644); err != nil {
+		return nil, err
+	}
+	return packages, nil
+}
+
 func LoadDevboxConfig() (*devboxfile.DevboxConfig, error) {
+	s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
+	s.Suffix = " Syncing Environment..."
+	s.Start()
+	defer func() {
+		s.Stop()
+	}()
+
 	envs, mm, err := GetLoadMaps()
 	if err != nil {
 		return nil, err
@@ -327,34 +403,9 @@ func LoadDevboxConfig() (*devboxfile.DevboxConfig, error) {
 
 	klConfig.Env = ev
 	klConfig.KlConfig.Mounts = fm
-
+	lockfile, err := syncLockfile(klConfig)
+	klConfig.PackageHashes = lockfile
 	return klConfig, nil
-}
-
-func SyncDevboxJsonFile() error {
-	if !client.InsideBox() {
-		return nil
-	}
-
-	kConf, err := LoadDevboxConfig()
-	if err != nil {
-		return err
-	}
-
-	b, err := kConf.ToJson()
-	if err != nil {
-		return err
-	}
-
-	if err := os.WriteFile(client.DevBoxJsonPath(), b, os.ModePerm); err != nil {
-		return err
-	}
-
-	if err := MountEnvs(kConf.KlConfig); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func MountEnvs(c devboxfile.KlConfig) error {

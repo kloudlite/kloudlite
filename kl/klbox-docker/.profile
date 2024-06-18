@@ -11,35 +11,37 @@
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
 
+source $HOME/.nix-profile/etc/profile.d/nix.sh
+
 KL_LOCK_PATH=/home/kl/workspace/kl.lock
+[ -f /tmp/env ] && source /tmp/env
 
-KL_DEVBOX_PATH=/kl-tmp/devbox
-KL_DEVBOX_JSON_PATH=$KL_DEVBOX_PATH/devbox.json
-KL_DEVBOX_LOCK_PATH=$KL_DEVBOX_PATH/devbox.lock
-KL_DEVBOX_ENV_PATH=/kl-tmp/devbox/devbox-env.sh
+# KL_DEVBOX_PATH=/kl-tmp/devbox
+# KL_DEVBOX_JSON_PATH=$KL_DEVBOX_PATH/devbox.json
+# KL_DEVBOX_LOCK_PATH=$KL_DEVBOX_PATH/devbox.lock
+# KL_DEVBOX_ENV_PATH=/kl-tmp/devbox/devbox-env.sh
 
-mkdir -p $KL_DEVBOX_PATH
+# mkdir -p $KL_DEVBOX_PATH
 
-if [ -f "$KL_LOCK_PATH" ]; then
-    cp $KL_LOCK_PATH $KL_DEVBOX_LOCK_PATH
-fi
+# if [ -f "$KL_LOCK_PATH" ]; then
+#     cp $KL_LOCK_PATH $KL_DEVBOX_LOCK_PATH
+# fi
+#
+# if [ ! -f "$KL_DEVBOX_ENV_PATH" ]; then
+#     cd  $KL_DEVBOX_PATH || return
+#     devbox shellenv > $KL_DEVBOX_ENV_PATH
+# fi
 
-if [ ! -f "$KL_DEVBOX_ENV_PATH" ]; then
-    cd  $KL_DEVBOX_PATH || return
-    devbox shellenv > $KL_DEVBOX_ENV_PATH
-fi
-
-
-source "$KL_DEVBOX_ENV_PATH"
-
-cd "$HOME" || return
-
-if [ -f "$KL_DEVBOX_LOCK_PATH" ]; then
-  cp $KL_DEVBOX_LOCK_PATH $KL_LOCK_PATH
-fi
-
-sudo /mounter --conf $KL_DEVBOX_JSON_PATH
-
+# source "$KL_DEVBOX_ENV_PATH"
+#
+# cd "$HOME" || return
+#
+# if [ -f "$KL_DEVBOX_LOCK_PATH" ]; then
+#   cp $KL_DEVBOX_LOCK_PATH $KL_LOCK_PATH
+# fi
+#
+# sudo /mounter --conf $KL_DEVBOX_JSON_PATH
+#
 # if running bash
 if [ -n "$BASH_VERSION" ]; then
 	# include .bashrc if it exists
@@ -52,6 +54,7 @@ fi
 if [ -d "$HOME/bin" ]; then
 	PATH="$HOME/bin:$PATH"
 fi
+
 
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/.local/bin" ]; then

@@ -15,7 +15,6 @@ var InitCommand = &cobra.Command{
 	Long:  `use this command to initialize a kl-config file`,
 
 	Run: func(cmd *cobra.Command, _ []string) {
-
 		aName := fn.ParseStringFlag(cmd, "account")
 		filePath := fn.ParseKlFile(cmd)
 		initFile, err := client.GetKlFile(filePath)
@@ -76,6 +75,7 @@ var InitCommand = &cobra.Command{
 		}
 
 		fn.Log("Initialized file ", client.GetConfigPath())
+		server.EnsureBoxHash()
 	},
 }
 

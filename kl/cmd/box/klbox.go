@@ -8,6 +8,9 @@ import (
 var BoxCmd = &cobra.Command{
 	Use:   "box",
 	Short: "start, stop, reload, ssh and get running box info",
+	//PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	//	server.EnsureBoxHash()
+	//},
 }
 
 func init() {

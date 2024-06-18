@@ -141,46 +141,14 @@ func (e *EnvVars) GetSecrets() []ResType {
 }
 
 func (e *EnvVars) AddResTypes(rt []ResType, rtype resType) {
-
-	if e == nil {
-		e = &EnvVars{}
-	}
-
-	keys := map[string]bool{}
-
-	getEnvKey := func(r EnvType) string {
-		return fmt.Sprint(r.Key, func() string {
-			if r.SecretRef != nil {
-				return *r.SecretRef
-			}
-			if r.MresRef != nil {
-				return *r.MresRef
-			}
-			if r.SecretRef != nil {
-				return *r.SecretRef
-			}
-			if r.Value != nil {
-				return *r.Value
-			}
-
-			return ""
-		}())
-	}
-
-	getRtKey := func(name, key, refKey string) string {
-		return fmt.Sprint(key, name, "/", refKey)
-	}
+	ev := make(map[string]EnvType)
 
 	for _, r := range *e {
-		ek := getEnvKey(r)
-
-		if !keys[ek] {
-			keys[ek] = true
-		}
+		ev[r.Key] = r
 	}
 
 	appendEnv := func(key, name, refKey string) {
-		*e = append(*e, EnvType{
+		ev[key] = EnvType{
 			Key:   key,
 			Value: nil,
 			ConfigRef: func() *string {
@@ -204,19 +172,128 @@ func (e *EnvVars) AddResTypes(rt []ResType, rtype resType) {
 
 				return fn.Ptr(fmt.Sprint(name, "/", refKey))
 			}(),
-		})
+		}
 	}
 
 	for _, r := range rt {
 		for _, ret := range r.Env {
-			ek := getRtKey(r.Name, ret.Key, ret.RefKey)
-			if !keys[ek] {
-				keys[ek] = true
-				appendEnv(ret.Key, r.Name, ret.RefKey)
-			}
+			appendEnv(ret.Key, r.Name, ret.RefKey)
 		}
 	}
+
+	for idx, v := range *e {
+		if _, ok := ev[v.Key]; ok {
+			(*e)[idx] = v
+			delete(ev, v.Key)
+		}
+	}
+
+	for _, v := range ev {
+		*e = append(*e, v)
+	}
 }
+
+//func (e *EnvVars) AddResTypes2(rt []ResType, rtype resType) {
+//	//if e == nil {
+//	//	e = &EnvVars{}
+//	//}
+//	keys := map[string]bool{}
+//
+//	getEnvKey := func(r EnvType) string {
+//		if r.SecretRef != nil {
+//			return *r.SecretRef
+//		}
+//		if r.MresRef != nil {
+//			return *r.MresRef
+//		}
+//		if r.SecretRef != nil {
+//			return *r.SecretRef
+//		}
+//		if r.Value != nil {
+//			return *r.Value
+//		}
+//
+//		return ""
+//	}
+//
+//	//getRtKey := func(name, key, refKey string) string {
+//	//	return fmt.Sprint(key, name, "/", refKey)
+//	//}
+//
+//	for _, r := range *e {
+//		ek := getEnvKey(r)
+//
+//		if !keys[ek] {
+//			keys[ek] = true
+//		}
+//	}
+//
+//	appendEnv := func(key, name, refKey string) {
+//		*e = append(*e, EnvType{
+//			Key:   key,
+//			Value: nil,
+//			ConfigRef: func() *string {
+//				if rtype != Res_config {
+//					return nil
+//				}
+//
+//				return fn.Ptr(fmt.Sprint(name, "/", refKey))
+//			}(),
+//			SecretRef: func() *string {
+//				if rtype != Res_secret {
+//					return nil
+//				}
+//
+//				return fn.Ptr(fmt.Sprint(name, "/", refKey))
+//			}(),
+//			MresRef: func() *string {
+//				if rtype != Res_mres {
+//					return nil
+//				}
+//
+//				return fn.Ptr(fmt.Sprint(name, "/", refKey))
+//			}(),
+//		})
+//	}
+//
+//	//file, _ := GetKlFile("")
+//	//for _, r := range rt {
+//	//	for _, ret := range r.Env {
+//	//		if rtype == Res_config {
+//	//			configs := file.EnvVars.GetConfigs()
+//	//			for _, c := range configs {
+//	//				for _, ck := range c.Env {
+//	//					if ck.Key == ret.Key {
+//	//
+//	//					}
+//	//				}
+//	//			}
+//	//		}
+//	//	}
+//	//}
+//
+//	//for _, r := range rt {
+//	//	for _, ret := range r.Env {
+//	//		ek := getRtKey(r.Name, ret.Key, ret.RefKey)
+//	//		if !keys[ek] {
+//	//			keys[ek] = true
+//	//			appendEnv(ret.Key, r.Name, ret.RefKey)
+//	//		}
+//	//	}
+//	//}
+//
+//	for _, r := range rt {
+//		for _, ret := range r.Env {
+//			//ek := getRtKey(r.Name, ret.Key, ret.RefKey)
+//			fn.Logf("adding %s", ret.Key)
+//			if _, ok := keys[ret.Key]; ok {
+//				fn.Warnf("key %s already exists in %s, overwriting", ret.Key, r.Name)
+//			}
+//			keys[ret.Key] = true
+//			appendEnv(ret.Key, r.Name, ret.RefKey)
+//		}
+//	}
+//}
 
 func SyncDevboxShellEnvFile(cmd *cobra.Command) error {
 	if !InsideBox() {

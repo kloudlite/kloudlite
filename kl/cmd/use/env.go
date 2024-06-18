@@ -14,7 +14,7 @@ var switchCmd = &cobra.Command{
 	Use:   "env",
 	Short: "Switch to a different environment",
 	Run: func(cmd *cobra.Command, _ []string) {
-
+		//TODO: add changes to the klbox-hash file
 		envName := fn.ParseStringFlag(cmd, "envname")
 		env, err := server.SelectEnv(envName)
 		if err != nil {
@@ -38,15 +38,19 @@ var switchCmd = &cobra.Command{
 			text.Blue(fmt.Sprintf("\n%s (%s)", env.DisplayName, env.Metadata.Name)),
 		)
 
-		if err := server.SyncDevboxJsonFile(); err != nil {
-			fn.PrintError(err)
+		if err := server.SyncBoxHash(); err != nil {
 			return
 		}
 
-		if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
-			fn.PrintError(err)
-			return
-		}
+		//if err := server.SyncDevboxJsonFile(); err != nil {
+		//	fn.PrintError(err)
+		//	return
+		//}
+		//
+		//if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
+		//	fn.PrintError(err)
+		//	return
+		//}
 
 	},
 }

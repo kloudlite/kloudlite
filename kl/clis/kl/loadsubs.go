@@ -12,6 +12,7 @@ import (
 	"github.com/kloudlite/kl/cmd/runner"
 	"github.com/kloudlite/kl/cmd/runner/add"
 	set_base_url "github.com/kloudlite/kl/cmd/set-base-url"
+	"github.com/kloudlite/kl/cmd/shell"
 	"github.com/kloudlite/kl/cmd/status"
 	"github.com/kloudlite/kl/cmd/use"
 	"github.com/kloudlite/kl/cmd/vpn"
@@ -36,6 +37,7 @@ func init() {
 	rootCmd.AddCommand(auth.Cmd)
 	rootCmd.AddCommand(vpn.Cmd)
 	rootCmd.AddCommand(box.BoxCmd)
+	rootCmd.AddCommand(shell.LocalShellCmd)
 
 	apploader.LoadStartApp(rootCmd)
 

@@ -50,7 +50,7 @@ var mountCommand = &cobra.Command{
 }
 
 func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command) error {
-
+	//TODO: add changes to the klbox-hash file
 	c := cmd.Flag("config").Value.String()
 	s := cmd.Flag("secret").Value.String()
 
@@ -197,6 +197,9 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 	}
 
 	fn.Log("added mount to your kl-file")
+	if err = server.SyncBoxHash(); err != nil {
+		return err
+	}
 
 	return nil
 }

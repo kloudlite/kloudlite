@@ -18,7 +18,7 @@ RUN go build --tags=box -ldflags="-X github.com/kloudlite/kl/flags.Version=${VER
 
 FROM --platform=$TARGETPLATFORM ubuntu:latest
 
-RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano zsh git
+RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano zsh git dnsmasq
 
 
 RUN mkdir /var/run/sshd
@@ -76,16 +76,16 @@ EOF
 
 COPY .bashrc .profile .zshrc aliasrc /tmp/
 
-
 RUN chsh -s /bin/zsh kl
 
 COPY ./start.sh /start.sh
 COPY ./entrypoint.sh /entrypoint.sh
+COPY ./track-changes.sh /track-changes.sh
+
 
 RUN mkdir /kl-tmp && chown -R kl:kl /kl-tmp
 
-RUN chmod +x /start.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /start.sh /entrypoint.sh /track-changes.sh
 
 COPY --from=builder /kl-app/bin/mounter /mounter
 COPY --from=builder /kl-app/bin/kl /usr/local/bin/kl

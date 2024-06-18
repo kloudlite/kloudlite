@@ -1,7 +1,6 @@
 package packages
 
 import (
-	"github.com/kloudlite/kl/domain/client"
 	"github.com/spf13/cobra"
 )
 
@@ -14,9 +13,9 @@ func init() {
 	Cmd.Aliases = append(Cmd.Aliases, "packages")
 	Cmd.Aliases = append(Cmd.Aliases, "package")
 
-	client.OnlyInsideBox(listCmd)
-	client.OnlyInsideBox(addCmd)
-	client.OnlyInsideBox(rmCmd)
+	//client.OnlyInsideBox(listCmd)
+	//client.OnlyInsideBox(addCmd)
+	//client.OnlyInsideBox(rmCmd)
 
 	Cmd.AddCommand(listCmd)
 	Cmd.AddCommand(addCmd)

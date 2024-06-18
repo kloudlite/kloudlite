@@ -1,14 +1,15 @@
 package boxpkg
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"path"
 	"strings"
 	"time"
 
 	"github.com/adrg/xdg"
 	cl "github.com/kloudlite/kl/domain/client"
-	confighandler "github.com/kloudlite/kl/pkg/config-handler"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -40,31 +41,29 @@ func (c *client) Ssh() error {
 		return c.doSSHWithCname(cname)
 	}
 
-	_, err2 := cl.GetKlFile("")
-	if err2 != nil {
-		if err2 == confighandler.ErrKlFileNotExists {
-			conts, err := c.listContainer(map[string]string{
-				CONT_MARK_KEY: "true",
-			})
+	// Check if kl.yml exists in current dir
+	if _, err2 := os.Stat("kl.yml"); err2 != nil && errors.Is(err2, os.ErrNotExist) {
 
-			if err != nil && err == NotFoundErr {
-				return fmt.Errorf("kl.yml in current dir not found, and also no any running container found")
-			}
+		conts, err := c.listContainer(map[string]string{
+			CONT_MARK_KEY: "true",
+		})
 
-			if err != nil {
-				return err
-			}
-
-			cnt, err := fzf.FindOne(conts, func(item Cntr) string {
-				return fmt.Sprintf("%s (%s)", item.Name, item.Labels[CONT_PATH_KEY])
-			}, fzf.WithPrompt("Select Container > "))
-			if err != nil {
-				return err
-			}
-
-			return c.doSSHWithCname(cnt.Name)
-
+		if err != nil && err == NotFoundErr {
+			return fmt.Errorf("kl.yml in current dir not found, and also no any running container found")
 		}
+
+		if err != nil {
+			return err
+		}
+
+		cnt, err := fzf.FindOne(conts, func(item Cntr) string {
+			return fmt.Sprintf("%s (%s)", item.Name, item.Labels[CONT_PATH_KEY])
+		}, fzf.WithPrompt("Select Container > "))
+		if err != nil {
+			return err
+		}
+
+		return c.doSSHWithCname(cnt.Name)
 
 		return err2
 	}

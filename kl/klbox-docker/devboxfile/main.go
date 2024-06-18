@@ -12,9 +12,10 @@ type KlConfig struct {
 }
 
 type DevboxConfig struct {
-	Packages []string          `yaml:"packages" json:"packages"`
-	Env      map[string]string `yaml:"env" json:"env"`
-	KlConfig KlConfig          `yaml:"kloudliteConfig" json:"kloudliteConfig"`
+	Packages      []string          `yaml:"packages" json:"packages"`
+	PackageHashes map[string]string `yaml:"packageHashes" json:"packageHashes"`
+	Env           map[string]string `yaml:"env" json:"env"`
+	KlConfig      KlConfig          `yaml:"kloudliteConfig" json:"kloudliteConfig"`
 }
 
 func (k *DevboxConfig) ToJson() ([]byte, error) {

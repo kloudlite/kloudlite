@@ -117,5 +117,4 @@ func init() {
 	ShellCmd.Aliases = append(ShellCmd.Aliases, "s", "sh")
 	ShellCmd.Flags().StringP("account", "a", "", "account name")
 	ShellCmd.Flags().StringP("cluster", "c", "", "cluster name")
-
 }

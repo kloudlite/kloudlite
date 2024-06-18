@@ -31,6 +31,7 @@ var secCmd = &cobra.Command{
 }
 
 func selectAndAddSecret(cmd *cobra.Command, args []string) error {
+	//TODO: add changes to the klbox-hash file
 	// m := fn.ParseStringFlag(cmd, "map")
 	filePath := fn.ParseKlFile(cmd)
 
@@ -195,13 +196,17 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 
 	fn.Log(fmt.Sprintf("added secret %s/%s to your kl-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key))
 
-	if err := server.SyncDevboxJsonFile(); err != nil {
+	if err := server.SyncBoxHash(); err != nil {
 		return err
 	}
 
-	if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
-		return err
-	}
+	//if err := server.SyncDevboxJsonFile(); err != nil {
+	//	return err
+	//}
+	//
+	//if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
+	//	return err
+	//}
 	return nil
 }
 

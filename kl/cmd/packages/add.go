@@ -3,10 +3,10 @@ package packages
 import (
 	"errors"
 	"fmt"
-
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
+	"slices"
 
 	"github.com/spf13/cobra"
 )
@@ -27,29 +27,22 @@ func addPackages(cmd *cobra.Command, args []string) error {
 	if name == "" && len(args) > 0 {
 		name = args[0]
 	}
-
 	if name == "" {
 		return errors.New("name is required")
 	}
-
-	verbose := fn.ParseBoolFlag(cmd, "verbose")
-
-	stopSp := spinner.Client.Start(fmt.Sprintf("adding package %s", name))
-	defer stopSp()
-
-	err := client.ExecPackageCommand(fmt.Sprintf("devbox add %s%s", name, func() string {
-		if verbose {
-			return ""
-		}
-		return " -q"
-	}()), cmd)
-	stopSp()
+	klConf, err := client.GetKlFile("")
+	if slices.Contains(klConf.Packages, name) {
+		return nil
+	}
+	klConf.Packages = append(klConf.Packages, name)
+	err = client.WriteKLFile(*klConf)
 	if err != nil {
 		return err
 	}
-
-	fn.Logf("added package %s", name)
-
+	fn.Println(fmt.Sprintf("Package %s is added successfully", name))
+	if err := server.SyncBoxHash(); err != nil {
+		return err
+	}
 	return nil
 }
 

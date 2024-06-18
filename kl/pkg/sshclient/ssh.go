@@ -2,12 +2,10 @@ package sshclient
 
 import (
 	"fmt"
-	"os"
-
-	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/term"
+	"os"
 )
 
 type SSHConfig struct {
@@ -31,14 +29,14 @@ func DoSSH(sc SSHConfig) error {
 
 	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", sc.Host, sc.SSHPort), config)
 	if err != nil {
-		return fmt.Errorf("Failed to dial: %s, please ensure container is running `%s`", err, text.Blue("kl box ps"))
+		return fmt.Errorf("failed to dial: %s, please ensure container is running `%s`", err, text.Blue("kl box ps"))
 	}
 	defer client.Close()
 
 	// Create a new SSH session
 	session, err := client.NewSession()
 	if err != nil {
-		return fmt.Errorf("Failed to create session: %s, please try again", err)
+		return fmt.Errorf("failed to create session: %s, please try again", err)
 	}
 	defer session.Close()
 
@@ -47,7 +45,7 @@ func DoSSH(sc SSHConfig) error {
 	// Allocate a pseudo-terminal (pty) for the session
 	ptmx, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
-		return fmt.Errorf("Failed to create pseudo-terminal: %s, please try again", err)
+		return fmt.Errorf("failed to create pseudo-terminal: %s, please try again", err)
 	}
 	defer term.Restore(int(os.Stdin.Fd()), ptmx)
 
@@ -64,19 +62,20 @@ func DoSSH(sc SSHConfig) error {
 
 	// Start the session with a pseudo-terminal
 	if err := session.RequestPty("xterm", height, width, ssh.TerminalModes{}); err != nil {
-		return fmt.Errorf("Failed to start pseudo-terminal: %s, please try again", err)
+		return fmt.Errorf("failed to start pseudo-terminal: %s, please try again", err)
 	}
 
 	// Start the remote shell
 	if err := session.Shell(); err != nil {
-		return fmt.Errorf("Failed to start shell: %s, please try again", err)
+		return fmt.Errorf("failed to start shell: %s, please try again", err)
 
 	}
 
 	// Wait for the session to finish
 	if err := session.Wait(); err != nil {
 		term.Restore(int(os.Stdin.Fd()), ptmx)
-		fn.Warnf("session exited with error: %s", err.Error())
+		return nil
+		//fn.Warnf("session exited with error: %s", err.Error())
 	}
 
 	return nil

@@ -213,6 +213,10 @@ func (c *client) Start() error {
 		if err := cl.SelectEnv(*localEnv); err != nil {
 			return err
 		}
+		deviceContext, err := cl.GetDeviceContext()
+		if err != nil {
+			return err
+		}
 
 		// s, err := proxy.GetHostIp()
 		// if err != nil {
@@ -231,7 +235,15 @@ func (c *client) Start() error {
 			"-v", fmt.Sprintf("%s:/home/kl/workspace:z", c.cwd),
 			"-v", fmt.Sprintf("%s:/home/kl/.cache/.kl:z", configFolder),
 			"-e", fmt.Sprintf("SSH_PORT=%d", sshPort),
+			"-e", fmt.Sprintf("KL_HASH_FILE=/home/kl/.cache/.kl/box-hash/%s", server.BoxHashFilePath()),
 			"-e", fmt.Sprintf("KL_WORKSPACE=%s", c.cwd),
+			"-e", fmt.Sprintf("KL_SEARCH_DOMAIN=%s.svc.%s.local", localEnv.TargetNs, localEnv.ClusterName),
+			"-e", fmt.Sprintf("KL_DNS=%s", func() string {
+				if len(deviceContext.DeviceDns) == 0 {
+					return "1.1.1.1"
+				}
+				return deviceContext.DeviceDns[0]
+			}()),
 			"--add-host=box:127.0.0.1",
 			// fmt.Sprintf("--add-host=%s.device.local:%s", d.Metadata.Name, s),
 			"-p", fmt.Sprintf("%d:%d", sshPort, sshPort),

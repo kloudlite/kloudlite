@@ -14,8 +14,8 @@ type KLFileType struct {
 	DefaultEnv string   `json:"defaultEnv" yaml:"defaultEnv"`
 	Packages   []string `json:"packages" yaml:"packages"`
 
-	EnvVars    EnvVars  `json:"envVars" yaml:"envVars"`
-	Mounts     Mounts   `json:"mounts" yaml:"mounts"`
+	EnvVars EnvVars `json:"envVars" yaml:"envVars"`
+	Mounts  Mounts  `json:"mounts" yaml:"mounts"`
 
 	InitScripts []string `json:"initScripts" yaml:"initScripts"`
 	AccountName string   `json:"accountName" yaml:"accountName"`

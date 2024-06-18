@@ -30,6 +30,7 @@ This command will add secret entry of managed resource references from current e
 }
 
 func AddMres(cmd *cobra.Command, _ []string) error {
+	//TODO: add changes to the klbox-hash file
 	mresName := fn.ParseStringFlag(cmd, "resource")
 
 	mres, err := server.SelectMres([]fn.Option{
@@ -107,13 +108,17 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 
 	fn.Log(fmt.Sprintf("added mres %s/%s to your kl-file", mres.Metadata.Name, *mresKey))
 
-	if err := server.SyncDevboxJsonFile(); err != nil {
+	if err := server.SyncBoxHash(); err != nil {
 		return err
 	}
 
-	if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
-		return err
-	}
+	//if err := server.SyncDevboxJsonFile(); err != nil {
+	//	return err
+	//}
+	//
+	//if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
+	//	return err
+	//}
 
 	return nil
 }
