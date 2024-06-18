@@ -78,7 +78,7 @@ func currentWorkingDir() string {
 }
 
 func SyncBoxHash() error {
-	fn.Printf("environment has been updated. to reflect the changes, do you want to restart the container? Y/n`.")
+	fn.Printf("environments may have been updated. to reflect the changes, do you want to restart the container? Y/n`.")
 	if !fn.Confirm("Y", "Y") {
 		return nil
 	}

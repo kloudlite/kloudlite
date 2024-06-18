@@ -15,7 +15,7 @@ var BoxCmd = &cobra.Command{
 
 func init() {
 
-	client.OnlyInsideBox(reloadCmd)
+	//client.OnlyInsideBox(reloadCmd)
 	BoxCmd.AddCommand(reloadCmd)
 
 	client.OnlyOutsideBox(startCmd)
