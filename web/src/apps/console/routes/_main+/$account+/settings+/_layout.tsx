@@ -8,7 +8,7 @@ const Settings = () => {
       navItems={[
         { label: 'General', value: 'general' },
         { label: 'User management', value: 'user-management' },
-        { label: 'Cloud providers', value: 'cloud-providers' },
+        // { label: 'Cloud providers', value: 'cloud-providers' },
         { label: 'Image pull secrets', value: 'image-pull-secrets' },
         // { label: 'VPN', value: 'vpn' },
       ]}
