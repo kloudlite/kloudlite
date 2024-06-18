@@ -75605,7 +75605,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -75613,7 +75613,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
