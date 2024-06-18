@@ -1,46 +1,21 @@
 syntax = "proto3";
-import "google/protobuf/any.proto";
 
 option go_package = "kloudlite.io/rpc/console";
 
 service Console {
-  rpc GetProjectName(ProjectIn) returns (ProjectOut);
-  rpc GetApp(AppIn) returns (AppOut);
-  rpc GetManagedSvc(MSvcIn) returns (MSvcOut);
-  rpc   SetupAccount(AccountSetupIn) returns (AccountSetupVoid);
+  rpc ArchiveEnvironmentsForCluster(ArchiveEnvironmentsForClusterIn) returns (ArchiveEnvironmentsForClusterOut);
 }
 
-message AccountSetupIn{
-  string accountId = 1;
+message ArchiveEnvironmentsForClusterIn {
+  string userId = 1;
+  string userName = 2;
+  string userEmail = 3;
+
+  string accountName = 4;
+  string clusterName = 5;
 }
 
-message AccountSetupVoid{
-
+message ArchiveEnvironmentsForClusterOut {
+  bool archived = 1;
 }
-
-message AppIn {
-  string app_id = 1;
-}
-
-message AppOut {
-  google.protobuf.Any data = 3;
-}
-
-message MSvcIn {
-  string msvc_id = 1;
-}
-
-message MSvcOut {
-  google.protobuf.Any data = 3;
-}
-
-message ProjectIn {
-  string projectId = 1;
-}
-
-message ProjectOut {
-  string name = 1;
-}
-
-message SetupClusterVoid {}
 

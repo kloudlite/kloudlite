@@ -137,6 +137,9 @@ spec:
             - --dns-servers
             - {{.GatewayDNSServers}}
 
+            - --service-hosts
+            -  {{.GatewayServiceHosts}}
+
             - --debug
           imagePullPolicy: Always
           resources:

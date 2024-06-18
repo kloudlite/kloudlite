@@ -13,6 +13,7 @@ import (
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -409,9 +410,14 @@ func (d *domain) syncKloudliteDeviceOnCluster(ctx InfraContext, gvpnName string)
 		return err
 	}
 
-	wgParams, err := d.buildGlobalVPNDeviceWgBaseParams(ctx, gvpnConns, klDevice)
+	wgParams, deviceHosts, err := d.buildGlobalVPNDeviceWgBaseParams(ctx, gvpnConns, klDevice)
 	if err != nil {
 		return err
+	}
+
+	deviceSvcHosts := make([]string, 0, len(deviceHosts))
+	for k, v := range deviceHosts {
+		deviceSvcHosts = append(deviceSvcHosts, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	wgParams.DNS = klDevice.IPAddr
@@ -491,6 +497,7 @@ func (d *domain) syncKloudliteDeviceOnCluster(ctx InfraContext, gvpnName string)
 		KubeReverseProxyImage: d.env.GlobalVPNKubeReverseProxyImage,
 		AuthzToken:            d.env.GlobalVPNKubeReverseProxyAuthzToken,
 		GatewayDNSServers:     strings.Join(dnsServerArgs, ","),
+		GatewayServiceHosts:   strings.Join(deviceSvcHosts, ","),
 		WireguardPort:         wgParams.ListenPort,
 	})
 	if err != nil {
@@ -745,6 +752,16 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 		return errors.NewE(err)
 	}
 
+	if _, err := d.consoleClient.ArchiveEnvironmentsForCluster(ctx, &console.ArchiveEnvironmentsForClusterIn{
+		UserId:      string(ctx.UserId),
+		UserName:    ctx.UserName,
+		UserEmail:   ctx.UserEmail,
+		AccountName: ctx.AccountName,
+		ClusterName: name,
+	}); err != nil {
+		return errors.NewE(err)
+	}
+
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, ucluster.Name, PublishUpdate)
 	if err := d.deleteK8sResource(ctx, &ucluster.Cluster); err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -862,6 +879,7 @@ func (d *domain) MarkClusterOnlineAt(ctx InfraContext, clusterName string, times
 		}); err != nil {
 			return errors.NewEf(err, "failed to patch last online time for byok cluster %q,", clusterName)
 		}
+		return nil
 	}
 
 	if _, err := d.clusterRepo.Patch(ctx, repos.Filter{

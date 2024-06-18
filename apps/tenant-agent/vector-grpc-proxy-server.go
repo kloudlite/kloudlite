@@ -14,6 +14,8 @@ type vectorGrpcProxyServer struct {
 	realVectorClient proto_rpc.VectorClient
 	logger           logging.Logger
 
+	errCh chan error
+
 	accessToken string
 	accountName string
 	clusterName string
@@ -36,6 +38,9 @@ func (v *vectorGrpcProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.P
 	per, err := v.realVectorClient.PushEvents(outgoingCtx, msg)
 	if err != nil {
 		v.logger.Error(err)
+		if v.errCh != nil {
+			v.errCh <- err
+		}
 		return nil, errors.NewE(err)
 	}
 	return per, nil
@@ -54,6 +59,9 @@ func (v *vectorGrpcProxyServer) HealthCheck(ctx context.Context, msg *proto_rpc.
 	hcr, err := v.realVectorClient.HealthCheck(outgoingCtx, msg)
 	if err != nil {
 		v.logger.Error(err)
+		if v.errCh != nil {
+			v.errCh <- err
+		}
 		return nil, errors.NewE(err)
 	}
 	return hcr, nil

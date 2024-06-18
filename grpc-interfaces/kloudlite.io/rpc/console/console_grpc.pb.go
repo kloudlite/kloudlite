@@ -19,20 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Console_GetProjectName_FullMethodName = "/Console/GetProjectName"
-	Console_GetApp_FullMethodName         = "/Console/GetApp"
-	Console_GetManagedSvc_FullMethodName  = "/Console/GetManagedSvc"
-	Console_SetupAccount_FullMethodName   = "/Console/SetupAccount"
+	Console_ArchiveEnvironmentsForCluster_FullMethodName = "/Console/ArchiveEnvironmentsForCluster"
 )
 
 // ConsoleClient is the client API for Console service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConsoleClient interface {
-	GetProjectName(ctx context.Context, in *ProjectIn, opts ...grpc.CallOption) (*ProjectOut, error)
-	GetApp(ctx context.Context, in *AppIn, opts ...grpc.CallOption) (*AppOut, error)
-	GetManagedSvc(ctx context.Context, in *MSvcIn, opts ...grpc.CallOption) (*MSvcOut, error)
-	SetupAccount(ctx context.Context, in *AccountSetupIn, opts ...grpc.CallOption) (*AccountSetupVoid, error)
+	ArchiveEnvironmentsForCluster(ctx context.Context, in *ArchiveEnvironmentsForClusterIn, opts ...grpc.CallOption) (*ArchiveEnvironmentsForClusterOut, error)
 }
 
 type consoleClient struct {
@@ -43,36 +37,9 @@ func NewConsoleClient(cc grpc.ClientConnInterface) ConsoleClient {
 	return &consoleClient{cc}
 }
 
-func (c *consoleClient) GetProjectName(ctx context.Context, in *ProjectIn, opts ...grpc.CallOption) (*ProjectOut, error) {
-	out := new(ProjectOut)
-	err := c.cc.Invoke(ctx, Console_GetProjectName_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *consoleClient) GetApp(ctx context.Context, in *AppIn, opts ...grpc.CallOption) (*AppOut, error) {
-	out := new(AppOut)
-	err := c.cc.Invoke(ctx, Console_GetApp_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *consoleClient) GetManagedSvc(ctx context.Context, in *MSvcIn, opts ...grpc.CallOption) (*MSvcOut, error) {
-	out := new(MSvcOut)
-	err := c.cc.Invoke(ctx, Console_GetManagedSvc_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *consoleClient) SetupAccount(ctx context.Context, in *AccountSetupIn, opts ...grpc.CallOption) (*AccountSetupVoid, error) {
-	out := new(AccountSetupVoid)
-	err := c.cc.Invoke(ctx, Console_SetupAccount_FullMethodName, in, out, opts...)
+func (c *consoleClient) ArchiveEnvironmentsForCluster(ctx context.Context, in *ArchiveEnvironmentsForClusterIn, opts ...grpc.CallOption) (*ArchiveEnvironmentsForClusterOut, error) {
+	out := new(ArchiveEnvironmentsForClusterOut)
+	err := c.cc.Invoke(ctx, Console_ArchiveEnvironmentsForCluster_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -83,10 +50,7 @@ func (c *consoleClient) SetupAccount(ctx context.Context, in *AccountSetupIn, op
 // All implementations must embed UnimplementedConsoleServer
 // for forward compatibility
 type ConsoleServer interface {
-	GetProjectName(context.Context, *ProjectIn) (*ProjectOut, error)
-	GetApp(context.Context, *AppIn) (*AppOut, error)
-	GetManagedSvc(context.Context, *MSvcIn) (*MSvcOut, error)
-	SetupAccount(context.Context, *AccountSetupIn) (*AccountSetupVoid, error)
+	ArchiveEnvironmentsForCluster(context.Context, *ArchiveEnvironmentsForClusterIn) (*ArchiveEnvironmentsForClusterOut, error)
 	mustEmbedUnimplementedConsoleServer()
 }
 
@@ -94,17 +58,8 @@ type ConsoleServer interface {
 type UnimplementedConsoleServer struct {
 }
 
-func (UnimplementedConsoleServer) GetProjectName(context.Context, *ProjectIn) (*ProjectOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetProjectName not implemented")
-}
-func (UnimplementedConsoleServer) GetApp(context.Context, *AppIn) (*AppOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetApp not implemented")
-}
-func (UnimplementedConsoleServer) GetManagedSvc(context.Context, *MSvcIn) (*MSvcOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetManagedSvc not implemented")
-}
-func (UnimplementedConsoleServer) SetupAccount(context.Context, *AccountSetupIn) (*AccountSetupVoid, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetupAccount not implemented")
+func (UnimplementedConsoleServer) ArchiveEnvironmentsForCluster(context.Context, *ArchiveEnvironmentsForClusterIn) (*ArchiveEnvironmentsForClusterOut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ArchiveEnvironmentsForCluster not implemented")
 }
 func (UnimplementedConsoleServer) mustEmbedUnimplementedConsoleServer() {}
 
@@ -119,74 +74,20 @@ func RegisterConsoleServer(s grpc.ServiceRegistrar, srv ConsoleServer) {
 	s.RegisterService(&Console_ServiceDesc, srv)
 }
 
-func _Console_GetProjectName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ProjectIn)
+func _Console_ArchiveEnvironmentsForCluster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ArchiveEnvironmentsForClusterIn)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ConsoleServer).GetProjectName(ctx, in)
+		return srv.(ConsoleServer).ArchiveEnvironmentsForCluster(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Console_GetProjectName_FullMethodName,
+		FullMethod: Console_ArchiveEnvironmentsForCluster_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsoleServer).GetProjectName(ctx, req.(*ProjectIn))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Console_GetApp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AppIn)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConsoleServer).GetApp(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Console_GetApp_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsoleServer).GetApp(ctx, req.(*AppIn))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Console_GetManagedSvc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MSvcIn)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConsoleServer).GetManagedSvc(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Console_GetManagedSvc_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsoleServer).GetManagedSvc(ctx, req.(*MSvcIn))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Console_SetupAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AccountSetupIn)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConsoleServer).SetupAccount(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Console_SetupAccount_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsoleServer).SetupAccount(ctx, req.(*AccountSetupIn))
+		return srv.(ConsoleServer).ArchiveEnvironmentsForCluster(ctx, req.(*ArchiveEnvironmentsForClusterIn))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -199,20 +100,8 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ConsoleServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetProjectName",
-			Handler:    _Console_GetProjectName_Handler,
-		},
-		{
-			MethodName: "GetApp",
-			Handler:    _Console_GetApp_Handler,
-		},
-		{
-			MethodName: "GetManagedSvc",
-			Handler:    _Console_GetManagedSvc_Handler,
-		},
-		{
-			MethodName: "SetupAccount",
-			Handler:    _Console_SetupAccount_Handler,
+			MethodName: "ArchiveEnvironmentsForCluster",
+			Handler:    _Console_ArchiveEnvironmentsForCluster_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
