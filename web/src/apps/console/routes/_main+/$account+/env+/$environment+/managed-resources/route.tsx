@@ -11,6 +11,7 @@ import { Button } from '~/components/atoms/button';
 import { useState } from 'react';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { EmptyManagedResourceImage } from '~/console/components/empty-resource-images';
+import { getSearch } from '~/console/server/utils/common';
 import Tools from './tools';
 import ManagedResourceResourcesV2 from './managed-resources-resource-v2';
 import HandleManagedResourceV2 from './handle-managed-resource-v2';
@@ -22,6 +23,7 @@ export const loader = (ctx: IRemixCtx) => {
       ctx.request
     ).listManagedResources({
       search: {
+        ...getSearch(ctx),
         envName: {
           matchType: 'exact',
           exact: environment,

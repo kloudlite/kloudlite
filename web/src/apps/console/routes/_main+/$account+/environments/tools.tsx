@@ -4,6 +4,7 @@ import CommonTools from '~/console/components/common-tools';
 
 const Tools = () => {
   const [searchParams] = useSearchParams();
+  console.log('ee params', searchParams);
 
   const options = useMemo(() => [], [searchParams]);
 

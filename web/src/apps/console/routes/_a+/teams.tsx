@@ -228,11 +228,15 @@ const Accounts = () => {
                         key: generateKey(name, index),
                         className: 'flex-1',
                         render: () => (
-                          <div className="flex flex-row items-center gap-lg">
+                          <div className="group flex flex-row items-center gap-lg">
                             <ConsoleAvatar name={name} />
-                            <div className="text-text-default headingMd flex-1">
-                              {displayName}{' '}
-                              <span className="opacity-60">#{name}</span>
+                            <div className="text-text-default  flex-1">
+                              <span className="capitalize headingMd">
+                                {displayName}
+                              </span>{' '}
+                              <span className=" group-hover:text-text-soft text-text-disabled ">
+                                #{name}
+                              </span>
                             </div>
                           </div>
                         ),

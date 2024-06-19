@@ -53,23 +53,22 @@ const FilterByCLusterType = ({ onChange, value }: IFilterByClusterType) => {
 
 const Tools = ({ onChange, value }: IFilterByClusterType) => {
   const [searchParams] = useSearchParams();
-
+  console.log('cc params', searchParams);
   const options = useMemo(
     () => [
-      {
-        name: 'Provider',
-        type: 'cloudProviderName',
-        search: false,
-        dataFetcher: async () => {
-          return [
-            { content: 'Amazon Web Services', value: 'aws' },
-            { content: 'Digital Ocean', value: 'do' },
-            { content: 'Google Cloud Platform', value: 'gcp' },
-            { content: 'Microsoft Azure', value: 'azure' },
-          ];
-        },
-      },
-
+      // {
+      //   name: 'Provider',
+      //   type: 'cloudProviderName',
+      //   search: false,
+      //   dataFetcher: async () => {
+      //     return [
+      //       { content: 'Amazon Web Services', value: 'aws' },
+      //       { content: 'Digital Ocean', value: 'do' },
+      //       { content: 'Google Cloud Platform', value: 'gcp' },
+      //       { content: 'Microsoft Azure', value: 'azure' },
+      //     ];
+      //   },
+      // },
       // {
       //   name: 'Region',
       //   type: 'region',
@@ -81,37 +80,39 @@ const Tools = ({ onChange, value }: IFilterByClusterType) => {
       //     ];
       //   },
       // },
-
-      {
-        name: 'Status',
-        type: 'isReady',
-        search: false,
-        dataFetcher: async () => {
-          return [
-            { content: 'Running', value: true },
-            { content: 'Error', value: false },
-            // { content: 'Freezed', value: false, type: 'freezed' },
-          ];
-        },
-      },
+      // {
+      //   name: 'Status',
+      //   type: 'isReady',
+      //   search: false,
+      //   dataFetcher: async () => {
+      //     return [
+      //       { content: 'Running', value: true },
+      //       { content: 'Error', value: false },
+      //       // { content: 'Freezed', value: false, type: 'freezed' },
+      //     ];
+      //   },
+      // },
     ],
     [searchParams]
   );
-
   return (
     <CommonTools
       {...{ options }}
-      commonToolPrefix={
-        <FilterByCLusterType
-          onChange={(e) => {
-            console.log(e);
-            onChange?.(e);
-          }}
-          value={value}
-        />
-      }
+      // commonToolPrefix={
+      //   <FilterByCLusterType
+      //     onChange={(e) => {
+      //       console.log(e);
+      //       onChange?.(e);
+      //     }}
+      //     value={value}
+      //   />
+      // }
     />
   );
+
+  // const [searchParams] = useSearchParams();
+
+  // const options = useMemo(() => [], [searchParams]);
 };
 
 export default Tools;
