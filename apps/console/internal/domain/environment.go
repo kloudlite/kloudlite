@@ -482,6 +482,10 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, name string) error {
 
 	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, uenv.Name, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
 
+	if uenv.IsArchived != nil && *uenv.IsArchived {
+		return d.environmentRepo.DeleteById(ctx, uenv.Id)
+	}
+
 	if err := d.deleteK8sResource(ctx, uenv.Name, &uenv.Environment); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.environmentRepo.DeleteById(ctx, uenv.Id)
