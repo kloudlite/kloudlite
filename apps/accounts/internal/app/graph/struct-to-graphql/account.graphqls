@@ -5,6 +5,7 @@ type Account @shareable {
   displayName: String!
   id: ID!
   isActive: Boolean
+  kloudliteGatewayRegion: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   logo: String
   markedForDeletion: Boolean
@@ -18,6 +19,7 @@ input AccountIn {
   contactEmail: String
   displayName: String!
   isActive: Boolean
+  kloudliteGatewayRegion: String!
   logo: String
   metadata: MetadataIn
 }
