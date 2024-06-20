@@ -65,13 +65,12 @@ func main() {
 		if isDev {
 			return context.WithTimeout(context.TODO(), 20*time.Second)
 		}
-		return context.WithTimeout(context.TODO(), 5*time.Second)
+		return context.WithTimeout(context.TODO(), 10*time.Second)
 	}()
 	defer cancelFunc()
 
 	if err := app.Start(ctx); err != nil {
 		logger.Errorf(err, "error starting accounts app")
-		logger.Infof("EXITING as errors encountered during startup")
 		os.Exit(1)
 	}
 

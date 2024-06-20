@@ -19,7 +19,9 @@ tasks:
     env:
       CGO_ENABLED: 0
     cmds:
-      - fwatcher --exec 'go run ./main.go --dev' --ext '.go'
+      # - fwatcher --exec 'go run ./main.go --dev' --ext '.go'
+      - go build -o ./bin/{{.app}} .
+      - ./bin/{{.app}} --dev
 
   build:
     cmds:
