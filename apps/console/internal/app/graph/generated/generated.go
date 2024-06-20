@@ -61,7 +61,6 @@ type ResolverRoot interface {
 	ImagePullSecret() ImagePullSecretResolver
 	K8s__io___api___core___v1__Secret() K8s__io___api___core___v1__SecretResolver
 	ManagedResource() ManagedResourceResolver
-	MatchFilter() MatchFilterResolver
 	Metadata() MetadataResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
@@ -75,7 +74,6 @@ type ResolverRoot interface {
 	Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn() Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver
 	ImagePullSecretIn() ImagePullSecretInResolver
 	ManagedResourceIn() ManagedResourceInResolver
-	MatchFilterIn() MatchFilterInResolver
 	MetadataIn() MetadataInResolver
 	RouterIn() RouterInResolver
 	SecretIn() SecretInResolver
@@ -943,9 +941,6 @@ type ManagedResourceResolver interface {
 
 	UpdateTime(ctx context.Context, obj *entities.ManagedResource) (string, error)
 }
-type MatchFilterResolver interface {
-	MatchType(ctx context.Context, obj *repos.MatchFilter) (model.GithubComKloudliteAPIPkgReposMatchType, error)
-}
 type MetadataResolver interface {
 	Annotations(ctx context.Context, obj *v13.ObjectMeta) (map[string]interface{}, error)
 	CreationTimestamp(ctx context.Context, obj *v13.ObjectMeta) (string, error)
@@ -1079,9 +1074,6 @@ type ImagePullSecretInResolver interface {
 type ManagedResourceInResolver interface {
 	Metadata(ctx context.Context, obj *entities.ManagedResource, data *v13.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.ManagedResource, data *model.GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn) error
-}
-type MatchFilterInResolver interface {
-	MatchType(ctx context.Context, obj *repos.MatchFilter, data model.GithubComKloudliteAPIPkgReposMatchType) error
 }
 type MetadataInResolver interface {
 	Annotations(ctx context.Context, obj *v13.ObjectMeta, data map[string]interface{}) error
@@ -25722,7 +25714,7 @@ func (ec *executionContext) _MatchFilter_matchType(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.MatchFilter().MatchType(rctx, obj)
+		return obj.MatchType, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -25734,17 +25726,17 @@ func (ec *executionContext) _MatchFilter_matchType(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.GithubComKloudliteAPIPkgReposMatchType)
+	res := resTmp.(repos.MatchType)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MatchFilter_matchType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MatchFilter",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Github__com___kloudlite___api___pkg___repos__MatchType does not have child fields")
 		},
@@ -40335,13 +40327,11 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 			it.Exact = data
 		case "matchType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchType"))
-			data, err := ec.unmarshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			if err = ec.resolvers.MatchFilterIn().MatchType(ctx, &it, data); err != nil {
-				return it, err
-			}
+			it.MatchType = data
 		case "notInArray":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notInArray"))
 			data, err := ec.unmarshalOAny2ᚕinterfaceᚄ(ctx, v)
@@ -46023,41 +46013,10 @@ func (ec *executionContext) _MatchFilter(ctx context.Context, sel ast.SelectionS
 		case "exact":
 			out.Values[i] = ec._MatchFilter_exact(ctx, field, obj)
 		case "matchType":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._MatchFilter_matchType(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._MatchFilter_matchType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "notInArray":
 			out.Values[i] = ec._MatchFilter_notInArray(ctx, field, obj)
 		case "regex":
@@ -48942,14 +48901,20 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___api___common__Crea
 	return ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIPkgReposMatchType, error) {
-	var res model.GithubComKloudliteAPIPkgReposMatchType
-	err := res.UnmarshalGQL(v)
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx context.Context, v interface{}) (repos.MatchType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := repos.MatchType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgReposMatchType(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIPkgReposMatchType) graphql.Marshaler {
-	return v
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx context.Context, sel ast.SelectionSet, v repos.MatchType) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___types__SyncAction2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncAction(ctx context.Context, v interface{}) (types.SyncAction, error) {

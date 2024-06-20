@@ -874,6 +874,7 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, search *mo
 	if search != nil {
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
+			filter[fc.MetadataName] = *search.Text
 		}
 		if search.IsReady != nil {
 			filter["status.isReady"] = *search.IsReady

@@ -171,7 +171,7 @@ models:
     model: github.com/kloudlite/api/pkg/repos.MatchFilter
   MatchFilterIn: *match-filter-model
 
-  MatchFilterMatchType:
+  Github__com___kloudlite___api___pkg___repos__MatchType:
     model: github.com/kloudlite/api/pkg/repos.MatchType
 
   CursorPagination: &cursor-pagination-model
