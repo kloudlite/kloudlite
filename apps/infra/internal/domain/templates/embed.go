@@ -15,6 +15,7 @@ type templateFile string
 const (
 	HelmKloudliteAgent               templateFile = "./helm-charts-kloudlite-agent.yml.tpl"
 	GlobalVPNKloudliteDeviceTemplate templateFile = "./global-vpn-kloudlite-device.yml.tpl"
+	GatewayServiceTemplate          templateFile = "./kloudlite-gateway-svc.yml.tpl"
 )
 
 func Read(t templateFile) ([]byte, error) {

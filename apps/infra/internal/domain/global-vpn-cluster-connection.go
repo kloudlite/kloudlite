@@ -229,6 +229,19 @@ func (d *domain) claimNextClusterCIDR(ctx InfraContext, clusterName string, gvpn
 
 		cidr := freeCIDR.ClusterSvcCIDR
 
+		claimed, err := d.claimClusterSvcCIDRRepo.FindOne(ctx, repos.Filter{
+			fc.AccountName:                         ctx.AccountName,
+			fc.ClaimClusterSvcCIDRGlobalVPNName:    gvpnName,
+			fc.ClaimClusterSvcCIDRClaimedByCluster: clusterName,
+		})
+		if err != nil {
+			return "", err
+		}
+
+		if claimed != nil {
+			return claimed.ClusterSvcCIDR, nil
+		}
+
 		if _, err := d.claimClusterSvcCIDRRepo.Create(ctx, &entities.ClaimClusterSvcCIDR{
 			AccountName:      ctx.AccountName,
 			GlobalVPNName:    gvpnName,
@@ -503,7 +516,12 @@ func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterNam
 		return errors.NewE(err)
 	}
 
-	if err := d.syncKloudliteDeviceOnCluster(ctx, xconn.GlobalVPNName); err != nil {
+	// FIXME: move to sync kloudlite gateway
+	// if err := d.syncKloudliteDeviceOnCluster(ctx, xconn.GlobalVPNName); err != nil {
+	// 	return errors.NewE(err)
+	// }
+
+	if err := d.syncKloudliteGateway(ctx, xconn.GlobalVPNName); err != nil {
 		return errors.NewE(err)
 	}
 
