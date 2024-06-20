@@ -24,6 +24,7 @@ tasks:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
           --struct github.com/kloudlite/api/apps/accounts/internal/entities.Account
+          --struct github.com/kloudlite/api/apps/accounts/internal/domain.AvailableKloudliteRegion
           --struct github.com/kloudlite/api/apps/accounts/internal/entities.Invitation
           --struct github.com/kloudlite/api/apps/accounts/internal/entities.AccountMembership
         > ./internal/app/_struct-to-graphql/main.go

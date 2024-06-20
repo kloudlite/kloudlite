@@ -26,6 +26,8 @@ type Query {
   accounts_getAccountMembership(accountName: String!): AccountMembership @isLoggedInAndVerified
 
   accounts_ensureKloudliteRegistryPullSecrets(accountName: String!): Boolean! @isLoggedInAndVerified
+
+  accounts_availableKloudliteRegions: [AvailableKloudliteRegion!] @isLoggedInAndVerified
 }
 
 type Mutation {

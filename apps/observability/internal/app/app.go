@@ -118,7 +118,7 @@ var Module = fx.Module(
 				}
 
 				return k8s.NewClient(&rest.Config{
-					Host: fmt.Sprintf("http://kloudlite-device-proxy-%s.kl-account-%s.svc.cluster.local:8080/clusters/%s", "default", accountName, clusterName),
+					Host: fmt.Sprintf("http://kloudlite-device-%s.kl-account-%s.svc.cluster.local:8080/clusters/%s", "default", accountName, clusterName),
 					WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
 						return httpServer.NewRoundTripperWithHeaders(rt, map[string][]string{
 							"X-Kloudlite-Authz": {fmt.Sprintf("Bearer %s", ev.GlobalVPNAuthzSecret)},
@@ -127,6 +127,7 @@ var Module = fx.Module(
 				}, nil)
 			}()
 			if err != nil {
+				logger.Errorf(err, "failed to create k8s client")
 				http.Error(w, fmt.Sprintf("failed to create k8s client: %v", err), http.StatusInternalServerError)
 				return
 			}
@@ -180,7 +181,7 @@ var Module = fx.Module(
 				}
 
 				return k8s.NewClient(&rest.Config{
-					Host: fmt.Sprintf("http://kloudlite-device-proxy-%s.kl-account-%s.svc.cluster.local:8080/clusters/%s", "default", accountName, clusterName),
+					Host: fmt.Sprintf("http://kloudlite-device-%s.kl-account-%s.svc.cluster.local:8080/clusters/%s", "default", accountName, clusterName),
 					WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
 						return httpServer.NewRoundTripperWithHeaders(rt, map[string][]string{
 							"X-Kloudlite-Authz": {fmt.Sprintf("Bearer %s", ev.GlobalVPNAuthzSecret)},
