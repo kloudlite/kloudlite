@@ -77,21 +77,20 @@ spec:
       containers:
         - name: kube-reverse-proxy
           image: {{.KubeReverseProxyImage}}
+          imagePullPolicy: "Always"
           args:
             - --addr
             - ":8080"
             - --proxy-addr
-            - {{ printf "kubectl-proxy.kloudlite.svc.{{.CLUSTER_NAME}}.local:8080" }}
+            - {{ printf "pod-logs-proxy.kl-gateway.svc.{{.CLUSTER_NAME}}.local:8383" }}
             - "--authz"
             - {{.AuthzToken}}
-          imagePullPolicy: "IfNotPresent"
           resources:
             limits:
               cpu: 100m
               memory: 100Mi
             requests:
               cpu: 100m
-
               memory: 100Mi
 
         {{- if $isDebug }}

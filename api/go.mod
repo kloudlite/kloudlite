@@ -42,6 +42,7 @@ require (
 )
 
 require (
+	github.com/go-chi/chi/v5 v5.0.10
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
 	github.com/nats-io/nats.go v1.31.0
 	github.com/onsi/ginkgo/v2 v2.12.0

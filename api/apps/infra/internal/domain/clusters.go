@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	"github.com/kloudlite/operator/pkg/kubectl"
 	"sigs.k8s.io/yaml"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -24,6 +26,7 @@ import (
 
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/api/pkg/wgutils"
@@ -372,6 +375,171 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	return nCluster, nil
+}
+
+func (d *domain) syncKloudliteGateway(ctx InfraContext, gvpnName string) error {
+	// 1. parse deployment template
+	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	svcTemplate, err := templates.Read(templates.GatewayServiceTemplate)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	accNs, err := d.getAccNamespace(ctx)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	gv, err := d.findGlobalVPN(ctx, gvpnName)
+	if err != nil {
+		return err
+	}
+
+	if gv.KloudliteDevice.Name == "" {
+		return nil
+	}
+
+	gvpnConns, err := d.listGlobalVPNConnections(ctx, gvpnName)
+	if err != nil {
+		return err
+	}
+
+	klDevice, err := d.findGlobalVPNDevice(ctx, gvpnName, gv.KloudliteDevice.Name)
+	if err != nil {
+		return err
+	}
+
+	wgParams, deviceHosts, err := d.buildGlobalVPNDeviceWgBaseParams(ctx, gvpnConns, klDevice)
+	if err != nil {
+		return err
+	}
+
+	deviceSvcHosts := make([]string, 0, len(deviceHosts))
+	for k, v := range deviceHosts {
+		deviceSvcHosts = append(deviceSvcHosts, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	wgParams.DNS = klDevice.IPAddr
+	wgParams.ListenPort = 31820
+
+	dnsServerArgs := make([]string, 0, len(gvpnConns))
+	for _, gvpnConn := range gvpnConns {
+		if gvpnConn.Spec.GlobalIP != "" {
+			dnsServerArgs = append(dnsServerArgs, fmt.Sprintf("%s=%s:53", gvpnConn.Spec.DNSSuffix, gvpnConn.Spec.GlobalIP))
+		}
+	}
+
+	resourceName := fmt.Sprintf("kloudlite-device-%s", gv.Name)
+	resourceNamespace := accNs
+	selector := map[string]string{
+		"app": resourceName,
+	}
+
+	// wgEndpoint := d.env.KloudliteGlobalVPNDeviceHost
+
+	gao, err := d.accountsSvc.GetAccount(ctx, string(ctx.UserId), ctx.AccountName)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	gwRegion, ok := d.env.AvailableKloudliteRegions[gao.KloudliteGatewayRegion]
+	if !ok {
+		return errors.Newf("invalid gateway region %q", gao.KloudliteGatewayRegion)
+	}
+
+	wgEndpoint := gwRegion.PublicDNSHost
+
+	c, err := k8s.RestConfigFromKubeConfig([]byte(gwRegion.Kubeconfig))
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	yc, err := kubectl.NewYAMLClient(c, kubectl.YAMLClientOpts{})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	service := &corev1.Service{}
+
+	wgSvcName := fmt.Sprintf("%s-wg", resourceName)
+
+	svcBytes, err := templates.ParseBytes(svcTemplate, templates.GatewayServiceTemplateVars{
+		Name:          wgSvcName,
+		Namespace:     resourceNamespace,
+		WireguardPort: wgParams.ListenPort,
+		Selector:      selector,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := os.WriteFile("/tmp/svc.yml", svcBytes, 0o644); err != nil {
+		return errors.NewE(err)
+	}
+
+	ctx2, cf := func() (context.Context, context.CancelFunc) {
+		if d.env.IsDev {
+			return context.WithCancel(ctx)
+		}
+		return context.WithTimeout(ctx, 5*time.Second)
+	}()
+	defer cf()
+
+	for {
+		if ctx2.Err() != nil {
+			return ctx2.Err()
+		}
+		service, err = yc.Client().CoreV1().Services(resourceNamespace).Get(ctx, wgSvcName, metav1.GetOptions{})
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return err
+			}
+			if _, err := yc.ApplyYAML(ctx, svcBytes); err != nil {
+				return errors.NewE(err)
+			}
+			continue
+		}
+
+		if service.Spec.Ports[0].NodePort != 0 {
+			wgEndpoint = fmt.Sprintf("%s:%d", wgEndpoint, service.Spec.Ports[0].NodePort)
+			break
+		}
+	}
+
+	if _, err := d.gvpnDevicesRepo.PatchById(ctx, klDevice.Id, repos.Document{
+		fc.GlobalVPNDevicePublicEndpoint: wgEndpoint,
+	}); err != nil {
+		return err
+	}
+
+	wgConfig, err := wgutils.GenerateWireguardConfig(*wgParams)
+	if err != nil {
+		return err
+	}
+
+	deploymentBytes, err := templates.ParseBytes(b, templates.GVPNKloudliteDeviceTemplateVars{
+		Name:                  resourceName,
+		Namespace:             accNs,
+		WgConfig:              wgConfig,
+		KubeReverseProxyImage: d.env.GlobalVPNKubeReverseProxyImage,
+		AuthzToken:            d.env.GlobalVPNKubeReverseProxyAuthzToken,
+		GatewayDNSServers:     strings.Join(dnsServerArgs, ","),
+		GatewayServiceHosts:   strings.Join(deviceSvcHosts, ","),
+		WireguardPort:         wgParams.ListenPort,
+	})
+	if err != nil {
+		return err
+	}
+
+	if _, err := yc.ApplyYAML(ctx, deploymentBytes); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
 }
 
 /*
