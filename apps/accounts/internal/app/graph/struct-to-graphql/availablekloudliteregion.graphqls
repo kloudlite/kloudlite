@@ -1,0 +1,10 @@
+type AvailableKloudliteRegion @shareable {
+  displayName: String!
+  id: String!
+}
+
+input AvailableKloudliteRegionIn {
+  displayName: String!
+  id: String!
+}
+
