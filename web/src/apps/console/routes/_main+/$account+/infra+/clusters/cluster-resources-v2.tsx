@@ -48,7 +48,7 @@ import CodeView from '~/console/components/code-view';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import { Badge } from '~/components/atoms/badge';
-import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
+// import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
 import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import Tooltip from '~/components/atoms/tooltip';
@@ -204,14 +204,24 @@ const ByokButton = ({ item }: { item: CombinedBaseType }) => {
 };
 
 const GetByokClusterMessage = ({
-  syncStatusState,
+  lastOnlineAt,
   item,
 }: {
-  syncStatusState: SyncStatusState;
+  lastOnlineAt: string;
   item: CombinedBaseType;
 }) => {
-  switch (syncStatusState) {
-    case 'UPDATED_AT_AGENT':
+  if (lastOnlineAt === null) {
+    return <ByokButton item={item} />;
+  }
+
+  const lastTime = new Date(lastOnlineAt);
+  const currentTime = new Date();
+
+  const timeDifference =
+    (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
+
+  switch (true) {
+    case timeDifference <= 2:
       return (
         <ListItem
           data={
@@ -226,12 +236,12 @@ const GetByokClusterMessage = ({
   }
 };
 
-const GetSyncStatus = ({ lastOnlioneAt }: { lastOnlioneAt: string }) => {
-  if (lastOnlioneAt === null) {
+const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
+  if (lastOnlineAt === null) {
     return <Badge type="warning">Offline</Badge>;
   }
 
-  const lastTime = new Date(lastOnlioneAt);
+  const lastTime = new Date(lastOnlineAt);
   const currentTime = new Date();
 
   const timeDifference =
@@ -261,7 +271,7 @@ const GetSyncStatus = ({ lastOnlioneAt }: { lastOnlioneAt: string }) => {
           side="top"
           content={
             <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
-              {lastOnlioneAt} ({timeDifference * 60}s ago)
+              {lastOnlineAt} ({timeDifference * 60}s ago)
             </div>
           }
         >
@@ -277,7 +287,7 @@ const GetSyncStatus = ({ lastOnlioneAt }: { lastOnlioneAt: string }) => {
           side="top"
           content={
             <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
-              {lastOnlioneAt}
+              {lastOnlineAt}
             </div>
           }
         >
@@ -477,13 +487,13 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
                     />
                   ) : (
                     <GetByokClusterMessage
-                      syncStatusState={i.syncStatus.state}
+                      lastOnlineAt={i.lastOnlineAt}
                       item={i}
                     />
                   ),
               },
               status: {
-                render: () => <GetSyncStatus lastOnlioneAt={i.lastOnlineAt} />,
+                render: () => <GetSyncStatus lastOnlineAt={i.lastOnlineAt} />,
               },
               updated: {
                 render: () => (

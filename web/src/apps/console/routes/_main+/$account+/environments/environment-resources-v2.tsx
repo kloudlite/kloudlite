@@ -201,7 +201,7 @@ const ListView = ({ items, onAction }: IResource) => {
               status: {
                 render: () =>
                   i.isArchived ? (
-                    <Badge type="critical">Deleted</Badge>
+                    <Badge type="neutral">Archived</Badge>
                   ) : (
                     <SyncStatusV2 item={i} />
                   ),

@@ -301,7 +301,7 @@ export const ShowWireguardConfig = ({
   deviceName: string;
   creationMethod: string;
 }) => {
-  const [mode, setMode] = useState<'config' | 'qr'>('qr');
+  const [mode, setMode] = useState<'config' | 'qr'>('config');
 
   const [data, setData] = useState<{
     value: string;
@@ -392,12 +392,12 @@ export const ShowWireguardConfig = ({
               }}
               items={[
                 {
-                  label: 'QR Code',
-                  value: 'qr',
-                },
-                {
                   label: 'Config',
                   value: 'config',
+                },
+                {
+                  label: 'QR Code',
+                  value: 'qr',
                 },
               ]}
             />

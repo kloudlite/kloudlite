@@ -210,10 +210,6 @@ export const ExposedPorts = () => {
             options={async () => []}
             onChange={(val, v) => {
               const r = /^\d+$/;
-              console.log(
-                'here',
-                v.every((c) => r.test(c))
-              );
               if (v.every((c) => r.test(c))) {
                 setServices([...v.map((vv) => ({ port: parseInt(vv, 10) }))]);
               } else {
