@@ -60,6 +60,19 @@ func (d *domain) claimNextFreeDeviceIP(ctx InfraContext, deviceName string, gvpn
 
 		ipAddr := freeIp.IPAddr
 
+		claimed, err := d.claimDeviceIPRepo.FindOne(ctx, repos.Filter{
+			fc.AccountName:                ctx.AccountName,
+			fc.ClaimDeviceIPGlobalVPNName: gvpnName,
+			fc.ClaimDeviceIPClaimedBy:     deviceName,
+		})
+		if err != nil {
+			return "", err
+		}
+
+		if claimed != nil {
+			return claimed.IPAddr, nil
+		}
+
 		if _, err := d.claimDeviceIPRepo.Create(ctx, &entities.ClaimDeviceIP{
 			AccountName:   ctx.AccountName,
 			GlobalVPNName: gvpnName,
@@ -118,7 +131,11 @@ func (d *domain) deleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName
 		return err
 	}
 
-	if err := d.syncKloudliteDeviceOnCluster(ctx, gvpn); err != nil {
+	// if err := d.syncKloudliteDeviceOnCluster(ctx, gvpn); err != nil {
+	// 	return err
+	// }
+
+	if err := d.syncKloudliteGateway(ctx, gvpn); err != nil {
 		return err
 	}
 
@@ -136,6 +153,10 @@ func (d *domain) ListGlobalVPNDevice(ctx InfraContext, gvpn string, search map[s
 			fc.GlobalVPNDeviceGlobalVPNName: gvpn,
 		},
 		map[string]repos.MatchFilter{
+			fc.CreatedByUserId: {
+				MatchType: repos.MatchTypeExact,
+				Exact:     ctx.UserId,
+			},
 			fc.GlobalVPNDeviceCreationMethod: {
 				MatchType:  repos.MatchTypeNotInArray,
 				NotInArray: []any{gvpnConnectionDeviceMethod, kloudliteGlobalVPNDevice},
@@ -174,12 +195,20 @@ func (d *domain) createGlobalVPNDevice(ctx InfraContext, gvpnDevice entities.Glo
 
 	gvpnDevice.IPAddr = ip
 
-	gv, err := d.gvpnDevicesRepo.Create(ctx, &gvpnDevice)
+	gv, err := d.gvpnDevicesRepo.Upsert(ctx, repos.Filter{
+		fc.AccountName:                  ctx.AccountName,
+		fc.GlobalVPNDeviceGlobalVPNName: gvpnDevice.GlobalVPNName,
+		fc.MetadataName:                 gvpnDevice.Name,
+	}, &gvpnDevice)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.syncKloudliteDeviceOnCluster(ctx, gvpnDevice.GlobalVPNName); err != nil {
+	// if err := d.syncKloudliteDeviceOnCluster(ctx, gvpnDevice.GlobalVPNName); err != nil {
+	// 	return nil, err
+	// }
+
+	if err := d.syncKloudliteGateway(ctx, gvpnDevice.GlobalVPNName); err != nil {
 		return nil, err
 	}
 

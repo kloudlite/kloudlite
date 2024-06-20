@@ -39,7 +39,7 @@ func (d *domain) createGlobalVPN(ctx InfraContext, gvpn entities.GlobalVPN) (*en
 			numIPsPerCluster := int(math.Pow(2, float64(32-gvpn.AllocatableCIDRSuffix)))
 			ipv4StartingAddr, err := iputils.GenIPAddr(gvpn.CIDR, i*numIPsPerCluster)
 			if err != nil {
-				return nil, err
+				break
 			}
 			gvpn.NonClusterUseAllowedIPs = append(gvpn.NonClusterUseAllowedIPs, fmt.Sprintf("%s/%d", ipv4StartingAddr, gvpn.AllocatableCIDRSuffix))
 		}
