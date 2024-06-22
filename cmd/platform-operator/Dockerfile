@@ -1,4 +1,4 @@
 FROM --platform=$TARGETPLATFORM gcr.io/distroless/static:nonroot
 ARG BINARY TARGETARCH
-COPY ./bin/${BINARY}-${TARGETARCH} /manager
+COPY ${BINARY}-${TARGETARCH} /manager
 ENTRYPOINT [ "/manager" ]

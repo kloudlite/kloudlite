@@ -5,6 +5,7 @@ dotenv:
 
 includes:
   go: ../../../../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../../../../.tools/taskfiles/docker.Taskfile.yml
 
 vars:
   binary: ip-manager
@@ -36,8 +37,7 @@ tasks:
           ./{{.binary}} --addr :8090 --dev
         fi
 
-
-  local:build-and-push:
+  container:build-and-push:
     preconditions: 
       - sh: '[ -n "{{.image}}" ]'
         msg: "image must be set"
@@ -48,12 +48,8 @@ tasks:
       - task: build
         vars:
           GOARCH: arm64
-      - docker buildx build --build-arg BINARY=./bin/{{.binary}} --platform linux/amd64,linux/arm64 --output=type=image,compression=zstd,compression-level=10,force-compression=true,push=true -t {{.image}} .
 
-  container:build:
-    preconditions: 
-      - sh: '[ -n "{{.image}}" ]'
-        msg: "image must be set"
-    cmds:
-      - task: build
-      - docker buildx build --build-arg BINARY=./bin/{{.binary}} --output=type=image,compression=zstd,compression-level=10,force-compression=true,push=true -t {{.image}} .
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY=./bin/{{.binary}} ."
+          image: "{{.image}}"
