@@ -289,16 +289,17 @@ func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMs
 			if err != nil {
 				return nil, err
 			}
-			cso, err := fn.JsonConvert[types.ClusterSvcOutput](m)
+
+			cso, err := fn.ParseFromSecretData[types.ClusterSvcOutput](m)
 			if err != nil {
-				return nil, err
+				return nil, errors.NewEf(err, "unmarshalling msvc creds into types.StandaloneSvcOutput")
 			}
 
 			return &MsvcOutput{
 				ClusterLocalHosts: cso.ClusterLocalHosts,
 				ClusterLocalURI:   cso.ClusterLocalURI,
 				GlobalVPNHosts:    cso.GlobalVpnHosts,
-				GlobalVpnURI:      cso.GlobalVpnURI,
+		    GlobalVpnURI:      cso.GlobalVpnURI,
 
 				ReplicasSetName: &cso.ReplicasSetName,
 			}, nil
@@ -327,6 +328,8 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 
 	shouldGeneratePassword := scrt == nil
 
+	req.Logger.Infof("[db] msvc URI: %s\n", msvcOutput.ClusterLocalURI)
+
 	if scrt != nil {
 		shouldGeneratePassword = false
 		mresOutput, err := fn.ParseFromSecret[types.DatabaseOutput](scrt)
@@ -338,6 +341,8 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 		if obj.IsGlobalVPNEnabled() {
 			uri = mresOutput.GlobalVpnURI
 		}
+
+		req.Logger.Infof("[db] mongo URI: %s\n", uri)
 
 		err = libMongo.ConnectAndPing(ctx, uri)
 		if err != nil {
@@ -366,6 +371,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 				if obj.Spec.MsvcRef.Kind == "ClusterService" {
 					return baseURI + fmt.Sprintf("&replicaSet=%s", *msvcOutput.ReplicasSetName)
 				}
+				req.Logger.Infof("[db] baseURI: %s\n", baseURI)
 				return baseURI
 			}(),
 		}

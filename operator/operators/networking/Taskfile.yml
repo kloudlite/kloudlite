@@ -5,6 +5,7 @@ dotenv:
 
 includes:
   go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
 
 vars:
   binary: networking
@@ -19,25 +20,21 @@ tasks:
     cmds:
       - task: go:build
         vars:
-          Out: "./bin/{{.binary}}"
+          Out: "./bin/{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
 
-  container:build:
+  container:build-and-push:
     cmds:
       - task: build
-      - docker buildx build -t ghcr.io/kloudlite/operator/networking:v1.0.7-nightly --output=type=image,compression=zstd,force-compression=true,compression-level=10,push=true --build-arg BINARY="./bin/{{.binary}}" .
+        vars:
+          GOARCH: "amd64"
 
-  k8s:apply:
-    vars:
-      namespace: "test-kl-networking"
-    cmds:
-      - nxt template parse -f ./k8s/namespace.yml --set namespace="{{.namespace}}" | kubectl apply -f -
-      - nxt template parse -f ./k8s/service-account.yml --set namespace="{{.namespace}}" | kubectl apply -f -
-      - nxt template parse -f ./k8s/operator.yml --set namespace="{{.namespace}}" | kubectl apply -f -
+      - task: build
+        vars:
+          GOARCH: "arm64"
 
-  k8s:delete:
-    vars:
-      namespace: "test-kl-networking"
-    cmds:
-      - nxt template parse -f ./k8s/service-account.yml --set namespace="{{.namespace}}" | kubectl delete -f -
-      - nxt template parse -f ./k8s/operator.yml --set namespace="{{.namespace}}" | kubectl delete -f -
-      - nxt template parse -f ./k8s/namespace.yml --set namespace="{{.namespace}}" | kubectl delete -f -
+      - task: docker:build-and-push
+        vars:
+          args: |-
+            --platform linux/arm64,linux/amd64 --build-arg BINARY=./bin/{{.binary}} .
+          image: "{{.image}}"

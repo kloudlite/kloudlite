@@ -41,6 +41,18 @@ inputs:
     description: 'build agent operator'
     default: false
 
+  networking-operator:
+    description: 'build networking/ip-binding-controller'
+    default: false
+
+  wireguard-operator:
+    description: 'build wireguard operator'
+    default: false
+
+  helm-charts-operator:
+    description: 'build helm-charts operator'
+    default: false
+
   networking_ip-manager:
     description: 'build networking/ip-manager'
     default: false
@@ -75,21 +87,29 @@ runs:
 
         echo "GOPKG_HASH=${{ hashFiles(format('{0}/go.mod', inputs.git_directory), format('{0}/go.sum', inputs.git_directory)) }}" >> $GITHUB_OUTPUT
 
+        echo "PUSH_IMAGE=false" >> $GITHUB_ENV
+
+    - name: check if image needs to be pushed
+      if: github.event_name != 'pull_request'
+      shell: bash
+      run: |+
+        echo "PUSH_IMAGE=true" >> $GITHUB_ENV
+
     - name: ensures path to setup action exists
       shell: bash
       run: |+
         mkdir -p $GOMODCACHE
         ln -sf ${{ inputs.git_directory }}/.github/actions ./operator-github-actions
 
-    - name: Setup Caches
-      uses: actions/cache@v4
-      with:
-        path: |+
-          ${{ env.GOMODCACHE }}
-          ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-${{ inputs.cache_prefix }}
-        save-always: true
-        restore-keys: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-
+    # - name: Setup Caches
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |+
+    #       ${{ env.GOMODCACHE }}
+    #       ${{ env.GOCACHE }}
+    #     key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-${{ inputs.cache_prefix }}
+    #     save-always: true
+    #     restore-keys: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-
 
     - name: setup nix cache
       if: ${{ inputs.cachix_enabled == 'true' }}
@@ -115,17 +135,41 @@ runs:
         docker_username: ${{ github.actor }}
         docker_password: ${{ inputs.github_token }}
 
-    - name: setup
-      id: setup
-      uses: ./operator-github-actions/setup/
-      with:
-        nix-develop-arguments: "${{ inputs.git_directory }}#default"
-        flake-lock: ${{ inputs.git_directory }}/flake.lock
-        github_token: ${{ inputs.github_token }}
+    # - name: setup
+    #   id: setup
+    #   uses: ./operator-github-actions/setup/
+    #   with:
+    #     nix-develop-arguments: "${{ inputs.git_directory }}#default"
+    #     flake-lock: ${{ inputs.git_directory }}/flake.lock
+    #     github_token: ${{ inputs.github_token }}
+    #
+    #     # cache_key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-${{ inputs.cache_prefix }}
+    #     # cache_restore_key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-
+    #     # cache_paths: |+
 
-        # cache_key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-${{ inputs.cache_prefix }}
-        # cache_restore_key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-
-        # cache_paths: |+
+    - name: Create Image Tag from branch name
+      if: startsWith(github.ref, 'refs/heads/release')
+      shell: bash
+      run: |
+        set +e
+        IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
+        echo "$IMAGE_TAG" | grep -i '\-nightly$'
+        if [ $? -ne 0 ]; then
+          IMAGE_TAG="$IMAGE_TAG-nightly"
+        fi
+        set -e
+
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+        echo "OVERRIDE_PUSHED_IMAGE=true" >> $GITHUB_ENV
+
+    - name: Create Image Tag from tag
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      run: |
+        IMAGE_TAG=$(echo ${GITHUB_REF#refs/tags/})
+
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+        echo "OVERRIDE_PUSHED_IMAGE=false" >> $GITHUB_ENV
 
     - name: go mod download
       if: ${{ inputs.go_mod_download == 'true' }}
@@ -138,119 +182,191 @@ runs:
 
         ls -al ${{ env.GOMODCACHE }}
 
+    - name: platform operator cache
+      if: ${{ inputs.platform-operator == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-platform-operator-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-platform-operator-
+
     - name: platform operator
       if: ${{ inputs.platform-operator == 'true' }}
-      # if: ${{ startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/tags/') }}
       working-directory: ${{ inputs.git_directory }}/cmd/platform-operator
-      env:
-        IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-        OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
+      # env:
+      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
+      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
-        set +e
-        image_name="ghcr.io/${{ github.repository }}/platform"
+        task container:build-and-push image=ghcr.io/${{ github.repository }}/platform:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
-        IMAGE_TAG=${IMAGE_TAG:-latest}
-        docker manifest inspect "$image_name:$IMAGE_TAG"
-        exit_status=$?
-        if [ $exit_status -eq 0 ]; then
-          [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
-          echo "image exists, but override pushed image is set to true. proceeding with building image"
-        fi
-        set -e
-
-        task container:build-and-push Image=$image_name:$IMAGE_TAG
+    - name: agent operator cache
+      if: ${{ inputs.agent-operator == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-agent-operator-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-agent-operator-
 
     - name: agent operator
       if: ${{ inputs.agent-operator == 'true' }}
       working-directory: ${{ inputs.git_directory }}/cmd/agent-operator
-      env:
-        IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-        OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
+      # env:
+      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
+      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
-        set +e
-        image_name="ghcr.io/${{ github.repository }}/agent"
+        task container:build-and-push image=ghcr.io/${{ github.repository }}/agent:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
-        IMAGE_TAG=${IMAGE_TAG:-latest}
-        docker manifest inspect "$image_name:$IMAGE_TAG"
-        exit_status=$?
-        if [ $exit_status -eq 0 ]; then
-          [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
-          echo "image exists, but override pushed image is set to true. proceeding with building image"
-        fi
-        set -e
+    - name: networking operator cache
+      if: ${{ inputs.networking-operator == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking-operator-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking-operator-
 
-        task local:build-and-push Image=$image_name:$IMAGE_TAG
+    - name: networking operator
+      if: ${{ inputs.networking-operator == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/networking
+      # env:
+      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
+      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
+      shell: bash
+      run: |
+        task container:build-and-push image=ghcr.io/${{ github.repository }}/networking:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: wireguard operator cache
+      if: ${{ inputs.wireguard-operator == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-wireguard-operator-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-wireguard-operator-
+
+    - name: wireguard operator
+      if: ${{ inputs.wireguard-operator == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/wireguard
+      # env:
+      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
+      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
+      shell: bash
+      run: |
+        task container:build-and-push image=ghcr.io/${{ github.repository }}/wireguard:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: helm-charts operator cache
+      if: ${{ inputs.helm-charts-operator == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-helm-charts-operator-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-helm-charts-operator-
+
+    - name: helm-charts operator
+      if: ${{ inputs.helm-charts-operator == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/helm-charts
+      # env:
+      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
+      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
+      shell: bash
+      run: |
+        task container:build-and-push image=ghcr.io/${{ github.repository }}/helm-charts:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: networking/ip-manager cache
+      if: ${{ inputs.networking_ip-manager == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking_ip-manager-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking_ip-manager-
 
     - name: networking/ip-manager
       if: ${{ inputs.networking_ip-manager == 'true' }}
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/ip-manager
-      env:
-        IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-        OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
+      # env:
+      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
+      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
-        echo "GOCACHE=${GOCACHE}"
-        echo "GOMODCACHE=${GOMODCACHE}"
-        set +e
-        image_name="ghcr.io/${{ github.repository }}/networking/cmd/ip-manager"
+        task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/ip-manager:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
-        IMAGE_TAG=${IMAGE_TAG:-latest}
-        docker manifest inspect "$image_name:$IMAGE_TAG"
-        exit_status=$?
-        if [ $exit_status -eq 0 ]; then
-          [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
-          echo "image exists, but override pushed image is set to true. proceeding with building image"
-        fi
-        set -e
+    - name: networking/ip-binding-controller cache
+      if: ${{ inputs.networking_ip-binding-controller == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking_ip-binding-controller-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking_ip-binding-controller-
 
-        task local:build-and-push image=$image_name:$IMAGE_TAG
+    - name: networking/ip-binding-controller
+      if: ${{ inputs.networking_ip-binding-controller == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/ip-binding-controller
+      # env:
+      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
+      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
+      shell: bash
+      run: |
+        task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/ip-binding-controller:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: networking/dns cache
+      if: ${{ inputs.networking_dns == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking_dns-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking_dns-
 
     - name: networking/dns
       if: ${{ inputs.networking_dns == 'true' }}
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/dns
-      env:
-        IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-        OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
+      # env:
+      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
+      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
-        echo "GOCACHE=${GOCACHE}"
-        echo "GOMODCACHE=${GOMODCACHE}"
-        set +e
-        image_name="ghcr.io/${{ github.repository }}/networking/cmd/dns"
+        task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/dns:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
-        IMAGE_TAG=${IMAGE_TAG:-latest}
-        docker manifest inspect "$image_name:$IMAGE_TAG"
-        exit_status=$?
-        if [ $exit_status -eq 0 ]; then
-          [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
-          echo "image exists, but override pushed image is set to true. proceeding with building image"
-        fi
-        set -e
-
-        task container:build-and-push image=$image_name:$IMAGE_TAG
+    - name: networking/weebhook cache
+      if: ${{ inputs.networking_webhook == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking_webhook-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking_webhook-
 
     - name: networking/webhook
       if: ${{ inputs.networking_webhook == 'true' }}
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/webhook
-      env:
-        IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-        OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
+      # env:
+      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
+      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
-        echo "GOCACHE=${GOCACHE}"
-        echo "GOMODCACHE=${GOMODCACHE}"
-        set +e
-        image_name="ghcr.io/${{ github.repository }}/networking/cmd/webhook"
-
-        IMAGE_TAG=${IMAGE_TAG:-latest}
-        docker manifest inspect "$image_name:$IMAGE_TAG"
-        exit_status=$?
-        if [ $exit_status -eq 0 ]; then
-          [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
-          echo "image exists, but override pushed image is set to true. proceeding with building image"
-        fi
-        set -e
-
-        task container:build-and-push image=$image_name:$IMAGE_TAG
+        task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/webhook:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
