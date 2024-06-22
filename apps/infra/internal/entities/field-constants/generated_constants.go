@@ -222,16 +222,19 @@ const (
 
 // constant vars generated for struct GlobalVPN
 const (
-	GlobalVPNCIDR                           = "CIDR"
-	GlobalVPNAllocatableCIDRSuffix          = "allocatableCIDRSuffix"
-	GlobalVPNKloudliteDevice                = "kloudliteDevice"
-	GlobalVPNKloudliteDeviceIpAddr          = "kloudliteDevice.ipAddr"
-	GlobalVPNKloudliteDeviceName            = "kloudliteDevice.name"
-	GlobalVPNNonClusterUseAllowedIPs        = "nonClusterUseAllowedIPs"
-	GlobalVPNNumAllocatedClusterCIDRs       = "numAllocatedClusterCIDRs"
-	GlobalVPNNumAllocatedDevices            = "numAllocatedDevices"
-	GlobalVPNNumReservedIPsForNonClusterUse = "numReservedIPsForNonClusterUse"
-	GlobalVPNWgInterface                    = "wgInterface"
+	GlobalVPNCIDR                              = "CIDR"
+	GlobalVPNAllocatableCIDRSuffix             = "allocatableCIDRSuffix"
+	GlobalVPNKloudliteClusterLocalDevice       = "kloudliteClusterLocalDevice"
+	GlobalVPNKloudliteClusterLocalDeviceIpAddr = "kloudliteClusterLocalDevice.ipAddr"
+	GlobalVPNKloudliteClusterLocalDeviceName   = "kloudliteClusterLocalDevice.name"
+	GlobalVPNKloudliteGatewayDevice            = "kloudliteGatewayDevice"
+	GlobalVPNKloudliteGatewayDeviceIpAddr      = "kloudliteGatewayDevice.ipAddr"
+	GlobalVPNKloudliteGatewayDeviceName        = "kloudliteGatewayDevice.name"
+	GlobalVPNNonClusterUseAllowedIPs           = "nonClusterUseAllowedIPs"
+	GlobalVPNNumAllocatedClusterCIDRs          = "numAllocatedClusterCIDRs"
+	GlobalVPNNumAllocatedDevices               = "numAllocatedDevices"
+	GlobalVPNNumReservedIPsForNonClusterUse    = "numReservedIPsForNonClusterUse"
+	GlobalVPNWgInterface                       = "wgInterface"
 )
 
 // constant vars generated for struct GlobalVPNConnDeviceRef
@@ -258,7 +261,9 @@ const (
 	GlobalVPNConnectionSpecLoadBalancer              = "spec.loadBalancer"
 	GlobalVPNConnectionSpecLoadBalancerHosts         = "spec.loadBalancer.hosts"
 	GlobalVPNConnectionSpecLoadBalancerPort          = "spec.loadBalancer.port"
+	GlobalVPNConnectionSpecNodePort                  = "spec.nodePort"
 	GlobalVPNConnectionSpecPeers                     = "spec.peers"
+	GlobalVPNConnectionSpecServiceType               = "spec.serviceType"
 	GlobalVPNConnectionSpecSvcCIDR                   = "spec.svcCIDR"
 	GlobalVPNConnectionSpecWireguardKeysRef          = "spec.wireguardKeysRef"
 	GlobalVPNConnectionSpecWireguardKeysRefName      = "spec.wireguardKeysRef.name"
