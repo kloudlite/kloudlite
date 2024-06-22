@@ -2,9 +2,11 @@ version: 3
 
 includes:
   go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
 
 vars:
   app: platform-operator
+  binary: ./bin/{{.app}}
 
 tasks:
   run:
@@ -18,12 +20,13 @@ tasks:
     cmds:
       - task: go:build
         vars:
-          Out: "./bin/{{.app}}-{{.GOARCH}}"
+          Out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
 
-  local:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+  container:build-and-push:
+    requires:
+      vars:
+        - "image"
     cmds:
       - task: build
         vars:
@@ -31,12 +34,8 @@ tasks:
       - task: build
         vars:
           GOARCH: arm64
-      - docker buildx build --platform linux/amd64,linux/arm64 -f ./Containerfile --output=type=image,compression=zstd,compressoin-level=12,force-compression=true,push=true -t {{.Image}} . --build-arg BINARY={{.app}}
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          image: "{{.image}}"
 
-  container:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: "var Image must have a value, of format 'image_repository:image_tag'"
-    cmds:
-      - GOARCH=amd64 task build upx={{.upx}}
-      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push

@@ -90,4 +90,6 @@ runs:
           echo "image_tag=${{ steps.gitref_tag.outputs.image_tag }}" >> $GITHUB_OUTPUT
           echo "override_pushed_image=${{ steps.gitref_tag.outputs.override_pushed_image }}" >> $GITHUB_OUTPUT
         fi
+        echo "IMAGE_TAG=${{ steps.output.outputs.image_tag }}" >> $GITHUB_ENV
+        echo "OVERRIDE_PUSHED_IMAGE=${{ steps.output.outputs.override_pushed_image }}" >> $GITHUB_ENV
 

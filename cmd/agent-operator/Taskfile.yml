@@ -2,9 +2,11 @@ version: 3
 
 includes:
   go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
 
 vars:
   app: agent-operator
+  binary: ./bin/{{.app}}
 
 tasks:
   run:
@@ -17,36 +19,22 @@ tasks:
     cmds:
       - task: go:build
         vars:
-          Out: "./bin/{{.app}}"
-
-  local:build:
-    cmds:
-      - task: go:build
-        vars:
-          GOARCH:
-            sh: echo $GOARCH
-          Out: "./bin/{{.app}}-{{.GOARCH}}"
-
-  local:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: "var Image must have a value, of format 'image_repository:image_tag'"
-    cmds:
-      - GOARCH=arm64 task local:build upx=true
-      - GOARCH=amd64 task local:build upx=true
-      - docker buildx build -f ./Containerfile --platform linux/amd64,linux/arm64 -t {{.Image}} . --output=type=image,force-compression=true,compression=zstd,compression-level=14,push=true --build-arg BINARY={{.app}}
+          Out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
 
   container:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    requires:
+      vars:
+        - "image"
     cmds:
-      - |+
-        echo "starting build @ $(date)"
-        GOARCH=arm64 task local:build upx={{.upx}} &
-        pip="$pid $!"
-        GOARCH=amd64 task local:build upx={{.upx}} &
-        pip="$pid $!"
-        eval wait $pid
-      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
-      - echo "finished build @ $(date)"
+      - task: build
+        vars:
+          GOARCH: amd64
+      - task: build
+        vars:
+          GOARCH: arm64
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          image: "{{.image}}"
+
