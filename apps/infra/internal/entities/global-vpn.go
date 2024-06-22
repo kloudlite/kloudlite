@@ -22,6 +22,7 @@ type GlobalVPN struct {
 
 	// like 10.0.0.0/8
 	CIDR string `json:"CIDR"`
+
 	// to allocate 8K IPs for each GlobalVPNConnection
 	// i.e. pow(2, 13) Ips, it means 13 Host bits,
 	// which leaves us with (32 - 13) 19 Network Bits. It is our AllocatableCIDRSuffix
@@ -41,10 +42,15 @@ type GlobalVPN struct {
 	// Peers []Peer `json:"peers" graphql:"noinput"`
 	AccountName string `json:"accountName" graphql:"noinput"`
 
-	KloudliteDevice struct {
+	KloudliteGatewayDevice struct {
 		Name   string `json:"name"`
 		IPAddr string `json:"ipAddr"`
-	} `json:"kloudliteDevice"`
+	} `json:"kloudliteGatewayDevice"`
+
+	KloudliteClusterLocalDevice struct {
+		Name   string `json:"name"`
+		IPAddr string `json:"ipAddr"`
+	} `json:"kloudliteClusterLocalDevice"`
 }
 
 func (c *GlobalVPN) GetDisplayName() string {
