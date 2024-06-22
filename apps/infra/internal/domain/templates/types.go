@@ -6,6 +6,9 @@ type GVPNKloudliteDeviceTemplateVars struct {
 	WgConfig      string
 	WireguardPort uint16
 
+  KloudliteAccount string
+
+  EnableKubeReverseProxy bool
 	KubeReverseProxyImage string
 	AuthzToken            string
 
