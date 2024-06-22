@@ -6,12 +6,20 @@ inputs:
     description: 'GitHub Token'
     required: true
 
-  use_cachix:
-    description: "use cachix"
+  cachix_enabled:
+    description: "cachix enabled"
     default: "false"
+
+  cachix_cache_name:
+    description: "cachix cache name"
+    default: "kloudlite"
 
   cachix_auth_token:
     description: "cachix auth token"
+
+  docker_enabled:
+    description: "dokcer enabled"
+    default: "false"
 
   git_directory:
     description: 'git directory'
@@ -83,6 +91,30 @@ runs:
         save-always: true
         restore-keys: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-
 
+    - name: setup nix cache
+      if: ${{ inputs.cachix_enabled == 'true' }}
+      uses: ./operator-github-actions/setup-nix-cachix/
+      with:
+        flake_lock: ${{ inputs.git_directory }}/flake.lock
+        nix_develop_arguments: "${{ inputs.git_directory }}#default"
+
+        cachix_cache_name: ${{ inputs.cachix_cache_name }}
+        cachix_auth_token: ${{ inputs.cachix_auth_token }}
+
+    - name: setup nix cache
+      if: ${{ inputs.cachix_enabled == 'false' }}
+      uses: ./operator-github-actions/setup-nix-github/
+      with:
+        flake_lock: ${{ inputs.git_directory }}/flake.lock
+        nix_develop_arguments: "${{ inputs.git_directory }}#default"
+
+    - name: setup docker
+      if: ${{ inputs.docker_enabled == 'true' }}
+      uses: ./operator-github-actions/setup-docker
+      with:
+        docker_username: ${{ github.actor }}
+        docker_password: ${{ inputs.github_token }}
+
     - name: setup
       id: setup
       uses: ./operator-github-actions/setup/
@@ -90,9 +122,6 @@ runs:
         nix-develop-arguments: "${{ inputs.git_directory }}#default"
         flake-lock: ${{ inputs.git_directory }}/flake.lock
         github_token: ${{ inputs.github_token }}
-        use_cachix: ${{ inputs.use_cachix }}
-        cachix_auth_token: ${{ inputs.cachix_auth_token }}
-        enable_docker: true
 
         # cache_key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-${{ inputs.cache_prefix }}
         # cache_restore_key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-
