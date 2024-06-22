@@ -1,3 +1,30 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{.namespace}}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kl-networking-sa
+  namespace: {{.namespace}}
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kl-networking-sa-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: "ClusterRole"
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: kl-networking-sa
+    namespace: {{.namespace}}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,7 +35,6 @@ metadata:
     vector.dev/exclude: "true"
 spec:
   replicas: 1
-  revisionHistoryLimit: 10
   selector:
     matchLabels: *labels
   template:
@@ -41,18 +67,13 @@ spec:
       - args:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
-        # - --leader-elect
+        - --leader-elect
         env:
         - name: MAX_CONCURRENT_RECONCILES
           value: "1"
 
-        - name: GATEWAY_ADMIN_HTTP_PORT
-          value: "8090"
-
-        - name: GATEWAY_ADMIN_SVC_ADDR
-          value: http://gateway-admin-api.{{.namespace}}.svc.cluster.local:8090
-
         image: ghcr.io/kloudlite/operator/networking:v1.0.7-nightly
+
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3

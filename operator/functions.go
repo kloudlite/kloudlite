@@ -59,6 +59,7 @@ func New(name string) Operator {
 	var enableLeaderElection bool
 	var probeAddr string
 	var isDev bool
+	var debugLog bool
 	var devServerHost string
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":12345", "The address the metric endpoint binds to.")
@@ -76,12 +77,12 @@ func New(name string) Operator {
 	rest.SetDefaultWarningHandler(rest.NoWarnings{})
 
 	flag.BoolVar(&isDev, "dev", false, "--dev")
+	flag.BoolVar(&debugLog, "debug-log", false, "--debug-log")
 	flag.StringVar(&devServerHost, "serverHost", "localhost:8080", "--serverHost <host:port>")
-	// flag.BoolVar(&isAllEnabled, "all", true, "--all")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-	logger := logging.NewOrDie(&logging.Options{Dev: true, CallerTrace: true})
+	logger := logging.NewOrDie(&logging.Options{Dev: debugLog, CallerTrace: true})
 
 	mgrConfig, mgrOptions := func() (*rest.Config, ctrl.Options) {
 		cOpts := ctrl.Options{
