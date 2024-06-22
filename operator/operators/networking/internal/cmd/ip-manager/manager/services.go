@@ -36,6 +36,7 @@ var unReservedServiceLabels = map[string]string{
 }
 
 func (m *Manager) CreateSvcBindings(ctx context.Context, count int) error {
+	m.logger.Info("Creating service bindings", "count", count)
 	_, svcIPCounter, err := m.EnsureIPManagerConfigExists(ctx)
 	if err != nil {
 		return err
@@ -87,17 +88,17 @@ func (m *Manager) CreateSvcBindings(ctx context.Context, count int) error {
 func (m *Manager) PickFreeSvcBinding(ctx context.Context) (*networkingv1.ServiceBinding, error) {
 	var sblist networkingv1.ServiceBindingList
 	if err := m.kcli.List(ctx, &sblist, &client.ListOptions{
-		Limit:         50,
+		Limit:         10,
 		LabelSelector: apiLabels.SelectorFromValidatedSet(unReservedServiceLabels),
 	}); err != nil {
 		return nil, NewError(err, "k8s list service bindings")
 	}
 
-	if len(sblist.Items) == 50 {
+	if len(sblist.Items) == 10 {
 		return &sblist.Items[0], nil
 	}
 
-	if err := m.CreateSvcBindings(ctx, 100); err != nil {
+	if err := m.CreateSvcBindings(ctx, 15); err != nil {
 		return nil, NewError(err, "creating service bindings")
 	}
 
@@ -106,11 +107,16 @@ func (m *Manager) PickFreeSvcBinding(ctx context.Context) (*networkingv1.Service
 
 type ReserveServiceResponse struct {
 	ServiceBindingIP string `json:"service_binding_ip"`
+	ReservationToken string `json:"reservation_token"`
 }
 
 func (m *Manager) ReserveService(ctx context.Context, namespace, name string) (*ReserveServiceResponse, error) {
 	m.Lock()
 	defer m.Unlock()
+
+	if resp, ok := m.svcBindingsMap[fmt.Sprintf("%s/%s", namespace, name)]; ok {
+		return resp, nil
+	}
 
 	sb, err := m.PickFreeSvcBinding(ctx)
 	if err != nil {
@@ -122,7 +128,9 @@ func (m *Manager) ReserveService(ctx context.Context, namespace, name string) (*
 		lb = make(map[string]string, 1)
 	}
 
-	lb[svcReservationLabel] = svcRegistrationValue(namespace, name)
+	reservationToken := fn.CleanerNanoid(40)
+
+	lb[svcReservationLabel] = reservationToken
 	sb.SetLabels(lb)
 
 	sb.Spec.ServiceRef = &ct.NamespacedResourceRef{
@@ -135,9 +143,12 @@ func (m *Manager) ReserveService(ctx context.Context, namespace, name string) (*
 		return nil, NewError(err, "updating service binding")
 	}
 
-	return &ReserveServiceResponse{
+	resp := &ReserveServiceResponse{
 		ServiceBindingIP: sb.Spec.GlobalIP,
-	}, nil
+	  ReservationToken: reservationToken,
+	}
+	m.svcBindingsMap[fmt.Sprintf("%s/%s", namespace, name)] = resp
+	return resp, nil
 }
 
 func (m *Manager) RegisterService(ctx context.Context, svcBindingIP string) error {
@@ -149,12 +160,17 @@ func (m *Manager) RegisterService(ctx context.Context, svcBindingIP string) erro
 		return NewError(err, "k8s get service binding")
 	}
 
+  // if sb.GetLabels()[svcReservationLabel] != reservationToken {
+  //   m.logger.Warn("reservation token mismatch", "got", reservationToken, "expected", sb.GetLabels()[svcReservationLabel])
+  //   return nil
+  // }
+
 	m.svcNginxStreams[sb.Spec.GlobalIP] = RegisterNginxStreamConfig(&sb)
 
 	return m.SyncNginxStreams()
 }
 
-func (m *Manager) DeregisterService(ctx context.Context, svcBindingIP string) error {
+func (m *Manager) DeregisterService(ctx context.Context, svcBindingIP string, reservationToken string) error {
 	var svcBinding networkingv1.ServiceBinding
 	if err := m.kcli.Get(ctx, fn.NN("", sanitizeSvcIP(svcBindingIP)), &svcBinding); err != nil {
 		if apiErrors.IsNotFound(err) {
@@ -163,6 +179,13 @@ func (m *Manager) DeregisterService(ctx context.Context, svcBindingIP string) er
 		}
 		return NewError(err, "k8s get svc binding")
 	}
+
+  delete(m.svcBindingsMap, fmt.Sprintf("%s/%s", svcBinding.Spec.ServiceRef.Namespace, svcBinding.Spec.ServiceRef.Name))
+
+  if svcBinding.GetLabels()[svcReservationLabel] != reservationToken {
+    m.logger.Warn("reservation token mismatch", "got", reservationToken, "expected", svcBinding.GetLabels()[svcReservationLabel])
+    return nil
+  }
 
 	svcBinding.Spec.ServiceIP = nil
 	svcBinding.Spec.ServiceRef = nil

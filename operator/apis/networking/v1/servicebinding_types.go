@@ -23,7 +23,7 @@ type ServiceBindingSpec struct {
 //+kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 //+kubebuilder:printcolumn:JSONPath=".spec.globalIP",name=GlobalIP,type=string
 //+kubebuilder:printcolumn:JSONPath=".spec.serviceIP",name=ServiceIP,type=string
-//+kubebuilder:printcolumn:JSONPath=".metadata.labels.kloudlite\\.io\\/global\\.hostname",name=Host,type=string
+//+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/global\\.hostname",name=Host,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
@@ -47,7 +47,7 @@ func (sb *ServiceBinding) GetStatus() *rApi.Status {
 }
 
 func (sb *ServiceBinding) GetEnsuredLabels() map[string]string {
-  return map[string]string{}
+	return map[string]string{}
 }
 
 func (sb *ServiceBinding) GetEnsuredAnnotations() map[string]string {
