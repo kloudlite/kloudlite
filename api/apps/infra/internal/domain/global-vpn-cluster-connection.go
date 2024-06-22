@@ -118,12 +118,19 @@ func (d *domain) reconGlobalVPNConnections(ctx InfraContext, vpnName string) err
 		return errors.NewE(err)
 	}
 
-	klDevice, err := d.findGlobalVPNDevice(ctx, gvpn.Name, gvpn.KloudliteDevice.Name)
+	klDevice, err := d.findGlobalVPNDevice(ctx, gvpn.Name, gvpn.KloudliteGatewayDevice.Name)
 	if err != nil {
-		return errors.NewEf(err, "failed to find kloudlite device %s", gvpn.KloudliteDevice.Name)
+		return errors.NewEf(err, "failed to find kloudlite device %s", gvpn.KloudliteGatewayDevice.Name)
 	}
 
 	klDevicePeer := d.buildPeerFromGlobalVPNDevice(ctx, gvpn, klDevice)
+
+	clDevice, err := d.findGlobalVPNDevice(ctx, gvpn.Name, gvpn.KloudliteClusterLocalDevice.Name)
+	if err != nil {
+		return errors.NewEf(err, "failed to find kloudlite device %s", gvpn.KloudliteClusterLocalDevice.Name)
+	}
+
+	clDevicePeer := d.buildPeerFromGlobalVPNDevice(ctx, gvpn, clDevice)
 
 	// INFO: all private cluster gateway peers, are supposed to be routed via kloudlite gateway
 	for _, c := range gvpnConns {
@@ -149,9 +156,9 @@ func (d *domain) reconGlobalVPNConnections(ctx InfraContext, vpnName string) err
 			OnlyPublicClusters:   true,
 		})
 
-		peers = append(peers, *klDevicePeer)
+		peers = append(peers, *klDevicePeer, *clDevicePeer)
 		if xcc.Visibility.Mode == entities.ClusterVisibilityModePrivate {
-			peers = []networkingv1.Peer{*klDevicePeer}
+			peers = []networkingv1.Peer{*klDevicePeer, *clDevicePeer}
 			peers[0].AllowedIPs = append(peers[0].AllowedIPs, publicAllowedIPs...)
 		}
 
@@ -516,12 +523,11 @@ func (d *domain) OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterNam
 		return errors.NewE(err)
 	}
 
-	// FIXME: move to sync kloudlite gateway
-	// if err := d.syncKloudliteDeviceOnCluster(ctx, xconn.GlobalVPNName); err != nil {
-	// 	return errors.NewE(err)
-	// }
+	if err := d.syncKloudliteDeviceOnPlatform(ctx, xconn.GlobalVPNName); err != nil {
+		return errors.NewE(err)
+	}
 
-	if err := d.syncKloudliteGateway(ctx, xconn.GlobalVPNName); err != nil {
+	if err := d.syncKloudliteGatewayDevice(ctx, xconn.GlobalVPNName); err != nil {
 		return errors.NewE(err)
 	}
 
