@@ -23,6 +23,13 @@ type GatewayLoadBalancer struct {
 	Port  int32    `json:"port"`
 }
 
+type GatewayServiceType string
+
+const (
+	GatewayServiceTypeLoadBalancer GatewayServiceType = "LoadBalancer"
+	GatewayServiceTypeNodePort     GatewayServiceType = "NodePort"
+)
+
 // GatewaySpec defines the desired state of Gateway
 type GatewaySpec struct {
 	AdminNamespace string `json:"adminNamespace,omitempty"`
@@ -36,8 +43,12 @@ type GatewaySpec struct {
 
 	Peers []Peer `json:"peers,omitempty"`
 
+	//+kubebuilder:default=LoadBalancer
+	ServiceType GatewayServiceType `json:"serviceType,omitempty"`
+
 	// it will be filled by resource controller
 	LoadBalancer *GatewayLoadBalancer `json:"loadBalancer,omitempty"`
+	NodePort     *int32               `json:"nodePort,omitempty"`
 
 	// secret's data will be unmarshalled into WireguardKeys
 	WireguardKeysRef ct.SecretRef `json:"wireguardKeysRef,omitempty"`

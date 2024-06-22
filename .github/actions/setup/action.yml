@@ -23,6 +23,13 @@ inputs:
     description: "git directory"
     default: "./"
 
+  use_cachix:
+    description: "use cachix"
+    default: "false"
+
+  cachix_auth_token:
+    description: "cachix auth token"
+
   cache_key: 
     description: "cache key"
     default: ""
@@ -54,11 +61,26 @@ runs:
         save-always: true
         restore-keys: ${{ inputs.cache_restore_key }}
 
+    - uses: cachix/install-nix-action@v25
+      if: ${{ inputs.use_cachix == 'true' }}
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+
     - name: Install NIX
+      if: ${{ inputs.use_cachix == 'false' || inputs.use_cachix == '' }}
       uses: DeterminateSystems/nix-installer-action@main
 
     - name: nix cache
+      if: ${{ inputs.use_cachix == 'false' || inputs.use_cachix == '' }}
       uses: DeterminateSystems/magic-nix-cache-action@main
+
+    - name: nix cache with cachix
+      uses: cachix/cachix-action@v14
+      if: ${{ inputs.use_cachix == 'true' }}
+      with:
+        name: testing-github-actions
+        # If you chose API tokens for write access OR if you have a private cache
+        authToken: '${{ inputs.cachix_auth_token }}'
 
     - name: nix flake check
       uses: DeterminateSystems/flake-checker-action@main

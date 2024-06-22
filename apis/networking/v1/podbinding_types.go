@@ -57,6 +57,10 @@ func (p *PodBinding) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{key: fmt.Sprintf("Reserved (%s/%s)", p.Spec.PodRef.Namespace, p.Spec.PodRef.Name)}
 }
 
+func (p *PodBinding) GetStatus() *rApi.Status {
+  return &p.Status
+}
+
 //+kubebuilder:object:root=true
 
 // PodBindingList contains a list of PodBinding

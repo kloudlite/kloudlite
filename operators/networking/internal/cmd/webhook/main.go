@@ -39,11 +39,11 @@ const (
 
 const (
 	podBindingIP        string = "kloudlite.io/podbinding.ip"
-	podBindingUID       string = "kloudlite.io/podbinding.uid"
 	podReservationToken string = "kloudlite.io/podbinding.reservation-token"
 
-	svcBindingIP  string = "kloudlite.io/servicebinding.ip"
-	svcBindingUID string = "kloudlite.io/servicebinding.uid"
+	svcBindingIPLabel            string = "kloudlite.io/servicebinding.ip"
+	svcReservationTokenLabel     string = "kloudlite.io/servicebinding.reservation-token"
+	kloudliteWebhookTriggerLabel string = "kloudlite.io/webhook.trigger"
 )
 
 const (
@@ -179,16 +179,16 @@ func processPodAdmission(ctx HandlerContext, review admissionv1.AdmissionReview)
 			isDebugMode := pod.GetAnnotations()[debugWebhookAnnotation] == "true"
 
 			wgContainer := corev1.Container{
-				Name:            "wg",
+				Name:            "kloudlite-wg",
 				Image:           ctx.WgImage,
 				ImagePullPolicy: corev1.PullPolicy(ctx.WgImagePullPolicy),
 				Command: []string{
 					"sh",
 					"-c",
 					fmt.Sprintf(`
-curl -X PUT --silent %q > /etc/wireguard/wg0.conf
-wg-quick down wg0 || echo "[starting] wireguard wg0 intrerface"
-wg-quick up wg0
+curl -X PUT --silent %q > /etc/wireguard/kloudlite-wg.conf
+wg-quick down kloudlite-wg || echo "[starting] wireguard kloudlite-wg intrerface"
+wg-quick up kloudlite-wg
 %s
 `, fmt.Sprintf("%s/pod/$POD_NAMESPACE/$POD_NAME/$POD_IP/$PODBINDING_RESERVATION_TOKEN", ctx.GatewayAdminApiAddr),
 						func() string {
@@ -331,6 +331,10 @@ func processServiceAdmission(ctx HandlerContext, review admissionv1.AdmissionRev
 				return errResponse(ctx, err, review.Request.UID)
 			}
 
+			if _, ok := svc.GetLabels()[svcBindingIPLabel]; ok {
+				return mutateAndAllow(review, nil)
+			}
+
 			req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/service/%s/%s", ctx.Env.GatewayAdminApiAddr, svc.Namespace, svc.Name), nil)
 			if err != nil {
 				return errResponse(ctx, err, review.Request.UID)
@@ -348,11 +352,14 @@ func processServiceAdmission(ctx HandlerContext, review admissionv1.AdmissionRev
 
 			lb := svc.GetLabels()
 			if lb == nil {
-				lb = make(map[string]string, 1)
+				lb = make(map[string]string, 2)
 			}
-			lb[svcBindingIP] = response.ServiceBindingIP
+			lb[svcBindingIPLabel] = response.ServiceBindingIP
+			lb[svcReservationTokenLabel] = response.ReservationToken
+			delete(lb, kloudliteWebhookTriggerLabel)
 			svc.SetLabels(lb)
 
+			ctx.Info("ALLOWED", "service", svc.Name, "namespace", svc.Namespace, "service-binding-ip", response.ServiceBindingIP, "service-binding-token", response.ReservationToken)
 			patchBytes, err := json.Marshal([]map[string]any{
 				{
 					"op":    "add",
@@ -374,12 +381,17 @@ func processServiceAdmission(ctx HandlerContext, review admissionv1.AdmissionRev
 				return errResponse(ctx, err, review.Request.UID)
 			}
 
-			svcBindingIP, ok := svc.GetLabels()[svcBindingIP]
+			svcBindingIP, ok := svc.GetLabels()[svcBindingIPLabel]
 			if !ok {
 				return mutateAndAllow(review, nil)
 			}
 
-			req, err := http.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("%s/service/%s", ctx.Env.GatewayAdminApiAddr, svcBindingIP), nil)
+			svcBindingToken, ok := svc.GetLabels()[svcReservationTokenLabel]
+			if !ok {
+				return mutateAndAllow(review, nil)
+			}
+
+			req, err := http.NewRequestWithContext(ctx, http.MethodDelete, fmt.Sprintf("%s/service/%s/%s", ctx.Env.GatewayAdminApiAddr, svcBindingIP, svcBindingToken), nil)
 			if err != nil {
 				return errResponse(ctx, err, review.Request.UID)
 			}

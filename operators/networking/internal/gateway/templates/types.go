@@ -1,6 +1,7 @@
 package templates
 
 import (
+	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -18,6 +19,9 @@ type GatewayDeploymentArgs struct {
 	GatewayInternalDNSNameserver string
 	GatewayWgExtraPeersHash      string
 	GatewayDNSServers            string
+
+	GatewayServiceType networkingv1.GatewayServiceType
+	GatewayNodePort    int32
 
 	ClusterCIDR string
 	ServiceCIDR string

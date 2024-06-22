@@ -243,7 +243,7 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 		peers := make([]string, 0, len(obj.Spec.Peers))
 		for _, peer := range obj.Spec.Peers {
 			npeer := fmt.Sprintf("[Peer]\nPublicKey = %s\nAllowedIPs = %s\n PersistentKeepalive = 25\n", peer.PublicKey, strings.Join(peer.AllowedIPs, ", "))
-			if peer.PublicEndpoint != nil {
+			if peer.PublicEndpoint != nil && *peer.PublicEndpoint != "" {
 				npeer = fmt.Sprintf("%s\nEndpoint = %s\n", npeer, *peer.PublicEndpoint)
 			}
 			peers = append(peers, npeer)
@@ -256,6 +256,9 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 
 	gatewayDNSServers := make([]string, 0, len(obj.Spec.Peers)+2)
 	for _, peer := range obj.Spec.Peers {
+		if peer.IP == obj.Spec.GlobalIP {
+			continue
+		}
 		if peer.DNSSuffix != nil {
 			gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", *peer.DNSSuffix, peer.IP))
 		}
@@ -297,6 +300,9 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 		ServiceCIDR:              obj.Spec.SvcCIDR,
 		IPManagerConfigName:      "gateway-ip-manager",
 		IPManagerConfigNamespace: obj.Spec.AdminNamespace,
+
+		GatewayServiceType: obj.Spec.ServiceType,
+		GatewayNodePort:    fn.DefaultIfNil(obj.Spec.NodePort),
 	})
 	if err != nil {
 		return check.Failed(err)
@@ -407,44 +413,68 @@ func (r *Reconciler) trackLoadBalancer(req *rApi.Request[*networkingv1.Gateway])
 		return check.Failed(err)
 	}
 
-	if svc.Spec.Type != corev1.ServiceTypeLoadBalancer {
-		return check.Failed(fmt.Errorf("failed to find a loadbalancer service"))
-	}
+	switch obj.Spec.ServiceType {
+	case networkingv1.GatewayServiceTypeLoadBalancer:
+		{
+			if svc.Spec.Type != corev1.ServiceTypeLoadBalancer {
+				return check.Failed(fmt.Errorf("failed to find a loadbalancer service"))
+			}
 
-	hosts := make([]string, 0, len(svc.Status.LoadBalancer.Ingress))
-	for _, ingress := range svc.Status.LoadBalancer.Ingress {
-		hosts = append(hosts, ingress.IP)
-	}
+			hosts := make([]string, 0, len(svc.Status.LoadBalancer.Ingress))
+			for _, ingress := range svc.Status.LoadBalancer.Ingress {
+				hosts = append(hosts, ingress.IP)
+			}
 
-	var port *int32
+			var port *int32
+			for i := range svc.Spec.Ports {
+				if svc.Spec.Ports[i].Name == "wireguard" {
+					port = &svc.Spec.Ports[i].Port
+				}
+			}
 
-	for i := range svc.Spec.Ports {
-		if svc.Spec.Ports[i].Name == "wireguard" {
-			port = &svc.Spec.Ports[i].Port
+			if port == nil {
+				return check.Failed(fmt.Errorf("failed to find a nodeport for our gateway service"))
+			}
+
+			if obj.Spec.LoadBalancer == nil {
+				obj.Spec.LoadBalancer = &networkingv1.GatewayLoadBalancer{}
+			}
+
+			hasUpdate := false
+			if !reflect.DeepEqual(obj.Spec.LoadBalancer.Hosts, hosts) {
+				hasUpdate = true
+				obj.Spec.LoadBalancer.Hosts = hosts
+			}
+			if obj.Spec.LoadBalancer.Port != *port {
+				hasUpdate = true
+				obj.Spec.LoadBalancer.Port = *port
+			}
+
+			if hasUpdate {
+				if err := r.Update(ctx, obj); err != nil {
+					return check.Failed(err)
+				}
+			}
 		}
-	}
+	case networkingv1.GatewayServiceTypeNodePort:
+		{
+			var port *int32
+			for i := range svc.Spec.Ports {
+				if svc.Spec.Ports[i].Name == "wireguard" {
+					port = &svc.Spec.Ports[i].Port
+				}
+			}
 
-	if port == nil {
-		return check.Failed(fmt.Errorf("failed to find a nodeport for our gateway service"))
-	}
-
-	if obj.Spec.LoadBalancer == nil {
-		obj.Spec.LoadBalancer = &networkingv1.GatewayLoadBalancer{}
-	}
-
-	hasUpdate := false
-	if !reflect.DeepEqual(obj.Spec.LoadBalancer.Hosts, hosts) {
-		hasUpdate = true
-		obj.Spec.LoadBalancer.Hosts = hosts
-	}
-	if obj.Spec.LoadBalancer.Port != *port {
-		hasUpdate = true
-		obj.Spec.LoadBalancer.Port = *port
-	}
-
-	if hasUpdate {
-		if err := r.Update(ctx, obj); err != nil {
-			return check.Failed(err)
+			if obj.Spec.NodePort == nil || *obj.Spec.NodePort != *port {
+				obj.Spec.NodePort = port
+				if err := r.Update(ctx, obj); err != nil {
+					return check.Failed(err)
+				}
+			}
+		}
+	default:
+		{
+			return check.Failed(fmt.Errorf("unsupported service type: %s", obj.Spec.ServiceType))
 		}
 	}
 

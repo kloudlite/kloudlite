@@ -6,6 +6,13 @@ inputs:
     description: 'GitHub Token'
     required: true
 
+  use_cachix:
+    description: "use cachix"
+    default: "false"
+
+  cachix_auth_token:
+    description: "cachix auth token"
+
   git_directory:
     description: 'git directory'
     default: "."
@@ -28,6 +35,10 @@ inputs:
 
   networking_ip-manager:
     description: 'build networking/ip-manager'
+    default: false
+
+  networking_ip-binding-controller:
+    description: 'build networking/ip-binding-controller'
     default: false
 
   networking_dns:
@@ -79,6 +90,8 @@ runs:
         nix-develop-arguments: "${{ inputs.git_directory }}#default"
         flake-lock: ${{ inputs.git_directory }}/flake.lock
         github_token: ${{ inputs.github_token }}
+        use_cachix: ${{ inputs.use_cachix }}
+        cachix_auth_token: ${{ inputs.cachix_auth_token }}
         enable_docker: true
 
         # cache_key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-${{ inputs.cache_prefix }}
@@ -187,7 +200,7 @@ runs:
         fi
         set -e
 
-        task local:build-and-push image=$image_name:$IMAGE_TAG
+        task container:build-and-push image=$image_name:$IMAGE_TAG
 
     - name: networking/webhook
       if: ${{ inputs.networking_webhook == 'true' }}
@@ -211,4 +224,4 @@ runs:
         fi
         set -e
 
-        task local:build-and-push image=$image_name:$IMAGE_TAG
+        task container:build-and-push image=$image_name:$IMAGE_TAG

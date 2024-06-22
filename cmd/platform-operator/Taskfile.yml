@@ -18,7 +18,7 @@ tasks:
     cmds:
       - task: go:build
         vars:
-          Out: "./bin/{{.app}}"
+          Out: "./bin/{{.app}}-{{.GOARCH}}"
 
   local:build-and-push:
     preconditions:
@@ -26,7 +26,12 @@ tasks:
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
       - task: build
-      - nerdctl build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}}
+        vars:
+          GOARCH: amd64
+      - task: build
+        vars:
+          GOARCH: arm64
+      - docker buildx build --platform linux/amd64,linux/arm64 -f ./Containerfile --output=type=image,compression=zstd,compressoin-level=12,force-compression=true,push=true -t {{.Image}} . --build-arg BINARY={{.app}}
 
   container:build-and-push:
     preconditions:
