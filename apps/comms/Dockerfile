@@ -1,5 +1,5 @@
 #syntax=docker/dockerfile:1.4
 FROM gcr.io/distroless/static:nonroot
-ARG BINARY
-COPY ./bin/$BINARY ./comms
+ARG BINARY TARGETARCH
+COPY $BINARY-$TARGETARCH ./comms
 ENTRYPOINT ["./comms"]
