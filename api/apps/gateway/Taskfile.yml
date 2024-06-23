@@ -1,5 +1,8 @@
 version: 3
 
+includes:
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
 vars:
   app: gateway
 
@@ -7,6 +10,7 @@ tasks:
   generate-schema:
     cmds:
       - bash ./generate-schema.sh {{.Output}}
+
   dev:
     dotenv:
       - "./.secrets/env"
@@ -14,26 +18,19 @@ tasks:
     cmds:
       - npm start
 
-  local:build:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: "var Image must have a value, of format 'image_repository:image_tag'"
-    vars:
-      push: "{{.push | default false}}"
-      SupergraphSchemaFile: "./supergraph.graphqls"
-    cmds:
-      - task: generate-schema
-      - podman build -t {{.Image}} . --cache-from=type=local,src=/tmp/buildx-cache --cache-to=type=local,dest=/tmp/buildx-cache
-
   container:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    requires:
+      vars:
+        - image
     vars:
       SupergraphSchemaFile: "./supergraph.graphqls"
     cmds:
       - task: generate-schema
         vars:
           Output: "{{.SupergraphSchemaFile}}"
-      - docker buildx build --build-arg SUPERGRAPH_FILE="{{.SupergraphSchemaFile}}" -t {{.Image}} . --push
+
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg SUPERGRAPH_FILE={{.SupergraphSchemaFile}} ."
+          image: "{{.image}}"
 
