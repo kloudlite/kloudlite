@@ -181,7 +181,7 @@ const HandleExternalApp = (props: IDialog) => {
   return (
     <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
       <Popup.Header>
-        {isUpdate ? 'Edit External Name' : 'Add External Name'}
+        {isUpdate ? 'Edit External App' : 'Add External App'}
       </Popup.Header>
       {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>

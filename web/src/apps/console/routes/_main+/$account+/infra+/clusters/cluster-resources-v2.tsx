@@ -35,7 +35,7 @@ import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 
 import { useState } from 'react';
-import { SyncStatusV2 } from '~/console/components/sync-status';
+// import { SyncStatusV2 } from '~/console/components/sync-status';
 import { Button } from '~/components/atoms/button';
 import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
 import DeleteDialog from '~/console/components/delete-dialog';
@@ -48,9 +48,10 @@ import CodeView from '~/console/components/code-view';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import { Badge } from '~/components/atoms/badge';
-import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
+// import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
 import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
+import Tooltip from '~/components/atoms/tooltip';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
@@ -103,12 +104,10 @@ const ByokInstructionsPopup = ({
   show,
   item,
   onClose,
-  clusterName,
 }: {
   show: boolean;
   item: CombinedBaseType;
   onClose: () => void;
-  clusterName: string;
 }) => {
   const params = useParams();
   ensureAccountClientSide(params);
@@ -128,7 +127,7 @@ const ByokInstructionsPopup = ({
 
   return (
     <Popup.Root onOpenChange={onClose} show={show} className="!w-[800px]">
-      <Popup.Header>{`${clusterName} setup instructions:`}</Popup.Header>
+      <Popup.Header>Instructions to attach cluster</Popup.Header>
       <Popup.Content>
         <form className="flex flex-col gap-2xl">
           {error && (
@@ -180,7 +179,6 @@ const ByokButton = ({ item }: { item: CombinedBaseType }) => {
     <div>
       {show ? (
         <ByokInstructionsPopup
-          clusterName={item.displayName || ''}
           show={show}
           onClose={() => {
             setShow(false);
@@ -206,14 +204,24 @@ const ByokButton = ({ item }: { item: CombinedBaseType }) => {
 };
 
 const GetByokClusterMessage = ({
-  syncStatusState,
+  lastOnlineAt,
   item,
 }: {
-  syncStatusState: SyncStatusState;
+  lastOnlineAt: string;
   item: CombinedBaseType;
 }) => {
-  switch (syncStatusState) {
-    case 'UPDATED_AT_AGENT':
+  if (lastOnlineAt === null) {
+    return <ByokButton item={item} />;
+  }
+
+  const lastTime = new Date(lastOnlineAt);
+  const currentTime = new Date();
+
+  const timeDifference =
+    (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
+
+  switch (true) {
+    case timeDifference <= 2:
       return (
         <ListItem
           data={
@@ -228,22 +236,66 @@ const GetByokClusterMessage = ({
   }
 };
 
-const GetByokClusterSyncStatus = ({
-  syncStatusState,
-}: {
-  syncStatusState: SyncStatusState;
-}) => {
-  switch (syncStatusState) {
-    case 'UPDATED_AT_AGENT':
-      return <Badge type="success">Online</Badge>;
-    case 'ERRORED_AT_AGENT':
-      return <Badge type="critical">Not Connected</Badge>;
-    case 'APPLIED_AT_AGENT':
-      return <Badge type="warning">Offline</Badge>;
-    case 'DELETING_AT_AGENT':
-      return <Badge type="critical">Deleting</Badge>;
+const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
+  if (lastOnlineAt === null) {
+    return <Badge type="warning">Offline</Badge>;
+  }
+
+  const lastTime = new Date(lastOnlineAt);
+  const currentTime = new Date();
+
+  const timeDifference =
+    (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
+
+  switch (true) {
+    case timeDifference <= 2:
+      return (
+        <Tooltip.Root
+          className="!w-fit !max-w-[500px]"
+          side="top"
+          content={
+            <div className="flex-1 bodySm text-text-strong pulsable whitespace-normal">
+              Last seen ({Math.floor(timeDifference * 60)}s ago)
+            </div>
+          }
+        >
+          <div>
+            <Badge type="success">Online</Badge>
+          </div>
+        </Tooltip.Root>
+      );
+    case timeDifference > 2:
+      return (
+        <Tooltip.Root
+          className="!w-fit !max-w-[500px]"
+          side="top"
+          content={
+            <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
+              {lastOnlineAt} ({timeDifference * 60}s ago)
+            </div>
+          }
+        >
+          <div>
+            <Badge type="warning">Offline</Badge>
+          </div>
+        </Tooltip.Root>
+      );
     default:
-      return <Badge type="critical">Not Connected</Badge>;
+      return (
+        <Tooltip.Root
+          className="!w-fit !max-w-[500px]"
+          side="top"
+          content={
+            <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
+              {lastOnlineAt}
+            </div>
+          }
+        >
+          <div>
+            <Badge type="warning">Offline</Badge>
+          </div>
+        </Tooltip.Root>
+      );
   }
 };
 
@@ -435,20 +487,13 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
                     />
                   ) : (
                     <GetByokClusterMessage
-                      syncStatusState={i.syncStatus.state}
+                      lastOnlineAt={i.lastOnlineAt}
                       item={i}
                     />
                   ),
               },
               status: {
-                render: () =>
-                  i.type === 'normal' ? (
-                    <SyncStatusV2 item={i} resourceType={i.type} />
-                  ) : (
-                    <GetByokClusterSyncStatus
-                      syncStatusState={i.syncStatus.state}
-                    />
-                  ),
+                render: () => <GetSyncStatus lastOnlineAt={i.lastOnlineAt} />,
               },
               updated: {
                 render: () => (

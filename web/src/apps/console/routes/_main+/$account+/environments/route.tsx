@@ -15,6 +15,7 @@ import fake from '~/root/fake-data-generator/fake';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
+import { EmptyEnvironmentImage } from '~/console/components/empty-resource-images';
 import Tools from './tools';
 import EnvironmentResourcesV2 from './environment-resources-v2';
 
@@ -79,6 +80,7 @@ const Workspaces = () => {
                 ),
               }}
               empty={{
+                image: <EmptyEnvironmentImage />,
                 is: environments?.length === 0,
                 title: 'This is where you’ll manage your environment.',
                 content: (

@@ -39,7 +39,7 @@ dependencies:
     specifier: 1.0.4
     version: 1.0.4(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1)(react@18.2.0)
   '@radix-ui/react-direction':
-    specifier: ^1.0.1
+    specifier: 1.0.1
     version: 1.0.1(@types/react@18.3.3)(react@18.2.0)
   '@radix-ui/react-dismissable-layer':
     specifier: ^1.0.5

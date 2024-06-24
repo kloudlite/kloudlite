@@ -11,6 +11,7 @@ import fake from '~/root/fake-data-generator/fake';
 import { useEffect } from 'react';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import { EmptyStorageImage } from '~/console/components/empty-resource-images';
 import Tools from './tools';
 import BackendServicesResourcesV2 from './backend-services-resources-V2';
 
@@ -76,6 +77,7 @@ const KlOperatorServices = () => {
               ),
             }}
             empty={{
+              image: <EmptyStorageImage />,
               is: backendServices.length === 0,
               title: 'This is where you’ll manage your Managed services.',
               content: (

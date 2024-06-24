@@ -101,13 +101,13 @@ const AppDetail = () => {
         name: Yup.string().required(),
         displayName: Yup.string().required(),
         imageUrl: Yup.string().matches(
-          /^\w(\w|[-/])+?(?::(\w|[-])+)?\w$/,
+          constants.dockerImageFormatRegex,
           'Invalid image format'
         ),
         manualRepo: Yup.string().when(
           ['imageUrl', 'imageMode'],
           ([imageUrl, imageMode], schema) => {
-            const regex = /^\w(\w|[-/])+?(?::(\w|[-])+)?\w$/;
+            const regex = constants.dockerImageFormatRegex;
             if (imageMode === 'git') {
               return schema;
             }

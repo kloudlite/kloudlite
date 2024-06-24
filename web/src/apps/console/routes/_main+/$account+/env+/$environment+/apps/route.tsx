@@ -12,6 +12,7 @@ import { clearAppState } from '~/console/page-components/app-states';
 import { useEffect } from 'react';
 import { Button } from '~/components/atoms/button';
 import fake from '~/root/fake-data-generator/fake';
+import { EmptyAppImage } from '~/console/components/empty-resource-images';
 import Tools from './tools';
 import AppsResourcesV2 from './apps-resources-v2';
 
@@ -70,6 +71,7 @@ const Apps = () => {
                 ),
               }}
               empty={{
+                image: <EmptyAppImage />,
                 is: apps?.length === 0,
                 title: 'This is where you’ll manage your Apps.',
                 content: (

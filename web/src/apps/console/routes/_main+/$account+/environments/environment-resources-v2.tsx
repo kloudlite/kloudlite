@@ -27,6 +27,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
+import { Badge } from '~/components/atoms/badge';
 import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'environment';
@@ -58,7 +59,7 @@ type IExtraButton = {
 
 const ExtraButton = ({ item, onAction }: IExtraButton) => {
   const { account } = useParams();
-  return item.clusterName === '' ? (
+  return item.isArchived ? (
     <ResourceExtraAction
       options={[
         {
@@ -193,10 +194,17 @@ const ListView = ({ items, onAction }: IResource) => {
                 ),
               },
               cluster: {
-                render: () => <ListItem data={i.clusterName} />,
+                render: () => (
+                  <ListItem data={i.isArchived ? '' : i.clusterName} />
+                ),
               },
               status: {
-                render: () => <SyncStatusV2 item={i} />,
+                render: () =>
+                  i.isArchived ? (
+                    <Badge type="neutral">Archived</Badge>
+                  ) : (
+                    <SyncStatusV2 item={i} />
+                  ),
               },
               // environment: {
               //   render: () => (
@@ -226,7 +234,7 @@ const ListView = ({ items, onAction }: IResource) => {
               },
             },
             // to: `/${account}/env/${id}`,
-            ...(i.clusterName !== '' ? { to: `/${account}/env/${id}` } : {}),
+            ...(i.isArchived ? {} : { to: `/${account}/env/${id}` }),
           };
         }),
       }}

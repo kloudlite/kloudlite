@@ -148,7 +148,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       name: Yup.string().required(),
       displayName: Yup.string().required(),
       imageUrl: Yup.string().matches(
-        /^\w(\w|[-/])+?(?::(\w|[-])+)?\w$/,
+        constants.dockerImageFormatRegex,
         'Invalid image format'
       ),
       manualRepo: Yup.string().when(

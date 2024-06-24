@@ -11,6 +11,7 @@ type Account {
   displayName: String!
   id: ID!
   isActive: Boolean
+  kloudliteGatewayRegion: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   logo: String
   markedForDeletion: Boolean
@@ -24,6 +25,7 @@ input AccountIn {
   contactEmail: String
   displayName: String!
   isActive: Boolean
+  kloudliteGatewayRegion: String!
   logo: String
   metadata: MetadataIn
 }
@@ -89,6 +91,16 @@ type AppPaginatedRecords {
   edges: [AppEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+}
+
+type AvailableKloudliteRegion {
+  displayName: String!
+  id: String!
+}
+
+input AvailableKloudliteRegionIn {
+  displayName: String!
+  id: String!
 }
 
 type Build {
@@ -172,6 +184,7 @@ type BYOKCluster {
   displayName: String!
   globalVPN: String!
   id: ID!
+  lastOnlineAt: Date
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   messageQueueTopicName: String!
@@ -265,6 +278,7 @@ type Cluster {
   globalVPN: String
   id: ID!
   kind: String
+  lastOnlineAt: Date
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
@@ -598,6 +612,7 @@ type Environment {
   creationTime: Date!
   displayName: String!
   id: ID!
+  isArchived: Boolean
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -3901,6 +3916,7 @@ input PortIn {
 scalar ProviderDetail
 
 type Query {
+  accounts_availableKloudliteRegions: [AvailableKloudliteRegion!]
   accounts_checkNameAvailability(name: String!): AccountsCheckNameAvailabilityOutput!
   accounts_ensureKloudliteRegistryPullSecrets(accountName: String!): Boolean!
   accounts_getAccount(accountName: String!): Account

@@ -43,7 +43,7 @@ const UserProfile = () => {
     <SidebarLayout
       navItems={[
         { label: 'Account', value: 'account' },
-        { label: 'Notifications', value: 'notifications' },
+        // { label: 'Notifications', value: 'notifications' },
         { label: 'Login connections', value: 'login-connections' },
       ]}
       parentPath="/user-profile"

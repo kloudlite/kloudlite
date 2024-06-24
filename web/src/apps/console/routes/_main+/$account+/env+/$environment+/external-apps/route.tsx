@@ -12,6 +12,7 @@ import { clearAppState } from '~/console/page-components/app-states';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import fake from '~/root/fake-data-generator/fake';
+import { EmptyAppImage } from '~/console/components/empty-resource-images';
 import Tools from './tools';
 import ExternalNameResource from './external-app-resource';
 import HandleExternalApp from './handle-external-app';
@@ -80,6 +81,7 @@ const ExternalApp = () => {
                   ),
                 }}
                 empty={{
+                  image: <EmptyAppImage />,
                   is: externalApps?.length === 0,
                   title: 'This is where you’ll manage your external Apps.',
                   content: (

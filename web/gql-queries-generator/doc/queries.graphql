@@ -48,6 +48,13 @@ mutation consoleCreateAccount($account: AccountIn!) {
   }
 }
 
+query consoleGetAvailableKloudliteRegions {
+  accounts_availableKloudliteRegions {
+    displayName
+    id
+  }
+}
+
 query consoleListAccounts {
   accounts_listAccounts {
     id
@@ -57,6 +64,7 @@ query consoleListAccounts {
     }
     updateTime
     displayName
+    kloudliteGatewayRegion
   }
 }
 
@@ -76,6 +84,7 @@ query consoleGetAccount($accountName: String!) {
     updateTime
     contactEmail
     displayName
+    kloudliteGatewayRegion
   }
 }
 
@@ -122,6 +131,7 @@ query consoleListAllClusters($search: SearchCluster, $pagination: CursorPaginati
       node {
         accountName
         clusterSvcCIDR
+        lastOnlineAt
         createdBy {
           userEmail
           userId
@@ -179,6 +189,7 @@ query consoleListAllClusters($search: SearchCluster, $pagination: CursorPaginati
       node {
         id
         displayName
+        lastOnlineAt
         markedForDeletion
         metadata {
           name
@@ -293,6 +304,7 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
         id
         displayName
         markedForDeletion
+        lastOnlineAt
         metadata {
           name
           annotations
@@ -809,6 +821,7 @@ query consoleGetEnvironment($name: String!) {
     creationTime
     displayName
     clusterName
+    isArchived
     lastUpdatedBy {
       userEmail
       userId
@@ -887,6 +900,7 @@ query consoleListEnvironments($search: SearchEnvironments, $pq: CursorPagination
         creationTime
         displayName
         clusterName
+        isArchived
         lastUpdatedBy {
           userEmail
           userId
@@ -3357,6 +3371,7 @@ query consoleListByokClusters($search: SearchCluster, $pagination: CursorPaginat
       node {
         accountName
         clusterSvcCIDR
+        lastOnlineAt
         createdBy {
           userEmail
           userId
