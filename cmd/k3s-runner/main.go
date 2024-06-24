@@ -26,7 +26,6 @@ func execK3s(ctx context.Context, args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	// logger.Info("STARTING k3s @ timestamp: %s, with cmd: %s\n", time.Now().Format(time.RFC3339), cmd.String())
 	logger.Info("STARTING k3s", "timestamp", time.Now().Format(time.RFC3339), "cmd", cmd.String())
 
 	if err := cmd.Run(); err != nil {
@@ -37,30 +36,10 @@ func execK3s(ctx context.Context, args ...string) error {
 	return cmd.Wait()
 }
 
-// func getPublicIPv4() (string, error) {
-// 	req, err := http.NewRequest(http.MethodGet, "https://ifconfig.me", nil)
-// 	if err != nil {
-// 		return "", err
-// 	}
-//
-// 	r, err := http.DefaultClient.Do(req)
-// 	if err != nil {
-// 		return "", err
-// 	}
-//
-// 	b, err := io.ReadAll(r.Body)
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	defer r.Body.Close()
-//
-// 	return string(b), nil
-// }
-
 func main() {
 	var runnerCfgFile string
 	var hasVersionFlag bool
-	flag.StringVar(&runnerCfgFile, "config", "./runner-config.yml", "--config runner-config-file")
+	flag.StringVar(&runnerCfgFile, "config", "/etc/kloudlite/runner-config.yml", "--config <runner-config-file>")
 	flag.BoolVar(&hasVersionFlag, "version", false, "--version")
 	flag.Parse()
 
