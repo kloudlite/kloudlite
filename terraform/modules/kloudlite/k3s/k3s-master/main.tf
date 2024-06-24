@@ -30,6 +30,7 @@ locals {
   k3s_server_extra_args = {
     for k, v in var.master_nodes : k => concat(
       [
+        "--token", random_password.k3s_server_token.result,
         "--agent-token", random_password.k3s_agent_token.result,
         "--disable-helm-controller",
         "--disable", "traefik",
