@@ -6,6 +6,7 @@ import (
 
 	"github.com/kloudlite/api/common/fields"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	opConstants "github.com/kloudlite/operator/pkg/constants"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
@@ -246,6 +247,9 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: destEnv.Spec.TargetNamespace,
+			Labels: map[string]string{
+				opConstants.KloudliteGatewayEnabledLabel: "true",
+			},
 		},
 	}, destEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
