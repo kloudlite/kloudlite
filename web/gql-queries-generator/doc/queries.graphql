@@ -6485,6 +6485,10 @@ mutation authVerifyEmail($token: String!) {
   }
 }
 
+mutation authResendVerificationEmail {
+  auth_resendVerificationEmail
+}
+
 query authLoginPageInitUrls {
   githubLoginUrl: oAuth_requestLogin(provider: "github")
   gitlabLoginUrl: oAuth_requestLogin(provider: "gitlab")

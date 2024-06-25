@@ -8117,6 +8117,14 @@ export type AuthVerifyEmailMutationVariables = Exact<{
 
 export type AuthVerifyEmailMutation = { auth_verifyEmail: { id: string } };
 
+export type AuthResendVerificationEmailMutationVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type AuthResendVerificationEmailMutation = {
+  auth_resendVerificationEmail: boolean;
+};
+
 export type AuthLoginPageInitUrlsQueryVariables = Exact<{
   [key: string]: never;
 }>;
