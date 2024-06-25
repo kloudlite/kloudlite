@@ -2074,7 +2074,8 @@ type GlobalVPN {
   creationTime: Date!
   displayName: String!
   id: ID!
-  kloudliteDevice: GlobalVPNKloudliteDevice!
+  kloudliteClusterLocalDevice: GlobalVPNKloudliteClusterLocalDevice!
+  kloudliteGatewayDevice: GlobalVPNKloudliteGatewayDevice!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
@@ -2134,7 +2135,8 @@ input GlobalVPNIn {
   allocatableCIDRSuffix: Int!
   CIDR: String!
   displayName: String!
-  kloudliteDevice: GlobalVPNKloudliteDeviceIn!
+  kloudliteClusterLocalDevice: GlobalVPNKloudliteClusterLocalDeviceIn!
+  kloudliteGatewayDevice: GlobalVPNKloudliteGatewayDeviceIn!
   metadata: MetadataIn!
   nonClusterUseAllowedIPs: [String!]!
   numAllocatedClusterCIDRs: Int!
@@ -2143,12 +2145,22 @@ input GlobalVPNIn {
   wgInterface: String!
 }
 
-type GlobalVPNKloudliteDevice {
+type GlobalVPNKloudliteClusterLocalDevice {
   ipAddr: String!
   name: String!
 }
 
-input GlobalVPNKloudliteDeviceIn {
+input GlobalVPNKloudliteClusterLocalDeviceIn {
+  ipAddr: String!
+  name: String!
+}
+
+type GlobalVPNKloudliteGatewayDevice {
+  ipAddr: String!
+  name: String!
+}
+
+input GlobalVPNKloudliteGatewayDeviceIn {
   ipAddr: String!
   name: String!
 }

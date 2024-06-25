@@ -1048,7 +1048,8 @@ export type GlobalVpnIn = {
   allocatableCIDRSuffix: Scalars['Int']['input'];
   CIDR: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
-  kloudliteDevice: GlobalVpnKloudliteDeviceIn;
+  kloudliteClusterLocalDevice: GlobalVpnKloudliteClusterLocalDeviceIn;
+  kloudliteGatewayDevice: GlobalVpnKloudliteGatewayDeviceIn;
   metadata: MetadataIn;
   nonClusterUseAllowedIPs: Array<Scalars['String']['input']>;
   numAllocatedClusterCIDRs: Scalars['Int']['input'];
@@ -1057,7 +1058,12 @@ export type GlobalVpnIn = {
   wgInterface: Scalars['String']['input'];
 };
 
-export type GlobalVpnKloudliteDeviceIn = {
+export type GlobalVpnKloudliteClusterLocalDeviceIn = {
+  ipAddr: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type GlobalVpnKloudliteGatewayDeviceIn = {
   ipAddr: Scalars['String']['input'];
   name: Scalars['String']['input'];
 };
