@@ -551,12 +551,12 @@ type GlobalVPNEdge struct {
 	Node   *entities.GlobalVPN `json:"node"`
 }
 
-type GlobalVPNKloudliteDevice struct {
+type GlobalVPNKloudliteClusterLocalDevice struct {
 	IPAddr string `json:"ipAddr"`
 	Name   string `json:"name"`
 }
 
-type GlobalVPNKloudliteDeviceIn struct {
+type GlobalVPNKloudliteGatewayDevice struct {
 	IPAddr string `json:"ipAddr"`
 	Name   string `json:"name"`
 }

@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
@@ -34,9 +33,14 @@ func (r *globalVPNResolver) ID(ctx context.Context, obj *entities.GlobalVPN) (re
 	return obj.Id, nil
 }
 
-// KloudliteDevice is the resolver for the kloudliteDevice field.
-func (r *globalVPNResolver) KloudliteDevice(ctx context.Context, obj *entities.GlobalVPN) (*model.GlobalVPNKloudliteDevice, error) {
-	panic(fmt.Errorf("not implemented: KloudliteDevice - kloudliteDevice"))
+// KloudliteClusterLocalDevice is the resolver for the kloudliteClusterLocalDevice field.
+func (r *globalVPNResolver) KloudliteClusterLocalDevice(ctx context.Context, obj *entities.GlobalVPN) (*model.GlobalVPNKloudliteClusterLocalDevice, error) {
+	return fn.JsonConvertP[model.GlobalVPNKloudliteClusterLocalDevice](obj.KloudliteClusterLocalDevice)
+}
+
+// KloudliteGatewayDevice is the resolver for the kloudliteGatewayDevice field.
+func (r *globalVPNResolver) KloudliteGatewayDevice(ctx context.Context, obj *entities.GlobalVPN) (*model.GlobalVPNKloudliteGatewayDevice, error) {
+	return fn.JsonConvertP[model.GlobalVPNKloudliteGatewayDevice](obj.KloudliteGatewayDevice)
 }
 
 // UpdateTime is the resolver for the updateTime field.
@@ -45,11 +49,6 @@ func (r *globalVPNResolver) UpdateTime(ctx context.Context, obj *entities.Global
 		return "", errors.Newf("cluster is nil")
 	}
 	return obj.UpdateTime.Format(time.RFC3339), nil
-}
-
-// KloudliteDevice is the resolver for the kloudliteDevice field.
-func (r *globalVPNInResolver) KloudliteDevice(ctx context.Context, obj *entities.GlobalVPN, data *model.GlobalVPNKloudliteDeviceIn) error {
-	panic(fmt.Errorf("not implemented: KloudliteDevice - kloudliteDevice"))
 }
 
 // Metadata is the resolver for the metadata field.
