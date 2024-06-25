@@ -2,6 +2,11 @@ version: 3
 
 includes:
   go: ../../../../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../../../../.tools/taskfiles/docker.Taskfile.yml
+
+vars:
+  app: dns
+  binary: ./bin/{{.app}}
 
 tasks:
   run:
@@ -14,6 +19,7 @@ tasks:
           --local-dns-addr ":{{.cluster_internal_port}}" 
           --local-gateway-dns sample.example.local 
           --http-addr ":8081" 
+          --account-name "testing"
           --debug
 
   test:
@@ -26,7 +32,8 @@ tasks:
     cmds:
       - task: go:build
         vars:
-          Out: ./bin/dns-{{.GOARCH}}
+          Out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
 
   container:build-and-push:
     preconditions:
@@ -39,4 +46,8 @@ tasks:
       - task: build
         vars:
           GOARCH: arm64
-      - docker buildx build --platform linux/amd64,linux/arm64 -t {{.image}} --output=type=image,compression=zstd,compression-level=12,force-compression=true,push=true --build-arg BINARY=./bin/dns .
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          image: "{{.image}}"
+

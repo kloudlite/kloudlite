@@ -105,6 +105,11 @@ func (in *GatewaySpec) DeepCopyInto(out *GatewaySpec) {
 		*out = new(GatewayLoadBalancer)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.NodePort != nil {
+		in, out := &in.NodePort, &out.NodePort
+		*out = new(int32)
+		**out = **in
+	}
 	out.WireguardKeysRef = in.WireguardKeysRef
 }
 

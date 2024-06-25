@@ -9,6 +9,7 @@
 {{- $dnsUDPPortWg := "53" }}
 {{- $dnsUDPPortLocal := "54" }}
 {{- $dnsHttpPort := "8082" }}
+{{- $kubectlProxyHttpPort := "8383" }}
 
 {{- $serviceBindControllerHealtCheckPort := "8081" }}
 {{- $serviceBindControllerMetricsPort := "9090" }}
@@ -222,6 +223,13 @@ spec:
           - name: GATEWAY_DNS_SUFFIX
             value: {{.GatewayDNSSuffix}}
 
+        securityContext:
+          capabilities:
+            add:
+              - NET_BIND_SERVICE
+            drop:
+              - all
+
       - name: dns
         image: "ghcr.io/kloudlite/operator/networking/cmd/dns:v1.0.7-nightly"
         imagePullPolicy: Always
@@ -243,6 +251,9 @@ spec:
 
           - --dns-servers
           - {{.GatewayDNSServers}}
+
+          - --service-hosts
+          - pod-logs-proxy.{{.Namespace}}.{{.GatewayDNSSuffix}}={{.GatewayGlobalIP}}
 
           - --debug
         imagePullPolicy: Always
@@ -271,6 +282,20 @@ spec:
           - name: GATEWAY_ADMIN_API_ADDR
             {{- /* value: {{$gatewayAdminApiAddr}} */}}
             value: http://$(POD_IP):{{$gatewayAdminHttpPort}}
+
+      - name: kubectl-proxy
+        image: ghcr.io/kloudlite/api/cmd/pod-logs-proxy:v1.0.7-nightly
+        imagePullPolicy: Always
+        args:
+          - --addr
+          - {{.GatewayGlobalIP}}:{{$kubectlProxyHttpPort}}
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
 
       volumes:
         {{- if not $debugWebhook }}
@@ -343,15 +368,13 @@ metadata:
   labels: {{.Labels | toYAML | nindent 4}}
   ownerReferences: {{.OwnerReferences | toYAML | nindent 4}}
 spec:
-  type: LoadBalancer
+  type: {{.GatewayServiceType}}
   selector: {{.Labels | toYAML | nindent 4}}
   ports:
     - name: wireguard
+      {{- if (and (eq .GatewayServiceType "NodePort") (ne .GatewayNodePort 0)) }}
+      nodePort: {{.GatewayNodePort}}
+      {{- end }}
       port: 31820
       protocol: UDP
       targetPort: {{$gatewayWgPort}}
-
-    {{- /* - name: dns */}}
-    {{- /*   port: 53 */}}
-    {{- /*   protocol: UDP */}}
-    {{- /*   targetPort: {{$dnsUDPPortLocal}} */}}

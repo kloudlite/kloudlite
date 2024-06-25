@@ -146,10 +146,10 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	r.Delete("/service/{svc_binding_ip}", func(w http.ResponseWriter, r *http.Request) {
-		svcBindingIP := chi.URLParam(r, "svc_binding_ip")
-		if err := mg.DeregisterService(r.Context(), svcBindingIP); err != nil {
-			log.Error("deregistering service", "svc-binding", svcBindingIP, "err", err)
+	r.Delete("/service/{svc_binding_ip}/{svc_binding_token}", func(w http.ResponseWriter, r *http.Request) {
+		svcBindingIP, svcBindingToken := chi.URLParam(r, "svc_binding_ip"), chi.URLParam(r, "svc_binding_token")
+		if err := mg.DeregisterService(r.Context(), svcBindingIP, svcBindingToken); err != nil {
+			log.Error("deregistering service", "svc-binding", svcBindingIP, "svc-", "err", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

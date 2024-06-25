@@ -9,6 +9,7 @@ import (
 	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
 	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
 	// msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
+	networkingv1 "github.com/kloudlite/operator/operators/networking/register"
 	nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	project "github.com/kloudlite/operator/operators/project/controller"
 	routers "github.com/kloudlite/operator/operators/routers/controller"
@@ -35,6 +36,7 @@ func main() {
 	virtualMachine.RegisterInto(mgr)
 
 	wireguard.RegisterInto(mgr)
+	networkingv1.RegisterInto(mgr)
 
 	mgr.Start()
 }
