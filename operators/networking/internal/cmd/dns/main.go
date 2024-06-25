@@ -175,6 +175,8 @@ func main() {
 		wgDNSAddr       string
 		localGatewayDNS string
 
+		accountName string
+
 		enableLocalDNS bool
 		localDNSAddr   string
 
@@ -187,6 +189,8 @@ func main() {
 
 	flag.BoolVar(&isDebug, "debug", false, "--debug")
 	flag.StringVar(&wgDNSAddr, "wg-dns-addr", ":53", "--wg-dns-addr <host>:<port>")
+	flag.StringVar(&accountName, "account", "", "--account <account_name>")
+
 	flag.BoolVar(&enableLocalDNS, "enable-local-dns", false, "--enable-local-dns")
 	flag.StringVar(&localDNSAddr, "local-dns-addr", ":54", "--local-dns-addr <host>:<port>")
 	flag.StringVar(&localGatewayDNS, "local-gateway-dns", "svc.cluster.local", "--local-gateway-dns <alias>")
@@ -209,6 +213,15 @@ func main() {
 
 		gatewayMap.Set(s[0], s[1])
 		log.Info("registered gateway", "dns-suffix", s[0], "gateway-addr", s[1])
+	}
+
+	if accountName != "" {
+		accountDNSName := "account.kloudlite.local"
+		accountRecord, err := dns.NewRR(fmt.Sprintf("%s. 5 IN TXT %s", accountDNSName, accountName))
+		if err != nil {
+			panic(err)
+		}
+		serviceMap.Set(accountDNSName+".", []dns.RR{accountRecord})
 	}
 
 	for _, serviceHost := range strings.Split(serviceHosts, ",") {

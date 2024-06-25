@@ -43,6 +43,7 @@ type Manager struct {
 	podPeers        map[string]string
 	svcNginxStreams map[string][]string
 
+	svcBindingsMap      map[string]*ReserveServiceResponse
 	gatewayWgExtraPeers string
 }
 
@@ -94,6 +95,7 @@ func NewManager(ev *env.Env, kclientset *kubernetes.Clientset, kcli client.Clien
 			ReportTimestamp: false,
 			ReportCaller:    true,
 		}),
+		svcBindingsMap: make(map[string]*ReserveServiceResponse),
 	}
 
 	if v, ok := cfg.Data["counter_pod_ip"]; ok {

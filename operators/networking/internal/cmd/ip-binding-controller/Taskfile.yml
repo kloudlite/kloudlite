@@ -2,6 +2,7 @@ version: 3
 
 includes:
   go: ../../../../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../../../../.tools/taskfiles/docker.Taskfile.yml
 
 vars:
   binary: service-binding-controller
@@ -30,4 +31,8 @@ tasks:
       - task: build
         vars:
           GOARCH: arm64
-      - docker buildx build --build-arg BINARY=./bin/{{.binary}} --platform linux/amd64,linux/arm64 --output=type=image,compression=zstd,compression-level=12,force-compression=true,push=true -t {{.image}} .
+
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY=./bin/{{.binary}} ."
+          image: "{{.image}}"
