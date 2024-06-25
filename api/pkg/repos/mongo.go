@@ -12,6 +12,7 @@ import (
 )
 
 func NewMongoDatabase(ctx context.Context, uri string, dbName string) (db *mongo.Database, e error) {
+	// client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri).SetReadPreference(readpref.SecondaryPreferred()))
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
 		return nil, errors.NewEf(err, "could not connect to mongodb servers")
@@ -36,6 +37,7 @@ func NewMongoClientFx[T MongoConfig]() fx.Option {
 			lifecycle.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
 					if err := db.Client().Ping(ctx, nil); err != nil {
+					// if err := db.Client().Ping(ctx, readpref.Primary()); err != nil {
 						return errors.NewEf(err, "could not ping Mongo")
 					}
 					logger.Infof("connected to mongodb database: %s", db.Name())

@@ -91,6 +91,7 @@ func (d *domain) handleResWatchMsg(ctx types.Context, resources *res_watch.ResWa
 					Id:      msg.Id,
 				}); err != nil {
 					utils.WriteError(ctx, err, msg.Id, types.ForResourceUpdate)
+					return
 				}
 			})
 
@@ -114,6 +115,7 @@ func (d *domain) handleResWatchMsg(ctx types.Context, resources *res_watch.ResWa
 
 				delete(*resources, rd.Topic)
 				utils.WriteInfo(ctx, fmt.Sprintf("unsubscribed from %s", rd.Topic), msg.Id, types.ForResourceUpdate)
+				return nil
 			}
 
 			utils.WriteError(ctx, fmt.Errorf("resource not found"), msg.Id, types.ForResourceUpdate)

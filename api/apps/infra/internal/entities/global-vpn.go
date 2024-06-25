@@ -45,12 +45,12 @@ type GlobalVPN struct {
 	KloudliteGatewayDevice struct {
 		Name   string `json:"name"`
 		IPAddr string `json:"ipAddr"`
-	} `json:"kloudliteGatewayDevice"`
+	} `json:"kloudliteGatewayDevice" graphql:"noinput"`
 
 	KloudliteClusterLocalDevice struct {
 		Name   string `json:"name"`
 		IPAddr string `json:"ipAddr"`
-	} `json:"kloudliteClusterLocalDevice"`
+	} `json:"kloudliteClusterLocalDevice" graphql:"noinput"`
 }
 
 func (c *GlobalVPN) GetDisplayName() string {

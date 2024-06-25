@@ -1,0 +1,82 @@
+name: building api with nix
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag: 
+        type: string
+        description: "image_tag"
+        required: true
+        default: ""
+
+
+  repository_dispatch:
+    types:
+      - webhook
+
+  push:
+    paths:
+      - "apps/**/**"
+      - "pkg/**"
+      - "grpc-interfaces/**"
+      - "common/**"
+      - "go.*"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-images:
+    strategy:
+      fail-fast: false
+      matrix:
+        images:
+          - name: accounts-api
+          - name: auth-api
+          - name: comms-api
+          - name: console-api
+          - name: container-registry-api
+          - name: gateway-api
+          - name: iam-api
+          - name: infra-api
+          - name: message-office-api
+          - name: observability-api
+          - name: tenant-agent
+          - name: webhook-api
+          - name: websocket-server-api
+
+    runs-on: ubuntu-latest
+    name: ${{ matrix.images.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: build-and-push
+        uses: ./.github/actions/build-api-images/
+        with:
+          image_tag: ${{ inputs.image_tag }}
+
+          cachix_enabled: true
+          cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+          docker_enabled: true
+
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git_directory: "."
+
+          accounts-api: ${{ matrix.images.name == 'accounts-api' }}
+          auth-api: ${{ matrix.images.name == 'auth-api' }}
+          comms-api: ${{ matrix.images.name == 'comms-api' }}
+          console-api: ${{ matrix.images.name == 'console-api' }}
+          container-registry-api: ${{ matrix.images.name == 'container-registry-api' }}
+          gateway-api: ${{ matrix.images.name == 'gateway-api' }}
+          iam-api: ${{ matrix.images.name == 'iam-api' }}
+          infra-api: ${{ matrix.images.name == 'infra-api' }}
+          message-office-api: ${{ matrix.images.name == 'message-office-api' }}
+          observability-api: ${{ matrix.images.name == 'observability-api' }}
+          tenant-agent: ${{ matrix.images.name == 'tenant-agent' }}
+          webhook-api: ${{ matrix.images.name == 'webhook-api' }}
+          websocket-server-api: ${{ matrix.images.name == 'websocket-server-api' }}
+

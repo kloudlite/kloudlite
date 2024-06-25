@@ -6,6 +6,10 @@ inputs:
     description: 'GitHub Token'
     required: true
 
+  image_tag:
+    description: 'image tag, if empty, will be generated from branch or tag'
+    default: ''
+
   cachix_enabled:
     description: "cachix enabled"
     default: "false"
@@ -24,14 +28,6 @@ inputs:
   git_directory:
     description: 'git directory'
     default: "."
-
-  cache_prefix:
-    description: 'cache prefix'
-    default: ""
-
-  go_mod_download:
-    description: 'go mod download'
-    default: false
 
   # APIs
   accounts-api:
@@ -105,25 +101,14 @@ runs:
 
         echo "GOMODCACHE=$GOMODCACHE" >> $GITHUB_ENV
         echo "GOCACHE=$GOCACHE" >> $GITHUB_ENV
-        echo "GOPKG_HASH=${{ hashFiles(format('{0}/go.mod', inputs.git_directory), format('{0}/go.sum', inputs.git_directory)) }}" >> $GITHUB_OUTPUT
+        echo "FILES_HASH=${{ hashFiles('**/*.go', '**/go.mod', '**/go.sum')}}" >> $GITHUB_OUTPUT
 
     - name: ensures path to setup action exists
       shell: bash
       run: |+
-        mkdir -p $GOMODCACHE
         ln -sf ${{ inputs.git_directory }}/.github/actions ./github-actions
 
-    # - name: Setup Caches
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: |+
-    #       ${{ env.GOMODCACHE }}
-    #       ${{ env.GOCACHE }}
-    #     key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-${{ inputs.cache_prefix }}
-    #     save-always: true
-    #     restore-keys: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-
-
-    - name: setup nix cache
+    - name: setup nix (with cachix)
       if: ${{ inputs.cachix_enabled == 'true' }}
       uses: ./github-actions/setup-nix-cachix/
       with:
@@ -133,7 +118,7 @@ runs:
         cachix_cache_name: ${{ inputs.cachix_cache_name }}
         cachix_auth_token: ${{ inputs.cachix_auth_token }}
 
-    - name: setup nix cache
+    - name: setup nix cache (with github cache)
       if: ${{ inputs.cachix_enabled == 'false' }}
       uses: ./github-actions/setup-nix-github/
       with:
@@ -147,8 +132,14 @@ runs:
         docker_username: ${{ github.actor }}
         docker_password: ${{ inputs.github_token }}
 
+    - name: Create Image Tag
+      if: ${{ inputs.image_tag != '' }}
+      shell: bash
+      run: |+
+        echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
+
     - name: Create Image Tag from branch name
-      if: startsWith(github.ref, 'refs/heads/release')
+      if: ${{ inputs.image_tag == '' && startsWith(github.ref, 'refs/heads/release-') }}
       shell: bash
       run: |
         set +e
@@ -160,27 +151,19 @@ runs:
         set -e
 
         echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-        echo "OVERRIDE_PUSHED_IMAGE=true" >> $GITHUB_ENV
 
     - name: Create Image Tag from tag
-      if: startsWith(github.ref, 'refs/tags/')
+      if: ${{ inputs.image_tag == '' && startsWith(github.ref, 'refs/tags/') }}
       shell: bash
       run: |
         IMAGE_TAG=$(echo ${GITHUB_REF#refs/tags/})
-
         echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-        echo "OVERRIDE_PUSHED_IMAGE=false" >> $GITHUB_ENV
 
-    - name: go mod download
-      if: ${{ inputs.go_mod_download == 'true' }}
-      working-directory: ${{ inputs.git_directory }}
+    - name: override image if image_tag is nightly
+      if: "${{ endsWith(env.IMAGE_TAG, '-nightly') }}"
       shell: bash
       run: |+
-        echo "### STARTING go mod download ###"
-        go mod download -x
-        echo "### FINSIHED go mod download ###"
-
-        ls -al ${{ env.GOMODCACHE }}
+        echo "OVERRIDE_PUSHED_IMAGE=true" >> $GITHUB_ENV
 
     - name: accounts api go build cache
       if: ${{ inputs.accounts-api == 'true' }}
@@ -189,7 +172,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-accounts-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-accounts-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-accounts-api-
 
@@ -207,7 +190,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-auth-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-auth-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-auth-api-
 
@@ -225,7 +208,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-comms-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-comms-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-comms-api-
 
@@ -243,7 +226,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-console-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-console-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-console-api-
 
@@ -261,7 +244,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-container-registry-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-container-registry-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-container-registry-api-
 
@@ -279,7 +262,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-gateway-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-gateway-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-gateway-api-
 
@@ -297,7 +280,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-iam-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-iam-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-iam-api-
 
@@ -315,7 +298,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-infra-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-infra-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-infra-api-
 
@@ -333,7 +316,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-iot-console-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-iot-console-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-iot-console-api-
 
@@ -351,7 +334,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-message-office-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-message-office-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-message-office-api-
 
@@ -369,7 +352,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-observability-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-observability-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-observability-api-
 
@@ -387,7 +370,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-tenant-agent-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-tenant-agent-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-tenant-agent-
 
@@ -405,7 +388,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-webhook-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-webhook-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-webhook-api-
 
@@ -423,7 +406,7 @@ runs:
         path: |+
           ${{ env.GOMODCACHE }}
           ${{ env.GOCACHE }}
-        key: go-${{ runner.os }}-websocket-server-api-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        key: go-${{ runner.os }}-websocket-server-api-${{ steps.env-vars.outputs.FILES_HASH }}
         save-always: true
         restore-keys: go-${{ runner.os }}-websocket-server-api-
 
