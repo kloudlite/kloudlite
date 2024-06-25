@@ -150,7 +150,7 @@ func (m *Manager) PickFreePodBinding(ctx context.Context) (*networkingv1.PodBind
 		return &pblist.Items[0], nil
 	}
 
-	if err := m.CreatePodBindings(ctx, 100); err != nil {
+	if err := m.CreatePodBindings(ctx, 15); err != nil {
 		return nil, NewError(err, "creating pod bindings")
 	}
 

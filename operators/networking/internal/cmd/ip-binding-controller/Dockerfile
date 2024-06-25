@@ -1,4 +1,4 @@
 FROM gcr.io/distroless/static:nonroot
-ARG BINARY
-COPY ./bin/${BINARY} /manager
+ARG BINARY TARGETARCH
+COPY ./${BINARY}-${TARGETARCH} /manager
 ENTRYPOINT [ "/manager" ]

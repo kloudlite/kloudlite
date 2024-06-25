@@ -76,6 +76,9 @@ spec:
                 - hosts
                 - port
                 type: object
+              nodePort:
+                format: int32
+                type: integer
               peers:
                 items:
                   properties:
@@ -100,6 +103,9 @@ spec:
                   - publicKey
                   type: object
                 type: array
+              serviceType:
+                default: LoadBalancer
+                type: string
               svcCIDR:
                 type: string
               wireguardKeysRef:

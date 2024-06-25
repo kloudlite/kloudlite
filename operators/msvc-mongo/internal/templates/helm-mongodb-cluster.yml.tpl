@@ -42,6 +42,7 @@ spec:
   chartRepoURL: https://charts.bitnami.com/bitnami
   chartName: mongodb
   chartVersion: 14.3.0
+  {{- /* chartVersion: 15.6.9 */}}
 
   {{- if $releaseName }}
   releaseName: {{$releaseName}}
