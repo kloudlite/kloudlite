@@ -1,31 +1,18 @@
-# KloudLite
-an opensource platform engineering system for developers
+# [Kloudlite](https://kloudlite.io) - Development Environment as a Service
+Kloudlite is a platform designed to enhance developers' productivity by providing seamless, secure, and **production-parity development environments**. It connects local systems and remote environments via a WireGuard network, allowing developers to build, test, and deploy distributed applications efficiently. Kloudlite eliminates the need for separate configurations by syncing configurations and secrets across environments, and it supports collaborative coding, real-time testing, and debugging.
 
-## Objective
-To develop an intuitive, versatile platform focused on Infrastructure and 
-DevOps automation, is designed to simplify the management, setup, and maintenance of infrastructure across 
-various public clouds and on-premises data centres. This platform aims to assist developers and companies 
-in streamlining their workflows, minimizing operational complexities, and improving overall productivity. 
-By leveraging advanced automation technologies, the solution will enable users to effectively manage complex 
-multi-cloud and hybrid infrastructures without requiring extensive expertise.
+# Objective
+The objective of Kloudlite is to revolutionize the development process for distributed applications by offering development environments that mirror production settings exactly. This includes seamless integration of local and remote environments, enhanced collaboration capabilities, and support for various workflows, including future plans for AI and ML workflows.
 
-## Goal
-To significantly minimize developers' efforts and expedite time to market for software products 
-by streamlining infrastructure and DevOps automation processes, ultimately reducing the time required to transition 
-from code to cloud deployment.
+# Goal
+The goal of Kloudlite is to become the go-to platform for developers to build, test, and deploy distributed applications with maximum efficiency and minimum friction. Kloudlite aims to:
+- Provide a seamless development experience that matches production environments.
+- Build a strong community of developers who actively use and contribute to the platform.
+- Ensure high scalability, reliability, and security for all users.
+- Foster innovation through open source contributions and partnerships with key technology providers.
+- Offer comprehensive educational resources and support to help developers make the most of Kloudlite.
 
-
-## Core Components
-+ [Platform API](https://github.com/kloudlite/api)
-+ [Frontend Web](https://github.com/kloudlite/web)
-+ [kl Cli](https://github.com/kloudlite/kl)
-+ [Operators](https://github.com/kloudlite/operator)
-+ [Helm Charts](https://github.com/kloudlite/helm-charts)
-+ [Kloudlite Autoscaler](https://github.com/kloudlite/autoscaler/tree/kloudlite)
-+ [Kubelet Metrics ReExporter](https://github.com/kloudlite/kubelet-metrics-reexporter)
-+ [Infrastructure As Code](https://github.com/kloudlite/infrastructure-as-code)
-
-
-## Architecture
-
-![Kloudlite InfraOps](https://github.com/kloudlite/kloudlite/assets/1580519/facdfc5d-dc35-47f8-9678-afff9e3b8636)
+# Core Components
+- [Platform API](https://github.com/kloudlite/api)
+- [Dashboard](https://github.com/kloudlite/web)
+- [Operators](https://github.com/kloudlite/operator)
