@@ -7,21 +7,18 @@ import (
 )
 
 const (
-	DefaultBaseURL              = "https://auth.kloudlite.io"
-	RuntimeLinux                = "linux"
-	RuntimeDarwin               = "darwin"
-	RuntimeWindows              = "windows"
-	BashShell                   = "bash"
-	FishShell                   = "fish"
-	ZshShell                    = "zsh"
-	PowerShell                  = "powershell"
-	NetworkService              = "Wi-Fi"
-	LocalSearchDomains          = ".local"
-	NoExistingSearchDomainError = "There aren't any Search Domains set on Wi-Fi."
+	DefaultBaseURL = "https://auth.kloudlite.io"
+	RuntimeLinux   = "linux"
+	RuntimeDarwin  = "darwin"
+	RuntimeWindows = "windows"
 
-	ContainerVpnPort = 1729
+	BashShell  = "bash"
+	FishShell  = "fish"
+	ZshShell   = "zsh"
+	PowerShell = "powershell"
 
-	DnsServerPort = 5353
+	SocatImage     = "ghcr.io/kloudlite/hub/socat:latest"
+	WireguardImage = "ghcr.io/kloudlite/hub/wireguard:latest"
 )
 
 var (
@@ -49,6 +46,5 @@ var (
 )
 
 var (
-	InfraCliName = "kli"
-	CoreCliName  = "kl"
+	CoreCliName = "kl"
 )

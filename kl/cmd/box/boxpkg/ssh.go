@@ -1,20 +1,16 @@
 package boxpkg
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/adrg/xdg"
 	cl "github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/sshclient"
-	"github.com/kloudlite/kl/pkg/ui/fzf"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
-	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 func getDomainFromPath(pth string) string {
@@ -34,176 +30,56 @@ func getDomainFromPath(pth string) string {
 }
 
 func (c *client) Ssh() error {
-	defer spinner.Client.Start("preparing to ssh")()
-
-	cname := fn.ParseStringFlag(c.cmd, "name")
-	if cname != "" {
-		return c.doSSHWithCname(cname)
-	}
-
-	// Check if kl.yml exists in current dir
-	if _, err2 := os.Stat("kl.yml"); err2 != nil && errors.Is(err2, os.ErrNotExist) {
-
-		conts, err := c.listContainer(map[string]string{
-			CONT_MARK_KEY: "true",
-		})
-
-		if err != nil && err == NotFoundErr {
-			return fmt.Errorf("kl.yml in current dir not found, and also no any running container found")
+	if klFile, err := cl.GetKlFile(""); err != nil {
+		return err
+	} else {
+		dir, _ := os.Getwd()
+		if os.Getenv("IN_DEV_BOX") == "true" {
+			return fn.Error("you are already in a devbox")
 		}
 
+		c.SetCwd(dir)
+		err = c.Start(klFile)
+		if err != nil {
+			if err2 := c.Stop(); err != nil {
+				return err2
+			}
+			return err
+		}
+
+		cont, err := c.containerAtPath(dir)
+		if err != nil {
+			return err
+		}
+		port, err := strconv.Atoi(cont.Labels[SSH_PORT_KEY])
 		if err != nil {
 			return err
 		}
 
-		cnt, err := fzf.FindOne(conts, func(item Cntr) string {
-			return fmt.Sprintf("%s (%s)", item.Name, item.Labels[CONT_PATH_KEY])
-		}, fzf.WithPrompt("Select Container > "))
-		if err != nil {
+		if err := c.waithForSshReady(port, cont.ID); err != nil {
 			return err
 		}
 
-		return c.doSSHWithCname(cnt.Name)
+		fmt.Println("sshing into", getDomainFromPath(cont.Labels[CONT_PATH_KEY]))
 
-		return err2
-	}
-
-	cr, err := c.GetContainer(map[string]string{
-		CONT_NAME_KEY: c.containerName,
-		CONT_PATH_KEY: c.cwd,
-	})
-	if err != nil && err != NotFoundErr {
-		return err
-	}
-
-	if err == NotFoundErr || (err == nil && c.containerName != cr.Name) || (cr.State == ContStateExited || cr.State == ContStateCreated) {
-		err := c.Start()
-
-		if err != nil && err != errContainerNotStarted {
+		if err := sshclient.DoSSH(sshclient.SSHConfig{
+			User:    "kl",
+			Host:    getDomainFromPath(cont.Labels[CONT_PATH_KEY]),
+			SSHPort: port,
+			KeyPath: path.Join(xdg.Home, ".ssh", "id_rsa"),
+		}); err != nil {
 			return err
 		}
 	}
 
-	localEnv, err := cl.CurrentEnv()
-	if err != nil {
-		return err
-	}
-
-	if localEnv.SSHPort == 0 {
-		return fmt.Errorf("container not running")
-	}
-
-	spinner.Client.Stop()
-	c.ensureVpnConnected()
-
-	count := 0
-
-	for {
-
-		if !cl.CheckPortAvailable(localEnv.SSHPort) {
-			break
-		}
-
-		count++
-		if count == 10 {
-			return fmt.Errorf("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start")
-		}
-
-		time.Sleep(1 * time.Second)
-	}
-
-	spinner.Client.Stop()
-	// command := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
-
-	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(localEnv.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
-
-	if err := sshclient.DoSSH(sshclient.SSHConfig{
-		Host:    getDomainFromPath(c.cwd),
-		User:    "kl",
-		KeyPath: path.Join(xdg.Home, ".ssh", "id_rsa"),
-		SSHPort: localEnv.SSHPort,
-	}); err != nil {
-		return err
-	}
-
-	// // command.Stderr = os.Stderr
-	// command.Stdin = os.Stdin
-	// command.Stdout = os.Stdout
-	// if err := command.Run(); err != nil {
-	// 	return fmt.Errorf(("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start. %s"), err.Error())
-	// }
 	return nil
 }
 
-func (c *client) doSSHWithCname(name string) error {
-	cr, err := c.GetContainer(map[string]string{
-		CONT_NAME_KEY: name,
-	})
-
-	if err == NotFoundErr {
-		return fmt.Errorf("no container running with name %s", name)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	if cr.State == ContStateExited || cr.State == ContStateCreated {
-		if err := c.StopCont(cr); err != nil {
-			return err
-		}
-
-		fn.PrintError(fmt.Errorf("container was not in running, stopped it, please try again"))
-		return nil
-	}
-
-	pth := cr.Labels[CONT_PATH_KEY]
-	localEnv, err := cl.EnvOfPath(pth)
-	if err != nil {
-		return err
-	}
-
-	if localEnv.SSHPort == 0 {
-		return fmt.Errorf("container not running")
-	}
-
-	spinner.Client.Stop()
-	c.ensureVpnConnected()
-
-	count := 0
-	for {
-
-		if !cl.CheckPortAvailable(localEnv.SSHPort) {
-			break
-		}
-
-		count++
-		if count == 10 {
-			return fmt.Errorf("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start")
-		}
-
-		time.Sleep(1 * time.Second)
-	}
-
-	spinner.Client.Stop()
-	// command := exec.Command("ssh", fmt.Sprintf("kl@%s", getDomainFromPath(pth)), "-p", fmt.Sprint(localEnv.SSHPort), "-i", path.Join(xdg.Home, ".ssh", "id_rsa"), "-oStrictHostKeyChecking=no")
-
-	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(pth)), "-p", fmt.Sprint(localEnv.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
-
-	if err := sshclient.DoSSH(sshclient.SSHConfig{
-		Host:    getDomainFromPath(pth),
+func sshConf(host string, port int) sshclient.SSHConfig {
+	return sshclient.SSHConfig{
 		User:    "kl",
+		Host:    host,
+		SSHPort: port,
 		KeyPath: path.Join(xdg.Home, ".ssh", "id_rsa"),
-		SSHPort: localEnv.SSHPort,
-	}); err != nil {
-		return err
 	}
-
-	// command.Stderr = os.Stderr
-	// command.Stdin = os.Stdin
-	// command.Stdout = os.Stdout
-	// if err := command.Run(); err != nil {
-	// 	return fmt.Errorf(("error opening ssh to kl-box container. Please ensure that container is running, or wait for it to start. %s"), err.Error())
-	// }
-	return nil
 }

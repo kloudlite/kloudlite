@@ -2,7 +2,9 @@ package add
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -197,7 +199,13 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 	}
 
 	fn.Log("added mount to your kl-file")
-	if err = server.SyncBoxHash(); err != nil {
+
+	wpath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	if err = hashctrl.SyncBoxHash(wpath); err != nil {
 		return err
 	}
 

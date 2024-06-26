@@ -1,8 +1,10 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"time"
 
 	"github.com/kloudlite/kl/domain/client"
@@ -21,9 +23,7 @@ type Device struct {
 	IPAddress         string `json:"ipAddr"`
 	LastUpdatedBy     User   `json:"lastUpdatedBy"`
 	MarkedForDeletion bool   `json:"markedForDeletion"`
-	// TODO: match with api (envname)
-	EnvironmentName string `json:"environmentName"`
-	Metadata        struct {
+	Metadata          struct {
 		Annotations       map[string]string `json:"annotations"`
 		CreationTimestamp string            `json:"creationTimestamp"`
 		DeletionTimestamp string            `json:"deletionTimestamp"`
@@ -46,6 +46,23 @@ const (
 
 type DeviceList struct {
 	Edges Edges[Env] `json:"edges"`
+}
+
+func GetVPNDevice(devName string, options ...fn.Option) (*Device, error) {
+	cookie, err := getCookie(options...)
+	if err != nil {
+		return nil, err
+	}
+
+	respData, err := klFetch("cli_getGlobalVpnDevice", map[string]any{
+		"gvpn":       Default_GVPN,
+		"deviceName": devName,
+	}, &cookie)
+	if err != nil {
+		return nil, err
+	}
+
+	return GetFromResp[Device](respData)
 }
 
 func createDevice(devName string) (*Device, error) {
@@ -93,29 +110,29 @@ func createDevice(devName string) (*Device, error) {
 	return d, nil
 }
 
-func EnsureDevice(options ...fn.Option) (*Device, error) {
-	dc, err := client.GetDeviceContext()
-	if err != nil {
-		return nil, err
-	}
-
-	hostName, err := os.Hostname()
-	if err != nil {
-		return nil, err
-	}
-
-	if dc.DeviceName == "" {
-		return createDevice(hostName)
-	}
-
-	d, err := getVPNDevice(dc.DeviceName, options...)
-	if err != nil {
-		fn.Warnf("failed to get VPN device: %s", err.Error())
-		return createDevice(hostName)
-	}
-
-	return d, nil
-}
+// func EnsureDevice(options ...fn.Option) (*Device, error) {
+// 	dc, err := client.GetDeviceContext()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	hostName, err := os.Hostname()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	if dc.DeviceName == "" {
+// 		return createDevice(hostName)
+// 	}
+//
+// 	d, err := getVPNDevice(dc.DeviceName, options...)
+// 	if err != nil {
+// 		fn.Warnf("failed to get VPN device: %s", err.Error())
+// 		return createDevice(hostName)
+// 	}
+//
+// 	return d, nil
+// }
 
 type CheckName struct {
 	Result         bool     `json:"result"`
@@ -125,66 +142,6 @@ type CheckName struct {
 const (
 	VPNDeviceType = "global_vpn_device"
 )
-
-func getDeviceName(devName string) (*CheckName, error) {
-	_, err := EnsureAccount()
-	if err != nil {
-		return nil, err
-	}
-
-	cookie, err := getCookie()
-	if err != nil {
-		return nil, err
-	}
-
-	respData, err := klFetch("cli_infraCheckNameAvailability", map[string]any{
-		"resType": VPNDeviceType,
-		"name":    devName,
-	}, &cookie)
-	if err != nil {
-		return nil, err
-	}
-
-	if fromResp, err := GetFromResp[CheckName](respData); err != nil {
-		return nil, err
-	} else {
-		return fromResp, nil
-	}
-}
-
-func getVPNDevice(devName string, options ...fn.Option) (*Device, error) {
-	// envName := fn.GetOption(options, "envName")
-
-	accountName, err := EnsureAccount(options...)
-	if err != nil {
-		return nil, err
-	}
-
-	// if envName == "" {
-	// 	env, err := EnsureEnv(nil, options...)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	envName = env.Name
-	// }
-
-	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
-	if err != nil {
-		return nil, err
-	}
-
-	respData, err := klFetch("cli_getGlobalVpnDevice", map[string]any{
-		// TODO: add env name when api is available
-		//"envName":    envName,
-		"gvpn":       Default_GVPN,
-		"deviceName": devName,
-	}, &cookie)
-	if err != nil {
-		return nil, err
-	}
-
-	return GetFromResp[Device](respData)
-}
 
 func CheckDeviceStatus() bool {
 	verbose := false
@@ -240,4 +197,107 @@ func CheckDeviceStatus() bool {
 	}
 
 	return true
+}
+
+func getDeviceName(devName string) (*CheckName, error) {
+	cookie, err := getCookie()
+	if err != nil {
+		return nil, err
+	}
+
+	respData, err := klFetch("cli_infraCheckNameAvailability", map[string]any{
+		"resType": VPNDeviceType,
+		"name":    devName,
+	}, &cookie)
+	if err != nil {
+		return nil, err
+	}
+
+	if fromResp, err := GetFromResp[CheckName](respData); err != nil {
+		return nil, err
+	} else {
+		return fromResp, nil
+	}
+}
+
+func createVpnForAccount() (*Device, error) {
+	devName, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+	checkNames, err := getDeviceName(devName)
+	if err != nil {
+		return nil, err
+	}
+	if !checkNames.Result {
+		if len(checkNames.SuggestedNames) == 0 {
+			return nil, fmt.Errorf("no suggested names for device %s", devName)
+		}
+		devName = checkNames.SuggestedNames[0]
+	}
+	device, err := createDevice(devName)
+	if err != nil {
+		return nil, err
+	}
+	return device, nil
+}
+
+func GetAccVPNConfig(account string) (*client.AccountVpnConfig, error) {
+	cfgFolder, err := client.GetConfigFolder()
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+	err = os.MkdirAll(path.Join(cfgFolder, "vpn"), 0755)
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+	cfgPath := path.Join(cfgFolder, "vpn", fmt.Sprintf("%s.json", account))
+	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
+		dev, err := createVpnForAccount()
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+		accountVpnConfig := client.AccountVpnConfig{
+			WGconf:     dev.WireguardConfig.Value,
+			DeviceName: dev.Metadata.Name,
+		}
+		marshal, err := json.Marshal(accountVpnConfig)
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+		err = os.WriteFile(cfgPath, marshal, 0644)
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+	}
+
+	var accVPNConfig client.AccountVpnConfig
+	c, err := os.ReadFile(cfgPath)
+	if err != nil {
+		return nil, fn.Error("failed to read vpn config")
+	}
+	err = json.Unmarshal(c, &accVPNConfig)
+	if err != nil {
+		return nil, fn.Error("failed to parse vpn config")
+	}
+
+	if accVPNConfig.WGconf == "" {
+		d, err := GetVPNDevice(accVPNConfig.DeviceName, fn.MakeOption("accountName", account))
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+
+		accVPNConfig.WGconf = d.WireguardConfig.Value
+
+		marshal, err := json.Marshal(accVPNConfig)
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+		err = os.WriteFile(cfgPath, marshal, 0644)
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+	}
+
+	return &accVPNConfig, nil
 }

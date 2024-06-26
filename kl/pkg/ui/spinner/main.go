@@ -24,7 +24,7 @@ func (s *Spinner) start() {
 		return
 	}
 
-	// functions.Logf("[%s] %s", text.Blue("started"), s.message)
+	fn.Logf("[%s] %s", text.Blue("+"), s.message)
 }
 
 func (s *Spinner) stop() {
@@ -34,8 +34,7 @@ func (s *Spinner) stop() {
 		return
 	}
 
-	// fmt.Print("\033c")
-	// functions.Logf("[%s] %s", text.Blue("stopped"), s.message)
+	fn.Logf("[%s] %s", text.Blue("-"), s.message)
 }
 
 func (s *Spinner) Started() bool {
@@ -55,7 +54,12 @@ func (s *Spinner) Stop() {
 	s.stop()
 }
 
-func (s *Spinner) UpdateMessage(msg string) func() {
+func (s *Spinner) UpdateMessage(msg string, verbose ...bool) func() {
+
+	if len(verbose) > 0 {
+		s.verbose = verbose[0]
+	}
+
 	if !s.started {
 		s.started = true
 		return s.Start(msg)
@@ -81,7 +85,7 @@ func (s *Spinner) UpdateMessage(msg string) func() {
 				fn.Logf("[%s] %s", text.Yellow("-"), om)
 			}
 		} else {
-			fmt.Print("\033c")
+			// fmt.Print("\033c")
 		}
 	}
 }

@@ -1,10 +1,16 @@
 package runner
 
 import (
+	"errors"
+	"os"
+
+	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	confighandler "github.com/kloudlite/kl/pkg/config-handler"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/spf13/cobra"
 )
@@ -13,74 +19,98 @@ var InitCommand = &cobra.Command{
 	Use:   "init",
 	Short: "initialize a kl-config file",
 	Long:  `use this command to initialize a kl-config file`,
-
-	Run: func(cmd *cobra.Command, _ []string) {
-		aName := fn.ParseStringFlag(cmd, "account")
-		filePath := fn.ParseKlFile(cmd)
-		initFile, err := client.GetKlFile(filePath)
-
-		if err != nil {
-
-			envs, err := server.ListEnvs(fn.MakeOption("accountName", aName))
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-
-			packages := []string{"vim", "git"}
-
-			defEnv := ""
-			if len(envs) != 0 {
-				de, err := fzf.FindOne(envs, func(item server.Env) string {
-					return item.Metadata.Name
-				}, fzf.WithPrompt("Select default environment >"))
-
-				if err != nil {
-					fn.PrintError(err)
-					return
-				}
-
-				defEnv = de.Metadata.Name
-			} else {
-				fn.Warn("no environment found, please create environments from dashboard")
-			}
-
-			accName, err := client.CurrentAccountName()
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-
-			initFile = &client.KLFileType{
-				AccountName: accName,
-				Version:     "v1",
-				DefaultEnv:  defEnv,
-				Packages:    packages,
-				EnvVars:     []client.EnvType{{Key: "SAMPLE", Value: fn.Ptr("sampleValue")}},
-				Mounts:      client.Mounts{},
-			}
-			if defEnv == "" {
-				fn.Warn("No environment found, Please create environments from dashboard\n")
-			} else {
-				fn.Log("default env set to: ", defEnv)
-			}
-
-		} else {
-			fn.Log("file already present \n")
+	Run: func(_ *cobra.Command, _ []string) {
+		if os.Getenv("IN_DEV_BOX") == "true" {
+			fn.PrintError(errors.New("cannot re-initialize workspace in dev box"))
+			return
 		}
-
-		if err = client.WriteKLFile(*initFile); err != nil {
+		_, err := client.GetKlFile("")
+		if err == nil {
+			fn.Printf(text.Yellow("Workspace is already initilized. Do you want to override? (y/N): "))
+			if !fn.Confirm("Y", "N") {
+				return
+			}
+		} else if !errors.Is(err, confighandler.ErrKlFileNotExists) {
 			fn.PrintError(err)
 			return
 		}
 
-		fn.Log("Initialized file ", client.GetConfigPath())
-		server.EnsureBoxHash()
+		if selectedAccount, err := selectAccount(); err != nil {
+			fn.PrintError(err)
+			return
+		} else {
+			if selectedEnv, err := selectEnv(*selectedAccount); err != nil {
+				fn.PrintError(err)
+			} else {
+				newKlFile := client.KLFileType{
+					AccountName: *selectedAccount,
+					DefaultEnv:  *selectedEnv,
+					Version:     "v1",
+					Packages:    []string{"neovim", "git"},
+				}
+				if err := client.WriteKLFile(newKlFile); err != nil {
+					fn.PrintError(err)
+				} else {
+					fn.Printf(text.Green("Workspace initialized successfully.\n"))
+				}
+			}
+		}
+
+		dir, err := os.Getwd()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if err := hashctrl.SyncBoxHash(dir); err != nil {
+			fn.PrintError(err)
+			return
+		}
 	},
+}
+
+func selectAccount() (*string, error) {
+	if accounts, err := server.ListAccounts(); err == nil {
+		if selectedAccount, err := fzf.FindOne(
+			accounts,
+			func(account server.Account) string {
+				return account.Metadata.Name + " #" + account.Metadata.Name
+			},
+			fzf.WithPrompt("select kloudlite team > "),
+		); err != nil {
+			return nil, err
+		} else {
+			return &selectedAccount.Metadata.Name, nil
+		}
+	} else {
+		return nil, err
+	}
+}
+
+func selectEnv(accountName string) (*string, error) {
+	if accounts, err := server.ListEnvs(
+		fn.Option{
+			Key:   "accountName",
+			Value: accountName,
+		},
+	); err == nil {
+		if selectedEnv, err := fzf.FindOne(
+			accounts,
+			func(env server.Env) string {
+				return env.Metadata.Name + " #" + env.Metadata.Name
+			},
+			fzf.WithPrompt("select environment > "),
+		); err != nil {
+			return nil, err
+		} else {
+			return &selectedEnv.Metadata.Name, nil
+		}
+	} else {
+		return nil, err
+	}
 }
 
 func init() {
 	InitCommand.Flags().StringP("account", "a", "", "account name")
 	InitCommand.Flags().StringP("file", "f", "", "file name")
-	fn.WithKlFile(InitCommand)
 }

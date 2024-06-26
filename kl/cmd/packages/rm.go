@@ -3,9 +3,11 @@ package packages
 import (
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	"os"
 	"strings"
+
+	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
+	"github.com/kloudlite/kl/domain/client"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
@@ -47,7 +49,13 @@ func rmPackages(cmd *cobra.Command, args []string) error {
 	}
 
 	fn.Println(fmt.Sprintf("Package %s is deleted", name))
-	if err := server.SyncBoxHash(); err != nil {
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	if err := hashctrl.SyncBoxHash(cwd); err != nil {
 		return err
 	}
 	return nil

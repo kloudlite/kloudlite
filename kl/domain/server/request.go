@@ -73,9 +73,9 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 		req.Header.Add("cookie", *cookie)
 	}
 
-	spinner.Client.Start()
+	f := spinner.Client.UpdateMessage("loading please wait")
 	res, err := client.Do(req)
-	spinner.Client.Stop()
+	f()
 	if err != nil || res.StatusCode != 200 {
 		if err != nil {
 			return nil, err

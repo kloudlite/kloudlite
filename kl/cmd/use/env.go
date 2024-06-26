@@ -2,6 +2,9 @@ package use
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/pkg/ui/text"
 
@@ -38,20 +41,14 @@ var switchCmd = &cobra.Command{
 			text.Blue(fmt.Sprintf("\n%s (%s)", env.DisplayName, env.Metadata.Name)),
 		)
 
-		if err := server.SyncBoxHash(); err != nil {
+		wpath, err := os.Getwd()
+		if err != nil {
+			fn.PrintError(err)
 			return
 		}
-
-		//if err := server.SyncDevboxJsonFile(); err != nil {
-		//	fn.PrintError(err)
-		//	return
-		//}
-		//
-		//if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
-		//	fn.PrintError(err)
-		//	return
-		//}
-
+		if err := hashctrl.SyncBoxHash(wpath); err != nil {
+			return
+		}
 	},
 }
 

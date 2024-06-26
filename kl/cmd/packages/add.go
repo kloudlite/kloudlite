@@ -3,10 +3,12 @@ package packages
 import (
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
-	fn "github.com/kloudlite/kl/pkg/functions"
+	"os"
 	"slices"
+
+	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
+	"github.com/kloudlite/kl/domain/client"
+	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/spf13/cobra"
 )
@@ -40,7 +42,13 @@ func addPackages(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	fn.Println(fmt.Sprintf("Package %s is added successfully", name))
-	if err := server.SyncBoxHash(); err != nil {
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	if err := hashctrl.SyncBoxHash(cwd); err != nil {
 		return err
 	}
 	return nil

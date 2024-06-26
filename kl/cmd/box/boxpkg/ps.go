@@ -48,6 +48,7 @@ func (c *client) PrintBoxes(conts []Cntr) error {
 
 func (c *client) ListAllBoxes() ([]Cntr, error) {
 	return c.listContainer(map[string]string{
-		CONT_MARK_KEY: "true",
+		CONT_MARK_KEY:           "true",
+		CONT_WORKSPACE_MARK_KEY: "true",
 	})
 }

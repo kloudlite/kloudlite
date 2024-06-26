@@ -17,16 +17,6 @@ func CheckPortAvailable(port int) bool {
 	return true
 }
 
-func GetAvailablePort() (int, error) {
-	for i := 12300; i <= 12400; i++ {
-		if CheckPortAvailable(i) {
-			return i, nil
-		}
-	}
-	// 61100, 61300
-	return 0, fmt.Errorf("no ports available to use")
-}
-
 func SelectEnv(ev Env) error {
 	k, err := GetExtraData()
 	if err != nil {
@@ -51,7 +41,7 @@ func SelectEnv(ev Env) error {
 	return SaveExtraData(k)
 }
 
-func SelectEnvOnPath(ev Env, pth string) error {
+func SelectEnvOnPath(pth string, ev Env) error {
 	k, err := GetExtraData()
 	if err != nil {
 		return err

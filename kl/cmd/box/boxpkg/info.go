@@ -1,68 +1,48 @@
 package boxpkg
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	cl "github.com/kloudlite/kl/domain/client"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
-func (c *client) Info(contName string) error {
+func (c *client) Info() error {
 
-	if contName == "" {
-		conts, err := c.listContainer(map[string]string{
-			CONT_MARK_KEY: "true",
-		})
-		if err != nil && err != NotFoundErr {
-			return err
-		}
-
-		if err == NotFoundErr && len(conts) == 0 {
-			return fmt.Errorf("no running container found")
-		}
-
-		cName, err := fzf.FindOne(conts, func(item Cntr) string {
-			return fmt.Sprintf("%s [%s]", item.Name, fn.TrimePref(item.Labels[CONT_PATH_KEY], 16))
-		}, fzf.WithPrompt("select container > "))
-		if err != nil {
-			return err
-		}
-
-		contName = cName.Name
-	}
-
-	cr, err := c.GetContainer(map[string]string{
-		CONT_MARK_KEY: "true",
-		CONT_NAME_KEY: contName,
+	existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
+		Filters: filters.NewArgs(
+			dockerLabelFilter(CONT_MARK_KEY, "true"),
+			dockerLabelFilter(CONT_WORKSPACE_MARK_KEY, "true"),
+			dockerLabelFilter(CONT_PATH_KEY, c.cwd),
+		),
+		All: true,
 	})
-
-	if err != nil && err != NotFoundErr {
-		return err
-	}
-
-	if err == NotFoundErr {
-		fn.Logf("no running container found")
-		return nil
-	}
-
-	pth := cr.Labels[CONT_PATH_KEY]
-	localEnv, err := cl.EnvOfPath(pth)
 	if err != nil {
-		return err
+		return fn.NewE(err)
 	}
+
+	if len(existingContainers) == 0 {
+		return fn.Error("no container running in current directory")
+	}
+
+	cr := existingContainers[0]
+
+	sshPort := cr.Labels[SSH_PORT_KEY]
+	fn.Println()
 
 	table.KVOutput("User:", "kl", true)
 
-	table.KVOutput("Name:", cr.Name, true)
+	table.KVOutput("Name:", strings.Join(cr.Names, ", "), true)
 	table.KVOutput("State:", cr.State, true)
-	table.KVOutput("Path:", pth, true)
-	table.KVOutput("SSH Port:", localEnv.SSHPort, true)
+	table.KVOutput("Path:", c.cwd, true)
+	table.KVOutput("SSH Port:", sshPort, true)
 
-	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(pth)), "-p", fmt.Sprint(localEnv.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
+	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(sshPort), "-oStrictHostKeyChecking=no"}, " ")))
 
 	return nil
 }

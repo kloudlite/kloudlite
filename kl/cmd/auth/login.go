@@ -3,15 +3,14 @@ package auth
 import (
 	"bufio"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
-	"os"
-	"os/exec"
-	"runtime"
-	"strings"
 )
 
 var loginCmd = &cobra.Command{
@@ -38,7 +37,7 @@ var loginCmd = &cobra.Command{
 				return
 			}
 			if strings.Contains(reader, "\n") {
-				err := openBrowser(link)
+				err := fn.OpenUrl(link)
 				if err != nil {
 					fn.PrintError(err)
 					return
@@ -54,21 +53,5 @@ var loginCmd = &cobra.Command{
 		}
 
 		fn.Log("successfully logged in\n")
-
 	},
 }
-
-func openBrowser(url string) error {
-	var cmd string
-	switch runtime.GOOS {
-	case constants.RuntimeDarwin:
-		cmd = "open"
-	case constants.RuntimeWindows:
-		cmd = "cmd /c start"
-	default:
-		cmd = "xdg-open"
-	}
-	return exec.Command(cmd, url).Start()
-}
-
-func init() {}

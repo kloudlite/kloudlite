@@ -1,13 +1,19 @@
 package boxpkg
 
 import (
-	"github.com/kloudlite/kl/domain/server"
+	"os"
+
+	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 )
 
 func (c *client) Reload() error {
-	//defer spinner.Client.Start("Reloading environments please wait")()
 
-	if err := server.SyncBoxHash(); err != nil {
+	wpath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	if err := hashctrl.SyncBoxHash(wpath); err != nil {
 		return err
 	}
 	return nil

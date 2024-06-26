@@ -16,13 +16,7 @@ var infoCmd = &cobra.Command{
 			return
 		}
 
-		// s := fn.ParseStringFlag(cmd, "name")
-		s := ""
-		if s == "" && len(args) > 0 {
-			s = args[0]
-		}
-
-		if err := c.Info(s); err != nil {
+		if err := c.Info(); err != nil {
 			fn.PrintError(err)
 			return
 		}

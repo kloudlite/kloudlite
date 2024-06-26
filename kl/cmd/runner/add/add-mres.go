@@ -2,6 +2,9 @@ package add
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -108,7 +111,12 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 
 	fn.Log(fmt.Sprintf("added mres %s/%s to your kl-file", mres.Metadata.Name, *mresKey))
 
-	if err := server.SyncBoxHash(); err != nil {
+	wpath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	if err := hashctrl.SyncBoxHash(wpath); err != nil {
 		return err
 	}
 

@@ -57,7 +57,6 @@ type EnvList struct {
 
 func ListEnvs(options ...fn.Option) ([]Env, error) {
 	var err error
-
 	_, err = EnsureAccount(options...)
 	if err != nil {
 		return nil, err

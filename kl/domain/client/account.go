@@ -1,10 +1,6 @@
 package client
 
-import (
-	"errors"
-	"fmt"
-	"github.com/kloudlite/kl/flags"
-)
+import fn "github.com/kloudlite/kl/pkg/functions"
 
 func SelectAccount(accountName string) error {
 	file, err := GetMainCtx()
@@ -23,12 +19,15 @@ func SelectAccount(accountName string) error {
 }
 
 func CurrentAccountName() (string, error) {
-	file, err := GetMainCtx()
+
+	kt, err := GetKlFile("")
 	if err != nil {
 		return "", err
 	}
-	if file.AccountName == "" {
-		return "", errors.New(fmt.Sprintf("no account selected, please select an account using '%s use account'", flags.CliName))
+
+	if kt.AccountName == "" {
+		return "", fn.Error("no account selected")
 	}
-	return file.AccountName, nil
+
+	return kt.AccountName, nil
 }

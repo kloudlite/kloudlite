@@ -6,30 +6,30 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/kloudlite/kl/constants"
-	cl "github.com/kloudlite/kl/domain/client"
-	proxy "github.com/kloudlite/kl/domain/dev-proxy"
-	"github.com/kloudlite/kl/domain/server"
+
+	// proxy "github.com/kloudlite/kl/domain/dev-proxy"
+
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
 
-func (c *client) ensureVpnConnected() error {
-	if err := cl.EnsureAppRunning(); err != nil {
-		return err
-	}
-
-	p, err := proxy.NewProxy(c.verbose)
-	if err != nil {
-		return err
-	}
-
-	if !server.CheckDeviceStatus() {
-		if err := p.Start(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
+// func (c *client) ensureVpnConnected() error {
+// 	if err := cl.EnsureAppRunning(); err != nil {
+// 		return err
+// 	}
+//
+// 	p, err := proxy.NewProxy(c.verbose)
+// 	if err != nil {
+// 		return err
+// 	}
+//
+// 	if !server.CheckDeviceStatus() {
+// 		if err := p.Start(); err != nil {
+// 			return err
+// 		}
+// 	}
+//
+// 	return nil
+// }
 
 // func (c *client) EnsureVpnCntRunning() error {
 // 	if runtime.GOOS == constants.RuntimeLinux {

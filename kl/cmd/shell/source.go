@@ -2,17 +2,11 @@ package shell
 
 import (
 	"fmt"
-	// "github.com/kloudlite/kl/cmd/runner/mounter"
 	"github.com/kloudlite/kl/constants"
-	// "github.com/kloudlite/kl/domain/client"
 	"os"
-	"os/exec"
 
-	"github.com/kloudlite/kl/domain/server"
 	domain_util "github.com/kloudlite/kl/domain/util"
-	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
 
 	// "path"
@@ -35,63 +29,17 @@ Example:
 }
 
 func loadEnv(cmd *cobra.Command) error {
-	accountName := fn.ParseStringFlag(cmd, "account")
-	clusterName := fn.ParseStringFlag(cmd, "cluster")
-
-	newEnv := exec.Command("kli -- printenv").Environ()
 	var err error
-	switch flags.CliName {
-	case constants.CoreCliName:
-		shell, err := ShellName()
-		if err != nil {
-			return err
-		}
 
-		if err := domain_util.MountEnv([]string{"--", shell}); err != nil {
-			return err
-		}
-
-		return nil
-	case constants.InfraCliName:
-		clusterName, err = server.EnsureCluster([]fn.Option{
-			fn.MakeOption("accountName", accountName),
-			fn.MakeOption("clusterName", clusterName),
-		}...)
-
-		if err != nil {
-			return err
-		}
-
-		fn.Log(
-			text.Bold(text.Green("\nSelected Cluster: ")),
-			text.Blue(fmt.Sprintf("%s", clusterName)),
-		)
-
-		configPath, err := server.SyncKubeConfig([]fn.Option{
-			fn.MakeOption("accountName", accountName),
-			fn.MakeOption("clusterName", clusterName),
-		}...)
-
-		if err != nil {
-			return err
-		}
-		newEnv = append(newEnv, fmt.Sprintf("KUBECONFIG=%s", *configPath))
-
-		shell, err := ShellName()
-		if err != nil {
-			return err
-		}
-		newCmd := exec.Command(shell)
-		newCmd.Env = newEnv
-
-		newCmd.Stdin = os.Stdin
-		newCmd.Stdout = os.Stdout
-		newCmd.Stderr = os.Stderr
-		if err := newCmd.Run(); err != nil {
-			return err
-		}
-
+	shell, err := ShellName()
+	if err != nil {
+		return err
 	}
+
+	if err := domain_util.MountEnv([]string{"--", shell}); err != nil {
+		return err
+	}
+
 	return nil
 }
 

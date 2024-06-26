@@ -1,11 +1,13 @@
 package auth
 
 import (
-	"github.com/kloudlite/kl/cmd/box/boxpkg"
-	fn "github.com/kloudlite/kl/pkg/functions"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path"
 
 	"github.com/kloudlite/kl/domain/client"
-	proxy "github.com/kloudlite/kl/domain/dev-proxy"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
 
@@ -14,45 +16,75 @@ var logoutCmd = &cobra.Command{
 	Short: "logout from kloudlite",
 	Example: `# Logout from kloudlite
 {cmd} auth logout`,
-	Run: func(cmd *cobra.Command, args []string) {
-
-		p, err := proxy.NewProxy(false)
+	Run: func(*cobra.Command, []string) {
+		configFolder, err := client.GetConfigFolder()
 		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-		p.Stop()
-
-		c, err := boxpkg.NewClient(cmd, args)
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		if err := c.StopAll(); err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		if err := client.Logout(); err != nil {
 			fn.Log(err)
 			return
 		}
 
-		//configFolder, err := client.GetConfigFolder()
-		//if err != nil {
-		//	fn.Log(err)
-		//	return
-		//}
-
-		//if err := os.RemoveAll(configFolder); err != nil {
-		//	fn.Log(err)
-		//	return
-		//}
-
-		fn.Log(`successfully logged out.
-
-but the mounted configs, secrets and kl-config stil there, so if you want to also clear this you have clean these manually. 
-		`)
+		if err = logout(configFolder); err != nil {
+			fn.PrintError(err)
+			return
+		}
 	},
+}
+
+func logout(configPath string) error {
+	sessionFile, err := os.Stat(path.Join(configPath, client.SessionFileName))
+	if err != nil && os.IsNotExist(err) {
+		return fn.NewE(err, "not logged in")
+	}
+	if err != nil {
+		return err
+	}
+
+	extraDataFile, _ := os.Stat(path.Join(configPath, client.ExtraDataFileName))
+	if extraDataFile != nil {
+		if err := os.Remove(path.Join(configPath, extraDataFile.Name())); err != nil {
+			return err
+		}
+	}
+	hashConfigPath := path.Join(configPath, "box-hash")
+	if err = os.RemoveAll(hashConfigPath); err != nil {
+		return err
+	}
+	vpnConfigPath := path.Join(configPath, "vpn")
+	files, err := os.ReadDir(vpnConfigPath)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		_, err := os.Stat(path.Join(vpnConfigPath, file.Name()))
+		if err != nil {
+			fn.PrintError(err)
+			continue
+		}
+		content, err := os.ReadFile(path.Join(vpnConfigPath, file.Name()))
+		if err != nil {
+			fn.PrintError(err)
+			continue
+		}
+
+		var data client.AccountVpnConfig
+		err = json.Unmarshal(content, &data)
+		if err != nil {
+			fn.PrintError(err)
+			continue
+		}
+		data.WGconf = ""
+
+		modifiedContent, err := json.Marshal(data)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		err = os.WriteFile(path.Join(vpnConfigPath, file.Name()), modifiedContent, 0644)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	return os.Remove(path.Join(configPath, sessionFile.Name()))
 }

@@ -4,9 +4,11 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"io"
 	"os"
 
 	dockerclient "github.com/docker/docker/client"
+	cl "github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
@@ -20,13 +22,33 @@ type client struct {
 	cwd        string
 
 	containerName string
+
+	env *cl.Env
+
+	// klConfig *cl.KLFileType
+
+	configFolder string
+	userHomeDir  string
+}
+
+type BoxClient interface {
+	SyncProxy(config ProxyConfig) error
+	StopAll() error
+	Stop() error
+	Start(*cl.KLFileType) error
+	Ssh() error
+	Reload() error
+	PrintBoxes([]Cntr) error
+	ListAllBoxes() ([]Cntr, error)
+	Info() error
+	Exec([]string, io.Writer) error
 }
 
 func (c *client) Context() context.Context {
 	return c.cmd.Context()
 }
 
-func NewClient(cmd *cobra.Command, args []string) (*client, error) {
+func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
 
 	if err != nil {
@@ -41,6 +63,21 @@ func NewClient(cmd *cobra.Command, args []string) (*client, error) {
 	hash.Write([]byte(cwd))
 	contName := fmt.Sprintf("klbox-%s", fmt.Sprintf("%x", hash.Sum(nil))[:8])
 
+	env, err := cl.EnvOfPath(cwd)
+	if err != nil {
+		return nil, err
+	}
+
+	configFolder, err := cl.GetConfigFolder()
+	if err != nil {
+		return nil, err
+	}
+
+	userHomeDir, err := cl.GetUserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
 	return &client{
 		cli:           cli,
 		cmd:           cmd,
@@ -49,5 +86,9 @@ func NewClient(cmd *cobra.Command, args []string) (*client, error) {
 		verbose:       verbose,
 		cwd:           cwd,
 		containerName: contName,
+		env:           env,
+		// klConfig:      klConfig,
+		configFolder: configFolder,
+		userHomeDir:  userHomeDir,
 	}, nil
 }

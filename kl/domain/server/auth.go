@@ -2,6 +2,13 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
+	"net/http"
+	"time"
+
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
+	nanoid "github.com/matoous/go-nanoid/v2"
 )
 
 func GetCurrentUser() (*User, error) {
@@ -28,4 +35,70 @@ func GetCurrentUser() (*User, error) {
 		return nil, resp.Errors[0]
 	}
 	return &resp.User, nil
+}
+
+func CreateRemoteLogin() (loginId string, err error) {
+	authSecret, err = nanoid.New(32)
+	if err != nil {
+		return "", err
+	}
+
+	respData, err := klFetch("cli_createRemoteLogin", map[string]any{
+		"secret": authSecret,
+	}, nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	type Response struct {
+		Id string `json:"data"`
+	}
+
+	var resp Response
+	err = json.Unmarshal(respData, &resp)
+	if err != nil {
+		return "", err
+	}
+	return resp.Id, nil
+}
+
+func Login(loginId string) error {
+	for {
+		respData, err := klFetch("cli_getRemoteLogin", map[string]any{
+			"loginId": loginId,
+			"secret":  authSecret,
+		}, nil)
+
+		if err != nil {
+			return err
+		}
+		type Response struct {
+			RemoteLogin struct {
+				Status     string `json:"status"`
+				AuthHeader string `json:"authHeader"`
+			} `json:"data"`
+		}
+		var loginStatusResponse Response
+		err = json.Unmarshal(respData, &loginStatusResponse)
+		if err != nil {
+			return err
+		}
+		if loginStatusResponse.RemoteLogin.Status == "succeeded" {
+			req, _ := http.NewRequest("GET", "/", nil)
+			req.Header.Set("Cookie", loginStatusResponse.RemoteLogin.AuthHeader)
+			cookie, _ := req.Cookie("hotspot-session")
+
+			return client.SaveAuthSession(cookie.Value)
+		}
+		if loginStatusResponse.RemoteLogin.Status == "failed" {
+			return errors.New("remote login failed")
+		}
+		if loginStatusResponse.RemoteLogin.Status == "pending" {
+			spinner.Client.Start("waiting for login to complete")
+			time.Sleep(time.Second * 2)
+			spinner.Client.Stop()
+			continue
+		}
+	}
 }

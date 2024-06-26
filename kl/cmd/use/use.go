@@ -18,5 +18,4 @@ func init() {
 	Cmd.AddCommand(switchCmd)
 
 	InfraCmd.AddCommand(accCmd)
-	InfraCmd.AddCommand(clusterCmd)
 }

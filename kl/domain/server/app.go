@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/kloudlite/kl/domain/client"
-	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -195,22 +194,23 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 				})
 			}
 
-			p, err := proxy.NewProxy(false)
-			if err != nil {
-				return err
-			}
-
-			if status {
-				if _, err := p.AddFwd(prs); err != nil {
-					fn.PrintError(err)
-					return err
-				}
-				return nil
-			}
-
-			if _, err := p.RemoveFwd(prs); err != nil {
-				return err
-			}
+			// TODO: add forwarding logic here
+			// p, err := proxy.NewProxy(false)
+			// if err != nil {
+			// 	return err
+			// }
+			//
+			// if status {
+			// 	if _, err := p.AddFwd(prs); err != nil {
+			// 		fn.PrintError(err)
+			// 		return err
+			// 	}
+			// 	return nil
+			// }
+			//
+			// if _, err := p.RemoveFwd(prs); err != nil {
+			// 	return err
+			// }
 		}
 		return nil
 	}(); err != nil {

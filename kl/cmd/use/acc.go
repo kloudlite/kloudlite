@@ -3,7 +3,6 @@ package use
 import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/domain/client"
-	proxy "github.com/kloudlite/kl/domain/dev-proxy"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -18,17 +17,6 @@ var accCmd = &cobra.Command{
 
 		acc, err := server.SelectAccount(accountName)
 		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		p, err := proxy.NewProxy(false)
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		if _, err := p.Stop(); err != nil {
 			fn.PrintError(err)
 			return
 		}

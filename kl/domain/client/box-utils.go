@@ -10,3 +10,16 @@ func InsideBox() bool {
 
 	return s == "true"
 }
+
+// func GetWorkspacePath() (string, error) {
+// 	s, ok := os.LookupEnv("KL_WORKSPACE")
+// 	if !ok {
+// 		dir, err := os.Getwd()
+// 		if err != nil {
+// 			return "", err
+// 		}
+// 		return dir, nil
+// 	}
+//
+// 	return s, nil
+// }

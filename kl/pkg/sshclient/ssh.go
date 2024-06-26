@@ -2,10 +2,12 @@ package sshclient
 
 import (
 	"fmt"
+	"os"
+
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/term"
-	"os"
 )
 
 type SSHConfig struct {
@@ -78,5 +80,28 @@ func DoSSH(sc SSHConfig) error {
 		//fn.Warnf("session exited with error: %s", err.Error())
 	}
 
+	return nil
+}
+
+var ErrSSHNotReady = fn.Error("ssh is not ready")
+
+func CheckSSHConnection(sc SSHConfig) error {
+	pkFile, err := publicKeyFile(sc.KeyPath)
+	if err != nil {
+		return fmt.Errorf("failed to parse private key: %s, please ensure you have the correct key", err)
+	}
+	config := &ssh.ClientConfig{
+		User: sc.User,
+		Auth: []ssh.AuthMethod{
+			pkFile,
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", sc.Host, sc.SSHPort), config)
+	if err != nil {
+		return ErrSSHNotReady
+	}
+	defer client.Close()
 	return nil
 }

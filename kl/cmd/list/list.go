@@ -29,6 +29,5 @@ func init() {
 	Cmd.Aliases = append(Cmd.Aliases, "ls")
 
 	InfraCmd.AddCommand(accCmd)
-	InfraCmd.AddCommand(clusterCmd)
 	InfraCmd.Aliases = append(InfraCmd.Aliases, "ls")
 }

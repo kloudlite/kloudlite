@@ -3,10 +3,8 @@ package status
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
-	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
@@ -29,20 +27,8 @@ var Cmd = &cobra.Command{
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Account: ")), s))
 		}
 
-		switch flags.CliName {
-		case constants.CoreCliName:
-			{
-				if e, err := client.CurrentEnv(); err == nil {
-					fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), e.Name))
-				}
-			}
-
-		case constants.InfraCliName:
-			{
-				if s, err := client.CurrentClusterName(); err == nil {
-					fn.Log(fmt.Sprint(text.Bold(text.Blue("Cluster: ")), s))
-				}
-			}
+		if e, err := client.CurrentEnv(); err == nil {
+			fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), e.Name))
 		}
 
 		if s, err := client.CurrentDeviceName(); err == nil {

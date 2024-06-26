@@ -1,21 +1,7 @@
 package server
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"github.com/briandowns/spinner"
 	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/klbox-docker/devboxfile"
-	"github.com/kloudlite/kl/pkg/functions"
-	"io"
-	"io/fs"
-	"net/http"
-	"os"
-	"path/filepath"
-	"slices"
-	"strings"
-	"time"
 )
 
 type SecretEnv struct {
@@ -47,41 +33,41 @@ type GeneratedEnvs struct {
 	MountFiles map[string]string `json:"mountFiles"`
 }
 
-func GenerateEnv() (*GeneratedEnvs, error) {
-	klFile, err := client.GetKlFile("")
-	if err != nil {
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	cookie, err := getCookie()
-	if err != nil {
-		return nil, err
-	}
-
-	respData, err := klFetch("cli_generateEnv", map[string]any{
-		"klConfig": klFile,
-	}, &cookie)
-
-	if err != nil {
-		return nil, err
-	}
-
-	type Response struct {
-		GeneratedEnvVars GeneratedEnvs `json:"data"`
-	}
-	var resp Response
-	err = json.Unmarshal(respData, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	// return resp.CoreConfigs, nil
-	return &resp.GeneratedEnvVars, nil
-}
+// func GenerateEnv() (*GeneratedEnvs, error) {
+// 	klFile, err := client.GetKlFile("")
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	cookie, err := getCookie()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	respData, err := klFetch("cli_generateEnv", map[string]any{
+// 		"klConfig": klFile,
+// 	}, &cookie)
+//
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	type Response struct {
+// 		GeneratedEnvVars GeneratedEnvs `json:"data"`
+// 	}
+// 	var resp Response
+// 	err = json.Unmarshal(respData, &resp)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	// return resp.CoreConfigs, nil
+// 	return &resp.GeneratedEnvVars, nil
+// }
 
 type Kv struct {
 	Key   string `json:"key"`
@@ -287,139 +273,4 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 	}
 
 	return result, mountMap, nil
-}
-
-func syncLockfile(config *devboxfile.DevboxConfig) (map[string]string, error) {
-	// check if kl.lock file exists
-	_, err := os.Stat("kl.lock")
-	packages := map[string]string{}
-	if err == nil {
-		file, err := os.ReadFile("kl.lock")
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(file, &packages)
-		if err != nil {
-			return nil, err
-		}
-	}
-	for p := range config.Packages {
-		splits := strings.Split(config.Packages[p], "@")
-		if len(splits) == 1 {
-			splits = append(splits, "latest")
-		}
-		if _, ok := packages[splits[0]+"@"+splits[1]]; ok {
-			continue
-		}
-		resp, err := http.Get(fmt.Sprintf("https://search.devbox.sh/v1/resolve?name=%s&version=%s", splits[0], splits[1]))
-		if err != nil {
-			return nil, err
-		}
-		if resp.StatusCode != 200 {
-			return nil, fmt.Errorf("failed to fetch package %s", config.Packages[p])
-		}
-		all, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-		type Res struct {
-			CommitHash string `json:"commit_hash"`
-			Version    string `json:"version"`
-		}
-		var res Res
-		err = json.Unmarshal(all, &res)
-		if err != nil {
-			return nil, err
-		}
-		packages[splits[0]+"@"+res.Version] = fmt.Sprintf("nixpkgs/%s#%s", res.CommitHash, splits[0])
-	}
-	for k, _ := range packages {
-		splits := strings.Split(k, "@")
-		if !slices.Contains(config.Packages, splits[0]) && !slices.Contains(config.Packages, k) && !slices.Contains(config.Packages, splits[0]+"@latest") {
-			delete(packages, k)
-		}
-	}
-	marshal, err := json.Marshal(packages)
-	if err != nil {
-		return nil, err
-	}
-	bjson := new(bytes.Buffer)
-	if err = json.Indent(bjson, marshal, "", "  "); err != nil {
-		return nil, err
-	}
-	if err = os.WriteFile("kl.lock", bjson.Bytes(), 0644); err != nil {
-		return nil, err
-	}
-	return packages, nil
-}
-
-func LoadDevboxConfig() (*devboxfile.DevboxConfig, error) {
-	s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
-	s.Suffix = " Syncing Environment..."
-	s.Start()
-	defer func() {
-		s.Stop()
-	}()
-
-	envs, mm, err := GetLoadMaps()
-	if err != nil {
-		return nil, err
-	}
-
-	kf, err := client.GetKlFile("")
-	if err != nil {
-		return nil, err
-	}
-
-	// read kl.yml into struct
-	klConfig := &devboxfile.DevboxConfig{
-		Packages: kf.Packages,
-	}
-
-	fm := map[string]string{}
-
-	for _, fe := range kf.Mounts.GetMounts() {
-		pth := fe.Path
-		if pth == "" {
-			pth = fe.Key
-		}
-
-		fm[pth] = mm[pth]
-	}
-
-	ev := map[string]string{}
-	for k, v := range envs {
-		ev[k] = v
-	}
-
-	for _, ne := range kf.EnvVars.GetEnvs() {
-		ev[ne.Key] = ne.Value
-	}
-
-	e, err := client.CurrentEnv()
-	if err == nil {
-		ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", e.Name, "❯")
-	}
-
-	klConfig.Env = ev
-	klConfig.KlConfig.Mounts = fm
-	lockfile, err := syncLockfile(klConfig)
-	klConfig.PackageHashes = lockfile
-	return klConfig, nil
-}
-
-func MountEnvs(c devboxfile.KlConfig) error {
-	for k, v := range c.Mounts {
-		if err := os.MkdirAll(filepath.Dir(k), fs.ModePerm); err != nil {
-			functions.Warnf("failed to create dir %s", filepath.Dir(k))
-			continue
-		}
-
-		if err := os.WriteFile(k, []byte(v), fs.ModePerm); err != nil {
-			functions.Warnf("failed to write file %s", k)
-			continue
-		}
-	}
-
-	return nil
 }
