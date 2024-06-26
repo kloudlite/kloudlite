@@ -6,6 +6,10 @@ inputs:
     description: 'GitHub Token'
     required: true
 
+  image_tag:
+    description: 'image tag, if known'
+    required: false
+
   cachix_enabled:
     description: "cachix enabled"
     default: "false"
@@ -24,10 +28,6 @@ inputs:
   git_directory:
     description: 'git directory'
     default: "."
-
-  cache_prefix:
-    description: 'cache prefix'
-    default: ""
 
   go_mod_download:
     description: 'go mod download'
@@ -79,13 +79,14 @@ runs:
       run: |+
         GOMODCACHE=${{github.workspace}}/actions/go-mod-cache
         GOCACHE=${{github.workspace}}/actions/go-cache
+
         echo "GOMODCACHE=$GOMODCACHE" >> $GITHUB_OUTPUT
         echo "GOCACHE=$GOCACHE" >> $GITHUB_OUTPUT
 
         echo "GOMODCACHE=$GOMODCACHE" >> $GITHUB_ENV
         echo "GOCACHE=$GOCACHE" >> $GITHUB_ENV
 
-        echo "GOPKG_HASH=${{ hashFiles(format('{0}/go.mod', inputs.git_directory), format('{0}/go.sum', inputs.git_directory)) }}" >> $GITHUB_OUTPUT
+        echo "GOPKG_HASH=${{ hashFiles(format('{0}/go.mod', inputs.git_directory), format('{0}/go.sum', inputs.git_directory), format('{0}/*.go', inputs.git_directory) ) }}" >> $GITHUB_OUTPUT
 
         echo "PUSH_IMAGE=false" >> $GITHUB_ENV
 
@@ -101,17 +102,7 @@ runs:
         mkdir -p $GOMODCACHE
         ln -sf ${{ inputs.git_directory }}/.github/actions ./operator-github-actions
 
-    # - name: Setup Caches
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: |+
-    #       ${{ env.GOMODCACHE }}
-    #       ${{ env.GOCACHE }}
-    #     key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-${{ inputs.cache_prefix }}
-    #     save-always: true
-    #     restore-keys: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-
-
-    - name: setup nix cache
+    - name: setup nix (cachix)
       if: ${{ inputs.cachix_enabled == 'true' }}
       uses: ./operator-github-actions/setup-nix-cachix/
       with:
@@ -121,7 +112,7 @@ runs:
         cachix_cache_name: ${{ inputs.cachix_cache_name }}
         cachix_auth_token: ${{ inputs.cachix_auth_token }}
 
-    - name: setup nix cache
+    - name: setup nix (github cache)
       if: ${{ inputs.cachix_enabled == 'false' }}
       uses: ./operator-github-actions/setup-nix-github/
       with:
@@ -135,20 +126,14 @@ runs:
         docker_username: ${{ github.actor }}
         docker_password: ${{ inputs.github_token }}
 
-    # - name: setup
-    #   id: setup
-    #   uses: ./operator-github-actions/setup/
-    #   with:
-    #     nix-develop-arguments: "${{ inputs.git_directory }}#default"
-    #     flake-lock: ${{ inputs.git_directory }}/flake.lock
-    #     github_token: ${{ inputs.github_token }}
-    #
-    #     # cache_key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-${{ inputs.cache_prefix }}
-    #     # cache_restore_key: go-${{ runner.os }}-${{github.repository_id}}-${{ steps.env-vars.outputs.GOPKG_HASH }}-
-    #     # cache_paths: |+
+    - name: Create Image Tag
+      if: ${{ inputs.image_tag != '' }}
+      shell: bash
+      run: |+
+        echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
 
     - name: Create Image Tag from branch name
-      if: startsWith(github.ref, 'refs/heads/release')
+      if: ${{ inputs.image_tag == '' && startsWith(github.ref, 'refs/heads/release-') }}
       shell: bash
       run: |
         set +e
@@ -160,16 +145,19 @@ runs:
         set -e
 
         echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-        echo "OVERRIDE_PUSHED_IMAGE=true" >> $GITHUB_ENV
 
     - name: Create Image Tag from tag
-      if: startsWith(github.ref, 'refs/tags/')
+      if: ${{ inputs.image_tag == '' && startsWith(github.ref, 'refs/tags/') }}
       shell: bash
       run: |
         IMAGE_TAG=$(echo ${GITHUB_REF#refs/tags/})
-
         echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-        echo "OVERRIDE_PUSHED_IMAGE=false" >> $GITHUB_ENV
+
+    - name: override image if image_tag is nightly
+      if: "${{ endsWith(env.IMAGE_TAG, '-nightly') }}"
+      shell: bash
+      run: |+
+        echo "OVERRIDE_PUSHED_IMAGE=true" >> $GITHUB_ENV
 
     - name: go mod download
       if: ${{ inputs.go_mod_download == 'true' }}
@@ -196,9 +184,6 @@ runs:
     - name: platform operator
       if: ${{ inputs.platform-operator == 'true' }}
       working-directory: ${{ inputs.git_directory }}/cmd/platform-operator
-      # env:
-      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
         task container:build-and-push image=ghcr.io/${{ github.repository }}/platform:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
@@ -217,9 +202,6 @@ runs:
     - name: agent operator
       if: ${{ inputs.agent-operator == 'true' }}
       working-directory: ${{ inputs.git_directory }}/cmd/agent-operator
-      # env:
-      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
         task container:build-and-push image=ghcr.io/${{ github.repository }}/agent:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
@@ -238,9 +220,6 @@ runs:
     - name: networking operator
       if: ${{ inputs.networking-operator == 'true' }}
       working-directory: ${{ inputs.git_directory }}/operators/networking
-      # env:
-      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
         task container:build-and-push image=ghcr.io/${{ github.repository }}/networking:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
@@ -259,9 +238,6 @@ runs:
     - name: wireguard operator
       if: ${{ inputs.wireguard-operator == 'true' }}
       working-directory: ${{ inputs.git_directory }}/operators/wireguard
-      # env:
-      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
         task container:build-and-push image=ghcr.io/${{ github.repository }}/wireguard:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
@@ -280,9 +256,6 @@ runs:
     - name: helm-charts operator
       if: ${{ inputs.helm-charts-operator == 'true' }}
       working-directory: ${{ inputs.git_directory }}/operators/helm-charts
-      # env:
-      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
         task container:build-and-push image=ghcr.io/${{ github.repository }}/helm-charts:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
@@ -301,9 +274,6 @@ runs:
     - name: networking/ip-manager
       if: ${{ inputs.networking_ip-manager == 'true' }}
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/ip-manager
-      # env:
-      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
         task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/ip-manager:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
@@ -322,9 +292,6 @@ runs:
     - name: networking/ip-binding-controller
       if: ${{ inputs.networking_ip-binding-controller == 'true' }}
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/ip-binding-controller
-      # env:
-      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
         task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/ip-binding-controller:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
@@ -343,9 +310,6 @@ runs:
     - name: networking/dns
       if: ${{ inputs.networking_dns == 'true' }}
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/dns
-      # env:
-      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
         task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/dns:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
@@ -364,9 +328,6 @@ runs:
     - name: networking/webhook
       if: ${{ inputs.networking_webhook == 'true' }}
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/webhook
-      # env:
-      #   IMAGE_TAG: ${{steps.setup.outputs.image_tag}}
-      #   OVERRIDE_PUSHED_IMAGE: ${{steps.setup.outputs.override_pushed_image}}
       shell: bash
       run: |
         task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/webhook:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"

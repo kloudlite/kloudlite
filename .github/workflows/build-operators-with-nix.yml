@@ -2,6 +2,12 @@ name: Build Operators With Nix Flakes
 
 on:
   workflow_dispatch:
+    inputs:
+      image_tag: 
+        type: string
+        description: "image_tag"
+        required: true
+        default: ""
 
   push:
     paths:
@@ -44,8 +50,8 @@ jobs:
       - name: build-and-push
         uses: ./.github/actions/build-operator-images/
         with:
-          cache_prefix: ${{ matrix.images.name }}
-          
+          image_tag: ${{github.event.inputs.image_tag}}
+
           cachix_enabled: true
           cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
