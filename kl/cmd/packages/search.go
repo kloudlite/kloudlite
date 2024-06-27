@@ -43,7 +43,7 @@ func searchPackages(cmd *cobra.Command, args []string) error {
 	}
 	stopSp()
 
-	header := table.Row{table.HeaderText("name"), table.HeaderText("versions")}
+	header := table.Row{table.HeaderText("#"), table.HeaderText("name"), table.HeaderText("versions")}
 	rows := make([]table.Row, 0)
 
 	for i, p := range sr.Packages {
@@ -57,7 +57,8 @@ func searchPackages(cmd *cobra.Command, args []string) error {
 		}
 
 		rows = append(rows, table.Row{
-			fmt.Sprintf("%s %s", text.Colored(fmt.Sprint(i+1, "."), 5), text.Bold((p.Name))),
+			text.Colored(fmt.Sprint(i+1, "."), 5),
+			text.Bold((p.Name)),
 			fmt.Sprintf("%s", strings.Join(versions, ", ")),
 		})
 	}

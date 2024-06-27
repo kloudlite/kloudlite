@@ -49,7 +49,7 @@ func GetTableStyles() table.BoxStyle {
 	// }
 
 	return table.BoxStyle{
-		PaddingRight: " \t",
+		PaddingRight: "   ",
 	}
 
 }
