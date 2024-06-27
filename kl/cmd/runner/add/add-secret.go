@@ -47,7 +47,9 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	secrets, err := server.ListSecrets()
+	secrets, err := server.ListSecrets([]fn.Option{
+		fn.MakeOption("accountName", klFile.AccountName),
+	}...)
 	if err != nil {
 		return functions.NewE(err)
 	}

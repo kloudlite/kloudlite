@@ -42,6 +42,9 @@ func addPackages(cmd *cobra.Command, args []string) error {
 	name = p
 
 	klConf, err := client.GetKlFile("")
+	if err != nil {
+		return functions.NewE(err)
+	}
 	if slices.Contains(klConf.Packages, name) {
 		return nil
 	}

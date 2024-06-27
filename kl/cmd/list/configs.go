@@ -20,8 +20,15 @@ var configsCmd = &cobra.Command{
 
 		envName := fn.ParseStringFlag(cmd, "env")
 
+		filePath := fn.ParseKlFile(cmd)
+		klFile, err := client.GetKlFile(filePath)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 		config, err := server.ListConfigs([]fn.Option{
 			fn.MakeOption("envName", envName),
+			fn.MakeOption("accountName", klFile.AccountName),
 		}...)
 
 		if err != nil {

@@ -3,6 +3,7 @@ package get
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
 
 	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -23,8 +24,17 @@ var configCmd = &cobra.Command{
 		if len(args) >= 1 {
 			configName = args[0]
 		}
+		filePath := fn.ParseKlFile(cmd)
+		klFile, err := client.GetKlFile(filePath)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
-		config, err := server.EnsureConfig(fn.MakeOption("configName", configName))
+		config, err := server.EnsureConfig([]fn.Option{
+			fn.MakeOption("configName", configName),
+			fn.MakeOption("accountName",klFile.AccountName),
+		}...)
 		if err != nil {
 			fn.PrintError(err)
 			return

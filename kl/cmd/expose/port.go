@@ -1,6 +1,7 @@
 package expose
 
 import (
+	"errors"
 	"os"
 	"slices"
 	"strconv"
@@ -37,11 +38,11 @@ func exposePorts(cmd *cobra.Command, args []string) error {
 	}
 	klFile, err := client.GetKlFile("")
 	if err != nil {
-		return functions.NewE(err, "please run 'kl init' if you are not initialized the file already")
+		return functions.NewE(err)
 	}
 
 	if len(args) == 0 {
-		return functions.NewE(err, "no ports provided. please provide ports using "+text.Yellow("kl expose port 8080 3000"))
+		return functions.NewE(errors.New("no ports provided. please provide ports using "+text.Yellow("kl expose port 8080 3000")))
 	}
 
 	for _, arg := range args {

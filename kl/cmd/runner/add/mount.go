@@ -86,7 +86,9 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 
 	items := make([]server.ConfigORSecret, 0)
 	if cOrs == client.ConfigType {
-		configs, e := server.ListConfigs()
+		configs, e := server.ListConfigs([]fn.Option{
+			fn.MakeOption("accountName", klFile.AccountName),
+		}...)
 
 		if e != nil {
 			return e
@@ -100,7 +102,9 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 		}
 
 	} else {
-		secrets, e := server.ListSecrets()
+		secrets, e := server.ListSecrets([]fn.Option{
+			fn.MakeOption("accountName", klFile.AccountName),
+		}...)
 
 		if e != nil {
 			return e

@@ -3,6 +3,7 @@ package get
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
 
 	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -24,7 +25,17 @@ var secretCmd = &cobra.Command{
 			secName = args[0]
 		}
 
-		sec, err := server.EnsureSecret(fn.MakeOption("secretName", secName))
+		filePath := fn.ParseKlFile(cmd)
+		klFile, err := client.GetKlFile(filePath)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		sec, err := server.EnsureSecret([]fn.Option{
+			fn.MakeOption("secretName", secName),
+			fn.MakeOption("accountName", klFile.AccountName),
+		}...)
 		if err != nil {
 			fn.PrintError(err)
 			return

@@ -19,7 +19,6 @@ import (
 
 const (
 	SessionFileName   string = "kl-session.yaml"
-	MainCtxFileName   string = "kl-main-contexts.yaml"
 	ExtraDataFileName string = "kl-extra-data.yaml"
 	DeviceFileName    string = "kl-device.yaml"
 	CompleteFileName  string = "kl-completion"
@@ -38,7 +37,6 @@ type Session struct {
 
 type MainContext struct {
 	AccountName string `json:"accountName"`
-	ClusterName string `json:"clusterName"`
 }
 
 type DeviceContext struct {
@@ -214,63 +212,6 @@ func GetConfigFolder() (configFolder string, err error) {
 	return configPath, nil
 }
 
-func SetAccountToMainCtx(aName string) error {
-	c, err := GetMainCtx()
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	c.AccountName = aName
-	file, err := yaml.Marshal(c)
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	return writeOnUserScope(MainCtxFileName, file)
-}
-
-func SetClusterToMainCtx(cName string) error {
-	c, err := GetMainCtx()
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	c.ClusterName = cName
-	file, err := yaml.Marshal(c)
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	return writeOnUserScope(MainCtxFileName, file)
-}
-
-func GetMainCtx() (*MainContext, error) {
-	file, err := ReadFile(MainCtxFileName)
-	contexts := MainContext{}
-
-	// need to check if file exists
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-
-			b, err := yaml.Marshal(contexts)
-			if err != nil {
-				return nil, functions.NewE(err)
-			}
-
-			if err := writeOnUserScope(MainCtxFileName, b); err != nil {
-				return nil, functions.NewE(err)
-			}
-
-		}
-	}
-
-	if err = yaml.Unmarshal(file, &contexts); err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	return &contexts, nil
-}
-
 func DeleteDeviceContext(dName string) error {
 	if dName == "" {
 		return fmt.Errorf("device Name is required")
@@ -435,16 +376,7 @@ func GetCookieString(options ...fn.Option) (string, error) {
 		return fmt.Sprintf("kloudlite-account=%s;hotspot-session=%s", accName, session), nil
 	}
 
-	c, err := GetMainCtx()
-	if err != nil {
-		return fmt.Sprintf("hotspot-session=%s", session), nil
-	}
-
-	if c.AccountName == "" {
-		return fmt.Sprintf("hotspot-session=%s", session), nil
-	}
-
-	return fmt.Sprintf("kloudlite-account=%s;hotspot-session=%s", c.AccountName, session), nil
+	return fmt.Sprintf("hotspot-session=%s", session), nil
 }
 
 func GetAuthSession() (string, error) {

@@ -20,7 +20,7 @@ func ListMreses(options ...fn.Option) ([]Mres, error) {
 		return nil, functions.NewE(err)
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getCookie(options...)
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
@@ -83,7 +83,7 @@ func ListMresKeys(options ...fn.Option) ([]string, error) {
 		return nil, functions.NewE(err)
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getCookie(options...)
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
@@ -147,7 +147,7 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 		return nil, fmt.Errorf("no managed resource selected")
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getCookie(options...)
 	if err != nil {
 		return nil, functions.NewE(err)
 	}

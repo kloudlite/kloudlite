@@ -62,7 +62,7 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 		return nil, functions.NewE(err)
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getCookie(options...)
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
@@ -177,10 +177,11 @@ func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
+
 	if kl.DefaultEnv == "" {
 		return nil, functions.Error("please select an environment using 'kl use env'")
 	}
-	selectedEnv, err := SelectEnv(kl.DefaultEnv)
+	selectedEnv, err := SelectEnv(kl.DefaultEnv, options...)
 	if err != nil {
 		return nil, functions.NewE(err)
 	}

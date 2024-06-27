@@ -5,22 +5,6 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
-func SelectAccount(accountName string) error {
-	file, err := GetMainCtx()
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	file.AccountName = accountName
-
-	if file.AccountName == "" {
-		return nil
-	}
-
-	err = SetAccountToMainCtx(accountName)
-	return functions.NewE(err)
-}
-
 func CurrentAccountName() (string, error) {
 
 	kt, err := GetKlFile("")

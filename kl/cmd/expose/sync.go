@@ -34,7 +34,7 @@ func sync(cmd *cobra.Command, args []string) error {
 	}
 	klFile, err := client.GetKlFile("")
 	if err != nil {
-		return functions.NewE(err, "please run 'kl init' if you are not initialized the file already")
+		return functions.NewE(err)
 	}
 	containerWorkspacePath := cwd
 	if val, ok := os.LookupEnv("KL_WORKSPACE"); ok {

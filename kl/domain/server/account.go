@@ -33,13 +33,6 @@ func ListAccounts() ([]Account, error) {
 }
 
 func SelectAccount(accountName string) (*Account, error) {
-	persistSelectedAcc := func(accName string) error {
-		err := client.SelectAccount(accName)
-		if err != nil {
-			return functions.NewE(err)
-		}
-		return nil
-	}
 
 	accounts, err := ListAccounts()
 	if err != nil {
@@ -49,9 +42,6 @@ func SelectAccount(accountName string) (*Account, error) {
 	if accountName != "" {
 		for _, a := range accounts {
 			if a.Metadata.Name == accountName {
-				if err := persistSelectedAcc(a.Metadata.Name); err != nil {
-					return nil, functions.NewE(err)
-				}
 				return &a, nil
 			}
 		}
@@ -67,9 +57,6 @@ func SelectAccount(accountName string) (*Account, error) {
 	)
 
 	if err != nil {
-		return nil, functions.NewE(err)
-	}
-	if err := persistSelectedAcc(account.Metadata.Name); err != nil {
 		return nil, functions.NewE(err)
 	}
 

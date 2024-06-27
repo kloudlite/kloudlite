@@ -2,7 +2,6 @@ package use
 
 import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
-	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -28,11 +27,6 @@ var accCmd = &cobra.Command{
 		}
 
 		if err := c.StopAll(); err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		if err := client.SetAccountToMainCtx(acc.Metadata.Name); err != nil {
 			fn.PrintError(err)
 			return
 		}
