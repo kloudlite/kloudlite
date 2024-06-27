@@ -9,7 +9,10 @@ import (
 )
 
 func Logout() error {
-	configPath := GetConfigPath()
+	configPath, err := GetConfigFolder()
+	if err != nil {
+		return fn.NewE(err)
+	}
 	sessionFile, err := os.Stat(path.Join(configPath, SessionFileName))
 	if err != nil && os.IsNotExist(err) {
 		return fn.Error( "not logged in")
