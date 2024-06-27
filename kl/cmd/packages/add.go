@@ -25,6 +25,11 @@ var addCmd = &cobra.Command{
 }
 
 func addPackages(cmd *cobra.Command, args []string) error {
+	klConf, err := client.GetKlFile("")
+	if err != nil {
+		return functions.NewE(err)
+	}
+
 	name := fn.ParseStringFlag(cmd, "name")
 	if name == "" && len(args) > 0 {
 		name = args[0]
@@ -41,7 +46,6 @@ func addPackages(cmd *cobra.Command, args []string) error {
 
 	name = p
 
-	klConf, err := client.GetKlFile("")
 	if slices.Contains(klConf.Packages, name) {
 		return nil
 	}
