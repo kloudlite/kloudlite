@@ -2,6 +2,7 @@ package list
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
 
 	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -16,7 +17,16 @@ var secretsCmd = &cobra.Command{
 	Short: "Get list of secrets in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		sec, err := server.ListSecrets()
+		filePath := fn.ParseKlFile(cmd)
+		klFile, err := client.GetKlFile(filePath)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		sec, err := server.ListSecrets([]fn.Option{
+			fn.MakeOption("accountName", klFile.AccountName),
+		}...)
 		if err != nil {
 			fn.PrintError(err)
 			return

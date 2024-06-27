@@ -36,7 +36,8 @@ var InitCommand = &cobra.Command{
 			return
 		}
 
-		if selectedAccount, err := selectAccount(); err != nil {
+		selectedAccount, err := selectAccount()
+		if err != nil {
 			fn.PrintError(err)
 			return
 		} else {
@@ -89,14 +90,11 @@ func selectAccount() (*string, error) {
 }
 
 func selectEnv(accountName string) (*string, error) {
-	if accounts, err := server.ListEnvs(
-		fn.Option{
-			Key:   "accountName",
-			Value: accountName,
-		},
-	); err == nil {
+	if envs, err := server.ListEnvs([]fn.Option{
+		fn.MakeOption("accountName", accountName),
+	}...); err == nil {
 		if selectedEnv, err := fzf.FindOne(
-			accounts,
+			envs,
 			func(env server.Env) string {
 				return env.Metadata.Name + " #" + env.Metadata.Name
 			},

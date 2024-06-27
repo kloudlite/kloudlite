@@ -48,7 +48,9 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	configs, err := server.ListConfigs()
+	configs, err := server.ListConfigs([]fn.Option{
+		fn.MakeOption("accountName", klFile.AccountName),
+	}...)
 	if err != nil {
 		return fn.NewE(err)
 	}

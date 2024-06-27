@@ -34,7 +34,7 @@ var logoutCmd = &cobra.Command{
 func logout(configPath string) error {
 	sessionFile, err := os.Stat(path.Join(configPath, client.SessionFileName))
 	if err != nil && os.IsNotExist(err) {
-		return fn.NewE(err, "not logged in")
+		return fn.Error( "not logged in")
 	}
 	if err != nil {
 		return functions.NewE(err)

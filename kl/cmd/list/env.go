@@ -27,7 +27,11 @@ var envCmd = &cobra.Command{
 func listEnvironments(cmd *cobra.Command, args []string) error {
 
 	var err error
-	envs, err := server.ListEnvs()
+	klFile, err := client.GetKlFile("")
+	if err != nil {
+		return functions.NewE(err)
+	}
+	envs, err := server.ListEnvs(fn.MakeOption("accountName", klFile.AccountName))
 	if err != nil {
 		return functions.NewE(err)
 	}

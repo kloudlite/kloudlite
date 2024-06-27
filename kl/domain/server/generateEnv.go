@@ -85,12 +85,17 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 		return nil, nil, functions.NewE(err)
 	}
 
-	env, err := EnsureEnv(nil)
+	env, err := EnsureEnv(nil, []functions.Option{
+		functions.MakeOption("accountName", kt.AccountName),
+	}...)
 	if err != nil {
 		return nil, nil, functions.NewE(err)
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getCookie([]functions.Option{
+		functions.MakeOption("accountName", kt.AccountName),
+	}...)
+
 	if err != nil {
 		return nil, nil, functions.NewE(err)
 	}

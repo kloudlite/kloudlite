@@ -45,6 +45,7 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 
 	mres, err := server.SelectMres([]fn.Option{
 		fn.MakeOption("mresName", mresName),
+		fn.MakeOption("accountName", kt.AccountName),
 	}...)
 
 	if err != nil {
@@ -53,6 +54,7 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 
 	mresKey, err := server.SelectMresKey([]fn.Option{
 		fn.MakeOption("mresName", mres.Metadata.Name),
+		fn.MakeOption("accountName", kt.AccountName),
 	}...)
 
 	if err != nil {

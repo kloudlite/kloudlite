@@ -22,7 +22,7 @@ func ListSecrets(options ...fn.Option) ([]Secret, error) {
 		return nil, functions.NewE(err)
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getCookie(options...)
 	if err != nil {
 		return nil, functions.NewE(err)
 	}

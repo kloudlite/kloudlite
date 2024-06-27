@@ -117,18 +117,21 @@ func BoxHashFileName(path string) (string, error) {
 func SyncBoxHash(fpath string) error {
 	defer spinner.Client.UpdateMessage("updating lockfile")()
 
-	e, err := client.EnvOfPath(fpath)
-	if err != nil {
-		return fn.NewE(err)
-	}
-	envName := e.Name
-	if envName == "" {
-		return fn.Error("envName is required")
-	}
-
 	klFile, err := client.GetKlFile(path.Join(fpath, "kl.yml"))
 	if err != nil {
 		return fn.NewE(err)
+	}
+	envName := ""
+	e, err := client.EnvOfPath(fpath)
+	if err != nil && err.Error() == "no selected environment" {
+		envName = klFile.DefaultEnv
+	} else if err != nil {
+		return fn.NewE(err)
+	} else {
+		envName = e.Name
+	}
+	if envName == "" {
+		return fn.Error("envName is required")
 	}
 
 	configFolder, err := client.GetConfigFolder()
@@ -213,6 +216,7 @@ func GenerateKLConfigHash(kf *client.KLFileType) (string, error) {
 }
 
 func generatePersistedEnv(kf *client.KLFileType, envName string, path string) (*PersistedEnv, error) {
+
 	envs, mm, err := server.GetLoadMaps()
 	if err != nil {
 		return nil, functions.NewE(err)

@@ -19,17 +19,21 @@ var switchCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, _ []string) {
 		//TODO: add changes to the klbox-hash file
 		envName := fn.ParseStringFlag(cmd, "envname")
-		env, err := server.SelectEnv(envName)
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
 
 		klFile, err := client.GetKlFile("")
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
+
+		env, err := server.SelectEnv(envName, []fn.Option{
+			fn.MakeOption("accountName", klFile.AccountName),
+		}...)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 		if klFile.DefaultEnv == "" {
 			klFile.DefaultEnv = env.Metadata.Name
 			if err := client.WriteKLFile(*klFile); err != nil {

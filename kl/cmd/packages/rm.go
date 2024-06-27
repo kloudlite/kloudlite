@@ -35,6 +35,9 @@ func rmPackages(cmd *cobra.Command, args []string) error {
 	}
 
 	klConf, err := client.GetKlFile("")
+	if err != nil {
+		return functions.NewE(err)
+	}
 	splits := strings.Split(name, "@")
 	for i, v := range klConf.Packages {
 		valSplits := strings.Split(v, "@")

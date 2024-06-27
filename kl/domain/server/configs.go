@@ -27,7 +27,7 @@ func ListConfigs(options ...fn.Option) ([]Config, error) {
 		return nil, functions.NewE(err)
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getCookie(options...)
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
