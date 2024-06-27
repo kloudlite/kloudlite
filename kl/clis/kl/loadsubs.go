@@ -3,7 +3,6 @@ package kl
 import (
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/box"
-	"github.com/kloudlite/kl/cmd/completion"
 	"github.com/kloudlite/kl/cmd/expose"
 	"github.com/kloudlite/kl/cmd/get"
 	"github.com/kloudlite/kl/cmd/list"
@@ -11,7 +10,6 @@ import (
 	"github.com/kloudlite/kl/cmd/runner"
 	"github.com/kloudlite/kl/cmd/runner/add"
 	set_base_url "github.com/kloudlite/kl/cmd/set-base-url"
-	"github.com/kloudlite/kl/cmd/shell"
 	"github.com/kloudlite/kl/cmd/status"
 	"github.com/kloudlite/kl/cmd/use"
 	"github.com/kloudlite/kl/cmd/vpn/intercept"
@@ -34,7 +32,6 @@ func init() {
 	rootCmd.AddCommand(get.Cmd)
 	rootCmd.AddCommand(auth.Cmd)
 	rootCmd.AddCommand(box.BoxCmd)
-	rootCmd.AddCommand(shell.LocalShellCmd)
 
 	// apploader.LoadStartApp(rootCmd)
 
@@ -49,5 +46,4 @@ func init() {
 	rootCmd.AddCommand(add.Command)
 	rootCmd.AddCommand(status.Cmd)
 	rootCmd.AddCommand(packages.Cmd)
-	rootCmd.AddCommand(completion.AutoCompletion)
 }
