@@ -107,6 +107,7 @@ func GetDockerHostIp() (string, error) {
 	return localAddress.IP.To4().String(), nil
 }
 func (c *client) ensureKloudliteNetwork() error {
+	defer spinner.Client.UpdateMessage("ensuring kloudlite network")()
 
 	networks, err := c.cli.NetworkList(context.Background(), network.ListOptions{
 		Filters: filters.NewArgs(
@@ -133,6 +134,8 @@ func (c *client) ensureKloudliteNetwork() error {
 }
 
 func (c *client) ensureImage(i string) error {
+	defer spinner.Client.UpdateMessage(fmt.Sprintf("checking image %s", i))()
+
 	if imageExists, err := c.imageExists(i); err == nil && imageExists {
 		return nil
 	}
@@ -290,30 +293,39 @@ func (c *client) startContainer() (string, error) {
 }
 
 func (c *client) stopOtherContainers() error {
+	defer spinner.Client.UpdateMessage("stopping other containers")()
 
 	existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
 		All: true,
 		Filters: filters.NewArgs(
-			dockerLabelFilter(CONT_MARK_KEY, CONT_MARK_KEY),
-			dockerLabelFilter(CONT_WORKSPACE_MARK_KEY, CONT_WORKSPACE_MARK_KEY),
+			dockerLabelFilter(CONT_MARK_KEY, "true"),
+			dockerLabelFilter(CONT_WORKSPACE_MARK_KEY, "true"),
 		),
 	})
-
 	if err != nil {
-		for _, d := range existingContainers {
-			if d.State == "running" {
-				if d.Labels[CONT_PATH_KEY] != c.cwd {
-					if err := c.stopContainer(d.Labels[CONT_PATH_KEY]); err != nil {
-						return fn.NewE(err)
-					}
-				}
+		return fn.NewE(err)
+	}
+
+	for _, d := range existingContainers {
+		if d.Labels[CONT_PATH_KEY] != c.cwd {
+
+			spinner.Client.Stop()
+			fn.Logf("An other container is running in %s, do you want to stop it? [Y/n]", d.Labels[CONT_PATH_KEY])
+			if !fn.Confirm("y", "y") {
+				continue
+			}
+
+			if err := c.stopContainer(d.Labels[CONT_PATH_KEY]); err != nil {
+				return fn.NewE(err)
 			}
 		}
 	}
+
 	return nil
 }
 
 func (c *client) stopContainer(path string) error {
+	defer spinner.Client.UpdateMessage("stopping container")()
 
 	existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
 		Filters: filters.NewArgs(
@@ -338,11 +350,11 @@ func (c *client) stopContainer(path string) error {
 		return fn.NewE(err)
 	}
 
-	// if err := cli.ContainerRemove(context.Background(), existingContainers[0].ID, container.RemoveOptions{
-	// 	Force: true,
-	// }); err != nil {
-	// 	return fn.Error(err)
-	// }
+	if err := c.cli.ContainerRemove(context.Background(), existingContainers[0].ID, container.RemoveOptions{
+		Force: true,
+	}); err != nil {
+		return fn.NewE(err)
+	}
 
 	return nil
 }
@@ -457,6 +469,8 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 }
 
 func (c *client) SyncVpn(wg string) error {
+	defer spinner.Client.UpdateMessage("validating vpn configuration")()
+
 	err := c.ensureImage(constants.WireguardImage)
 	if err != nil {
 		return functions.Error("failed to pull image")
@@ -555,6 +569,8 @@ func (c *client) getContainerLogs(ctx context.Context, containerId string) (io.R
 }
 
 func (c *client) containerAtPath(path string) (*types.Container, error) {
+	defer spinner.Client.UpdateMessage("looking for the container")()
+
 	existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
 		All: true,
 		Filters: filters.NewArgs(

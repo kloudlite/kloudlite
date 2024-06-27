@@ -6,29 +6,68 @@ import (
 
 	"github.com/briandowns/spinner"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
-const inProgress = "⏳"
-const done = "✅"
-
-type Spinner struct {
+type sclient struct {
 	spinner *spinner.Spinner
-	message string
+	message []string
 	verbose bool
 	quiet   bool
 
 	started bool
 }
 
-func (s *Spinner) SetVerbose(verbose bool) {
+type Spinner interface {
+	UpdateMessage(msg string) func()
+	Stop()
+	Pause()
+	Resume()
+	SetVerbose(verbose bool)
+	SetQuiet(quiet bool)
+}
+
+// type Spinner struct {}
+
+func (s *sclient) pushMessage(msg string) {
+	if s.verbose && !s.quiet {
+		fn.Logf("%s %s\n", text.Bold(text.Green(fmt.Sprintf("+ [%d]", len(s.message)))), msg)
+	}
+
+	s.message = append(s.message, msg)
+}
+
+func (s *sclient) popMessage() string {
+	if len(s.message) == 0 {
+		return "please wait..."
+	}
+
+	oresp := s.message[len(s.message)-1]
+	if s.verbose && !s.quiet {
+		fn.Logf("%s %s\n", text.Bold(text.Red(fmt.Sprintf("- [%d]", len(s.message)-1))), oresp)
+	}
+
+	s.message = s.message[:len(s.message)-1]
+	if len(s.message) == 0 {
+		return oresp
+	}
+
+	return s.message[len(s.message)-1]
+}
+
+func (s *sclient) isPopable() bool {
+	return len(s.message) > 0
+}
+
+func (s *sclient) SetVerbose(verbose bool) {
 	s.verbose = verbose
 }
 
-func (s *Spinner) SetQuiet(quiet bool) {
+func (s *sclient) SetQuiet(quiet bool) {
 	s.quiet = quiet
 }
 
-func (s *Spinner) start() {
+func (s *sclient) start() {
 	if s.quiet {
 		return
 	}
@@ -38,11 +77,9 @@ func (s *Spinner) start() {
 		s.spinner.Start()
 		return
 	}
-
-	fn.Logf("[%s] %s\n", inProgress, s.message)
 }
 
-func (s *Spinner) stop() {
+func (s *sclient) stop() {
 	if s.quiet {
 		return
 	}
@@ -52,70 +89,53 @@ func (s *Spinner) stop() {
 		s.spinner.Stop()
 		return
 	}
-
-	fn.Logf("[%s] %s\n", done, s.message)
 }
 
-func (s *Spinner) Started() bool {
-	return s.started
-}
-
-func (s *Spinner) Start(msg ...string) func() {
-	if s.quiet {
-		return s.stop
-	}
-
-	if len(msg) > 0 && s.message != msg[0] {
-		s.message = msg[0]
-		s.UpdateMessage(msg[0])
-	}
-
-	return s.stop
-}
-func (s *Spinner) Stop() {
+func (s *sclient) Stop() {
+	s.message = []string{}
 	s.stop()
 }
 
-func (s *Spinner) UpdateMessage(msg string, verbose ...bool) func() {
+func (s *sclient) Pause() {
+	s.stop()
+}
+
+func (s *sclient) Resume() {
+	s.start()
+}
+
+func (s *sclient) UpdateMessage(msg string) func() {
 	if s.quiet {
 		return s.stop
-	}
-
-	if len(verbose) > 0 {
-		s.verbose = verbose[0]
 	}
 
 	if !s.started {
 		s.started = true
-		return s.Start(msg)
+		s.start()
 	}
 
-	om := s.message
-	s.message = msg
+	s.pushMessage(msg)
 	s.spinner.Suffix = fmt.Sprintf(" %s...", msg)
 
 	if !s.verbose {
 		s.spinner.Restart()
-	} else {
-		fn.Logf("[%s] %s\n", inProgress, s.message)
 	}
 
 	return func() {
-		if om != "" {
-			s.message = om
-			s.spinner.Suffix = fmt.Sprintf(" %s...", om)
+		if s.isPopable() {
+			s2 := s.popMessage()
+			s.spinner.Suffix = fmt.Sprintf(" %s...", s2)
+
 			if !s.verbose {
 				s.spinner.Restart()
-			} else {
-				fn.Logf("[%s] %s\n", done, om)
 			}
 		} else {
-			s.spinner.Stop()
+			s.stop()
 		}
 	}
 }
 
-func newSpinner(msg string, verbose bool) *Spinner {
+func newSpinner(msg string, verbose bool) Spinner {
 	sp := spinner.CharSets[11]
 
 	s := spinner.New(sp, 100*time.Millisecond)
@@ -125,7 +145,7 @@ func newSpinner(msg string, verbose bool) *Spinner {
 		s.Suffix = fmt.Sprintf(" %s...", msg)
 	}
 
-	return &Spinner{
+	return &sclient{
 		spinner: s,
 		verbose: verbose,
 	}

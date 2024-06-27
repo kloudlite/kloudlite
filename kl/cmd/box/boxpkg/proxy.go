@@ -10,6 +10,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
 
 type ProxyConfig struct {
@@ -19,6 +20,8 @@ type ProxyConfig struct {
 }
 
 func (c *client) SyncProxy(config ProxyConfig) error {
+	defer spinner.Client.UpdateMessage("updating port configuration")()
+
 	if err := c.ensureImage(constants.SocatImage); err != nil {
 		return functions.NewE(err, "failed to pull image")
 	}

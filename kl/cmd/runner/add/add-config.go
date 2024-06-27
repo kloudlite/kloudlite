@@ -229,13 +229,6 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	if err := hashctrl.SyncBoxHash(wpath); err != nil {
 		return fn.NewE(err)
 	}
-	//if err := server.SyncDevboxJsonFile(); err != nil {
-	//	return functions.NewE(err)
-	//}
-
-	//if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
-	//	return functions.NewE(err)
-	//}
 
 	return nil
 }

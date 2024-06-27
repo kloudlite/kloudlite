@@ -42,7 +42,7 @@ var rootCmd = &cobra.Command{
 		}()
 	},
 
-	PostRun: func(*cobra.Command, []string) {
+	PersistentPostRun: func(*cobra.Command, []string) {
 		spinner.Client.Stop()
 	},
 }

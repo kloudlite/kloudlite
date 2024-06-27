@@ -81,14 +81,6 @@ func BoxHashFile(workspacePath string) (*PersistedEnv, error) {
 	}
 	if os.IsNotExist(err) {
 		return nil, functions.NewE(err)
-		// env, err := server.EnvAtPath(workspacePath)
-		// if err != nil {
-		// 	return nil, functions.Error(err)
-		// }
-		// if err = SyncBoxHash(env.Name, workspacePath); err != nil {
-		// 	return nil, functions.Error(err)
-		// }
-		// return BoxHashFile(workspacePath)
 	}
 	var r struct {
 		Config PersistedEnv `json:"config"`
@@ -115,7 +107,7 @@ func BoxHashFileName(path string) (string, error) {
 }
 
 func SyncBoxHash(fpath string) error {
-	defer spinner.Client.UpdateMessage("updating lockfile")()
+	defer spinner.Client.UpdateMessage("validating kl.yml and kl.lock")()
 
 	klFile, err := client.GetKlFile(path.Join(fpath, "kl.yml"))
 	if err != nil {
@@ -161,6 +153,8 @@ func SyncBoxHash(fpath string) error {
 }
 
 func GenerateKLConfigHash(kf *client.KLFileType) (string, error) {
+	defer spinner.Client.UpdateMessage("validating kl.yml and parsing environment variables")()
+
 	klConfhash := md5.New()
 	slices.SortFunc(kf.EnvVars, func(a, b client.EnvType) int {
 		return strings.Compare(a.Key, b.Key)

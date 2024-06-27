@@ -34,7 +34,7 @@ func searchPackages(cmd *cobra.Command, args []string) error {
 		return functions.Error("name is required")
 	}
 
-	stopSp := spinner.Client.Start(fmt.Sprintf("searching for package %s", name))
+	stopSp := spinner.Client.UpdateMessage(fmt.Sprintf("searching for package %s", name))
 	defer stopSp()
 
 	sr, err := Search(cmd.Context(), name)

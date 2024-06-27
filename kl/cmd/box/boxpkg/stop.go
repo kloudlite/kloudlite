@@ -11,7 +11,7 @@ func (c *client) Stop() error {
 }
 
 func (c *client) StopAll() error {
-	defer spinner.Client.Start("stopping container please wait")()
+	defer spinner.Client.UpdateMessage("stopping container please wait")()
 
 	crs, err := c.listContainer(map[string]string{
 		CONT_MARK_KEY: "true",
@@ -26,76 +26,10 @@ func (c *client) StopAll() error {
 	}
 
 	for _, cr := range crs {
-
 		if err := c.stopContainer(cr.Labels[CONT_PATH_KEY]); err != nil {
 			return functions.NewE(err)
 		}
-
-		// crPath := cr.Labels[CONT_PATH_KEY]
-		//
-		// if c.verbose {
-		// 	fn.Logf("stopping container of: %s", text.Blue(crPath))
-		// }
-		//
-		// if cr.State != ContStateExited && cr.State != ContStateCreated {
-		// 	if err := c.cli.ContainerKill(c.Context(), cr.Name, "SIGKILL"); err != nil {
-		// 		fn.Warnf("error stoping container: %s", err.Error())
-		// 		continue
-		// 	}
-		// }
-		//
-		// if err := c.cli.ContainerRemove(c.Context(), cr.Name, container.RemoveOptions{}); err != nil {
-		// 	fn.Warnf("failed to remove container: %s", err.Error())
-		// 	continue
-		// }
-		//
-		// if c.verbose {
-		// 	fn.Logf("stopped container of: %s", text.Blue(crPath))
-		// }
 	}
 
 	return nil
 }
-
-// func (c *client) StopCont(cr *Cntr) error {
-// 	defer spinner.Client.Start("stopping container please wait")()
-//
-// 	crPath := cr.Labels[CONT_PATH_KEY]
-//
-// 	if c.verbose {
-// 		fn.Logf("stopping container of: %s", text.Blue(crPath))
-// 	}
-//
-// 	if cr.State != ContStateExited && cr.State != ContStateCreated {
-// 		if err := c.cli.ContainerKill(c.Context(), cr.Name, "SIGKILL"); err != nil {
-// 			return fmt.Errorf("error stoping container: %s", err)
-// 		}
-// 	}
-//
-// 	if err := c.cli.ContainerRemove(c.Context(), cr.Name, container.RemoveOptions{}); err != nil {
-// 		return fmt.Errorf("failed to remove container: %s", err)
-// 	}
-//
-// 	localEnv, err := cl.EnvOfPath(crPath)
-// 	if err != nil {
-// 		return functions.NewE(err)
-// 	}
-//
-// 	if localEnv.SSHPort != 0 {
-// 		p, err := proxy.NewProxy(false)
-// 		if err != nil {
-// 			return functions.NewE(err)
-// 		}
-//
-// 		if _, err := p.RemoveAllFwd(sshclient.StartCh{
-// 			SshPort: fmt.Sprint(localEnv.SSHPort),
-// 		}); err != nil {
-// 			return functions.NewE(err)
-// 		}
-// 	}
-//
-// 	if c.verbose {
-// 		fn.Logf("stopped container of: %s", text.Blue(crPath))
-// 	}
-// 	return nil
-// }
