@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -43,14 +44,14 @@ func printConfig(config *server.Config, cmd *cobra.Command) error {
 	case "json":
 		configBytes, err := json.Marshal(config.Data)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 		fn.Println(string(configBytes))
 
 	case "yaml", "yml":
 		configBytes, err := yaml.Marshal(config.Data)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 		fn.Println(string(configBytes))
 

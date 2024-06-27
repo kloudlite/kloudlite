@@ -16,7 +16,7 @@ func InsideBox() bool {
 // 	if !ok {
 // 		dir, err := os.Getwd()
 // 		if err != nil {
-// 			return "", err
+// 			return "", functions.NewE(err)
 // 		}
 // 		return dir, nil
 // 	}

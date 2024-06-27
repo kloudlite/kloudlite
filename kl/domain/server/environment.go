@@ -1,10 +1,10 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
@@ -27,12 +27,12 @@ type EnvList struct {
 // 	var err error
 // 	projectName, err := EnsureProject()
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	cookie, err := getCookie()
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	respData, err := klFetch("cli_getEnvironment", map[string]any{
@@ -45,11 +45,11 @@ type EnvList struct {
 // 	}, &cookie)
 //
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	if fromResp, err := GetFromResp[Env](respData); err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	} else {
 // 		return fromResp, nil
 // 	}
@@ -59,12 +59,12 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 	var err error
 	_, err = EnsureAccount(options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_listEnvironments", map[string]any{
@@ -76,11 +76,11 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 	}, &cookie)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if fromResp, err := GetFromRespForEdge[Env](respData); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	} else {
 		return fromResp, nil
 	}
@@ -91,14 +91,14 @@ func SelectEnv(envName string, options ...fn.Option) (*Env, error) {
 	persistSelectedEnv := func(env client.Env) error {
 		err := client.SelectEnv(env)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 		return nil
 	}
 
 	envs, err := ListEnvs(options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	oldEnv, _ := client.CurrentEnv()
@@ -117,12 +117,12 @@ func SelectEnv(envName string, options ...fn.Option) (*Env, error) {
 					TargetNs:    a.Spec.TargetNamespace,
 					ClusterName: a.ClusterName,
 				}); err != nil {
-					return nil, err
+					return nil, functions.NewE(err)
 				}
 				return &a, nil
 			}
 		}
-		return nil, errors.New("you don't have access to this account")
+		return nil, functions.Error("you don't have access to this account")
 	}
 
 	env, err := fzf.FindOne(
@@ -134,7 +134,7 @@ func SelectEnv(envName string, options ...fn.Option) (*Env, error) {
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if err := persistSelectedEnv(client.Env{
@@ -148,7 +148,7 @@ func SelectEnv(envName string, options ...fn.Option) (*Env, error) {
 		}(),
 		ClusterName: env.ClusterName,
 	}); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return env, nil
@@ -160,7 +160,7 @@ func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
 	if _, err := EnsureAccount(
 		fn.MakeOption("accountName", accountName),
 	); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if env != nil && env.Name != "" {
@@ -175,14 +175,14 @@ func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
 
 	kl, err := client.GetKlFile("")
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	if kl.DefaultEnv == "" {
-		return nil, errors.New("please select an environment using 'kl use env'")
+		return nil, functions.Error("please select an environment using 'kl use env'")
 	}
 	selectedEnv, err := SelectEnv(kl.DefaultEnv)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	return &client.Env{
 		Name:     selectedEnv.DisplayName,

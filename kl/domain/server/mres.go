@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
@@ -16,12 +17,12 @@ type Mres struct {
 func ListMreses(options ...fn.Option) ([]Mres, error) {
 	env, err := EnsureEnv(nil, options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_listMreses", map[string]any{
@@ -35,12 +36,12 @@ func ListMreses(options ...fn.Option) ([]Mres, error) {
 		"pq": PaginationDefault,
 	}, &cookie)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	fromResp, err := GetFromRespForEdge[Mres](respData)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return fromResp, nil
@@ -52,7 +53,7 @@ func SelectMres(options ...fn.Option) (*Mres, error) {
 
 	m, err := ListMreses(options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	if len(m) == 0 {
 		return nil, fmt.Errorf("no managed resources created yet on server")
@@ -79,12 +80,12 @@ func ListMresKeys(options ...fn.Option) ([]string, error) {
 
 	env, err := EnsureEnv(nil, options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_getMresKeys", map[string]any{
@@ -92,12 +93,12 @@ func ListMresKeys(options ...fn.Option) ([]string, error) {
 		"name":    mresName,
 	}, &cookie)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	s, err := GetFromResp[[]string](respData)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return *s, nil
@@ -108,7 +109,7 @@ func SelectMresKey(options ...fn.Option) (*string, error) {
 
 	keys, err := ListMresKeys(options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if len(keys) == 0 {
@@ -134,12 +135,12 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 	}, options...)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	kt, err := client.GetKlFile("")
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if kt.EnvVars.GetMreses() == nil {
@@ -148,7 +149,7 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_getMresOutputKeyValues", map[string]any{
@@ -168,12 +169,12 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 	}, &cookie)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	fromResp, err := GetFromResp[[]MresResp](respData)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	mresMap := map[string]map[string]*Kv{}

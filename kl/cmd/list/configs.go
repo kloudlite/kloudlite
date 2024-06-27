@@ -5,6 +5,7 @@ import (
 
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -39,7 +40,7 @@ func printConfigs(cmd *cobra.Command, configs []server.Config) error {
 
 	e, err := client.CurrentEnv()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if len(configs) == 0 {

@@ -2,11 +2,11 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"time"
 
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	nanoid "github.com/matoous/go-nanoid/v2"
 )
@@ -14,13 +14,13 @@ import (
 func GetCurrentUser() (*User, error) {
 	cookie, err := getCookie()
 	if err != nil && cookie == "" {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_getCurrentUser", map[string]any{}, &cookie)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	type Resp struct {
 		User   User    `json:"data"`
@@ -29,7 +29,7 @@ func GetCurrentUser() (*User, error) {
 	var resp Resp
 	err = json.Unmarshal(respData, &resp)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	if len(resp.Errors) > 0 {
 		return nil, resp.Errors[0]
@@ -40,7 +40,7 @@ func GetCurrentUser() (*User, error) {
 func CreateRemoteLogin() (loginId string, err error) {
 	authSecret, err = nanoid.New(32)
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_createRemoteLogin", map[string]any{
@@ -48,7 +48,7 @@ func CreateRemoteLogin() (loginId string, err error) {
 	}, nil)
 
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	type Response struct {
@@ -58,7 +58,7 @@ func CreateRemoteLogin() (loginId string, err error) {
 	var resp Response
 	err = json.Unmarshal(respData, &resp)
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 	return resp.Id, nil
 }
@@ -71,7 +71,7 @@ func Login(loginId string) error {
 		}, nil)
 
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 		type Response struct {
 			RemoteLogin struct {
@@ -82,7 +82,7 @@ func Login(loginId string) error {
 		var loginStatusResponse Response
 		err = json.Unmarshal(respData, &loginStatusResponse)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 		if loginStatusResponse.RemoteLogin.Status == "succeeded" {
 			req, _ := http.NewRequest("GET", "/", nil)
@@ -92,7 +92,7 @@ func Login(loginId string) error {
 			return client.SaveAuthSession(cookie.Value)
 		}
 		if loginStatusResponse.RemoteLogin.Status == "failed" {
-			return errors.New("remote login failed")
+			return functions.Error("remote login failed")
 		}
 		if loginStatusResponse.RemoteLogin.Status == "pending" {
 			spinner.Client.Start("waiting for login to complete")

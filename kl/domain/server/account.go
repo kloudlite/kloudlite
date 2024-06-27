@@ -1,9 +1,8 @@
 package server
 
 import (
-	"errors"
-
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
@@ -17,17 +16,17 @@ type Account struct {
 func ListAccounts() ([]Account, error) {
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_listAccounts", map[string]any{}, &cookie)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	type AccList []Account
 	if fromResp, err := GetFromResp[AccList](respData); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	} else {
 		return *fromResp, nil
 	}
@@ -37,26 +36,26 @@ func SelectAccount(accountName string) (*Account, error) {
 	persistSelectedAcc := func(accName string) error {
 		err := client.SelectAccount(accName)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 		return nil
 	}
 
 	accounts, err := ListAccounts()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if accountName != "" {
 		for _, a := range accounts {
 			if a.Metadata.Name == accountName {
 				if err := persistSelectedAcc(a.Metadata.Name); err != nil {
-					return nil, err
+					return nil, functions.NewE(err)
 				}
 				return &a, nil
 			}
 		}
-		return nil, errors.New("you don't have access to this account")
+		return nil, functions.Error("you don't have access to this account")
 	}
 
 	account, err := fzf.FindOne(
@@ -68,10 +67,10 @@ func SelectAccount(accountName string) (*Account, error) {
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	if err := persistSelectedAcc(account.Metadata.Name); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return account, nil
@@ -88,7 +87,7 @@ func EnsureAccount(options ...fn.Option) (string, error) {
 	if s == "" {
 		a, err := SelectAccount("")
 		if err != nil {
-			return "", err
+			return "", functions.NewE(err)
 		}
 
 		return a.Metadata.Name, nil

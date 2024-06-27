@@ -1,6 +1,7 @@
 package boxpkg
 
 import (
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
@@ -17,7 +18,7 @@ func (c *client) StopAll() error {
 	})
 
 	if err != nil && err != NotFoundErr {
-		return err
+		return functions.NewE(err)
 	}
 
 	if err == NotFoundErr {
@@ -27,7 +28,7 @@ func (c *client) StopAll() error {
 	for _, cr := range crs {
 
 		if err := c.stopContainer(cr.Labels[CONT_PATH_KEY]); err != nil {
-			return err
+			return functions.NewE(err)
 		}
 
 		// crPath := cr.Labels[CONT_PATH_KEY]
@@ -77,19 +78,19 @@ func (c *client) StopAll() error {
 //
 // 	localEnv, err := cl.EnvOfPath(crPath)
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 //
 // 	if localEnv.SSHPort != 0 {
 // 		p, err := proxy.NewProxy(false)
 // 		if err != nil {
-// 			return err
+// 			return functions.NewE(err)
 // 		}
 //
 // 		if _, err := p.RemoveAllFwd(sshclient.StartCh{
 // 			SshPort: fmt.Sprint(localEnv.SSHPort),
 // 		}); err != nil {
-// 			return err
+// 			return functions.NewE(err)
 // 		}
 // 	}
 //

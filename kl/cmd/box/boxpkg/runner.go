@@ -3,7 +3,6 @@ package boxpkg
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -38,7 +38,7 @@ type Cntr struct {
 	State  ContState
 }
 
-var NotFoundErr = errors.New("container not found")
+var NotFoundErr = functions.Error("container not found")
 
 func (c *client) listContainer(labels map[string]string) ([]Cntr, error) {
 	defer spinner.Client.UpdateMessage("fetching existing container")()
@@ -56,7 +56,7 @@ func (c *client) listContainer(labels map[string]string) ([]Cntr, error) {
 		All: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if len(crlist) == 0 {
@@ -112,7 +112,7 @@ func (c *client) GetContainer(labels map[string]string) (*Cntr, error) {
 		All: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if len(crlist) == 0 {
@@ -252,14 +252,14 @@ func (c *client) readTillLine(ctx context.Context, containerId string, desiredLi
 
 func writeOnUserScope(fpath string, data []byte) error {
 	if err := os.WriteFile(fpath, data, 0o644); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
 		if err := fn.ExecCmd(
 			fmt.Sprintf("chown -R %s %s", usr, filepath.Dir(fpath)), nil, false,
 		); err != nil {
-			return err
+			return functions.NewE(err)
 		}
 	}
 
@@ -271,7 +271,7 @@ func userOwn(fpath string) error {
 		if err := fn.ExecCmd(
 			fmt.Sprintf("chown -R %s %s", usr, filepath.Dir(fpath)), nil, false,
 		); err != nil {
-			return err
+			return functions.NewE(err)
 		}
 	}
 

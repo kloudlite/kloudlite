@@ -52,7 +52,7 @@ package del
 // 	)
 
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 
 // 	newMres := make([]client.ResType, 0)
@@ -68,7 +68,7 @@ package del
 
 // 	err = client.WriteKLFile(*klFile)
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 
 // 	fn.Logf("removed mres %s from kl-file\n", selectedMres.Name)

@@ -1,7 +1,6 @@
 package add
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -10,6 +9,7 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -57,11 +57,11 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 
 	configs, err := server.ListConfigs()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if len(configs) == 0 {
-		return errors.New("no configs created yet on server")
+		return functions.Error("no configs created yet on server")
 	}
 
 	selectedConfigGroup := server.Config{}
@@ -73,7 +73,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 				break
 			}
 		}
-		return errors.New("can't find configs with provided name")
+		return functions.Error("can't find configs with provided name")
 	} else {
 
 		selectedGroup, e := fzf.FindOne(
@@ -103,7 +103,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	if m != "" {
 		kk := strings.Split(m, "=")
 		if len(kk) != 2 {
-			return errors.New("map must be in format of config_key=your_var_key")
+			return functions.Error("map must be in format of config_key=your_var_key")
 		}
 
 		for k, v := range selectedConfigGroup.Data {
@@ -116,7 +116,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		return errors.New("config_key not found in selected config")
+		return functions.Error("config_key not found in selected config")
 
 	} else {
 		selectedConfigKey, err = fzf.FindOne(
@@ -137,7 +137,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 			fzf.WithPrompt(fmt.Sprintf("Select Key of %s >", selectedConfigGroup.Metadata.Name)),
 		)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 	}
 
@@ -169,11 +169,11 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	//	}
 	//	err := client.WriteKLFile(*klFile)
 	//	if err != nil {
-	//		return err
+	//		return functions.NewE(err)
 	//	}
 	//	klFile, err = client.GetKlFile("")
 	//	if err != nil {
-	//		return err
+	//		return functions.NewE(err)
 	//	}
 	//}
 	//fmt.Println(currConfigs, matchedGroupIndex)
@@ -221,25 +221,25 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 
 	err = client.WriteKLFile(*klFile)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	fn.Log(fmt.Sprintf("added config %s/%s to your kl-file\n", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key))
 
 	wpath, err := os.Getwd()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if err := hashctrl.SyncBoxHash(wpath); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 	//if err := server.SyncDevboxJsonFile(); err != nil {
-	//	return err
+	//	return functions.NewE(err)
 	//}
 
 	//if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
-	//	return err
+	//	return functions.NewE(err)
 	//}
 
 	return nil

@@ -2,6 +2,7 @@ package packages
 
 import (
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -23,7 +24,7 @@ func listPackages(cmd *cobra.Command, _ []string) error {
 
 	kt, err := client.GetKlFile("")
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	header := table.Row{

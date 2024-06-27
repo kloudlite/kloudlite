@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	confighandler "github.com/kloudlite/kl/pkg/config-handler"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -21,7 +22,7 @@ var InitCommand = &cobra.Command{
 	Long:  `use this command to initialize a kl-config file`,
 	Run: func(_ *cobra.Command, _ []string) {
 		if os.Getenv("IN_DEV_BOX") == "true" {
-			fn.PrintError(errors.New("cannot re-initialize workspace in dev box"))
+			fn.PrintError(functions.Error("cannot re-initialize workspace in dev box"))
 			return
 		}
 		_, err := client.GetKlFile("")
@@ -78,12 +79,12 @@ func selectAccount() (*string, error) {
 			},
 			fzf.WithPrompt("select kloudlite team > "),
 		); err != nil {
-			return nil, err
+			return nil, functions.NewE(err)
 		} else {
 			return &selectedAccount.Metadata.Name, nil
 		}
 	} else {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 }
 
@@ -101,12 +102,12 @@ func selectEnv(accountName string) (*string, error) {
 			},
 			fzf.WithPrompt("select environment > "),
 		); err != nil {
-			return nil, err
+			return nil, functions.NewE(err)
 		} else {
 			return &selectedEnv.Metadata.Name, nil
 		}
 	} else {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 }
 

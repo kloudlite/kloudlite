@@ -2,10 +2,12 @@ package shell
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/constants"
 	"os"
 
+	"github.com/kloudlite/kl/constants"
+
 	domain_util "github.com/kloudlite/kl/domain/util"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 
@@ -33,11 +35,11 @@ func loadEnv(cmd *cobra.Command) error {
 
 	shell, err := ShellName()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if err := domain_util.MountEnv([]string{"--", shell}); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return nil

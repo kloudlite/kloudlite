@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/adrg/xdg"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"sigs.k8s.io/yaml"
@@ -81,7 +82,7 @@ type ExtraData struct {
 // func GetDeviceDns() (string, error) {
 // 	extraData, err := GetExtraData()
 // 	if err != nil {
-// 		return "", err
+// 		return "", functions.NewE(err)
 // 	}
 
 // 	return extraData.DeviceDns, nil
@@ -90,14 +91,14 @@ type ExtraData struct {
 // func SetDeviceDns(dns string) error {
 // 	extraData, err := GetExtraData()
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 
 // 	extraData.DeviceDns = dns
 
 // 	file, err := yaml.Marshal(extraData)
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 
 // 	return writeOnUserScope(ExtraDataFileName, file)
@@ -106,7 +107,7 @@ type ExtraData struct {
 func GetActiveCluster() (string, error) {
 	extraData, err := GetExtraData()
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	return extraData.ActiveCluster, nil
@@ -115,14 +116,14 @@ func GetActiveCluster() (string, error) {
 func SetActiveCluster(devCluster string) error {
 	extraData, err := GetExtraData()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	extraData.ActiveCluster = devCluster
 
 	file, err := yaml.Marshal(extraData)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return writeOnUserScope(ExtraDataFileName, file)
@@ -131,7 +132,7 @@ func SetActiveCluster(devCluster string) error {
 func GetDns() ([]string, error) {
 	extraData, err := GetExtraData()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return extraData.BackupDns, nil
@@ -140,14 +141,14 @@ func GetDns() ([]string, error) {
 func SetDns(dns []string) error {
 	extraData, err := GetExtraData()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	extraData.BackupDns = dns
 
 	file, err := yaml.Marshal(extraData)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return writeOnUserScope(ExtraDataFileName, file)
@@ -161,12 +162,12 @@ func GetUserHomeDir() (string, error) {
 	if euid := os.Geteuid(); euid == 0 {
 		username, ok := os.LookupEnv("SUDO_USER")
 		if !ok {
-			return "", errors.New("failed to get sudo user name")
+			return "", functions.Error("failed to get sudo user name")
 		}
 
 		oldPwd, err := os.Getwd()
 		if err != nil {
-			return "", err
+			return "", functions.NewE(err)
 		}
 
 		sp := strings.Split(oldPwd, "/")
@@ -177,12 +178,12 @@ func GetUserHomeDir() (string, error) {
 			}
 		}
 
-		return "", errors.New("failed to get home path of sudo user")
+		return "", functions.Error("failed to get home path of sudo user")
 	}
 
 	userHome, ok := os.LookupEnv("HOME")
 	if !ok {
-		return "", errors.New("failed to get home path of user")
+		return "", functions.Error("failed to get home path of user")
 	}
 
 	return userHome, nil
@@ -191,14 +192,14 @@ func GetUserHomeDir() (string, error) {
 func GetConfigFolder() (configFolder string, err error) {
 	homePath, err := GetUserHomeDir()
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	configPath := path.Join(homePath, ".cache", ".kl")
 
 	// ensuring the dir is present
 	if err := os.MkdirAll(configPath, os.ModePerm); err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	// ensuring user permission on created dir
@@ -206,7 +207,7 @@ func GetConfigFolder() (configFolder string, err error) {
 		if err = fn.ExecCmd(
 			fmt.Sprintf("chown %s %s", usr, configPath), nil, false,
 		); err != nil {
-			return "", err
+			return "", functions.NewE(err)
 		}
 	}
 
@@ -216,13 +217,13 @@ func GetConfigFolder() (configFolder string, err error) {
 func SetAccountToMainCtx(aName string) error {
 	c, err := GetMainCtx()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	c.AccountName = aName
 	file, err := yaml.Marshal(c)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return writeOnUserScope(MainCtxFileName, file)
@@ -231,13 +232,13 @@ func SetAccountToMainCtx(aName string) error {
 func SetClusterToMainCtx(cName string) error {
 	c, err := GetMainCtx()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	c.ClusterName = cName
 	file, err := yaml.Marshal(c)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return writeOnUserScope(MainCtxFileName, file)
@@ -253,18 +254,18 @@ func GetMainCtx() (*MainContext, error) {
 
 			b, err := yaml.Marshal(contexts)
 			if err != nil {
-				return nil, err
+				return nil, functions.NewE(err)
 			}
 
 			if err := writeOnUserScope(MainCtxFileName, b); err != nil {
-				return nil, err
+				return nil, functions.NewE(err)
 			}
 
 		}
 	}
 
 	if err = yaml.Unmarshal(file, &contexts); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return &contexts, nil
@@ -278,7 +279,7 @@ func DeleteDeviceContext(dName string) error {
 	c, err := GetDeviceContext()
 
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if c.DeviceName != dName {
@@ -289,7 +290,7 @@ func DeleteDeviceContext(dName string) error {
 
 	b, err := yaml.Marshal(c)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return writeOnUserScope(DeviceFileName, b)
@@ -299,7 +300,7 @@ func WriteDeviceContext(dc *DeviceContext) error {
 	file, err := yaml.Marshal(dc)
 
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return writeOnUserScope(DeviceFileName, file)
@@ -308,14 +309,14 @@ func WriteDeviceContext(dc *DeviceContext) error {
 func WriteCompletionContext() (io.Writer, error) {
 	dir, err := GetConfigFolder()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	filePath := path.Join(dir, CompleteFileName)
 
 	file, err := os.Create(filePath)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return file, nil
@@ -324,7 +325,7 @@ func WriteCompletionContext() (io.Writer, error) {
 func GetCompletionContext() (string, error) {
 	dir, err := GetConfigFolder()
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	filePath := path.Join(dir, CompleteFileName)
@@ -341,18 +342,18 @@ func GetDeviceContext() (*DeviceContext, error) {
 
 			b, err := yaml.Marshal(contexts)
 			if err != nil {
-				return nil, err
+				return nil, functions.NewE(err)
 			}
 
 			if err := writeOnUserScope(DeviceFileName, b); err != nil {
-				return nil, err
+				return nil, functions.NewE(err)
 			}
 
 		}
 	}
 
 	if err = yaml.Unmarshal(file, &contexts); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return &contexts, nil
@@ -361,13 +362,13 @@ func GetDeviceContext() (*DeviceContext, error) {
 func SaveBaseURL(url string) error {
 	extraData, err := GetExtraData()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	extraData.BaseUrl = url
 	file, err := yaml.Marshal(extraData)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return writeOnUserScope(ExtraDataFileName, file)
@@ -376,7 +377,7 @@ func SaveBaseURL(url string) error {
 func GetBaseURL() (string, error) {
 	extraData, err := GetExtraData()
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	return extraData.BaseUrl, nil
@@ -385,7 +386,7 @@ func GetBaseURL() (string, error) {
 func SaveExtraData(extraData *ExtraData) error {
 	file, err := yaml.Marshal(extraData)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return writeOnUserScope(ExtraDataFileName, file)
@@ -399,11 +400,11 @@ func GetExtraData() (*ExtraData, error) {
 			b, err := yaml.Marshal(extraData)
 
 			if err != nil {
-				return nil, err
+				return nil, functions.NewE(err)
 			}
 
 			if err := writeOnUserScope(ExtraDataFileName, b); err != nil {
-				return nil, err
+				return nil, functions.NewE(err)
 			}
 		}
 
@@ -411,7 +412,7 @@ func GetExtraData() (*ExtraData, error) {
 	}
 
 	if err = yaml.Unmarshal(file, &extraData); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return &extraData, nil
@@ -423,7 +424,7 @@ func GetCookieString(options ...fn.Option) (string, error) {
 
 	session, err := GetAuthSession()
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	if session == "" {
@@ -455,17 +456,17 @@ func GetAuthSession() (string, error) {
 		if !errors.Is(err, os.ErrNotExist) {
 			b, err := yaml.Marshal(session)
 			if err != nil {
-				return "", err
+				return "", functions.NewE(err)
 			}
 
 			if err := writeOnUserScope(SessionFileName, b); err != nil {
-				return "", err
+				return "", functions.NewE(err)
 			}
 		}
 	}
 
 	if err = yaml.Unmarshal(file, &session); err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	return session.Session, nil
@@ -474,7 +475,7 @@ func GetAuthSession() (string, error) {
 func SaveAuthSession(session string) error {
 	file, err := yaml.Marshal(Session{Session: session})
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return writeOnUserScope(SessionFileName, file)
@@ -483,7 +484,7 @@ func SaveAuthSession(session string) error {
 func writeOnUserScope(name string, data []byte) error {
 	dir, err := GetConfigFolder()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if _, er := os.Stat(dir); errors.Is(er, os.ErrNotExist) {
@@ -496,14 +497,14 @@ func writeOnUserScope(name string, data []byte) error {
 	filePath := path.Join(dir, name)
 
 	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
 		if err := fn.ExecCmd(
 			fmt.Sprintf("chown %s %s", usr, filePath), nil, false,
 		); err != nil {
-			return err
+			return functions.NewE(err)
 		}
 	}
 
@@ -513,7 +514,7 @@ func writeOnUserScope(name string, data []byte) error {
 func ReadFile(name string) ([]byte, error) {
 	dir, err := GetConfigFolder()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	filePath := path.Join(dir, name)
@@ -525,7 +526,7 @@ func ReadFile(name string) ([]byte, error) {
 	file, err := os.ReadFile(filePath)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return file, nil
@@ -543,7 +544,7 @@ func IsLoading() (bool, error) {
 func SetLoading(loading bool) error {
 	extraData, err := GetExtraData()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	extraData.Loading = loading

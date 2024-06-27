@@ -3,10 +3,12 @@ package mounter
 import (
 	"errors"
 	"fmt"
-	fn "github.com/kloudlite/kl/pkg/functions"
 	"os"
 	"os/exec"
 	"path"
+
+	"github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 func mountFile(_file, data, mountPath string) error {
@@ -16,14 +18,14 @@ func mountFile(_file, data, mountPath string) error {
 	if _, err := os.Stat(file); !errors.Is(err, os.ErrNotExist) {
 		err := os.Remove(file)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 	}
 
 	if _, err := os.Stat(file); errors.Is(err, os.ErrNotExist) {
 		err := os.MkdirAll(path.Dir(file), os.ModePerm)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 	}
 
@@ -39,7 +41,7 @@ func Mount(mountFiles map[string]string, mountBasePath string) error {
 	for k, v := range mountFiles {
 		err := mountFile(k, v, mountBasePath)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 	}
 	return nil

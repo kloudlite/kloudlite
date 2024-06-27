@@ -28,7 +28,7 @@ func GetFromResp[T any](respData []byte) (*T, error) {
 	var resp Response[T]
 	err := json.Unmarshal(respData, &resp)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	if len(resp.Errors) > 0 {
 		return nil, resp.Errors[0]
@@ -43,7 +43,7 @@ type ItemList[T any] struct {
 func GetFromRespForEdge[T any](respData []byte) ([]T, error) {
 	resp, err := GetFromResp[ItemList[T]](respData)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	var data []T

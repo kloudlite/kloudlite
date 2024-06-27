@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"golang.org/x/crypto/ssh"
 )
@@ -88,7 +89,7 @@ func newForwarder(localPort, remotePort, sshUser, sshHost, sshPort, keyPath stri
 	pkFile, err := publicKeyFile(keyPath)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	// Setup SSH client configuration

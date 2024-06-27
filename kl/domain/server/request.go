@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -11,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 
@@ -25,7 +25,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 		"args":   []any{variables},
 	})
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	payload := strings.NewReader(string(marshal))
@@ -52,7 +52,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 				host, port := addrArray[0], addrArray[1]
 				ips, err := customResolver.LookupIPAddr(ctx, host)
 				if err != nil || len(ips) == 0 {
-					return nil, err // or: return nil, errors.New("couldn't resolve the host")
+					return nil, functions.NewE(err) // or: return nil, functions.Error("couldn't resolve the host")
 				}
 				// Use the first IP address returned by the custom DNS resolver
 				return net.Dial(network, net.JoinHostPort(ips[0].String(), port))
@@ -62,7 +62,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 	req, err := http.NewRequest(http.MethodPost, url, payload)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	req.Header.Add("authority", "klcli.kloudlite.io")
@@ -78,14 +78,14 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 	f()
 	if err != nil || res.StatusCode != 200 {
 		if err != nil {
-			return nil, err
+			return nil, functions.NewE(err)
 		}
 
 		body, e := io.ReadAll(res.Body)
 		if e != nil {
 			return nil, e
 		}
-		return nil, errors.New(string(body))
+		return nil, functions.Error(string(body))
 	}
 	defer func() {
 		_ = res.Body.Close()
@@ -93,7 +93,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	type RespData struct {
@@ -110,7 +110,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 	err = json.Unmarshal(body, &respData)
 	if err != nil {
 		fn.PrintError(fmt.Errorf("some issue with server:\n%s", string(body)))
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if len(respData.Errors) > 0 {

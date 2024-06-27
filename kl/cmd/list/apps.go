@@ -1,9 +1,8 @@
 package list
 
 import (
-	"errors"
-
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -31,11 +30,11 @@ func listapps(cmd *cobra.Command, _ []string) error {
 		fn.MakeOption("envName", envName),
 	}...)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if len(apps) == 0 {
-		return errors.New("no apps found")
+		return functions.Error("no apps found")
 	}
 
 	header := table.Row{

@@ -1,9 +1,9 @@
 package server
 
 import (
-	"errors"
 	"strings"
 
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
@@ -24,12 +24,12 @@ func ListConfigs(options ...fn.Option) ([]Config, error) {
 
 	env, err := EnsureEnv(nil, options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_listConfigs", map[string]any{
@@ -42,11 +42,11 @@ func ListConfigs(options ...fn.Option) ([]Config, error) {
 	}, &cookie)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if fromResp, err := GetFromRespForEdge[Config](respData); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	} else {
 		return fromResp, nil
 	}
@@ -56,21 +56,21 @@ func SelectConfig(options ...fn.Option) (*Config, error) {
 
 	e, err := EnsureEnv(nil, options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if e.Name == "" {
-		return nil, errors.New("no environment selected")
+		return nil, functions.Error("no environment selected")
 	}
 
 	configs, err := ListConfigs(options...)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if len(configs) == 0 {
-		return nil, errors.New("no configs found")
+		return nil, functions.Error("no configs found")
 	}
 
 	config, err := fzf.FindOne(
@@ -81,7 +81,7 @@ func SelectConfig(options ...fn.Option) (*Config, error) {
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return config, nil
@@ -97,7 +97,7 @@ func EnsureConfig(options ...fn.Option) (*Config, error) {
 	config, err := SelectConfig(options...)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return config, nil
@@ -108,11 +108,11 @@ func GetConfig(options ...fn.Option) (*Config, error) {
 
 	env, err := EnsureEnv(nil, options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_getConfig", map[string]any{
@@ -121,11 +121,11 @@ func GetConfig(options ...fn.Option) (*Config, error) {
 	}, &cookie)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if fromResp, err := GetFromResp[Config](respData); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	} else {
 		return fromResp, nil
 	}

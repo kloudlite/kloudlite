@@ -11,6 +11,7 @@ import (
 
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/pkg/fjson"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
@@ -30,11 +31,11 @@ func SyncLockfileWithNewConfig(config client.KLFileType) (map[string]string, err
 	if err == nil {
 		file, err := os.ReadFile("kl.lock")
 		if err != nil {
-			return nil, err
+			return nil, functions.NewE(err)
 		}
 
 		if err := packages.Unmarshal(file); err != nil {
-			return nil, err
+			return nil, functions.NewE(err)
 		}
 	}
 
@@ -64,7 +65,7 @@ func SyncLockfileWithNewConfig(config client.KLFileType) (map[string]string, err
 
 		resp, err := http.Get(fmt.Sprintf("https://search.devbox.sh/v1/resolve?name=%s&version=%s", splits[0], splits[1]))
 		if err != nil {
-			return nil, err
+			return nil, functions.NewE(err)
 		}
 
 		if resp.StatusCode != 200 {
@@ -73,7 +74,7 @@ func SyncLockfileWithNewConfig(config client.KLFileType) (map[string]string, err
 
 		all, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return nil, err
+			return nil, functions.NewE(err)
 		}
 
 		type Res struct {
@@ -99,11 +100,11 @@ func SyncLockfileWithNewConfig(config client.KLFileType) (map[string]string, err
 
 	marshal, err := packages.Marshal()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if err = os.WriteFile("kl.lock", marshal, 0644); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return packages, nil

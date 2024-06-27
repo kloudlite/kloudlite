@@ -2,7 +2,6 @@ package functions
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -155,7 +154,7 @@ func JsonConversion(from any, to any) error {
 		return nil
 	}
 	if err := json.Unmarshal(b, &to); err != nil {
-		return err
+		return NewE(err)
 	}
 	return nil
 }
@@ -343,7 +342,7 @@ func NewE(err error, s ...string) error {
 }
 
 func Error(s string) error {
-	return tracerr.Wrap(errors.New(s))
+	return tracerr.Wrap(fmt.Errorf(s))
 }
 
 func Errorf(format string, args ...interface{}) error {

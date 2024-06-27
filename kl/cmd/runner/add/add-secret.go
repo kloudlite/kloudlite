@@ -1,7 +1,6 @@
 package add
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -9,6 +8,7 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
@@ -51,7 +51,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 
 	secrets, err := server.ListSecrets()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if len(secrets) == 0 {
@@ -67,7 +67,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 				break
 			}
 		}
-		return errors.New("can't find secrets with provided name")
+		return functions.Error("can't find secrets with provided name")
 
 	} else {
 		selectedGroup, err := fzf.FindOne(
@@ -78,7 +78,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 			fzf.WithPrompt("Select Secret Group >"),
 		)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 
 		selectedSecretGroup = *selectedGroup
@@ -100,7 +100,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	if m != "" {
 		kk := strings.Split(m, "=")
 		if len(kk) != 2 {
-			return errors.New("map must be in format of secret_key=your_var_key")
+			return functions.Error("map must be in format of secret_key=your_var_key")
 		}
 
 		for k, v := range selectedSecretGroup.StringData {
@@ -113,7 +113,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		return errors.New("secret_key not found in selected secret")
+		return functions.Error("secret_key not found in selected secret")
 
 	} else {
 		selectedSecretKey, err = fzf.FindOne(
@@ -135,7 +135,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 			fzf.WithPrompt(fmt.Sprintf("Select Key of %s >", selectedSecretGroup.Metadata.Name)),
 		)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 	}
 
@@ -193,26 +193,26 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	klFile.EnvVars.AddResTypes(currSecs, client.Res_secret)
 	err = client.WriteKLFile(*klFile)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	fn.Log(fmt.Sprintf("added secret %s/%s to your kl-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key))
 
 	wpath, err := os.Getwd()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if err := hashctrl.SyncBoxHash(wpath); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	//if err := server.SyncDevboxJsonFile(); err != nil {
-	//	return err
+	//	return functions.NewE(err)
 	//}
 	//
 	//if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
-	//	return err
+	//	return functions.NewE(err)
 	//}
 	return nil
 }

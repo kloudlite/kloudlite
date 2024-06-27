@@ -51,7 +51,7 @@ package del
 // 	)
 
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 
 // 	if len(selectedConfig.Env) == 1 {
@@ -96,5 +96,5 @@ package del
 
 // 	err = client.WriteKLFile(*klFile)
 
-// 	return err
+// 	return functions.NewE(err)
 // }

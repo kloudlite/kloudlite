@@ -8,6 +8,7 @@ import (
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/flags"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
@@ -59,7 +60,7 @@ func ExecUpdateCmd(version string) error {
 
 	err := cmd.Run()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 	return nil
 }
@@ -67,7 +68,7 @@ func ExecUpdateCmd(version string) error {
 func isCommandAvailable(command string) bool {
 	cmd := exec.Command("which", command)
 	err := cmd.Run()
-	return err == nil
+	return functions.NewE(err) == nil
 }
 
 func init() {

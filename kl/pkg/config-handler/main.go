@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 
+	"github.com/kloudlite/kl/pkg/functions"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -17,7 +18,7 @@ func ReadConfig[T any](path string) (*T, error) {
 		return nil, ErrKlFileNotExists
 	}
 	if err := yaml.Unmarshal(b, &v); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return &v, nil
@@ -31,27 +32,27 @@ func WriteConfig(path string, v interface{}, perm fs.FileMode) error {
 		if os.IsNotExist(err) {
 			b, err = yaml.Marshal(v)
 			if err != nil {
-				return err
+				return functions.NewE(err)
 			}
 
 			return os.WriteFile(path, b, perm)
 		}
 
-		return err
+		return functions.NewE(err)
 	}
 
 	var config yaml.MapSlice
 	if err := yaml.Unmarshal(b, &config); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if err := fillConfig(&config, v); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	b, err = yaml.Marshal(config)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return os.WriteFile(path, b, perm)
@@ -62,13 +63,13 @@ func fillConfig(src *yaml.MapSlice, dest interface{}) error {
 	// Marshal dest to YAML
 	destBytes, err := yaml.Marshal(dest)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	// Unmarshal dest YAML into a MapSlice
 	var destMapSlice yaml.MapSlice
 	if err := yaml.Unmarshal(destBytes, &destMapSlice); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	// Iterate over destMapSlice and update src

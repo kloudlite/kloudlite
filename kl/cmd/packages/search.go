@@ -2,12 +2,12 @@ package packages
 
 import (
 	"encoding/csv"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 
@@ -37,7 +37,7 @@ func searchPackages(cmd *cobra.Command, args []string) error {
 	showAll := fn.ParseBoolFlag(cmd, "show-all")
 
 	if name == "" {
-		return errors.New("name is required")
+		return functions.Error("name is required")
 	}
 
 	stopSp := spinner.Client.Start(fmt.Sprintf("searching for package %s", name))
@@ -58,7 +58,7 @@ func searchPackages(cmd *cobra.Command, args []string) error {
 
 	stopSp()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	return nil
@@ -69,7 +69,7 @@ func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
 	r.Comma = ' '
 	cmdArr, err := r.Read()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 	if verbose {
@@ -90,7 +90,7 @@ func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
 	// s.Start()
 	err = cmd.Run()
 	// s.Stop()
-	return err
+	return functions.NewE(err)
 }
 
 func init() {

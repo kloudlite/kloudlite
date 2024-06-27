@@ -10,6 +10,7 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/miekg/dns"
 
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
@@ -51,7 +52,7 @@ type DeviceList struct {
 func GetVPNDevice(devName string, options ...fn.Option) (*Device, error) {
 	cookie, err := getCookie(options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_getGlobalVpnDevice", map[string]any{
@@ -59,7 +60,7 @@ func GetVPNDevice(devName string, options ...fn.Option) (*Device, error) {
 		"deviceName": devName,
 	}, &cookie)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return GetFromResp[Device](respData)
@@ -68,12 +69,12 @@ func GetVPNDevice(devName string, options ...fn.Option) (*Device, error) {
 func createDevice(devName string) (*Device, error) {
 	cn, err := getDeviceName(devName)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	dn := devName
@@ -100,11 +101,11 @@ func createDevice(devName string) (*Device, error) {
 
 	d, err := GetFromResp[Device](respData)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if err := client.SelectDevice(d.Metadata.Name); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return d, nil
@@ -113,12 +114,12 @@ func createDevice(devName string) (*Device, error) {
 // func EnsureDevice(options ...fn.Option) (*Device, error) {
 // 	dc, err := client.GetDeviceContext()
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	hostName, err := os.Hostname()
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	if dc.DeviceName == "" {
@@ -202,7 +203,7 @@ func CheckDeviceStatus() bool {
 func getDeviceName(devName string) (*CheckName, error) {
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_infraCheckNameAvailability", map[string]any{
@@ -210,11 +211,11 @@ func getDeviceName(devName string) (*CheckName, error) {
 		"name":    devName,
 	}, &cookie)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if fromResp, err := GetFromResp[CheckName](respData); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	} else {
 		return fromResp, nil
 	}
@@ -223,11 +224,11 @@ func getDeviceName(devName string) (*CheckName, error) {
 func createVpnForAccount() (*Device, error) {
 	devName, err := os.Hostname()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	checkNames, err := getDeviceName(devName)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	if !checkNames.Result {
 		if len(checkNames.SuggestedNames) == 0 {
@@ -237,7 +238,7 @@ func createVpnForAccount() (*Device, error) {
 	}
 	device, err := createDevice(devName)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	return device, nil
 }

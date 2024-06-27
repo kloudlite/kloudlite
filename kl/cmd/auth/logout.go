@@ -7,6 +7,7 @@ import (
 	"path"
 
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
@@ -36,23 +37,23 @@ func logout(configPath string) error {
 		return fn.NewE(err, "not logged in")
 	}
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	extraDataFile, _ := os.Stat(path.Join(configPath, client.ExtraDataFileName))
 	if extraDataFile != nil {
 		if err := os.Remove(path.Join(configPath, extraDataFile.Name())); err != nil {
-			return err
+			return functions.NewE(err)
 		}
 	}
 	hashConfigPath := path.Join(configPath, "box-hash")
 	if err = os.RemoveAll(hashConfigPath); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 	vpnConfigPath := path.Join(configPath, "vpn")
 	files, err := os.ReadDir(vpnConfigPath)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 	for _, file := range files {
 		_, err := os.Stat(path.Join(vpnConfigPath, file.Name()))

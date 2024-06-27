@@ -1,11 +1,11 @@
 package intercept
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
@@ -34,7 +34,7 @@ Examples:
 			mp := strings.Split(v, ":")
 			if len(mp) != 2 {
 				fn.PrintError(
-					errors.New("wrong map format use <server_port>:<local_port> eg: 80:3000"),
+					functions.Error("wrong map format use <server_port>:<local_port> eg: 80:3000"),
 				)
 				return
 			}

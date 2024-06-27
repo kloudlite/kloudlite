@@ -1,9 +1,10 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 	"net"
+
+	"github.com/kloudlite/kl/pkg/functions"
 )
 
 type AccountVpnConfig struct {
@@ -14,11 +15,11 @@ type AccountVpnConfig struct {
 func CurrentDeviceName() (string, error) {
 	file, err := GetDeviceContext()
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 	if file.DeviceName == "" {
 		return "",
-			errors.New("no selected device. please select one using \"kl account switch\"")
+			functions.Error("no selected device. please select one using \"kl account switch\"")
 	}
 	return file.DeviceName, nil
 }
@@ -26,12 +27,12 @@ func CurrentDeviceName() (string, error) {
 func CurrentDeviceIp() (*string, error) {
 	dev, err := CurrentDeviceName()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	ipAddr, err := net.ResolveIPAddr("", fmt.Sprintf("%s.device.local", dev))
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	kk := ipAddr.IP.String()
@@ -41,7 +42,7 @@ func CurrentDeviceIp() (*string, error) {
 func SelectDevice(deviceName string) error {
 	file, err := GetDeviceContext()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	file.DeviceName = deviceName
@@ -53,13 +54,13 @@ func SelectDevice(deviceName string) error {
 	err = WriteDeviceContext(&DeviceContext{
 		DeviceName: deviceName,
 	})
-	return err
+	return functions.NewE(err)
 }
 
 // func EnsureAppRunning() error {
 // 	p, err := proxy.NewProxy(flags.IsDev())
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 //
 // 	count := 0
@@ -76,7 +77,7 @@ func SelectDevice(deviceName string) error {
 //
 // 			err := cmd.Run()
 // 			if err != nil {
-// 				return err
+// 				return functions.NewE(err)
 // 			}
 //
 // 			command := exec.Command("sudo", flags.GetCliPath(), "app", "start")

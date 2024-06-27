@@ -1,10 +1,11 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"os"
+
+	"github.com/kloudlite/kl/pkg/functions"
 )
 
 func CheckPortAvailable(port int) bool {
@@ -20,12 +21,12 @@ func CheckPortAvailable(port int) bool {
 func SelectEnv(ev Env) error {
 	k, err := GetExtraData()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	dir, err := os.Getwd()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if InsideBox() {
@@ -44,7 +45,7 @@ func SelectEnv(ev Env) error {
 func SelectEnvOnPath(pth string, ev Env) error {
 	k, err := GetExtraData()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if k.SelectedEnvs == nil {
@@ -59,15 +60,15 @@ func SelectEnvOnPath(pth string, ev Env) error {
 func EnvOfPath(pth string) (*Env, error) {
 	c, err := GetExtraData()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if c.SelectedEnvs == nil {
-		return nil, errors.New("no selected environment")
+		return nil, functions.Error("no selected environment")
 	}
 
 	if c.SelectedEnvs[pth] == nil {
-		return nil, errors.New("no selected environment")
+		return nil, functions.Error("no selected environment")
 	}
 
 	return c.SelectedEnvs[pth], nil
@@ -77,12 +78,12 @@ func CurrentEnv() (*Env, error) {
 
 	c, err := GetExtraData()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	dir, err := os.Getwd()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if InsideBox() {
@@ -90,11 +91,11 @@ func CurrentEnv() (*Env, error) {
 	}
 
 	if c.SelectedEnvs == nil {
-		return nil, errors.New("no selected environment")
+		return nil, functions.Error("no selected environment")
 	}
 
 	if c.SelectedEnvs[dir] == nil {
-		return nil, errors.New("no selected environment")
+		return nil, functions.Error("no selected environment")
 	}
 
 	return c.SelectedEnvs[dir], nil

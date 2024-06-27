@@ -31,7 +31,7 @@ func getDomainFromPath(pth string) string {
 
 func (c *client) Ssh() error {
 	if klFile, err := cl.GetKlFile(""); err != nil {
-		return err
+		return fn.NewE(err)
 	} else {
 		dir, _ := os.Getwd()
 		if os.Getenv("IN_DEV_BOX") == "true" {
@@ -42,22 +42,22 @@ func (c *client) Ssh() error {
 		err = c.Start(klFile)
 		if err != nil {
 			if err2 := c.Stop(); err != nil {
-				return err2
+				return fn.NewE(err2)
 			}
-			return err
+			return fn.NewE(err)
 		}
 
 		cont, err := c.containerAtPath(dir)
 		if err != nil {
-			return err
+			return fn.NewE(err)
 		}
 		port, err := strconv.Atoi(cont.Labels[SSH_PORT_KEY])
 		if err != nil {
-			return err
+			return fn.NewE(err)
 		}
 
 		if err := c.waithForSshReady(port, cont.ID); err != nil {
-			return err
+			return fn.NewE(err)
 		}
 
 		fmt.Println("sshing into", getDomainFromPath(cont.Labels[CONT_PATH_KEY]))
@@ -68,7 +68,7 @@ func (c *client) Ssh() error {
 			SSHPort: port,
 			KeyPath: path.Join(xdg.Home, ".ssh", "id_rsa"),
 		}); err != nil {
-			return err
+			return fn.NewE(err)
 		}
 	}
 

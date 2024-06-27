@@ -1,9 +1,9 @@
 package server
 
 import (
-	"errors"
 	"strings"
 
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
@@ -19,12 +19,12 @@ func ListSecrets(options ...fn.Option) ([]Secret, error) {
 
 	env, err := EnsureEnv(nil, options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_listSecrets", map[string]any{
@@ -37,11 +37,11 @@ func ListSecrets(options ...fn.Option) ([]Secret, error) {
 	}, &cookie)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if fromResp, err := GetFromRespForEdge[Secret](respData); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	} else {
 		return fromResp, nil
 	}
@@ -51,21 +51,21 @@ func SelectSecret(options ...fn.Option) (*Secret, error) {
 
 	e, err := EnsureEnv(nil, options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if e.Name == "" {
-		return nil, errors.New("no environment selected")
+		return nil, functions.Error("no environment selected")
 	}
 
 	secrets, err := ListSecrets(options...)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if len(secrets) == 0 {
-		return nil, errors.New("no secret found")
+		return nil, functions.Error("no secret found")
 	}
 
 	secret, err := fzf.FindOne(
@@ -76,7 +76,7 @@ func SelectSecret(options ...fn.Option) (*Secret, error) {
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return secret, nil
@@ -92,7 +92,7 @@ func EnsureSecret(options ...fn.Option) (*Secret, error) {
 	secret, err := SelectSecret(options...)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return secret, nil
@@ -103,12 +103,12 @@ func GetSecret(options ...fn.Option) (*Secret, error) {
 
 	env, err := EnsureEnv(nil, options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_getSecret", map[string]any{
@@ -117,11 +117,11 @@ func GetSecret(options ...fn.Option) (*Secret, error) {
 	}, &cookie)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if fromResp, err := GetFromResp[Secret](respData); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	} else {
 		return fromResp, nil
 	}

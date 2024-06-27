@@ -1,11 +1,14 @@
 package client
 
-import fn "github.com/kloudlite/kl/pkg/functions"
+import (
+	"github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
+)
 
 func SelectAccount(accountName string) error {
 	file, err := GetMainCtx()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	file.AccountName = accountName
@@ -15,14 +18,14 @@ func SelectAccount(accountName string) error {
 	}
 
 	err = SetAccountToMainCtx(accountName)
-	return err
+	return functions.NewE(err)
 }
 
 func CurrentAccountName() (string, error) {
 
 	kt, err := GetKlFile("")
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	if kt.AccountName == "" {

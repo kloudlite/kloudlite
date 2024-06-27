@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 )
 
 type SecretEnv struct {
@@ -36,16 +37,16 @@ type GeneratedEnvs struct {
 // func GenerateEnv() (*GeneratedEnvs, error) {
 // 	klFile, err := client.GetKlFile("")
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	cookie, err := getCookie()
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	respData, err := klFetch("cli_generateEnv", map[string]any{
@@ -53,7 +54,7 @@ type GeneratedEnvs struct {
 // 	}, &cookie)
 //
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	type Response struct {
@@ -62,7 +63,7 @@ type GeneratedEnvs struct {
 // 	var resp Response
 // 	err = json.Unmarshal(respData, &resp)
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	// return resp.CoreConfigs, nil
@@ -81,17 +82,17 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 
 	kt, err := client.GetKlFile("")
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, functions.NewE(err)
 	}
 
 	env, err := EnsureEnv(nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, functions.NewE(err)
 	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, functions.NewE(err)
 	}
 
 	currMreses := kt.EnvVars.GetMreses()
@@ -163,14 +164,14 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 	}, &cookie)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, functions.NewE(err)
 
 	}
 
 	fromResp, err := GetFromResp[EnvRsp](respData)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, functions.NewE(err)
 	}
 
 	result := map[string]string{}

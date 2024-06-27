@@ -9,22 +9,23 @@ import (
 
 	// proxy "github.com/kloudlite/kl/domain/dev-proxy"
 
+	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
 
 // func (c *client) ensureVpnConnected() error {
 // 	if err := cl.EnsureAppRunning(); err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 //
 // 	p, err := proxy.NewProxy(c.verbose)
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 //
 // 	if !server.CheckDeviceStatus() {
 // 		if err := p.Start(); err != nil {
-// 			return err
+// 			return functions.NewE(err)
 // 		}
 // 	}
 //
@@ -51,21 +52,21 @@ import (
 // 		return nil
 // 		// fn.Println(cr.Name)
 // 		// if err := c.StopVpn(); err != nil {
-// 		// 	return err
+// 		// 	return functions.NewE(err)
 // 		// }
 // 		//
 // 		// return c.EnsureVpnRunning()
 // 	}
 //
 // 	if err != nil && err != notFoundErr {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 //
 // 	spinner.Client.Stop()
 //
 // 	dc, err := cl.GetDeviceContext()
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 //
 // 	if dc.PrivateKey == nil {
@@ -85,18 +86,18 @@ import (
 //
 // 	// configuration, err := base64.StdEncoding.DecodeString(d.WireguardConfig.Value)
 // 	// if err != nil {
-// 	// 	return err
+// 	// 	return functions.NewE(err)
 // 	// }
 //
 // 	td, err := os.MkdirTemp("", "kl-tmp")
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 //
 // 	confPath := path.Join(td, "klboxvpn.conf")
 //
 // 	if err := os.WriteFile(confPath, []byte(configuration), os.ModePerm); err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 //
 // 	defer func() {
@@ -120,12 +121,12 @@ import (
 // 			args:      args,
 // 			imageName: VpnImageName,
 // 		}); err != nil {
-// 			return err
+// 			return functions.NewE(err)
 // 		}
 //
 // 		return nil
 // 	}(); err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 //
 // 	return nil
@@ -145,7 +146,7 @@ func (c *client) StopContVpn() error {
 	})
 
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if err := c.cli.ContainerStop(c.Context(), cr.Name, container.StopOptions{}); err != nil {

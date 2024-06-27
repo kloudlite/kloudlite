@@ -9,6 +9,7 @@ import (
 
 	dockerclient "github.com/docker/docker/client"
 	cl "github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
@@ -52,7 +53,7 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	foreground := fn.ParseBoolFlag(cmd, "foreground")
@@ -65,17 +66,17 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 
 	env, err := cl.EnvOfPath(cwd)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	configFolder, err := cl.GetConfigFolder()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	userHomeDir, err := cl.GetUserHomeDir()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return &client{

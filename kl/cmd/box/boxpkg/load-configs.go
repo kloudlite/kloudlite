@@ -8,7 +8,7 @@ type EnvironmentVariable struct {
 // func (*client) loadConfig(mm server.MountMap, envs map[string]string) (*mclient.DevboxKlFile, error) {
 // 	kf, err := mclient.GetKlFile("")
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	// read kl.yml into struct
@@ -18,7 +18,7 @@ type EnvironmentVariable struct {
 //
 // 	kt, err := mclient.GetKlFile("")
 // 	if err != nil {
-// 		return nil, err
+// 		return nil, functions.NewE(err)
 // 	}
 //
 // 	fm := map[string]string{}

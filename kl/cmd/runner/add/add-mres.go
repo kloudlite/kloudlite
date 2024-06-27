@@ -7,6 +7,7 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/spf13/cobra"
@@ -42,7 +43,7 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 	filePath := fn.ParseKlFile(cmd)
 
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	mresKey, err := server.SelectMresKey([]fn.Option{
@@ -50,12 +51,12 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 	}...)
 
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	kt, err := client.GetKlFile(filePath)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 	env, err := client.CurrentEnv()
 	if err != nil && kt.DefaultEnv != "" {
@@ -106,26 +107,26 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 
 	kt.EnvVars.AddResTypes(currMreses, client.Res_mres)
 	if err := client.WriteKLFile(*kt); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	fn.Log(fmt.Sprintf("added mres %s/%s to your kl-file", mres.Metadata.Name, *mresKey))
 
 	wpath, err := os.Getwd()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if err := hashctrl.SyncBoxHash(wpath); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	//if err := server.SyncDevboxJsonFile(); err != nil {
-	//	return err
+	//	return functions.NewE(err)
 	//}
 	//
 	//if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
-	//	return err
+	//	return functions.NewE(err)
 	//}
 
 	return nil

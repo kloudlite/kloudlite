@@ -1,13 +1,13 @@
 package packages
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"slices"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/spf13/cobra"
@@ -30,7 +30,7 @@ func addPackages(cmd *cobra.Command, args []string) error {
 		name = args[0]
 	}
 	if name == "" {
-		return errors.New("name is required")
+		return functions.Error("name is required")
 	}
 	klConf, err := client.GetKlFile("")
 	if slices.Contains(klConf.Packages, name) {
@@ -39,17 +39,17 @@ func addPackages(cmd *cobra.Command, args []string) error {
 	klConf.Packages = append(klConf.Packages, name)
 	err = client.WriteKLFile(*klConf)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 	fn.Println(fmt.Sprintf("Package %s is added successfully", name))
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if err := hashctrl.SyncBoxHash(cwd); err != nil {
-		return err
+		return functions.NewE(err)
 	}
 	return nil
 }

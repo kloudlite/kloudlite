@@ -1,11 +1,11 @@
 package list
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -29,11 +29,11 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 	var err error
 	envs, err := server.ListEnvs()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if len(envs) == 0 {
-		return errors.New("no environments found")
+		return functions.Error("no environments found")
 	}
 
 	env, _ := client.CurrentEnv()

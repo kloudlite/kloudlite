@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -56,12 +57,12 @@ func ListApps(options ...fn.Option) ([]App, error) {
 		Name: envName,
 	}, options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	respData, err := klFetch("cli_listApps", map[string]any{
@@ -70,11 +71,11 @@ func ListApps(options ...fn.Option) ([]App, error) {
 	}, &cookie)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if fromResp, err := GetFromRespForEdge[App](respData); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	} else {
 		return fromResp, nil
 	}
@@ -86,7 +87,7 @@ func SelectApp(options ...fn.Option) (*App, error) {
 
 	a, err := ListApps(options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if len(a) == 0 {
@@ -113,7 +114,7 @@ func SelectApp(options ...fn.Option) (*App, error) {
 		}())
 	}, fzf.WithPrompt("Select App>"))
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return app, nil
@@ -123,7 +124,7 @@ func EnsureApp(options ...fn.Option) (*App, error) {
 
 	s, err := SelectApp(options...)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return s, nil
@@ -139,7 +140,7 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 	if envName == "" {
 		env, err := EnsureEnv(nil, options...)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 
 		envName = env.Name
@@ -148,7 +149,7 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 	if devName == "" {
 		ctx, err := client.GetDeviceContext()
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 
 		if ctx.DeviceName == "" {
@@ -160,12 +161,12 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 
 	app, err := EnsureApp(options...)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if len(ports) == 0 {
@@ -197,19 +198,19 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 			// TODO: add forwarding logic here
 			// p, err := proxy.NewProxy(false)
 			// if err != nil {
-			// 	return err
+			// 	return functions.NewE(err)
 			// }
 			//
 			// if status {
 			// 	if _, err := p.AddFwd(prs); err != nil {
 			// 		fn.PrintError(err)
-			// 		return err
+			// 		return functions.NewE(err)
 			// 	}
 			// 	return nil
 			// }
 			//
 			// if _, err := p.RemoveFwd(prs); err != nil {
-			// 	return err
+			// 	return functions.NewE(err)
 			// }
 		}
 		return nil
@@ -235,11 +236,11 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 	}, &cookie)
 
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if _, err := GetFromResp[bool](respData); err != nil {
-		return err
+		return functions.NewE(err)
 	} else {
 		return nil
 	}

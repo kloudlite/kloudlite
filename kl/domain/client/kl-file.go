@@ -4,6 +4,7 @@ import (
 	"os"
 
 	confighandler "github.com/kloudlite/kl/pkg/config-handler"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
@@ -35,7 +36,7 @@ func GetConfigPath() string {
 func WriteKLFile(fileObj KLFileType) error {
 	if err := confighandler.WriteConfig(GetConfigPath(), fileObj, 0644); err != nil {
 		fn.PrintError(err)
-		return err
+		return functions.NewE(err)
 	}
 
 	return nil
@@ -49,7 +50,7 @@ func GetKlFile(filePath string) (*KLFileType, error) {
 
 	klfile, err := confighandler.ReadConfig[KLFileType](filePath)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return klfile, nil

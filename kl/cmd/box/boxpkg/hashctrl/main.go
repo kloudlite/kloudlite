@@ -12,6 +12,7 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg/packagectrl"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
@@ -58,7 +59,7 @@ func generateBoxHashContent(envName string, path string, klFile *client.KLFileTy
 		"hash":   hash.Sum(nil),
 	})
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	return marshal, nil
@@ -67,19 +68,19 @@ func generateBoxHashContent(envName string, path string, klFile *client.KLFileTy
 func BoxHashFile(workspacePath string) (*PersistedEnv, error) {
 	fileName, err := BoxHashFileName(workspacePath)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	configFolder, err := client.GetConfigFolder()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	filePath := path.Join(configFolder, "box-hash", fileName)
 	data, err := os.ReadFile(filePath)
 	if err != nil && !os.IsNotExist(err) {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 	if os.IsNotExist(err) {
-		return nil, err
+		return nil, functions.NewE(err)
 		// env, err := server.EnvAtPath(workspacePath)
 		// if err != nil {
 		// 	return nil, functions.Error(err)
@@ -214,12 +215,12 @@ func GenerateKLConfigHash(kf *client.KLFileType) (string, error) {
 func generatePersistedEnv(kf *client.KLFileType, envName string, path string) (*PersistedEnv, error) {
 	envs, mm, err := server.GetLoadMaps()
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	realPkgs, err := packagectrl.SyncLockfileWithNewConfig(*kf)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	hashConfig := PersistedEnv{
@@ -248,7 +249,7 @@ func generatePersistedEnv(kf *client.KLFileType, envName string, path string) (*
 
 	e, err := client.EnvOfPath(path)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", envName, "❯")
@@ -256,7 +257,7 @@ func generatePersistedEnv(kf *client.KLFileType, envName string, path string) (*
 
 	klConfhash, err := GenerateKLConfigHash(kf)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	hashConfig.Env = ev

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"crypto/md5"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -29,6 +28,7 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/constants"
 	cl "github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -57,7 +57,7 @@ func (c *client) ensurePublicKey() error {
 		cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "4096", "-f", path.Join(sshPath, "id_rsa"), "-N", "")
 		err := cmd.Run()
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 	}
 
@@ -75,7 +75,7 @@ func (c *client) ensureCacheExist() error {
 			}),
 		})
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 
 		if len(vlist.Volumes) == 0 {
@@ -85,7 +85,7 @@ func (c *client) ensureCacheExist() error {
 				},
 				Name: cache,
 			}); err != nil {
-				return err
+				return functions.NewE(err)
 			}
 		}
 
@@ -98,7 +98,7 @@ func GetDockerHostIp() (string, error) {
 
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 	defer conn.Close()
 
@@ -170,7 +170,7 @@ func (c *client) imageExists(imageName string) (bool, error) {
 func (c *client) startContainer() (string, error) {
 
 	if err := c.stopOtherContainers(); err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	if err := c.ensurePublicKey(); err != nil {
@@ -191,27 +191,27 @@ func (c *client) startContainer() (string, error) {
 	})
 
 	if err != nil {
-		return "", errors.New("failed to list containers")
+		return "", functions.Error("failed to list containers")
 	}
 
 	if len(existingContainers) > 0 {
 		if existingContainers[0].State != "running" {
 			if err := c.cli.ContainerStart(context.Background(), existingContainers[0].ID, container.StartOptions{}); err != nil {
-				return "", err
+				return "", functions.NewE(err)
 			}
 
 			sshPortStr, ok := existingContainers[0].Labels[SSH_PORT_KEY]
 			if !ok {
-				return "", errors.New("failed to get ssh port")
+				return "", functions.Error("failed to get ssh port")
 			}
 
 			sshPort, err := strconv.Atoi(sshPortStr)
 			if err != nil {
-				return "", err
+				return "", functions.NewE(err)
 			}
 
 			if err := c.waithForSshReady(sshPort, existingContainers[0].ID); err != nil {
-				return "", err
+				return "", functions.NewE(err)
 			}
 		}
 
@@ -220,17 +220,17 @@ func (c *client) startContainer() (string, error) {
 
 	sshPort, err := c.getFreePort()
 	if err != nil {
-		return "", errors.New("failed to get free port")
+		return "", functions.Error("failed to get free port")
 	}
 
 	vmounts, err := c.generateMounts()
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	boxhashFileName, err := hashctrl.BoxHashFileName(c.cwd)
 	if err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	resp, err := c.cli.ContainerCreate(context.Background(), &container.Config{
@@ -283,7 +283,7 @@ func (c *client) startContainer() (string, error) {
 	}
 
 	if err := c.waithForSshReady(sshPort, resp.ID); err != nil {
-		return "", err
+		return "", functions.NewE(err)
 	}
 
 	return resp.ID, nil
@@ -374,18 +374,18 @@ func (c *client) getFreePort() (int, error) {
 func (c *client) generateMounts() ([]mount.Mount, error) {
 	td, err := os.MkdirTemp("", "kl-tmp")
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if err := userOwn(td); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	sshPath := path.Join(c.userHomeDir, ".ssh", "id_rsa.pub")
 
 	akByte, err := os.ReadFile(sshPath)
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	ak := string(akByte)
@@ -430,11 +430,11 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 
 		return nil
 	}(); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	if err := writeOnUserScope(akTmpPath, []byte(ak)); err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	volumes := []mount.Mount{
@@ -459,7 +459,7 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 func (c *client) SyncVpn(wg string) error {
 	err := c.ensureImage(constants.WireguardImage)
 	if err != nil {
-		return errors.New("failed to pull image")
+		return functions.Error("failed to pull image")
 	}
 
 	existingVPN, err := c.cli.ContainerList(context.Background(), container.ListOptions{
@@ -469,7 +469,7 @@ func (c *client) SyncVpn(wg string) error {
 		),
 	})
 	if err != nil {
-		return errors.New("failed to list containers")
+		return functions.Error("failed to list containers")
 	}
 	md5sum := md5.Sum([]byte(wg))
 	if len(existingVPN) > 0 {
@@ -477,7 +477,7 @@ func (c *client) SyncVpn(wg string) error {
 			if existingVPN[0].State != "running" {
 				err := c.cli.ContainerStart(context.Background(), existingVPN[0].ID, container.StartOptions{})
 				if err != nil {
-					return errors.New("failed to start container")
+					return functions.Error("failed to start container")
 				}
 			}
 			return nil
@@ -486,13 +486,13 @@ func (c *client) SyncVpn(wg string) error {
 			Signal: "SIGKILL",
 		})
 		if err != nil {
-			return errors.New("failed to stop container")
+			return functions.Error("failed to stop container")
 		}
 		err = c.cli.ContainerRemove(context.Background(), existingVPN[0].ID, container.RemoveOptions{
 			Force: true,
 		})
 		if err != nil {
-			return errors.New("failed to remove container")
+			return functions.Error("failed to remove container")
 		}
 	}
 	script := fmt.Sprintf("echo %s | base64 -d > /etc/wireguard/wg0.conf && (wg-quick down wg0 || echo done) && wg-quick up wg0 && tail -f /dev/null", wg)
@@ -510,11 +510,11 @@ func (c *client) SyncVpn(wg string) error {
 		NetworkMode: "host",
 	}, &network.NetworkingConfig{}, nil, "")
 	if err != nil {
-		return errors.New("failed to create container")
+		return functions.Error("failed to create container")
 	}
 	err = c.cli.ContainerStart(context.Background(), resp.ID, container.StartOptions{})
 	if err != nil {
-		return errors.New("failed to start container")
+		return functions.Error("failed to start container")
 	}
 	return nil
 }
@@ -564,10 +564,10 @@ func (c *client) containerAtPath(path string) (*types.Container, error) {
 		),
 	})
 	if err != nil {
-		return nil, errors.New("failed to list containers")
+		return nil, functions.Error("failed to list containers")
 	}
 	if len(existingContainers) == 0 {
-		return nil, errors.New(NO_RUNNING_CONTAINERS)
+		return nil, functions.Error(NO_RUNNING_CONTAINERS)
 	}
 	return &existingContainers[0], nil
 }
@@ -604,7 +604,7 @@ func (c *client) waithForSshReady(port int, containerId string) error {
 	for {
 		cj, err := c.cli.ContainerInspect(context.TODO(), containerId)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 
 		if cj.State != nil && !cj.State.Running {

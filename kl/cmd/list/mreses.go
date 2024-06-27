@@ -1,10 +1,10 @@
 package list
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -31,7 +31,7 @@ var mresCmd = &cobra.Command{
 
 func printMres(_ *cobra.Command, secrets []server.Mres) error {
 	if len(secrets) == 0 {
-		return errors.New("no secrets found")
+		return functions.Error("no secrets found")
 	}
 
 	header := table.Row{
