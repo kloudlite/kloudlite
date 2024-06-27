@@ -44,9 +44,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 
 	klFile, err := client.GetKlFile(filePath)
 	if err != nil {
-		fn.PrintError(err)
-		es := "please run 'kl init' if you are not initialized the file already"
-		return fmt.Errorf(es)
+		return fn.NewE(err)
 	}
 
 	secrets, err := server.ListSecrets()

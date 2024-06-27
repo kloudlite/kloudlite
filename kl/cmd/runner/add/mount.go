@@ -7,7 +7,6 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
@@ -31,8 +30,6 @@ var mountCommand = &cobra.Command{
 		klFile, err := client.GetKlFile(filePath)
 		if err != nil {
 			fn.PrintError(err)
-			es := "please run 'kl init' if you are not initialized the file already"
-			fn.PrintError(fmt.Errorf(es))
 			return
 		}
 		path := ""
@@ -81,7 +78,7 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 			fzf.WithPrompt("Mount from Config/Secret >"),
 		)
 		if err != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 
 		cOrs = client.CSType(*cOrsValue)
@@ -173,7 +170,7 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 	}, fzf.WithPrompt("Select Config/Secret >"))
 
 	if err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	fe := klFile.Mounts.GetMounts()
@@ -196,18 +193,18 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 
 	klFile.Mounts.AddMounts(fe)
 	if err := client.WriteKLFile(klFile); err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	fn.Log("added mount to your kl-file")
 
 	wpath, err := os.Getwd()
 	if err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	if err = hashctrl.SyncBoxHash(wpath); err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	return nil

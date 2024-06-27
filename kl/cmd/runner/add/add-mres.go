@@ -34,13 +34,18 @@ This command will add secret entry of managed resource references from current e
 }
 
 func AddMres(cmd *cobra.Command, _ []string) error {
+	filePath := fn.ParseKlFile(cmd)
+	kt, err := client.GetKlFile(filePath)
+	if err != nil {
+		return functions.NewE(err)
+	}
+
 	//TODO: add changes to the klbox-hash file
 	mresName := fn.ParseStringFlag(cmd, "resource")
 
 	mres, err := server.SelectMres([]fn.Option{
 		fn.MakeOption("mresName", mresName),
 	}...)
-	filePath := fn.ParseKlFile(cmd)
 
 	if err != nil {
 		return functions.NewE(err)
@@ -54,10 +59,6 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 		return functions.NewE(err)
 	}
 
-	kt, err := client.GetKlFile(filePath)
-	if err != nil {
-		return functions.NewE(err)
-	}
 	env, err := client.CurrentEnv()
 	if err != nil && kt.DefaultEnv != "" {
 		env.Name = kt.DefaultEnv
@@ -133,6 +134,5 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 }
 
 func init() {
-	// mresCmd.Flags().StringP("name", "n", "", "managed resource name")
 	fn.WithKlFile(mresCmd)
 }
