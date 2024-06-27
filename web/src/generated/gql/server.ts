@@ -1048,7 +1048,8 @@ export type GlobalVpnIn = {
   allocatableCIDRSuffix: Scalars['Int']['input'];
   CIDR: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
-  kloudliteDevice: GlobalVpnKloudliteDeviceIn;
+  kloudliteClusterLocalDevice: GlobalVpnKloudliteClusterLocalDeviceIn;
+  kloudliteGatewayDevice: GlobalVpnKloudliteGatewayDeviceIn;
   metadata: MetadataIn;
   nonClusterUseAllowedIPs: Array<Scalars['String']['input']>;
   numAllocatedClusterCIDRs: Scalars['Int']['input'];
@@ -1057,7 +1058,12 @@ export type GlobalVpnIn = {
   wgInterface: Scalars['String']['input'];
 };
 
-export type GlobalVpnKloudliteDeviceIn = {
+export type GlobalVpnKloudliteClusterLocalDeviceIn = {
+  ipAddr: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type GlobalVpnKloudliteGatewayDeviceIn = {
   ipAddr: Scalars['String']['input'];
   name: Scalars['String']['input'];
 };
@@ -3625,14 +3631,6 @@ export type ConsoleDeleteAccountMembershipMutationVariables = Exact<{
 
 export type ConsoleDeleteAccountMembershipMutation = {
   accounts_removeAccountMembership: boolean;
-};
-
-export type ConsoleVerifyInviteCodeMutationVariables = Exact<{
-  invitationCode: Scalars['String']['input'];
-}>;
-
-export type ConsoleVerifyInviteCodeMutation = {
-  auth_verifyInviteCode: boolean;
 };
 
 export type ConsoleGetCredTokenQueryVariables = Exact<{
@@ -8110,6 +8108,14 @@ export type AuthVerifyEmailMutationVariables = Exact<{
 }>;
 
 export type AuthVerifyEmailMutation = { auth_verifyEmail: { id: string } };
+
+export type AuthResendVerificationEmailMutationVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type AuthResendVerificationEmailMutation = {
+  auth_resendVerificationEmail: boolean;
+};
 
 export type AuthLoginPageInitUrlsQueryVariables = Exact<{
   [key: string]: never;

@@ -83,7 +83,7 @@ const Footer = () => {
             <div className="hidden md:block lg:hidden">
               <SocialMenu />
             </div>
-            <ThemeSwitcher />
+            {/* <ThemeSwitcher /> */}
           </div>
         </div>
         <div className="flex flex-col-reverse gap-4xl md:gap-0 md:flex-row md:items-center lg:justify-between">
