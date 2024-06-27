@@ -1,4 +1,3 @@
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import usePersistState from '~/root/lib/client/hooks/use-persist-state';
 import { useEffect, useState } from 'react';
 import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
@@ -14,12 +13,13 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import { ArrowLeft } from '~/components/icons';
 import { cn } from '~/components/utils';
 import Container from '~/auth/components/container';
+import { useAuthApi } from '~/auth/server/gql/api-provider';
 
 const VerifyEmail = () => {
   const { query, email } = useLoaderData();
   const navigate = useNavigate();
   const { token } = query;
-  const api = useAPIClient();
+  const api = useAuthApi();
 
   const [rateLimiter, setRateLimiter] = usePersistState('rateLimiter', {});
 
@@ -27,7 +27,7 @@ const VerifyEmail = () => {
     (async () => {
       try {
         if (!token) return;
-        const { _, errors } = await api.verifyEmail({
+        const { errors } = await api.verifyEmail({
           token,
         });
         if (errors) {
@@ -68,7 +68,7 @@ const VerifyEmail = () => {
 
         setSending(true);
 
-        const { errors } = await api.resendVerificationEmail({ email });
+        const { errors } = await api.resendVerificationEmail();
 
         setSending(false);
 

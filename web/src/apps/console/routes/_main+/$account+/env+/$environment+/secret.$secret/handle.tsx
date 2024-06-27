@@ -4,6 +4,7 @@ import Popup from '~/components/molecule/popup';
 import { IDialog, IModifiedItem } from '~/console/components/types.d';
 import { ConsoleApiType } from '~/console/server/gql/saved-queries';
 import { parseName } from '~/console/server/r-utils/common';
+import { constants } from '~/console/server/utils/constants';
 import useForm from '~/lib/client/hooks/use-form';
 import Yup from '~/lib/server/helpers/yup';
 import { handleError } from '~/lib/utils/common';
@@ -72,6 +73,7 @@ const Handle = ({
     validationSchema: Yup.object({
       key: Yup.string()
         .required()
+        .matches(constants.keyFormatRegex, 'Invalid key format')
         .test('is-valid', 'Key already exists.', (value) => {
           if (isUpdate) {
             return true;

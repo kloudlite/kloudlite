@@ -1,5 +1,5 @@
 import {
-  BackingServices,
+  // BackingServices,
   CirclesFour,
   GearSix,
   // Plus,
@@ -103,16 +103,16 @@ const tabs = [
     to: '/cs/configs',
     value: '/cs',
   },
-  {
-    label: (
-      <span className="flex flex-row items-center gap-lg">
-        <BackingServices size={tabIconSize} />
-        Managed resources
-      </span>
-    ),
-    to: '/managed-resources',
-    value: '/managed-resources',
-  },
+  // {
+  //   label: (
+  //     <span className="flex flex-row items-center gap-lg">
+  //       <BackingServices size={tabIconSize} />
+  //       Managed resources
+  //     </span>
+  //   ),
+  //   to: '/managed-resources',
+  //   value: '/managed-resources',
+  // },
   // {
   //   label: 'Jobs & Crons',
   //   to: '/jc/task',

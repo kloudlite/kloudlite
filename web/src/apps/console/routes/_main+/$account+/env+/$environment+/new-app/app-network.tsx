@@ -162,6 +162,7 @@ const ExposedRoute = () => {
         // error={!!portError}
         // message={portError}
         disableWhileLoading
+        createLabel="Exposed Domains"
       />
     </div>
   );
@@ -219,6 +220,7 @@ export const ExposedPorts = () => {
             error={!!portError}
             message={portError}
             disableWhileLoading
+            createLabel="Exposed ports"
           />
         </div>
       </div>
