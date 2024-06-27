@@ -3,6 +3,8 @@ package table
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -18,32 +20,36 @@ const (
 )
 
 func HeaderText(txt string) string {
-	return text.Colored(txt, headerColor)
+	return text.Bold(text.Colored(strings.ToUpper(strings.ReplaceAll(txt, " ", "-")), headerColor))
 }
 
 func GetTableStyles() table.BoxStyle {
-	colorReset := text.Reset()
-	colorBorder := text.Color(borderColor)
+	// colorReset := text.Reset()
+	// colorBorder := text.Color(borderColor)
+	//
+	// return table.BoxStyle{
+	// 	BottomLeft:       colorBorder + "└",
+	// 	BottomRight:      "┘" + colorReset,
+	// 	BottomSeparator:  "┴",
+	// 	EmptySeparator:   "  ",
+	// 	Left:             colorBorder + "│" + colorReset,
+	// 	LeftSeparator:    colorBorder + "├",
+	// 	MiddleHorizontal: "─",
+	// 	MiddleSeparator:  "┼",
+	// 	MiddleVertical:   colorBorder + "│" + colorReset,
+	// 	PaddingLeft:      "  ",
+	// 	PaddingRight:     "  ",
+	// 	PageSeparator:    "  ",
+	// 	Right:            colorBorder + "│" + colorReset,
+	// 	RightSeparator:   "┤" + colorReset,
+	// 	TopLeft:          colorBorder + "┌",
+	// 	TopRight:         "┐" + colorReset,
+	// 	TopSeparator:     "┬",
+	// 	UnfinishedRow:    "  ",
+	// }
 
 	return table.BoxStyle{
-		BottomLeft:       colorBorder + "└",
-		BottomRight:      "┘" + colorReset,
-		BottomSeparator:  "┴",
-		EmptySeparator:   "  ",
-		Left:             colorBorder + "│" + colorReset,
-		LeftSeparator:    colorBorder + "├",
-		MiddleHorizontal: "─",
-		MiddleSeparator:  "┼",
-		MiddleVertical:   colorBorder + "│" + colorReset,
-		PaddingLeft:      "  ",
-		PaddingRight:     "  ",
-		PageSeparator:    "  ",
-		Right:            colorBorder + "│" + colorReset,
-		RightSeparator:   "┤" + colorReset,
-		TopLeft:          colorBorder + "┌",
-		TopRight:         "┐" + colorReset,
-		TopSeparator:     "┬",
-		UnfinishedRow:    "  ",
+		PaddingRight: " \t",
 	}
 
 }
@@ -119,10 +125,13 @@ func Table(header *Row, rows []Row, cmds ...*cobra.Command) string {
 
 	default:
 		t.Style().Box = GetTableStyles()
+		rows := getRows(rows)
 		if header != nil {
-			t.AppendHeader(getRow(*header))
+			// t.AppendHeader(getRow(*header))
+			rows = append([]table.Row{getRow(*header)}, rows...)
+			// t.AppendRows(getRow(*header))
 		}
-		t.AppendRows(getRows(rows))
+		t.AppendRows(rows)
 
 		return t.Render()
 	}
