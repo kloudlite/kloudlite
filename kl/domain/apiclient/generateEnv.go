@@ -1,7 +1,7 @@
-package server
+package apiclient
 
 import (
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 )
 
@@ -35,7 +35,7 @@ type GeneratedEnvs struct {
 }
 
 // func GenerateEnv() (*GeneratedEnvs, error) {
-// 	klFile, err := client.GetKlFile("")
+// 	klFile, err := fileclient.GetKlFile("")
 // 	if err != nil {
 // 		return nil, functions.NewE(err)
 // 	}
@@ -80,7 +80,7 @@ type MountMap map[string]string
 
 func GetLoadMaps() (map[string]string, MountMap, error) {
 
-	kt, err := client.GetKlFile("")
+	kt, err := fileclient.GetKlFile("")
 	if err != nil {
 		return nil, nil, functions.NewE(err)
 	}
@@ -120,7 +120,7 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 			}
 
 			for _, fe := range currMounts {
-				if fe.Type == client.ConfigType {
+				if fe.Type == fileclient.ConfigType {
 					queries = append(queries, map[string]any{
 						"configName": fe.Name,
 						"key":        fe.Key,
@@ -157,7 +157,7 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 			}
 
 			for _, fe := range currMounts {
-				if fe.Type == client.SecretType {
+				if fe.Type == fileclient.SecretType {
 					queries = append(queries, map[string]any{
 						"secretName": fe.Name,
 						"key":        fe.Key,
@@ -257,7 +257,7 @@ func GetLoadMaps() (map[string]string, MountMap, error) {
 			pth = fe.Key
 		}
 
-		if fe.Type == client.ConfigType {
+		if fe.Type == fileclient.ConfigType {
 			mountMap[pth] = func() string {
 				for _, ce := range fromResp.Configs {
 					if ce.ConfigName == fe.Name && ce.Key == fe.Key {

@@ -2,7 +2,7 @@ package box
 
 import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
@@ -20,7 +20,7 @@ var startCmd = &cobra.Command{
 			return
 		}
 
-		klfile, err := client.GetKlFile("")
+		klfile, err := fileclient.GetKlFile("")
 		if err != nil {
 			fn.PrintError(err)
 			return

@@ -3,8 +3,8 @@ package list
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
@@ -21,12 +21,12 @@ var configsCmd = &cobra.Command{
 		envName := fn.ParseStringFlag(cmd, "env")
 
 		filePath := fn.ParseKlFile(cmd)
-		klFile, err := client.GetKlFile(filePath)
+		klFile, err := fileclient.GetKlFile(filePath)
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
-		config, err := server.ListConfigs([]fn.Option{
+		config, err := apiclient.ListConfigs([]fn.Option{
 			fn.MakeOption("envName", envName),
 			fn.MakeOption("accountName", klFile.AccountName),
 		}...)
@@ -43,9 +43,9 @@ var configsCmd = &cobra.Command{
 	},
 }
 
-func printConfigs(cmd *cobra.Command, configs []server.Config) error {
+func printConfigs(cmd *cobra.Command, configs []apiclient.Config) error {
 
-	e, err := client.CurrentEnv()
+	e, err := fileclient.CurrentEnv()
 	if err != nil {
 		return functions.NewE(err)
 	}

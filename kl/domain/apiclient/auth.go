@@ -1,11 +1,11 @@
-package server
+package apiclient
 
 import (
 	"encoding/json"
 	"net/http"
 	"time"
 
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	nanoid "github.com/matoous/go-nanoid/v2"
@@ -89,7 +89,7 @@ func Login(loginId string) error {
 			req.Header.Set("Cookie", loginStatusResponse.RemoteLogin.AuthHeader)
 			cookie, _ := req.Cookie("hotspot-session")
 
-			return client.SaveAuthSession(cookie.Value)
+			return fileclient.SaveAuthSession(cookie.Value)
 		}
 		if loginStatusResponse.RemoteLogin.Status == "failed" {
 			return functions.Error("remote login failed")

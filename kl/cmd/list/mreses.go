@@ -2,9 +2,9 @@ package list
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
@@ -18,13 +18,13 @@ var mresCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		filePath := fn.ParseKlFile(cmd)
-		klFile, err := client.GetKlFile(filePath)
+		klFile, err := fileclient.GetKlFile(filePath)
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		sec, err := server.ListMreses([]fn.Option{
+		sec, err := apiclient.ListMreses([]fn.Option{
 			fn.MakeOption("accountName", klFile.AccountName),
 		}...)
 		if err != nil {
@@ -39,7 +39,7 @@ var mresCmd = &cobra.Command{
 	},
 }
 
-func printMres(_ *cobra.Command, secrets []server.Mres) error {
+func printMres(_ *cobra.Command, secrets []apiclient.Mres) error {
 	if len(secrets) == 0 {
 		return functions.Error("no secrets found")
 	}

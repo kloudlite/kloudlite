@@ -5,7 +5,7 @@ type EnvironmentVariable struct {
 	Value string `yaml:"value" json:"value"`
 }
 
-// func (*client) loadConfig(mm server.MountMap, envs map[string]string) (*mclient.DevboxKlFile, error) {
+// func (*fileclient) loadConfig(mm apiclient.MountMap, envs map[string]string) (*mclient.DevboxKlFile, error) {
 // 	kf, err := mclient.GetKlFile("")
 // 	if err != nil {
 // 		return nil, functions.NewE(err)

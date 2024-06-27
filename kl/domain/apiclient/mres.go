@@ -1,9 +1,9 @@
-package server
+package apiclient
 
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -56,7 +56,7 @@ func SelectMres(options ...fn.Option) (*Mres, error) {
 		return nil, functions.NewE(err)
 	}
 	if len(m) == 0 {
-		return nil, fmt.Errorf("no managed resources created yet on server")
+		return nil, fmt.Errorf("no managed resources created yet on apiclient")
 	}
 
 	if mresName != "" {
@@ -130,7 +130,7 @@ type MresResp struct {
 }
 
 func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
-	env, err := EnsureEnv(&client.Env{
+	env, err := EnsureEnv(&fileclient.Env{
 		Name: fn.GetOption(options, "envName"),
 	}, options...)
 
@@ -138,7 +138,7 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 		return nil, functions.NewE(err)
 	}
 
-	kt, err := client.GetKlFile("")
+	kt, err := fileclient.GetKlFile("")
 	if err != nil {
 		return nil, functions.NewE(err)
 	}

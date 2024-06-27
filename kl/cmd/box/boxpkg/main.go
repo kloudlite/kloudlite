@@ -3,12 +3,14 @@ package boxpkg
 import (
 	"context"
 	"crypto/md5"
+	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/apiclient"
 	"io"
 	"os"
 
 	dockerclient "github.com/docker/docker/client"
-	cl "github.com/kloudlite/kl/domain/client"
+	 "github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/flags"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -25,7 +27,7 @@ type client struct {
 
 	containerName string
 
-	env *cl.Env
+	env *fileclient.Env
 
 	configFolder string
 	userHomeDir  string
@@ -35,7 +37,7 @@ type BoxClient interface {
 	SyncProxy(config ProxyConfig) error
 	StopAll() error
 	Stop() error
-	Start(*cl.KLFileType) error
+	Start(*fileclient.KLFileType) error
 	Ssh() error
 	Reload() error
 	PrintBoxes([]Cntr) error
@@ -61,18 +63,46 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 	hash := md5.New()
 	hash.Write([]byte(cwd))
 	contName := fmt.Sprintf("klbox-%s", fmt.Sprintf("%x", hash.Sum(nil))[:8])
+	klFile, err := fileclient.GetKlFile("")
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+	env, err := fileclient.EnvOfPath(cwd)
+	if err != nil && errors.Is(err, fileclient.NoEnvSelected) {
+		environment, err := apiclient.GetEnvironment(klFile.AccountName, klFile.DefaultEnv)
+		if err != nil {
+			return nil, functions.NewE(err)
+		}
+		env = &fileclient.Env{
+			Name:        environment.DisplayName,
+			TargetNs:    environment.Metadata.Namespace,
+			SSHPort:     0,
+			ClusterName: environment.ClusterName,
+		}
+		data, err := fileclient.GetExtraData()
+		if err != nil {
+			return nil, functions.NewE(err)
+		}
+		if data.SelectedEnvs == nil {
+			data.SelectedEnvs = map[string]*fileclient.Env{
+				cwd: env,
+			}
+		} else {
+			data.SelectedEnvs[cwd] = env
+		}
+		if err := fileclient.SaveExtraData(data); err != nil {
+			return nil, functions.NewE(err)
+		}
+	} else if err != nil {
+		return nil, functions.NewE(err)
+	}
 
-	env, err := cl.EnvOfPath(cwd)
+	configFolder, err := fileclient.GetConfigFolder()
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
 
-	configFolder, err := cl.GetConfigFolder()
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	userHomeDir, err := cl.GetUserHomeDir()
+	userHomeDir, err := fileclient.GetUserHomeDir()
 	if err != nil {
 		return nil, functions.NewE(err)
 	}

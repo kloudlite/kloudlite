@@ -3,7 +3,7 @@ package del
 // import (
 // 	"fmt"
 
-// 	"github.com/kloudlite/kl/domain/client"
+// 	"github.com/kloudlite/kl/domain/fileclient"
 // 	fn "github.com/kloudlite/kl/pkg/functions"
 // 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
@@ -30,7 +30,7 @@ package del
 
 // func removeMreses() error {
 
-// 	klFile, err := client.GetKlFile("")
+// 	klFile, err := fileclient.GetKlFile("")
 
 // 	if err != nil {
 // 		fn.PrintError(err)
@@ -45,7 +45,7 @@ package del
 
 // 	selectedMres, err := fzf.FindOne(
 // 		klFile.Mres,
-// 		func(item client.ResType) string {
+// 		func(item fileclient.ResType) string {
 // 			return item.Name
 // 		},
 // 		fzf.WithPrompt("Select managed service >"),
@@ -55,7 +55,7 @@ package del
 // 		return functions.NewE(err)
 // 	}
 
-// 	newMres := make([]client.ResType, 0)
+// 	newMres := make([]fileclient.ResType, 0)
 
 // 	for _, rt := range klFile.Mres {
 // 		if rt.Name == selectedMres.Name {
@@ -66,7 +66,7 @@ package del
 
 // 	klFile.Mres = newMres
 
-// 	err = client.WriteKLFile(*klFile)
+// 	err = fileclient.WriteKLFile(*klFile)
 // 	if err != nil {
 // 		return functions.NewE(err)
 // 	}

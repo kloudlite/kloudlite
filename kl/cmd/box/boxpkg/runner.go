@@ -145,7 +145,7 @@ func (c *client) GetContainer(labels map[string]string) (*Cntr, error) {
 	return &defCr, nil
 }
 
-// func (c *client) waitForContReady(containerId string) error {
+// func (c *fileclient) waitForContReady(containerId string) error {
 // 	timeoutCtx, cf := context.WithTimeout(context.TODO(), 1*time.Minute)
 //
 // 	cancelFn := func() {

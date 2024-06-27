@@ -3,7 +3,7 @@ package del
 // import (
 // 	"fmt"
 
-// 	"github.com/kloudlite/kl/domain/client"
+// 	"github.com/kloudlite/kl/domain/fileclient"
 // 	common_util "github.com/kloudlite/kl/pkg/functions"
 // 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
@@ -22,7 +22,7 @@ package del
 
 // func removeConfigMount() {
 
-// 	klFile, err := client.GetKlFile("")
+// 	klFile, err := fileclient.GetKlFile("")
 
 // 	if err != nil {
 // 		common_util.PrintError(err)
@@ -31,7 +31,7 @@ package del
 
 // 	selectedMount, err := fzf.FindOne(
 // 		klFile.FileMount.Mounts,
-// 		func(item client.FileEntry) string {
+// 		func(item fileclient.FileEntry) string {
 // 			return fmt.Sprintf("%s | %s | %s", item.Type, item.Path, item.Name)
 // 		},
 // 		fzf.WithPrompt("Select Config Group >"),
@@ -42,7 +42,7 @@ package del
 // 		return
 // 	}
 
-// 	newMounts := make([]client.FileEntry, 0)
+// 	newMounts := make([]fileclient.FileEntry, 0)
 // 	for _, fe := range klFile.FileMount.Mounts {
 // 		if fe.Name == selectedMount.Name {
 // 			continue
@@ -52,7 +52,7 @@ package del
 
 // 	klFile.FileMount.Mounts = newMounts
 
-// 	err = client.WriteKLFile(*klFile)
+// 	err = fileclient.WriteKLFile(*klFile)
 
 // 	if err != nil {
 // 		common_util.PrintError(err)

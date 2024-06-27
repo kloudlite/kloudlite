@@ -1,7 +1,7 @@
-package server
+package apiclient
 
 import (
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -70,7 +70,7 @@ func EnsureAccount(options ...fn.Option) (string, error) {
 		return accountName, nil
 	}
 
-	s, _ := client.CurrentAccountName()
+	s, _ := fileclient.CurrentAccountName()
 	if s == "" {
 		a, err := SelectAccount("")
 		if err != nil {

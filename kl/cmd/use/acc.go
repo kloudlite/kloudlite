@@ -2,7 +2,7 @@ package use
 
 import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
@@ -14,7 +14,7 @@ var accCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		accountName := fn.ParseStringFlag(cmd, "account")
 
-		acc, err := server.SelectAccount(accountName)
+		acc, err := apiclient.SelectAccount(accountName)
 		if err != nil {
 			fn.PrintError(err)
 			return

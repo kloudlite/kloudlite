@@ -1,4 +1,4 @@
-package server
+package apiclient
 
 import (
 	"context"
@@ -34,7 +34,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 	customResolver := &net.Resolver{
 		PreferGo: true,
 		Dial: func(ctx context.Context, _, _ string) (net.Conn, error) {
-			// Specify the address of your custom DNS server
+			// Specify the address of your custom DNS apiclient
 			dnsServer := "1.1.1.1:53"
 			d := net.Dialer{
 				Timeout: time.Millisecond * time.Duration(10000),
@@ -109,7 +109,7 @@ func klFetch(method string, variables map[string]any, cookie *string, verbose ..
 	var respData RespData
 	err = json.Unmarshal(body, &respData)
 	if err != nil {
-		fn.PrintError(fmt.Errorf("some issue with server:\n%s", string(body)))
+		fn.PrintError(fmt.Errorf("some issue with apiclient:\n%s", string(body)))
 		return nil, functions.NewE(err)
 	}
 

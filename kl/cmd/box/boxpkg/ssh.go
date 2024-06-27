@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/adrg/xdg"
-	cl "github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -33,13 +33,13 @@ func getDomainFromPath(pth string) string {
 func (c *client) Ssh() error {
 	defer spinner.Client.UpdateMessage("trying to ssh into the box")()
 
-	klFile, err := cl.GetKlFile("")
+	klFile, err := fileclient.GetKlFile("")
 	if err != nil {
 		return fn.NewE(err)
 	}
 
 	dir, _ := os.Getwd()
-	if os.Getenv("IN_DEV_BOX") == "true" {
+	if fileclient.InsideBox() {
 		return fn.Error("you are already in a devbox")
 	}
 

@@ -13,7 +13,7 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
 
-// func (c *client) ensureVpnConnected() error {
+// func (c *fileclient) ensureVpnConnected() error {
 // 	if err := cl.EnsureAppRunning(); err != nil {
 // 		return functions.NewE(err)
 // 	}
@@ -23,7 +23,7 @@ import (
 // 		return functions.NewE(err)
 // 	}
 //
-// 	if !server.CheckDeviceStatus() {
+// 	if !apiclient.CheckDeviceStatus() {
 // 		if err := p.Start(); err != nil {
 // 			return functions.NewE(err)
 // 		}
@@ -32,7 +32,7 @@ import (
 // 	return nil
 // }
 
-// func (c *client) EnsureVpnCntRunning() error {
+// func (c *fileclient) EnsureVpnCntRunning() error {
 // 	if runtime.GOOS == constants.RuntimeLinux {
 // 		return nil
 // 	}

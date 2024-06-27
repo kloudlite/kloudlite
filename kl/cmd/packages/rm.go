@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -34,7 +34,7 @@ func rmPackages(cmd *cobra.Command, args []string) error {
 		return functions.Error("name is required")
 	}
 
-	klConf, err := client.GetKlFile("")
+	klConf, err := fileclient.GetKlFile("")
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -46,7 +46,7 @@ func rmPackages(cmd *cobra.Command, args []string) error {
 			break
 		}
 	}
-	err = client.WriteKLFile(*klConf)
+	err = fileclient.WriteKLFile(*klConf)
 	if err != nil {
 		return functions.NewE(err)
 	}

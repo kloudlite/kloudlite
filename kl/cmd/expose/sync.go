@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
@@ -32,7 +32,7 @@ func sync(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return functions.NewE(err)
 	}
-	klFile, err := client.GetKlFile("")
+	klFile, err := fileclient.GetKlFile("")
 	if err != nil {
 		return functions.NewE(err)
 	}

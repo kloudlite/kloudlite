@@ -1,4 +1,4 @@
-package client
+package fileclient
 
 import (
 	"fmt"
@@ -8,6 +8,9 @@ import (
 	"github.com/kloudlite/kl/pkg/functions"
 )
 
+var (
+	NoEnvSelected = functions.Error("no selected environment")
+)
 func CheckPortAvailable(port int) bool {
 	address := fmt.Sprintf(":%d", port)
 	listener, err := net.Listen("tcp", address)
@@ -63,12 +66,8 @@ func EnvOfPath(pth string) (*Env, error) {
 		return nil, functions.NewE(err)
 	}
 
-	if c.SelectedEnvs == nil {
-		return nil, functions.Error("no selected environment")
-	}
-
-	if c.SelectedEnvs[pth] == nil {
-		return nil, functions.Error("no selected environment")
+	if c.SelectedEnvs == nil && c.SelectedEnvs[pth] == nil {
+		return nil, NoEnvSelected
 	}
 
 	return c.SelectedEnvs[pth], nil

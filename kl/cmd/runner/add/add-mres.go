@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 
@@ -35,7 +35,7 @@ This command will add secret entry of managed resource references from current e
 
 func AddMres(cmd *cobra.Command, _ []string) error {
 	filePath := fn.ParseKlFile(cmd)
-	kt, err := client.GetKlFile(filePath)
+	kt, err := fileclient.GetKlFile(filePath)
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -43,7 +43,7 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 	//TODO: add changes to the klbox-hash file
 	mresName := fn.ParseStringFlag(cmd, "resource")
 
-	mres, err := server.SelectMres([]fn.Option{
+	mres, err := apiclient.SelectMres([]fn.Option{
 		fn.MakeOption("mresName", mresName),
 		fn.MakeOption("accountName", kt.AccountName),
 	}...)
@@ -52,7 +52,7 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 		return functions.NewE(err)
 	}
 
-	mresKey, err := server.SelectMresKey([]fn.Option{
+	mresKey, err := apiclient.SelectMresKey([]fn.Option{
 		fn.MakeOption("mresName", mres.Metadata.Name),
 		fn.MakeOption("accountName", kt.AccountName),
 	}...)
@@ -61,7 +61,7 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 		return functions.NewE(err)
 	}
 
-	env, err := client.CurrentEnv()
+	env, err := fileclient.CurrentEnv()
 	if err != nil && kt.DefaultEnv != "" {
 		env.Name = kt.DefaultEnv
 	}
@@ -69,10 +69,10 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 	currMreses := kt.EnvVars.GetMreses()
 
 	if currMreses == nil {
-		currMreses = []client.ResType{
+		currMreses = []fileclient.ResType{
 			{
 				Name: mres.Metadata.Name,
-				Env: []client.ResEnvType{
+				Env: []fileclient.ResEnvType{
 					{
 						Key:    RenameKey(fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey)),
 						RefKey: *mresKey,
@@ -86,7 +86,7 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 		matchedMres := false
 		for i, rt := range currMreses {
 			if rt.Name == mres.Metadata.Name {
-				currMreses[i].Env = append(currMreses[i].Env, client.ResEnvType{
+				currMreses[i].Env = append(currMreses[i].Env, fileclient.ResEnvType{
 					Key:    RenameKey(fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey)),
 					RefKey: *mresKey,
 				})
@@ -96,9 +96,9 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 		}
 
 		if !matchedMres {
-			currMreses = append(currMreses, client.ResType{
+			currMreses = append(currMreses, fileclient.ResType{
 				Name: mres.Metadata.Name,
-				Env: []client.ResEnvType{
+				Env: []fileclient.ResEnvType{
 					{
 						Key:    RenameKey(fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey)),
 						RefKey: *mresKey,
@@ -108,8 +108,8 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	kt.EnvVars.AddResTypes(currMreses, client.Res_mres)
-	if err := client.WriteKLFile(*kt); err != nil {
+	kt.EnvVars.AddResTypes(currMreses, fileclient.Res_mres)
+	if err := fileclient.WriteKLFile(*kt); err != nil {
 		return functions.NewE(err)
 	}
 
@@ -124,11 +124,11 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 		return functions.NewE(err)
 	}
 
-	//if err := server.SyncDevboxJsonFile(); err != nil {
+	//if err := apiclient.SyncDevboxJsonFile(); err != nil {
 	//	return functions.NewE(err)
 	//}
 	//
-	//if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
+	//if err := fileclient.SyncDevboxShellEnvFile(cmd); err != nil {
 	//	return functions.NewE(err)
 	//}
 

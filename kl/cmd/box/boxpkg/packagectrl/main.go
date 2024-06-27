@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/fjson"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -25,7 +25,7 @@ func (p *Packages) Unmarshal(b []byte) error {
 	return fjson.Unmarshal(b, p)
 }
 
-func SyncLockfileWithNewConfig(config client.KLFileType) (map[string]string, error) {
+func SyncLockfileWithNewConfig(config fileclient.KLFileType) (map[string]string, error) {
 	_, err := os.Stat("kl.lock")
 	packages := Packages{}
 	if err == nil {

@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
@@ -28,7 +28,7 @@ Examples:
 			return
 		}
 
-		ports := make([]server.AppPort, 0)
+		ports := make([]apiclient.AppPort, 0)
 
 		for _, v := range maps {
 			mp := strings.Split(v, ":")
@@ -51,13 +51,13 @@ Examples:
 				return
 			}
 
-			ports = append(ports, server.AppPort{
+			ports = append(ports, apiclient.AppPort{
 				AppPort:    int(pp),
 				DevicePort: int(tp),
 			})
 		}
 
-		err = server.InterceptApp(true, ports, []fn.Option{
+		err = apiclient.InterceptApp(true, ports, []fn.Option{
 			fn.MakeOption("appName", app),
 		}...)
 

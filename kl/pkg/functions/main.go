@@ -48,7 +48,7 @@ func PrintError(err error) {
 	}
 
 	if flags.IsDev() {
-		_, _ = os.Stderr.WriteString(fmt.Sprintf("%s %s\n\n", text.Red("[error]:"), err.Error()))
+		_, _ = os.Stderr.WriteString(fmt.Sprintf("%s %s\n\n", text.Red("[error]"), err.Error()))
 
 		if err, ok := err.(stackTracer); ok {
 			st := err.StackTrace()
@@ -60,7 +60,7 @@ func PrintError(err error) {
 		return
 	}
 
-	_, _ = os.Stderr.WriteString(fmt.Sprintf("%s %s\n", text.Red("[error]:"), err.Error()))
+	_, _ = os.Stderr.WriteString(fmt.Sprintf("%s %s\n", text.Red("[error]"), err.Error()))
 }
 
 func Log(str ...interface{}) {
@@ -71,7 +71,7 @@ func Warn(str ...interface{}) {
 	if flags.IsQuiet {
 		return
 	}
-	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprintf("%s %s", text.Yellow("[warn]:"), fmt.Sprint(fmt.Sprint(str...), "\n")))
+	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprintf("%s %s", text.Yellow("[warn]"), fmt.Sprint(fmt.Sprint(str...), "\n")))
 }
 
 func Warnf(format string, str ...interface{}) {

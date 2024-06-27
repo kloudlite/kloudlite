@@ -1,4 +1,4 @@
-package client
+package fileclient
 
 import (
 	"errors"
@@ -64,92 +64,6 @@ type InfraContexts struct {
 type ExtraData struct {
 	BaseUrl      string          `json:"baseUrl"`
 	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
-	// DeviceDns    string          `json:"deviceDns"`
-	// backupDns
-	BackupDns    []string `json:"dns"`
-	Loading      bool     `json:"loading"`
-	VpnConnected bool     `json:"vpnConnected"`
-
-	// TODO: don't have any idea about this field, needs to remove if not required
-	ActiveCluster string `json:"activeCluster"`
-	// SearchDomainAdded bool   `json:"searchDomainAdded"`
-	// DnsAdded          bool            `json:"dnsAdded"`
-	// DnsValues         []string        `json:"dnsValues"`
-}
-
-// func GetDeviceDns() (string, error) {
-// 	extraData, err := GetExtraData()
-// 	if err != nil {
-// 		return "", functions.NewE(err)
-// 	}
-
-// 	return extraData.DeviceDns, nil
-// }
-
-// func SetDeviceDns(dns string) error {
-// 	extraData, err := GetExtraData()
-// 	if err != nil {
-// 		return functions.NewE(err)
-// 	}
-
-// 	extraData.DeviceDns = dns
-
-// 	file, err := yaml.Marshal(extraData)
-// 	if err != nil {
-// 		return functions.NewE(err)
-// 	}
-
-// 	return writeOnUserScope(ExtraDataFileName, file)
-// }
-
-func GetActiveCluster() (string, error) {
-	extraData, err := GetExtraData()
-	if err != nil {
-		return "", functions.NewE(err)
-	}
-
-	return extraData.ActiveCluster, nil
-}
-
-func SetActiveCluster(devCluster string) error {
-	extraData, err := GetExtraData()
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	extraData.ActiveCluster = devCluster
-
-	file, err := yaml.Marshal(extraData)
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	return writeOnUserScope(ExtraDataFileName, file)
-}
-
-func GetDns() ([]string, error) {
-	extraData, err := GetExtraData()
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	return extraData.BackupDns, nil
-}
-
-func SetDns(dns []string) error {
-	extraData, err := GetExtraData()
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	extraData.BackupDns = dns
-
-	file, err := yaml.Marshal(extraData)
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	return writeOnUserScope(ExtraDataFileName, file)
 }
 
 func GetUserHomeDir() (string, error) {
@@ -188,6 +102,9 @@ func GetUserHomeDir() (string, error) {
 }
 
 func GetConfigFolder() (configFolder string, err error) {
+	if InsideBox() {
+		return path.Join("/.cache", "/kl"), nil
+	}
 	homePath, err := GetUserHomeDir()
 	if err != nil {
 		return "", functions.NewE(err)
@@ -462,24 +379,4 @@ func ReadFile(name string) ([]byte, error) {
 	}
 
 	return file, nil
-}
-
-func IsLoading() (bool, error) {
-	extraData, err := GetExtraData()
-	if err != nil {
-		return false, err
-	}
-
-	return extraData.Loading, nil
-}
-
-func SetLoading(loading bool) error {
-	extraData, err := GetExtraData()
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	extraData.Loading = loading
-
-	return SaveExtraData(extraData)
 }

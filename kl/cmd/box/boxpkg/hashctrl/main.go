@@ -3,6 +3,7 @@ package hashctrl
 import (
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -10,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/packagectrl"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -25,7 +26,7 @@ func keys[K comparable, V any](m map[K]V) []K {
 	return keys
 }
 
-func generateBoxHashContent(envName string, path string, klFile *client.KLFileType) ([]byte, error) {
+func generateBoxHashContent(envName string, path string, klFile *fileclient.KLFileType) ([]byte, error) {
 
 	persistedConfig, err := generatePersistedEnv(klFile, envName, path)
 	if err != nil {
@@ -70,7 +71,7 @@ func BoxHashFile(workspacePath string) (*PersistedEnv, error) {
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
-	configFolder, err := client.GetConfigFolder()
+	configFolder, err := fileclient.GetConfigFolder()
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
@@ -94,7 +95,7 @@ func BoxHashFile(workspacePath string) (*PersistedEnv, error) {
 }
 
 func BoxHashFileName(path string) (string, error) {
-	if os.Getenv("IN_DEV_BOX") == "true" {
+	if fileclient.InsideBox() {
 		path = os.Getenv("KL_WORKSPACE")
 	}
 
@@ -109,13 +110,13 @@ func BoxHashFileName(path string) (string, error) {
 func SyncBoxHash(fpath string) error {
 	defer spinner.Client.UpdateMessage("validating kl.yml and kl.lock")()
 
-	klFile, err := client.GetKlFile(path.Join(fpath, "kl.yml"))
+	klFile, err := fileclient.GetKlFile(path.Join(fpath, "kl.yml"))
 	if err != nil {
 		return fn.NewE(err)
 	}
 	envName := ""
-	e, err := client.EnvOfPath(fpath)
-	if err != nil && err.Error() == "no selected environment" {
+	e, err := fileclient.EnvOfPath(fpath)
+	if err != nil && errors.Is(err, fileclient.NoEnvSelected) {
 		envName = klFile.DefaultEnv
 	} else if err != nil {
 		return fn.NewE(err)
@@ -126,7 +127,7 @@ func SyncBoxHash(fpath string) error {
 		return fn.Error("envName is required")
 	}
 
-	configFolder, err := client.GetConfigFolder()
+	configFolder, err := fileclient.GetConfigFolder()
 	if err != nil {
 		return fn.NewE(err)
 	}
@@ -152,11 +153,11 @@ func SyncBoxHash(fpath string) error {
 	return nil
 }
 
-func GenerateKLConfigHash(kf *client.KLFileType) (string, error) {
+func GenerateKLConfigHash(kf *fileclient.KLFileType) (string, error) {
 	defer spinner.Client.UpdateMessage("validating kl.yml and parsing environment variables")()
 
 	klConfhash := md5.New()
-	slices.SortFunc(kf.EnvVars, func(a, b client.EnvType) int {
+	slices.SortFunc(kf.EnvVars, func(a, b fileclient.EnvType) int {
 		return strings.Compare(a.Key, b.Key)
 	})
 	for _, v := range kf.EnvVars {
@@ -209,9 +210,9 @@ func GenerateKLConfigHash(kf *client.KLFileType) (string, error) {
 	return fmt.Sprintf("%x", klConfhash.Sum(nil)), nil
 }
 
-func generatePersistedEnv(kf *client.KLFileType, envName string, path string) (*PersistedEnv, error) {
+func generatePersistedEnv(kf *fileclient.KLFileType, envName string, path string) (*PersistedEnv, error) {
 
-	envs, mm, err := server.GetLoadMaps()
+	envs, mm, err := apiclient.GetLoadMaps()
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
@@ -245,11 +246,10 @@ func generatePersistedEnv(kf *client.KLFileType, envName string, path string) (*
 		ev[ne.Key] = ne.Value
 	}
 
-	e, err := client.EnvOfPath(path)
+	e, err := fileclient.EnvOfPath(path)
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
-
 	ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", envName, "❯")
 	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.svc.%s.local", e.TargetNs, e.ClusterName)
 

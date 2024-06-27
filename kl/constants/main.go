@@ -3,7 +3,7 @@ package constants
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 )
 
 const (
@@ -20,7 +20,7 @@ var (
 	BaseURL = func() string {
 		baseUrl := DefaultBaseURL
 
-		s, err := client.GetBaseURL()
+		s, err := fileclient.GetBaseURL()
 		if err == nil && s != "" {
 			baseUrl = s
 		}

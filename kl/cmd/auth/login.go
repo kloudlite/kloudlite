@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
@@ -17,7 +17,7 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "login to kloudlite",
 	Run: func(_ *cobra.Command, _ []string) {
-		loginId, err := server.CreateRemoteLogin()
+		loginId, err := apiclient.CreateRemoteLogin()
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -47,7 +47,7 @@ var loginCmd = &cobra.Command{
 			}
 		}()
 
-		if err = server.Login(loginId); err != nil {
+		if err = apiclient.Login(loginId); err != nil {
 			fn.PrintError(err)
 			return
 		}

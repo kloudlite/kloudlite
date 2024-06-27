@@ -1,4 +1,4 @@
-package client
+package fileclient
 
 import (
 	"fmt"

@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	cl "github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -17,7 +17,7 @@ import (
 
 var errContainerNotStarted = fmt.Errorf("container not started")
 
-func (c *client) Start(klConfig *cl.KLFileType) error {
+func (c *client) Start(klConfig *fileclient.KLFileType) error {
 	defer spinner.Client.UpdateMessage("initiating container please wait")()
 
 	if err := c.ensureKloudliteNetwork(); err != nil {
@@ -62,7 +62,7 @@ func (c *client) Start(klConfig *cl.KLFileType) error {
 		return fn.NewE(err)
 	}
 
-	vpnCfg, err := server.GetAccVPNConfig(klConfig.AccountName)
+	vpnCfg, err := apiclient.GetAccVPNConfig(klConfig.AccountName)
 	if err != nil {
 		return functions.NewE(err)
 	}

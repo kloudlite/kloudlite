@@ -1,10 +1,10 @@
-package server
+package apiclient
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/sshclient"
@@ -53,7 +53,7 @@ func ListApps(options ...fn.Option) ([]App, error) {
 
 	envName := fn.GetOption(options, "envName")
 
-	env, err := EnsureEnv(&client.Env{
+	env, err := EnsureEnv(&fileclient.Env{
 		Name: envName,
 	}, options...)
 	if err != nil {
@@ -147,7 +147,7 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 	}
 
 	if devName == "" {
-		ctx, err := client.GetDeviceContext()
+		ctx, err := fileclient.GetDeviceContext()
 		if err != nil {
 			return functions.NewE(err)
 		}

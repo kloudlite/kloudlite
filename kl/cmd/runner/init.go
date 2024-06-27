@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/domain/apiclient"
 	confighandler "github.com/kloudlite/kl/pkg/config-handler"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -21,11 +21,11 @@ var InitCommand = &cobra.Command{
 	Short: "initialize a kl-config file",
 	Long:  `use this command to initialize a kl-config file`,
 	Run: func(_ *cobra.Command, _ []string) {
-		if os.Getenv("IN_DEV_BOX") == "true" {
+		if fileclient.InsideBox() {
 			fn.PrintError(functions.Error("cannot re-initialize workspace in dev box"))
 			return
 		}
-		_, err := client.GetKlFile("")
+		_, err := fileclient.GetKlFile("")
 		if err == nil {
 			fn.Printf(text.Yellow("Workspace is already initilized. Do you want to override? (y/N): "))
 			if !fn.Confirm("Y", "N") {
@@ -44,13 +44,13 @@ var InitCommand = &cobra.Command{
 			if selectedEnv, err := selectEnv(*selectedAccount); err != nil {
 				fn.PrintError(err)
 			} else {
-				newKlFile := client.KLFileType{
+				newKlFile := fileclient.KLFileType{
 					AccountName: *selectedAccount,
 					DefaultEnv:  *selectedEnv,
 					Version:     "v1",
 					Packages:    []string{"neovim", "git"},
 				}
-				if err := client.WriteKLFile(newKlFile); err != nil {
+				if err := fileclient.WriteKLFile(newKlFile); err != nil {
 					fn.PrintError(err)
 				} else {
 					fn.Printf(text.Green("Workspace initialized successfully.\n"))
@@ -72,10 +72,10 @@ var InitCommand = &cobra.Command{
 }
 
 func selectAccount() (*string, error) {
-	if accounts, err := server.ListAccounts(); err == nil {
+	if accounts, err := apiclient.ListAccounts(); err == nil {
 		if selectedAccount, err := fzf.FindOne(
 			accounts,
-			func(account server.Account) string {
+			func(account apiclient.Account) string {
 				return account.Metadata.Name + " #" + account.Metadata.Name
 			},
 			fzf.WithPrompt("select kloudlite team > "),
@@ -90,12 +90,12 @@ func selectAccount() (*string, error) {
 }
 
 func selectEnv(accountName string) (*string, error) {
-	if envs, err := server.ListEnvs([]fn.Option{
+	if envs, err := apiclient.ListEnvs([]fn.Option{
 		fn.MakeOption("accountName", accountName),
 	}...); err == nil {
 		if selectedEnv, err := fzf.FindOne(
 			envs,
-			func(env server.Env) string {
+			func(env apiclient.Env) string {
 				return env.Metadata.Name + " #" + env.Metadata.Name
 			},
 			fzf.WithPrompt("select environment > "),

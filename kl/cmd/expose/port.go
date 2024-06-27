@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -35,7 +35,7 @@ func exposePorts(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return functions.NewE(err)
 	}
-	klFile, err := client.GetKlFile("")
+	klFile, err := fileclient.GetKlFile("")
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -54,7 +54,7 @@ func exposePorts(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := client.WriteKLFile(*klFile); err != nil {
+	if err := fileclient.WriteKLFile(*klFile); err != nil {
 		return functions.NewE(err)
 	}
 

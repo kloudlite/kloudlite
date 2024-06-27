@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 
@@ -25,7 +25,7 @@ var addCmd = &cobra.Command{
 }
 
 func addPackages(cmd *cobra.Command, args []string) error {
-	klConf, err := client.GetKlFile("")
+	klConf, err := fileclient.GetKlFile("")
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -50,7 +50,7 @@ func addPackages(cmd *cobra.Command, args []string) error {
 	}
 
 	klConf.Packages = append(klConf.Packages, name)
-	err = client.WriteKLFile(*klConf)
+	err = fileclient.WriteKLFile(*klConf)
 	if err != nil {
 		return functions.NewE(err)
 	}

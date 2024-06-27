@@ -1,9 +1,9 @@
-package server
+package apiclient
 
 import (
 	"encoding/json"
 
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 )
 
@@ -16,7 +16,7 @@ type User struct {
 var authSecret string
 
 func getCookie(options ...functions.Option) (string, error) {
-	return client.GetCookieString(options...)
+	return fileclient.GetCookieString(options...)
 }
 
 type Response[T any] struct {

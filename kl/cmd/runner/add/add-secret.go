@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -42,12 +42,12 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		name = args[0]
 	}
 
-	klFile, err := client.GetKlFile(filePath)
+	klFile, err := fileclient.GetKlFile(filePath)
 	if err != nil {
 		return fn.NewE(err)
 	}
 
-	secrets, err := server.ListSecrets([]fn.Option{
+	secrets, err := apiclient.ListSecrets([]fn.Option{
 		fn.MakeOption("accountName", klFile.AccountName),
 	}...)
 	if err != nil {
@@ -55,10 +55,10 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(secrets) == 0 {
-		return fmt.Errorf("no secrets created yet on server")
+		return fmt.Errorf("no secrets created yet on apiclient")
 	}
 
-	selectedSecretGroup := server.Secret{}
+	selectedSecretGroup := apiclient.Secret{}
 
 	if name != "" {
 		for _, c := range secrets {
@@ -72,7 +72,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	} else {
 		selectedGroup, err := fzf.FindOne(
 			secrets,
-			func(item server.Secret) string {
+			func(item apiclient.Secret) string {
 				return item.Metadata.Name
 			},
 			fzf.WithPrompt("Select Secret Group >"),
@@ -160,7 +160,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		}
 
 		if matchedKeyIndex == -1 {
-			currSecs[matchedGroupIndex].Env = append(currSecs[matchedGroupIndex].Env, client.ResEnvType{
+			currSecs[matchedGroupIndex].Env = append(currSecs[matchedGroupIndex].Env, fileclient.ResEnvType{
 				Key: RenameKey(func() string {
 					if m != "" {
 						kk := strings.Split(m, "=")
@@ -172,9 +172,9 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 			})
 		}
 	} else {
-		currSecs = append(currSecs, client.ResType{
+		currSecs = append(currSecs, fileclient.ResType{
 			Name: selectedSecretGroup.Metadata.Name,
-			Env: []client.ResEnvType{
+			Env: []fileclient.ResEnvType{
 				{
 					Key: RenameKey(func() string {
 						if m != "" {
@@ -190,8 +190,8 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 
 	}
 
-	klFile.EnvVars.AddResTypes(currSecs, client.Res_secret)
-	err = client.WriteKLFile(*klFile)
+	klFile.EnvVars.AddResTypes(currSecs, fileclient.Res_secret)
+	err = fileclient.WriteKLFile(*klFile)
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -207,11 +207,11 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return functions.NewE(err)
 	}
 
-	//if err := server.SyncDevboxJsonFile(); err != nil {
+	//if err := apiclient.SyncDevboxJsonFile(); err != nil {
 	//	return functions.NewE(err)
 	//}
 	//
-	//if err := client.SyncDevboxShellEnvFile(cmd); err != nil {
+	//if err := fileclient.SyncDevboxShellEnvFile(cmd); err != nil {
 	//	return functions.NewE(err)
 	//}
 	return nil

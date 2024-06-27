@@ -1,7 +1,7 @@
 package box
 
 import (
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/spf13/cobra"
 )
 
@@ -9,31 +9,31 @@ var BoxCmd = &cobra.Command{
 	Use:   "box",
 	Short: "start, stop, reload, ssh and get running box info",
 	//PersistentPreRun: func(cmd *cobra.Command, args []string) {
-	//	server.EnsureBoxHash()
+	//	apiclient.EnsureBoxHash()
 	//},
 }
 
 func init() {
 
-	//client.OnlyInsideBox(reloadCmd)
+	//fileclient.OnlyInsideBox(reloadCmd)
 	BoxCmd.AddCommand(reloadCmd)
 
-	client.OnlyOutsideBox(startCmd)
+	fileclient.OnlyOutsideBox(startCmd)
 	BoxCmd.AddCommand(startCmd)
 
-	client.OnlyOutsideBox(stopAllCmd)
+	fileclient.OnlyOutsideBox(stopAllCmd)
 	BoxCmd.AddCommand(stopAllCmd)
 
-	client.OnlyOutsideBox(sshCmd)
+	fileclient.OnlyOutsideBox(sshCmd)
 	BoxCmd.AddCommand(sshCmd)
 
-	client.OnlyOutsideBox(execCmd)
+	fileclient.OnlyOutsideBox(execCmd)
 	BoxCmd.AddCommand(execCmd)
 
-	client.OnlyOutsideBox(stopCmd)
+	fileclient.OnlyOutsideBox(stopCmd)
 	BoxCmd.AddCommand(stopCmd)
 
-	client.OnlyOutsideBox(psCmd)
+	fileclient.OnlyOutsideBox(psCmd)
 	BoxCmd.AddCommand(psCmd)
 
 	BoxCmd.AddCommand(infoCmd)

@@ -1,7 +1,7 @@
 package intercept
 
 import (
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +26,7 @@ Examples:
 		}
 
 		if ns == "" {
-			e, err := server.EnsureEnv(nil)
+			e, err := apiclient.EnsureEnv(nil)
 			if err != nil {
 				fn.PrintError(err)
 				return
@@ -35,7 +35,7 @@ Examples:
 			ns = e.TargetNs
 		}
 
-		if err := server.InterceptApp(false, nil, []fn.Option{
+		if err := apiclient.InterceptApp(false, nil, []fn.Option{
 			fn.MakeOption("appName", app),
 		}...); err != nil {
 			fn.PrintError(err)
