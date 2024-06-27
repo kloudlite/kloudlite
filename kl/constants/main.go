@@ -12,11 +12,6 @@ const (
 	RuntimeDarwin  = "darwin"
 	RuntimeWindows = "windows"
 
-	BashShell  = "bash"
-	FishShell  = "fish"
-	ZshShell   = "zsh"
-	PowerShell = "powershell"
-
 	SocatImage     = "ghcr.io/kloudlite/hub/socat:latest"
 	WireguardImage = "ghcr.io/kloudlite/hub/wireguard:latest"
 )

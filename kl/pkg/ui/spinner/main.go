@@ -17,6 +17,10 @@ type Spinner struct {
 	started bool
 }
 
+func (s *Spinner) SetVerbose(verbose bool) {
+	s.verbose = verbose
+}
+
 func (s *Spinner) start() {
 	s.started = true
 	if !s.verbose {

@@ -18,7 +18,7 @@ import (
 var errContainerNotStarted = fmt.Errorf("container not started")
 
 func (c *client) Start(klConfig *cl.KLFileType) error {
-	defer spinner.Client.UpdateMessage("initiating container please wait", c.verbose)()
+	defer spinner.Client.UpdateMessage("initiating container please wait")()
 
 	if err := c.ensureKloudliteNetwork(); err != nil {
 		return fn.NewE(err)

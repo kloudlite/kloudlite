@@ -14,6 +14,10 @@ import (
 var rootCmd = &cobra.Command{
 	Use: flags.CliName,
 	PersistentPreRun: func(*cobra.Command, []string) {
+		if s, ok := os.LookupEnv("KL_DEV"); ok && s == "true" {
+			flags.DevMode = "true"
+		}
+
 		sigChan := make(chan os.Signal, 1)
 
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)

@@ -11,6 +11,7 @@ import (
 	cl "github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/spf13/cobra"
 )
 
@@ -25,8 +26,6 @@ type client struct {
 	containerName string
 
 	env *cl.Env
-
-	// klConfig *cl.KLFileType
 
 	configFolder string
 	userHomeDir  string
@@ -79,6 +78,8 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		return nil, functions.NewE(err)
 	}
 
+	spinner.Client.SetVerbose(verbose)
+
 	return &client{
 		cli:           cli,
 		cmd:           cmd,
@@ -88,8 +89,7 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		cwd:           cwd,
 		containerName: contName,
 		env:           env,
-		// klConfig:      klConfig,
-		configFolder: configFolder,
-		userHomeDir:  userHomeDir,
+		configFolder:  configFolder,
+		userHomeDir:   userHomeDir,
 	}, nil
 }
