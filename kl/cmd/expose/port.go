@@ -1,7 +1,6 @@
 package expose
 
 import (
-	"errors"
 	"os"
 	"slices"
 	"strconv"
@@ -42,7 +41,7 @@ func exposePorts(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(args) == 0 {
-		return functions.NewE(errors.New("no ports provided. please provide ports using "+text.Yellow("kl expose port 8080 3000")))
+		return functions.Errorf("no ports provided. please provide ports using %s", text.Yellow("kl expose port 8080 3000"))
 	}
 
 	for _, arg := range args {
