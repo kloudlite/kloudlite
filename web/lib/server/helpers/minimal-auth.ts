@@ -53,10 +53,6 @@ export const minimalAuth = async (ctx: IExtRemixCtx) => {
     return redirect(`${authBaseUrl}/verify-email`);
   }
 
-  if (whoAmI.data && !whoAmI.data.approved) {
-    return redirect(`${consoleBaseUrl}/invite-code`);
-  }
-
   ctx.authProps = (props: MapType) => {
     return {
       ...props,

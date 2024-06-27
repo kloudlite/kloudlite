@@ -3633,14 +3633,6 @@ export type ConsoleDeleteAccountMembershipMutation = {
   accounts_removeAccountMembership: boolean;
 };
 
-export type ConsoleVerifyInviteCodeMutationVariables = Exact<{
-  invitationCode: Scalars['String']['input'];
-}>;
-
-export type ConsoleVerifyInviteCodeMutation = {
-  auth_verifyInviteCode: boolean;
-};
-
 export type ConsoleGetCredTokenQueryVariables = Exact<{
   username: Scalars['String']['input'];
 }>;
