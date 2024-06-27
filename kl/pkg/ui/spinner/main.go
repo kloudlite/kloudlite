@@ -6,13 +6,16 @@ import (
 
 	"github.com/briandowns/spinner"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/text"
 )
+
+const inProgress = "⏳"
+const done = "✅"
 
 type Spinner struct {
 	spinner *spinner.Spinner
 	message string
 	verbose bool
+	quiet   bool
 
 	started bool
 }
@@ -21,24 +24,36 @@ func (s *Spinner) SetVerbose(verbose bool) {
 	s.verbose = verbose
 }
 
+func (s *Spinner) SetQuiet(quiet bool) {
+	s.quiet = quiet
+}
+
 func (s *Spinner) start() {
+	if s.quiet {
+		return
+	}
+
 	s.started = true
 	if !s.verbose {
 		s.spinner.Start()
 		return
 	}
 
-	fn.Logf("[%s] %s", text.Blue("+"), s.message)
+	fn.Logf("[%s] %s\n", inProgress, s.message)
 }
 
 func (s *Spinner) stop() {
+	if s.quiet {
+		return
+	}
+
 	s.started = false
 	if !s.verbose {
 		s.spinner.Stop()
 		return
 	}
 
-	fn.Logf("[%s] %s", text.Blue("-"), s.message)
+	fn.Logf("[%s] %s\n", done, s.message)
 }
 
 func (s *Spinner) Started() bool {
@@ -46,9 +61,12 @@ func (s *Spinner) Started() bool {
 }
 
 func (s *Spinner) Start(msg ...string) func() {
-	s.start()
+	if s.quiet {
+		return s.stop
+	}
 
 	if len(msg) > 0 && s.message != msg[0] {
+		s.message = msg[0]
 		s.UpdateMessage(msg[0])
 	}
 
@@ -59,6 +77,9 @@ func (s *Spinner) Stop() {
 }
 
 func (s *Spinner) UpdateMessage(msg string, verbose ...bool) func() {
+	if s.quiet {
+		return s.stop
+	}
 
 	if len(verbose) > 0 {
 		s.verbose = verbose[0]
@@ -76,7 +97,7 @@ func (s *Spinner) UpdateMessage(msg string, verbose ...bool) func() {
 	if !s.verbose {
 		s.spinner.Restart()
 	} else {
-		fn.Logf("[%s] %s", text.Blue("+"), s.message)
+		fn.Logf("[%s] %s\n", inProgress, s.message)
 	}
 
 	return func() {
@@ -86,10 +107,10 @@ func (s *Spinner) UpdateMessage(msg string, verbose ...bool) func() {
 			if !s.verbose {
 				s.spinner.Restart()
 			} else {
-				fn.Logf("[%s] %s", text.Yellow("-"), om)
+				fn.Logf("[%s] %s\n", done, om)
 			}
 		} else {
-			// fmt.Print("\033c")
+			s.spinner.Stop()
 		}
 	}
 }

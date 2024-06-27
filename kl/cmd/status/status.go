@@ -55,7 +55,7 @@ var Cmd = &cobra.Command{
 
 			ip, err := client.CurrentDeviceIp()
 			if err == nil {
-				fn.Logf("%s %s", text.Bold(text.Blue("Device IP:")), *ip)
+				fn.Logf("%s %s\n", text.Bold(text.Blue("Device IP:")), *ip)
 			}
 		}
 	},

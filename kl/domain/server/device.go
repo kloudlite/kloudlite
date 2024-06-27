@@ -86,7 +86,7 @@ func createDevice(devName string) (*Device, error) {
 		dn = cn.SuggestedNames[0]
 	}
 
-	fn.Logf("creating new device %s", dn)
+	fn.Logf("creating new device %s\n", dn)
 	respData, err := klFetch("cli_createGlobalVPNDevice", map[string]any{
 		"gvpnDevice": map[string]any{
 			"metadata":       map[string]string{"name": dn},

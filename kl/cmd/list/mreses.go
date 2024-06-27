@@ -55,5 +55,4 @@ func init() {
 	mresCmd.Aliases = append(secretsCmd.Aliases, "mres")
 	mresCmd.Aliases = append(secretsCmd.Aliases, "managed-resources")
 	mresCmd.Aliases = append(secretsCmd.Aliases, "mresources")
-	fn.WithOutputVariant(mresCmd)
 }

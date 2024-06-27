@@ -29,18 +29,29 @@ func addPackages(cmd *cobra.Command, args []string) error {
 	if name == "" && len(args) > 0 {
 		name = args[0]
 	}
+
 	if name == "" {
 		return functions.Error("name is required")
 	}
+
+	p, err := Resolve(cmd.Context(), name)
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	name = p
+
 	klConf, err := client.GetKlFile("")
 	if slices.Contains(klConf.Packages, name) {
 		return nil
 	}
+
 	klConf.Packages = append(klConf.Packages, name)
 	err = client.WriteKLFile(*klConf)
 	if err != nil {
 		return functions.NewE(err)
 	}
+
 	fn.Println(fmt.Sprintf("Package %s is added successfully", name))
 
 	cwd, err := os.Getwd()
@@ -51,6 +62,7 @@ func addPackages(cmd *cobra.Command, args []string) error {
 	if err := hashctrl.SyncBoxHash(cwd); err != nil {
 		return functions.NewE(err)
 	}
+
 	return nil
 }
 

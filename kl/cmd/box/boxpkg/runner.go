@@ -240,9 +240,9 @@ func (c *client) readTillLine(ctx context.Context, containerId string, desiredLi
 		if c.verbose {
 			switch stream {
 			case "stderr":
-				fn.Logf("%s: %s", text.Yellow("[stderr]"), line)
+				fn.Logf("%s: %s\n", text.Yellow("[stderr]"), line)
 			default:
-				fn.Logf("%s: %s", text.Blue("[stdout]"), line)
+				fn.Logf("%s: %s\n", text.Blue("[stdout]"), line)
 			}
 		}
 	}

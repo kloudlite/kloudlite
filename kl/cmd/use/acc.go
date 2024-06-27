@@ -37,7 +37,7 @@ var accCmd = &cobra.Command{
 			return
 		}
 
-		fn.Logf("%s %s", text.Blue(text.Bold("\nSelected Account:")), acc.Metadata.Name)
+		fn.Logf("%s %s\n", text.Blue(text.Bold("\nSelected Account:")), acc.Metadata.Name)
 	},
 }
 

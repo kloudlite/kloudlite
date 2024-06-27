@@ -40,6 +40,5 @@ func init() {
 }
 
 func setBoxCommonFlags(cmd *cobra.Command) {
-	cmd.Flags().BoolP("verbose", "v", false, "run in verbose mode")
 	cmd.Flags().BoolP("foreground", "f", false, "run in foreground mode")
 }

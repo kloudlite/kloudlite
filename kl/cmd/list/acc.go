@@ -67,6 +67,4 @@ func listAccounts(cmd *cobra.Command) error {
 
 func init() {
 	accCmd.Aliases = append(accCmd.Aliases, "acc", "account")
-
-	fn.WithOutputVariant(accCmd)
 }

@@ -70,6 +70,4 @@ func init() {
 	configsCmd.Aliases = append(configsCmd.Aliases, "conf")
 
 	configsCmd.Flags().StringP("env", "e", "", "environment name")
-
-	fn.WithOutputVariant(configsCmd)
 }

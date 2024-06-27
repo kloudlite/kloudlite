@@ -58,5 +58,4 @@ func listapps(cmd *cobra.Command, _ []string) error {
 func init() {
 	appsCmd.Aliases = append(appsCmd.Aliases, "app")
 	appsCmd.Flags().StringP("env", "e", "", "environment name")
-	fn.WithOutputVariant(appsCmd)
 }

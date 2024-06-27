@@ -9,9 +9,9 @@ import (
 
 	dockerclient "github.com/docker/docker/client"
 	cl "github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/flags"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +56,6 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 	}
 
 	foreground := fn.ParseBoolFlag(cmd, "foreground")
-	verbose := fn.ParseBoolFlag(cmd, "verbose")
 	cwd, _ := os.Getwd()
 
 	hash := md5.New()
@@ -78,14 +77,12 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		return nil, functions.NewE(err)
 	}
 
-	spinner.Client.SetVerbose(verbose)
-
 	return &client{
 		cli:           cli,
 		cmd:           cmd,
 		args:          args,
 		foreground:    foreground,
-		verbose:       verbose,
+		verbose:       flags.IsVerbose,
 		cwd:           cwd,
 		containerName: contName,
 		env:           env,

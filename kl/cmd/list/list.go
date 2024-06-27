@@ -30,4 +30,6 @@ func init() {
 
 	InfraCmd.AddCommand(accCmd)
 	InfraCmd.Aliases = append(InfraCmd.Aliases, "ls")
+
+	Cmd.PersistentFlags().StringP("output", "o", "table", "output format [table | json | yaml]")
 }

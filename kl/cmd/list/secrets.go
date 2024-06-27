@@ -54,5 +54,4 @@ func printSecrets(_ *cobra.Command, secrets []server.Secret) error {
 func init() {
 	secretsCmd.Aliases = append(secretsCmd.Aliases, "secret")
 	secretsCmd.Aliases = append(secretsCmd.Aliases, "sec")
-	fn.WithOutputVariant(secretsCmd)
 }

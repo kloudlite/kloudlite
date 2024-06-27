@@ -53,16 +53,15 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	fmt.Println(table.Table(&header, rows))
+	fmt.Println(table.Table(&header, rows, cmd))
 
 	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
 		table.TotalResults(len(envs), true)
 	}
-	table.TotalResults(len(envs), true)
+
 	return nil
 }
 
 func init() {
-	fn.WithOutputVariant(envCmd)
 	envCmd.Aliases = append(envCmd.Aliases, "env")
 }

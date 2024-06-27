@@ -1,11 +1,17 @@
 package functions
 
 import (
+	"context"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/kloudlite/kl/flags"
 )
 
 func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
@@ -90,13 +96,48 @@ func WinSudoExec(cmdString string, env map[string]string) ([]byte, error) {
 }
 
 func Confirm(yes string, defaultValue string) bool {
+
 	var response string
-	_, _ = fmt.Scanln(&response)
-	if response == "" {
-		if defaultValue == "" {
-			return false
-		}
+
+	if flags.IsQuiet {
 		response = defaultValue
+	} else {
+		_, _ = fmt.Scanln(&response)
+		if response == "" {
+			if defaultValue == "" {
+				return false
+			}
+			response = defaultValue
+		}
 	}
+
 	return strings.ToLower(response) == strings.ToLower(yes)
+}
+
+func ExecGet[T any](ctx context.Context, url string) (*T, int, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, -1, Errorf("GET %s: %w", url, err)
+	}
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, -1, Errorf("GET %s: %w", url, err)
+	}
+	defer response.Body.Close()
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, -1, Errorf("GET %s: read respoonse body: %w", url, err)
+	}
+	if response.StatusCode >= 400 {
+		return nil, response.StatusCode, Errorf("GET %s: unexpected status code %s: %s",
+			url,
+			response.Status,
+			data,
+		)
+	}
+	var result T
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, response.StatusCode, Errorf("GET %s: unmarshal response JSON: %w", url, err)
+	}
+	return &result, response.StatusCode, nil
 }

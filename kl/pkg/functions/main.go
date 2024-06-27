@@ -12,8 +12,8 @@ import (
 	"github.com/kloudlite/kl/flags"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/martinlindhe/notify"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/ztrue/tracerr"
 )
 
 type Option struct {
@@ -43,8 +43,20 @@ func PrintError(err error) {
 		return
 	}
 
+	type stackTracer interface {
+		StackTrace() errors.StackTrace
+	}
+
 	if flags.IsDev() {
-		tracerr.PrintSourceColor(err)
+		_, _ = os.Stderr.WriteString(fmt.Sprintf("%s %s\n\n", text.Red("[error]:"), err.Error()))
+
+		if err, ok := err.(stackTracer); ok {
+			st := err.StackTrace()
+			fmt.Printf("%s%+v", text.Bold("Stack Trace:"), st)
+			return
+		}
+
+		fmt.Printf("%s\n%+v\n", text.Bold("Stack Trace:"), err)
 		return
 	}
 
@@ -56,22 +68,41 @@ func Log(str ...interface{}) {
 }
 
 func Warn(str ...interface{}) {
+	if flags.IsQuiet {
+		return
+	}
 	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprintf("%s %s", text.Yellow("[warn]:"), fmt.Sprint(fmt.Sprint(str...), "\n")))
 }
 
 func Warnf(format string, str ...interface{}) {
+	if flags.IsQuiet {
+		return
+	}
+
 	Warn(fmt.Sprintf("%s", fmt.Sprintf(format, str...)))
 }
 
 func Logf(format string, str ...interface{}) {
-	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprintf(fmt.Sprint(format, "\n"), str...))
+	if flags.IsQuiet {
+		return
+	}
+
+	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprintf(fmt.Sprint(format), str...))
 }
 
 func Printf(format string, str ...interface{}) {
+	if flags.IsQuiet {
+		return
+	}
+
 	_, _ = fmt.Fprintf(os.Stdout, format, str...)
 }
 
 func Println(str ...interface{}) {
+	if flags.IsQuiet {
+		return
+	}
+
 	_, _ = fmt.Println(str...)
 }
 
@@ -335,16 +366,16 @@ func CopyFile(src, dst string) error {
 
 func NewE(err error, s ...string) error {
 	if len(s) == 0 {
-		return tracerr.Wrap(err)
+		return errors.WithStack(err)
 	}
 
-	return tracerr.Wrap(fmt.Errorf("%s as [%w]", s[0], err))
+	return errors.WithStack(fmt.Errorf("%s as [%w]", s[0], err))
 }
 
 func Error(s string) error {
-	return tracerr.Wrap(fmt.Errorf(s))
+	return errors.WithStack(fmt.Errorf(s))
 }
 
 func Errorf(format string, args ...interface{}) error {
-	return tracerr.Wrap(fmt.Errorf(format, args...))
+	return errors.WithStack(fmt.Errorf(format, args...))
 }
