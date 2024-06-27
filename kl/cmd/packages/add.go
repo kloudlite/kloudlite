@@ -45,12 +45,7 @@ func addPackages(cmd *cobra.Command, args []string) error {
 	}
 
 	name = p
-  klConf, err := client.GetKlFile("")
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-  if slices.Contains(klConf.Packages, name) {
+	if slices.Contains(klConf.Packages, name) {
 		return nil
 	}
 
@@ -76,5 +71,4 @@ func addPackages(cmd *cobra.Command, args []string) error {
 
 func init() {
 	addCmd.Flags().StringP("name", "n", "", "name of the package to install")
-	addCmd.Flags().BoolP("verbose", "v", false, "name of the package to install")
 }
