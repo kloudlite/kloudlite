@@ -23,6 +23,11 @@ func (a *AccountVpnConfig) Unmarshal(b []byte) error {
 }
 
 func (c *fclient) GetVpnAccountConfig(account string) (*AccountVpnConfig, error) {
+
+	if account == "" {
+		return nil, fn.Error("account is required")
+	}
+
 	cfgFolder := c.configPath
 
 	if err := os.MkdirAll(path.Join(cfgFolder, "vpn"), 0755); err != nil {
@@ -48,6 +53,10 @@ func (c *fclient) GetVpnAccountConfig(account string) (*AccountVpnConfig, error)
 }
 
 func (c *fclient) SetVpnAccountConfig(account string, avc *AccountVpnConfig) error {
+	if account == "" {
+		return fn.Error("account is required")
+	}
+
 	cfgFolder := c.configPath
 
 	if err := os.MkdirAll(path.Join(cfgFolder, "vpn"), 0755); err != nil {
