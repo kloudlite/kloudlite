@@ -277,6 +277,14 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 		return nil, errors.NewE(err)
 	}
 
+	externalApps, err := d.externalAppRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Sort:   nil,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	secrets, err := d.secretRepo.Find(ctx, repos.Query{
 		Filter: filters,
 		Sort:   nil,
@@ -322,15 +330,35 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 	}
 
 	for i := range apps {
+		appSpec := apps[i].Spec
+		appSpec.Intercept = nil
 		if _, err := d.createAndApplyApp(resCtx, &entities.App{
 			App: crdsv1.App{
 				TypeMeta:   apps[i].TypeMeta,
 				ObjectMeta: objectMeta(apps[i].ObjectMeta, destEnv.Spec.TargetNamespace),
-				Spec:       apps[i].Spec,
+				Spec:       appSpec,
 			},
 			AccountName:      ctx.AccountName,
 			EnvironmentName:  destEnv.Name,
 			ResourceMetadata: resourceMetadata(apps[i].DisplayName),
+			SyncStatus:       t.GenSyncStatus(t.SyncActionApply, 0),
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	for i := range externalApps {
+		externalAppSpec := externalApps[i].Spec
+		externalAppSpec.Intercept = nil
+		if _, err := d.createAndApplyExternalApp(resCtx, &entities.ExternalApp{
+			ExternalApp: crdsv1.ExternalApp{
+				TypeMeta:   externalApps[i].TypeMeta,
+				ObjectMeta: objectMeta(externalApps[i].ObjectMeta, destEnv.Spec.TargetNamespace),
+				Spec:       externalAppSpec,
+			},
+			AccountName:      ctx.AccountName,
+			EnvironmentName:  destEnv.Name,
+			ResourceMetadata: resourceMetadata(externalApps[i].DisplayName),
 			SyncStatus:       t.GenSyncStatus(t.SyncActionApply, 0),
 		}); err != nil {
 			return nil, err
