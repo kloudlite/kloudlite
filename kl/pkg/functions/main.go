@@ -388,7 +388,7 @@ func Logf(format string, str ...interface{}) {
 		return
 	}
 
-	stderr(fmt.Sprintf(fmt.Sprint(format), str...))
+	stderr(fmt.Sprintf(format, str...))
 }
 
 func Printf(format string, str ...interface{}) {
@@ -396,7 +396,7 @@ func Printf(format string, str ...interface{}) {
 		return
 	}
 
-	stdout(fmt.Sprintf(fmt.Sprint(format), str...))
+	stdout(fmt.Sprintf(format, str...))
 }
 
 func Println(str ...interface{}) {
