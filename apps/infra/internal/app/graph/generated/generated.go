@@ -200,6 +200,7 @@ type ComplexityRoot struct {
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
 		ID                func(childComplexity int) int
+		IsArchived        func(childComplexity int) int
 		Kind              func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
@@ -2244,6 +2245,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ClusterManagedService.ID(childComplexity), true
+
+	case "ClusterManagedService.isArchived":
+		if e.complexity.ClusterManagedService.IsArchived == nil {
+			break
+		}
+
+		return e.complexity.ClusterManagedService.IsArchived(childComplexity), true
 
 	case "ClusterManagedService.kind":
 		if e.complexity.ClusterManagedService.Kind == nil {
@@ -8503,6 +8511,7 @@ input ClusterIn {
   creationTime: Date!
   displayName: String!
   id: ID!
+  isArchived: Boolean
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -15474,6 +15483,47 @@ func (ec *executionContext) fieldContext_ClusterManagedService_id(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _ClusterManagedService_isArchived(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterManagedService) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ClusterManagedService_isArchived(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsArchived, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ClusterManagedService_isArchived(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ClusterManagedService",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ClusterManagedService_kind(ctx context.Context, field graphql.CollectedField, obj *entities.ClusterManagedService) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ClusterManagedService_kind(ctx, field)
 	if err != nil {
@@ -16012,6 +16062,8 @@ func (ec *executionContext) fieldContext_ClusterManagedServiceEdge_node(ctx cont
 				return ec.fieldContext_ClusterManagedService_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_ClusterManagedService_id(ctx, field)
+			case "isArchived":
+				return ec.fieldContext_ClusterManagedService_isArchived(ctx, field)
 			case "kind":
 				return ec.fieldContext_ClusterManagedService_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -44026,6 +44078,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createClusterManagedServ
 				return ec.fieldContext_ClusterManagedService_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_ClusterManagedService_id(ctx, field)
+			case "isArchived":
+				return ec.fieldContext_ClusterManagedService_isArchived(ctx, field)
 			case "kind":
 				return ec.fieldContext_ClusterManagedService_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -44138,6 +44192,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateClusterManagedServ
 				return ec.fieldContext_ClusterManagedService_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_ClusterManagedService_id(ctx, field)
+			case "isArchived":
+				return ec.fieldContext_ClusterManagedService_isArchived(ctx, field)
 			case "kind":
 				return ec.fieldContext_ClusterManagedService_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -44331,6 +44387,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_cloneClusterManagedServi
 				return ec.fieldContext_ClusterManagedService_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_ClusterManagedService_id(ctx, field)
+			case "isArchived":
+				return ec.fieldContext_ClusterManagedService_isArchived(ctx, field)
 			case "kind":
 				return ec.fieldContext_ClusterManagedService_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -51751,6 +51809,8 @@ func (ec *executionContext) fieldContext_Query_infra_getClusterManagedService(ct
 				return ec.fieldContext_ClusterManagedService_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_ClusterManagedService_id(ctx, field)
+			case "isArchived":
+				return ec.fieldContext_ClusterManagedService_isArchived(ctx, field)
 			case "kind":
 				return ec.fieldContext_ClusterManagedService_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -62522,6 +62582,8 @@ func (ec *executionContext) _ClusterManagedService(ctx context.Context, sel ast.
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "isArchived":
+			out.Values[i] = ec._ClusterManagedService_isArchived(ctx, field, obj)
 		case "kind":
 			out.Values[i] = ec._ClusterManagedService_kind(ctx, field, obj)
 		case "lastUpdatedBy":
