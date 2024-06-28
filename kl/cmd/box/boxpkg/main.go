@@ -75,7 +75,7 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		}
 		env = &fileclient.Env{
 			Name:        environment.DisplayName,
-			TargetNs:    environment.Metadata.Namespace,
+			TargetNs:    environment.Spec.TargetNamespace,
 			SSHPort:     0,
 			ClusterName: environment.ClusterName,
 		}
