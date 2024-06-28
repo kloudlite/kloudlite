@@ -48,6 +48,8 @@ echo "kloudlite-entrypoint:INSTALLING_PACKAGES"
 cat $KL_HASH_FILE | jq '.hash' -r > /tmp/hash
 cat $KL_HASH_FILE | jq '.config.env | to_entries | map_values(. = "export \(.key)=\"\(.value)\"")|.[]' -r >> /tmp/env
 cat > /tmp/mount.sh <<EOF
+set -o errexit
+set -o pipefail
 vmounts=$(cat $KL_HASH_FILE | jq '.config.mounts | length')
 if [ \$vmounts -gt 0 ]; then
   eval $(cat $KL_HASH_FILE | jq '.config.mounts | to_entries | map_values(. = "mkdir -p $(dirname \(.key))") | .[]' -r)
@@ -57,6 +59,8 @@ EOF
 sudo bash /tmp/mount.sh
 
 cat > /tmp/pkg-install.sh <<EOF
+set -o errexit
+set -o pipefail
 npkgs=$(cat $KL_HASH_FILE | jq '.config.packageHashes | length')
 if [ \$npkgs -gt 0 ]; then
   nix shell --log-format bar-with-logs $(cat $KL_HASH_FILE | jq '.config.packageHashes | to_entries | map_values(. = .value) | .[]' -r | xargs -I{} printf "%s " {}) --command echo "successfully installed packages"
