@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -19,28 +19,28 @@ func RunDocGen(cmd *cobra.Command, _ []string) error {
 	if _, er := os.Stat(fmt.Sprintf("./docs/%s", cliName)); errors.Is(er, os.ErrNotExist) {
 		err := os.MkdirAll(fmt.Sprintf("./docs/%s", cliName), os.ModePerm)
 		if err != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 
 	} else {
 		err := os.RemoveAll(fmt.Sprintf("./docs/%s", cliName))
 
 		if err != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 
 		err = os.MkdirAll(fmt.Sprintf("./docs/%s", cliName), os.ModePerm)
 		if er != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 	}
 
 	if err := doc.GenMarkdownTree(cmd, fmt.Sprintf("./docs/%s", cliName)); err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	if err := generateDocs(cmd, fmt.Sprintf("./docs/%s", cliName)); err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 	return nil
 }
@@ -62,13 +62,13 @@ func generateDocs(cmd *cobra.Command, dir string) error {
 		fmt.Sprintf("%d-%s-%d", time.Now().Day(), time.Now().Month(), time.Now().Year()))
 
 	if err := os.WriteFile(path.Join(dir, strings.ReplaceAll(cmd.CommandPath(), " ", "_")+".md"), []byte(fileContent), 0644); err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	for _, c := range cmd.Commands() {
 		err := generateDocs(c, dir)
 		if err != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 	}
 

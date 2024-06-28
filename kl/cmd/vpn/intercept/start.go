@@ -9,8 +9,8 @@ import (
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/envclient"
 	"github.com/kloudlite/kl/domain/fileclient"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
+
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +43,7 @@ func startIntercept(cmd *cobra.Command, args []string) error {
 	for _, v := range maps {
 		mp := strings.Split(v, ":")
 		if len(mp) != 2 {
-			return functions.Error("wrong map format use <server_port>:<local_port> eg: 80:3000")
+			return fn.Error("wrong map format use <server_port>:<local_port> eg: 80:3000")
 		}
 
 		pp, err := strconv.ParseInt(mp[0], 10, 32)
@@ -66,6 +66,10 @@ func startIntercept(cmd *cobra.Command, args []string) error {
 		fn.MakeOption("appName", app),
 	}...)
 
+	if err != nil {
+		return err
+	}
+
 	bc, err := boxpkg.NewClient(cmd, args)
 	if err != nil {
 		return err
@@ -87,9 +91,7 @@ func startIntercept(cmd *cobra.Command, args []string) error {
 	}
 
 	eports := []int{}
-	for _, v := range kt.Ports {
-		eports = append(eports, v)
-	}
+	eports = append(eports, kt.Ports...)
 
 	for _, v := range ports {
 		if !slices.Contains(eports, v.DevicePort) {
@@ -101,10 +103,6 @@ func startIntercept(cmd *cobra.Command, args []string) error {
 		TargetContainerPath: s,
 		ExposedPorts:        eports,
 	}); err != nil {
-		return err
-	}
-
-	if err != nil {
 		return err
 	}
 

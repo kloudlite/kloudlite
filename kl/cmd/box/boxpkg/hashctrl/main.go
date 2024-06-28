@@ -65,12 +65,6 @@ func generateBoxHashContent(envName string, fpath string, klFile *fileclient.KLF
 		return nil, fn.NewE(err)
 	}
 
-	if envclient.InsideBox() {
-		if err := os.WriteFile("/tmp/hash", []byte(hsh), os.ModePerm); err != nil {
-			return nil, fn.NewE(err)
-		}
-	}
-
 	return marshal, nil
 }
 
@@ -103,6 +97,13 @@ func BoxHashFile(workspacePath string) (*PersistedEnv, error) {
 }
 
 func BoxHashFileName(path string) (string, error) {
+	if envclient.InsideBox() {
+		p, err := envclient.GetWorkspacePath()
+		if err != nil {
+			return "", err
+		}
+		path = p
+	}
 	hash := md5.New()
 	if _, err := hash.Write([]byte(path)); err != nil {
 		return "", nil

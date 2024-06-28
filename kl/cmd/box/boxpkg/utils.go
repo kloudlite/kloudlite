@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
-	"io"
 	"math/rand"
 	"net"
 	"os"
@@ -28,8 +27,8 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/fileclient"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
+
 	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
@@ -57,7 +56,7 @@ func (c *client) ensurePublicKey() error {
 		cmd := exec.Command("ssh-keygen", "-t", "rsa", "-b", "4096", "-f", path.Join(sshPath, "id_rsa"), "-N", "")
 		err := cmd.Run()
 		if err != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 	}
 
@@ -75,7 +74,7 @@ func (c *client) ensureCacheExist() error {
 			}),
 		})
 		if err != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 
 		if len(vlist.Volumes) == 0 {
@@ -85,7 +84,7 @@ func (c *client) ensureCacheExist() error {
 				},
 				Name: cache,
 			}); err != nil {
-				return functions.NewE(err)
+				return fn.NewE(err)
 			}
 		}
 
@@ -98,7 +97,7 @@ func GetDockerHostIp() (string, error) {
 
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
-		return "", functions.NewE(err)
+		return "", fn.NewE(err)
 	}
 	defer conn.Close()
 
@@ -170,10 +169,40 @@ func (c *client) imageExists(imageName string) (bool, error) {
 	return false, nil
 }
 
+func (c *client) restartContainer(path string) error {
+	defer spinner.Client.UpdateMessage("restart container")()
+
+	existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
+		Filters: filters.NewArgs(
+			dockerLabelFilter(CONT_MARK_KEY, "true"),
+			dockerLabelFilter(CONT_WORKSPACE_MARK_KEY, "true"),
+			dockerLabelFilter(CONT_PATH_KEY, path),
+		),
+		All: true,
+	})
+	if len(existingContainers) == 0 {
+		return nil
+	}
+
+	if err != nil {
+		return fn.NewE(err, "failed to list containers")
+	}
+
+	timeOut := 0
+	if err := c.cli.ContainerRestart(context.Background(), existingContainers[0].ID, container.StopOptions{
+		Signal:  "SIGKILL",
+		Timeout: &timeOut,
+	}); err != nil {
+		return fn.NewE(err)
+	}
+
+	return nil
+}
+
 func (c *client) startContainer(klconfHash string) (string, error) {
 
 	if err := c.stopOtherContainers(); err != nil {
-		return "", functions.NewE(err)
+		return "", fn.NewE(err)
 	}
 
 	if err := c.ensurePublicKey(); err != nil {
@@ -194,27 +223,27 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 	})
 
 	if err != nil {
-		return "", functions.Error("failed to list containers")
+		return "", fn.Error("failed to list containers")
 	}
 
 	if len(existingContainers) > 0 {
 		if existingContainers[0].State != "running" {
 			if err := c.cli.ContainerStart(context.Background(), existingContainers[0].ID, container.StartOptions{}); err != nil {
-				return "", functions.NewE(err)
+				return "", fn.NewE(err)
 			}
 
 			sshPortStr, ok := existingContainers[0].Labels[SSH_PORT_KEY]
 			if !ok {
-				return "", functions.Error("failed to get ssh port")
+				return "", fn.Error("failed to get ssh port")
 			}
 
 			sshPort, err := strconv.Atoi(sshPortStr)
 			if err != nil {
-				return "", functions.NewE(err)
+				return "", fn.NewE(err)
 			}
 
 			if err := c.waithForSshReady(sshPort, existingContainers[0].ID); err != nil {
-				return "", functions.NewE(err)
+				return "", fn.NewE(err)
 			}
 		}
 
@@ -223,17 +252,17 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 
 	sshPort, err := c.getFreePort()
 	if err != nil {
-		return "", functions.Error("failed to get free port")
+		return "", fn.Error("failed to get free port")
 	}
 
 	vmounts, err := c.generateMounts()
 	if err != nil {
-		return "", functions.NewE(err)
+		return "", fn.NewE(err)
 	}
 
 	boxhashFileName, err := hashctrl.BoxHashFileName(c.cwd)
 	if err != nil {
-		return "", functions.NewE(err)
+		return "", fn.NewE(err)
 	}
 
 	resp, err := c.cli.ContainerCreate(context.Background(), &container.Config{
@@ -287,7 +316,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 	}
 
 	if err := c.waithForSshReady(sshPort, resp.ID); err != nil {
-		return "", functions.NewE(err)
+		return "", fn.NewE(err)
 	}
 
 	return resp.ID, nil
@@ -330,7 +359,7 @@ func (c *client) stopOtherContainers() error {
 	return nil
 }
 
-func (c *client) stopContainer(path string) error {
+func (c *client) stopContainer(_ string) error {
 	defer spinner.Client.UpdateMessage("stopping container")()
 
 	existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
@@ -362,6 +391,7 @@ func (c *client) stopContainer(path string) error {
 		}); err != nil {
 			return fn.NewE(err)
 		}
+
 	}
 
 	return nil
@@ -393,23 +423,23 @@ func (c *client) getFreePort() (int, error) {
 func (c *client) generateMounts() ([]mount.Mount, error) {
 	td, err := os.MkdirTemp("", "kl-tmp")
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	if err := userOwn(td); err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	userHomeDir, err := fileclient.GetUserHomeDir()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	sshPath := path.Join(userHomeDir, ".ssh", "id_rsa.pub")
 
 	akByte, err := os.ReadFile(sshPath)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	ak := string(akByte)
@@ -454,16 +484,16 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 
 		return nil
 	}(); err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	if err := writeOnUserScope(akTmpPath, []byte(ak)); err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	configFolder, err := fileclient.GetConfigFolder()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	volumes := []mount.Mount{
@@ -490,7 +520,7 @@ func (c *client) SyncVpn(wg string) error {
 
 	err := c.ensureImage(constants.WireguardImage)
 	if err != nil {
-		return functions.Error("failed to pull image")
+		return fn.Error("failed to pull image")
 	}
 
 	existingVPN, err := c.cli.ContainerList(context.Background(), container.ListOptions{
@@ -500,7 +530,7 @@ func (c *client) SyncVpn(wg string) error {
 		),
 	})
 	if err != nil {
-		return functions.Error("failed to list containers")
+		return fn.Error("failed to list containers")
 	}
 	md5sum := md5.Sum([]byte(wg))
 	if len(existingVPN) > 0 {
@@ -508,7 +538,7 @@ func (c *client) SyncVpn(wg string) error {
 			if existingVPN[0].State != "running" {
 				err := c.cli.ContainerStart(context.Background(), existingVPN[0].ID, container.StartOptions{})
 				if err != nil {
-					return functions.Error("failed to start container")
+					return fn.Error("failed to start container")
 				}
 			}
 			return nil
@@ -517,13 +547,13 @@ func (c *client) SyncVpn(wg string) error {
 			Signal: "SIGKILL",
 		})
 		if err != nil {
-			return functions.Error("failed to stop container")
+			return fn.Error("failed to stop container")
 		}
 		err = c.cli.ContainerRemove(context.Background(), existingVPN[0].ID, container.RemoveOptions{
 			Force: true,
 		})
 		if err != nil {
-			return functions.Error("failed to remove container")
+			return fn.Error("failed to remove container")
 		}
 	}
 	script := fmt.Sprintf("echo %s | base64 -d > /etc/wireguard/wg0.conf && (wg-quick down wg0 || echo done) && wg-quick up wg0 && tail -f /dev/null", wg)
@@ -541,49 +571,49 @@ func (c *client) SyncVpn(wg string) error {
 		NetworkMode: "host",
 	}, &network.NetworkingConfig{}, nil, "")
 	if err != nil {
-		return functions.Error("failed to create container")
+		return fn.Error("failed to create container")
 	}
 	err = c.cli.ContainerStart(context.Background(), resp.ID, container.StartOptions{})
 	if err != nil {
-		return functions.Error("failed to start container")
+		return fn.Error("failed to start container")
 	}
 	return nil
 }
 
-func (c *client) allWorkspaceContainers() ([]types.Container, error) {
-	existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
-		All: true,
-		Filters: filters.NewArgs(
-			dockerLabelFilter(CONT_MARK_KEY, CONT_MARK_KEY),
-			dockerLabelFilter(CONT_WORKSPACE_MARK_KEY, CONT_WORKSPACE_MARK_KEY),
-		),
-	})
-	if err != nil {
-		return nil, fn.NewE(err, "failed to list containers")
-	}
+// func (c *client) allWorkspaceContainers() ([]types.Container, error) {
+// 	existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
+// 		All: true,
+// 		Filters: filters.NewArgs(
+// 			dockerLabelFilter(CONT_MARK_KEY, CONT_MARK_KEY),
+// 			dockerLabelFilter(CONT_WORKSPACE_MARK_KEY, CONT_WORKSPACE_MARK_KEY),
+// 		),
+// 	})
+// 	if err != nil {
+// 		return nil, fn.NewE(err, "failed to list containers")
+// 	}
 
-	return existingContainers, nil
-}
+// 	return existingContainers, nil
+// }
 
-func (c *client) ensureContainerRunning(containerId string) error {
-	cont, err := c.cli.ContainerInspect(context.Background(), containerId)
-	if err != nil {
-		return fn.NewE(err, "failed to inspect container")
-	}
+// func (c *client) ensureContainerRunning(containerId string) error {
+// 	cont, err := c.cli.ContainerInspect(context.Background(), containerId)
+// 	if err != nil {
+// 		return fn.NewE(err, "failed to inspect container")
+// 	}
 
-	if !cont.State.Running {
-		return c.cli.ContainerStart(context.Background(), containerId, container.StartOptions{})
-	}
-	return nil
-}
+// 	if !cont.State.Running {
+// 		return c.cli.ContainerStart(context.Background(), containerId, container.StartOptions{})
+// 	}
+// 	return nil
+// }
 
-func (c *client) getContainerLogs(ctx context.Context, containerId string) (io.ReadCloser, error) {
-	return c.cli.ContainerLogs(ctx, containerId, container.LogsOptions{
-		ShowStdout: true,
-		ShowStderr: true,
-		Follow:     false,
-	})
-}
+// func (c *client) getContainerLogs(ctx context.Context, containerId string) (io.ReadCloser, error) {
+// 	return c.cli.ContainerLogs(ctx, containerId, container.LogsOptions{
+// 		ShowStdout: true,
+// 		ShowStderr: true,
+// 		Follow:     false,
+// 	})
+// }
 
 func (c *client) containerAtPath(path string) (*types.Container, error) {
 	defer spinner.Client.UpdateMessage("looking for the container")()
@@ -597,10 +627,10 @@ func (c *client) containerAtPath(path string) (*types.Container, error) {
 		),
 	})
 	if err != nil {
-		return nil, functions.Error("failed to list containers")
+		return nil, fn.Error("failed to list containers")
 	}
 	if len(existingContainers) == 0 {
-		return nil, functions.Error(NO_RUNNING_CONTAINERS)
+		return nil, fn.Error(NO_RUNNING_CONTAINERS)
 	}
 	return &existingContainers[0], nil
 }
@@ -637,7 +667,7 @@ func (c *client) waithForSshReady(port int, containerId string) error {
 	for {
 		cj, err := c.cli.ContainerInspect(context.TODO(), containerId)
 		if err != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 
 		if cj.State != nil && !cj.State.Running {
@@ -659,7 +689,7 @@ func (c *client) waithForSshReady(port int, containerId string) error {
 					logs += l + "\n"
 				}
 
-				return fn.NewE(fmt.Errorf("failed to start container\n"), logs)
+				return fn.NewE(fmt.Errorf("failed to start container"), logs)
 			}
 
 			return fn.Errorf("container is not running")
@@ -671,6 +701,5 @@ func (c *client) waithForSshReady(port int, containerId string) error {
 
 		time.Sleep(1 * time.Second)
 	}
-
 	return nil
 }

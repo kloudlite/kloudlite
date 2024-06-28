@@ -16,12 +16,7 @@ var restartCmd = &cobra.Command{
 			return
 		}
 
-		if err = c.Stop(); err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		if err = c.Start(); err != nil {
+		if err := c.Restart(); err != nil {
 			fn.PrintError(err)
 			return
 		}
