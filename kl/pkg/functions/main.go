@@ -3,6 +3,7 @@ package functions
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"strings"
 
 	"github.com/kloudlite/kl/flags"
@@ -101,6 +102,8 @@ func TrimePref(s string, length int) string {
 }
 
 func Confirm(yes string, defaultValue string) bool {
+	spinner.Client.Pause()
+	defer spinner.Client.Resume()
 
 	var response string
 

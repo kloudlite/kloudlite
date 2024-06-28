@@ -141,6 +141,7 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 		}
 
 		accountName = kt.AccountName
+		options = append(options, fn.MakeOption("accountName", accountName))
 	}
 
 	if envName == "" {
@@ -170,7 +171,9 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 		return functions.NewE(err)
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getCookie([]fn.Option{
+		fn.MakeOption("accountName", accountName),
+	}...)
 	if err != nil {
 		return functions.NewE(err)
 	}
