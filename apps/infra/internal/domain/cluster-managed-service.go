@@ -186,6 +186,38 @@ func (d *domain) CloneClusterManagedService(ctx InfraContext, args CloneManagedS
 	return destMsvc, nil
 }
 
+func (d *domain) ArchiveClusterManagedService(ctx InfraContext, clusterName string) error {
+	filter := repos.Filter{
+		fields.AccountName: ctx.AccountName,
+		fields.ClusterName: clusterName,
+	}
+
+	msvc, err := d.clusterManagedServiceRepo.Find(ctx, repos.Query{
+		Filter: filter,
+		Sort:   nil,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	for i := range msvc {
+		patchForUpdate := repos.Document{
+			fc.ClusterManagedServiceIsArchived: true,
+		}
+		patchFilter := repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.ClusterName:  clusterName,
+			fields.MetadataName: msvc[i].Name,
+		}
+
+		_, err := d.clusterManagedServiceRepo.Patch(ctx, patchFilter, patchForUpdate)
+		if err != nil {
+			return errors.NewE(err)
+		}
+	}
+	return nil
+}
+
 func (d *domain) UpdateClusterManagedService(ctx InfraContext, cmsvc entities.ClusterManagedService) (*entities.ClusterManagedService, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateClusterManagedService); err != nil {
 		return nil, errors.NewE(err)
