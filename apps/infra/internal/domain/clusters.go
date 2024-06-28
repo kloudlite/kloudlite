@@ -960,6 +960,10 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 		return errors.NewE(err)
 	}
 
+	if err := d.ArchiveClusterManagedService(ctx, name); err != nil {
+		return errors.NewE(err)
+	}
+
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, ucluster.Name, PublishUpdate)
 	if err := d.deleteK8sResource(ctx, &ucluster.Cluster); err != nil {
 		if !apiErrors.IsNotFound(err) {
