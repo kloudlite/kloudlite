@@ -2,6 +2,7 @@ package boxpkg
 
 import (
 	"context"
+	"crypto/md5"
 	"fmt"
 
 	"github.com/docker/docker/api/types/container"
@@ -9,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
 	"github.com/kloudlite/kl/constants"
+	"github.com/kloudlite/kl/pkg/egob"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
@@ -19,11 +21,40 @@ type ProxyConfig struct {
 	ExposedPorts        []int
 }
 
+func (c *ProxyConfig) GetHash() string {
+	b, err := egob.Marshal(c)
+	if err != nil {
+		return ""
+	}
+
+	hash := md5.New()
+	hash.Write(b)
+
+	return fmt.Sprintf("%x", hash.Sum(nil))
+}
+
 func (c *client) SyncProxy(config ProxyConfig) error {
 	defer spinner.Client.UpdateMessage("updating port configuration")()
 
 	if err := c.ensureImage(constants.SocatImage); err != nil {
 		return functions.NewE(err, "failed to pull image")
+	}
+
+	existingProxies, err := c.cli.ContainerList(context.Background(), container.ListOptions{
+		Filters: filters.NewArgs(
+			dockerLabelFilter(CONT_MARK_KEY, "true"),
+			dockerLabelFilter("proxy", "true"),
+		),
+	})
+	if err != nil {
+		return functions.NewE(err, "failed to list containers")
+	}
+
+	if len(existingProxies) > 0 {
+		portHash := existingProxies[0].Labels["port-hash"]
+		if portHash == config.GetHash() && existingProxies[0].State == "running" {
+			return nil
+		}
 	}
 
 	targetContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
@@ -40,30 +71,18 @@ func (c *client) SyncProxy(config ProxyConfig) error {
 		return nil
 	}
 
-	existingProxies, err := c.cli.ContainerList(context.Background(), container.ListOptions{
-		Filters: filters.NewArgs(
-			dockerLabelFilter(CONT_MARK_KEY, "true"),
-			dockerLabelFilter("proxy", "true"),
-		),
-	})
-	if err != nil {
-		return functions.NewE(err, "failed to list containers")
-	}
-
 	if len(existingProxies) > 0 {
-		err := c.cli.ContainerStop(context.Background(), existingProxies[0].ID, container.StopOptions{
-			Signal: "SIGKILL",
-		})
-		if err != nil {
+		if err := c.cli.ContainerKill(context.Background(), existingProxies[0].ID, "SIGKILL"); err != nil {
 			return functions.NewE(err, "failed to stop container")
 		}
-		err = c.cli.ContainerRemove(context.Background(), existingProxies[0].ID, container.RemoveOptions{
+
+		if err = c.cli.ContainerRemove(context.Background(), existingProxies[0].ID, container.RemoveOptions{
 			Force: true,
-		})
-		if err != nil {
+		}); err != nil {
 			return functions.NewE(err, "failed to remove container")
 		}
 	}
+
 	if len(config.ExposedPorts) == 0 {
 		return nil
 	}
@@ -82,6 +101,7 @@ func (c *client) SyncProxy(config ProxyConfig) error {
 		Labels: map[string]string{
 			CONT_MARK_KEY: "true",
 			"proxy":       "true",
+			"port-hash":   config.GetHash(),
 		},
 		ExposedPorts: func() nat.PortSet {
 			ports := nat.PortSet{}

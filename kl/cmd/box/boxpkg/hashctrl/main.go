@@ -12,6 +12,7 @@ import (
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/packagectrl"
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/envclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -54,13 +55,20 @@ func generateBoxHashContent(envName string, path string, klFile *fileclient.KLFi
 		hash.Write([]byte(persistedConfig.Env[v]))
 	}
 
+	hsh := fmt.Sprintf("%x", hash.Sum(nil))
 	marshal, err := json.Marshal(map[string]any{
 		"config": persistedConfig,
-		"hash":   hash.Sum(nil),
+		"hash":   hsh,
 	})
 
 	if err != nil {
 		return nil, fn.NewE(err)
+	}
+
+	if envclient.InsideBox() {
+		if err := os.WriteFile("/tmp/hash", []byte(hsh), os.ModePerm); err != nil {
+			return nil, fn.NewE(err)
+		}
 	}
 
 	return marshal, nil

@@ -83,12 +83,11 @@ RUN chsh -s /bin/zsh kl
 
 COPY ./start.sh /start.sh
 COPY ./entrypoint.sh /entrypoint.sh
-COPY ./track-changes.sh /track-changes.sh
 
 
 RUN mkdir /kl-tmp && chown -R kl:kl /kl-tmp
 
-RUN chmod +x /start.sh /entrypoint.sh /track-changes.sh
+RUN chmod +x /start.sh /entrypoint.sh
 
 COPY --from=builder /kl-app/bin/kl /usr/local/bin/kl
 
