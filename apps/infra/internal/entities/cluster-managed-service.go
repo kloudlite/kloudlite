@@ -16,6 +16,8 @@ type ClusterManagedService struct {
 	AccountName string `json:"accountName" graphql:"noinput"`
 	ClusterName string `json:"clusterName"`
 
+	IsArchived *bool `json:"isArchived,omitempty" graphql:"noinput"`
+
 	SyncedOutputSecretRef *corev1.Secret `json:"syncedOutputSecretRef" graphql:"ignore"`
 
 	common.ResourceMetadata `json:",inline"`
