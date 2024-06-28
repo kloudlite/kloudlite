@@ -5,14 +5,15 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/domain/apiclient"
 	"io"
 	"os"
+
+	"github.com/kloudlite/kl/domain/apiclient"
 
 	dockerclient "github.com/docker/docker/client"
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/flags"
-	"github.com/kloudlite/kl/pkg/functions"
+
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
@@ -37,6 +38,7 @@ type BoxClient interface {
 	SyncProxy(config ProxyConfig) error
 	StopAll() error
 	Stop() error
+	Restart() error
 	Start() error
 	Ssh() error
 	Reload() error
@@ -54,14 +56,17 @@ func (c *client) Context() context.Context {
 
 func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
 
 	fc, err := fileclient.New()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	foreground := fn.ParseBoolFlag(cmd, "foreground")
@@ -73,14 +78,14 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 
 	klFile, err := fc.GetKlFile("")
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	env, err := fileclient.EnvOfPath(cwd)
 	if err != nil && errors.Is(err, fileclient.NoEnvSelected) {
 		environment, err := apiclient.GetEnvironment(klFile.AccountName, klFile.DefaultEnv)
 		if err != nil {
-			return nil, functions.NewE(err)
+			return nil, fn.NewE(err)
 		}
 		env = &fileclient.Env{
 			Name:        environment.DisplayName,
@@ -90,7 +95,7 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		}
 		data, err := fileclient.GetExtraData()
 		if err != nil {
-			return nil, functions.NewE(err)
+			return nil, fn.NewE(err)
 		}
 		if data.SelectedEnvs == nil {
 			data.SelectedEnvs = map[string]*fileclient.Env{
@@ -100,10 +105,10 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 			data.SelectedEnvs[cwd] = env
 		}
 		if err := fileclient.SaveExtraData(data); err != nil {
-			return nil, functions.NewE(err)
+			return nil, fn.NewE(err)
 		}
 	} else if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	return &client{

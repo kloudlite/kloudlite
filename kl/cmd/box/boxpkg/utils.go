@@ -170,6 +170,36 @@ func (c *client) imageExists(imageName string) (bool, error) {
 	return false, nil
 }
 
+func (c *client) restartContainer(path string) error {
+	defer spinner.Client.UpdateMessage("restart container")()
+
+	existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
+		Filters: filters.NewArgs(
+			dockerLabelFilter(CONT_MARK_KEY, "true"),
+			dockerLabelFilter(CONT_WORKSPACE_MARK_KEY, "true"),
+			dockerLabelFilter(CONT_PATH_KEY, path),
+		),
+		All: true,
+	})
+	if len(existingContainers) == 0 {
+		return nil
+	}
+
+	if err != nil {
+		return fn.NewE(err, "failed to list containers")
+	}
+
+	timeOut := 0
+	if err := c.cli.ContainerRestart(context.Background(), existingContainers[0].ID, container.StopOptions{
+		Signal:  "SIGKILL",
+		Timeout: &timeOut,
+	}); err != nil {
+		return fn.NewE(err)
+	}
+
+	return nil
+}
+
 func (c *client) startContainer(klconfHash string) (string, error) {
 
 	if err := c.stopOtherContainers(); err != nil {
