@@ -22,7 +22,3 @@ var stopCmd = &cobra.Command{
 		}
 	},
 }
-
-func init() {
-	setBoxCommonFlags(stopCmd)
-}

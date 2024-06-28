@@ -16,21 +16,15 @@ var restartCmd = &cobra.Command{
 			return
 		}
 
-		err = c.Stop()
-		if err != nil {
+		if err = c.Stop(); err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		err = c.Start()
-		if err != nil {
+		if err = c.Start(); err != nil {
 			fn.PrintError(err)
 			return
 		}
 
 	},
-}
-
-func init() {
-	setBoxCommonFlags(restartCmd)
 }

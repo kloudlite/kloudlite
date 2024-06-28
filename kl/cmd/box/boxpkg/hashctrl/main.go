@@ -26,9 +26,9 @@ func keys[K comparable, V any](m map[K]V) []K {
 	return keys
 }
 
-func generateBoxHashContent(envName string, path string, klFile *fileclient.KLFileType) ([]byte, error) {
+func generateBoxHashContent(envName string, fpath string, klFile *fileclient.KLFileType) ([]byte, error) {
 
-	persistedConfig, err := generatePersistedEnv(klFile, envName, path)
+	persistedConfig, err := generatePersistedEnv(klFile, envName, fpath)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

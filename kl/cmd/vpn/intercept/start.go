@@ -97,10 +97,12 @@ func startIntercept(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	bc.SyncProxy(boxpkg.ProxyConfig{
+	if err := bc.SyncProxy(boxpkg.ProxyConfig{
 		TargetContainerPath: s,
 		ExposedPorts:        eports,
-	})
+	}); err != nil {
+		return err
+	}
 
 	if err != nil {
 		return err

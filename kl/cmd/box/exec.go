@@ -23,7 +23,3 @@ var execCmd = &cobra.Command{
 		}
 	},
 }
-
-func init() {
-	setBoxCommonFlags(execCmd)
-}

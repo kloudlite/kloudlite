@@ -2,9 +2,9 @@ package runner
 
 import (
 	"errors"
-	domainutil "github.com/kloudlite/kl/domain/util"
 	"os"
 
+	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/envclient"
@@ -22,7 +22,7 @@ var InitCommand = &cobra.Command{
 	Use:   "init",
 	Short: "initialize a kl-config file",
 	Long:  `use this command to initialize a kl-config file`,
-	Run: func(_ *cobra.Command, _ []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 
 		fc, err := fileclient.New()
 		if err != nil {
@@ -77,10 +77,18 @@ var InitCommand = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		if err := domainutil.ConfirmBoxRestart(dir); err != nil {
+
+		c, err := boxpkg.NewClient(cmd, args)
+		if err != nil {
 			fn.PrintError(err)
 			return
 		}
+
+		if err := c.ConfirmBoxRestart(); err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 	},
 }
 

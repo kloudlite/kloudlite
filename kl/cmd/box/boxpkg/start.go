@@ -48,8 +48,7 @@ func (c *client) Start() error {
 		}
 	}
 
-	_, err = c.startContainer()
-	if err != nil {
+	if _, err = c.startContainer(boxHash.KLConfHash); err != nil {
 		return fn.NewE(err)
 	}
 
@@ -65,8 +64,7 @@ func (c *client) Start() error {
 		return functions.NewE(err)
 	}
 
-	err = c.SyncVpn(vpnCfg.WGconf)
-	if err != nil {
+	if err = c.SyncVpn(vpnCfg.WGconf); err != nil {
 		return functions.NewE(err)
 	}
 

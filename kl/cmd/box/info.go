@@ -22,7 +22,3 @@ var infoCmd = &cobra.Command{
 		}
 	},
 }
-
-func init() {
-	// infoCmd.Flags().StringP("name", "n", "", "container name")
-}

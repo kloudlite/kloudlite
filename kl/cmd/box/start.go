@@ -26,7 +26,3 @@ var startCmd = &cobra.Command{
 		}
 	},
 }
-
-func init() {
-	setBoxCommonFlags(startCmd)
-}

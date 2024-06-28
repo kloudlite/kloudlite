@@ -8,9 +8,6 @@ import (
 var BoxCmd = &cobra.Command{
 	Use:   "box",
 	Short: "start, stop, reload, ssh and get running box info",
-	//PersistentPreRun: func(cmd *cobra.Command, args []string) {
-	//	apiclient.EnsureBoxHash()
-	//},
 }
 
 func init() {
@@ -20,9 +17,6 @@ func init() {
 
 	fileclient.OnlyOutsideBox(startCmd)
 	BoxCmd.AddCommand(startCmd)
-
-	fileclient.OnlyOutsideBox(stopAllCmd)
-	BoxCmd.AddCommand(stopAllCmd)
 
 	fileclient.OnlyOutsideBox(sshCmd)
 	BoxCmd.AddCommand(sshCmd)
@@ -40,8 +34,4 @@ func init() {
 	BoxCmd.AddCommand(restartCmd)
 
 	BoxCmd.AddCommand(infoCmd)
-}
-
-func setBoxCommonFlags(cmd *cobra.Command) {
-	cmd.Flags().BoolP("foreground", "f", false, "run in foreground mode")
 }

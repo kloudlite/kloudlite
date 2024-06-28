@@ -2,9 +2,9 @@ package add
 
 import (
 	"fmt"
-	domainutil "github.com/kloudlite/kl/domain/util"
 	"os"
 
+	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
@@ -34,7 +34,7 @@ This command will add secret entry of managed resource references from current e
 	},
 }
 
-func AddMres(cmd *cobra.Command, _ []string) error {
+func AddMres(cmd *cobra.Command, args []string) error {
 	fc, err := fileclient.New()
 	if err != nil {
 		return fn.NewE(err)
@@ -129,7 +129,13 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 	if err := hashctrl.SyncBoxHash(wpath); err != nil {
 		return functions.NewE(err)
 	}
-	if err := domainutil.ConfirmBoxRestart(wpath); err != nil {
+
+	c, err := boxpkg.NewClient(cmd, args)
+	if err != nil {
+		return err
+	}
+
+	if err := c.ConfirmBoxRestart(); err != nil {
 		return functions.NewE(err)
 	}
 

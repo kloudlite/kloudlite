@@ -2,10 +2,10 @@ package packages
 
 import (
 	"fmt"
-	domainutil "github.com/kloudlite/kl/domain/util"
 	"os"
 	"slices"
 
+	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -71,7 +71,13 @@ func addPackages(cmd *cobra.Command, args []string) error {
 	if err := hashctrl.SyncBoxHash(cwd); err != nil {
 		return functions.NewE(err)
 	}
-	if err := domainutil.ConfirmBoxRestart(cwd); err != nil {
+
+	c, err := boxpkg.NewClient(cmd, args)
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	if err := c.ConfirmBoxRestart(); err != nil {
 		return functions.NewE(err)
 	}
 

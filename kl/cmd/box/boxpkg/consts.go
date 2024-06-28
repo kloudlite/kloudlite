@@ -16,6 +16,7 @@ const (
 	CONT_VPN_MARK_KEY       = "kl.container.vpn"
 	CONT_WORKSPACE_MARK_KEY = "kl.container.workspace"
 	SSH_PORT_KEY            = "kl.container.ssh.port"
+	KLCONFIG_HASH_KEY       = "kl.container.klconfig.hash"
 )
 
 func GetImageName() string {

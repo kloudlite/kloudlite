@@ -170,7 +170,7 @@ func (c *client) imageExists(imageName string) (bool, error) {
 	return false, nil
 }
 
-func (c *client) startContainer() (string, error) {
+func (c *client) startContainer(klconfHash string) (string, error) {
 
 	if err := c.stopOtherContainers(); err != nil {
 		return "", functions.NewE(err)
@@ -243,6 +243,7 @@ func (c *client) startContainer() (string, error) {
 			CONT_WORKSPACE_MARK_KEY: "true",
 			CONT_PATH_KEY:           c.cwd,
 			SSH_PORT_KEY:            fmt.Sprintf("%d", sshPort),
+			KLCONFIG_HASH_KEY:       klconfHash,
 		},
 		Env: []string{
 			fmt.Sprintf("KL_HASH_FILE=/.cache/kl/box-hash/%s", boxhashFileName),
@@ -308,7 +309,6 @@ func (c *client) stopOtherContainers() error {
 
 	for _, d := range existingContainers {
 		if d.Labels[CONT_PATH_KEY] != c.cwd {
-
 			spinner.Client.Stop()
 			fn.Logf("An other container is running in %s, do you want to stop it? [Y/n]", d.Labels[CONT_PATH_KEY])
 			if !fn.Confirm("y", "y") {
@@ -317,6 +317,12 @@ func (c *client) stopOtherContainers() error {
 
 			if err := c.stopContainer(d.Labels[CONT_PATH_KEY]); err != nil {
 				return fn.NewE(err)
+			}
+		} else {
+			if d.State != "running" {
+				if err := c.stopContainer(d.Labels[CONT_PATH_KEY]); err != nil {
+					return fn.NewE(err)
+				}
 			}
 		}
 	}

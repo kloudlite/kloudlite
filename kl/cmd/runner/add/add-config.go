@@ -2,11 +2,11 @@ package add
 
 import (
 	"fmt"
-	domainutil "github.com/kloudlite/kl/domain/util"
 	"os"
 	"regexp"
 	"strings"
 
+	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
@@ -236,7 +236,12 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	if err := domainutil.ConfirmBoxRestart(wpath); err != nil {
+	c, err := boxpkg.NewClient(cmd, args)
+	if err != nil {
+		return err
+	}
+
+	if err := c.ConfirmBoxRestart(); err != nil {
 		return fn.NewE(err)
 	}
 

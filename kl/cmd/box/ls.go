@@ -6,10 +6,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var stopAllCmd = &cobra.Command{
-	Hidden: true,
-	Use:    "stop-all",
-	Short:  "stop all the running boxes",
+var psCmd = &cobra.Command{
+	Use:   "ls",
+	Short: "list all running boxes",
 	Run: func(cmd *cobra.Command, args []string) {
 		c, err := boxpkg.NewClient(cmd, args)
 		if err != nil {
@@ -17,7 +16,13 @@ var stopAllCmd = &cobra.Command{
 			return
 		}
 
-		if err := c.StopAll(); err != nil {
+		conts, err := c.ListAllBoxes()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if err := c.PrintBoxes(conts); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -25,5 +30,5 @@ var stopAllCmd = &cobra.Command{
 }
 
 func init() {
-	setBoxCommonFlags(stopAllCmd)
+	psCmd.Aliases = append(psCmd.Aliases, "ps")
 }

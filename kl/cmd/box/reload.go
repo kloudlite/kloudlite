@@ -2,10 +2,8 @@ package box
 
 import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
-	domainutil "github.com/kloudlite/kl/domain/util"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var reloadCmd = &cobra.Command{
@@ -23,21 +21,10 @@ var reloadCmd = &cobra.Command{
 			return
 		}
 
-		wpath, err := os.Getwd()
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-		err = domainutil.ConfirmBoxRestart(wpath)
-		if err != nil {
+		if err = c.ConfirmBoxRestart(); err != nil {
 			fn.PrintError(err)
 			return
 		}
 
 	},
-}
-
-func init() {
-	setBoxCommonFlags(reloadCmd)
-	reloadCmd.Flags().BoolP("skip-restart", "s", false, "skip restarting the box")
 }

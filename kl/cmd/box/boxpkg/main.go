@@ -44,6 +44,8 @@ type BoxClient interface {
 	ListAllBoxes() ([]Cntr, error)
 	Info() error
 	Exec([]string, io.Writer) error
+
+	ConfirmBoxRestart() error
 }
 
 func (c *client) Context() context.Context {
