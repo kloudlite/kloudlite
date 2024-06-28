@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/flags"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/martinlindhe/notify"
 	"github.com/pkg/errors"
@@ -55,58 +56,15 @@ func PrintError(err error) {
 
 		if err, ok := err.(stackTracer); ok {
 			st := err.StackTrace()
-			fmt.Printf("%s%+v", text.Bold("Stack Trace:"), st)
+			Logf("%s%+v", text.Bold("Stack Trace:"), st)
 			return
 		}
 
-		fmt.Printf("%s\n%+v\n", text.Bold("Stack Trace:"), err)
+		Logf("%s\n%+v\n", text.Bold("Stack Trace:"), err)
 		return
 	}
 
-	_, _ = os.Stderr.WriteString(fmt.Sprintf("%s %s\n", text.Red("[error]"), err.Error()))
-}
-
-func Log(str ...interface{}) {
-	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprint(fmt.Sprint(str...), "\n"))
-}
-
-func Warn(str ...interface{}) {
-	if flags.IsQuiet {
-		return
-	}
-	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprintf("%s %s", text.Yellow("[warn]"), fmt.Sprint(fmt.Sprint(str...), "\n")))
-}
-
-func Warnf(format string, str ...interface{}) {
-	if flags.IsQuiet {
-		return
-	}
-
-	Warn(fmt.Sprintf("%s", fmt.Sprintf(format, str...)))
-}
-
-func Logf(format string, str ...interface{}) {
-	if flags.IsQuiet {
-		return
-	}
-
-	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprintf(fmt.Sprint(format), str...))
-}
-
-func Printf(format string, str ...interface{}) {
-	if flags.IsQuiet {
-		return
-	}
-
-	_, _ = fmt.Fprintf(os.Stdout, format, str...)
-}
-
-func Println(str ...interface{}) {
-	if flags.IsQuiet {
-		return
-	}
-
-	_, _ = fmt.Println(str...)
+	Logf("%s %s\n\n", text.Red("[error]"), err.Error())
 }
 
 type resType struct {
@@ -244,7 +202,7 @@ func Alert(name string, str ...interface{}) {
 	if runtime.GOOS == "linux" {
 		notification(name, fmt.Sprint(str...), "")
 		if err := exec.Command("paplay", "/usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga").Start(); err != nil {
-			Println("error playing alert sound:", err)
+			PrintError(NewE(err, "error playing alert sound"))
 		}
 	}
 }
@@ -381,4 +339,70 @@ func Error(s string) error {
 
 func Errorf(format string, args ...interface{}) error {
 	return errors.WithStack(fmt.Errorf(format, args...))
+}
+
+func stderr(str string) {
+	if spinner.Client.IsRunning() {
+		spinner.Client.Pause()
+		defer spinner.Client.Resume()
+	}
+
+	_, _ = os.Stderr.WriteString(str)
+}
+
+func stdout(str string) {
+	if spinner.Client.IsRunning() {
+		spinner.Client.Pause()
+		defer spinner.Client.Resume()
+	}
+
+	_, _ = os.Stdout.WriteString(str)
+}
+
+func Log(str ...interface{}) {
+	if spinner.Client.IsRunning() {
+		spinner.Client.Pause()
+		defer spinner.Client.Resume()
+	}
+	stderr(fmt.Sprint(fmt.Sprint(str...), "\n"))
+}
+
+func Warn(str ...interface{}) {
+	if flags.IsQuiet {
+		return
+	}
+
+	stderr(fmt.Sprintf("%s %s", text.Yellow("[warn]"), fmt.Sprint(fmt.Sprint(str...), "\n")))
+}
+
+func Warnf(format string, str ...interface{}) {
+	if flags.IsQuiet {
+		return
+	}
+
+	stderr(fmt.Sprintf(format, str...))
+}
+
+func Logf(format string, str ...interface{}) {
+	if flags.IsQuiet {
+		return
+	}
+
+	stderr(fmt.Sprintf(fmt.Sprint(format), str...))
+}
+
+func Printf(format string, str ...interface{}) {
+	if flags.IsQuiet {
+		return
+	}
+
+	stdout(fmt.Sprintf(fmt.Sprint(format), str...))
+}
+
+func Println(str ...interface{}) {
+	if flags.IsQuiet {
+		return
+	}
+
+	stdout(fmt.Sprint(str...))
 }

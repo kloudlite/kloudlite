@@ -2,12 +2,21 @@ package spinner
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/briandowns/spinner"
-	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/flags"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
+
+func logf(format string, str ...interface{}) {
+	if flags.IsQuiet {
+		return
+	}
+
+	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprintf(fmt.Sprint(format), str...))
+}
 
 type sclient struct {
 	spinner *spinner.Spinner
@@ -25,11 +34,17 @@ type Spinner interface {
 	Resume()
 	SetVerbose(verbose bool)
 	SetQuiet(quiet bool)
+	IsRunning() bool
+}
+
+func (s *sclient) IsRunning() bool {
+	return s.started
 }
 
 func (s *sclient) pushMessage(msg string) {
 	if s.verbose && !s.quiet {
-		fn.Logf("%s %s\n", text.Bold(text.Green(fmt.Sprintf("+ [%d]", len(s.message)))), msg)
+		logf("%s %s\n", text.Bold(text.Green(fmt.Sprintf("+ [%d]", len(s.message)))), msg)
+
 	}
 
 	s.message = append(s.message, msg)
@@ -42,7 +57,7 @@ func (s *sclient) popMessage() string {
 
 	oresp := s.message[len(s.message)-1]
 	if s.verbose && !s.quiet {
-		fn.Logf("%s %s\n", text.Bold(text.Red(fmt.Sprintf("- [%d]", len(s.message)-1))), oresp)
+		logf("%s %s\n", text.Bold(text.Red(fmt.Sprintf("- [%d]", len(s.message)-1))), oresp)
 	}
 
 	s.message = s.message[:len(s.message)-1]
