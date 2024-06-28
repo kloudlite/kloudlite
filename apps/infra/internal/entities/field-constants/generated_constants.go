@@ -153,6 +153,7 @@ const (
 
 // constant vars generated for struct ClusterManagedService
 const (
+	ClusterManagedServiceIsArchived                                              = "isArchived"
 	ClusterManagedServiceOutput                                                  = "output"
 	ClusterManagedServiceOutputCredentialsRef                                    = "output.credentialsRef"
 	ClusterManagedServiceOutputCredentialsRefName                                = "output.credentialsRef.name"
@@ -261,9 +262,7 @@ const (
 	GlobalVPNConnectionSpecLoadBalancer              = "spec.loadBalancer"
 	GlobalVPNConnectionSpecLoadBalancerHosts         = "spec.loadBalancer.hosts"
 	GlobalVPNConnectionSpecLoadBalancerPort          = "spec.loadBalancer.port"
-	GlobalVPNConnectionSpecNodePort                  = "spec.nodePort"
 	GlobalVPNConnectionSpecPeers                     = "spec.peers"
-	GlobalVPNConnectionSpecServiceType               = "spec.serviceType"
 	GlobalVPNConnectionSpecSvcCIDR                   = "spec.svcCIDR"
 	GlobalVPNConnectionSpecWireguardKeysRef          = "spec.wireguardKeysRef"
 	GlobalVPNConnectionSpecWireguardKeysRefName      = "spec.wireguardKeysRef.name"
