@@ -3,8 +3,10 @@ package get
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/kl/domain/fileclient"
 
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -17,13 +19,28 @@ var configCmd = &cobra.Command{
 	Short: "list config entries",
 	Long:  "use this command to list entries of specific config",
 	Run: func(cmd *cobra.Command, args []string) {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 		configName := ""
 
 		if len(args) >= 1 {
 			configName = args[0]
 		}
+		filePath := fn.ParseKlFile(cmd)
+		klFile, err := fc.GetKlFile(filePath)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
-		config, err := server.EnsureConfig(fn.MakeOption("configName", configName))
+		config, err := apiclient.EnsureConfig([]fn.Option{
+			fn.MakeOption("configName", configName),
+			fn.MakeOption("accountName", klFile.AccountName),
+		}...)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -36,21 +53,21 @@ var configCmd = &cobra.Command{
 	},
 }
 
-func printConfig(config *server.Config, cmd *cobra.Command) error {
+func printConfig(config *apiclient.Config, cmd *cobra.Command) error {
 	outputFormat := cmd.Flag("output").Value.String()
 
 	switch outputFormat {
 	case "json":
 		configBytes, err := json.Marshal(config.Data)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 		fn.Println(string(configBytes))
 
 	case "yaml", "yml":
 		configBytes, err := yaml.Marshal(config.Data)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 		fn.Println(string(configBytes))
 

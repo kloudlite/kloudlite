@@ -1,6 +1,7 @@
-# Kloudlite CLI `kl` & `kli`
+# [Kloudlite](https://github.com/kloudlite/kloudlite) CLI `kl`
 
-kl and kli are the cli for kloudlite. where kl is the cli for the developers to work with environments and kli is the cli for the infrastructure team to work with kloudlite.
+`kl` is command line interface for developers to work with environments in kloudlite. This will help developers to create
+local development containers which are connected to remote environments.
 
 ### Installation
 
@@ -10,56 +11,28 @@ To install the latest version in Linux or Mac you can run the following command 
 
 ###### Install latest with curl
 ```sh
-curl 'https://kl.kloudlite.io/kloudlite!?select=kl' | bash
+curl 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | bash
 ```
 
 ###### Install latest with wget
 
 ```sh
-wget -qO- 'https://kl.kloudlite.io/kloudlite!?select=kl' | bash
+wget -qO- 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | bash
 ```
 
 ###### Install specific version
 ```sh
-curl 'https://kl.kloudlite.io/kloudlite@v1.0.0!?select=kl' | bash
+curl 'https://kl.kloudlite.io/kloudlite/kl@v1.0.0!?select=kl' | bash
 ```
 
 ###### download but don't install
 ```sh
-curl 'https://kl.kloudlite.io/kloudlite?select=kl' | bash
+curl 'https://kl.kloudlite.io/kloudlite/kl?select=kl' | bash
 ```
 
 ###### install in windows
 ```sh
-iwr 'https://kl.kloudlite.io/kloudlite!?select=kl' | iex
-```
-
-#### Installation of kli
-
-###### Install latest with curl
-```sh
-curl 'https://kl.kloudlite.io/kloudlite!?select=kli' | bash
-```
-
-###### Install latest with wget
-
-```sh
-wget -qO- 'https://kl.kloudlite.io/kloudlite!?select=kli' | bash
-```
-
-###### Install specific version
-```sh
-curl 'https://kl.kloudlite.io/kloudlite@v1.0.0!?select=kli' | bash
-```
-
-###### download but don't install
-```sh
-curl 'https://kl.kloudlite.io/kloudlite?select=kli' | bash
-```
-
-###### install in windows
-```sh
-iwr 'https://kl.kloudlite.io/kloudlite!?select=kli' | iex
+iwr 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | iex
 ```
 
 ### Authentication
@@ -72,14 +45,6 @@ kl auth logout
 kl auth status
 ```
 
-### Select Account
-
-To select account you can use the following command.
-
-```sh
-kl switch account
-```
-
 ### Initialize your workspace
 To work with any project you need to initialize your workspace where you can define 
 environments, managed resouces, mounts and etc.
@@ -88,120 +53,89 @@ To initialize you workspace you can use the following command.
 kl init
 ```
 
-
-### Listing Resources
-
-With this CLI you can list accounts, envs, devices, configs, secrets and apps.
-To list resources you can use the following commands.
-For more details visit [kl list](./docs/kl/kl_list.md)
-
-
+### Configure Envvars & Config Mounts
+To configure environment variables & configs mounts you can use following commands
 ```sh
-kl list accounts
-kl list envs
-kl list devices
-kl list configs
-kl list secrets
-kl list apps
-```
-
-with these commands you can provide the resource id. In case of you don't provide resource 
-it it will show you a picker. For more details visit [kl list](./docs/kl/kl_list.md)
-
-### Working with vpn
-
-To access services of cluster and tunnel your local app to the server you need to connect to vpn.
-For that you can use the following commands.
-
-```sh
-sudo kl vpn start
-sudo kl vpn stop
-sudo kl vpn status
-
-# to tunnel traffic to your local you need to expose ports also
-kl wg expose -p <server_port>:<local_port>
-kl wg expose -p <server_port>:<local_port> -d    # provide -d flag to delete
-```
-
-### Working with environments
-We support multiple environments to work with. these commands 
-will help you to import config,secrets as environment variables, mount and also ipmprting managed resources.
-
-For more details visit [kl add](./docs/kl/kl_add.md).
-
-
-```sh
-# Adding
 kl add config
-kl add secret
-kl add mres
-kl add mount <file_path/file_name>
 ```
-
-### Intercepting App
-You can tunnel you local running app to the server and intercept your app to forward all the request of that app to your local system. 
-for that you need to perform following actions.
-- [connecting to vpn](./docs/kl/kl_vpn_start.md)
-- [exposing port](./docs/kl/kl_vpn_expose.md)
-- [intercept an app](./docs/kl/kl_vpn_intercept.md)
-
-So you can use following commands to work with interception. 
-For more details visit [kl vpn intecept start](./docs/kl/kl_vpn_intercept_start.md) and [kl vpn intecept stop](./docs/kl/kl_vpn_intercept_stop.md)
 
 ```sh
-kl vpn intercept start
-kl vpn intercept stop
+kl add secret
 ```
+
+```sh
+kl add config-mount <file_path>
+```
+These commands will prompt to select configs and secrets from the list of available resources in the environment.
+
+### Manage Nix Packages
+You will be able to manage nix packages that are available in the container using the following commands.
+```sh
+kl pkg add <package-name>
+```
+You can search and add packages form [NixHub](https://www.nixhub.io/)
+
+### Switch between Environments
+You can switch between remote environments using the following command.
+```sh
+kl env use
+```
+This command will prompt to select environment from the list of available environments.
+
+### SSH into container
+Container will be running a ssh server. You will be able to check the configuration with `kl box info` command
+inside your workspace
+
+You can ssh into the container using the following command.
+```sh
+kl box ssh
+```
+This command will start the container if it is not running and ssh into the container.
+
+### Expose Ports
+You can expose ports from the container to your local machine using the following command.
+```sh
+kl box expose -p <container-port>
+```
+
+### Intercept applications
+You can intercept applications running in remote environments to your local machine using the following commands.
+```sh
+kl intercept start -p <remote-port>:<local-port>
+```
+This command will prompt to choose the application from the list of available applications in the environment.
+
 
 ### KL Config File structure
-This is the structure of app config file which will be generated by executing the command `kl -- <cmd>` and 
+This is the structure of kloudlite config file which will be generated by executing the command `kl init` and 
 you can also modify this file according to your requirement.
 ```yaml
 version: v1
-name: <project_name>
-mres: 
-- name: service/<mres_name>
-  env:
-  - name: <env_name>
-    key: <local_key>
-    refkey: <server_key>
-configs:
-- name: <config_name>
-  env:
-  - key: <local_key>
-    refkey: <server_key>
-secrets:
-- name: <secret_name>
-  env:
-  - key: <local_key> 
-    refkey: <server_key> 
-env:
-- key: <env_key>    # eg. NODE_ENV
-  value: <env_value>    # eg. development
-fileMount:
-  mountBasePath: <base_mount_path> # eg. ./.mounts
-  mounts:
-  - path: <mount_path> # eg. /tmp
-    type: <type> # eg. config or secret
-    name: <config_name>
+accountName: <kloudlite-account-name>
+defaultEnv: <default-environment>
+packages:
+# list of nix packages
+- neovim@0.5.1
+# ...
+ports:
+# list of exposed ports
+- 8080
+# ...
+envVars:
+# list of environment variables
+envVars:
+- key: ENV_VAR_NAME
+  secretRef: <secret-name>/<secret-key>
+- key: ENV_VAR_NAME2
+  configRef: <config-name>/<config-key>
+- key: ENV_VAR_NAME3
+  configRef: <mres-name>/<mres-key>
+- key: ENV_VAR_NAME4
+  value: TEST_VALUE
+# ...
+mounts:
+- path: <mount-path>
+  configRef: <config-name>/<config-key>
+- path: <mount-path>
+  secretRef: <secret-name>/<secret-key>
 ```
-
-## Getting All environments 
-According to above config file you can get all the environments to your local shell.
-you can use the following commands for getting all environments to working shell.
-```
-kl -- <cmd>  # will execute the command with all the environments eg. kl -- npm start
-kl -- <shell>  # will open the shell with all the environments eg. kl -- bash
-
-kl -- printenv # will print all the environments
-```
-
-
-## Working with kli
-kli is the cli for the infrastructure team to work with kloudlite.
-visit [kli](./docs/kli/kli.md) for more details.
-
-> This CLI is under development so, more information will will be updated in this doc. also if some new commands will be added to the CLI will be updated to this doc.
-
-
-> for more details visit [docs](./docs/kl/kl.md)

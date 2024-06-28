@@ -11,15 +11,12 @@ COPY --from=project . /kl-app
 
 ARG VERSION
 
-RUN cd klbox-docker && go build -o ../bin/mounter main.go
-
 RUN go build --tags=box -ldflags="-X github.com/kloudlite/kl/flags.Version=${VERSION} -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl main.go
 
 
 FROM --platform=$TARGETPLATFORM ubuntu:latest
 
-RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano zsh git dnsmasq
-
+RUN apt-get update && apt-get install -y openssh-server sudo curl xz-utils jq iproute2 nano zsh git dnsmasq bzip2
 
 RUN mkdir /var/run/sshd
 
@@ -35,31 +32,37 @@ RUN sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid
 
 RUN echo "GatewayPorts yes" >> /etc/ssh/sshd_config
 
-EXPOSE 22
 
 ENV HOSTNAME box
 RUN mkdir -m 0755 /nix && chown kl /nix
+RUN mkdir -p /kl-nix-profile && chown kl /kl-nix-profile
+
+#RUN <<EOF
+# export VERSION=2.23.0
+# export SYSTEM=x86_64-linux
+# cd /tmp
+# curl -LO https://releases.nixos.org/nix/nix-$VERSION/nix-$VERSION-$SYSTEM.tar.xz
+# tar xf nix-$VERSION-$SYSTEM.tar.xz
+# mv nix-$VERSION-$SYSTEM /nix-installer
+#EOF
+#RUN chown kl /nix-installer
+
 USER kl
-RUN curl -L https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-profile
+RUN mkdir -p ~/.local/state/nix
+RUN ln -sf /kl-nix-profile ~/.local/state/nix/profiles
+RUN curl -L https://nixos.org/nix/install | sh -s --
 
 RUN mkdir -p "/home/kl/.config/zsh"
 RUN git clone https://github.com/sindresorhus/pure.git "/home/kl/.config/zsh/pure"
 
 USER root
 
-RUN curl -fsSL https://get.jetify.com/devbox > /tmp/devbox.sh && chmod +x /tmp/devbox.sh 
-RUN /tmp/devbox.sh -f && rm /tmp/devbox.sh && sudo chown kl:kl /usr/local/bin/devbox
-
 
 RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git  "/usr/share/zsh/plugins/zsh-syntax-highlighting"
 
 USER kl
 
-RUN cd /tmp && devbox init
-
 USER root
-
-# RUN rm /tmp/devbox.lock /tmp/devbox.json
 
 # COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
 
@@ -80,14 +83,12 @@ RUN chsh -s /bin/zsh kl
 
 COPY ./start.sh /start.sh
 COPY ./entrypoint.sh /entrypoint.sh
-COPY ./track-changes.sh /track-changes.sh
 
 
 RUN mkdir /kl-tmp && chown -R kl:kl /kl-tmp
 
-RUN chmod +x /start.sh /entrypoint.sh /track-changes.sh
+RUN chmod +x /start.sh /entrypoint.sh
 
-COPY --from=builder /kl-app/bin/mounter /mounter
 COPY --from=builder /kl-app/bin/kl /usr/local/bin/kl
 
 USER kl

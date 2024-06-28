@@ -3,7 +3,7 @@ package del
 // import (
 // 	"fmt"
 
-// 	"github.com/kloudlite/kl/domain/client"
+// 	"github.com/kloudlite/kl/domain/fileclient"
 // 	fn "github.com/kloudlite/kl/pkg/functions"
 // 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
@@ -30,7 +30,7 @@ package del
 
 // func removeConfig() error {
 
-// 	klFile, err := client.GetKlFile("")
+// 	klFile, err := fileclient.GetKlFile("")
 // 	if err != nil {
 // 		fn.PrintError(err)
 // 		es := "please run 'kl init' if you are not initialized the file already"
@@ -44,18 +44,18 @@ package del
 
 // 	selectedConfig, err := fzf.FindOne(
 // 		klFile.Configs,
-// 		func(item client.ResType) string {
+// 		func(item fileclient.ResType) string {
 // 			return item.Name
 // 		},
 // 		fzf.WithPrompt("Select Config Group >"),
 // 	)
 
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 
 // 	if len(selectedConfig.Env) == 1 {
-// 		newConfigs := make([]client.ResType, 0)
+// 		newConfigs := make([]fileclient.ResType, 0)
 // 		for _, rt := range klFile.Configs {
 // 			if rt.Name == selectedConfig.Name {
 // 				continue
@@ -71,7 +71,7 @@ package del
 
 // 		selectedKeyValues, e := fzf.FindOne(
 // 			selectedConfig.Env,
-// 			func(item client.ResEnvType) string {
+// 			func(item fileclient.ResEnvType) string {
 // 				return fmt.Sprintf("%s, %s", item.Key, item.RefKey)
 // 			},
 // 			fzf.WithPrompt("Select Config Key >"),
@@ -81,7 +81,7 @@ package del
 // 			return e
 // 		}
 
-// 		newEnvs := make([]client.ResEnvType, 0)
+// 		newEnvs := make([]fileclient.ResEnvType, 0)
 // 		for _, ret := range selectedConfig.Env {
 // 			if ret.Name == selectedKeyValues.Name {
 // 				continue
@@ -94,7 +94,7 @@ package del
 // 		fn.Logf("removed key %s/%s form your kl-file\n", selectedConfig.Name, selectedConfig.Name)
 // 	}
 
-// 	err = client.WriteKLFile(*klFile)
+// 	err = fileclient.WriteKLFile(*klFile)
 
-// 	return err
+// 	return functions.NewE(err)
 // }

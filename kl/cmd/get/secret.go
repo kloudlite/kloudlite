@@ -3,8 +3,10 @@ package get
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/kl/domain/fileclient"
 
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -17,13 +19,29 @@ var secretCmd = &cobra.Command{
 	Short: "list secrets entries",
 	Long:  "use this command to list the entries of specific secret",
 	Run: func(cmd *cobra.Command, args []string) {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 		secName := ""
 
 		if len(args) >= 1 {
 			secName = args[0]
 		}
 
-		sec, err := server.EnsureSecret(fn.MakeOption("secretName", secName))
+		filePath := fn.ParseKlFile(cmd)
+		klFile, err := fc.GetKlFile(filePath)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		sec, err := apiclient.EnsureSecret([]fn.Option{
+			fn.MakeOption("secretName", secName),
+			fn.MakeOption("accountName", klFile.AccountName),
+		}...)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -36,21 +54,21 @@ var secretCmd = &cobra.Command{
 	},
 }
 
-func printSecret(secret *server.Secret, cmd *cobra.Command) error {
+func printSecret(secret *apiclient.Secret, cmd *cobra.Command) error {
 	outputFormat := cmd.Flag("output").Value.String()
 
 	switch outputFormat {
 	case "json":
 		configBytes, err := json.Marshal(secret.StringData)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 		fn.Println(string(configBytes))
 
 	case "yaml", "yml":
 		configBytes, err := yaml.Marshal(secret.StringData)
 		if err != nil {
-			return err
+			return functions.NewE(err)
 		}
 		fn.Println(string(configBytes))
 

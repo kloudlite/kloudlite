@@ -17,13 +17,9 @@ var execCmd = &cobra.Command{
 			return
 		}
 
-		if err := c.Exec(); err != nil {
+		if err := c.Exec(args, nil); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
-}
-
-func init() {
-	setBoxCommonFlags(execCmd)
 }

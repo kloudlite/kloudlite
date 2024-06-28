@@ -1,12 +1,15 @@
 package packages
 
 import (
-	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
-	fn "github.com/kloudlite/kl/pkg/functions"
+	"os"
 	"slices"
+
+	"github.com/kloudlite/kl/cmd/box/boxpkg"
+	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/spf13/cobra"
 )
@@ -23,30 +26,64 @@ var addCmd = &cobra.Command{
 }
 
 func addPackages(cmd *cobra.Command, args []string) error {
+	fc, err := fileclient.New()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	klConf, err := fc.GetKlFile("")
+	if err != nil {
+		return functions.NewE(err)
+	}
+
 	name := fn.ParseStringFlag(cmd, "name")
 	if name == "" && len(args) > 0 {
 		name = args[0]
 	}
+
 	if name == "" {
-		return errors.New("name is required")
+		return functions.Error("name is required")
 	}
-	klConf, err := client.GetKlFile("")
+
+	p, err := Resolve(cmd.Context(), name)
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	name = p
 	if slices.Contains(klConf.Packages, name) {
 		return nil
 	}
+
 	klConf.Packages = append(klConf.Packages, name)
-	err = client.WriteKLFile(*klConf)
+	err = fc.WriteKLFile(*klConf)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
+
 	fn.Println(fmt.Sprintf("Package %s is added successfully", name))
-	if err := server.SyncBoxHash(); err != nil {
-		return err
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return functions.NewE(err)
 	}
+
+	if err := hashctrl.SyncBoxHash(cwd); err != nil {
+		return functions.NewE(err)
+	}
+
+	c, err := boxpkg.NewClient(cmd, args)
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	if err := c.ConfirmBoxRestart(); err != nil {
+		return functions.NewE(err)
+	}
+
 	return nil
 }
 
 func init() {
 	addCmd.Flags().StringP("name", "n", "", "name of the package to install")
-	addCmd.Flags().BoolP("verbose", "v", false, "name of the package to install")
 }

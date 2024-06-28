@@ -1,8 +1,7 @@
 package fzf
 
 import (
-	"errors"
-
+	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/koki-develop/go-fzf"
 	mfzf "github.com/koki-develop/go-fzf"
 )
@@ -25,7 +24,7 @@ func FindOne[T any](items []T, itemFunc func(item T) string, options ...Option) 
 	}()...)
 
 	if err != nil {
-		return nil, err
+		return nil, functions.NewE(err)
 	}
 
 	idxs, err := f.Find(items, func(i int) string {
@@ -33,7 +32,7 @@ func FindOne[T any](items []T, itemFunc func(item T) string, options ...Option) 
 	})
 
 	if len(idxs) == 0 {
-		return nil, errors.New("you have not selected any item")
+		return nil, functions.Error("you have not selected any item")
 	}
 
 	selectedIndex := idxs[0]

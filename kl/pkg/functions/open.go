@@ -1,7 +1,6 @@
 package functions
 
 import (
-	"fmt"
 	"os/exec"
 	"runtime"
 )
@@ -22,8 +21,6 @@ func OpenUrl(url string) error {
 	args = append(args, url)
 
 	Log("opening browser for login")
-	Log("if browser doesn't open automatically, please visit the following link")
-	fmt.Println(url)
 
 	return exec.Command(cmd, args...).Start()
 }

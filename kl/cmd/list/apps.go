@@ -1,9 +1,9 @@
 package list
 
 import (
-	"errors"
-
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -22,20 +22,29 @@ var appsCmd = &cobra.Command{
 }
 
 func listapps(cmd *cobra.Command, _ []string) error {
+	fc, err := fileclient.New()
+	if err != nil {
+		return functions.NewE(err)
+	}
 
 	envName := fn.ParseStringFlag(cmd, "env")
-	accName := fn.ParseStringFlag(cmd, "account")
 
-	apps, err := server.ListApps([]fn.Option{
-		fn.MakeOption("accountName", accName),
+	filePath := fn.ParseKlFile(cmd)
+	klFile, err := fc.GetKlFile(filePath)
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	apps, err := apiclient.ListApps([]fn.Option{
+		fn.MakeOption("accountName", klFile.AccountName),
 		fn.MakeOption("envName", envName),
 	}...)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if len(apps) == 0 {
-		return errors.New("no apps found")
+		return functions.Error("no apps found")
 	}
 
 	header := table.Row{
@@ -59,5 +68,4 @@ func listapps(cmd *cobra.Command, _ []string) error {
 func init() {
 	appsCmd.Aliases = append(appsCmd.Aliases, "app")
 	appsCmd.Flags().StringP("env", "e", "", "environment name")
-	fn.WithOutputVariant(appsCmd)
 }

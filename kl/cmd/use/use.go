@@ -14,9 +14,6 @@ var InfraCmd = &cobra.Command{
 
 func init() {
 	Cmd.Aliases = append(Cmd.Aliases, "select")
-	Cmd.AddCommand(accCmd)
 	Cmd.AddCommand(switchCmd)
 
-	InfraCmd.AddCommand(accCmd)
-	InfraCmd.AddCommand(clusterCmd)
 }

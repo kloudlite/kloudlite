@@ -1,11 +1,11 @@
 package list
 
 import (
-	"errors"
 	"fmt"
 
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -26,17 +26,23 @@ var accCmd = &cobra.Command{
 }
 
 func listAccounts(cmd *cobra.Command) error {
-	accounts, err := server.ListAccounts()
+	accounts, err := apiclient.ListAccounts()
 
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if len(accounts) == 0 {
-		return errors.New("no accounts found")
+		return functions.Error("no accounts found")
 	}
 
-	accountName, _ := client.CurrentAccountName()
+	fc, err := fileclient.New()
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	// this erro ignore is intentional
+	accountName, _ := fc.CurrentAccountName()
 
 	header := table.Row{table.HeaderText("name"), table.HeaderText("id")}
 	rows := make([]table.Row, 0)
@@ -67,6 +73,4 @@ func listAccounts(cmd *cobra.Command) error {
 
 func init() {
 	accCmd.Aliases = append(accCmd.Aliases, "acc", "account")
-
-	fn.WithOutputVariant(accCmd)
 }

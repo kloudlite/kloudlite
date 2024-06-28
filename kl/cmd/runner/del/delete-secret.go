@@ -3,7 +3,7 @@ package del
 // import (
 // 	"fmt"
 
-// 	"github.com/kloudlite/kl/domain/client"
+// 	"github.com/kloudlite/kl/domain/fileclient"
 // 	fn "github.com/kloudlite/kl/pkg/functions"
 // 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
@@ -31,7 +31,7 @@ package del
 
 // func removeSecret() error {
 
-// 	klFile, err := client.GetKlFile("")
+// 	klFile, err := fileclient.GetKlFile("")
 // 	if err != nil {
 // 		fn.PrintError(err)
 // 		es := "please run 'kl init' if you are not initialized the file already"
@@ -45,18 +45,18 @@ package del
 
 // 	selectedSecret, err := fzf.FindOne(
 // 		klFile.Secrets,
-// 		func(item client.ResType) string {
+// 		func(item fileclient.ResType) string {
 // 			return item.Name
 // 		},
 // 		fzf.WithPrompt("Select Secret Group >"),
 // 	)
 
 // 	if err != nil {
-// 		return err
+// 		return functions.NewE(err)
 // 	}
 
 // 	if len(selectedSecret.Env) == 1 {
-// 		newSecrets := make([]client.ResType, 0)
+// 		newSecrets := make([]fileclient.ResType, 0)
 // 		for _, rt := range klFile.Secrets {
 // 			if rt.Name == selectedSecret.Name {
 // 				continue
@@ -72,7 +72,7 @@ package del
 
 // 		selectedKeyVal, e := fzf.FindOne(
 // 			selectedSecret.Env,
-// 			func(item client.ResEnvType) string {
+// 			func(item fileclient.ResEnvType) string {
 // 				return fmt.Sprintf("%s, %s", item.Key, item.RefKey)
 // 			},
 // 			fzf.WithPrompt("Select Secret Key >"),
@@ -82,7 +82,7 @@ package del
 // 			return e
 // 		}
 
-// 		newEnvs := make([]client.ResEnvType, 0)
+// 		newEnvs := make([]fileclient.ResEnvType, 0)
 // 		for _, ret := range selectedSecret.Env {
 // 			if ret.Name == selectedKeyVal.Name {
 // 				continue
@@ -95,7 +95,7 @@ package del
 // 		fn.Logf("removed key %s/%s form your kl-file\n", selectedSecret.Name, selectedSecret.Name)
 // 	}
 
-// 	err = client.WriteKLFile(*klFile)
+// 	err = fileclient.WriteKLFile(*klFile)
 
-// 	return err
+// 	return functions.NewE(err)
 // }

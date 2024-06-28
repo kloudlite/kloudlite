@@ -22,8 +22,3 @@ var sshCmd = &cobra.Command{
 		}
 	},
 }
-
-func init() {
-	setBoxCommonFlags(sshCmd)
-	sshCmd.Flags().StringP("name", "n", "", "container name")
-}

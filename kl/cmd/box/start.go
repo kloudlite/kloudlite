@@ -13,6 +13,7 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "start box using kl.yml configuraiton of the current directory",
 	Run: func(cmd *cobra.Command, args []string) {
+
 		c, err := boxpkg.NewClient(cmd, args)
 		if err != nil {
 			fn.PrintError(err)
@@ -24,8 +25,4 @@ var startCmd = &cobra.Command{
 			return
 		}
 	},
-}
-
-func init() {
-	setBoxCommonFlags(startCmd)
 }

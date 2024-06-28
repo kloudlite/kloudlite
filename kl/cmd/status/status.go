@@ -3,74 +3,55 @@ package status
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
-	"github.com/kloudlite/kl/flags"
+	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/envclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
 )
 
 var Cmd = &cobra.Command{
-	Use:     "status",
-	Short:   "get status of your current context (user, account, environment, vpn status)",
-	Example: fn.Desc("{cmd} status"),
+	Use:   "status",
+	Short: "get status of your current context (user, account, environment, vpn status)",
 	Run: func(_ *cobra.Command, _ []string) {
 
-		if u, err := server.GetCurrentUser(); err == nil {
+		if u, err := apiclient.GetCurrentUser(); err == nil {
 			fn.Logf("\nLogged in as %s (%s)\n",
 				text.Blue(u.Name),
 				text.Blue(u.Email),
 			)
 		}
 
-		if s, err := client.CurrentAccountName(); err == nil {
-			fn.Log(fmt.Sprint(text.Bold(text.Blue("Account: ")), s))
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
 		}
 
-		switch flags.CliName {
-		case constants.CoreCliName:
-			{
-				if e, err := client.CurrentEnv(); err == nil {
-					fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), e.Name))
-				}
-			}
-
-		case constants.InfraCliName:
-			{
-				if s, err := client.CurrentClusterName(); err == nil {
-					fn.Log(fmt.Sprint(text.Bold(text.Blue("Cluster: ")), s))
-				}
-			}
+		acc, err := fc.CurrentAccountName()
+		if err == nil {
+			fn.Log(fmt.Sprint(text.Bold(text.Blue("Account: ")), acc))
 		}
 
-		if s, err := client.CurrentDeviceName(); err == nil {
+		if e, err := fileclient.CurrentEnv(); err == nil {
+			fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), e.Name))
+		}
 
-			// dev, err := server.GetDevice(fn.MakeOption("deviceName", s))
-			// if err != nil {
-			// 	fn.PrintError(err)
-			// 	return
-			// }
+		if envclient.InsideBox() {
+			b := apiclient.CheckDeviceStatus()
+			avc, err := fc.GetVpnAccountConfig(acc)
+			if err != nil {
+				return
+			}
 
-			// switch flags.CliName {
-			// case constants.InfraCliName:
-			// 	fn.Log(fmt.Sprint(text.Bold("Cluster:"), dev.ClusterName))
-			// }
-
-			b := server.CheckDeviceStatus()
-			fn.Log(fmt.Sprint(text.Bold(text.Blue("Device: ")), s, func() string {
+			fn.Log(fmt.Sprint(text.Bold(text.Blue("Device: ")), avc.DeviceName, func() string {
 				if b {
 					return text.Bold(text.Green(" (Connected) "))
 				} else {
 					return text.Bold(text.Red(" (Disconnected) "))
 				}
 			}()))
-
-			ip, err := client.CurrentDeviceIp()
-			if err == nil {
-				fn.Logf("%s %s", text.Bold(text.Blue("Device IP:")), *ip)
-			}
 		}
 	},
 }

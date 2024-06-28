@@ -3,32 +3,24 @@ package constants
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/fileclient"
 )
 
 const (
-	DefaultBaseURL              = "https://auth.kloudlite.io"
-	RuntimeLinux                = "linux"
-	RuntimeDarwin               = "darwin"
-	RuntimeWindows              = "windows"
-	BashShell                   = "bash"
-	FishShell                   = "fish"
-	ZshShell                    = "zsh"
-	PowerShell                  = "powershell"
-	NetworkService              = "Wi-Fi"
-	LocalSearchDomains          = ".local"
-	NoExistingSearchDomainError = "There aren't any Search Domains set on Wi-Fi."
+	DefaultBaseURL = "https://auth.kloudlite.io"
+	RuntimeLinux   = "linux"
+	RuntimeDarwin  = "darwin"
+	RuntimeWindows = "windows"
 
-	ContainerVpnPort = 1729
-
-	DnsServerPort = 5353
+	SocatImage     = "ghcr.io/kloudlite/hub/socat:latest"
+	WireguardImage = "ghcr.io/kloudlite/hub/wireguard:latest"
 )
 
 var (
 	BaseURL = func() string {
 		baseUrl := DefaultBaseURL
 
-		s, err := client.GetBaseURL()
+		s, err := fileclient.GetBaseURL()
 		if err == nil && s != "" {
 			baseUrl = s
 		}
@@ -49,6 +41,5 @@ var (
 )
 
 var (
-	InfraCliName = "kli"
-	CoreCliName  = "kl"
+	CoreCliName = "kl"
 )

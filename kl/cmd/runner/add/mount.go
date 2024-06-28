@@ -2,9 +2,13 @@ package add
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/cmd/box/boxpkg"
+	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
+	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
@@ -23,13 +27,16 @@ var mountCommand = &cobra.Command{
   kl add config-mount [path] --secret=<secret_name>	# add secret from secret.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		filePath := fn.ParseKlFile(cmd)
-
-		klFile, err := client.GetKlFile(filePath)
+		fc, err := fileclient.New()
 		if err != nil {
 			fn.PrintError(err)
-			es := "please run 'kl init' if you are not initialized the file already"
-			fn.PrintError(fmt.Errorf(es))
+			return
+		}
+
+		filePath := fn.ParseKlFile(cmd)
+		klFile, err := fc.GetKlFile(filePath)
+		if err != nil {
+			fn.PrintError(err)
 			return
 		}
 		path := ""
@@ -49,65 +56,75 @@ var mountCommand = &cobra.Command{
 	},
 }
 
-func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command) error {
+func selectConfigMount(path string, klFile fileclient.KLFileType, cmd *cobra.Command) error {
+
+	fc, err := fileclient.New()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
 	//TODO: add changes to the klbox-hash file
 	c := cmd.Flag("config").Value.String()
 	s := cmd.Flag("secret").Value.String()
 
-	var cOrs client.CSType
+	var cOrs fileclient.CSType
 	cOrs = ""
 
 	if c != "" || s != "" {
 
 		if c != "" {
-			cOrs = client.ConfigType
+			cOrs = fileclient.ConfigType
 		} else {
-			cOrs = client.SecretType
+			cOrs = fileclient.SecretType
 		}
 
 	} else {
-		csName := []client.CSType{client.ConfigType, client.SecretType}
+		csName := []fileclient.CSType{fileclient.ConfigType, fileclient.SecretType}
 		cOrsValue, err := fzf.FindOne(
 			csName,
 			//func(i int) string {
 			//	return csName[i]
 			//},
-			func(item client.CSType) string {
+			func(item fileclient.CSType) string {
 				return string(item)
 			},
 			fzf.WithPrompt("Mount from Config/Secret >"),
 		)
 		if err != nil {
-			return err
+			return fn.NewE(err)
 		}
 
-		cOrs = client.CSType(*cOrsValue)
+		cOrs = fileclient.CSType(*cOrsValue)
 	}
 
-	items := make([]server.ConfigORSecret, 0)
-	if cOrs == client.ConfigType {
-		configs, e := server.ListConfigs()
+	items := make([]apiclient.ConfigORSecret, 0)
+	if cOrs == fileclient.ConfigType {
+		configs, e := apiclient.ListConfigs([]fn.Option{
+			fn.MakeOption("accountName", klFile.AccountName),
+		}...)
 
 		if e != nil {
 			return e
 		}
 
 		for _, c := range configs {
-			items = append(items, server.ConfigORSecret{
+			items = append(items, apiclient.ConfigORSecret{
 				Entries: c.Data,
 				Name:    c.Metadata.Name,
 			})
 		}
 
 	} else {
-		secrets, e := server.ListSecrets()
+		secrets, e := apiclient.ListSecrets([]fn.Option{
+			fn.MakeOption("accountName", klFile.AccountName),
+		}...)
 
 		if e != nil {
 			return e
 		}
 
 		for _, c := range secrets {
-			items = append(items, server.ConfigORSecret{
+			items = append(items, apiclient.ConfigORSecret{
 				Entries: c.StringData,
 				Name:    c.Metadata.Name,
 			})
@@ -118,7 +135,7 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 		return fmt.Errorf("no %ss created yet on server ", cOrs)
 	}
 
-	selectedItem := server.ConfigORSecret{}
+	selectedItem := apiclient.ConfigORSecret{}
 
 	if c != "" || s != "" {
 		csId := func() string {
@@ -139,7 +156,7 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 	} else {
 		selectedItemVal, err := fzf.FindOne(
 			items,
-			func(item server.ConfigORSecret) string {
+			func(item apiclient.ConfigORSecret) string {
 				return item.Name
 			},
 			fzf.WithPrompt(fmt.Sprintf("Select %s >", cOrs)),
@@ -170,20 +187,20 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 	}, fzf.WithPrompt("Select Config/Secret >"))
 
 	if err != nil {
-		return err
+		return fn.NewE(err)
 	}
 
 	fe := klFile.Mounts.GetMounts()
 
 	if matchedIndex == -1 {
-		fe = append(fe, client.FileEntry{
+		fe = append(fe, fileclient.FileEntry{
 			Type: cOrs,
 			Path: path,
 			Name: selectedItem.Name,
 			Key:  *key,
 		})
 	} else {
-		fe[matchedIndex] = client.FileEntry{
+		fe[matchedIndex] = fileclient.FileEntry{
 			Type: cOrs,
 			Path: path,
 			Name: selectedItem.Name,
@@ -192,13 +209,28 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 	}
 
 	klFile.Mounts.AddMounts(fe)
-	if err := client.WriteKLFile(klFile); err != nil {
-		return err
+	if err := fc.WriteKLFile(klFile); err != nil {
+		return fn.NewE(err)
 	}
 
 	fn.Log("added mount to your kl-file")
-	if err = server.SyncBoxHash(); err != nil {
-		return err
+
+	wpath, err := os.Getwd()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	if err = hashctrl.SyncBoxHash(wpath); err != nil {
+		return fn.NewE(err)
+	}
+
+	cl, err := boxpkg.NewClient(cmd, nil)
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	if err := cl.ConfirmBoxRestart(); err != nil {
+		return functions.NewE(err)
 	}
 
 	return nil

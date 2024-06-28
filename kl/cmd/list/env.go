@@ -1,11 +1,11 @@
 package list
 
 import (
-	"errors"
 	"fmt"
 
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -26,17 +26,25 @@ var envCmd = &cobra.Command{
 
 func listEnvironments(cmd *cobra.Command, args []string) error {
 
-	var err error
-	envs, err := server.ListEnvs()
+	fc, err := fileclient.New()
 	if err != nil {
-		return err
+		return functions.NewE(err)
+	}
+
+	klFile, err := fc.GetKlFile("")
+	if err != nil {
+		return functions.NewE(err)
+	}
+	envs, err := apiclient.ListEnvs(fn.MakeOption("accountName", klFile.AccountName))
+	if err != nil {
+		return functions.NewE(err)
 	}
 
 	if len(envs) == 0 {
-		return errors.New("no environments found")
+		return functions.Error("no environments found")
 	}
 
-	env, _ := client.CurrentEnv()
+	env, _ := fileclient.CurrentEnv()
 	envName := ""
 	if env != nil {
 		envName = env.Name
@@ -53,16 +61,15 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	fmt.Println(table.Table(&header, rows))
+	fmt.Println(table.Table(&header, rows, cmd))
 
 	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
 		table.TotalResults(len(envs), true)
 	}
-	table.TotalResults(len(envs), true)
+
 	return nil
 }
 
 func init() {
-	fn.WithOutputVariant(envCmd)
 	envCmd.Aliases = append(envCmd.Aliases, "env")
 }

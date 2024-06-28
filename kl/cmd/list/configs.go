@@ -3,8 +3,9 @@ package list
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -16,11 +17,23 @@ var configsCmd = &cobra.Command{
 	Use:   "configs",
 	Short: "Get list of configs in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
 		envName := fn.ParseStringFlag(cmd, "env")
 
-		config, err := server.ListConfigs([]fn.Option{
+		filePath := fn.ParseKlFile(cmd)
+		klFile, err := fc.GetKlFile(filePath)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		config, err := apiclient.ListConfigs([]fn.Option{
 			fn.MakeOption("envName", envName),
+			fn.MakeOption("accountName", klFile.AccountName),
 		}...)
 
 		if err != nil {
@@ -35,11 +48,11 @@ var configsCmd = &cobra.Command{
 	},
 }
 
-func printConfigs(cmd *cobra.Command, configs []server.Config) error {
+func printConfigs(cmd *cobra.Command, configs []apiclient.Config) error {
 
-	e, err := client.CurrentEnv()
+	e, err := fileclient.CurrentEnv()
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
 
 	if len(configs) == 0 {
@@ -69,6 +82,4 @@ func init() {
 	configsCmd.Aliases = append(configsCmd.Aliases, "conf")
 
 	configsCmd.Flags().StringP("env", "e", "", "environment name")
-
-	fn.WithOutputVariant(configsCmd)
 }

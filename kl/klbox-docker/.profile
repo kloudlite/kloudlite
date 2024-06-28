@@ -12,6 +12,7 @@
 #umask 022
 
 source $HOME/.nix-profile/etc/profile.d/nix.sh
+export PATH=$PATH:$HOME/.nix-profile/bin
 
 KL_LOCK_PATH=/home/kl/workspace/kl.lock
 [ -f /tmp/env ] && source /tmp/env
@@ -65,4 +66,4 @@ if [ -f "/kl-tmp/global-profile" ]; then
   source /kl-tmp/global-profile
 fi
 
-cd /home/kl/workspace || return
+cd /workspace || return

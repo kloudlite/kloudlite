@@ -1,10 +1,11 @@
 package list
 
 import (
-	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/fileclient"
 
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -15,8 +16,22 @@ var mresCmd = &cobra.Command{
 	Use:   "mreses",
 	Short: "Get list of managed resources in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
-		sec, err := server.ListMreses()
+		filePath := fn.ParseKlFile(cmd)
+		klFile, err := fc.GetKlFile(filePath)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		sec, err := apiclient.ListMreses([]fn.Option{
+			fn.MakeOption("accountName", klFile.AccountName),
+		}...)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -29,9 +44,9 @@ var mresCmd = &cobra.Command{
 	},
 }
 
-func printMres(_ *cobra.Command, secrets []server.Mres) error {
+func printMres(_ *cobra.Command, secrets []apiclient.Mres) error {
 	if len(secrets) == 0 {
-		return errors.New("no secrets found")
+		return functions.Error("no secrets found")
 	}
 
 	header := table.Row{
@@ -52,8 +67,8 @@ func printMres(_ *cobra.Command, secrets []server.Mres) error {
 }
 
 func init() {
-	mresCmd.Aliases = append(secretsCmd.Aliases, "mres")
-	mresCmd.Aliases = append(secretsCmd.Aliases, "managed-resources")
-	mresCmd.Aliases = append(secretsCmd.Aliases, "mresources")
+	mresCmd.Aliases = append(mresCmd.Aliases, "mres")
+	mresCmd.Aliases = append(mresCmd.Aliases, "managed-resources")
+	mresCmd.Aliases = append(mresCmd.Aliases, "mresources")
 	fn.WithOutputVariant(mresCmd)
 }

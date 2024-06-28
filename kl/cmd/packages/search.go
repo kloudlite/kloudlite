@@ -1,15 +1,14 @@
 package packages
 
 import (
-	"encoding/csv"
-	"errors"
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
 
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
+	"github.com/kloudlite/kl/pkg/ui/table"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/spf13/cobra"
 )
@@ -26,71 +25,47 @@ var searchCmd = &cobra.Command{
 }
 
 func searchPackages(cmd *cobra.Command, args []string) error {
-
-	// parsing name
-
 	name := fn.ParseStringFlag(cmd, "name")
 	if name == "" && len(args) > 0 {
 		name = args[0]
 	}
 
-	showAll := fn.ParseBoolFlag(cmd, "show-all")
-
 	if name == "" {
-		return errors.New("name is required")
+		return functions.Error("name is required")
 	}
 
-	stopSp := spinner.Client.Start(fmt.Sprintf("searching for package %s", name))
+	stopSp := spinner.Client.UpdateMessage(fmt.Sprintf("searching for package %s", name))
 	defer stopSp()
 
-	err := ExecCmd(
-		fmt.Sprintf("devbox search %s%s", name,
-			func() string {
-				if showAll {
-					return " --show-all"
-				}
-
-				return ""
-			}(),
-		),
-		nil, true,
-	)
-
-	stopSp()
+	sr, err := Search(cmd.Context(), name)
 	if err != nil {
-		return err
+		return functions.NewE(err)
 	}
+	stopSp()
+
+	header := table.Row{table.HeaderText("#"), table.HeaderText("name"), table.HeaderText("versions")}
+	rows := make([]table.Row, 0)
+
+	for i, p := range sr.Packages {
+		versions := make([]string, 0)
+		for j, v := range p.Versions {
+			if j >= 10 {
+				break
+			}
+
+			versions = append(versions, v.Version)
+		}
+
+		rows = append(rows, table.Row{
+			text.Colored(fmt.Sprint(i+1, "."), 5),
+			text.Bold((p.Name)),
+			fmt.Sprintf("%s", strings.Join(versions, ", ")),
+		})
+	}
+
+	fmt.Println(table.Table(&header, rows, cmd))
 
 	return nil
-}
-
-func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
-	r := csv.NewReader(strings.NewReader(cmdString))
-	r.Comma = ' '
-	cmdArr, err := r.Read()
-	if err != nil {
-		return err
-	}
-	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
-	if verbose {
-		cmd.Stdout = os.Stdout
-	}
-
-	// cmd.Env = os.Environ()
-
-	if env == nil {
-		env = map[string]string{}
-	}
-
-	for k, v := range env {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
-	}
-
-	cmd.Stderr = os.Stderr
-	// s.Start()
-	err = cmd.Run()
-	// s.Stop()
-	return err
 }
 
 func init() {

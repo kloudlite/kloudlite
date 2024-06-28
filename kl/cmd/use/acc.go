@@ -2,9 +2,7 @@ package use
 
 import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
-	"github.com/kloudlite/kl/domain/client"
-	proxy "github.com/kloudlite/kl/domain/dev-proxy"
-	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/domain/apiclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
@@ -16,19 +14,8 @@ var accCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		accountName := fn.ParseStringFlag(cmd, "account")
 
-		acc, err := server.SelectAccount(accountName)
+		acc, err := apiclient.SelectAccount(accountName)
 		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		p, err := proxy.NewProxy(false)
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		if _, err := p.Stop(); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -44,12 +31,7 @@ var accCmd = &cobra.Command{
 			return
 		}
 
-		if err := client.SetAccountToMainCtx(acc.Metadata.Name); err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		fn.Logf("%s %s", text.Blue(text.Bold("\nSelected Account:")), acc.Metadata.Name)
+		fn.Logf("%s %s\n", text.Blue(text.Bold("\nSelected Account:")), acc.Metadata.Name)
 	},
 }
 

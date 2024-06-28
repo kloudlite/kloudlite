@@ -1,7 +1,6 @@
 package functions
 
 import (
-	"bytes"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -9,83 +8,12 @@ import (
 	"strings"
 )
 
-// StreamOutput executes a command and streams its output line by line.
-func StreamOutput(cmdString string, env map[string]string, outputCh chan<- string, errCh chan<- error) {
-	defer close(outputCh)
-	defer close(errCh)
-
-	r := csv.NewReader(strings.NewReader(cmdString))
-	r.Comma = ' '
-	cmdArr, err := r.Read()
-	if err != nil {
-		errCh <- err
-		return
-	}
-
-	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
-
-	cmd.Env = os.Environ()
-
-	for k, v := range env {
-		cmd.Env = append(cmd.Env, k+"="+v)
-	}
-
-	stdoutPipe, err := cmd.StdoutPipe()
-	if err != nil {
-		errCh <- err
-		return
-	}
-
-	stderrPipe, err := cmd.StderrPipe()
-	if err != nil {
-		errCh <- err
-		return
-	}
-
-	if err := cmd.Start(); err != nil {
-		errCh <- err
-		return
-	}
-
-	var stdoutBuf, stderrBuf bytes.Buffer
-
-	go func() {
-		buf := make([]byte, 1024)
-		for {
-			n, err := stdoutPipe.Read(buf)
-			if err != nil {
-				break
-			}
-			stdoutBuf.Write(buf[:n])
-			outputCh <- stdoutBuf.String()
-			stdoutBuf.Reset()
-		}
-	}()
-
-	go func() {
-		buf := make([]byte, 1024)
-		for {
-			n, err := stderrPipe.Read(buf)
-			if err != nil {
-				break
-			}
-			stderrBuf.Write(buf[:n])
-			outputCh <- stderrBuf.String()
-			stderrBuf.Reset()
-		}
-	}()
-
-	if err := cmd.Wait(); err != nil {
-		errCh <- err
-	}
-}
-
 func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
 	r := csv.NewReader(strings.NewReader(cmdString))
 	r.Comma = ' '
 	cmdArr, err := r.Read()
 	if err != nil {
-		return err
+		return NewE(err)
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 	if verbose {
@@ -107,38 +35,7 @@ func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
 	// s.Start()
 	err = cmd.Run()
 	// s.Stop()
-	return err
-}
-
-func ExecCmdOut(cmdString string, env map[string]string) ([]byte, error) {
-	r := csv.NewReader(strings.NewReader(cmdString))
-	r.Comma = ' '
-	cmdArr, err := r.Read()
-	if err != nil {
-		return nil, err
-	}
-
-	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
-
-	if env == nil {
-		env = make(map[string]string)
-	}
-
-	for k, v := range env {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
-	}
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err = cmd.Run()
-	if err != nil {
-		return nil, err
-	}
-
-	combinedOutput := append(stdout.Bytes(), stderr.Bytes()...)
-	return combinedOutput, nil
+	return NewE(err)
 }
 
 func Exec(cmdString string, env map[string]string) ([]byte, error) {
@@ -146,7 +43,7 @@ func Exec(cmdString string, env map[string]string) ([]byte, error) {
 	r.Comma = ' '
 	cmdArr, err := r.Read()
 	if err != nil {
-		return nil, err
+		return nil, NewE(err)
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 
@@ -171,7 +68,7 @@ func Exec(cmdString string, env map[string]string) ([]byte, error) {
 func isAdmin() bool {
 	cmd := exec.Command("net", "session")
 	err := cmd.Run()
-	return err == nil
+	return NewE(err) == nil
 }
 
 func WinSudoExec(cmdString string, env map[string]string) ([]byte, error) {
@@ -183,23 +80,11 @@ func WinSudoExec(cmdString string, env map[string]string) ([]byte, error) {
 	r.Comma = ' '
 	cmdArr, err := r.Read()
 	if err != nil {
-		return nil, err
+		return nil, NewE(err)
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 
 	quotedArgs := strings.Join(cmdArr[1:], ",")
 
 	return Exec(fmt.Sprintf("powershell -Command Start-Process -WindowStyle Hidden -FilePath %s -ArgumentList %q -Verb RunAs", cmd.Path, quotedArgs), map[string]string{"PATH": os.Getenv("PATH")})
-}
-
-func Confirm(yes string, defaultValue string) bool {
-	var response string
-	_, _ = fmt.Scanln(&response)
-	if response == "" {
-		if defaultValue == "" {
-			return false
-		}
-		response = defaultValue
-	}
-	return strings.ToLower(response) == strings.ToLower(yes)
 }

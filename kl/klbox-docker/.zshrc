@@ -39,5 +39,22 @@ if [[ -f $ZSH_HIGHLIGHT_PATH ]]; then
   source $ZSH_HIGHLIGHT_PATH
 fi
 
+precmd() {
+  if [ -z "$KL_HASH_FILE" ]; then
+    return
+  fi
+
+	chash=$(cat $KL_HASH_FILE | jq '.hash' -r)
+	ohash=$(cat /tmp/hash)
+	if [ "$chash" != "$ohash" ]; then
+		dirtyPrefix="(needs-restart)"
+		cprefix="$(echo $PURE_PROMPT_SYMBOL | awk '{print $1}')"
+		if [ "$cprefix" != "$dirtyPrefix" ]; then
+			PURE_PROMPT_SYMBOL="$dirtyPrefix $PURE_PROMPT_SYMBOL"
+		fi
+	else
+		PURE_PROMPT_SYMBOL=${PURE_PROMPT_SYMBOL#"$dirtyPrefix "}
+	fi
+}
 # go to workspace
-cd $HOME/workspace
+cd /workspace
