@@ -60,7 +60,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(secrets) == 0 {
-		return fmt.Errorf("no secrets created yet on apiclient")
+		return fmt.Errorf("no secrets created yet on server")
 	}
 
 	selectedSecretGroup := apiclient.Secret{}

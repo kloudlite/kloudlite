@@ -130,7 +130,7 @@ func selectConfigMount(path string, klFile fileclient.KLFileType, cmd *cobra.Com
 	}
 
 	if len(items) == 0 {
-		return fmt.Errorf("no %ss created yet on apiclient ", cOrs)
+		return fmt.Errorf("no %ss created yet on server ", cOrs)
 	}
 
 	selectedItem := apiclient.ConfigORSecret{}

@@ -61,7 +61,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(configs) == 0 {
-		return fn.Error("no configs created yet on apiclient")
+		return fn.Error("no configs created yet on server")
 	}
 
 	selectedConfigGroup := apiclient.Config{}

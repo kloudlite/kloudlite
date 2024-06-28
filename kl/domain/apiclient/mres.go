@@ -56,7 +56,7 @@ func SelectMres(options ...fn.Option) (*Mres, error) {
 		return nil, functions.NewE(err)
 	}
 	if len(m) == 0 {
-		return nil, fmt.Errorf("no managed resources created yet on apiclient")
+		return nil, fmt.Errorf("no managed resources created yet on server")
 	}
 
 	if mresName != "" {
