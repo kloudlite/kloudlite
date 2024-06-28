@@ -79,7 +79,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [kl,kli]
+        app: [kl]
         os: [ubuntu-latest, windows-latest, macos-14, macos-13]
         arch: [amd64, arm64]
         include:
@@ -100,8 +100,8 @@ jobs:
             arch: amd64
           - os: macos-13
             arch: arm64
-          - os: ubuntu-latest
-            arch: arm64
+          # - os: ubuntu-latest
+          #   arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

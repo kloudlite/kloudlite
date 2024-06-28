@@ -365,8 +365,6 @@ func (c *client) getFreePort() (int, error) {
 		return c.env.SSHPort, nil
 	}
 
-	defer fileclient.SelectEnvOnPath(c.cwd, *c.env)
-
 	var resp int
 	for {
 		port := rand.Intn(65535-1024) + 1025
@@ -380,6 +378,7 @@ func (c *client) getFreePort() (int, error) {
 		}
 	}
 
+	defer fileclient.SelectEnvOnPath(c.cwd, *c.env)
 	return resp, nil
 }
 
@@ -393,7 +392,12 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 		return nil, functions.NewE(err)
 	}
 
-	sshPath := path.Join(c.userHomeDir, ".ssh", "id_rsa.pub")
+	userHomeDir, err := fileclient.GetUserHomeDir()
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+
+	sshPath := path.Join(userHomeDir, ".ssh", "id_rsa.pub")
 
 	akByte, err := os.ReadFile(sshPath)
 	if err != nil {
@@ -404,7 +408,7 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 
 	akTmpPath := path.Join(td, "authorized_keys")
 
-	akByte, err = os.ReadFile(path.Join(c.userHomeDir, ".ssh", "authorized_keys"))
+	akByte, err = os.ReadFile(path.Join(userHomeDir, ".ssh", "authorized_keys"))
 	if err == nil {
 		ak += fmt.Sprint("\n", string(akByte))
 	}
@@ -449,11 +453,16 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 		return nil, functions.NewE(err)
 	}
 
+	configFolder, err := fileclient.GetConfigFolder()
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+
 	volumes := []mount.Mount{
 		{Type: mount.TypeBind, Source: akTmpPath, Target: "/tmp/ssh2/authorized_keys", ReadOnly: true},
 		{Type: mount.TypeVolume, Source: "kl-home-cache", Target: "/home"},
 		{Type: mount.TypeVolume, Source: "kl-nix-store", Target: "/nix"},
-		{Type: mount.TypeBind, Source: c.configFolder, Target: "/.cache/kl"},
+		{Type: mount.TypeBind, Source: configFolder, Target: "/.cache/kl"},
 	}
 
 	dockerSock := "/var/run/docker.sock"

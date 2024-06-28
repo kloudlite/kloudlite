@@ -12,11 +12,15 @@ var logoutCmd = &cobra.Command{
 	Example: `# Logout from kloudlite
 {cmd} auth logout`,
 	Run: func(*cobra.Command, []string) {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
-		if err := fileclient.Logout(); err != nil {
+		if err := fc.Logout(); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
-

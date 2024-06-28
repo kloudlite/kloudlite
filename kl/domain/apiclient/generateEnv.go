@@ -79,8 +79,12 @@ type CSResp map[string]map[string]*Kv
 type MountMap map[string]string
 
 func GetLoadMaps() (map[string]string, MountMap, error) {
+	fc, err := fileclient.New()
+	if err != nil {
+		return nil, nil, functions.NewE(err)
+	}
 
-	kt, err := fileclient.GetKlFile("")
+	kt, err := fc.GetKlFile("")
 	if err != nil {
 		return nil, nil, functions.NewE(err)
 	}

@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	confighandler "github.com/kloudlite/kl/pkg/config-handler"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -21,12 +21,19 @@ var InitCommand = &cobra.Command{
 	Short: "initialize a kl-config file",
 	Long:  `use this command to initialize a kl-config file`,
 	Run: func(_ *cobra.Command, _ []string) {
+
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 		if fileclient.InsideBox() {
 			fn.PrintError(functions.Error("cannot re-initialize workspace in dev box"))
 			return
 		}
-		_, err := fileclient.GetKlFile("")
-		if err == nil {
+
+		if _, err = fc.GetKlFile(""); err == nil {
 			fn.Printf(text.Yellow("Workspace is already initilized. Do you want to override? (y/N): "))
 			if !fn.Confirm("Y", "N") {
 				return
@@ -50,7 +57,7 @@ var InitCommand = &cobra.Command{
 					Version:     "v1",
 					Packages:    []string{"neovim", "git"},
 				}
-				if err := fileclient.WriteKLFile(newKlFile); err != nil {
+				if err := fc.WriteKLFile(newKlFile); err != nil {
 					fn.PrintError(err)
 				} else {
 					fn.Printf(text.Green("Workspace initialized successfully.\n"))

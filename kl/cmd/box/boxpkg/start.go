@@ -8,7 +8,6 @@ import (
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/apiclient"
-	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -17,7 +16,7 @@ import (
 
 var errContainerNotStarted = fmt.Errorf("container not started")
 
-func (c *client) Start(klConfig *fileclient.KLFileType) error {
+func (c *client) Start() error {
 	defer spinner.Client.UpdateMessage("initiating container please wait")()
 
 	if err := c.ensureKloudliteNetwork(); err != nil {
@@ -36,9 +35,8 @@ func (c *client) Start(klConfig *fileclient.KLFileType) error {
 				return fn.NewE(err)
 			}
 		}
-		return fn.NewE(err)
 	} else {
-		klconfHash, err := hashctrl.GenerateKLConfigHash(klConfig)
+		klconfHash, err := hashctrl.GenerateKLConfigHash(c.klfile)
 		if err != nil {
 			return fn.NewE(err)
 		}
@@ -56,13 +54,13 @@ func (c *client) Start(klConfig *fileclient.KLFileType) error {
 	}
 
 	if err = c.SyncProxy(ProxyConfig{
-		ExposedPorts:        klConfig.Ports,
+		ExposedPorts:        c.klfile.Ports,
 		TargetContainerPath: c.cwd,
 	}); err != nil {
 		return fn.NewE(err)
 	}
 
-	vpnCfg, err := apiclient.GetAccVPNConfig(klConfig.AccountName)
+	vpnCfg, err := apiclient.GetAccVPNConfig(c.klfile.AccountName)
 	if err != nil {
 		return functions.NewE(err)
 	}

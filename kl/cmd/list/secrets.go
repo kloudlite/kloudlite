@@ -16,9 +16,14 @@ var secretsCmd = &cobra.Command{
 	Use:   "secrets",
 	Short: "Get list of secrets in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
 		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fileclient.GetKlFile(filePath)
+		klFile, err := fc.GetKlFile(filePath)
 		if err != nil {
 			fn.PrintError(err)
 			return

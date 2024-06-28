@@ -33,8 +33,6 @@ func init() {
 	rootCmd.AddCommand(auth.Cmd)
 	rootCmd.AddCommand(box.BoxCmd)
 
-	// apploader.LoadStartApp(rootCmd)
-
 	rootCmd.AddCommand(use.Cmd)
 	rootCmd.AddCommand(runner.InitCommand)
 	rootCmd.AddCommand(set_base_url.Cmd)

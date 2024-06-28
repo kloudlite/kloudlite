@@ -175,6 +175,10 @@ func SelectEnv(envName string, options ...fn.Option) (*Env, error) {
 }
 
 func EnsureEnv(env *fileclient.Env, options ...fn.Option) (*fileclient.Env, error) {
+	fc, err := fileclient.New()
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
 
 	accountName := fn.GetOption(options, "accountName")
 	if _, err := EnsureAccount(
@@ -193,7 +197,7 @@ func EnsureEnv(env *fileclient.Env, options ...fn.Option) (*fileclient.Env, erro
 		return env, nil
 	}
 
-	kl, err := fileclient.GetKlFile("")
+	kl, err := fc.GetKlFile("")
 	if err != nil {
 		return nil, functions.NewE(err)
 	}

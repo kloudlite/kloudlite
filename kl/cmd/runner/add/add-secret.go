@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -33,6 +33,11 @@ var secCmd = &cobra.Command{
 }
 
 func selectAndAddSecret(cmd *cobra.Command, args []string) error {
+	fc, err := fileclient.New()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
 	//TODO: add changes to the klbox-hash file
 	// m := fn.ParseStringFlag(cmd, "map")
 	filePath := fn.ParseKlFile(cmd)
@@ -42,7 +47,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		name = args[0]
 	}
 
-	klFile, err := fileclient.GetKlFile(filePath)
+	klFile, err := fc.GetKlFile(filePath)
 	if err != nil {
 		return fn.NewE(err)
 	}
@@ -191,7 +196,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	}
 
 	klFile.EnvVars.AddResTypes(currSecs, fileclient.Res_secret)
-	err = fileclient.WriteKLFile(*klFile)
+	err = fc.WriteKLFile(*klFile)
 	if err != nil {
 		return functions.NewE(err)
 	}

@@ -1,14 +1,10 @@
 package apiclient
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"path"
-	"time"
 
 	"github.com/kloudlite/kl/domain/fileclient"
-	"github.com/miekg/dns"
 
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -104,9 +100,9 @@ func createDevice(devName string) (*Device, error) {
 		return nil, functions.NewE(err)
 	}
 
-	if err := fileclient.SelectDevice(d.Metadata.Name); err != nil {
-		return nil, functions.NewE(err)
-	}
+	// if err := fileclient.SelectDevice(d.Metadata.Name); err != nil {
+	// 	return nil, functions.NewE(err)
+	// }
 
 	return d, nil
 }
@@ -144,61 +140,63 @@ const (
 	VPNDeviceType = "global_vpn_device"
 )
 
-func CheckDeviceStatus() bool {
-	verbose := false
-
-	logF := func(format string, v ...interface{}) {
-		if verbose {
-			if len(v) > 0 {
-				fn.Log(format, v)
-			} else {
-				fn.Log(format)
-			}
-		}
-	}
-
-	s, err := fileclient.GetDeviceContext()
-	if err != nil {
-		logF(err.Error())
-		return false
-	}
-
-	if len(s.DeviceDns) == 0 {
-		logF("No DNS record found for device")
-		return false
-	}
-
-	dnsServer := s.DeviceDns[0]
-
-	client := new(dns.Client)
-
-	client.Timeout = 2 * time.Second
-
-	// Create a new DNS message
-	message := new(dns.Msg)
-	message.SetQuestion(dns.Fqdn("one.one.one.one"), dns.TypeA)
-	message.RecursionDesired = true
-
-	// Send the DNS query
-	response, _, err := client.Exchange(message, dnsServer+":53")
-	if err != nil {
-		logF("Failed to get DNS response: %v\n", err)
-		return false
-	}
-
-	// Print the response
-	if response.Rcode != dns.RcodeSuccess {
-		logF("Query failed: %s\n", dns.RcodeToString[response.Rcode])
-		return false
-	} else {
-		for _, answer := range response.Answer {
-			logF("%s\n", answer.String())
-		}
-
-	}
-
-	return true
-}
+// func CheckDeviceStatus() bool {
+// 	verbose := false
+//
+// 	logF := func(format string, v ...interface{}) {
+// 		if verbose {
+// 			if len(v) > 0 {
+// 				fn.Log(format, v)
+// 			} else {
+// 				fn.Log(format)
+// 			}
+// 		}
+// 	}
+//
+// 	fileclient.GetVpnAccountConfig(account)
+//
+// 	s, err := fileclient.GetDeviceContext()
+// 	if err != nil {
+// 		logF(err.Error())
+// 		return false
+// 	}
+//
+// 	if len(s.DeviceDns) == 0 {
+// 		logF("No DNS record found for device")
+// 		return false
+// 	}
+//
+// 	dnsServer := s.DeviceDns[0]
+//
+// 	client := new(dns.Client)
+//
+// 	client.Timeout = 2 * time.Second
+//
+// 	// Create a new DNS message
+// 	message := new(dns.Msg)
+// 	message.SetQuestion(dns.Fqdn("one.one.one.one"), dns.TypeA)
+// 	message.RecursionDesired = true
+//
+// 	// Send the DNS query
+// 	response, _, err := client.Exchange(message, dnsServer+":53")
+// 	if err != nil {
+// 		logF("Failed to get DNS response: %v\n", err)
+// 		return false
+// 	}
+//
+// 	// Print the response
+// 	if response.Rcode != dns.RcodeSuccess {
+// 		logF("Query failed: %s\n", dns.RcodeToString[response.Rcode])
+// 		return false
+// 	} else {
+// 		for _, answer := range response.Answer {
+// 			logF("%s\n", answer.String())
+// 		}
+//
+// 	}
+//
+// 	return true
+// }
 
 func getDeviceName(devName string) (*CheckName, error) {
 	cookie, err := getCookie()
@@ -244,16 +242,18 @@ func createVpnForAccount() (*Device, error) {
 }
 
 func GetAccVPNConfig(account string) (*fileclient.AccountVpnConfig, error) {
-	cfgFolder, err := fileclient.GetConfigFolder()
+
+	fc, err := fileclient.New()
 	if err != nil {
-		return nil, fn.NewE(err)
+		return nil, functions.NewE(err)
 	}
-	err = os.MkdirAll(path.Join(cfgFolder, "vpn"), 0755)
+
+	avc, err := fc.GetVpnAccountConfig(account)
 	if err != nil {
-		return nil, fn.NewE(err)
+		return nil, functions.NewE(err)
 	}
-	cfgPath := path.Join(cfgFolder, "vpn", fmt.Sprintf("%s.json", account))
-	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
+
+	if err != nil && os.IsNotExist(err) {
 		dev, err := createVpnForAccount()
 		if err != nil {
 			return nil, fn.NewE(err)
@@ -262,43 +262,24 @@ func GetAccVPNConfig(account string) (*fileclient.AccountVpnConfig, error) {
 			WGconf:     dev.WireguardConfig.Value,
 			DeviceName: dev.Metadata.Name,
 		}
-		marshal, err := json.Marshal(accountVpnConfig)
-		if err != nil {
-			return nil, fn.NewE(err)
-		}
-		err = os.WriteFile(cfgPath, marshal, 0644)
-		if err != nil {
+
+		if err := fc.SetVpnAccountConfig(account, &accountVpnConfig); err != nil {
 			return nil, fn.NewE(err)
 		}
 	}
 
-	var accVPNConfig fileclient.AccountVpnConfig
-	c, err := os.ReadFile(cfgPath)
-	if err != nil {
-		return nil, fn.Error("failed to read vpn config")
-	}
-	err = json.Unmarshal(c, &accVPNConfig)
-	if err != nil {
-		return nil, fn.Error("failed to parse vpn config")
-	}
-
-	if accVPNConfig.WGconf == "" {
-		d, err := GetVPNDevice(accVPNConfig.DeviceName, fn.MakeOption("accountName", account))
+	if avc.WGconf == "" {
+		d, err := GetVPNDevice(avc.DeviceName, fn.MakeOption("accountName", account))
 		if err != nil {
 			return nil, fn.NewE(err)
 		}
 
-		accVPNConfig.WGconf = d.WireguardConfig.Value
+		avc.WGconf = d.WireguardConfig.Value
 
-		marshal, err := json.Marshal(accVPNConfig)
-		if err != nil {
-			return nil, fn.NewE(err)
-		}
-		err = os.WriteFile(cfgPath, marshal, 0644)
-		if err != nil {
+		if err := fc.SetVpnAccountConfig(account, avc); err != nil {
 			return nil, fn.NewE(err)
 		}
 	}
 
-	return &accVPNConfig, nil
+	return avc, nil
 }

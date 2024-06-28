@@ -33,19 +33,13 @@ func getDomainFromPath(pth string) string {
 func (c *client) Ssh() error {
 	defer spinner.Client.UpdateMessage("trying to ssh into the box")()
 
-	klFile, err := fileclient.GetKlFile("")
-	if err != nil {
-		return fn.NewE(err)
-	}
-
 	dir, _ := os.Getwd()
 	if fileclient.InsideBox() {
 		return fn.Error("you are already in a devbox")
 	}
 
-	c.SetCwd(dir)
-	if err = c.Start(klFile); err != nil {
-		if err2 := c.Stop(); err != nil {
+	if err := c.Start(); err != nil {
+		if err2 := c.Stop(); err2 != nil {
 			return fn.NewE(err2)
 		}
 		return fn.NewE(err)
@@ -55,6 +49,7 @@ func (c *client) Ssh() error {
 	if err != nil {
 		return fn.NewE(err)
 	}
+
 	port, err := strconv.Atoi(cont.Labels[SSH_PORT_KEY])
 	if err != nil {
 		return fn.NewE(err)

@@ -27,8 +27,6 @@ type Spinner interface {
 	SetQuiet(quiet bool)
 }
 
-// type Spinner struct {}
-
 func (s *sclient) pushMessage(msg string) {
 	if s.verbose && !s.quiet {
 		fn.Logf("%s %s\n", text.Bold(text.Green(fmt.Sprintf("+ [%d]", len(s.message)))), msg)

@@ -8,14 +8,12 @@ import (
 	"path"
 )
 
-func Logout() error {
-	configPath, err := GetConfigFolder()
-	if err != nil {
-		return fn.NewE(err)
-	}
+func (fc *fclient) Logout() error {
+	configPath := fc.configPath
+
 	sessionFile, err := os.Stat(path.Join(configPath, SessionFileName))
 	if err != nil && os.IsNotExist(err) {
-		return fn.Error( "not logged in")
+		return fn.Error("not logged in")
 	}
 	if err != nil {
 		return fn.NewE(err)

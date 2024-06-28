@@ -3,7 +3,6 @@ package fileclient
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"path"
@@ -20,7 +19,6 @@ import (
 const (
 	SessionFileName   string = "kl-session.yaml"
 	ExtraDataFileName string = "kl-extra-data.yaml"
-	DeviceFileName    string = "kl-device.yaml"
 	CompleteFileName  string = "kl-completion"
 )
 
@@ -127,94 +125,6 @@ func GetConfigFolder() (configFolder string, err error) {
 	}
 
 	return configPath, nil
-}
-
-func DeleteDeviceContext(dName string) error {
-	if dName == "" {
-		return fmt.Errorf("device Name is required")
-	}
-
-	c, err := GetDeviceContext()
-
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	if c.DeviceName != dName {
-		return fmt.Errorf("device %s not found", dName)
-	}
-
-	c.DeviceName = ""
-
-	b, err := yaml.Marshal(c)
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	return writeOnUserScope(DeviceFileName, b)
-}
-
-func WriteDeviceContext(dc *DeviceContext) error {
-	file, err := yaml.Marshal(dc)
-
-	if err != nil {
-		return functions.NewE(err)
-	}
-
-	return writeOnUserScope(DeviceFileName, file)
-}
-
-func WriteCompletionContext() (io.Writer, error) {
-	dir, err := GetConfigFolder()
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	filePath := path.Join(dir, CompleteFileName)
-
-	file, err := os.Create(filePath)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	return file, nil
-}
-
-func GetCompletionContext() (string, error) {
-	dir, err := GetConfigFolder()
-	if err != nil {
-		return "", functions.NewE(err)
-	}
-
-	filePath := path.Join(dir, CompleteFileName)
-	return filePath, nil
-}
-
-func GetDeviceContext() (*DeviceContext, error) {
-	file, err := ReadFile(DeviceFileName)
-	contexts := DeviceContext{}
-
-	// need to check if file exists
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-
-			b, err := yaml.Marshal(contexts)
-			if err != nil {
-				return nil, functions.NewE(err)
-			}
-
-			if err := writeOnUserScope(DeviceFileName, b); err != nil {
-				return nil, functions.NewE(err)
-			}
-
-		}
-	}
-
-	if err = yaml.Unmarshal(file, &contexts); err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	return &contexts, nil
 }
 
 func SaveBaseURL(url string) error {

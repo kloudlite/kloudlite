@@ -3,8 +3,8 @@ package status
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
@@ -23,7 +23,13 @@ var Cmd = &cobra.Command{
 			)
 		}
 
-		if s, err := fileclient.CurrentAccountName(); err == nil {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if s, err := fc.CurrentAccountName(); err == nil {
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Account: ")), s))
 		}
 
@@ -31,32 +37,32 @@ var Cmd = &cobra.Command{
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), e.Name))
 		}
 
-		if s, err := fileclient.CurrentDeviceName(); err == nil {
-
-			// dev, err := apiclient.GetDevice(fn.MakeOption("deviceName", s))
-			// if err != nil {
-			// 	fn.PrintError(err)
-			// 	return
-			// }
-
-			// switch flags.CliName {
-			// case constants.InfraCliName:
-			// 	fn.Log(fmt.Sprint(text.Bold("Cluster:"), dev.ClusterName))
-			// }
-
-			b := apiclient.CheckDeviceStatus()
-			fn.Log(fmt.Sprint(text.Bold(text.Blue("Device: ")), s, func() string {
-				if b {
-					return text.Bold(text.Green(" (Connected) "))
-				} else {
-					return text.Bold(text.Red(" (Disconnected) "))
-				}
-			}()))
-
-			ip, err := fileclient.CurrentDeviceIp()
-			if err == nil {
-				fn.Logf("%s %s\n", text.Bold(text.Blue("Device IP:")), *ip)
-			}
-		}
+		// if s, err := fileclient.CurrentDeviceName(); err == nil {
+		//
+		// 	// dev, err := apiclient.GetDevice(fn.MakeOption("deviceName", s))
+		// 	// if err != nil {
+		// 	// 	fn.PrintError(err)
+		// 	// 	return
+		// 	// }
+		//
+		// 	// switch flags.CliName {
+		// 	// case constants.InfraCliName:
+		// 	// 	fn.Log(fmt.Sprint(text.Bold("Cluster:"), dev.ClusterName))
+		// 	// }
+		//
+		// 	b := apiclient.CheckDeviceStatus()
+		// 	fn.Log(fmt.Sprint(text.Bold(text.Blue("Device: ")), s, func() string {
+		// 		if b {
+		// 			return text.Bold(text.Green(" (Connected) "))
+		// 		} else {
+		// 			return text.Bold(text.Red(" (Disconnected) "))
+		// 		}
+		// 	}()))
+		//
+		// 	ip, err := fileclient.CurrentDeviceIp()
+		// 	if err == nil {
+		// 		fn.Logf("%s %s\n", text.Bold(text.Blue("Device IP:")), *ip)
+		// 	}
+		// }
 	},
 }

@@ -130,6 +130,11 @@ type MresResp struct {
 }
 
 func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
+	fc, err := fileclient.New()
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+
 	env, err := EnsureEnv(&fileclient.Env{
 		Name: fn.GetOption(options, "envName"),
 	}, options...)
@@ -138,7 +143,7 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 		return nil, functions.NewE(err)
 	}
 
-	kt, err := fileclient.GetKlFile("")
+	kt, err := fc.GetKlFile("")
 	if err != nil {
 		return nil, functions.NewE(err)
 	}

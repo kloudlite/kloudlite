@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -36,6 +36,11 @@ This command will add config entry references from current environment to your k
 }
 
 func selectAndAddConfig(cmd *cobra.Command, args []string) error {
+	fc, err := fileclient.New()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
 	filePath := fn.ParseKlFile(cmd)
 
 	name := ""
@@ -43,7 +48,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		name = args[0]
 	}
 
-	klFile, err := fileclient.GetKlFile(filePath)
+	klFile, err := fc.GetKlFile(filePath)
 	if err != nil {
 		return fn.NewE(err)
 	}
@@ -214,7 +219,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	//fmt.Println(currConfigs)
 	klFile.EnvVars.AddResTypes(currConfigs, fileclient.Res_config)
 
-	err = fileclient.WriteKLFile(*klFile)
+	err = fc.WriteKLFile(*klFile)
 	if err != nil {
 		return fn.NewE(err)
 	}

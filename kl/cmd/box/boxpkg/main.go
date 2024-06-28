@@ -10,7 +10,7 @@ import (
 	"os"
 
 	dockerclient "github.com/docker/docker/client"
-	 "github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/flags"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -29,15 +29,15 @@ type client struct {
 
 	env *fileclient.Env
 
-	configFolder string
-	userHomeDir  string
+	fc     fileclient.FileClient
+	klfile *fileclient.KLFileType
 }
 
 type BoxClient interface {
 	SyncProxy(config ProxyConfig) error
 	StopAll() error
 	Stop() error
-	Start(*fileclient.KLFileType) error
+	Start() error
 	Ssh() error
 	Reload() error
 	PrintBoxes([]Cntr) error
@@ -53,6 +53,11 @@ func (c *client) Context() context.Context {
 func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
 
+	fc, err := fileclient.New()
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
@@ -63,10 +68,12 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 	hash := md5.New()
 	hash.Write([]byte(cwd))
 	contName := fmt.Sprintf("klbox-%s", fmt.Sprintf("%x", hash.Sum(nil))[:8])
-	klFile, err := fileclient.GetKlFile("")
+
+	klFile, err := fc.GetKlFile("")
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
+
 	env, err := fileclient.EnvOfPath(cwd)
 	if err != nil && errors.Is(err, fileclient.NoEnvSelected) {
 		environment, err := apiclient.GetEnvironment(klFile.AccountName, klFile.DefaultEnv)
@@ -97,16 +104,6 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		return nil, functions.NewE(err)
 	}
 
-	configFolder, err := fileclient.GetConfigFolder()
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	userHomeDir, err := fileclient.GetUserHomeDir()
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
 	return &client{
 		cli:           cli,
 		cmd:           cmd,
@@ -116,7 +113,7 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		cwd:           cwd,
 		containerName: contName,
 		env:           env,
-		configFolder:  configFolder,
-		userHomeDir:   userHomeDir,
+		fc:            fc,
+		klfile:        klFile,
 	}, nil
 }

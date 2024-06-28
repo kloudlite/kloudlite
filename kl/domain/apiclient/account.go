@@ -70,7 +70,12 @@ func EnsureAccount(options ...fn.Option) (string, error) {
 		return accountName, nil
 	}
 
-	s, _ := fileclient.CurrentAccountName()
+	fc, err := fileclient.New()
+	if err != nil {
+		return "", functions.NewE(err)
+	}
+
+	s, _ := fc.CurrentAccountName()
 	if s == "" {
 		a, err := SelectAccount("")
 		if err != nil {

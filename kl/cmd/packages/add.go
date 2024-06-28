@@ -25,7 +25,12 @@ var addCmd = &cobra.Command{
 }
 
 func addPackages(cmd *cobra.Command, args []string) error {
-	klConf, err := fileclient.GetKlFile("")
+	fc, err := fileclient.New()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	klConf, err := fc.GetKlFile("")
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -50,7 +55,7 @@ func addPackages(cmd *cobra.Command, args []string) error {
 	}
 
 	klConf.Packages = append(klConf.Packages, name)
-	err = fileclient.WriteKLFile(*klConf)
+	err = fc.WriteKLFile(*klConf)
 	if err != nil {
 		return functions.NewE(err)
 	}

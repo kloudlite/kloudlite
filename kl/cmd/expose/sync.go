@@ -28,11 +28,16 @@ This command will sync ports to your kl-config file.
 }
 
 func sync(cmd *cobra.Command, args []string) error {
+	fc, err := fileclient.New()
+	if err != nil {
+		return functions.NewE(err)
+	}
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		return functions.NewE(err)
 	}
-	klFile, err := fileclient.GetKlFile("")
+	klFile, err := fc.GetKlFile("")
 	if err != nil {
 		return functions.NewE(err)
 	}

@@ -3,8 +3,8 @@ package list
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
@@ -17,11 +17,16 @@ var configsCmd = &cobra.Command{
 	Use:   "configs",
 	Short: "Get list of configs in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
 		envName := fn.ParseStringFlag(cmd, "env")
 
 		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fileclient.GetKlFile(filePath)
+		klFile, err := fc.GetKlFile(filePath)
 		if err != nil {
 			fn.PrintError(err)
 			return

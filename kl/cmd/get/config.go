@@ -19,13 +19,19 @@ var configCmd = &cobra.Command{
 	Short: "list config entries",
 	Long:  "use this command to list entries of specific config",
 	Run: func(cmd *cobra.Command, args []string) {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 		configName := ""
 
 		if len(args) >= 1 {
 			configName = args[0]
 		}
 		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fileclient.GetKlFile(filePath)
+		klFile, err := fc.GetKlFile(filePath)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -33,7 +39,7 @@ var configCmd = &cobra.Command{
 
 		config, err := apiclient.EnsureConfig([]fn.Option{
 			fn.MakeOption("configName", configName),
-			fn.MakeOption("accountName",klFile.AccountName),
+			fn.MakeOption("accountName", klFile.AccountName),
 		}...)
 		if err != nil {
 			fn.PrintError(err)

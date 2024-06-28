@@ -1,20 +1,16 @@
 package boxpkg
 
 import (
-	"bufio"
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
-	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 type ContainerConfig struct {
@@ -145,6 +141,35 @@ func (c *client) GetContainer(labels map[string]string) (*Cntr, error) {
 	return &defCr, nil
 }
 
+func writeOnUserScope(fpath string, data []byte) error {
+	if err := os.WriteFile(fpath, data, 0o644); err != nil {
+		return functions.NewE(err)
+	}
+
+	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
+		if err := fn.ExecCmd(
+			fmt.Sprintf("chown -R %s %s", usr, filepath.Dir(fpath)), nil, false,
+		); err != nil {
+			return functions.NewE(err)
+		}
+	}
+
+	return nil
+}
+
+func userOwn(fpath string) error {
+	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
+		if err := fn.ExecCmd(
+			fmt.Sprintf("chown -R %s %s", usr, filepath.Dir(fpath)), nil, false,
+		); err != nil {
+			return functions.NewE(err)
+		}
+	}
+
+	return nil
+}
+
+// DEPRECATED
 // func (c *fileclient) waitForContReady(containerId string) error {
 // 	timeoutCtx, cf := context.WithTimeout(context.TODO(), 1*time.Minute)
 //
@@ -199,81 +224,53 @@ func (c *client) GetContainer(labels map[string]string) (*Cntr, error) {
 // 	return nil
 // }
 
-func (c *client) readTillLine(ctx context.Context, containerId string, desiredLine, stream string, follow bool) (bool, error) {
-	cout, err := c.cli.ContainerLogs(ctx, containerId, container.LogsOptions{
-		ShowStdout: func() bool {
-			return stream == "stdout"
-		}(),
-		ShowStderr: func() bool {
-			return stream == "stderr"
-		}(),
-		Follow: follow,
-		Since:  time.Now().Format(time.RFC3339),
-	})
-	if err != nil {
-		return false, err
-	}
-
-	scanner := bufio.NewScanner(cout)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if len(line) > 8 {
-			line = line[8:]
-		}
-
-		if line == desiredLine {
-			return true, nil
-		}
-
-		if line == "kloudlite-entrypoint:INSTALLING_PACKAGES" {
-			spinner.Client.UpdateMessage("installing nix packages")
-			continue
-		}
-
-		if line == "kloudlite-entrypoint:INSTALLING_PACKAGES_DONE" {
-			spinner.Client.UpdateMessage("loading please wait")
-			continue
-		}
-
-		if c.verbose {
-			switch stream {
-			case "stderr":
-				fn.Logf("%s: %s\n", text.Yellow("[stderr]"), line)
-			default:
-				fn.Logf("%s: %s\n", text.Blue("[stdout]"), line)
-			}
-		}
-	}
-
-	return false, nil
-}
-
-func writeOnUserScope(fpath string, data []byte) error {
-	if err := os.WriteFile(fpath, data, 0o644); err != nil {
-		return functions.NewE(err)
-	}
-
-	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
-		if err := fn.ExecCmd(
-			fmt.Sprintf("chown -R %s %s", usr, filepath.Dir(fpath)), nil, false,
-		); err != nil {
-			return functions.NewE(err)
-		}
-	}
-
-	return nil
-}
-
-func userOwn(fpath string) error {
-	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
-		if err := fn.ExecCmd(
-			fmt.Sprintf("chown -R %s %s", usr, filepath.Dir(fpath)), nil, false,
-		); err != nil {
-			return functions.NewE(err)
-		}
-	}
-
-	return nil
-}
+// func (c *client) readTillLine(ctx context.Context, containerId string, desiredLine, stream string, follow bool) (bool, error) {
+// 	cout, err := c.cli.ContainerLogs(ctx, containerId, container.LogsOptions{
+// 		ShowStdout: func() bool {
+// 			return stream == "stdout"
+// 		}(),
+// 		ShowStderr: func() bool {
+// 			return stream == "stderr"
+// 		}(),
+// 		Follow: follow,
+// 		Since:  time.Now().Format(time.RFC3339),
+// 	})
+// 	if err != nil {
+// 		return false, err
+// 	}
+//
+// 	scanner := bufio.NewScanner(cout)
+//
+// 	for scanner.Scan() {
+// 		line := scanner.Text()
+//
+// 		if len(line) > 8 {
+// 			line = line[8:]
+// 		}
+//
+// 		if line == desiredLine {
+// 			return true, nil
+// 		}
+//
+// 		if line == "kloudlite-entrypoint:INSTALLING_PACKAGES" {
+// 			spinner.Client.UpdateMessage("installing nix packages")
+// 			continue
+// 		}
+//
+// 		if line == "kloudlite-entrypoint:INSTALLING_PACKAGES_DONE" {
+// 			spinner.Client.UpdateMessage("loading please wait")
+// 			continue
+// 		}
+//
+// 		if c.verbose {
+// 			switch stream {
+// 			case "stderr":
+// 				fn.Logf("%s: %s\n", text.Yellow("[stderr]"), line)
+// 			default:
+// 				fn.Logf("%s: %s\n", text.Blue("[stdout]"), line)
+// 			}
+// 		}
+// 	}
+//
+// 	return false, nil
+// }

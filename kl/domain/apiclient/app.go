@@ -134,8 +134,12 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 
 	devName := fn.GetOption(options, "deviceName")
 	envName := fn.GetOption(options, "envName")
+	accountName := fn.GetOption(options, "accountName")
 
-	var err error
+	fc, err := fileclient.New()
+	if err != nil {
+		return functions.NewE(err)
+	}
 
 	if envName == "" {
 		env, err := EnsureEnv(nil, options...)
@@ -147,16 +151,16 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 	}
 
 	if devName == "" {
-		ctx, err := fileclient.GetDeviceContext()
+		avc, err := fc.GetVpnAccountConfig(accountName)
 		if err != nil {
 			return functions.NewE(err)
 		}
 
-		if ctx.DeviceName == "" {
+		if avc.DeviceName == "" {
 			return fmt.Errorf("device name is required")
 		}
 
-		devName = ctx.DeviceName
+		devName = avc.DeviceName
 	}
 
 	app, err := EnsureApp(options...)

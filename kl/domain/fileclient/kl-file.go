@@ -25,7 +25,7 @@ const (
 	defaultKLFile = "kl.yml"
 )
 
-func GetConfigPath() string {
+func getConfigPath() string {
 	klfilepath := os.Getenv("KLCONFIG_PATH")
 	if klfilepath != "" {
 		return klfilepath
@@ -33,8 +33,8 @@ func GetConfigPath() string {
 	return defaultKLFile
 }
 
-func WriteKLFile(fileObj KLFileType) error {
-	if err := confighandler.WriteConfig(GetConfigPath(), fileObj, 0644); err != nil {
+func (c *fclient) WriteKLFile(fileObj KLFileType) error {
+	if err := confighandler.WriteConfig(getConfigPath(), fileObj, 0644); err != nil {
 		fn.PrintError(err)
 		return functions.NewE(err)
 	}
@@ -42,9 +42,13 @@ func WriteKLFile(fileObj KLFileType) error {
 	return nil
 }
 
-func GetKlFile(filePath string) (*KLFileType, error) {
+func (c *fclient) GetKlFile(filePath string) (*KLFileType, error) {
+	return c.getKlFile(filePath)
+}
+
+func (c *fclient) getKlFile(filePath string) (*KLFileType, error) {
 	if filePath == "" {
-		s := GetConfigPath()
+		s := c.configPath
 		filePath = s
 	}
 

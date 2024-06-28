@@ -21,8 +21,12 @@ var listCmd = &cobra.Command{
 }
 
 func listPackages(cmd *cobra.Command, _ []string) error {
+	fc, err := fileclient.New()
+	if err != nil {
+		return functions.NewE(err)
+	}
 
-	kt, err := fileclient.GetKlFile("")
+	kt, err := fc.GetKlFile("")
 	if err != nil {
 		return functions.NewE(err)
 	}

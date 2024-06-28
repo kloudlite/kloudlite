@@ -5,9 +5,8 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
-func CurrentAccountName() (string, error) {
-
-	kt, err := GetKlFile("")
+func (f *fclient) CurrentAccountName() (string, error) {
+	kt, err := f.getKlFile("")
 	if err != nil {
 		return "", functions.NewE(err)
 	}

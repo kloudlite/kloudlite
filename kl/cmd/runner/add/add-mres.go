@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 
@@ -34,8 +34,13 @@ This command will add secret entry of managed resource references from current e
 }
 
 func AddMres(cmd *cobra.Command, _ []string) error {
+	fc, err := fileclient.New()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
 	filePath := fn.ParseKlFile(cmd)
-	kt, err := fileclient.GetKlFile(filePath)
+	kt, err := fc.GetKlFile(filePath)
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -109,7 +114,7 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 	}
 
 	kt.EnvVars.AddResTypes(currMreses, fileclient.Res_mres)
-	if err := fileclient.WriteKLFile(*kt); err != nil {
+	if err := fc.WriteKLFile(*kt); err != nil {
 		return functions.NewE(err)
 	}
 

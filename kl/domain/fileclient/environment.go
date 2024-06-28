@@ -1,35 +1,34 @@
 package fileclient
 
 import (
-	"fmt"
-	"net"
 	"os"
 
-	"github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 var (
-	NoEnvSelected = functions.Error("no selected environment")
+	NoEnvSelected = fn.Error("no selected environment")
 )
-func CheckPortAvailable(port int) bool {
-	address := fmt.Sprintf(":%d", port)
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
-		return false
-	}
-	defer listener.Close()
-	return true
-}
+
+// func CheckPortAvailable(port int) bool {
+// 	address := fmt.Sprintf(":%d", port)
+// 	listener, err := net.Listen("tcp", address)
+// 	if err != nil {
+// 		return false
+// 	}
+// 	defer listener.Close()
+// 	return true
+// }
 
 func SelectEnv(ev Env) error {
 	k, err := GetExtraData()
 	if err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	dir, err := os.Getwd()
 	if err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	if InsideBox() {
@@ -48,7 +47,7 @@ func SelectEnv(ev Env) error {
 func SelectEnvOnPath(pth string, ev Env) error {
 	k, err := GetExtraData()
 	if err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	if k.SelectedEnvs == nil {
@@ -63,10 +62,10 @@ func SelectEnvOnPath(pth string, ev Env) error {
 func EnvOfPath(pth string) (*Env, error) {
 	c, err := GetExtraData()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
-	if c.SelectedEnvs == nil && c.SelectedEnvs[pth] == nil {
+	if c.SelectedEnvs == nil || c.SelectedEnvs[pth] == nil {
 		return nil, NoEnvSelected
 	}
 
@@ -74,15 +73,14 @@ func EnvOfPath(pth string) (*Env, error) {
 }
 
 func CurrentEnv() (*Env, error) {
-
 	c, err := GetExtraData()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	dir, err := os.Getwd()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	if InsideBox() {
@@ -90,11 +88,11 @@ func CurrentEnv() (*Env, error) {
 	}
 
 	if c.SelectedEnvs == nil {
-		return nil, functions.Error("no selected environment")
+		return nil, fn.Error("no selected environment")
 	}
 
 	if c.SelectedEnvs[dir] == nil {
-		return nil, functions.Error("no selected environment")
+		return nil, fn.Error("no selected environment")
 	}
 
 	return c.SelectedEnvs[dir], nil

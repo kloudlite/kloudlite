@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
@@ -25,9 +25,14 @@ var mountCommand = &cobra.Command{
   kl add config-mount [path] --secret=<secret_name>	# add secret from secret.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		filePath := fn.ParseKlFile(cmd)
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
-		klFile, err := fileclient.GetKlFile(filePath)
+		filePath := fn.ParseKlFile(cmd)
+		klFile, err := fc.GetKlFile(filePath)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -50,6 +55,12 @@ var mountCommand = &cobra.Command{
 }
 
 func selectConfigMount(path string, klFile fileclient.KLFileType, cmd *cobra.Command) error {
+
+	fc, err := fileclient.New()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
 	//TODO: add changes to the klbox-hash file
 	c := cmd.Flag("config").Value.String()
 	s := cmd.Flag("secret").Value.String()
@@ -196,7 +207,7 @@ func selectConfigMount(path string, klFile fileclient.KLFileType, cmd *cobra.Com
 	}
 
 	klFile.Mounts.AddMounts(fe)
-	if err := fileclient.WriteKLFile(klFile); err != nil {
+	if err := fc.WriteKLFile(klFile); err != nil {
 		return fn.NewE(err)
 	}
 

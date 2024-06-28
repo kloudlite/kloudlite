@@ -16,9 +16,14 @@ var mresCmd = &cobra.Command{
 	Use:   "mreses",
 	Short: "Get list of managed resources in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
 		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fileclient.GetKlFile(filePath)
+		klFile, err := fc.GetKlFile(filePath)
 		if err != nil {
 			fn.PrintError(err)
 			return

@@ -31,11 +31,17 @@ This command will add ports to your kl-config file.
 }
 
 func exposePorts(cmd *cobra.Command, args []string) error {
+	fc, err := fileclient.New()
+	if err != nil {
+		return functions.NewE(err)
+	}
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		return functions.NewE(err)
 	}
-	klFile, err := fileclient.GetKlFile("")
+
+	klFile, err := fc.GetKlFile("")
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -54,7 +60,7 @@ func exposePorts(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := fileclient.WriteKLFile(*klFile); err != nil {
+	if err := fc.WriteKLFile(*klFile); err != nil {
 		return functions.NewE(err)
 	}
 

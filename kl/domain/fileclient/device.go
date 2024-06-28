@@ -1,10 +1,12 @@
 package fileclient
 
 import (
+	"encoding/json"
 	"fmt"
-	"net"
+	"os"
+	"path"
 
-	"github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 type AccountVpnConfig struct {
@@ -12,89 +14,56 @@ type AccountVpnConfig struct {
 	DeviceName string `json:"device"`
 }
 
-func CurrentDeviceName() (string, error) {
-	file, err := GetDeviceContext()
-	if err != nil {
-		return "", functions.NewE(err)
-	}
-	if file.DeviceName == "" {
-		return "",
-			functions.Error("no selected device. please select one using \"kl account switch\"")
-	}
-	return file.DeviceName, nil
+func (a *AccountVpnConfig) Marshal() ([]byte, error) {
+	return json.Marshal(a)
 }
 
-func CurrentDeviceIp() (*string, error) {
-	dev, err := CurrentDeviceName()
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	ipAddr, err := net.ResolveIPAddr("", fmt.Sprintf("%s.device.local", dev))
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	kk := ipAddr.IP.String()
-	return &kk, nil
+func (a *AccountVpnConfig) Unmarshal(b []byte) error {
+	return json.Unmarshal(b, a)
 }
 
-func SelectDevice(deviceName string) error {
-	file, err := GetDeviceContext()
+func (c *fclient) GetVpnAccountConfig(account string) (*AccountVpnConfig, error) {
+	cfgFolder := c.configPath
+
+	if err := os.MkdirAll(path.Join(cfgFolder, "vpn"), 0755); err != nil {
+		return nil, fn.NewE(err)
+	}
+
+	cfgPath := path.Join(cfgFolder, "vpn", fmt.Sprintf("%s.json", account))
+	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
+		return nil, err
+	}
+
+	var accVPNConfig AccountVpnConfig
+	b, err := os.ReadFile(cfgPath)
 	if err != nil {
-		return functions.NewE(err)
+		return nil, fn.NewE(err, "failed to read vpn config")
 	}
 
-	file.DeviceName = deviceName
-
-	if file.DeviceName == "" {
-		return nil
+	if err := accVPNConfig.Unmarshal(b); err != nil {
+		return nil, fn.NewE(err, "failed to parse vpn config")
 	}
 
-	err = WriteDeviceContext(&DeviceContext{
-		DeviceName: deviceName,
-	})
-	return functions.NewE(err)
+	return &accVPNConfig, nil
 }
 
-// func EnsureAppRunning() error {
-// 	p, err := proxy.NewProxy(flags.IsDev())
-// 	if err != nil {
-// 		return functions.NewE(err)
-// 	}
-//
-// 	count := 0
-// 	for {
-// 		if p.Status() {
-// 			return nil
-// 		}
-//
-// 		if runtime.GOOS != "windows" {
-// 			cmd := exec.Command("sudo", "echo", "")
-// 			cmd.Stdin = os.Stdin
-// 			cmd.Stderr = os.Stderr
-// 			cmd.Stdout = os.Stdout
-//
-// 			err := cmd.Run()
-// 			if err != nil {
-// 				return functions.NewE(err)
-// 			}
-//
-// 			command := exec.Command("sudo", flags.GetCliPath(), "app", "start")
-// 			_ = command.Start()
-//
-// 		} else {
-// 			_, err = functions.WinSudoExec(fmt.Sprintf("%s app start", flags.GetCliPath()), nil)
-// 			if err != nil {
-// 				functions.PrintError(err)
-// 			}
-// 		}
-//
-// 		count++
-// 		if count >= 2 {
-// 			return fmt.Errorf("failed to start app")
-// 		}
-//
-// 		time.Sleep(2 * time.Second)
-// 	}
-// }
+func (c *fclient) SetVpnAccountConfig(account string, avc *AccountVpnConfig) error {
+	cfgFolder := c.configPath
+
+	if err := os.MkdirAll(path.Join(cfgFolder, "vpn"), 0755); err != nil {
+		return fn.NewE(err)
+	}
+
+	cfgPath := path.Join(cfgFolder, "vpn", fmt.Sprintf("%s.json", account))
+
+	marshal, err := avc.Marshal()
+	if err != nil {
+		return fn.NewE(err)
+	}
+	err = os.WriteFile(cfgPath, marshal, 0644)
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	return nil
+}

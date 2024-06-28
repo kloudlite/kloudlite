@@ -1,8 +1,8 @@
 package list
 
 import (
-	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
@@ -22,11 +22,15 @@ var appsCmd = &cobra.Command{
 }
 
 func listapps(cmd *cobra.Command, _ []string) error {
+	fc, err := fileclient.New()
+	if err != nil {
+		return functions.NewE(err)
+	}
 
 	envName := fn.ParseStringFlag(cmd, "env")
 
 	filePath := fn.ParseKlFile(cmd)
-	klFile, err := fileclient.GetKlFile(filePath)
+	klFile, err := fc.GetKlFile(filePath)
 	if err != nil {
 		return functions.NewE(err)
 	}

@@ -110,7 +110,12 @@ func BoxHashFileName(path string) (string, error) {
 func SyncBoxHash(fpath string) error {
 	defer spinner.Client.UpdateMessage("validating kl.yml and kl.lock")()
 
-	klFile, err := fileclient.GetKlFile(path.Join(fpath, "kl.yml"))
+	fc, err := fileclient.New()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	klFile, err := fc.GetKlFile(path.Join(fpath, "kl.yml"))
 	if err != nil {
 		return fn.NewE(err)
 	}

@@ -17,10 +17,17 @@ var switchCmd = &cobra.Command{
 	Use:   "env",
 	Short: "Switch to a different environment",
 	Run: func(cmd *cobra.Command, _ []string) {
+
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 		//TODO: add changes to the klbox-hash file
 		envName := fn.ParseStringFlag(cmd, "envname")
 
-		klFile, err := fileclient.GetKlFile("")
+		klFile, err := fc.GetKlFile("")
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -36,7 +43,7 @@ var switchCmd = &cobra.Command{
 
 		if klFile.DefaultEnv == "" {
 			klFile.DefaultEnv = env.Metadata.Name
-			if err := fileclient.WriteKLFile(*klFile); err != nil {
+			if err := fc.WriteKLFile(*klFile); err != nil {
 				fn.PrintError(err)
 				return
 			}

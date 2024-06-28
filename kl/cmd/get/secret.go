@@ -19,6 +19,12 @@ var secretCmd = &cobra.Command{
 	Short: "list secrets entries",
 	Long:  "use this command to list the entries of specific secret",
 	Run: func(cmd *cobra.Command, args []string) {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 		secName := ""
 
 		if len(args) >= 1 {
@@ -26,7 +32,7 @@ var secretCmd = &cobra.Command{
 		}
 
 		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fileclient.GetKlFile(filePath)
+		klFile, err := fc.GetKlFile(filePath)
 		if err != nil {
 			fn.PrintError(err)
 			return
