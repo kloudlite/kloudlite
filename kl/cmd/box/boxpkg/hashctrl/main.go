@@ -95,10 +95,6 @@ func BoxHashFile(workspacePath string) (*PersistedEnv, error) {
 }
 
 func BoxHashFileName(path string) (string, error) {
-	if fileclient.InsideBox() {
-		path = os.Getenv("KL_WORKSPACE")
-	}
-
 	hash := md5.New()
 	if _, err := hash.Write([]byte(path)); err != nil {
 		return "", nil
@@ -120,7 +116,10 @@ func SyncBoxHash(fpath string) error {
 		return fn.NewE(err)
 	}
 	envName := ""
-	e, err := fileclient.EnvOfPath(fpath)
+
+	pathKey := fpath
+
+	e, err := fileclient.EnvOfPath(pathKey)
 	if err != nil && errors.Is(err, fileclient.NoEnvSelected) {
 		envName = klFile.DefaultEnv
 	} else if err != nil {

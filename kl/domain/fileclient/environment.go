@@ -1,24 +1,14 @@
 package fileclient
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/kloudlite/kl/domain/envclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
-var (
-	NoEnvSelected = fn.Error("no selected environment")
-)
-
-// func CheckPortAvailable(port int) bool {
-// 	address := fmt.Sprintf(":%d", port)
-// 	listener, err := net.Listen("tcp", address)
-// 	if err != nil {
-// 		return false
-// 	}
-// 	defer listener.Close()
-// 	return true
-// }
+var NoEnvSelected = fmt.Errorf("no selected environment")
 
 func SelectEnv(ev Env) error {
 	k, err := GetExtraData()
@@ -31,8 +21,13 @@ func SelectEnv(ev Env) error {
 		return fn.NewE(err)
 	}
 
-	if InsideBox() {
-		dir = os.Getenv("KL_WORKSPACE")
+	if envclient.InsideBox() {
+		s, err := envclient.GetWorkspacePath()
+		if err != nil {
+			return fn.NewE(err)
+		}
+
+		dir = s
 	}
 
 	if k.SelectedEnvs == nil {
@@ -60,13 +55,22 @@ func SelectEnvOnPath(pth string, ev Env) error {
 }
 
 func EnvOfPath(pth string) (*Env, error) {
+	if envclient.InsideBox() {
+		s, err := envclient.GetWorkspacePath()
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+
+		pth = s
+	}
+
 	c, err := GetExtraData()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
 
 	if c.SelectedEnvs == nil || c.SelectedEnvs[pth] == nil {
-		return nil, NoEnvSelected
+		return nil, fn.NewE(NoEnvSelected)
 	}
 
 	return c.SelectedEnvs[pth], nil
@@ -83,8 +87,13 @@ func CurrentEnv() (*Env, error) {
 		return nil, fn.NewE(err)
 	}
 
-	if InsideBox() {
-		dir = os.Getenv("KL_WORKSPACE")
+	if envclient.InsideBox() {
+		s, err := envclient.GetWorkspacePath()
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+
+		dir = s
 	}
 
 	if c.SelectedEnvs == nil {

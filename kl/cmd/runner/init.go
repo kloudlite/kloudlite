@@ -6,6 +6,7 @@ import (
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/apiclient"
+	"github.com/kloudlite/kl/domain/envclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	confighandler "github.com/kloudlite/kl/pkg/config-handler"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -28,7 +29,7 @@ var InitCommand = &cobra.Command{
 			return
 		}
 
-		if fileclient.InsideBox() {
+		if envclient.InsideBox() {
 			fn.PrintError(functions.Error("cannot re-initialize workspace in dev box"))
 			return
 		}

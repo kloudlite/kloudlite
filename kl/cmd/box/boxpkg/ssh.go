@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/adrg/xdg"
-	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/domain/envclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/sshclient"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -34,7 +34,7 @@ func (c *client) Ssh() error {
 	defer spinner.Client.UpdateMessage("trying to ssh into the box")()
 
 	dir, _ := os.Getwd()
-	if fileclient.InsideBox() {
+	if envclient.InsideBox() {
 		return fn.Error("you are already in a devbox")
 	}
 

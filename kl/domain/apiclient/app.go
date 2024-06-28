@@ -17,16 +17,6 @@ var PaginationDefault = map[string]any{
 	"first":         99999999,
 }
 
-// intercept {
-//   enabled
-//   toDevice
-//   portMappings {
-//     appPort
-//     devicePort
-//   }
-// }
-//
-
 type AppSpec struct {
 	Services []struct {
 		Port int `json:"port"`
@@ -50,7 +40,6 @@ type AppPort struct {
 }
 
 func ListApps(options ...fn.Option) ([]App, error) {
-
 	envName := fn.GetOption(options, "envName")
 
 	env, err := EnsureEnv(&fileclient.Env{

@@ -16,6 +16,19 @@ type User struct {
 var authSecret string
 
 func getCookie(options ...functions.Option) (string, error) {
+	accName := functions.GetOption(options, "accountName")
+	if accName == "" {
+		fc, err := fileclient.New()
+		if err != nil {
+			return "", functions.NewE(err)
+		}
+
+		accName, err = fc.CurrentAccountName()
+		if err == nil {
+			options = append(options, functions.MakeOption("accountName", accName))
+		}
+	}
+
 	return fileclient.GetCookieString(options...)
 }
 

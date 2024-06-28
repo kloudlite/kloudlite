@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/adrg/xdg"
+	"github.com/kloudlite/kl/domain/envclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 
@@ -100,9 +101,10 @@ func GetUserHomeDir() (string, error) {
 }
 
 func GetConfigFolder() (configFolder string, err error) {
-	if InsideBox() {
+	if envclient.InsideBox() {
 		return path.Join("/.cache", "/kl"), nil
 	}
+
 	homePath, err := GetUserHomeDir()
 	if err != nil {
 		return "", functions.NewE(err)

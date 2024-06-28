@@ -3,12 +3,13 @@ package fileclient
 import (
 	"fmt"
 
+	"github.com/kloudlite/kl/domain/envclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
 
 func OnlyInsideBox(cmd *cobra.Command) {
-	if InsideBox() {
+	if envclient.InsideBox() {
 		return
 	}
 
@@ -19,7 +20,7 @@ func OnlyInsideBox(cmd *cobra.Command) {
 }
 
 func OnlyOutsideBox(cmd *cobra.Command) {
-	if !InsideBox() {
+	if !envclient.InsideBox() {
 		return
 	}
 
