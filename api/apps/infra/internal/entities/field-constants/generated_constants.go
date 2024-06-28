@@ -153,6 +153,7 @@ const (
 
 // constant vars generated for struct ClusterManagedService
 const (
+	ClusterManagedServiceIsArchived                                              = "isArchived"
 	ClusterManagedServiceOutput                                                  = "output"
 	ClusterManagedServiceOutputCredentialsRef                                    = "output.credentialsRef"
 	ClusterManagedServiceOutputCredentialsRefName                                = "output.credentialsRef.name"
