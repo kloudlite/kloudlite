@@ -3,6 +3,7 @@ package fileclient
 import (
 	"os"
 
+	"github.com/kloudlite/kl/domain/envclient"
 	confighandler "github.com/kloudlite/kl/pkg/config-handler"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -30,6 +31,15 @@ func getConfigPath() string {
 	if klfilepath != "" {
 		return klfilepath
 	}
+
+	if envclient.InsideBox() {
+		s, err := envclient.GetWorkspacePath()
+		if err != nil {
+			return defaultKLFile
+		}
+		return s
+	}
+
 	return defaultKLFile
 }
 

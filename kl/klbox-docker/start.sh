@@ -90,8 +90,5 @@ if [ -d "/tmp/ssh2" ]; then
     echo "successfully copied ssh credentials"
 fi 
 
-export SSH_PORT=$SSH_PORT
 trap - EXIT SIGTERM SIGINT
 echo "kloudlite-entrypoint:SETUP_COMPLETE"
-
-sudo /usr/sbin/sshd -D -p "$SSH_PORT"
