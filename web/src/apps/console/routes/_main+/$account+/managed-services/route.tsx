@@ -65,11 +65,11 @@ const KlOperatorServices = () => {
         return (
           <Wrapper
             header={{
-              title: 'Managed services',
+              title: 'Integrated services',
               action: backendServices.length > 0 && (
                 <Button
                   variant="primary"
-                  content="Create managed service"
+                  content="Create integrated service"
                   prefix={<Plus />}
                   to="../new-managed-service"
                   linkComponent={Link}
@@ -79,15 +79,15 @@ const KlOperatorServices = () => {
             empty={{
               image: <EmptyStorageImage />,
               is: backendServices.length === 0,
-              title: 'This is where you’ll manage your Managed services.',
+              title: 'This is where you’ll manage your Integrated services.',
               content: (
                 <p>
-                  You can create a new backing service and manage the listed
-                  backing service.
+                  You can create a new integrated service and manage the listed
+                  integrated service.
                 </p>
               ),
               action: {
-                content: 'Create new managed service',
+                content: 'Create new integrated service',
                 prefix: <Plus />,
                 to: '../new-managed-service',
                 linkComponent: Link,

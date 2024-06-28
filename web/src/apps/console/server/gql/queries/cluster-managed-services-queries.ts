@@ -33,6 +33,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
           clusterName
           creationTime
           displayName
+          isArchived
           id
           kind
           lastUpdatedBy {
@@ -152,6 +153,7 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
               accountName
               apiVersion
               clusterName
+              isArchived
               createdBy {
                 userEmail
                 userId

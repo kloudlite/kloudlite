@@ -32,14 +32,14 @@ const ManagedServiceTabs = () => {
       baseurl={`/${account}/msvc/${msv}`}
       backButton={{
         to: `/${account}/managed-services`,
-        label: 'Managed Services',
+        label: 'Integrated Services',
       }}
       tabs={[
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
               <BackingServices size={tabIconSize} />
-              Managed resources
+              Integrated resources
             </span>
           ),
           to: '/managed-resources',

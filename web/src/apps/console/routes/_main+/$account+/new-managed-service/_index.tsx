@@ -31,6 +31,7 @@ import {
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { toast } from 'react-toastify';
 import { IAccountContext } from '../_layout';
 
 const valueRender = ({ label, icon }: { label: string; icon: string }) => {
@@ -625,6 +626,7 @@ const ManagedServiceLayout = () => {
             if (e) {
               throw e[0];
             }
+            toast.success('Integrated service created successfully');
             navigate(rootUrl);
           } catch (err) {
             handleError(err);
@@ -723,10 +725,10 @@ const ManagedServiceLayout = () => {
 
   return (
     <MultiStepProgressWrapper
-      title="Let’s create new managed service."
+      title="Let’s create new integrated service."
       subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
       backButton={{
-        content: 'Back to managed services',
+        content: 'Back to integrated services',
         to: rootUrl,
       }}
     >

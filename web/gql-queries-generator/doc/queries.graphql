@@ -3135,6 +3135,7 @@ query consoleGetClusterMSv($name: String!) {
     clusterName
     creationTime
     displayName
+    isArchived
     id
     kind
     lastUpdatedBy {
@@ -3206,6 +3207,7 @@ query consoleListClusterMSvs($pagination: CursorPaginationIn, $search: SearchClu
         accountName
         apiVersion
         clusterName
+        isArchived
         createdBy {
           userEmail
           userId

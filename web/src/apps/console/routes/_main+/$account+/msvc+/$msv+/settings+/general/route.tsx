@@ -89,6 +89,7 @@ const ClusterManagedServiceSettingGeneral = () => {
         if (e) {
           throw e[0];
         }
+        toast.success('Integrated service updated successfully');
         setSuccess(true);
         resetAndReload();
       },
@@ -145,11 +146,11 @@ const ClusterManagedServiceSettingGeneral = () => {
           ),
         }}
       >
-        <Box title="Cluster managed service details">
+        <Box title="Integrated service details">
           <div className="flex flex-row items-center gap-3xl">
             <div className="flex-1">
               <TextInput
-                label="Cluster managed service URL"
+                label="Integrated service URL"
                 value={`${consoleBaseUrl}/${parseName(account)}/${parseName(
                   managedService
                 )}`}
@@ -181,7 +182,7 @@ const ClusterManagedServiceSettingGeneral = () => {
             <div className="flex-1">
               <TextInput
                 value={parseName(managedService)}
-                label="Cluster manage service ID"
+                label="Integrated service ID"
                 message="Used when interacting with the Kloudlite API"
                 suffix={
                   <div
@@ -219,18 +220,18 @@ const ClusterManagedServiceSettingGeneral = () => {
         </Box>
 
         <DeleteContainer
-          title="Delete Managed Service"
+          title="Delete Integrated Service"
           action={() => {
             setDeleteClusterMsvc(true);
           }}
         >
-          Permanently remove your Managed service and all of its contents from
-          the Kloudlite platform. This action is not reversible — please
+          Permanently remove your Integrated service and all of its contents
+          from the Kloudlite platform. This action is not reversible — please
           continue with caution.
         </DeleteContainer>
         <DeleteDialog
           resourceName={parseName(managedService)}
-          resourceType="deviceblueprint"
+          resourceType="Integrated service"
           show={deleteClusterMsvc}
           setShow={setDeleteClusterMsvc}
           onSubmit={async () => {
@@ -243,7 +244,7 @@ const ClusterManagedServiceSettingGeneral = () => {
                 throw errors[0];
               }
               reload();
-              toast.success(`cluster managed service deleted successfully`);
+              toast.success(`Integrated service deleted successfully`);
               setDeleteClusterMsvc(false);
               navigate(`/${parseName(account)}/managed-services`);
             } catch (err) {

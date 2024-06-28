@@ -243,7 +243,9 @@ const TemplateView = ({
 }: ITemplateView) => {
   return (
     <form className="flex flex-col gap-3xl" onSubmit={handleSubmit}>
-      <div className="bodyMd text-text-soft">Create your managed services.</div>
+      <div className="bodyMd text-text-soft">
+        Create your integrated services.
+      </div>
       <Select
         label="Resource type"
         size="lg"
@@ -294,7 +296,7 @@ const FieldView = ({
       }}
     >
       <NameIdView
-        placeholder="Enter managed service name"
+        placeholder="Enter integrated service name"
         label="Name"
         resType="environment"
         name={values.name}
@@ -576,10 +578,10 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
 
   return (
     <MultiStepProgressWrapper
-      title="Let’s create new managed resource."
+      title="Let’s create new integrated resource."
       subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
       backButton={{
-        content: 'Back to managed resources',
+        content: 'Back to integrated resources',
         to: rootUrl,
       }}
     >
@@ -595,7 +597,7 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
             resources={resources}
           />
         </MultiStepProgress.Step>
-        <MultiStepProgress.Step label="Configure managed resource" step={2}>
+        <MultiStepProgress.Step label="Configure integrated resource" step={2}>
           <FieldView
             selectedResource={values.selectedResource}
             values={values}

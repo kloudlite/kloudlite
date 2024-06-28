@@ -28,6 +28,7 @@ import { ListItem } from '~/console/components/console-list-components';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$environment+/_layout';
+import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 
 type BaseType = ExtractNodeType<IManagedResources>;
 type IDialog = IDialogBase<BaseType> & {
@@ -368,6 +369,8 @@ export const ViewSecret = ({
   const api = useConsoleApi();
   const { environment } = useOutletContext<IEnvironmentContext>();
   const [onClick, setOnClick] = useState(false);
+  const params = useParams();
+  ensureAccountClientSide(params);
   const { data, isLoading, error } = useCustomSwr(
     () =>
       onClick ? `secret _${item.syncedOutputSecretRef?.metadata?.name}` : null,
@@ -384,6 +387,56 @@ export const ViewSecret = ({
       }
     }
   );
+
+  const dataSecret = () => {
+    if (isLoading) {
+      return <LoadingPlaceHolder />;
+    }
+    if (error) {
+      return <p>Error: {error}</p>;
+    }
+    if (!data?.stringData) {
+      return <p>No secret found</p>;
+    }
+
+    return (
+      <ListV2.Root
+        data={{
+          headers: [
+            {
+              render: () => 'Key',
+              name: 'key',
+              className: 'min-w-[170px]',
+            },
+            {
+              render: () => 'Value',
+              name: 'value',
+              className: 'flex-1 min-w-[345px] max-w-[345px] w-[345px]',
+            },
+          ],
+          rows: Object.entries(data.stringData || {}).map(([key, value]) => {
+            const v = value as string;
+            return {
+              columns: {
+                key: {
+                  render: () => <ListItem data={key} />,
+                },
+                value: {
+                  render: () => (
+                    <CopyContentToClipboard
+                      content={v}
+                      toastMessage={`${key} copied`}
+                    />
+                  ),
+                },
+              },
+            };
+          }),
+        }}
+      />
+    );
+  };
+
   useEffect(() => {
     if (error) {
       toast.error(error);
@@ -406,51 +459,7 @@ export const ViewSecret = ({
               <p>{`Are you sure you want to view the secrets of '${item.syncedOutputSecretRef?.metadata?.name}'?`}</p>
             </div>
           </MultiStep.Step>
-          <MultiStep.Step step={1}>
-            {isLoading ? (
-              <LoadingPlaceHolder />
-            ) : (
-              data && (
-                <ListV2.Root
-                  data={{
-                    headers: [
-                      {
-                        render: () => 'Key',
-                        name: 'key',
-                        className: 'min-w-[170px]',
-                      },
-                      {
-                        render: () => 'Value',
-                        name: 'value',
-                        className:
-                          'flex-1 min-w-[345px] max-w-[345px] w-[345px]',
-                      },
-                    ],
-                    rows: Object.entries(data.stringData).map(
-                      ([key, value]) => {
-                        const v = value as string;
-                        return {
-                          columns: {
-                            key: {
-                              render: () => <ListItem data={key} />,
-                            },
-                            value: {
-                              render: () => (
-                                <CopyContentToClipboard
-                                  content={v}
-                                  toastMessage={`${key} copied`}
-                                />
-                              ),
-                            },
-                          },
-                        };
-                      }
-                    ),
-                  }}
-                />
-              )
-            )}
-          </MultiStep.Step>
+          <MultiStep.Step step={1}>{dataSecret()}</MultiStep.Step>
         </MultiStep.Root>
       </Popup.Content>
       <Popup.Footer>
