@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/flags"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
@@ -101,6 +102,10 @@ func TrimePref(s string, length int) string {
 }
 
 func Confirm(yes string, defaultValue string) bool {
+	if spinner.Client.IsRunning() {
+		spinner.Client.Pause()
+		defer spinner.Client.Resume()
+	}
 
 	var response string
 

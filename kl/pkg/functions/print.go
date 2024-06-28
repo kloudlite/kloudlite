@@ -10,6 +10,10 @@ import (
 )
 
 func stderr(str string) {
+	if flags.IsQuiet {
+		return
+	}
+
 	if spinner.Client.IsRunning() {
 		spinner.Client.Pause()
 		defer spinner.Client.Resume()
@@ -19,6 +23,10 @@ func stderr(str string) {
 }
 
 func stdout(str string) {
+	if flags.IsQuiet {
+		return
+	}
+
 	if spinner.Client.IsRunning() {
 		spinner.Client.Pause()
 		defer spinner.Client.Resume()
@@ -28,45 +36,37 @@ func stdout(str string) {
 }
 
 func Log(str ...interface{}) {
-	stderr(fmt.Sprint(fmt.Sprint(str...), "\n"))
+	str = append(str, "\n")
+	stderr(fmt.Sprint(str...))
 }
 
 func Warn(str ...interface{}) {
-	if flags.IsQuiet {
-		return
-	}
-
-	stderr(fmt.Sprintf("%s %s", text.Yellow("[warn]"), fmt.Sprint(fmt.Sprint(str...), "\n")))
+	str = append(str, "\n")
+	stderr(fmt.Sprintf("%s %s", text.Yellow("[warn]"), fmt.Sprint(str...)))
 }
 
 func Warnf(format string, str ...interface{}) {
-	if flags.IsQuiet {
-		return
+	if spinner.Client.IsRunning() {
+		spinner.Client.Pause()
 	}
-
 	stderr(fmt.Sprintf(format, str...))
 }
 
 func Logf(format string, str ...interface{}) {
-	if flags.IsQuiet {
-		return
+	if spinner.Client.IsRunning() {
+		spinner.Client.Pause()
 	}
-
 	stderr(fmt.Sprintf(format, str...))
 }
 
 func Printf(format string, str ...interface{}) {
-	if flags.IsQuiet {
-		return
+	if spinner.Client.IsRunning() {
+		spinner.Client.Pause()
 	}
-
 	stdout(fmt.Sprintf(format, str...))
 }
 
 func Println(str ...interface{}) {
-	if flags.IsQuiet {
-		return
-	}
-
+	str = append(str, "\n")
 	stdout(fmt.Sprint(str...))
 }
