@@ -360,10 +360,6 @@ func stdout(str string) {
 }
 
 func Log(str ...interface{}) {
-	if spinner.Client.IsRunning() {
-		spinner.Client.Pause()
-		defer spinner.Client.Resume()
-	}
 	stderr(fmt.Sprint(fmt.Sprint(str...), "\n"))
 }
 
