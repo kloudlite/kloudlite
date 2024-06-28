@@ -11,9 +11,8 @@ import (
 )
 
 var Cmd = &cobra.Command{
-	Use:     "status",
-	Short:   "get status of your current context (user, account, environment, vpn status)",
-	Example: fn.Desc("{cmd} status"),
+	Use:   "status",
+	Short: "get status of your current context (user, account, environment, vpn status)",
 	Run: func(_ *cobra.Command, _ []string) {
 
 		if u, err := apiclient.GetCurrentUser(); err == nil {

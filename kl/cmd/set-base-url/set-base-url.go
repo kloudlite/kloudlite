@@ -10,10 +10,9 @@ import (
 )
 
 var Cmd = &cobra.Command{
-	Use:     "setbaseurl",
-	Short:   "set base url for the cli",
-	Example: fn.Desc("{cmd} status"),
-	Hidden:  true,
+	Use:    "setbaseurl",
+	Short:  "set base url for the cli",
+	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if b := functions.ParseBoolFlag(cmd, "reset"); b {
