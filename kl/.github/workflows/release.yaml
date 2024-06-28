@@ -184,6 +184,7 @@ jobs:
           echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
           mkdir bin
           mkdir out
+          go mod tidy
           go build --tags main -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" main.go
 
       - name: Upload Artifact
