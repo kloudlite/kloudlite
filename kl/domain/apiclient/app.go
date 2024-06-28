@@ -141,6 +141,19 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 		return functions.NewE(err)
 	}
 
+	if accountName == "" {
+		kt, err := fc.GetKlFile("")
+		if err != nil {
+			return functions.NewE(err)
+		}
+
+		if kt.AccountName == "" {
+			return fmt.Errorf("account name is required")
+		}
+
+		accountName = kt.AccountName
+	}
+
 	if envName == "" {
 		env, err := EnsureEnv(nil, options...)
 		if err != nil {

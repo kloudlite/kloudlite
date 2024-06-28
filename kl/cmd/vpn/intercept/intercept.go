@@ -2,7 +2,6 @@ package intercept
 
 import (
 	"github.com/kloudlite/kl/domain/fileclient"
-	"github.com/kloudlite/kl/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -14,16 +13,10 @@ var Cmd = &cobra.Command{
 
 func init() {
 
-	if !flags.IsDev() {
-		fileclient.OnlyInsideBox(startCmd)
-	}
+	fileclient.OnlyInsideBox(startCmd)
+	fileclient.OnlyInsideBox(stopCmd)
 
 	Cmd.AddCommand(startCmd)
-
-	if !flags.IsDev() {
-		fileclient.OnlyInsideBox(stopCmd)
-	}
-
 	Cmd.AddCommand(stopCmd)
 
 	Cmd.Aliases = append(startCmd.Aliases, "inc")
