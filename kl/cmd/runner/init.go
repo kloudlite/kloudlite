@@ -34,7 +34,7 @@ var InitCommand = &cobra.Command{
 		}
 
 		if _, err = fc.GetKlFile(""); err == nil {
-			fn.Printf(text.Yellow("Workspace is already initilized. Do you want to override? (y/N): "))
+			fn.Printf(text.Yellow("workspace is already initilized. Do you want to override? (y/N): "))
 			if !fn.Confirm("Y", "N") {
 				return
 			}
@@ -60,7 +60,7 @@ var InitCommand = &cobra.Command{
 				if err := fc.WriteKLFile(newKlFile); err != nil {
 					fn.PrintError(err)
 				} else {
-					fn.Printf(text.Green("Workspace initialized successfully.\n"))
+					fn.Printf(text.Green("workspace initialized successfully.\n"))
 				}
 			}
 		}

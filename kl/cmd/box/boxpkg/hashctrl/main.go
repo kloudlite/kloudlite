@@ -13,7 +13,6 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg/packagectrl"
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
@@ -59,8 +58,9 @@ func generateBoxHashContent(envName string, path string, klFile *fileclient.KLFi
 		"config": persistedConfig,
 		"hash":   hash.Sum(nil),
 	})
+
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	return marshal, nil
@@ -69,19 +69,19 @@ func generateBoxHashContent(envName string, path string, klFile *fileclient.KLFi
 func BoxHashFile(workspacePath string) (*PersistedEnv, error) {
 	fileName, err := BoxHashFileName(workspacePath)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 	configFolder, err := fileclient.GetConfigFolder()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 	filePath := path.Join(configFolder, "box-hash", fileName)
 	data, err := os.ReadFile(filePath)
 	if err != nil && !os.IsNotExist(err) {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 	if os.IsNotExist(err) {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 	var r struct {
 		Config PersistedEnv `json:"config"`
@@ -216,15 +216,14 @@ func GenerateKLConfigHash(kf *fileclient.KLFileType) (string, error) {
 }
 
 func generatePersistedEnv(kf *fileclient.KLFileType, envName string, path string) (*PersistedEnv, error) {
-
 	envs, mm, err := apiclient.GetLoadMaps()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	realPkgs, err := packagectrl.SyncLockfileWithNewConfig(*kf)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	hashConfig := PersistedEnv{
@@ -253,14 +252,14 @@ func generatePersistedEnv(kf *fileclient.KLFileType, envName string, path string
 
 	e, err := fileclient.EnvOfPath(path)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 	ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", envName, "❯")
 	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.svc.%s.local", e.TargetNs, e.ClusterName)
 
 	klConfhash, err := GenerateKLConfigHash(kf)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	hashConfig.Env = ev

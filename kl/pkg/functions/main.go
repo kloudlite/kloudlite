@@ -16,6 +16,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var ErrorWrapper = errors.WithStack
+var ErrorPrinter = fmt.Errorf
+
 type Option struct {
 	Key   string
 	Value string

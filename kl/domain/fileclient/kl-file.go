@@ -48,7 +48,7 @@ func (c *fclient) GetKlFile(filePath string) (*KLFileType, error) {
 
 func (c *fclient) getKlFile(filePath string) (*KLFileType, error) {
 	if filePath == "" {
-		s := c.configPath
+		s := getConfigPath()
 		filePath = s
 	}
 
