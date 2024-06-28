@@ -36,6 +36,9 @@ func init() {
 	fileclient.OnlyOutsideBox(psCmd)
 	BoxCmd.AddCommand(psCmd)
 
+	fileclient.OnlyOutsideBox(restartCmd)
+	BoxCmd.AddCommand(restartCmd)
+
 	BoxCmd.AddCommand(infoCmd)
 }
 

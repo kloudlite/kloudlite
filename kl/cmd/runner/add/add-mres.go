@@ -2,6 +2,7 @@ package add
 
 import (
 	"fmt"
+	domainutil "github.com/kloudlite/kl/domain/util"
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
@@ -126,6 +127,9 @@ func AddMres(cmd *cobra.Command, _ []string) error {
 	}
 
 	if err := hashctrl.SyncBoxHash(wpath); err != nil {
+		return functions.NewE(err)
+	}
+	if err := domainutil.ConfirmBoxRestart(wpath); err != nil {
 		return functions.NewE(err)
 	}
 

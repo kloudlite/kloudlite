@@ -2,6 +2,7 @@ package add
 
 import (
 	"fmt"
+	domainutil "github.com/kloudlite/kl/domain/util"
 	"os"
 	"regexp"
 	"strings"
@@ -232,6 +233,10 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := hashctrl.SyncBoxHash(wpath); err != nil {
+		return fn.NewE(err)
+	}
+
+	if err := domainutil.ConfirmBoxRestart(wpath); err != nil {
 		return fn.NewE(err)
 	}
 

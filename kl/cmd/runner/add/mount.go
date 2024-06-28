@@ -2,6 +2,7 @@ package add
 
 import (
 	"fmt"
+	domainutil "github.com/kloudlite/kl/domain/util"
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
@@ -219,6 +220,9 @@ func selectConfigMount(path string, klFile fileclient.KLFileType, cmd *cobra.Com
 	}
 
 	if err = hashctrl.SyncBoxHash(wpath); err != nil {
+		return fn.NewE(err)
+	}
+	if err := domainutil.ConfirmBoxRestart(wpath); err != nil {
 		return fn.NewE(err)
 	}
 

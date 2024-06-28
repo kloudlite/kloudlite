@@ -2,6 +2,7 @@ package use
 
 import (
 	"fmt"
+	domainutil "github.com/kloudlite/kl/domain/util"
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
@@ -58,6 +59,9 @@ var switchCmd = &cobra.Command{
 			return
 		}
 		if err := hashctrl.SyncBoxHash(wpath); err != nil {
+			return
+		}
+		if err := domainutil.ConfirmBoxRestart(wpath); err != nil {
 			return
 		}
 	},

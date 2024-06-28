@@ -2,6 +2,7 @@ package packages
 
 import (
 	"fmt"
+	domainutil "github.com/kloudlite/kl/domain/util"
 	"os"
 	"strings"
 
@@ -63,6 +64,9 @@ func rmPackages(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := hashctrl.SyncBoxHash(cwd); err != nil {
+		return fn.NewE(err)
+	}
+	if err := domainutil.ConfirmBoxRestart(cwd); err != nil {
 		return fn.NewE(err)
 	}
 	return nil

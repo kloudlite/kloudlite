@@ -2,6 +2,7 @@ package runner
 
 import (
 	"errors"
+	domainutil "github.com/kloudlite/kl/domain/util"
 	"os"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
@@ -73,6 +74,10 @@ var InitCommand = &cobra.Command{
 		}
 
 		if err := hashctrl.SyncBoxHash(dir); err != nil {
+			fn.PrintError(err)
+			return
+		}
+		if err := domainutil.ConfirmBoxRestart(dir); err != nil {
 			fn.PrintError(err)
 			return
 		}
