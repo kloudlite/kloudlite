@@ -70,7 +70,6 @@ func (c *client) Start() error {
 		return functions.NewE(err)
 	}
 
-	spinner.Client.Pause()
 	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(c.env.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
 
 	return nil
