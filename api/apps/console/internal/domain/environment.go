@@ -6,6 +6,7 @@ import (
 
 	"github.com/kloudlite/api/common/fields"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	opConstants "github.com/kloudlite/operator/pkg/constants"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
@@ -246,6 +247,9 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: destEnv.Spec.TargetNamespace,
+			Labels: map[string]string{
+				opConstants.KloudliteGatewayEnabledLabel: "true",
+			},
 		},
 	}, destEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -266,6 +270,14 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 	}
 
 	apps, err := d.appRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Sort:   nil,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	externalApps, err := d.externalAppRepo.Find(ctx, repos.Query{
 		Filter: filters,
 		Sort:   nil,
 	})
@@ -318,15 +330,35 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 	}
 
 	for i := range apps {
+		appSpec := apps[i].Spec
+		appSpec.Intercept = nil
 		if _, err := d.createAndApplyApp(resCtx, &entities.App{
 			App: crdsv1.App{
 				TypeMeta:   apps[i].TypeMeta,
 				ObjectMeta: objectMeta(apps[i].ObjectMeta, destEnv.Spec.TargetNamespace),
-				Spec:       apps[i].Spec,
+				Spec:       appSpec,
 			},
 			AccountName:      ctx.AccountName,
 			EnvironmentName:  destEnv.Name,
 			ResourceMetadata: resourceMetadata(apps[i].DisplayName),
+			SyncStatus:       t.GenSyncStatus(t.SyncActionApply, 0),
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	for i := range externalApps {
+		externalAppSpec := externalApps[i].Spec
+		externalAppSpec.Intercept = nil
+		if _, err := d.createAndApplyExternalApp(resCtx, &entities.ExternalApp{
+			ExternalApp: crdsv1.ExternalApp{
+				TypeMeta:   externalApps[i].TypeMeta,
+				ObjectMeta: objectMeta(externalApps[i].ObjectMeta, destEnv.Spec.TargetNamespace),
+				Spec:       externalAppSpec,
+			},
+			AccountName:      ctx.AccountName,
+			EnvironmentName:  destEnv.Name,
+			ResourceMetadata: resourceMetadata(externalApps[i].DisplayName),
 			SyncStatus:       t.GenSyncStatus(t.SyncActionApply, 0),
 		}); err != nil {
 			return nil, err
@@ -481,6 +513,10 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, name string) error {
 	}
 
 	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, uenv.Name, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
+
+	if uenv.IsArchived != nil && *uenv.IsArchived {
+		return d.environmentRepo.DeleteById(ctx, uenv.Id)
+	}
 
 	if err := d.deleteK8sResource(ctx, uenv.Name, &uenv.Environment); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {

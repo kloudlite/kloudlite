@@ -1,10 +1,12 @@
 version: 3
 
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
 vars:
   app: tenant-agent
-
-includes:
-  go: ../../.tools/taskfiles/go-build.yml
+  binary: "./bin/{{.app}}"
 
 tasks:
   vector:proto:
@@ -21,31 +23,23 @@ tasks:
     cmds:
       - task: go:build 
         vars: 
-          Out: ./bin/{{.app}}
-
-  local:build:
-    vars:
-      GOARCH:
-        sh: go env GOARCH
-    cmds:
-      - task: go:build 
-        vars: 
-          Out: ./bin/{{.app}}-${GOARCH:-$(go env GOARCH)}
-
-  local:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: "var Image must have a value, of format 'image_repository:image_tag'"
-    cmds:
-      - GOARCH=amd64 task local:build
-      - GOARCH=arm64 task local:build
-      - docker buildx build -f ./Containerfile --platform linux/amd64,linux/arm64 -t {{.Image}} . --build-arg BINARY={{.app}} --push
+          out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
 
   container:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    requires:
+      vars:
+        - image
     cmds:
-      - task: local:build
-      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
+      - task: build
+        vars:
+          GOARCH: amd64
 
+      - task: build
+        vars:
+          GOARCH: arm64
+
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          image: "{{.image}}"

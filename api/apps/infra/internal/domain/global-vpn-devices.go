@@ -19,6 +19,7 @@ import (
 
 func (d *domain) claimNextFreeDeviceIP(ctx InfraContext, deviceName string, gvpnName string) (string, error) {
 	var ipAddrFilter *repos.MatchFilter
+	offsetIdx := 0 
 	for {
 		filter := repos.Filter{
 			fields.AccountName:           ctx.AccountName,
@@ -38,7 +39,7 @@ func (d *domain) claimNextFreeDeviceIP(ctx InfraContext, deviceName string, gvpn
 				return "", err
 			}
 
-			ip, err := iputils.GetIPAddrInARange(gvpn.CIDR, gvpn.NumAllocatedDevices+1, gvpn.NumReservedIPsForNonClusterUse)
+			ip, err := iputils.GetIPAddrInARange(gvpn.CIDR, gvpn.NumAllocatedDevices+1+offsetIdx, gvpn.NumReservedIPsForNonClusterUse)
 			if err != nil {
 				return "", err
 			}
@@ -48,6 +49,7 @@ func (d *domain) claimNextFreeDeviceIP(ctx InfraContext, deviceName string, gvpn
 				GlobalVPNName: gvpnName,
 				IPAddr:        ip,
 			}); err != nil {
+			  offsetIdx += 1
 				continue
 			}
 
@@ -59,6 +61,19 @@ func (d *domain) claimNextFreeDeviceIP(ctx InfraContext, deviceName string, gvpn
 		}
 
 		ipAddr := freeIp.IPAddr
+
+		claimed, err := d.claimDeviceIPRepo.FindOne(ctx, repos.Filter{
+			fc.AccountName:                ctx.AccountName,
+			fc.ClaimDeviceIPGlobalVPNName: gvpnName,
+			fc.ClaimDeviceIPClaimedBy:     deviceName,
+		})
+		if err != nil {
+			return "", err
+		}
+
+		if claimed != nil {
+			return claimed.IPAddr, nil
+		}
 
 		if _, err := d.claimDeviceIPRepo.Create(ctx, &entities.ClaimDeviceIP{
 			AccountName:   ctx.AccountName,
@@ -118,7 +133,11 @@ func (d *domain) deleteGlobalVPNDevice(ctx InfraContext, gvpn string, deviceName
 		return err
 	}
 
-	if err := d.syncKloudliteDeviceOnCluster(ctx, gvpn); err != nil {
+	if err := d.syncKloudliteDeviceOnPlatform(ctx, gvpn); err != nil {
+		return err
+	}
+
+	if err := d.syncKloudliteGatewayDevice(ctx, gvpn); err != nil {
 		return err
 	}
 
@@ -136,6 +155,10 @@ func (d *domain) ListGlobalVPNDevice(ctx InfraContext, gvpn string, search map[s
 			fc.GlobalVPNDeviceGlobalVPNName: gvpn,
 		},
 		map[string]repos.MatchFilter{
+			fc.CreatedByUserId: {
+				MatchType: repos.MatchTypeExact,
+				Exact:     ctx.UserId,
+			},
 			fc.GlobalVPNDeviceCreationMethod: {
 				MatchType:  repos.MatchTypeNotInArray,
 				NotInArray: []any{gvpnConnectionDeviceMethod, kloudliteGlobalVPNDevice},
@@ -174,12 +197,20 @@ func (d *domain) createGlobalVPNDevice(ctx InfraContext, gvpnDevice entities.Glo
 
 	gvpnDevice.IPAddr = ip
 
-	gv, err := d.gvpnDevicesRepo.Create(ctx, &gvpnDevice)
+	gv, err := d.gvpnDevicesRepo.Upsert(ctx, repos.Filter{
+		fc.AccountName:                  ctx.AccountName,
+		fc.GlobalVPNDeviceGlobalVPNName: gvpnDevice.GlobalVPNName,
+		fc.MetadataName:                 gvpnDevice.Name,
+	}, &gvpnDevice)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.syncKloudliteDeviceOnCluster(ctx, gvpnDevice.GlobalVPNName); err != nil {
+	if err := d.syncKloudliteDeviceOnPlatform(ctx, gvpnDevice.GlobalVPNName); err != nil {
+		return nil, err
+	}
+
+	if err := d.syncKloudliteGatewayDevice(ctx, gvpnDevice.GlobalVPNName); err != nil {
 		return nil, err
 	}
 
@@ -189,7 +220,7 @@ func (d *domain) createGlobalVPNDevice(ctx InfraContext, gvpnDevice entities.Glo
 func (d *domain) buildPeerFromGlobalVPNDevice(ctx InfraContext, gvpn *entities.GlobalVPN, device *entities.GlobalVPNDevice) *networkingv1.Peer {
 	allowedIPs := []string{fmt.Sprintf("%s/32", device.IPAddr)}
 
-	if device.CreationMethod == kloudliteGlobalVPNDevice {
+	if device.IPAddr == gvpn.KloudliteGatewayDevice.IPAddr {
 		allowedIPs = append(allowedIPs, gvpn.NonClusterUseAllowedIPs...)
 	}
 
@@ -229,7 +260,8 @@ func (d *domain) buildPeersFromGlobalVPNDevices(ctx InfraContext, gvpn string) (
 		allowedIPs := []string{fmt.Sprintf("%s/32", devices[i].IPAddr)}
 		if devices[i].PublicEndpoint != nil {
 			allowedIPs := []string{fmt.Sprintf("%s/32", devices[i].IPAddr)}
-			if devices[i].CreationMethod == kloudliteGlobalVPNDevice {
+
+      if devices[i].Name == gv.KloudliteGatewayDevice.Name {
 				allowedIPs = append(allowedIPs, gv.NonClusterUseAllowedIPs...)
 			}
 
@@ -334,7 +366,7 @@ func (d *domain) getGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnD
 		return "", err
 	}
 
-	klDevice, err := d.findGlobalVPNDevice(ctx, gvpn, gv.KloudliteDevice.Name)
+	klDevice, err := d.findGlobalVPNDevice(ctx, gvpn, gv.KloudliteGatewayDevice.Name)
 	if err != nil {
 		return "", err
 	}
@@ -346,7 +378,7 @@ func (d *domain) getGlobalVPNDeviceWgConfig(ctx InfraContext, gvpn string, gvpnD
 	config, err := wgutils.GenerateWireguardConfig(wgutils.WgConfigParams{
 		IPAddr:     device.IPAddr,
 		PrivateKey: device.PrivateKey,
-		DNS:        gv.KloudliteDevice.IPAddr,
+		DNS:        gv.KloudliteGatewayDevice.IPAddr,
 		PostUp:     postUp,
 		PublicPeers: []wgutils.PublicPeer{
 			{
