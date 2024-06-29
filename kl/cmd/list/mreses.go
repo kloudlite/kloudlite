@@ -46,7 +46,7 @@ var mresCmd = &cobra.Command{
 
 func printMres(_ *cobra.Command, secrets []apiclient.Mres) error {
 	if len(secrets) == 0 {
-		return functions.Error("no secrets found")
+		return functions.Error("no managed resources found")
 	}
 
 	header := table.Row{

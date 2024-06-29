@@ -48,7 +48,8 @@ func (c *client) Start() error {
 		}
 	}
 
-	if _, err = c.startContainer(boxHash.KLConfHash); err != nil {
+	_, err = c.startContainer(boxHash.KLConfHash)
+	if err != nil {
 		return fn.NewE(err)
 	}
 

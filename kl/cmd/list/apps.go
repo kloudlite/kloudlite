@@ -6,8 +6,9 @@ import (
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
-
 	"github.com/spf13/cobra"
+	"strconv"
+	"strings"
 )
 
 var appsCmd = &cobra.Command{
@@ -48,14 +49,20 @@ func listapps(cmd *cobra.Command, _ []string) error {
 	}
 
 	header := table.Row{
-		table.HeaderText("apps"),
-		table.HeaderText("name"),
+		table.HeaderText("Display Name"),
+		table.HeaderText("Name"),
+		table.HeaderText("App Port"),
 	}
 
 	rows := make([]table.Row, 0)
 
+	ports := make([]string, 0)
 	for _, a := range apps {
-		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name})
+		ports = nil
+		for _, v := range a.Spec.Services {
+			ports = append(ports, strconv.Itoa(v.Port))
+		}
+		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name, strings.Join(ports, ", ")})
 	}
 
 	fn.Println(table.Table(&header, rows, cmd))

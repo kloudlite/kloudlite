@@ -97,11 +97,11 @@ func CurrentEnv() (*Env, error) {
 	}
 
 	if c.SelectedEnvs == nil {
-		return nil, fn.Error("no selected environment")
+		return nil, fn.NewE(NoEnvSelected)
 	}
 
 	if c.SelectedEnvs[dir] == nil {
-		return nil, fn.Error("no selected environment")
+		return nil, fn.NewE(NoEnvSelected)
 	}
 
 	return c.SelectedEnvs[dir], nil

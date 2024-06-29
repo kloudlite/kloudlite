@@ -41,6 +41,8 @@ const (
 	NO_RUNNING_CONTAINERS = "no container running"
 )
 
+var UserCanceled = fmt.Errorf("user canceled")
+
 type Container struct {
 	Name string
 	Path string
@@ -201,7 +203,8 @@ func (c *client) restartContainer(path string) error {
 
 func (c *client) startContainer(klconfHash string) (string, error) {
 
-	if err := c.stopOtherContainers(); err != nil {
+	err := c.stopOtherContainers()
+	if err != nil {
 		return "", fn.NewE(err)
 	}
 
@@ -339,9 +342,9 @@ func (c *client) stopOtherContainers() error {
 	for _, d := range existingContainers {
 		if d.Labels[CONT_PATH_KEY] != c.cwd {
 			spinner.Client.Stop()
-			fn.Logf("An other container is running in %s, do you want to stop it? [Y/n]", d.Labels[CONT_PATH_KEY])
+			fn.Logf("[#] another workspace is active and running at %s. this action will stop that workspace and terminate all the processes running in the that container. do you want to proceed? [Y/n]", d.Labels[CONT_PATH_KEY])
 			if !fn.Confirm("y", "y") {
-				continue
+				return fn.NewE(fn.NewE(UserCanceled))
 			}
 
 			if err := c.stopContainer(d.Labels[CONT_PATH_KEY]); err != nil {

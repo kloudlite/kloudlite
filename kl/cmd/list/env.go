@@ -50,7 +50,7 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 		envName = env.Name
 	}
 
-	header := table.Row{table.HeaderText("DisplayName"), table.HeaderText("Name"), table.HeaderText("ready")}
+	header := table.Row{table.HeaderText("Display Name"), table.HeaderText("Name"), table.HeaderText("ready")}
 	rows := make([]table.Row, 0)
 
 	for _, a := range envs {

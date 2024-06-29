@@ -1,6 +1,7 @@
 package status
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/kloudlite/kl/domain/apiclient"
@@ -16,7 +17,7 @@ import (
 var Cmd = &cobra.Command{
 	Use:   "status",
 	Short: "get status of your current context (user, account, environment, vpn status)",
-	Run: func(_ *cobra.Command, _ []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 
 		if u, err := apiclient.GetCurrentUser(); err == nil {
 			fn.Logf("\nLogged in as %s (%s)\n",
@@ -36,8 +37,17 @@ var Cmd = &cobra.Command{
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Account: ")), acc))
 		}
 
-		if e, err := fileclient.CurrentEnv(); err == nil {
+		e, err := fileclient.CurrentEnv()
+		if err == nil {
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), e.Name))
+		} else if errors.Is(err, fileclient.NoEnvSelected) {
+			filePath := fn.ParseKlFile(cmd)
+			klFile, err := fc.GetKlFile(filePath)
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), klFile.DefaultEnv))
 		}
 
 		if envclient.InsideBox() {

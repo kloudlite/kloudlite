@@ -1,6 +1,7 @@
 package boxpkg
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -38,7 +39,11 @@ func (c *client) Ssh() error {
 		return fn.Error("you are already in a devbox")
 	}
 
-	if err := c.Start(); err != nil {
+	err := c.Start()
+	if err != nil && errors.Is(err, UserCanceled) {
+		fn.Log("Operation was canceled by the user")
+		return nil
+	} else if err != nil {
 		if err2 := c.Stop(); err2 != nil {
 			return fn.NewE(err2)
 		}
