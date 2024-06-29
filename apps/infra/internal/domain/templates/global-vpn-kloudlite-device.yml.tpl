@@ -66,6 +66,8 @@ spec:
             - |+
               wg-quick down wg0 || echo "[starting] wg-quick down wg0"
               wg-quick up wg0
+              echo "allowing time for ip addr to become available"
+              sleep 0.25
           volumeMounts:
             - mountPath: /config/wg_confs/wg0.conf
               name: wg-config
@@ -75,24 +77,25 @@ spec:
       {{- end }}
 
       containers:
+        {{- if .EnableKubeReverseProxy }}
         - name: kube-reverse-proxy
           image: {{.KubeReverseProxyImage}}
+          imagePullPolicy: "Always"
           args:
             - --addr
             - ":8080"
             - --proxy-addr
-            - {{ printf "kubectl-proxy.kloudlite.svc.{{.CLUSTER_NAME}}.local:8080" }}
+            - {{ printf "pod-logs-proxy.kl-gateway.svc.{{.CLUSTER_NAME}}.local:8383" }}
             - "--authz"
             - {{.AuthzToken}}
-          imagePullPolicy: "IfNotPresent"
           resources:
             limits:
               cpu: 100m
               memory: 100Mi
             requests:
               cpu: 100m
-
               memory: 100Mi
+        {{- end }}
 
         {{- if $isDebug }}
         - image: ghcr.io/kloudlite/hub/wireguard:latest
@@ -140,6 +143,9 @@ spec:
             - --service-hosts
             -  {{.GatewayServiceHosts}}
 
+            - --account
+            - {{.KloudliteAccount}}
+
             - --debug
           imagePullPolicy: Always
           resources:
@@ -150,13 +156,13 @@ spec:
               cpu: 100m
               memory: 100Mi
 
-          {{- /* securityContext: */}}
-          {{- /*   capabilities: */}}
-          {{- /*     add: */}}
-          {{- /*       - NET_BIND_SERVICE */}}
-          {{- /*       - SETGID */}}
-          {{- /*     drop: */}}
-          {{- /*       - all */}}
+          securityContext:
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
+                - SETGID
+              drop:
+                - all
 
       dnsPolicy: ClusterFirst
       volumes:

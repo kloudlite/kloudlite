@@ -14,11 +14,22 @@ type AccountMembershipIn struct {
 	UserID      string     `json:"userId"`
 }
 
+type AvailableKloudliteRegionIn struct {
+	DisplayName string `json:"displayName"`
+	ID          string `json:"id"`
+}
+
+type Mutation struct {
+}
+
 type PageInfo struct {
 	EndCursor       *string `json:"endCursor,omitempty"`
 	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
 	HasPreviousPage *bool   `json:"hasPreviousPage,omitempty"`
 	StartCursor     *string `json:"startCursor,omitempty"`
+}
+
+type Query struct {
 }
 
 type User struct {

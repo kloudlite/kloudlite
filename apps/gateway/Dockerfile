@@ -1,4 +1,4 @@
-FROM node:current-alpine
+FROM --platform=$TARGETPLATFORM node:current-alpine
 RUN npm i -g pnpm
 WORKDIR /home/node
 RUN --mount=type=bind,source=package.json,target=package.json \
