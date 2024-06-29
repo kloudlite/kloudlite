@@ -303,3 +303,21 @@ func (d *domain) DeactivateAccount(ctx UserContext, name string) (bool, error) {
 
 	return true, nil
 }
+
+type AvailableKloudliteRegion struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"displayName"`
+}
+
+// AvailableKloudliteRegions implements Domain.
+func (d *domain) AvailableKloudliteRegions(ctx UserContext) ([]*AvailableKloudliteRegion, error) {
+	regions := make([]*AvailableKloudliteRegion, 0, len(d.Env.AvailableKloudliteRegions))
+	for i := range d.Env.AvailableKloudliteRegions {
+		regions = append(regions, &AvailableKloudliteRegion{
+			ID:          d.Env.AvailableKloudliteRegions[i].ID,
+			DisplayName: d.Env.AvailableKloudliteRegions[i].DisplayName,
+		})
+	}
+
+	return regions, nil
+}

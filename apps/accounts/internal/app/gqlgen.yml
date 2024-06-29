@@ -82,6 +82,9 @@ models:
       user:
         resolver: true
 
+  AvailableKloudliteRegion:
+    model: github.com/kloudlite/api/apps/accounts/internal/domain.AvailableKloudliteRegion
+
   Invitation: &invitation-model
     model: github.com/kloudlite/api/apps/accounts/internal/entities.Invitation
   InvitationIn: *invitation-model

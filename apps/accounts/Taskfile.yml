@@ -1,10 +1,12 @@
 version: "3"
 
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+  docker: ../../.tools/taskfiles/docker.Taskfile.yml
+
 vars:
   app: accounts
-
-includes:
-  go: ../../.tools/taskfiles/go-build.yml
+  binary: ./bin/{{.app}}
 
 tasks:
   gql:
@@ -24,6 +26,7 @@ tasks:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
           --struct github.com/kloudlite/api/apps/accounts/internal/entities.Account
+          --struct github.com/kloudlite/api/apps/accounts/internal/domain.AvailableKloudliteRegion
           --struct github.com/kloudlite/api/apps/accounts/internal/entities.Invitation
           --struct github.com/kloudlite/api/apps/accounts/internal/entities.AccountMembership
         > ./internal/app/_struct-to-graphql/main.go
@@ -37,13 +40,23 @@ tasks:
     cmds:
       - task: go:build 
         vars: 
-          Out: ./bin/{{.app}}
+          out: "{{.binary}}-{{.GOARCH}}"
+          GOARCH: "{{.GOARCH}}"
 
   container:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    requires:
+      vars:
+        - image
     cmds:
       - task: build
-      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
+        vars:
+          GOARCH: amd64
 
+      - task: build
+        vars:
+          GOARCH: arm64
+
+      - task: docker:build-and-push
+        vars:
+          args: "--platform linux/amd64,linux/arm64 --build-arg BINARY={{.binary}} ."
+          image: "{{.image}}"

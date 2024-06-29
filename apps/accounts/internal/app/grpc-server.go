@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/accounts/internal/domain"
@@ -33,9 +34,10 @@ func (s *accountsGrpcServer) GetAccount(ctx context.Context, in *accounts.GetAcc
 	}
 
 	return &accounts.GetAccountOut{
-		IsActive:        isActive,
-		TargetNamespace: acc.TargetNamespace,
-		AccountId:       string(acc.Id),
+		IsActive:               isActive,
+		TargetNamespace:        acc.TargetNamespace,
+		AccountId:              string(acc.Id),
+		KloudliteGatewayRegion: acc.KloudliteGatewayRegion,
 	}, nil
 }
 

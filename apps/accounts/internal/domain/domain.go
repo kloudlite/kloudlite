@@ -2,6 +2,7 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
+	"github.com/kloudlite/api/apps/accounts/internal/env"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/grpc-interfaces/container_registry"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
@@ -36,6 +37,8 @@ type AccountService interface {
 	DeactivateAccount(ctx UserContext, name string) (bool, error)
 
 	EnsureKloudliteRegistryCredentials(ctx UserContext, accountName string) error
+
+	AvailableKloudliteRegions(ctx UserContext) ([]*AvailableKloudliteRegion, error)
 }
 
 type InvitationService interface {
@@ -82,6 +85,8 @@ type domain struct {
 
 	k8sClient k8s.Client
 
+	Env *env.Env
+
 	logger logging.Logger
 }
 
@@ -98,6 +103,8 @@ func NewDomain(
 	invitationRepo repos.DbRepo[*entities.Invitation],
 	// accountInviteTokenRepo cache.Repo[*entities.Invitation],
 
+	ev *env.Env,
+
 	logger logging.Logger,
 ) Domain {
 	return &domain{
@@ -111,6 +118,8 @@ func NewDomain(
 
 		accountRepo:    accountRepo,
 		invitationRepo: invitationRepo,
+
+		Env: ev,
 
 		logger: logger,
 	}
