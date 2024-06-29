@@ -551,12 +551,12 @@ type GlobalVPNEdge struct {
 	Node   *entities.GlobalVPN `json:"node"`
 }
 
-type GlobalVPNKloudliteDevice struct {
+type GlobalVPNKloudliteClusterLocalDevice struct {
 	IPAddr string `json:"ipAddr"`
 	Name   string `json:"name"`
 }
 
-type GlobalVPNKloudliteDeviceIn struct {
+type GlobalVPNKloudliteGatewayDevice struct {
 	IPAddr string `json:"ipAddr"`
 	Name   string `json:"name"`
 }
@@ -1578,51 +1578,6 @@ func (e *GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode) Un
 }
 
 func (e GithubComKloudliteAPIAppsInfraInternalEntitiesClusterVisibilityMode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type GithubComKloudliteAPIPkgReposMatchType string
-
-const (
-	GithubComKloudliteAPIPkgReposMatchTypeArray      GithubComKloudliteAPIPkgReposMatchType = "array"
-	GithubComKloudliteAPIPkgReposMatchTypeExact      GithubComKloudliteAPIPkgReposMatchType = "exact"
-	GithubComKloudliteAPIPkgReposMatchTypeNotInArray GithubComKloudliteAPIPkgReposMatchType = "not_in_array"
-	GithubComKloudliteAPIPkgReposMatchTypeRegex      GithubComKloudliteAPIPkgReposMatchType = "regex"
-)
-
-var AllGithubComKloudliteAPIPkgReposMatchType = []GithubComKloudliteAPIPkgReposMatchType{
-	GithubComKloudliteAPIPkgReposMatchTypeArray,
-	GithubComKloudliteAPIPkgReposMatchTypeExact,
-	GithubComKloudliteAPIPkgReposMatchTypeNotInArray,
-	GithubComKloudliteAPIPkgReposMatchTypeRegex,
-}
-
-func (e GithubComKloudliteAPIPkgReposMatchType) IsValid() bool {
-	switch e {
-	case GithubComKloudliteAPIPkgReposMatchTypeArray, GithubComKloudliteAPIPkgReposMatchTypeExact, GithubComKloudliteAPIPkgReposMatchTypeNotInArray, GithubComKloudliteAPIPkgReposMatchTypeRegex:
-		return true
-	}
-	return false
-}
-
-func (e GithubComKloudliteAPIPkgReposMatchType) String() string {
-	return string(e)
-}
-
-func (e *GithubComKloudliteAPIPkgReposMatchType) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = GithubComKloudliteAPIPkgReposMatchType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___pkg___repos__MatchType", str)
-	}
-	return nil
-}
-
-func (e GithubComKloudliteAPIPkgReposMatchType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

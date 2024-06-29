@@ -16,6 +16,8 @@ type Account struct {
 	Logo         *string `json:"logo"`
 	IsActive     *bool   `json:"isActive,omitempty"`
 	ContactEmail string  `json:"contactEmail,omitempty"`
+
+	KloudliteGatewayRegion string `json:"kloudliteGatewayRegion"`
 }
 
 var AccountIndices = []repos.IndexField{

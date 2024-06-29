@@ -1,8 +1,12 @@
 package env
 
 import (
+	"io"
+	"os"
+
 	"github.com/codingconcepts/env"
 	"github.com/kloudlite/api/pkg/errors"
+	"sigs.k8s.io/yaml"
 )
 
 type Env struct {
@@ -59,12 +63,43 @@ type Env struct {
 	GlobalVPNKubeReverseProxyAuthzToken string `env:"GLOBAL_VPN_KUBE_REVERSE_PROXY_AUTHZ_TOKEN" required:"true"`
 
 	KloudliteGlobalVPNDeviceHost string `env:"KLOUDLITE_GLOBAL_VPN_DEVICE_HOST" required:"true"`
+
+	AvailableKloudliteRegionsConfig string `env:"AVAILABLE_KLOUDLITE_REGIONS_CONFIG" required:"false"`
+	AvailableKloudliteRegions       map[string]AvailableKloudliteRegion
+}
+
+type AvailableKloudliteRegion struct {
+	ID            string `json:"id"`
+	DisplayName   string `json:"displayName"`
+	Region        string `json:"region"`
+	CloudProvider string `json:"cloudProvider"`
+	Kubeconfig    string `json:"kubeconfig"`
+	PublicDNSHost string `json:"publicDNSHost"`
 }
 
 func LoadEnv() (*Env, error) {
 	var ev Env
 	if err := env.Set(&ev); err != nil {
 		return nil, errors.NewE(err)
+	}
+	if ev.AvailableKloudliteRegionsConfig != "" {
+		f, err := os.Open(ev.AvailableKloudliteRegionsConfig)
+		if err != nil {
+			return nil, err
+		}
+		b, err := io.ReadAll(f)
+		if err != nil {
+			return nil, err
+		}
+
+		var regions []AvailableKloudliteRegion
+		if err := yaml.Unmarshal(b, &regions); err != nil {
+			return nil, err
+		}
+		ev.AvailableKloudliteRegions = make(map[string]AvailableKloudliteRegion, len(regions))
+		for i := range regions {
+			ev.AvailableKloudliteRegions[regions[i].ID] = regions[i]
+		}
 	}
 	return &ev, nil
 }

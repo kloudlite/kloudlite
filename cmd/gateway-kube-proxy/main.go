@@ -25,7 +25,7 @@ func main() {
 	flag.Parse()
 
 	if authz == "" {
-		panic("authz token is required")
+		panic("authz token is required, use --authz <authz-token>")
 	}
 
 	logger := slog.Default()

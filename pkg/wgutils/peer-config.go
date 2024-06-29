@@ -67,7 +67,9 @@ PostDown = {{.}}
 {{- end }} 
 PublicKey = {{.PublicKey}}
 AllowedIPs = {{.AllowedIPs | join ", " }}
+{{- if .Endpoint }}
 Endpoint = {{.Endpoint}}
+{{- end }}
 PersistentKeepalive = 25
 {{- end }}
 {{- end }}

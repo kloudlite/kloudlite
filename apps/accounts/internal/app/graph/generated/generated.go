@@ -65,19 +65,20 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Account struct {
-		ContactEmail      func(childComplexity int) int
-		CreatedBy         func(childComplexity int) int
-		CreationTime      func(childComplexity int) int
-		DisplayName       func(childComplexity int) int
-		Id                func(childComplexity int) int
-		IsActive          func(childComplexity int) int
-		LastUpdatedBy     func(childComplexity int) int
-		Logo              func(childComplexity int) int
-		MarkedForDeletion func(childComplexity int) int
-		ObjectMeta        func(childComplexity int) int
-		RecordVersion     func(childComplexity int) int
-		TargetNamespace   func(childComplexity int) int
-		UpdateTime        func(childComplexity int) int
+		ContactEmail           func(childComplexity int) int
+		CreatedBy              func(childComplexity int) int
+		CreationTime           func(childComplexity int) int
+		DisplayName            func(childComplexity int) int
+		Id                     func(childComplexity int) int
+		IsActive               func(childComplexity int) int
+		KloudliteGatewayRegion func(childComplexity int) int
+		LastUpdatedBy          func(childComplexity int) int
+		Logo                   func(childComplexity int) int
+		MarkedForDeletion      func(childComplexity int) int
+		ObjectMeta             func(childComplexity int) int
+		RecordVersion          func(childComplexity int) int
+		TargetNamespace        func(childComplexity int) int
+		UpdateTime             func(childComplexity int) int
 	}
 
 	AccountMembership struct {
@@ -90,6 +91,11 @@ type ComplexityRoot struct {
 	AccountsCheckNameAvailabilityOutput struct {
 		Result         func(childComplexity int) int
 		SuggestedNames func(childComplexity int) int
+	}
+
+	AvailableKloudliteRegion struct {
+		DisplayName func(childComplexity int) int
+		ID          func(childComplexity int) int
 	}
 
 	Entity struct {
@@ -151,6 +157,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		AccountsAvailableKloudliteRegions          func(childComplexity int) int
 		AccountsCheckNameAvailability              func(childComplexity int, name string) int
 		AccountsEnsureKloudliteRegistryPullSecrets func(childComplexity int, accountName string) int
 		AccountsGetAccount                         func(childComplexity int, accountName string) int
@@ -230,6 +237,7 @@ type QueryResolver interface {
 	AccountsListMembershipsForAccount(ctx context.Context, accountName string, role *types.Role) ([]*entities.AccountMembership, error)
 	AccountsGetAccountMembership(ctx context.Context, accountName string) (*entities.AccountMembership, error)
 	AccountsEnsureKloudliteRegistryPullSecrets(ctx context.Context, accountName string) (bool, error)
+	AccountsAvailableKloudliteRegions(ctx context.Context) ([]*domain.AvailableKloudliteRegion, error)
 }
 type UserResolver interface {
 	Accounts(ctx context.Context, obj *model.User) ([]*entities.AccountMembership, error)
@@ -304,6 +312,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Account.IsActive(childComplexity), true
+
+	case "Account.kloudliteGatewayRegion":
+		if e.complexity.Account.KloudliteGatewayRegion == nil {
+			break
+		}
+
+		return e.complexity.Account.KloudliteGatewayRegion(childComplexity), true
 
 	case "Account.lastUpdatedBy":
 		if e.complexity.Account.LastUpdatedBy == nil {
@@ -395,6 +410,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AccountsCheckNameAvailabilityOutput.SuggestedNames(childComplexity), true
+
+	case "AvailableKloudliteRegion.displayName":
+		if e.complexity.AvailableKloudliteRegion.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.AvailableKloudliteRegion.DisplayName(childComplexity), true
+
+	case "AvailableKloudliteRegion.id":
+		if e.complexity.AvailableKloudliteRegion.ID == nil {
+			break
+		}
+
+		return e.complexity.AvailableKloudliteRegion.ID(childComplexity), true
 
 	case "Entity.findUserByID":
 		if e.complexity.Entity.FindUserByID == nil {
@@ -741,6 +770,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
+	case "Query.accounts_availableKloudliteRegions":
+		if e.complexity.Query.AccountsAvailableKloudliteRegions == nil {
+			break
+		}
+
+		return e.complexity.Query.AccountsAvailableKloudliteRegions(childComplexity), true
+
 	case "Query.accounts_checkNameAvailability":
 		if e.complexity.Query.AccountsCheckNameAvailability == nil {
 			break
@@ -925,6 +961,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAccountIn,
 		ec.unmarshalInputAccountMembershipIn,
+		ec.unmarshalInputAvailableKloudliteRegionIn,
 		ec.unmarshalInputInvitationIn,
 		ec.unmarshalInputMetadataIn,
 	)
@@ -1052,6 +1089,8 @@ type Query {
   accounts_getAccountMembership(accountName: String!): AccountMembership @isLoggedInAndVerified
 
   accounts_ensureKloudliteRegistryPullSecrets(accountName: String!): Boolean! @isLoggedInAndVerified
+
+  accounts_availableKloudliteRegions: [AvailableKloudliteRegion!] @isLoggedInAndVerified
 }
 
 type Mutation {
@@ -1089,6 +1128,7 @@ extend type User @key(fields: "id") {
   displayName: String!
   id: ID!
   isActive: Boolean
+  kloudliteGatewayRegion: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   logo: String
   markedForDeletion: Boolean
@@ -1102,6 +1142,7 @@ input AccountIn {
   contactEmail: String
   displayName: String!
   isActive: Boolean
+  kloudliteGatewayRegion: String!
   logo: String
   metadata: MetadataIn
 }
@@ -1117,6 +1158,17 @@ input AccountMembershipIn {
   accountName: String!
   role: Github__com___kloudlite___api___apps___iam___types__Role!
   userId: String!
+}
+
+`, BuiltIn: false},
+	{Name: "../struct-to-graphql/availablekloudliteregion.graphqls", Input: `type AvailableKloudliteRegion @shareable {
+  displayName: String!
+  id: String!
+}
+
+input AvailableKloudliteRegionIn {
+  displayName: String!
+  id: String!
 }
 
 `, BuiltIn: false},
@@ -1214,7 +1266,13 @@ scalar Date
 	  | UNION
 	directive @interfaceObject on OBJECT
 	directive @link(import: [String!], url: String!) repeatable on SCHEMA
-	directive @override(from: String!) on FIELD_DEFINITION
+	directive @override(from: String!, label: String) on FIELD_DEFINITION
+	directive @policy(policies: [[federation__Policy!]!]!) on 
+	  | FIELD_DEFINITION
+	  | OBJECT
+	  | INTERFACE
+	  | SCALAR
+	  | ENUM
 	directive @provides(fields: FieldSet!) on FIELD_DEFINITION
 	directive @requires(fields: FieldSet!) on FIELD_DEFINITION
 	directive @requiresScopes(scopes: [[federation__Scope!]!]!) on 
@@ -1237,6 +1295,7 @@ scalar Date
 	  | UNION
 	scalar _Any
 	scalar FieldSet
+	scalar federation__Policy
 	scalar federation__Scope
 `, BuiltIn: true},
 	{Name: "../../federation/entity.graphql", Input: `
@@ -2034,6 +2093,50 @@ func (ec *executionContext) fieldContext_Account_isActive(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Account_kloudliteGatewayRegion(ctx context.Context, field graphql.CollectedField, obj *entities.Account) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Account_kloudliteGatewayRegion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KloudliteGatewayRegion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Account_kloudliteGatewayRegion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Account",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Account_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.Account) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Account_lastUpdatedBy(ctx, field)
 	if err != nil {
@@ -2613,6 +2716,94 @@ func (ec *executionContext) _AccountsCheckNameAvailabilityOutput_suggestedNames(
 func (ec *executionContext) fieldContext_AccountsCheckNameAvailabilityOutput_suggestedNames(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AccountsCheckNameAvailabilityOutput",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AvailableKloudliteRegion_displayName(ctx context.Context, field graphql.CollectedField, obj *domain.AvailableKloudliteRegion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AvailableKloudliteRegion_displayName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AvailableKloudliteRegion_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AvailableKloudliteRegion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AvailableKloudliteRegion_id(ctx context.Context, field graphql.CollectedField, obj *domain.AvailableKloudliteRegion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AvailableKloudliteRegion_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AvailableKloudliteRegion_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AvailableKloudliteRegion",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3742,6 +3933,8 @@ func (ec *executionContext) fieldContext_Mutation_accounts_createAccount(ctx con
 				return ec.fieldContext_Account_id(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Account_isActive(ctx, field)
+			case "kloudliteGatewayRegion":
+				return ec.fieldContext_Account_kloudliteGatewayRegion(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_Account_lastUpdatedBy(ctx, field)
 			case "logo":
@@ -3845,6 +4038,8 @@ func (ec *executionContext) fieldContext_Mutation_accounts_updateAccount(ctx con
 				return ec.fieldContext_Account_id(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Account_isActive(ctx, field)
+			case "kloudliteGatewayRegion":
+				return ec.fieldContext_Account_kloudliteGatewayRegion(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_Account_lastUpdatedBy(ctx, field)
 			case "logo":
@@ -4884,6 +5079,8 @@ func (ec *executionContext) fieldContext_Query_accounts_listAccounts(ctx context
 				return ec.fieldContext_Account_id(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Account_isActive(ctx, field)
+			case "kloudliteGatewayRegion":
+				return ec.fieldContext_Account_kloudliteGatewayRegion(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_Account_lastUpdatedBy(ctx, field)
 			case "logo":
@@ -4973,6 +5170,8 @@ func (ec *executionContext) fieldContext_Query_accounts_getAccount(ctx context.C
 				return ec.fieldContext_Account_id(ctx, field)
 			case "isActive":
 				return ec.fieldContext_Account_isActive(ctx, field)
+			case "kloudliteGatewayRegion":
+				return ec.fieldContext_Account_kloudliteGatewayRegion(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_Account_lastUpdatedBy(ctx, field)
 			case "logo":
@@ -5767,6 +5966,73 @@ func (ec *executionContext) fieldContext_Query_accounts_ensureKloudliteRegistryP
 	if fc.Args, err = ec.field_Query_accounts_ensureKloudliteRegistryPullSecrets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_accounts_availableKloudliteRegions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_accounts_availableKloudliteRegions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().AccountsAvailableKloudliteRegions(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*domain.AvailableKloudliteRegion); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/kloudlite/api/apps/accounts/internal/domain.AvailableKloudliteRegion`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*domain.AvailableKloudliteRegion)
+	fc.Result = res
+	return ec.marshalOAvailableKloudliteRegion2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋaccountsᚋinternalᚋdomainᚐAvailableKloudliteRegionᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_accounts_availableKloudliteRegions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "displayName":
+				return ec.fieldContext_AvailableKloudliteRegion_displayName(ctx, field)
+			case "id":
+				return ec.fieldContext_AvailableKloudliteRegion_id(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AvailableKloudliteRegion", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -7999,7 +8265,7 @@ func (ec *executionContext) unmarshalInputAccountIn(ctx context.Context, obj int
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"contactEmail", "displayName", "isActive", "logo", "metadata"}
+	fieldsInOrder := [...]string{"contactEmail", "displayName", "isActive", "kloudliteGatewayRegion", "logo", "metadata"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8007,8 +8273,6 @@ func (ec *executionContext) unmarshalInputAccountIn(ctx context.Context, obj int
 		}
 		switch k {
 		case "contactEmail":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contactEmail"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -8016,8 +8280,6 @@ func (ec *executionContext) unmarshalInputAccountIn(ctx context.Context, obj int
 			}
 			it.ContactEmail = data
 		case "displayName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -8025,17 +8287,20 @@ func (ec *executionContext) unmarshalInputAccountIn(ctx context.Context, obj int
 			}
 			it.DisplayName = data
 		case "isActive":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isActive"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.IsActive = data
+		case "kloudliteGatewayRegion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kloudliteGatewayRegion"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.KloudliteGatewayRegion = data
 		case "logo":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logo"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
@@ -8043,8 +8308,6 @@ func (ec *executionContext) unmarshalInputAccountIn(ctx context.Context, obj int
 			}
 			it.Logo = data
 		case "metadata":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
 			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
@@ -8074,8 +8337,6 @@ func (ec *executionContext) unmarshalInputAccountMembershipIn(ctx context.Contex
 		}
 		switch k {
 		case "accountName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -8083,8 +8344,6 @@ func (ec *executionContext) unmarshalInputAccountMembershipIn(ctx context.Contex
 			}
 			it.AccountName = data
 		case "role":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___api___apps___iam___types__Role2githubᚗcomᚋkloudliteᚋapiᚋappsᚋiamᚋtypesᚐRole(ctx, v)
 			if err != nil {
@@ -8092,14 +8351,46 @@ func (ec *executionContext) unmarshalInputAccountMembershipIn(ctx context.Contex
 			}
 			it.Role = data
 		case "userId":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.UserID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAvailableKloudliteRegionIn(ctx context.Context, obj interface{}) (model.AvailableKloudliteRegionIn, error) {
+	var it model.AvailableKloudliteRegionIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"displayName", "id"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "displayName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DisplayName = data
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
 		}
 	}
 
@@ -8121,8 +8412,6 @@ func (ec *executionContext) unmarshalInputInvitationIn(ctx context.Context, obj 
 		}
 		switch k {
 		case "userEmail":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userEmail"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -8130,8 +8419,6 @@ func (ec *executionContext) unmarshalInputInvitationIn(ctx context.Context, obj 
 			}
 			it.UserEmail = data
 		case "userName":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userName"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -8139,8 +8426,6 @@ func (ec *executionContext) unmarshalInputInvitationIn(ctx context.Context, obj 
 			}
 			it.UserName = data
 		case "userRole":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userRole"))
 			data, err := ec.unmarshalNGithub__com___kloudlite___api___apps___iam___types__Role2githubᚗcomᚋkloudliteᚋapiᚋappsᚋiamᚋtypesᚐRole(ctx, v)
 			if err != nil {
@@ -8168,8 +8453,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 		}
 		switch k {
 		case "annotations":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("annotations"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -8179,8 +8462,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 				return it, err
 			}
 		case "labels":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
 			data, err := ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
@@ -8190,8 +8471,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 				return it, err
 			}
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -8199,8 +8478,6 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 			}
 			it.Name = data
 		case "namespace":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
 			data, err := ec.unmarshalOString2string(ctx, v)
 			if err != nil {
@@ -8303,6 +8580,11 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "isActive":
 			out.Values[i] = ec._Account_isActive(ctx, field, obj)
+		case "kloudliteGatewayRegion":
+			out.Values[i] = ec._Account_kloudliteGatewayRegion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "lastUpdatedBy":
 			out.Values[i] = ec._Account_lastUpdatedBy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -8514,6 +8796,50 @@ func (ec *executionContext) _AccountsCheckNameAvailabilityOutput(ctx context.Con
 			}
 		case "suggestedNames":
 			out.Values[i] = ec._AccountsCheckNameAvailabilityOutput_suggestedNames(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var availableKloudliteRegionImplementors = []string{"AvailableKloudliteRegion"}
+
+func (ec *executionContext) _AvailableKloudliteRegion(ctx context.Context, sel ast.SelectionSet, obj *domain.AvailableKloudliteRegion) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, availableKloudliteRegionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AvailableKloudliteRegion")
+		case "displayName":
+			out.Values[i] = ec._AvailableKloudliteRegion_displayName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "id":
+			out.Values[i] = ec._AvailableKloudliteRegion_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9410,6 +9736,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "accounts_availableKloudliteRegions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_accounts_availableKloudliteRegions(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "_entities":
 			field := field
 
@@ -9995,6 +10340,16 @@ func (ec *executionContext) marshalNAccountsCheckNameAvailabilityOutput2ᚖgithu
 	return ec._AccountsCheckNameAvailabilityOutput(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNAvailableKloudliteRegion2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋaccountsᚋinternalᚋdomainᚐAvailableKloudliteRegion(ctx context.Context, sel ast.SelectionSet, v *domain.AvailableKloudliteRegion) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AvailableKloudliteRegion(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -10515,6 +10870,85 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) unmarshalNfederation__Policy2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNfederation__Policy2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Policy2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Policy2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Policy2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNfederation__Policy2ᚕᚕstringᚄ(ctx context.Context, v interface{}) ([][]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([][]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNfederation__Policy2ᚕstringᚄ(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNfederation__Policy2ᚕᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v [][]string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNfederation__Policy2ᚕstringᚄ(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNfederation__Scope2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -10694,6 +11128,53 @@ func (ec *executionContext) marshalOAccountMembership2ᚖgithubᚗcomᚋkloudlit
 		return graphql.Null
 	}
 	return ec._AccountMembership(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAvailableKloudliteRegion2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋaccountsᚋinternalᚋdomainᚐAvailableKloudliteRegionᚄ(ctx context.Context, sel ast.SelectionSet, v []*domain.AvailableKloudliteRegion) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAvailableKloudliteRegion2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋaccountsᚋinternalᚋdomainᚐAvailableKloudliteRegion(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
