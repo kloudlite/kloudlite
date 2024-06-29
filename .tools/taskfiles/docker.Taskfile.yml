@@ -12,6 +12,8 @@ tasks:
         - "image"
         - "args"
     silent: true
+    vars:
+      push_image: "{{.push_image | default true}}"
     cmds:
       - cmd: |+
           echo $(docker manifest inspect "{{.image}}" || echo "not-found") >/tmp/manifest-inspect-status 2>/dev/null
@@ -20,4 +22,4 @@ tasks:
             echo "image exists, but overridden"
           fi
 
-          docker buildx build -t {{.image}} --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true {{.args}}
+          docker buildx build -t {{.image}} --output=type=image,compression=zstd,force-compression=true,compression-level=12,push={{.push_image}} {{.args}}
