@@ -521,7 +521,7 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 func (c *client) SyncVpn(wg string) error {
 	defer spinner.Client.UpdateMessage("validating vpn configuration")()
 
-	err := c.ensureImage(constants.WireguardImage)
+	err := c.ensureImage(constants.GetWireguardImageName())
 	if err != nil {
 		return fn.Error("failed to pull image")
 	}
@@ -567,11 +567,14 @@ func (c *client) SyncVpn(wg string) error {
 			"wg":          "true",
 			"wgsum":       fmt.Sprintf("%x", md5sum[:]),
 		},
-		Image: constants.WireguardImage,
+		Image: constants.GetWireguardImageName(),
 		Cmd:   []string{"sh", "-c", script},
 	}, &container.HostConfig{
 		CapAdd:      []string{"NET_ADMIN"},
 		NetworkMode: "host",
+		RestartPolicy: container.RestartPolicy{
+			Name: "always",
+		},
 	}, &network.NetworkingConfig{}, nil, "")
 	if err != nil {
 		return fn.Error("failed to create container")

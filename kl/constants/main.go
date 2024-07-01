@@ -2,6 +2,7 @@ package constants
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/flags"
 
 	"github.com/kloudlite/kl/domain/fileclient"
 )
@@ -11,10 +12,12 @@ const (
 	RuntimeLinux   = "linux"
 	RuntimeDarwin  = "darwin"
 	RuntimeWindows = "windows"
-
-	SocatImage     = "ghcr.io/kloudlite/hub/socat:latest"
-	WireguardImage = "ghcr.io/kloudlite/hub/wireguard:latest"
+	SocatImage = "ghcr.io/kloudlite/hub/socat:latest"
 )
+
+func GetWireguardImageName() string {
+	return fmt.Sprintf("ghcr.io/kloudlite/kl/box/wireguard:%s", flags.Version)
+}
 
 var (
 	BaseURL = func() string {
