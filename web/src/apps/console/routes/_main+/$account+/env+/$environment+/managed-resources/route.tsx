@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { EmptyManagedResourceImage } from '~/console/components/empty-resource-images';
 import { getSearch } from '~/console/server/utils/common';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import Tools from './tools';
 import ManagedResourceResourcesV2 from './managed-resources-resource-v2';
 import HandleManagedResourceV2 from './handle-managed-resource-v2';
@@ -19,6 +20,8 @@ import HandleManagedResourceV2 from './handle-managed-resource-v2';
 export const loader = (ctx: IRemixCtx) => {
   const { environment } = ctx.params;
   const promise = pWrapper(async () => {
+    ensureAccountSet(ctx);
+
     const { data: mData, errors: mErrors } = await GQLServerHandler(
       ctx.request
     ).listManagedResources({
@@ -60,11 +63,11 @@ const KlOperatorServices = () => {
           return (
             <Wrapper
               header={{
-                title: 'Managed resources',
+                title: 'Integrated resources',
                 action: managedResources.length > 0 && (
                   <Button
                     variant="primary"
-                    content="Import managed resource"
+                    content="Import Integrated resource"
                     prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
@@ -75,15 +78,15 @@ const KlOperatorServices = () => {
               empty={{
                 image: <EmptyManagedResourceImage />,
                 is: managedResources.length === 0,
-                title: 'This is where you’ll manage your Managed resources.',
+                title: 'This is where you’ll manage your Integrated resources.',
                 content: (
                   <p>
-                    You can import a new backing resource and manage the listed
-                    backing resource.
+                    You can import a new integrated resource and manage the
+                    listed integrated resource.
                   </p>
                 ),
                 action: {
-                  content: 'Import managed resource',
+                  content: 'Import integrated resource',
                   prefix: <Plus />,
                   onClick: () => {
                     setVisible(true);

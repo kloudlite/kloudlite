@@ -1,5 +1,4 @@
 /* eslint-disable react/destructuring-assignment */
-import { toast } from 'react-toastify';
 import Popup from '~/components/molecule/popup';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
@@ -13,7 +12,7 @@ import {
 } from '~/console/server/r-utils/common';
 import Select from '~/components/atoms/select';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useOutletContext } from '@remix-run/react';
+import { useOutletContext, useParams } from '@remix-run/react';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useMapper } from '~/components/utils';
 import MultiStep, { useMultiStep } from '~/console/components/multi-step';
@@ -23,6 +22,8 @@ import { ListItem } from '~/console/components/console-list-components';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import { useEffect, useState } from 'react';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
+import { toast } from '~/components/molecule/toast';
+import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { IEnvironmentContext } from '../_layout';
 
 type BaseType = ExtractNodeType<IManagedResources>;
@@ -59,10 +60,10 @@ const Root = (props: IDialog) => {
           },
       validationSchema: Yup.object({
         managedServiceName: Yup.string().required(
-          'managed service is required'
+          'integrated service is required'
         ),
         managedResourceName: Yup.string().required(
-          'managed resource name is required'
+          'integrated resource name is required'
         ),
       }),
       onSubmit: async (val) => {
@@ -80,7 +81,9 @@ const Root = (props: IDialog) => {
           reloadPage();
           resetValues();
           toast.success(
-            `managed resource ${isUpdate ? 'updated' : 'imported'} successfully`
+            `integrated resource ${
+              isUpdate ? 'updated' : 'imported'
+            } successfully`
           );
           setVisible(false);
         } catch (err) {
@@ -145,11 +148,11 @@ const Root = (props: IDialog) => {
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
           <Select
-            label="Select Managed Services"
+            label="Integrated Services"
             size="lg"
             value={values.managedServiceName}
             disabled={msvcIsLoading}
-            placeholder="Select a Managed Service"
+            placeholder="Select a Integrated Service"
             options={async () => [
               ...((msvcList &&
                 msvcList.filter((msvc) => {
@@ -166,11 +169,11 @@ const Root = (props: IDialog) => {
           />
 
           <Select
-            label="Select Managed Resource"
+            label="Integrated Resource"
             size="lg"
             value={values.managedResourceName}
             disabled={mresIsLoading}
-            placeholder="Select a Managed Resource"
+            placeholder="Select a Integrated Resource"
             options={async () => [
               ...((mresList &&
                 mresList.filter((mres) => {
@@ -206,7 +209,7 @@ const HandleManagedResourceV2 = (props: IDialog) => {
   return (
     <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
       <Popup.Header>
-        {isUpdate ? 'Edit External Name' : 'Import Managed Resource'}
+        {isUpdate ? 'Edit External Name' : 'Import Integrated Resource'}
       </Popup.Header>
       {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>
@@ -227,6 +230,8 @@ export const ViewSecret = ({
   const api = useConsoleApi();
   const { environment } = useOutletContext<IEnvironmentContext>();
   const [onYesClick, setOnYesClick] = useState(false);
+  const params = useParams();
+  ensureAccountClientSide(params);
   const { data, isLoading, error } = useCustomSwr(
     () =>
       onYesClick
@@ -245,6 +250,55 @@ export const ViewSecret = ({
       }
     }
   );
+
+  const dataSecret = () => {
+    if (isLoading) {
+      return <LoadingPlaceHolder />;
+    }
+    if (error) {
+      return <p>Error: {error}</p>;
+    }
+    if (!data?.data) {
+      return <p>No secret found</p>;
+    }
+
+    return (
+      <ListV2.Root
+        data={{
+          headers: [
+            {
+              render: () => 'Key',
+              name: 'key',
+              className: 'min-w-[170px]',
+            },
+            {
+              render: () => 'Value',
+              name: 'value',
+              className: 'flex-1 min-w-[345px] max-w-[345px] w-[345px]',
+            },
+          ],
+          rows: Object.entries(data.data || {}).map(([key, value]) => {
+            const v = value as string;
+            return {
+              columns: {
+                key: {
+                  render: () => <ListItem data={key} />,
+                },
+                value: {
+                  render: () => (
+                    <CopyContentToClipboard
+                      content={atob(v)}
+                      toastMessage={`${key} copied`}
+                    />
+                  ),
+                },
+              },
+            };
+          }),
+        }}
+      />
+    );
+  };
 
   useEffect(() => {
     if (error) {
@@ -268,51 +322,7 @@ export const ViewSecret = ({
               <p>{`Are you sure you want to view the secrets of '${item.syncedOutputSecretRef?.metadata?.name}'?`}</p>
             </div>
           </MultiStep.Step>
-          <MultiStep.Step step={1}>
-            {isLoading ? (
-              <LoadingPlaceHolder />
-            ) : (
-              data && (
-                <ListV2.Root
-                  data={{
-                    headers: [
-                      {
-                        render: () => 'Key',
-                        name: 'key',
-                        className: 'min-w-[170px]',
-                      },
-                      {
-                        render: () => 'Value',
-                        name: 'value',
-                        className:
-                          'flex-1 min-w-[345px] max-w-[345px] w-[345px]',
-                      },
-                    ],
-                    rows: Object.entries(data.stringData).map(
-                      ([key, value]) => {
-                        const v = value as string;
-                        return {
-                          columns: {
-                            key: {
-                              render: () => <ListItem data={key} />,
-                            },
-                            value: {
-                              render: () => (
-                                <CopyContentToClipboard
-                                  content={v}
-                                  toastMessage={`${key} copied`}
-                                />
-                              ),
-                            },
-                          },
-                        };
-                      }
-                    ),
-                  }}
-                />
-              )
-            )}
-          </MultiStep.Step>
+          <MultiStep.Step step={1}>{dataSecret()}</MultiStep.Step>
         </MultiStep.Root>
       </Popup.Content>
       <Popup.Footer>

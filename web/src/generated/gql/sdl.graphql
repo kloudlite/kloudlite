@@ -311,6 +311,7 @@ type ClusterManagedService {
   creationTime: Date!
   displayName: String!
   id: ID!
+  isArchived: Boolean
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -2135,8 +2136,6 @@ input GlobalVPNIn {
   allocatableCIDRSuffix: Int!
   CIDR: String!
   displayName: String!
-  kloudliteClusterLocalDevice: GlobalVPNKloudliteClusterLocalDeviceIn!
-  kloudliteGatewayDevice: GlobalVPNKloudliteGatewayDeviceIn!
   metadata: MetadataIn!
   nonClusterUseAllowedIPs: [String!]!
   numAllocatedClusterCIDRs: Int!
@@ -2150,17 +2149,7 @@ type GlobalVPNKloudliteClusterLocalDevice {
   name: String!
 }
 
-input GlobalVPNKloudliteClusterLocalDeviceIn {
-  ipAddr: String!
-  name: String!
-}
-
 type GlobalVPNKloudliteGatewayDevice {
-  ipAddr: String!
-  name: String!
-}
-
-input GlobalVPNKloudliteGatewayDeviceIn {
   ipAddr: String!
   name: String!
 }

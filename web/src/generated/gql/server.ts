@@ -1048,24 +1048,12 @@ export type GlobalVpnIn = {
   allocatableCIDRSuffix: Scalars['Int']['input'];
   CIDR: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
-  kloudliteClusterLocalDevice: GlobalVpnKloudliteClusterLocalDeviceIn;
-  kloudliteGatewayDevice: GlobalVpnKloudliteGatewayDeviceIn;
   metadata: MetadataIn;
   nonClusterUseAllowedIPs: Array<Scalars['String']['input']>;
   numAllocatedClusterCIDRs: Scalars['Int']['input'];
   numAllocatedDevices: Scalars['Int']['input'];
   numReservedIPsForNonClusterUse: Scalars['Int']['input'];
   wgInterface: Scalars['String']['input'];
-};
-
-export type GlobalVpnKloudliteClusterLocalDeviceIn = {
-  ipAddr: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-};
-
-export type GlobalVpnKloudliteGatewayDeviceIn = {
-  ipAddr: Scalars['String']['input'];
-  name: Scalars['String']['input'];
 };
 
 export type GlobalVpnDeviceIn = {
@@ -4773,6 +4761,7 @@ export type ConsoleGetClusterMSvQuery = {
     clusterName: string;
     creationTime: any;
     displayName: string;
+    isArchived?: boolean;
     id: string;
     kind?: string;
     markedForDeletion?: boolean;
@@ -4846,6 +4835,7 @@ export type ConsoleListClusterMSvsQuery = {
         accountName: string;
         apiVersion?: string;
         clusterName: string;
+        isArchived?: boolean;
         creationTime: any;
         displayName: string;
         id: string;

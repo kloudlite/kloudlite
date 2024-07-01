@@ -154,7 +154,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           {
             render: () => 'Resource Type',
             name: 'resource',
-            className: 'w-[80px]',
+            className: 'w-[120px]',
           },
           {
             render: () => '',

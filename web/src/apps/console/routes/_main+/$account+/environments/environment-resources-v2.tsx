@@ -63,6 +63,13 @@ const ExtraButton = ({ item, onAction }: IExtraButton) => {
     <ResourceExtraAction
       options={[
         {
+          label: 'Clone',
+          icon: <Copy size={16} />,
+          type: 'item',
+          key: 'clone',
+          onClick: () => onAction({ action: 'clone', item }),
+        },
+        {
           label: 'Delete',
           icon: <Trash size={16} />,
           type: 'item',
@@ -206,21 +213,6 @@ const ListView = ({ items, onAction }: IResource) => {
                     <SyncStatusV2 item={i} />
                   ),
               },
-              // environment: {
-              //   render: () => (
-              //     <Badge
-              //       icon={
-              //         i.spec?.routing?.mode === 'private' ? (
-              //           <ShieldCheck />
-              //         ) : (
-              //           <Globe />
-              //         )
-              //       }
-              //     >
-              //       {i.spec?.routing?.mode}
-              //     </Badge>
-              //   ),
-              // },
               updated: {
                 render: () => (
                   <ListItem
@@ -233,7 +225,6 @@ const ListView = ({ items, onAction }: IResource) => {
                 render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
-            // to: `/${account}/env/${id}`,
             ...(i.isArchived ? {} : { to: `/${account}/env/${id}` }),
           };
         }),

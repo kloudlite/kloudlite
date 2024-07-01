@@ -1,13 +1,9 @@
 import {
-  // BackingServices,
+  BackingServices,
   CirclesFour,
   GearSix,
-  // Plus,
-  // Search,
   File,
   TreeStructure,
-  // Check,
-  // ChevronUpDown,
 } from '~/console/components/icons';
 import {
   Link,
@@ -17,23 +13,15 @@ import {
   useParams,
 } from '@remix-run/react';
 import { useState } from 'react';
-// import OptionList from '~/components/atoms/option-list';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import HandleScope from '~/console/page-components/handle-environment';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseName } from '~/console/server/r-utils/common';
-import {
-  // ensureAccountClientSide,
-  ensureAccountSet,
-} from '~/console/server/utils/auth-utils';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { SubNavDataProvider } from '~/lib/client/hooks/use-create-subnav-action';
-// import useDebounce from '~/lib/client/hooks/use-debounce';
 import { IRemixCtx, LoaderResult } from '~/lib/types/common';
-// import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
 import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
-// import { cn } from '~/components/utils';
-// import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { ILoginUrls, ILogins } from '~/console/server/gql/queries/git-queries';
 import logger from '~/root/lib/client/helpers/log';
 import Breadcrum from '~/console/components/breadcrum';
@@ -103,16 +91,16 @@ const tabs = [
     to: '/cs/configs',
     value: '/cs',
   },
-  // {
-  //   label: (
-  //     <span className="flex flex-row items-center gap-lg">
-  //       <BackingServices size={tabIconSize} />
-  //       Managed resources
-  //     </span>
-  //   ),
-  //   to: '/managed-resources',
-  //   value: '/managed-resources',
-  // },
+  {
+    label: (
+      <span className="flex flex-row items-center gap-lg">
+        <BackingServices size={tabIconSize} />
+        Integrated resources
+      </span>
+    ),
+    to: '/managed-resources',
+    value: '/managed-resources',
+  },
   // {
   //   label: 'Jobs & Crons',
   //   to: '/jc/task',

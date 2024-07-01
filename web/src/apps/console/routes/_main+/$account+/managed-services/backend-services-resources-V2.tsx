@@ -1,4 +1,4 @@
-import { Copy, GearSix } from '~/console/components/icons';
+import { Copy, GearSix, Trash } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -21,6 +21,12 @@ import ListV2 from '~/console/components/listV2';
 import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import { useWatchReload } from '~/root/lib/client/helpers/socket/useWatch';
 import { useState } from 'react';
+import DeleteDialog from '~/console/components/delete-dialog';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { toast } from '~/components/molecule/toast';
+import { handleError } from '~/root/lib/utils/common';
+import { Badge } from '~/components/atoms/badge';
 import { IAccountContext } from '../_layout';
 import { IClusterContext } from '../infra+/$cluster+/_layout';
 import CloneManagedService from './clone-managed-service';
@@ -45,7 +51,13 @@ const parseItem = (item: BaseType, templates: IMSvTemplates) => {
   };
 };
 
-type OnAction = ({ action, item }: { action: 'clone'; item: BaseType }) => void;
+type OnAction = ({
+  action,
+  item,
+}: {
+  action: 'clone' | 'delete';
+  item: BaseType;
+}) => void;
 
 type IExtraButton = {
   onAction: OnAction;
@@ -54,7 +66,27 @@ type IExtraButton = {
 
 const ExtraButton = ({ item, onAction }: IExtraButton) => {
   const { account } = useParams();
-  return (
+  return item.isArchived ? (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Clone',
+          icon: <Copy size={16} />,
+          type: 'item',
+          key: 'clone',
+          onClick: () => onAction({ action: 'clone', item }),
+        },
+        {
+          label: 'Delete',
+          icon: <Trash size={16} />,
+          type: 'item',
+          onClick: () => onAction({ action: 'delete', item }),
+          key: 'delete',
+          className: '!text-text-critical',
+        },
+      ]}
+    />
+  ) : (
     <ResourceExtraAction
       options={[
         {
@@ -194,10 +226,17 @@ const ListView = ({ items, templates, onAction }: IResource) => {
                 ),
               },
               cluster: {
-                render: () => <ListItem data={i.clusterName} />,
+                render: () => (
+                  <ListItem data={i.isArchived ? '' : i.clusterName} />
+                ),
               },
               status: {
-                render: () => <SyncStatusV2 item={i} />,
+                render: () =>
+                  i.isArchived ? (
+                    <Badge type="neutral">Archived</Badge>
+                  ) : (
+                    <SyncStatusV2 item={i} />
+                  ),
               },
               updated: {
                 render: () => (
@@ -211,7 +250,10 @@ const ListView = ({ items, templates, onAction }: IResource) => {
                 render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
-            to: `/${parseName(account)}/msvc/${id}/managed-resources`,
+            // to: `/${parseName(account)}/msvc/${id}/managed-resources`,
+            ...(i.isArchived
+              ? {}
+              : { to: `/${parseName(account)}/msvc/${id}/managed-resources` }),
           };
         }),
       }}
@@ -235,7 +277,12 @@ const BackendServicesResourcesV2 = ({
     })
   );
 
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
   const [visible, setVisible] = useState<BaseType | null>(null);
+  const api = useConsoleApi();
+  const reloadPage = useReload();
 
   const props: IResource = {
     items,
@@ -244,6 +291,9 @@ const BackendServicesResourcesV2 = ({
       switch (action) {
         case 'clone':
           setVisible(item);
+          break;
+        case 'delete':
+          setShowDeleteDialog(item);
           break;
         default:
           break;
@@ -256,6 +306,28 @@ const BackendServicesResourcesV2 = ({
       <ListGridView
         listView={<ListView {...props} />}
         gridView={<GridView {...props} />}
+      />
+      <DeleteDialog
+        resourceName={parseName(showDeleteDialog)}
+        resourceType={RESOURCE_NAME}
+        show={showDeleteDialog}
+        setShow={setShowDeleteDialog}
+        onSubmit={async () => {
+          try {
+            const { errors } = await api.deleteClusterMSv({
+              name: parseName(showDeleteDialog),
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            reloadPage();
+            toast.success(`Integrated service deleted successfully`);
+            setShowDeleteDialog(null);
+          } catch (err) {
+            handleError(err);
+          }
+        }}
       />
       <CloneManagedService
         {...{

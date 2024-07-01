@@ -163,7 +163,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
             className: 'flex-1',
           },
           {
-            render: () => 'Managed Service',
+            render: () => 'Integrated Service',
             name: 'service',
             className: 'w-[200px]',
           },
