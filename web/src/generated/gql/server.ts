@@ -5179,7 +5179,6 @@ export type ConsoleGetManagedResourceQuery = {
       resourceTemplate: {
         apiVersion: string;
         kind: string;
-        spec: any;
         msvcRef: {
           apiVersion?: string;
           clusterName?: string;
@@ -5289,7 +5288,6 @@ export type ConsoleListManagedResourcesQuery = {
           resourceTemplate: {
             apiVersion: string;
             kind: string;
-            spec: any;
             msvcRef: {
               apiVersion?: string;
               clusterName?: string;

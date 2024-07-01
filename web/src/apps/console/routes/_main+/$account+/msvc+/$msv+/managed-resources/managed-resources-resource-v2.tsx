@@ -25,7 +25,6 @@ import { IManagedResources } from '~/console/server/gql/queries/managed-resource
 import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
-import { SyncStatusV2 } from '~/console/components/sync-status';
 import { getManagedTemplate } from '~/console/utils/commons';
 import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
 
@@ -146,11 +145,6 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
             name: 'name',
             className: 'flex flex-1 w-[80px]',
           },
-          // {
-          //   render: () => '',
-          //   name: 'secret',
-          //   className: 'flex flex-1 w-[150px]',
-          // },
           {
             render: () => 'Resource Type',
             name: 'resource',
@@ -161,11 +155,6 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
             name: 'flex-post',
             className: 'flex-1',
           },
-          // {
-          //   render: () => 'Status',
-          //   name: 'status',
-          //   className: 'flex-1 min-w-[30px]',
-          // },
           {
             render: () => 'Updated',
             name: 'updated',
@@ -201,9 +190,9 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
                   <ListItem data={`${i.spec?.resourceTemplate?.kind}`} />
                 ),
               },
-              status: {
-                render: () => <SyncStatusV2 item={i} />,
-              },
+              // status: {
+              //   render: () => <SyncStatusV2 item={i} />,
+              // },
               updated: {
                 render: () => (
                   <ListItem

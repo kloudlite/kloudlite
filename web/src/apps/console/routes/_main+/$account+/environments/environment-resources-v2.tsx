@@ -28,6 +28,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { Badge } from '~/components/atoms/badge';
+import Tooltip from '~/components/atoms/tooltip';
 import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'environment';
@@ -42,6 +43,55 @@ const parseItem = (item: BaseType) => {
       time: parseUpdateOrCreatedOn(item),
     },
   };
+};
+
+const GetClusterStatusForEnvironment = ({
+  lastOnlineAt,
+}: {
+  lastOnlineAt: string;
+}) => {
+  if (lastOnlineAt === null) {
+    return <span>Offline</span>;
+  }
+
+  const lastTime = new Date(lastOnlineAt);
+  const currentTime = new Date();
+
+  const timeDifference =
+    (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
+
+  switch (true) {
+    case timeDifference <= 2:
+      return (
+        <Tooltip.Root
+          className="!w-fit !max-w-[500px]"
+          side="top"
+          content={
+            <div className="flex-1 bodySm text-text-strong pulsable whitespace-normal">
+              Last seen ({Math.floor(timeDifference * 60)}s ago)
+            </div>
+          }
+        >
+          <span className="text-text-success">Online</span>
+        </Tooltip.Root>
+      );
+    case timeDifference > 2:
+      return (
+        <Tooltip.Root
+          className="!w-fit !max-w-[500px]"
+          side="top"
+          content={
+            <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
+              Last seen ({timeDifference * 60}s ago)
+            </div>
+          }
+        >
+          <span className="text-text-critical">Offline</span>
+        </Tooltip.Root>
+      );
+    default:
+      return <span className="text-text-critical">{lastOnlineAt}</span>;
+  }
 };
 
 type OnAction = ({

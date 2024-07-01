@@ -83,7 +83,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              spec
             }
           }
           status {
@@ -227,7 +226,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                     name
                     namespace
                   }
-                  spec
                 }
               }
               status {

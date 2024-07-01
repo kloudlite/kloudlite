@@ -3563,7 +3563,6 @@ query consoleGetManagedResource($name: String!, $msvcName: String, $envName: Str
           name
           namespace
         }
-        spec
       }
     }
     status {
@@ -3673,7 +3672,6 @@ query consoleListManagedResources($search: SearchManagedResources, $pq: CursorPa
               name
               namespace
             }
-            spec
           }
         }
         status {
