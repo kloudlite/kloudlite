@@ -34,6 +34,7 @@ func (c *client) Start() error {
 			if err != nil {
 				return fn.NewE(err)
 			}
+			return c.Start()
 		}
 	} else {
 		klconfHash, err := hashctrl.GenerateKLConfigHash(c.klfile)

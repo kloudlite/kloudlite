@@ -26,13 +26,17 @@ func (fc *fclient) Logout() error {
 		}
 	}
 	hashConfigPath := path.Join(configPath, "box-hash")
-	if err = os.RemoveAll(hashConfigPath); err != nil {
+	if err = os.RemoveAll(hashConfigPath); err != nil && !os.IsNotExist(err) {
 		return fn.NewE(err)
+	} else if err == nil && os.IsNotExist(err) {
+		return os.Remove(path.Join(configPath, sessionFile.Name()))
 	}
 	vpnConfigPath := path.Join(configPath, "vpn")
 	files, err := os.ReadDir(vpnConfigPath)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return fn.NewE(err)
+	} else if err == nil && os.IsNotExist(err) {
+		return os.Remove(path.Join(configPath, sessionFile.Name()))
 	}
 	for _, file := range files {
 		_, err := os.Stat(path.Join(vpnConfigPath, file.Name()))
