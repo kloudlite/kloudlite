@@ -27,6 +27,15 @@ export const getManagedTemplate = ({
     .find((t) => t.kind === kind && t.apiVersion === apiVersion);
 };
 
+export const getManagedTemplateLogo = (
+  templates: IMSvTemplates,
+  msvcApiVersion: string
+) => {
+  return templates
+    ?.flatMap((t) => t.items.flat())
+    .find((t) => t.apiVersion === msvcApiVersion)?.logoUrl;
+};
+
 export const DIALOG_TYPE = Object.freeze({
   ADD: 'add',
   EDIT: 'edit',

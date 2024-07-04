@@ -298,7 +298,7 @@ const FieldView = ({
       <NameIdView
         placeholder="Enter integrated service name"
         label="Name"
-        resType="environment"
+        resType="managed_resource"
         name={values.name}
         displayName={values.displayName}
         errors={errors.name}

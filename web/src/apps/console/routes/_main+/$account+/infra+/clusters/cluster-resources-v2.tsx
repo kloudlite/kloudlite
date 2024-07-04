@@ -270,7 +270,7 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
           className="!w-fit !max-w-[500px]"
           side="top"
           content={
-            <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
+            <div className="flex-1 bodySm text-text-strong pulsable whitespace-normal">
               Last seen ({timeDifference * 60}s ago)
             </div>
           }

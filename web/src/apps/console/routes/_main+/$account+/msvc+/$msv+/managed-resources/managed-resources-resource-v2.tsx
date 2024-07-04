@@ -28,7 +28,7 @@ import ListV2 from '~/console/components/listV2';
 import { getManagedTemplate } from '~/console/utils/commons';
 import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
 
-const RESOURCE_NAME = 'managed resource';
+const RESOURCE_NAME = 'integrated resource';
 type BaseType = ExtractNodeType<IManagedResources>;
 
 const parseItem = (item: BaseType, templates: IMSvTemplates) => {

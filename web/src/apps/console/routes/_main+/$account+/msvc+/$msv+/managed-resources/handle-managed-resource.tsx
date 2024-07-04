@@ -388,15 +388,23 @@ export const ViewSecret = ({
     }
   );
 
+  console.log('hgdsh', data);
+
   const dataSecret = () => {
     if (isLoading) {
       return <LoadingPlaceHolder />;
     }
     if (error) {
-      return <p>Error: {error}</p>;
+      return (
+        <span className="bodyMd-medium text-text-strong">
+          Error while fetching secrets
+        </span>
+      );
     }
     if (!data?.stringData) {
-      return <p>No secret found</p>;
+      return (
+        <span className="bodyMd-medium text-text-strong">No secret found</span>
+      );
     }
 
     return (

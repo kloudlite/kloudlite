@@ -23,22 +23,19 @@ import { useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
-// import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
-// import ConsoleAvatar from '~/console/components/console-avatar';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
-import { getManagedTemplate } from '~/console/utils/commons';
+import { getManagedTemplateLogo } from '~/console/utils/commons';
 import { ViewSecret } from './handle-managed-resource-v2';
 
-const RESOURCE_NAME = 'managed resource';
+const RESOURCE_NAME = 'integrated resource';
 type BaseType = ExtractNodeType<IManagedResources>;
 
 const parseItem = (item: BaseType, templates: IMSvTemplates) => {
-  const template = getManagedTemplate({
+  const logoUrl = getManagedTemplateLogo(
     templates,
-    kind: item.spec?.resourceTemplate.msvcRef?.kind || '',
-    apiVersion: item.spec?.resourceTemplate.msvcRef?.apiVersion || '',
-  });
+    item.spec?.resourceTemplate.apiVersion || ''
+  );
   return {
     name: item?.displayName,
     id: parseName(item),
@@ -46,7 +43,7 @@ const parseItem = (item: BaseType, templates: IMSvTemplates) => {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
-    logo: template?.logoUrl,
+    logo: logoUrl,
   };
 };
 
@@ -241,9 +238,6 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
                   />
                 ),
               },
-              // status: {
-              //   render: () => <SyncStatusV2 item={i} />,
-              // },
               updated: {
                 render: () => (
                   <ListItem
@@ -321,7 +315,7 @@ const ManagedResourceResourcesV2 = ({
           }
           try {
             const { errors } = await api.deleteImportedManagedResource({
-              mresName: parseName(showDeleteDialog),
+              importName: parseName(showDeleteDialog),
               envName: environment || '',
             });
 

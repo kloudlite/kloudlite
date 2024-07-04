@@ -749,6 +749,26 @@ enum Github__com___kloudlite___api___apps___console___internal___entities__PullS
   params
 }
 
+enum Github__com___kloudlite___api___apps___console___internal___entities__ResourceType {
+  app
+  config
+  environment
+  external_app
+  image_pull_secret
+  imported_managed_resource
+  managed_resource
+  router
+  secret
+  vpn_device
+}
+
+type Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor {
+  name: String!
+  namespace: String!
+  refId: String!
+  resourceType: Github__com___kloudlite___api___apps___console___internal___entities__ResourceType!
+}
+
 enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus {
   error
   failed
@@ -1699,14 +1719,14 @@ type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate
   apiVersion: String!
   kind: String!
   msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRef!
-  spec: Map!
+  spec: Map
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
   apiVersion: String!
   kind: String!
   msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRefIn!
-  spec: Map!
+  spec: Map
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Probe {
@@ -3579,12 +3599,12 @@ type Mutation {
   core_deleteEnvironment(envName: String!): Boolean!
   core_deleteExternalApp(envName: String!, externalAppName: String!): Boolean!
   core_deleteImagePullSecret(name: String!): Boolean!
-  core_deleteImportedManagedResource(envName: String!, mresName: String!): Boolean!
+  core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean!
   core_deleteManagedResource(mresName: String!, msvcName: String!): Boolean!
   core_deleteRouter(envName: String!, routerName: String!): Boolean!
   core_deleteSecret(envName: String!, secretName: String!): Boolean!
   core_deleteVPNDevice(deviceName: String!): Boolean!
-  core_importManagedResource(envName: String!, mresName: String!, msvcName: String!): ManagedResource
+  core_importManagedResource(envName: String!, importName: String!, mresName: String!, msvcName: String!): ManagedResource
   core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_interceptExternalApp(deviceName: String!, envName: String!, externalAppName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_updateApp(app: AppIn!, envName: String!): App
@@ -4015,7 +4035,7 @@ type Query {
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
   infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
-  infrat_getBYOKClusterSetupInstructions(name: String!): [BYOKSetupInstruction!]
+  infrat_getBYOKClusterSetupInstructions(name: String!, onlyHelmValues: Boolean): [BYOKSetupInstruction!]
   iot_getApp(deviceBlueprintName: String!, name: String!, projectName: String!): IOTApp
   iot_getDeployment(name: String!, projectName: String!): IOTDeployment
   iot_getDevice(deploymentName: String!, name: String!, projectName: String!): IOTDevice
@@ -4285,6 +4305,7 @@ type Secret {
   data: Map
   displayName: String!
   environmentName: String!
+  for: Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor
   id: ID!
   immutable: Boolean
   isReadyOnly: Boolean!

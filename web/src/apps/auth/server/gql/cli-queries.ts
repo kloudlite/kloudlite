@@ -668,4 +668,53 @@ export const cliQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
+  cli_createClusterReference: executor(
+    gql`
+      mutation Infra_createBYOKCluster($cluster: BYOKClusterIn!) {
+        infra_createBYOKCluster(cluster: $cluster) {
+          id
+          metadata {
+            name
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_createBYOKCluster,
+      vars(_: any) {},
+    }
+  ),
+  cli_deleteClusterReference: executor(
+    gql`
+      mutation Infra_deleteBYOKCluster($name: String!) {
+        infra_deleteBYOKCluster(name: $name)
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_deleteBYOKCluster,
+      vars(_: any) {},
+    }
+  ),
+  cli_clusterReferenceInstructions: executor(
+    gql`
+      query Infrat_getBYOKClusterSetupInstructions($name: String!) {
+        infrat_getBYOKClusterSetupInstructions(
+          name: $name
+          onlyHelmValues: true
+        ) {
+          command
+          title
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => {
+        const instructions = JSON.parse(
+          data.infrat_getBYOKClusterSetupInstructions[0].command
+        );
+        return instructions;
+      },
+      vars(_: any) {},
+    }
+  ),
 });

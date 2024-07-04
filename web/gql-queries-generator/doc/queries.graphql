@@ -3314,10 +3314,13 @@ mutation consoleUpdateByokCluster($clusterName: String!, $displayName: String!) 
   }
 }
 
-query consoleGetBYOKClusterInstructions($name: String!) {
-  infrat_getBYOKClusterSetupInstructions(name: $name) {
-    title
+query consoleGetBYOKClusterInstructions($name: String!, $onlyHelmValues: Boolean) {
+  infrat_getBYOKClusterSetupInstructions(
+    name: $name
+    onlyHelmValues: $onlyHelmValues
+  ) {
     command
+    title
   }
 }
 
@@ -3730,20 +3733,6 @@ query consoleListManagedResources($search: SearchManagedResources, $pq: CursorPa
 
 mutation consoleDeleteManagedResource($msvcName: String!, $mresName: String!) {
   core_deleteManagedResource(msvcName: $msvcName, mresName: $mresName)
-}
-
-mutation consoleImportManagedResource($envName: String!, $msvcName: String!, $mresName: String!) {
-  core_importManagedResource(
-    envName: $envName
-    msvcName: $msvcName
-    mresName: $mresName
-  ) {
-    id
-  }
-}
-
-mutation consoleDeleteImportedManagedResource($envName: String!, $mresName: String!) {
-  core_deleteImportedManagedResource(envName: $envName, mresName: $mresName)
 }
 
 query consoleGetHelmChart($clusterName: String!, $name: String!) {
@@ -4426,6 +4415,21 @@ query consoleListNotifications($pagination: CursorPaginationIn) {
     }
     totalCount
   }
+}
+
+mutation consoleImportManagedResource($envName: String!, $mresName: String!, $msvcName: String!, $importName: String!) {
+  core_importManagedResource(
+    envName: $envName
+    mresName: $mresName
+    msvcName: $msvcName
+    importName: $importName
+  ) {
+    id
+  }
+}
+
+mutation consoleDeleteImportedManagedResource($envName: String!, $importName: String!) {
+  core_deleteImportedManagedResource(envName: $envName, importName: $importName)
 }
 
 query iotconsoleAccountCheckNameAvailability($name: String!) {
@@ -6443,6 +6447,26 @@ query authCli_getRemoteLogin($loginId: String!, $secret: String!) {
   auth_getRemoteLogin(loginId: $loginId, secret: $secret) {
     authHeader
     status
+  }
+}
+
+mutation authCli_createClusterReference($cluster: BYOKClusterIn!) {
+  infra_createBYOKCluster(cluster: $cluster) {
+    id
+    metadata {
+      name
+    }
+  }
+}
+
+mutation authCli_deleteClusterReference($name: String!) {
+  infra_deleteBYOKCluster(name: $name)
+}
+
+query authCli_clusterReferenceInstructions($name: String!) {
+  infrat_getBYOKClusterSetupInstructions(name: $name, onlyHelmValues: true) {
+    command
+    title
   }
 }
 

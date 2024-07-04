@@ -130,6 +130,19 @@ export type K8s__Io___Api___Core___V1__SecretType =
   | 'kubernetes__io___tls'
   | 'Opaque';
 
+export type Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__ResourceType =
+
+    | 'app'
+    | 'config'
+    | 'environment'
+    | 'external_app'
+    | 'image_pull_secret'
+    | 'imported_managed_resource'
+    | 'managed_resource'
+    | 'router'
+    | 'secret'
+    | 'vpn_device';
+
 export type SecretKeyRefIn = {
   key: Scalars['String']['input'];
   secretName: Scalars['String']['input'];
@@ -791,7 +804,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresResourceT
     apiVersion: Scalars['String']['input'];
     kind: Scalars['String']['input'];
     msvcRef: Github__Com___Kloudlite___Operator___Apis___Common____Types__MsvcRefIn;
-    spec: Scalars['Map']['input'];
+    spec?: InputMaybe<Scalars['Map']['input']>;
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Common____Types__MsvcRefIn =
@@ -4942,12 +4955,13 @@ export type ConsoleUpdateByokClusterMutation = {
 
 export type ConsoleGetByokClusterInstructionsQueryVariables = Exact<{
   name: Scalars['String']['input'];
+  onlyHelmValues?: InputMaybe<Scalars['Boolean']['input']>;
 }>;
 
 export type ConsoleGetByokClusterInstructionsQuery = {
   infrat_getBYOKClusterSetupInstructions?: Array<{
-    title: string;
     command: string;
+    title: string;
   }>;
 };
 
@@ -5352,25 +5366,6 @@ export type ConsoleDeleteManagedResourceMutationVariables = Exact<{
 
 export type ConsoleDeleteManagedResourceMutation = {
   core_deleteManagedResource: boolean;
-};
-
-export type ConsoleImportManagedResourceMutationVariables = Exact<{
-  envName: Scalars['String']['input'];
-  msvcName: Scalars['String']['input'];
-  mresName: Scalars['String']['input'];
-}>;
-
-export type ConsoleImportManagedResourceMutation = {
-  core_importManagedResource?: { id: string };
-};
-
-export type ConsoleDeleteImportedManagedResourceMutationVariables = Exact<{
-  envName: Scalars['String']['input'];
-  mresName: Scalars['String']['input'];
-}>;
-
-export type ConsoleDeleteImportedManagedResourceMutation = {
-  core_deleteImportedManagedResource: boolean;
 };
 
 export type ConsoleGetHelmChartQueryVariables = Exact<{
@@ -6002,6 +5997,26 @@ export type ConsoleListNotificationsQuery = {
       startCursor?: string;
     };
   };
+};
+
+export type ConsoleImportManagedResourceMutationVariables = Exact<{
+  envName: Scalars['String']['input'];
+  mresName: Scalars['String']['input'];
+  msvcName: Scalars['String']['input'];
+  importName: Scalars['String']['input'];
+}>;
+
+export type ConsoleImportManagedResourceMutation = {
+  core_importManagedResource?: { id: string };
+};
+
+export type ConsoleDeleteImportedManagedResourceMutationVariables = Exact<{
+  envName: Scalars['String']['input'];
+  importName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteImportedManagedResourceMutation = {
+  core_deleteImportedManagedResource: boolean;
 };
 
 export type IotconsoleAccountCheckNameAvailabilityQueryVariables = Exact<{
@@ -8041,6 +8056,33 @@ export type AuthCli_GetRemoteLoginQueryVariables = Exact<{
 
 export type AuthCli_GetRemoteLoginQuery = {
   auth_getRemoteLogin?: { authHeader?: string; status: string };
+};
+
+export type AuthCli_CreateClusterReferenceMutationVariables = Exact<{
+  cluster: ByokClusterIn;
+}>;
+
+export type AuthCli_CreateClusterReferenceMutation = {
+  infra_createBYOKCluster?: { id: string; metadata: { name: string } };
+};
+
+export type AuthCli_DeleteClusterReferenceMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_DeleteClusterReferenceMutation = {
+  infra_deleteBYOKCluster: boolean;
+};
+
+export type AuthCli_ClusterReferenceInstructionsQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_ClusterReferenceInstructionsQuery = {
+  infrat_getBYOKClusterSetupInstructions?: Array<{
+    command: string;
+    title: string;
+  }>;
 };
 
 export type AuthSetRemoteAuthHeaderMutationVariables = Exact<{

@@ -24,6 +24,7 @@ import { useEffect, useState } from 'react';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { toast } from '~/components/molecule/toast';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
+import { NameIdView } from '~/console/components/name-id-view';
 import { IEnvironmentContext } from '../_layout';
 
 type BaseType = ExtractNodeType<IManagedResources>;
@@ -55,6 +56,8 @@ const Root = (props: IDialog) => {
           }
         : {
             isNameError: false,
+            name: '',
+            displayName: '',
             managedServiceName: '',
             managedResourceName: '',
           },
@@ -73,6 +76,7 @@ const Root = (props: IDialog) => {
               envName: parseName(environment),
               msvcName: val.managedServiceName || '',
               mresName: val.managedResourceName || '',
+              importName: val.name || '',
             });
             if (e) {
               throw e[0];
@@ -147,6 +151,17 @@ const Root = (props: IDialog) => {
     >
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
+          <NameIdView
+            placeholder="Enter integrated service name"
+            label="Name"
+            resType="managed_resource"
+            name={values.name || ''}
+            displayName={values.displayName || ''}
+            errors={errors.name}
+            handleChange={handleChange}
+            nameErrorLabel="isNameError"
+          />
+
           <Select
             label="Integrated Services"
             size="lg"
@@ -256,10 +271,16 @@ export const ViewSecret = ({
       return <LoadingPlaceHolder />;
     }
     if (error) {
-      return <p>Error: {error}</p>;
+      return (
+        <span className="bodyMd-medium text-text-strong">
+          Error while fetching secrets
+        </span>
+      );
     }
-    if (!data?.data) {
-      return <p>No secret found</p>;
+    if (!data?.stringData) {
+      return (
+        <span className="bodyMd-medium text-text-strong">No secret found</span>
+      );
     }
 
     return (
@@ -277,7 +298,7 @@ export const ViewSecret = ({
               className: 'flex-1 min-w-[345px] max-w-[345px] w-[345px]',
             },
           ],
-          rows: Object.entries(data.data || {}).map(([key, value]) => {
+          rows: Object.entries(data.stringData || {}).map(([key, value]) => {
             const v = value as string;
             return {
               columns: {
@@ -287,7 +308,7 @@ export const ViewSecret = ({
                 value: {
                   render: () => (
                     <CopyContentToClipboard
-                      content={atob(v)}
+                      content={v}
                       toastMessage={`${key} copied`}
                     />
                   ),
