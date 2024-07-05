@@ -14,7 +14,6 @@ import (
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
-	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -55,21 +54,10 @@ type ManagedResourceContext struct {
 }
 
 func (m ManagedResourceContext) MresDBFilters() (*repos.Filter, error) {
-	if m.EnvironmentName != nil {
-		return &repos.Filter{
-			fields.AccountName:     m.AccountName,
-			fields.EnvironmentName: m.EnvironmentName,
-		}, nil
-	}
-
-	if m.ManagedServiceName != nil {
-		return &repos.Filter{
-			fields.AccountName:                   m.AccountName,
-			fc.ManagedResourceManagedServiceName: m.ManagedServiceName,
-		}, nil
-	}
-
-	return nil, errors.New("environment or managed service name is required")
+	return &repos.Filter{
+		fields.AccountName:                   m.AccountName,
+		fc.ManagedResourceManagedServiceName: m.ManagedServiceName,
+	}, nil
 }
 
 func (r ResourceContext) DBFilters() repos.Filter {
@@ -236,19 +224,32 @@ type Domain interface {
 
 	ListManagedResources(ctx ConsoleContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
 	GetManagedResource(ctx ManagedResourceContext, name string) (*entities.ManagedResource, error)
+	GetManagedResourceByID(ctx ConsoleContext, id repos.ID) (*entities.ManagedResource, error)
 
 	// ListImportedManagedResources(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
 	// GetImportedManagedResource(ctx ResourceContext, name string) (*entities.ManagedResource, error)
 
 	GetManagedResourceOutputKeys(ctx ManagedResourceContext, name string) ([]string, error)
+	GetImportedManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error)
 	GetManagedResourceOutputKVs(ctx ManagedResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error)
+	GetImportedManagedResourceOutputKVs(ctx ResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error)
 
+	CreateRootManagedResource(ctx ConsoleContext, accountNamespace string, mres *entities.ManagedResource) (*entities.ManagedResource, error)
 	CreateManagedResource(ctx ManagedResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
 	UpdateManagedResource(ctx ManagedResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
 	DeleteManagedResource(ctx ManagedResourceContext, name string) error
 
-	ImportManagedResource(ctx ManagedResourceContext, mresName string) (*entities.ManagedResource, error)
-	DeleteImportedManagedResource(ctx ResourceContext, mresName string) error
+	// ImportManagedResource(ctx ManagedResourceContext, mresName string, importName string) (*entities.ManagedResource, error)
+	ImportManagedResource(ctx ManagedResourceContext, mresName string, importName string) (*entities.ImportedManagedResource, error)
+	// ListImportedManagedResources(ctx ConsoleContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
+	ListImportedManagedResources(ctx ConsoleContext, envName string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImportedManagedResource], error)
+	DeleteImportedManagedResource(ctx ResourceContext, importName string) error
+
+	// ImportManagedResource(ctx ConsoleContext, imr entities.ImportedManagedResource) (*entities.ImportedManagedResource, error)
+	// DeleteImportedManagedResource(ctx ConsoleContext, name string) error
+
+	// OnImportedManagedResourceDeleteMessage(ctx ConsoleContext, secret *corev1.Secret) error
+	// OnImportedManagedResourceUpdateMessage(ctx ConsoleContext, secret *corev1.Secret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	OnManagedResourceApplyError(ctx ConsoleContext, errMsg string, msvcName string, name string, opts UpdateAndDeleteOpts) error
 	OnManagedResourceDeleteMessage(ctx ConsoleContext, msvcName string, mres entities.ManagedResource) error

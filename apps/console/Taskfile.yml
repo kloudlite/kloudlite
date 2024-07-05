@@ -34,13 +34,14 @@ tasks:
         --struct github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyValueRef
         --struct github.com/kloudlite/api/apps/console/internal/entities.Router
         --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ImportedManagedResource
         --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
         --struct github.com/kloudlite/api/pkg/repos.MatchFilter
         --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,ExternalApp,Secret,Config,Router,ManagedResource,ImagePullSecret,ConsoleVPNDevice
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,ExternalApp,Secret,Config,Router,ManagedResource,ImportedManagedResource,ImagePullSecret,ConsoleVPNDevice
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
