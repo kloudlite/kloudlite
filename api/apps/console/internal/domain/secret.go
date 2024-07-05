@@ -32,6 +32,15 @@ func (d *domain) findSecret(ctx ResourceContext, name string) (*entities.Secret,
 	if xSecret == nil {
 		return nil, errors.Newf("no secret with name (%s) found", name)
 	}
+
+	if xSecret.StringData == nil {
+		xSecret.StringData = make(map[string]string, len(xSecret.Data))
+	}
+
+	for k, v := range xSecret.Data {
+		xSecret.StringData[k] = string(v)
+	}
+
 	return xSecret, nil
 }
 
@@ -92,6 +101,10 @@ func (d *domain) GetSecretEntries(ctx ResourceContext, keyrefs []SecretKeyRef) (
 }
 
 func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*entities.Secret, error) {
+	return d.createSecret(ctx, secret)
+}
+
+func (d *domain) createSecret(ctx ResourceContext, secret entities.Secret) (*entities.Secret, error) {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -198,6 +211,10 @@ func (d *domain) UpdateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 }
 
 func (d *domain) DeleteSecret(ctx ResourceContext, name string) error {
+	return d.deleteSecret(ctx, name)
+}
+
+func (d *domain) deleteSecret(ctx ResourceContext, name string) error {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return errors.NewE(err)
 	}
@@ -213,7 +230,7 @@ func (d *domain) DeleteSecret(ctx ResourceContext, name string) error {
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, usecret.Name, PublishUpdate)
 
-	if err := d.deleteK8sResource(ctx, "", &usecret.Secret); err != nil {
+	if err := d.deleteK8sResource(ctx, usecret.EnvironmentName, &usecret.Secret); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.secretRepo.DeleteById(ctx, usecret.Id)
 		}
@@ -223,11 +240,31 @@ func (d *domain) DeleteSecret(ctx ResourceContext, name string) error {
 }
 
 func (d *domain) OnSecretDeleteMessage(ctx ResourceContext, secret entities.Secret) error {
-	err := d.secretRepo.DeleteOne(
-		ctx,
-		ctx.DBFilters().Add(fields.MetadataName, secret.Name),
-	)
+	s, err := d.findSecret(ctx, secret.Name)
 	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if _, err := d.MatchRecordVersion(secret.Annotations, s.RecordVersion); err != nil {
+		return d.resyncK8sResource(ctx, s.EnvironmentName, s.SyncStatus.Action, &s.Secret, s.RecordVersion)
+	}
+
+	if s.For != nil {
+		switch s.For.ResourceType {
+		case entities.ResourceTypeImportedManagedResource:
+			{
+				if err := d.OnImportedManagedResourceDeleteMessage(ctx.ConsoleContext, s.For.RefId); err != nil {
+					return errors.NewE(err)
+				}
+			}
+		default:
+			{
+				d.logger.Warnf("unknown resource type %s", s.For.ResourceType)
+			}
+		}
+	}
+
+	if err := d.secretRepo.DeleteOne(ctx, ctx.DBFilters().Add(fields.MetadataName, secret.Name)); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -247,12 +284,24 @@ func (d *domain) OnSecretUpdateMessage(ctx ResourceContext, secretIn entities.Se
 		return d.resyncK8sResource(ctx, xSecret.EnvironmentName, xSecret.SyncStatus.Action, &xSecret.Secret, xSecret.RecordVersion)
 	}
 
-	usecret, err := d.secretRepo.PatchById(
-		ctx,
-		xSecret.Id,
-		common.PatchForSyncFromAgent(&secretIn, recordVersion, status, common.PatchOpts{
-			MessageTimestamp: opts.MessageTimestamp,
-		}))
+	if xSecret.For != nil {
+		switch xSecret.For.ResourceType {
+		case entities.ResourceTypeImportedManagedResource:
+			{
+				if err := d.OnImportedManagedResourceUpdateMessage(ctx.ConsoleContext, xSecret.For.RefId, status, opts); err != nil {
+					return errors.NewE(err)
+				}
+			}
+		default:
+			{
+				d.logger.Warnf("unknown resource type %s", xSecret.For.ResourceType)
+			}
+		}
+	}
+
+	usecret, err := d.secretRepo.PatchById(ctx, xSecret.Id, common.PatchForSyncFromAgent(&secretIn, recordVersion, status, common.PatchOpts{
+		MessageTimestamp: opts.MessageTimestamp,
+	}))
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, usecret.GetResourceType(), usecret.GetName(), PublishUpdate)
 
