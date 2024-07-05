@@ -19,7 +19,7 @@ import (
 
 func (d *domain) claimNextFreeDeviceIP(ctx InfraContext, deviceName string, gvpnName string) (string, error) {
 	var ipAddrFilter *repos.MatchFilter
-	offsetIdx := 0 
+	offsetIdx := 0
 	for {
 		filter := repos.Filter{
 			fields.AccountName:           ctx.AccountName,
@@ -49,7 +49,7 @@ func (d *domain) claimNextFreeDeviceIP(ctx InfraContext, deviceName string, gvpn
 				GlobalVPNName: gvpnName,
 				IPAddr:        ip,
 			}); err != nil {
-			  offsetIdx += 1
+				offsetIdx += 1
 				continue
 			}
 
@@ -261,7 +261,7 @@ func (d *domain) buildPeersFromGlobalVPNDevices(ctx InfraContext, gvpn string) (
 		if devices[i].PublicEndpoint != nil {
 			allowedIPs := []string{fmt.Sprintf("%s/32", devices[i].IPAddr)}
 
-      if devices[i].Name == gv.KloudliteGatewayDevice.Name {
+			if devices[i].Name == gv.KloudliteGatewayDevice.Name {
 				allowedIPs = append(allowedIPs, gv.NonClusterUseAllowedIPs...)
 			}
 

@@ -376,6 +376,10 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 }
 
 func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) error {
+  t := time.Now()
+  defer func() {
+    d.logger.Infof("syncKloudliteGatewayDevice took %.2fs", time.Since(t).Seconds())
+  }()
 	// 1. parse deployment template
 	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
 	if err != nil {
@@ -427,7 +431,6 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 	    publicPeers = append(publicPeers, p)
 	  }
 	}
-
 
 	deviceSvcHosts := make([]string, 0, len(deviceHosts))
 	for k, v := range deviceHosts {

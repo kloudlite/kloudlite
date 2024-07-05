@@ -1,0 +1,71 @@
+---
+label: List Imported Managed Resources
+query: |+ #graphql
+  query Core_listImportedManagedResources($envName: String!, $search: SearchImportedManagedResources) {
+    core_listImportedManagedResources(envName: $envName, search: $search) {
+      edges {
+        node {
+          name
+          accountName
+          environmentName
+          displayName
+          createdBy {
+            userEmail
+          }
+          managedResource {
+            spec {
+              resourceTemplate {
+                kind
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+variables:
+  envName: "nxt-dev-1"
+  search: {}
+
+---
+
+label: Read Secret for Imported Managed Resource
+query: |+ #graphql
+  query Core_getSecret($envName: String!, $name: String!) {
+    core_getSecret(envName: $envName, name: $name) {
+      metadata {
+        name
+      }
+      stringData
+    }
+  }
+variables:
+  envName: "nxt-dev-1"
+  name: "copy-root-mongo"
+
+---
+label: Delete Imported Managed Resources
+query: |+ #graphql
+  mutation Core_deleteImportedManagedResource($envName: String!, $importName: String!) {
+    core_deleteImportedManagedResource(envName: $envName, importName: $importName)
+  }
+variables:
+  envName: "nxt-dev-1"
+  importName: "copy-root-pg"
+---
+
+label: Import Managed Resources
+query: |+ #graphql
+  mutation Core_ImportManagedResource($envName: String!, $msvcName: String!, $mresName: String!, $importName: String!) {
+    core_importManagedResource(envName: $envName, msvcName: $msvcName, mresName: $mresName, importName: $importName) {
+      accountName
+      environmentName
+    }
+  }
+variables:
+  envName: "nxt-dev-1"
+  # msvcName: "t-postgres"
+  msvcName: "sample"
+  mresName: "root-credentials"
+  importName: "copy-root-mongo"
+---

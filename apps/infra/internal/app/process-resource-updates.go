@@ -247,9 +247,13 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if v, ok := su.Object[types.KeyClusterManagedSvcSecret]; ok {
-					if v2, ok := v.(*corev1.Secret); ok {
-						cmsvc.SyncedOutputSecretRef = v2
+					v2, err := fn.JsonConvertP[corev1.Secret](v)
+					if err != nil {
+						mLogger.Infof("managed resource, invalid output secret received")
+						return errors.NewE(err)
 					}
+					v2.SetManagedFields(nil)
+					cmsvc.SyncedOutputSecretRef = v2
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
