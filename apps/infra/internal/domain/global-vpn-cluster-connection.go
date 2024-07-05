@@ -416,21 +416,6 @@ func (d *domain) ensureGlobalVPNConnection(ctx InfraContext, clusterName string,
 }
 
 func (d *domain) applyGlobalVPNConnection(ctx InfraContext, gvpn *entities.GlobalVPNConnection) error {
-	// if err := d.resDispatcher.ApplyToTargetCluster(ctx, gvpn.ClusterName, &corev1.Secret{
-	// 	TypeMeta: metav1.TypeMeta{
-	// 		APIVersion: "v1",
-	// 		Kind:       "Secret",
-	// 	},
-	// 	ObjectMeta: metav1.ObjectMeta{
-	// 		Name:      gvpn.Spec.WgRef.Name,
-	// 		Namespace: gvpn.Spec.WgRef.Namespace,
-	// 	},
-	// 	StringData: map[string]string{
-	// 		"ip": gvpn.DeviceRef.IPAddr,
-	// 	},
-	// }, 0); err != nil {
-	// 	return err
-	// }
 	return d.resDispatcher.ApplyToTargetCluster(ctx, gvpn.ClusterName, &gvpn.Gateway, gvpn.RecordVersion)
 }
 
