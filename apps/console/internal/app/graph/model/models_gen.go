@@ -9,6 +9,7 @@ import (
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/apis/crds/v1"
 )
 
@@ -90,6 +91,25 @@ type ExternalAppPaginatedRecords struct {
 	TotalCount int                `json:"totalCount"`
 }
 
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedResourceRef struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedResourceRefIn struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesSecretCreatedFor struct {
+	Name         string                                                       `json:"name"`
+	Namespace    string                                                       `json:"namespace"`
+	RefID        string                                                       `json:"refId"`
+	ResourceType GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType `json:"resourceType"`
+}
+
 type GithubComKloudliteAPIPkgTypesEncodedString struct {
 	Encoding string `json:"encoding"`
 	Value    string `json:"value"`
@@ -109,6 +129,16 @@ type GithubComKloudliteOperatorApisCommonTypesMsvcRefIn struct {
 	Kind        *string `json:"kind,omitempty"`
 	Name        string  `json:"name"`
 	Namespace   string  `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorApisCommonTypesSecretRef struct {
+	Name      string  `json:"name"`
+	Namespace *string `json:"namespace,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisCommonTypesSecretRefIn struct {
+	Name      string  `json:"name"`
+	Namespace *string `json:"namespace,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppContainer struct {
@@ -396,14 +426,14 @@ type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate struct {
 	APIVersion string                                            `json:"apiVersion"`
 	Kind       string                                            `json:"kind"`
 	MsvcRef    *GithubComKloudliteOperatorApisCommonTypesMsvcRef `json:"msvcRef"`
-	Spec       map[string]interface{}                            `json:"spec"`
+	Spec       map[string]interface{}                            `json:"spec,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn struct {
 	APIVersion string                                              `json:"apiVersion"`
 	Kind       string                                              `json:"kind"`
 	MsvcRef    *GithubComKloudliteOperatorApisCommonTypesMsvcRefIn `json:"msvcRef"`
-	Spec       map[string]interface{}                              `json:"spec"`
+	Spec       map[string]interface{}                              `json:"spec,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1Probe struct {
@@ -610,6 +640,26 @@ type ImagePullSecretPaginatedRecords struct {
 	TotalCount int                    `json:"totalCount"`
 }
 
+type ImportedManagedResourceEdge struct {
+	Cursor string                            `json:"cursor"`
+	Node   *entities.ImportedManagedResource `json:"node"`
+}
+
+type ImportedManagedResourceIn struct {
+	DisplayName        string                                                                `json:"displayName"`
+	EnvironmentName    string                                                                `json:"environmentName"`
+	ManagedResourceRef *GithubComKloudliteAPIAppsConsoleInternalEntitiesManagedResourceRefIn `json:"managedResourceRef"`
+	Name               string                                                                `json:"name"`
+	SecretRef          *GithubComKloudliteOperatorApisCommonTypesSecretRefIn                 `json:"secretRef"`
+	SyncStatus         *types.SyncStatus                                                     `json:"syncStatus"`
+}
+
+type ImportedManagedResourcePaginatedRecords struct {
+	Edges      []*ImportedManagedResourceEdge `json:"edges"`
+	PageInfo   *PageInfo                      `json:"pageInfo"`
+	TotalCount int                            `json:"totalCount"`
+}
+
 type K8sIoAPICoreV1Toleration struct {
 	Effect            *K8sIoAPICoreV1TaintEffect        `json:"effect,omitempty"`
 	Key               *string                           `json:"key,omitempty"`
@@ -751,6 +801,12 @@ type SearchImagePullSecrets struct {
 	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
+type SearchImportedManagedResources struct {
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
+}
+
 type SearchManagedResources struct {
 	Text               *repos.MatchFilter `json:"text,omitempty"`
 	ManagedServiceName *repos.MatchFilter `json:"managedServiceName,omitempty"`
@@ -844,6 +900,63 @@ func (e *GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) Unmar
 }
 
 func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType string
+
+const (
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeApp                     GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "app"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeConfig                  GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "config"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeEnvironment             GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "environment"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeExternalApp             GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "external_app"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImagePullSecret         GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "image_pull_secret"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImportedManagedResource GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "imported_managed_resource"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeManagedResource         GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "managed_resource"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeRouter                  GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "router"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeSecret                  GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "secret"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeVpnDevice               GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "vpn_device"
+)
+
+var AllGithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = []GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType{
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeApp,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeConfig,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeEnvironment,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeExternalApp,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImagePullSecret,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImportedManagedResource,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeManagedResource,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeRouter,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeSecret,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeVpnDevice,
+}
+
+func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType) IsValid() bool {
+	switch e {
+	case GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeApp, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeConfig, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeEnvironment, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeExternalApp, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImagePullSecret, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImportedManagedResource, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeManagedResource, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeRouter, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeSecret, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeVpnDevice:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___apps___console___internal___entities__ResourceType", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

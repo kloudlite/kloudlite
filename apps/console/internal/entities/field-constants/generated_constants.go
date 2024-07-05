@@ -108,6 +108,18 @@ const (
 	ImagePullSecretRegistryUsername   = "registryUsername"
 )
 
+// constant vars generated for struct ImportedManagedResource
+const (
+	ImportedManagedResourceManagedResourceRef          = "managedResourceRef"
+	ImportedManagedResourceManagedResourceRefId        = "managedResourceRef.id"
+	ImportedManagedResourceManagedResourceRefName      = "managedResourceRef.name"
+	ImportedManagedResourceManagedResourceRefNamespace = "managedResourceRef.namespace"
+	ImportedManagedResourceName                        = "name"
+	ImportedManagedResourceSecretRef                   = "secretRef"
+	ImportedManagedResourceSecretRefName               = "secretRef.name"
+	ImportedManagedResourceSecretRefNamespace          = "secretRef.namespace"
+)
+
 // constant vars generated for struct ManagedResource
 const (
 	ManagedResourceEnabled                                                 = "enabled"
@@ -155,6 +167,12 @@ const (
 	ManagedResourceSyncedOutputSecretRefType                               = "syncedOutputSecretRef.type"
 )
 
+// constant vars generated for struct ManagedResourceRef
+const (
+	ManagedResourceRefName      = "name"
+	ManagedResourceRefNamespace = "namespace"
+)
+
 // constant vars generated for struct ResourceMapping
 const (
 	ResourceMappingBaseEntity                  = "BaseEntity"
@@ -199,11 +217,24 @@ const (
 
 // constant vars generated for struct Secret
 const (
-	SecretData        = "data"
-	SecretImmutable   = "immutable"
-	SecretIsReadyOnly = "isReadyOnly"
-	SecretStringData  = "stringData"
-	SecretType        = "type"
+	SecretData            = "data"
+	SecretFor             = "for"
+	SecretForName         = "for.name"
+	SecretForNamespace    = "for.namespace"
+	SecretForRefId        = "for.refId"
+	SecretForResourceType = "for.resourceType"
+	SecretImmutable       = "immutable"
+	SecretIsReadyOnly     = "isReadyOnly"
+	SecretStringData      = "stringData"
+	SecretType            = "type"
+)
+
+// constant vars generated for struct SecretCreatedFor
+const (
+	SecretCreatedForName         = "name"
+	SecretCreatedForNamespace    = "namespace"
+	SecretCreatedForRefId        = "refId"
+	SecretCreatedForResourceType = "resourceType"
 )
 
 // constant vars generated for struct
