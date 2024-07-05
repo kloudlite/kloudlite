@@ -1376,7 +1376,7 @@ type ComplexityRoot struct {
 		InfraListPVs                          func(childComplexity int, clusterName string, search *model.SearchPersistentVolumes, pq *repos.CursorPagination) int
 		InfraListProviderSecrets              func(childComplexity int, search *model.SearchProviderSecret, pagination *repos.CursorPagination) int
 		InfraListVolumeAttachments            func(childComplexity int, clusterName string, search *model.SearchVolumeAttachments, pq *repos.CursorPagination) int
-		InfratGetBYOKClusterSetupInstructions func(childComplexity int, name string) int
+		InfratGetBYOKClusterSetupInstructions func(childComplexity int, name string, onlyHelmValues *bool) int
 		__resolve__service                    func(childComplexity int) int
 	}
 
@@ -1609,7 +1609,7 @@ type QueryResolver interface {
 	InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error)
 	InfraListBYOKClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.BYOKClusterPaginatedRecords, error)
 	InfraGetBYOKCluster(ctx context.Context, name string) (*entities.BYOKCluster, error)
-	InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) ([]*model.BYOKSetupInstruction, error)
+	InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string, onlyHelmValues *bool) ([]*model.BYOKSetupInstruction, error)
 	InfraListGlobalVPNs(ctx context.Context, search *model.SearchGlobalVPNs, pagination *repos.CursorPagination) (*model.GlobalVPNPaginatedRecords, error)
 	InfraGetGlobalVpn(ctx context.Context, name string) (*entities.GlobalVPN, error)
 	InfraListGlobalVPNDevices(ctx context.Context, gvpn string, search *model.SearchGlobalVPNDevices, pagination *repos.CursorPagination) (*model.GlobalVPNDevicePaginatedRecords, error)
@@ -7813,7 +7813,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfratGetBYOKClusterSetupInstructions(childComplexity, args["name"].(string)), true
+		return e.complexity.Query.InfratGetBYOKClusterSetupInstructions(childComplexity, args["name"].(string), args["onlyHelmValues"].(*bool)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -8285,7 +8285,7 @@ type Query {
     # byok
     infra_listBYOKClusters(search: SearchCluster, pagination: CursorPaginationIn): BYOKClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getBYOKCluster(name: String!): BYOKCluster @isLoggedInAndVerified @hasAccount
-    infrat_getBYOKClusterSetupInstructions(name: String!): [BYOKSetupInstruction!] @isLoggedInAndVerified @hasAccount
+    infrat_getBYOKClusterSetupInstructions(name: String!, onlyHelmValues: Boolean): [BYOKSetupInstruction!] @isLoggedInAndVerified @hasAccount
 
     # global VPN
     infra_listGlobalVPNs(search: SearchGlobalVPNs, pagination: CursorPaginationIn): GlobalVPNPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -11852,6 +11852,15 @@ func (ec *executionContext) field_Query_infrat_getBYOKClusterSetupInstructions_a
 		}
 	}
 	args["name"] = arg0
+	var arg1 *bool
+	if tmp, ok := rawArgs["onlyHelmValues"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onlyHelmValues"))
+		arg1, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["onlyHelmValues"] = arg1
 	return args, nil
 }
 
@@ -50673,7 +50682,7 @@ func (ec *executionContext) _Query_infrat_getBYOKClusterSetupInstructions(ctx co
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfratGetBYOKClusterSetupInstructions(rctx, fc.Args["name"].(string))
+			return ec.resolvers.Query().InfratGetBYOKClusterSetupInstructions(rctx, fc.Args["name"].(string), fc.Args["onlyHelmValues"].(*bool))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -75845,7 +75854,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -75853,7 +75862,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

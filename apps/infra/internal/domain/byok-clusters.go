@@ -2,6 +2,7 @@ package domain
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -172,10 +173,37 @@ type BYOKSetupInstruction struct {
 	Command string `json:"command"`
 }
 
-func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string) ([]BYOKSetupInstruction, error) {
+func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string, onlyHelmValues bool) ([]BYOKSetupInstruction, error) {
 	cluster, err := d.findBYOKCluster(ctx, name)
 	if err != nil {
 		return nil, err
+	}
+
+	if onlyHelmValues {
+		b, err := json.Marshal(map[string]any{
+			"crds-url": fmt.Sprintf("https://github.com/kloudlite/helm-charts/releases/download/%s/crds-all.yml", d.env.KloudliteRelease),
+
+			"chart-repo":    "https://kloudlite.github.io/helm-charts",
+			"chart-version": d.env.KloudliteRelease,
+
+      "helm-values": map[string]any{
+			  "accountName":           ctx.AccountName,
+			  "clusterName":           name,
+			  "clusterToken":          cluster.ClusterToken,
+			  "messageOfficeGRPCAddr": d.env.MessageOfficeExternalGrpcAddr,
+			  "byok.enabled":          "true",
+      },
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return []BYOKSetupInstruction{
+		  {
+			  Title:   "Helm Values",
+			  Command: string(b),
+		  },
+		}, nil
 	}
 
 	return []BYOKSetupInstruction{
@@ -184,15 +212,6 @@ func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string) 
 		{Title: "Install kloudlite CRDs", Command: fmt.Sprintf("kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/%s/crds-all.yml --server-side", d.env.KloudliteRelease)},
 		{Title: "Install Kloudlite Agent", Command: fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --version %s --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set byok.enabled=true`, d.env.KloudliteRelease, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr)},
 	}, nil
-}
-
-func (d *domain) GetBYOKClusterSetupInstructions2(ctx InfraContext, name string) (*string, error) {
-	cluster, err := d.findBYOKCluster(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-
-	return fn.New(fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --version %s --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set byok.enabled=true --set helmCharts.ingressNginx.enabled=true --set helmCharts.certManager.enabled=true`, d.env.KloudliteRelease, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr)), nil
 }
 
 func (d *domain) DeleteBYOKCluster(ctx InfraContext, name string) error {
