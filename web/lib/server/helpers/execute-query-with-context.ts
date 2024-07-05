@@ -74,6 +74,7 @@ export const ExecuteQueryWithContext = (
           method: 'POST',
           headers: {
             'Content-Type': 'application/json; charset=utf-8',
+            connection: 'keep-alive',
             ...{
               cookie: Object.entries(cookie)
                 .map(([key, value]) => `${key}=${value}`)

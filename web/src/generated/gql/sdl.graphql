@@ -744,6 +744,18 @@ type Github__com___kloudlite___api___apps___comms___types__NotifyContent {
   title: String!
 }
 
+type Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef {
+  id: String!
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRefIn {
+  id: String!
+  name: String!
+  namespace: String!
+}
+
 enum Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat {
   dockerConfigJson
   params
@@ -1022,6 +1034,15 @@ enum Github__com___kloudlite___api___pkg___types__SyncState {
 }
 
 type Github__com___kloudlite___api___pkg___types__SyncStatus {
+  action: Github__com___kloudlite___api___pkg___types__SyncAction!
+  error: String
+  lastSyncedAt: Date
+  recordVersion: Int!
+  state: Github__com___kloudlite___api___pkg___types__SyncState!
+  syncScheduledAt: Date
+}
+
+input Github__com___kloudlite___api___pkg___types__SyncStatusIn {
   action: Github__com___kloudlite___api___pkg___types__SyncAction!
   error: String
   lastSyncedAt: Date
@@ -2256,6 +2277,44 @@ input ImagePullSecretIn {
 
 type ImagePullSecretPaginatedRecords {
   edges: [ImagePullSecretEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ImportedManagedResource {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  environmentName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  managedResource: ManagedResource
+  managedResourceRef: Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ImportedManagedResourceEdge {
+  cursor: String!
+  node: ImportedManagedResource!
+}
+
+input ImportedManagedResourceIn {
+  displayName: String!
+  environmentName: String!
+  managedResourceRef: Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRefIn!
+  name: String!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatusIn!
+}
+
+type ImportedManagedResourcePaginatedRecords {
+  edges: [ImportedManagedResourceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
@@ -3604,7 +3663,7 @@ type Mutation {
   core_deleteRouter(envName: String!, routerName: String!): Boolean!
   core_deleteSecret(envName: String!, secretName: String!): Boolean!
   core_deleteVPNDevice(deviceName: String!): Boolean!
-  core_importManagedResource(envName: String!, importName: String!, mresName: String!, msvcName: String!): ManagedResource
+  core_importManagedResource(envName: String!, importName: String!, mresName: String!, msvcName: String!): ImportedManagedResource
   core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_interceptExternalApp(deviceName: String!, envName: String!, externalAppName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_updateApp(app: AppIn!, envName: String!): App
@@ -3975,6 +4034,7 @@ type Query {
   core_listEnvironments(pq: CursorPaginationIn, search: SearchEnvironments): EnvironmentPaginatedRecords
   core_listExternalApps(envName: String!, pq: CursorPaginationIn, search: SearchExternalApps): ExternalAppPaginatedRecords
   core_listImagePullSecrets(pq: CursorPaginationIn, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
+  core_listImportedManagedResources(envName: String!, pq: CursorPaginationIn, search: SearchImportedManagedResources): ImportedManagedResourcePaginatedRecords
   core_listManagedResources(pq: CursorPaginationIn, search: SearchManagedResources): ManagedResourcePaginatedRecords
   core_listRouters(envName: String!, pq: CursorPaginationIn, search: SearchRouters): RouterPaginatedRecords
   core_listSecrets(envName: String!, pq: CursorPaginationIn, search: SearchSecrets): SecretPaginatedRecords
@@ -4200,6 +4260,12 @@ input SearchHelmRelease {
 }
 
 input SearchImagePullSecrets {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchImportedManagedResources {
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
   text: MatchFilterIn

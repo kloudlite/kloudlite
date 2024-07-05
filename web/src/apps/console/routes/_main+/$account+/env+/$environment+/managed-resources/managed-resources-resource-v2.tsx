@@ -8,7 +8,6 @@ import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
 import {
   ExtractNodeType,
-  parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
@@ -20,25 +19,31 @@ import { useState } from 'react';
 import { handleError } from '~/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useParams } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
-import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { getManagedTemplateLogo } from '~/console/utils/commons';
+import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
+import { Badge } from '~/components/atoms/badge';
 import { ViewSecret } from './handle-managed-resource-v2';
 
 const RESOURCE_NAME = 'integrated resource';
-type BaseType = ExtractNodeType<IManagedResources>;
+type BaseType = ExtractNodeType<IImportedManagedResources>;
 
 const parseItem = (item: BaseType, templates: IMSvTemplates) => {
   const logoUrl = getManagedTemplateLogo(
     templates,
-    item.spec?.resourceTemplate.apiVersion || ''
+    item.managedResource?.spec?.resourceTemplate.apiVersion || ''
+  );
+  console.log(
+    'logoUrl',
+    logoUrl,
+    templates,
+    item.managedResource?.spec?.resourceTemplate.apiVersion
   );
   return {
     name: item?.displayName,
-    id: parseName(item),
+    id: item?.name,
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
@@ -142,13 +147,8 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           {
             render: () => 'Resource Name',
             name: 'name',
-            className: 'flex flex-1 w-[80px]',
+            className: 'flex flex-1 w-[120px]',
           },
-          // {
-          //   render: () => '',
-          //   name: 'secret',
-          //   className: 'flex flex-1 w-[150px]',
-          // },
           {
             render: () => 'Resource Type',
             name: 'resource',
@@ -169,11 +169,11 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
             name: 'flex-post',
             className: 'flex-1',
           },
-          // {
-          //   render: () => 'Status',
-          //   name: 'status',
-          //   className: 'flex-1 min-w-[30px]',
-          // },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px]',
+          },
           {
             render: () => 'Updated',
             name: 'updated',
@@ -203,21 +203,11 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
                   />
                 ),
               },
-              secret: {
-                render: () =>
-                  i.syncedOutputSecretRef ? (
-                    <Button
-                      content="View secrets"
-                      variant="plain"
-                      onClick={() =>
-                        onAction({ action: 'view_secret', item: i })
-                      }
-                    />
-                  ) : null,
-              },
               resource: {
                 render: () => (
-                  <ListItem data={`${i.spec?.resourceTemplate?.kind}`} />
+                  <ListItem
+                    data={`${i.managedResource?.spec?.resourceTemplate?.kind}`}
+                  />
                 ),
               },
               service: {
@@ -228,15 +218,23 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
                         <span>
                           <img
                             src={logo}
-                            alt={`${i.spec?.resourceTemplate?.msvcRef?.name}`}
+                            alt={`${i.managedResource?.spec?.resourceTemplate?.msvcRef?.name}`}
                             className="w-4xl h-4xl"
                           />
                         </span>
-                        <span>{`${i.spec?.resourceTemplate?.msvcRef?.name}`}</span>
+                        <span>{`${i.managedResource?.spec?.resourceTemplate?.msvcRef?.name}`}</span>
                       </div>
                     }
                   />
                 ),
+              },
+              status: {
+                render: () =>
+                  i.syncStatus?.state === 'UPDATED_AT_AGENT' ? (
+                    <Badge type="info">Ready</Badge>
+                  ) : (
+                    <Badge type="warning">Waiting</Badge>
+                  ),
               },
               updated: {
                 render: () => (
@@ -276,9 +274,7 @@ const ManagedResourceResourcesV2 = ({
 
   useWatchReload(
     items.map((i) => {
-      return `account:${account}.environment:${environment}.managed_resource:${parseName(
-        i
-      )}`;
+      return `account:${account}.environment:${environment}.managed_resource:${i.name}`;
     })
   );
 
@@ -305,7 +301,7 @@ const ManagedResourceResourcesV2 = ({
         gridView={<GridView {...props} />}
       />
       <DeleteDialog
-        resourceName={parseName(showDeleteDialog)}
+        resourceName={showDeleteDialog?.name || ''}
         resourceType={RESOURCE_NAME}
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
@@ -315,7 +311,7 @@ const ManagedResourceResourcesV2 = ({
           }
           try {
             const { errors } = await api.deleteImportedManagedResource({
-              importName: parseName(showDeleteDialog),
+              importName: showDeleteDialog?.name || '',
               envName: environment || '',
             });
 

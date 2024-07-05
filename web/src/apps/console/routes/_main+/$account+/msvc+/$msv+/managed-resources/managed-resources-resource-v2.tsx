@@ -26,6 +26,7 @@ import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { getManagedTemplate } from '~/console/utils/commons';
+import { Badge } from '~/components/atoms/badge';
 import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
 
 const RESOURCE_NAME = 'integrated resource';
@@ -156,6 +157,11 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
             className: 'flex-1',
           },
           {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px]',
+          },
+          {
             render: () => 'Updated',
             name: 'updated',
             className: 'w-[180px]',
@@ -190,9 +196,14 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
                   <ListItem data={`${i.spec?.resourceTemplate?.kind}`} />
                 ),
               },
-              // status: {
-              //   render: () => <SyncStatusV2 item={i} />,
-              // },
+              status: {
+                render: () =>
+                  i.status?.isReady ? (
+                    <Badge type="info">Ready</Badge>
+                  ) : (
+                    <Badge type="warning">Waiting</Badge>
+                  ),
+              },
               updated: {
                 render: () => (
                   <ListItem

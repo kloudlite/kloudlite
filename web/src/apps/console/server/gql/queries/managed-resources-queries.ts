@@ -12,10 +12,6 @@ import {
   ConsoleUpdateManagedResourceMutationVariables,
   ConsoleDeleteManagedResourceMutation,
   ConsoleDeleteManagedResourceMutationVariables,
-  // ConsoleImportManagedResourceMutation,
-  // ConsoleImportManagedResourceMutationVariables,
-  // ConsoleDeleteImportedManagedResourceMutation,
-  // ConsoleDeleteImportedManagedResourceMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IManagedResource = NN<
@@ -303,46 +299,4 @@ export const managedResourceQueries = (executor: IExecutor) => ({
       vars(_: ConsoleDeleteManagedResourceMutationVariables) {},
     }
   ),
-  // importManagedResource: executor(
-  //   gql`
-  //     mutation Core_importManagedResource(
-  //       $envName: String!
-  //       $mresName: String!
-  //       $msvcName: String!
-  //       $importName: String!
-  //     ) {
-  //       core_importManagedResource(
-  //         envName: $envName
-  //         mresName: $mresName
-  //         msvcName: $msvcName
-  //         importName: $importName
-  //       ) {
-  //         id
-  //       }
-  //     }
-  //   `,
-  //   {
-  //     transformer: (data: ConsoleImportManagedResourceMutation) =>
-  //       data.core_importManagedResource,
-  //     vars(_: ConsoleImportManagedResourceMutationVariables) {},
-  //   }
-  // ),
-  // deleteImportedManagedResource: executor(
-  //   gql`
-  //     mutation Core_deleteImportedManagedResource(
-  //       $envName: String!
-  //       $importName: String!
-  //     ) {
-  //       core_deleteImportedManagedResource(
-  //         envName: $envName
-  //         importName: $importName
-  //       )
-  //     }
-  //   `,
-  //   {
-  //     transformer: (data: ConsoleDeleteImportedManagedResourceMutation) =>
-  //       data.core_deleteImportedManagedResource,
-  //     vars(_: ConsoleDeleteImportedManagedResourceMutationVariables) {},
-  //   }
-  // ),
 });

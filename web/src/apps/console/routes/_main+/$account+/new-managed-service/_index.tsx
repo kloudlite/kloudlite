@@ -193,7 +193,9 @@ const TemplateView = ({
 }) => {
   return (
     <form className="flex flex-col gap-3xl" onSubmit={handleSubmit}>
-      <div className="bodyMd text-text-soft">Create your managed services.</div>
+      <div className="bodyMd text-text-soft">
+        Create your integrated services.
+      </div>
       <Select
         label="Template"
         size="lg"

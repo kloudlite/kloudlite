@@ -64,23 +64,13 @@ const tabs = [
   {
     label: (
       <span className="flex flex-row items-center gap-lg">
-        <TreeStructure size={tabIconSize} />
-        External Apps
+        <BackingServices size={tabIconSize} />
+        Integrated Resources
       </span>
     ),
-    to: '/external-apps',
-    value: '/external-apps',
+    to: '/managed-resources',
+    value: '/managed-resources',
   },
-  // {
-  //   label: (
-  //     <span className="flex flex-row items-center gap-lg">
-  //       <TreeStructure size={tabIconSize} />
-  //       Router
-  //     </span>
-  //   ),
-  //   to: '/routers',
-  //   value: '/routers',
-  // },
   {
     label: (
       <span className="flex flex-row items-center gap-lg">
@@ -94,12 +84,12 @@ const tabs = [
   {
     label: (
       <span className="flex flex-row items-center gap-lg">
-        <BackingServices size={tabIconSize} />
-        Integrated resources
+        <TreeStructure size={tabIconSize} />
+        External Apps
       </span>
     ),
-    to: '/managed-resources',
-    value: '/managed-resources',
+    to: '/external-apps',
+    value: '/external-apps',
   },
   // {
   //   label: 'Jobs & Crons',

@@ -4432,6 +4432,130 @@ mutation consoleDeleteImportedManagedResource($envName: String!, $importName: St
   core_deleteImportedManagedResource(envName: $envName, importName: $importName)
 }
 
+query consoleListImportedManagedResources($envName: String!, $search: SearchImportedManagedResources, $pq: CursorPaginationIn) {
+  core_listImportedManagedResources(envName: $envName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        environmentName
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        managedResourceRef {
+          id
+          name
+          namespace
+        }
+        markedForDeletion
+        name
+        recordVersion
+        secretRef {
+          name
+          namespace
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+        managedResource {
+          accountName
+          apiVersion
+          clusterName
+          creationTime
+          displayName
+          enabled
+          environmentName
+          id
+          isImported
+          kind
+          managedServiceName
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          mresRef
+          recordVersion
+          spec {
+            resourceNamePrefix
+            resourceTemplate {
+              apiVersion
+              kind
+              msvcRef {
+                apiVersion
+                clusterName
+                kind
+                name
+                namespace
+              }
+              spec
+            }
+          }
+          status {
+            checkList {
+              debug
+              description
+              hide
+              name
+              title
+            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncedOutputSecretRef {
+            apiVersion
+            data
+            immutable
+            kind
+            stringData
+            type
+          }
+          updateTime
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
 query iotconsoleAccountCheckNameAvailability($name: String!) {
   accounts_checkNameAvailability(name: $name) {
     result

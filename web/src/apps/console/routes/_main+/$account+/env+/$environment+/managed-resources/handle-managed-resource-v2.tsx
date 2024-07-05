@@ -21,14 +21,14 @@ import ListV2 from '~/console/components/listV2';
 import { ListItem } from '~/console/components/console-list-components';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import { useEffect, useState } from 'react';
-import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { toast } from '~/components/molecule/toast';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { NameIdView } from '~/console/components/name-id-view';
+import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
 import { IEnvironmentContext } from '../_layout';
 
-type BaseType = ExtractNodeType<IManagedResources>;
-type IDialog = IDialogBase<ExtractNodeType<IManagedResources>>;
+type BaseType = ExtractNodeType<IImportedManagedResources>;
+type IDialog = IDialogBase<ExtractNodeType<IImportedManagedResources>>;
 
 const SelectItem = ({ label, value }: { label: string; value: string }) => {
   return (
@@ -248,19 +248,16 @@ export const ViewSecret = ({
   const params = useParams();
   ensureAccountClientSide(params);
   const { data, isLoading, error } = useCustomSwr(
-    () =>
-      onYesClick
-        ? `secret _${item.syncedOutputSecretRef?.metadata?.name}`
-        : null,
+    () => (onYesClick ? `secret _${item.name}` : null),
     async () => {
-      if (!item.syncedOutputSecretRef?.metadata?.name) {
+      if (!item.name) {
         toast.error('Secret not found');
         throw new Error('Secret not found');
       } else {
         return api.getSecret({
           envName: parseName(environment),
 
-          name: item.syncedOutputSecretRef?.metadata?.name,
+          name: item.name,
         });
       }
     }
@@ -340,7 +337,7 @@ export const ViewSecret = ({
         <MultiStep.Root currentStep={currentStep}>
           <MultiStep.Step step={0}>
             <div>
-              <p>{`Are you sure you want to view the secrets of '${item.syncedOutputSecretRef?.metadata?.name}'?`}</p>
+              <p>{`Are you sure you want to view the secrets of '${item.name}'?`}</p>
             </div>
           </MultiStep.Step>
           <MultiStep.Step step={1}>{dataSecret()}</MultiStep.Step>

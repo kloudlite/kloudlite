@@ -260,7 +260,7 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
           }
         >
           <div>
-            <Badge type="success">Online</Badge>
+            <Badge type="info">Online</Badge>
           </div>
         </Tooltip.Root>
       );
