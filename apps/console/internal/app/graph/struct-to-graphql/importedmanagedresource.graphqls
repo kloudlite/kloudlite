@@ -1,0 +1,37 @@
+type ImportedManagedResource @shareable {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  environmentName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  managedResourceRef: Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ImportedManagedResourceEdge @shareable {
+  cursor: String!
+  node: ImportedManagedResource!
+}
+
+type ImportedManagedResourcePaginatedRecords @shareable {
+  edges: [ImportedManagedResourceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input ImportedManagedResourceIn {
+  displayName: String!
+  environmentName: String!
+  managedResourceRef: Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRefIn!
+  name: String!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatusIn!
+}
+

@@ -74,6 +74,12 @@ input SearchManagedResources {
 	markedForDeletion: MatchFilterIn
 }
 
+input SearchImportedManagedResources {
+	text: MatchFilterIn
+	isReady: MatchFilterIn
+	markedForDeletion: MatchFilterIn
+}
+
 input SearchProjectManagedService {
 	text: MatchFilterIn
 	managedServiceName: MatchFilterIn
@@ -134,6 +140,8 @@ type Query {
 	# core_listImportedManagedResources(envName: String! ,search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
 	# core_getImportedManagedResource(envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
 
+	core_listImportedManagedResources(envName: String!, search: SearchImportedManagedResources, pq: CursorPaginationIn): ImportedManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
+
 	# core_listProjectManagedServices(search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
 	# core_getProjectManagedService( name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
 	# core_resyncProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -184,8 +192,12 @@ type Mutation {
 	core_createManagedResource(msvcName: String! ,mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_updateManagedResource(msvcName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_deleteManagedResource(msvcName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	core_importManagedResource(envName: String!, msvcName: String! ,mresName: String!): ManagedResource @isLoggedInAndVerified @hasAccount
-	core_deleteImportedManagedResource(envName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+	# core_importManagedResource(envName: String!, msvcName: String!, mresName: String!, importName: String!): ManagedResource @isLoggedInAndVerified @hasAccount
+	# core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+	core_importManagedResource(envName: String!, msvcName: String!, mresName: String!, importName: String!): ImportedManagedResource @isLoggedInAndVerified @hasAccount
+	core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	# core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
 	# core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
@@ -208,4 +220,8 @@ type Build @key(fields: "id") {
 
 extend type App {
 	build: Build
+}
+
+extend type ImportedManagedResource {
+  managedResource: ManagedResource
 }
