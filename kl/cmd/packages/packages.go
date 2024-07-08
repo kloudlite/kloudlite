@@ -1,6 +1,7 @@
 package packages
 
 import (
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +19,10 @@ func init() {
 	//fileclient.OnlyInsideBox(rmCmd)
 
 	Cmd.AddCommand(listCmd)
+	fileclient.OnlyInsideBox(addCmd)
 	Cmd.AddCommand(addCmd)
+	fileclient.OnlyInsideBox(rmCmd)
 	Cmd.AddCommand(rmCmd)
+	fileclient.OnlyInsideBox(searchCmd)
 	Cmd.AddCommand(searchCmd)
 }

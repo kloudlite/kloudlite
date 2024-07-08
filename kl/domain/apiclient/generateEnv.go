@@ -18,9 +18,9 @@ type ConfigEnv struct {
 }
 
 type MresEnv struct {
-	Key      string `json:"key"`
-	MresName string `json:"mresName"`
-	Value    string `json:"value"`
+	Key        string `json:"key"`
+	SecretName string `json:"secretName"`
+	Value      string `json:"value"`
 }
 
 type EnvRsp struct {
@@ -135,8 +135,8 @@ func (apic *apiClient) GetLoadMaps() (map[string]string, MountMap, error) {
 			for _, rt := range currMreses {
 				for _, v := range rt.Env {
 					queries = append(queries, map[string]any{
-						"mresName": rt.Name,
-						"key":      v.RefKey,
+						"secretName": rt.Name,
+						"key":        v.RefKey,
 					})
 				}
 			}
@@ -237,16 +237,15 @@ func (apic *apiClient) GetLoadMaps() (map[string]string, MountMap, error) {
 	}
 
 	for _, v := range fromResp.Mreses {
-		ent := mmap[v.MresName][v.Key]
+		ent := mmap[v.SecretName][v.Key]
 		if ent != nil {
 			result[ent.Key] = v.Value
 		}
 
-		if mmap[v.MresName][v.Key] != nil {
-			mmap[v.MresName][v.Key].Value = v.Value
+		if mmap[v.SecretName][v.Key] != nil {
+			mmap[v.SecretName][v.Key].Value = v.Value
 		}
 	}
-
 	// ************************[ handling mounts ]****************************
 	mountMap := map[string]string{}
 

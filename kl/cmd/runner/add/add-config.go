@@ -230,7 +230,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 			},
 		})
 	}
-	//fmt.Println(currConfigs)
+
 	klFile.EnvVars.AddResTypes(currConfigs, fileclient.Res_config)
 
 	err = fc.WriteKLFile(*klFile)

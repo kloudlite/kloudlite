@@ -2,7 +2,6 @@ package boxpkg
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/docker/docker/api/types/container"
@@ -39,8 +38,7 @@ func (c *client) ConfirmBoxRestart() error {
 	})
 
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return err
 	}
 	if len(existingContainers) == 0 {
 		return nil

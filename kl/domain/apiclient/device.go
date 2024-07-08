@@ -204,12 +204,7 @@ func createVpnForAccount() (*Device, error) {
 
 func (apic *apiClient) GetAccVPNConfig(account string) (*fileclient.AccountVpnConfig, error) {
 
-	fc, err := fileclient.New()
-	if err != nil {
-		return nil, fn.NewE(err)
-	}
-
-	avc, err := fc.GetVpnAccountConfig(account)
+	avc, err := apic.fc.GetVpnAccountConfig(account)
 
 	if err != nil && os.IsNotExist(err) {
 		dev, err := createVpnForAccount()
@@ -221,10 +216,10 @@ func (apic *apiClient) GetAccVPNConfig(account string) (*fileclient.AccountVpnCo
 			DeviceName: dev.Metadata.Name,
 		}
 
-		if err := fc.SetVpnAccountConfig(account, &accountVpnConfig); err != nil {
+		if err := apic.fc.SetVpnAccountConfig(account, &accountVpnConfig); err != nil {
 			return nil, fn.NewE(err)
 		}
-	} else {
+	} else if err != nil {
 		return nil, fn.NewE(err)
 	}
 
@@ -236,7 +231,7 @@ func (apic *apiClient) GetAccVPNConfig(account string) (*fileclient.AccountVpnCo
 
 		avc.WGconf = d.WireguardConfig.Value
 
-		if err := fc.SetVpnAccountConfig(account, avc); err != nil {
+		if err := apic.fc.SetVpnAccountConfig(account, avc); err != nil {
 			return nil, fn.NewE(err)
 		}
 	}

@@ -2,15 +2,15 @@ package packages
 
 import (
 	"fmt"
-	"os"
-	"slices"
-
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
+	"os"
+	"slices"
 
 	"github.com/spf13/cobra"
 )
@@ -56,10 +56,27 @@ func addPackages(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.
 		return functions.Error("name is required")
 	}
 
-	p, err := Resolve(cmd.Context(), name)
+	p, hashpkg, err := Resolve(cmd.Context(), name)
 	if err != nil {
 		return functions.NewE(err)
 	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	c, err := boxpkg.NewClient(cmd, args)
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	spinner.Client.Pause()
+	_, err = fn.Exec(fmt.Sprintf("nix shell nixpkgs/%s#%s --command echo downloaded", hashpkg, p), nil)
+	if err != nil {
+		return functions.NewE(err)
+	}
+	spinner.Client.Resume()
 
 	name = p
 	if slices.Contains(klConf.Packages, name) {
@@ -72,21 +89,11 @@ func addPackages(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.
 		return functions.NewE(err)
 	}
 
-	fn.Println(fmt.Sprintf("Package %s is added successfully", name))
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		return functions.NewE(err)
-	}
-
 	if err := hashctrl.SyncBoxHash(apic, fc, cwd); err != nil {
 		return functions.NewE(err)
 	}
 
-	c, err := boxpkg.NewClient(cmd, args)
-	if err != nil {
-		return functions.NewE(err)
-	}
+	fn.Println(fmt.Sprintf("Package %s is added successfully", name))
 
 	if err := c.ConfirmBoxRestart(); err != nil {
 		return functions.NewE(err)

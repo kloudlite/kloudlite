@@ -42,7 +42,7 @@ var mresCmd = &cobra.Command{
 			return
 		}
 
-		sec, err := apic.ListMreses(currentEnv.Name, []fn.Option{
+		mres, err := apic.ListMreses(currentEnv.Name, []fn.Option{
 			fn.MakeOption("accountName", klFile.AccountName),
 		}...)
 		if err != nil {
@@ -50,7 +50,7 @@ var mresCmd = &cobra.Command{
 			return
 		}
 
-		if err := printMres(cmd, sec); err != nil {
+		if err := printMres(cmd, mres); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -65,13 +65,13 @@ func printMres(_ *cobra.Command, secrets []apiclient.Mres) error {
 	header := table.Row{
 		table.HeaderText("Display Name"),
 		table.HeaderText("Name"),
-		// table.HeaderText("entries"),
+		table.HeaderText("Secret Ref Name"),
 	}
 
 	rows := make([]table.Row, 0)
 
 	for _, a := range secrets {
-		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name})
+		rows = append(rows, table.Row{a.DisplayName, a.Name, a.SecretRefName.Name})
 	}
 
 	fmt.Println(table.Table(&header, rows))

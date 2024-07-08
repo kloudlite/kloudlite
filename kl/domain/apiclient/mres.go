@@ -7,8 +7,9 @@ import (
 )
 
 type Mres struct {
-	DisplayName string   `json:"displayName"`
-	Metadata    Metadata `json:"metadata"`
+	DisplayName   string   `json:"displayName"`
+	Name          string   `json:"name"`
+	SecretRefName Metadata `json:"secretRef"`
 }
 
 func (apic *apiClient) ListMreses(envName string, options ...fn.Option) ([]Mres, error) {

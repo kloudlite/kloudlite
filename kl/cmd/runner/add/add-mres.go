@@ -65,7 +65,7 @@ func AddMres(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Comm
 	}
 
 	mresKey, err := selectMresKey(apic, []fn.Option{
-		fn.MakeOption("secretName", mres.Metadata.Name),
+		fn.MakeOption("secretName", mres.SecretRefName.Name),
 		fn.MakeOption("accountName", kt.AccountName),
 	}...)
 
@@ -78,10 +78,10 @@ func AddMres(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Comm
 	if currMreses == nil {
 		currMreses = []fileclient.ResType{
 			{
-				Name: mres.Metadata.Name,
+				Name: mres.SecretRefName.Name,
 				Env: []fileclient.ResEnvType{
 					{
-						Key:    RenameKey(fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey)),
+						Key:    RenameKey(fmt.Sprintf("%s_%s", mres.SecretRefName.Name, *mresKey)),
 						RefKey: *mresKey,
 					},
 				},
@@ -92,9 +92,9 @@ func AddMres(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Comm
 	if currMreses != nil {
 		matchedMres := false
 		for i, rt := range currMreses {
-			if rt.Name == mres.Metadata.Name {
+			if rt.Name == mres.SecretRefName.Name {
 				currMreses[i].Env = append(currMreses[i].Env, fileclient.ResEnvType{
-					Key:    RenameKey(fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey)),
+					Key:    RenameKey(fmt.Sprintf("%s_%s", mres.SecretRefName.Name, *mresKey)),
 					RefKey: *mresKey,
 				})
 				matchedMres = true
@@ -104,10 +104,10 @@ func AddMres(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Comm
 
 		if !matchedMres {
 			currMreses = append(currMreses, fileclient.ResType{
-				Name: mres.Metadata.Name,
+				Name: mres.SecretRefName.Name,
 				Env: []fileclient.ResEnvType{
 					{
-						Key:    RenameKey(fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey)),
+						Key:    RenameKey(fmt.Sprintf("%s_%s", mres.SecretRefName.Name, *mresKey)),
 						RefKey: *mresKey,
 					},
 				},
@@ -120,7 +120,7 @@ func AddMres(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Comm
 		return fn.NewE(err)
 	}
 
-	fn.Log(fmt.Sprintf("added mres %s/%s to your kl-file", mres.Metadata.Name, *mresKey))
+	fn.Log(fmt.Sprintf("added mres %s/%s to your kl-file", mres.SecretRefName.Name, *mresKey))
 
 	wpath, err := os.Getwd()
 	if err != nil {
