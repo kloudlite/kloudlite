@@ -245,9 +245,9 @@ func (d *domain) OnSecretDeleteMessage(ctx ResourceContext, secret entities.Secr
 		return errors.NewE(err)
 	}
 
-	if _, err := d.MatchRecordVersion(secret.Annotations, s.RecordVersion); err != nil {
-		return d.resyncK8sResource(ctx, s.EnvironmentName, s.SyncStatus.Action, &s.Secret, s.RecordVersion)
-	}
+	// if _, err := d.MatchRecordVersion(secret.Annotations, s.RecordVersion); err != nil {
+	// 	return d.resyncK8sResource(ctx, s.EnvironmentName, s.SyncStatus.Action, &s.Secret, s.RecordVersion)
+	// }
 
 	if s.For != nil {
 		switch s.For.ResourceType {
