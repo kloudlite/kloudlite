@@ -331,4 +331,5 @@ type ResourceEventPublisher interface {
 	PublishConsoleEvent(ctx ConsoleContext, resourceType entities.ResourceType, name string, update PublishMsg)
 	PublishEnvironmentResourceEvent(ctx ConsoleContext, envName string, resourceType entities.ResourceType, name string, update PublishMsg)
 	PublishResourceEvent(ctx ResourceContext, resourceType entities.ResourceType, name string, update PublishMsg)
+	PublishClusterManagedServiceEvent(ctx ConsoleContext, msvcName string, resourceType entities.ResourceType, name string, update PublishMsg)
 }
