@@ -145,7 +145,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment)
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, nenv.Name, entities.ResourceTypeEnvironment, nenv.Name, PublishAdd)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeEnvironment, nenv.Name, PublishAdd)
 
 	if _, err := d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
 		UserId:       string(ctx.UserId),
@@ -493,7 +493,7 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, env entities.Environment)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, upEnv.Name, entities.ResourceTypeEnvironment, upEnv.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeEnvironment, upEnv.Name, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, upEnv.Name, &upEnv.Environment, upEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -512,7 +512,7 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, uenv.Name, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
 
 	if uenv.IsArchived != nil && *uenv.IsArchived {
 		return d.environmentRepo.DeleteById(ctx, uenv.Id)
@@ -547,7 +547,7 @@ func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, 
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, uenv.Name, entities.ResourceTypeEnvironment, uenv.Name, PublishDelete)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeEnvironment, uenv.Name, PublishDelete)
 
 	return errors.NewE(err)
 }
@@ -570,7 +570,7 @@ func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Env
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, env.Name, entities.ResourceTypeEnvironment, env.Name, PublishDelete)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeEnvironment, env.Name, PublishDelete)
 	return nil
 }
 
@@ -603,7 +603,7 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 		return err
 	}
 
-	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, uenv.Name, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
 	return nil
 }
 
