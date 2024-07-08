@@ -3,6 +3,8 @@ package get
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -24,27 +26,58 @@ var configCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
 		configName := ""
 
 		if len(args) >= 1 {
 			configName = args[0]
 		}
-		// filePath := fn.ParseKlFile(cmd)
-		// klFile, err := fc.GetKlFile(filePath)
-		// if err != nil {
-		// 	fn.PrintError(err)
-		// 	return
-		// }
+		//filePath := fn.ParseKlFile(cmd)
+		//klFile, err := fc.GetKlFile(filePath)
+		//if err != nil {
+		//	fn.PrintError(err)
+		//	return
+		//}
+		//
+		//config, err := apic.EnsureConfig([]fn.Option{
+		//	fn.MakeOption("configName", configName),
+		//	fn.MakeOption("accountName", klFile.AccountName),
+		//}...)
+		//if err != nil {
+		//	fn.PrintError(err)
+		//	return
+		//}
 
-		// config, err := apic.EnsureConfig([]fn.Option{
-		// 	fn.MakeOption("configName", configName),
-		// 	fn.MakeOption("accountName", klFile.AccountName),
-		// }...)
-		// if err != nil {
-		// 	fn.PrintError(err)
-		// 	return
-		// }
+		if configName == "" {
+			currentAccount, err := fc.CurrentAccountName()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			currentEnv, err := fc.CurrentEnv()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			configs, err := apic.ListConfigs(currentAccount, currentEnv.Name)
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			selectedConfig, err := fzf.FindOne(configs, func(config apiclient.Config) string {
+				return config.DisplayName
+			}, fzf.WithPrompt("select config > "))
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			configName = selectedConfig.Metadata.Name
+		}
 
 		config, err := apic.GetConfig(fn.MakeOption("configName", configName))
 		if err != nil {

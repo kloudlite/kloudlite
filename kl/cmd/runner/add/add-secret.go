@@ -58,9 +58,16 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	secrets, err := apic.ListSecrets([]fn.Option{
-		fn.MakeOption("accountName", klFile.AccountName),
-	}...)
+	currentAccount, err := fc.CurrentAccountName()
+	if err != nil {
+		return fn.NewE(err)
+	}
+	currentEnv, err := fc.CurrentEnv()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	secrets, err := apic.ListSecrets(currentAccount, currentEnv.Name)
 	if err != nil {
 		return functions.NewE(err)
 	}

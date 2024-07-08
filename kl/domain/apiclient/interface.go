@@ -19,7 +19,7 @@ type ApiClient interface {
 	GetCurrentUser() (*User, error)
 	Login(loginId string) error
 
-	ListConfigs(options ...fn.Option) ([]Config, error)
+	ListConfigs(accountName string, envName string) ([]Config, error)
 	GetConfig(options ...fn.Option) (*Config, error)
 
 	GetVPNDevice(devName string, options ...fn.Option) (*Device, error)
@@ -34,7 +34,7 @@ type ApiClient interface {
 	ListMresKeys(envName, importedManagedResource string, options ...fn.Option) ([]string, error)
 	GetMresConfigValues(options ...fn.Option) (map[string]string, error)
 
-	ListSecrets(options ...fn.Option) ([]Secret, error)
+	ListSecrets(accountName string, envName string) ([]Secret, error)
 	GetSecret(options ...fn.Option) (*Secret, error)
 }
 

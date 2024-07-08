@@ -29,19 +29,17 @@ var configsCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-
-		envName := fn.ParseStringFlag(cmd, "env")
-
-		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fc.GetKlFile(filePath)
+		currentAccount, err := fc.CurrentAccountName()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
-		config, err := apic.ListConfigs([]fn.Option{
-			fn.MakeOption("envName", envName),
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		currentEnv, err := fc.CurrentEnv()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		config, err := apic.ListConfigs(currentAccount, currentEnv.Name)
 
 		if err != nil {
 			fn.PrintError(err)

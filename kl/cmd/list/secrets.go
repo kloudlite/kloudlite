@@ -30,16 +30,18 @@ var secretsCmd = &cobra.Command{
 			return
 		}
 
-		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fc.GetKlFile(filePath)
+		currentAccount, err := fc.CurrentAccountName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		currentEnv, err := fc.CurrentEnv()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		sec, err := apic.ListSecrets([]fn.Option{
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		sec, err := apic.ListSecrets(currentAccount, currentEnv.Name)
 		if err != nil {
 			fn.PrintError(err)
 			return

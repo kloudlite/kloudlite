@@ -18,21 +18,21 @@ type Config struct {
 	Data        map[string]string `yaml:"data"`
 }
 
-func (apic *apiClient) ListConfigs(options ...fn.Option) ([]Config, error) {
+func (apic *apiClient) ListConfigs(accountName string, envName string) ([]Config, error) {
 
 	// env, err := EnsureEnv(nil, options...)
 	// if err != nil {
 	// 	return nil, fn.NewE(err)
 	// }
 
-	cookie, err := getCookie(options...)
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
-	currentEnv, err := apic.fc.CurrentEnv()
-	if err != nil {
-		return nil, fn.NewE(err)
-	}
+	//currentEnv, err := apic.fc.CurrentEnv()
+	//if err != nil {
+	//	return nil, fn.NewE(err)
+	//}
 
 	respData, err := klFetch("cli_listConfigs", map[string]any{
 		"pq": map[string]any{
@@ -40,7 +40,7 @@ func (apic *apiClient) ListConfigs(options ...fn.Option) ([]Config, error) {
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},
-		"envName": strings.TrimSpace(currentEnv.Name),
+		"envName": strings.TrimSpace(envName),
 	}, &cookie)
 
 	if err != nil {

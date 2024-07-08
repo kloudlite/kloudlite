@@ -55,7 +55,7 @@ var InitCommand = &cobra.Command{
 			fn.PrintError(err)
 			return
 		} else {
-			if selectedEnv, err := selectEnv(apic, *selectedAccount); err != nil {
+			if selectedEnv, err := selectEnv(apic, fc, *selectedAccount); err != nil {
 				fn.PrintError(err)
 			} else {
 				newKlFile := fileclient.KLFileType{
@@ -115,7 +115,7 @@ func selectAccount(apic apiclient.ApiClient) (*string, error) {
 	}
 }
 
-func selectEnv(apic apiclient.ApiClient, accountName string) (*string, error) {
+func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient, accountName string) (*string, error) {
 	if envs, err := apic.ListEnvs([]fn.Option{
 		fn.MakeOption("accountName", accountName),
 	}...); err == nil {
@@ -128,6 +128,17 @@ func selectEnv(apic apiclient.ApiClient, accountName string) (*string, error) {
 		); err != nil {
 			return nil, fn.NewE(err)
 		} else {
+			cwd, err := os.Getwd()
+			env := &fileclient.Env{
+				Name: selectedEnv.Metadata.Name,
+			}
+			err = fc.SelectEnvOnPath(cwd, *env)
+			if err != nil {
+				return nil, fn.NewE(err)
+			}
+			if err != nil {
+				return nil, fn.NewE(err)
+			}
 			return &selectedEnv.Metadata.Name, nil
 		}
 	} else {

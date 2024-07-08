@@ -13,19 +13,14 @@ type Secret struct {
 	StringData  map[string]string `yaml:"stringData"`
 }
 
-func (apic *apiClient) ListSecrets(options ...fn.Option) ([]Secret, error) {
+func (apic *apiClient) ListSecrets(accountName string, envName string) ([]Secret, error) {
 
 	// env, err := EnsureEnv(nil, options...)
 	// if err != nil {
 	// 	return nil, functions.NewE(err)
 	// }
 
-	currentEnv, err := apic.fc.CurrentEnv()
-	if err != nil {
-		return nil, fn.NewE(err)
-	}
-
-	cookie, err := getCookie(options...)
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -36,7 +31,7 @@ func (apic *apiClient) ListSecrets(options ...fn.Option) ([]Secret, error) {
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},
-		"envName": strings.TrimSpace(currentEnv.Name),
+		"envName": strings.TrimSpace(envName),
 	}, &cookie)
 
 	if err != nil {

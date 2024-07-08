@@ -100,9 +100,16 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, path 
 
 	items := make([]apiclient.ConfigORSecret, 0)
 	if cOrs == fileclient.ConfigType {
-		configs, e := apic.ListConfigs([]fn.Option{
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		currentAccount, err := fc.CurrentAccountName()
+		if err != nil {
+			return err
+		}
+		currentEnv, err := fc.CurrentEnv()
+		if err != nil {
+			fn.PrintError(err)
+			return err
+		}
+		configs, e := apic.ListConfigs(currentAccount, currentEnv.Name)
 
 		if e != nil {
 			return e
@@ -116,9 +123,16 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, path 
 		}
 
 	} else {
-		secrets, e := apic.ListSecrets([]fn.Option{
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		currentAccount, err := fc.CurrentAccountName()
+		if err != nil {
+			return err
+		}
+		currentEnv, err := fc.CurrentEnv()
+		if err != nil {
+			fn.PrintError(err)
+			return err
+		}
+		secrets, e := apic.ListSecrets(currentAccount, currentEnv.Name)
 
 		if e != nil {
 			return e

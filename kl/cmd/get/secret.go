@@ -3,6 +3,8 @@ package get
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/domain/apiclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -24,12 +26,17 @@ var secretCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
-		// secName := ""
+		secName := ""
 
-		// if len(args) >= 1 {
-		// 	secName = args[0]
-		// }
+		if len(args) >= 1 {
+			secName = args[0]
+		}
 
 		// filePath := fn.ParseKlFile(cmd)
 		// klFile, err := fc.GetKlFile(filePath)
@@ -47,7 +54,33 @@ var secretCmd = &cobra.Command{
 		// 	return
 		// }
 
-		sec, err := apic.GetSecret(fn.MakeOption("secretName", args[0]))
+		if secName == "" {
+			currentAccount, err := fc.CurrentAccountName()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			currentEnv, err := fc.CurrentEnv()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			secrets, err := apic.ListSecrets(currentAccount, currentEnv.Name)
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			selectedSecret, err := fzf.FindOne(secrets, func(secret apiclient.Secret) string {
+				return secret.Metadata.Name
+			}, fzf.WithPrompt("select secret > "))
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			secName = selectedSecret.Metadata.Name
+		}
+
+		sec, err := apic.GetSecret(fn.MakeOption("secretName", secName))
 		if err != nil {
 			fn.PrintError(err)
 			return
