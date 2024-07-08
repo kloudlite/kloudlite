@@ -52,6 +52,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 
 		mLogger := logger.WithKV(
 			"gvk", obj.GroupVersionKind(),
+			"nn", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
 			"accountName", em.AccountName,
 			"clusterName", em.ClusterName,
 		)
@@ -184,11 +185,6 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case managedResourceGVK.String():
 			{
-				//rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeManagedResource, em.ClusterName, obj)
-				//if err != nil {
-				//	return errors.NewE(err)
-				//}
-
 				mres, err := fn.JsonConvert[entities.ManagedResource](obj.Object)
 				if err != nil {
 					return err
