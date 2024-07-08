@@ -8,8 +8,9 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
+
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/spf13/cobra"
 )
@@ -25,8 +26,18 @@ This command will add secret entry of managed resource references from current e
   kl add  mres [name] # add specific mres secret entry to your kl-config as env var by providing mres name
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
-		if err := AddMres(cmd, args); err != nil {
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		if err := AddMres(apic, fc, cmd, args); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -34,42 +45,32 @@ This command will add secret entry of managed resource references from current e
 	},
 }
 
-func AddMres(cmd *cobra.Command, args []string) error {
-	fc, err := fileclient.New()
-	if err != nil {
-		return fn.NewE(err)
-	}
+func AddMres(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Command, args []string) error {
 
 	filePath := fn.ParseKlFile(cmd)
 	kt, err := fc.GetKlFile(filePath)
 	if err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	//TODO: add changes to the klbox-hash file
-	mresName := fn.ParseStringFlag(cmd, "resource")
+	// mresName := fn.ParseStringFlag(cmd, "resource")
 
-	mres, err := apiclient.SelectMres([]fn.Option{
-		fn.MakeOption("mresName", mresName),
+	mres, err := selectMres(apic, fc, []fn.Option{
 		fn.MakeOption("accountName", kt.AccountName),
 	}...)
 
 	if err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
-	mresKey, err := apiclient.SelectMresKey([]fn.Option{
-		fn.MakeOption("mresName", mres.Metadata.Name),
+	mresKey, err := selectMresKey(apic, []fn.Option{
+		fn.MakeOption("secretName", mres.Metadata.Name),
 		fn.MakeOption("accountName", kt.AccountName),
 	}...)
 
 	if err != nil {
-		return functions.NewE(err)
-	}
-
-	env, err := fileclient.CurrentEnv()
-	if err != nil && kt.DefaultEnv != "" {
-		env.Name = kt.DefaultEnv
+		return fn.NewE(err)
 	}
 
 	currMreses := kt.EnvVars.GetMreses()
@@ -116,18 +117,18 @@ func AddMres(cmd *cobra.Command, args []string) error {
 
 	kt.EnvVars.AddResTypes(currMreses, fileclient.Res_mres)
 	if err := fc.WriteKLFile(*kt); err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	fn.Log(fmt.Sprintf("added mres %s/%s to your kl-file", mres.Metadata.Name, *mresKey))
 
 	wpath, err := os.Getwd()
 	if err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
-	if err := hashctrl.SyncBoxHash(wpath); err != nil {
-		return functions.NewE(err)
+	if err := hashctrl.SyncBoxHash(apic, fc, wpath); err != nil {
+		return fn.NewE(err)
 	}
 
 	c, err := boxpkg.NewClient(cmd, args)
@@ -136,20 +137,51 @@ func AddMres(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := c.ConfirmBoxRestart(); err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
-
-	//if err := apiclient.SyncDevboxJsonFile(); err != nil {
-	//	return functions.NewE(err)
-	//}
-	//
-	//if err := fileclient.SyncDevboxShellEnvFile(cmd); err != nil {
-	//	return functions.NewE(err)
-	//}
 
 	return nil
 }
 
+func selectMres(apic apiclient.ApiClient, fc fileclient.FileClient, options ...fn.Option) (*apiclient.Mres, error) {
+	currentEnv, err := fc.CurrentEnv()
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+	options = append(options, fn.MakeOption("envName", currentEnv.Name))
+	m, err := apic.ListMreses(currentEnv.Name, options...)
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+	if len(m) == 0 {
+		return nil, fmt.Errorf("no managed resources created yet on server")
+	}
+
+	mres, err := fzf.FindOne(m, func(item apiclient.Mres) string {
+		return item.DisplayName
+	}, fzf.WithPrompt("Select managed resource >"))
+
+	return mres, err
+}
+
 func init() {
 	fn.WithKlFile(mresCmd)
+}
+
+func selectMresKey(apic apiclient.ApiClient, options ...fn.Option) (*string, error) {
+	secret, err := apic.GetSecret(options...)
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+
+	keys := []string{}
+	for k := range secret.StringData {
+		keys = append(keys, k)
+	}
+
+	key, err := fzf.FindOne(keys, func(item string) string {
+		return item
+	}, fzf.WithPrompt("Select key >"))
+
+	return key, err
 }

@@ -3,9 +3,7 @@ package apiclient
 import (
 	"strings"
 
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
 type Secret struct {
@@ -15,16 +13,21 @@ type Secret struct {
 	StringData  map[string]string `yaml:"stringData"`
 }
 
-func ListSecrets(options ...fn.Option) ([]Secret, error) {
+func (apic *apiClient) ListSecrets(options ...fn.Option) ([]Secret, error) {
 
-	env, err := EnsureEnv(nil, options...)
+	// env, err := EnsureEnv(nil, options...)
+	// if err != nil {
+	// 	return nil, functions.NewE(err)
+	// }
+
+	currentEnv, err := apic.fc.CurrentEnv()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	cookie, err := getCookie(options...)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	respData, err := klFetch("cli_listSecrets", map[string]any{
@@ -33,95 +36,99 @@ func ListSecrets(options ...fn.Option) ([]Secret, error) {
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},
-		"envName": strings.TrimSpace(env.Name),
+		"envName": strings.TrimSpace(currentEnv.Name),
 	}, &cookie)
 
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	if fromResp, err := GetFromRespForEdge[Secret](respData); err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	} else {
 		return fromResp, nil
 	}
 }
 
-func SelectSecret(options ...fn.Option) (*Secret, error) {
+// func SelectSecret(options ...fn.Option) (*Secret, error) {
+// 	e, err := EnsureEnv(nil, options...)
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
 
-	e, err := EnsureEnv(nil, options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+// 	if e.Name == "" {
+// 		return nil, functions.Error("no environment selected")
+// 	}
 
-	if e.Name == "" {
-		return nil, functions.Error("no environment selected")
-	}
+// 	secrets, err := ListSecrets(options...)
 
-	secrets, err := ListSecrets(options...)
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
 
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+// 	if len(secrets) == 0 {
+// 		return nil, functions.Error("no secret found")
+// 	}
 
-	if len(secrets) == 0 {
-		return nil, functions.Error("no secret found")
-	}
+// 	secret, err := fzf.FindOne(
+// 		secrets,
+// 		func(sec Secret) string {
+// 			return sec.DisplayName
+// 		},
+// 	)
 
-	secret, err := fzf.FindOne(
-		secrets,
-		func(sec Secret) string {
-			return sec.DisplayName
-		},
-	)
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
 
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+// 	return secret, nil
+// }
 
-	return secret, nil
-}
+// func EnsureSecret(options ...fn.Option) (*Secret, error) {
+// 	secName := fn.GetOption(options, "secretName")
 
-func EnsureSecret(options ...fn.Option) (*Secret, error) {
+// 	if secName != "" {
+// 		return GetSecret(options...)
+// 	}
+
+// 	secret, err := SelectSecret(options...)
+
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
+
+// 	return secret, nil
+// }
+
+func (apic *apiClient) GetSecret(options ...fn.Option) (*Secret, error) {
 	secName := fn.GetOption(options, "secretName")
 
-	if secName != "" {
-		return GetSecret(options...)
-	}
-
-	secret, err := SelectSecret(options...)
-
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	return secret, nil
-}
-
-func GetSecret(options ...fn.Option) (*Secret, error) {
-	secName := fn.GetOption(options, "secretName")
-
-	env, err := EnsureEnv(nil, options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+	// env, err := EnsureEnv(nil, options...)
+	// if err != nil {
+	// 	return nil, functions.NewE(err)
+	// }
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
+	}
+
+	currentEnv, err := apic.fc.CurrentEnv()
+	if err != nil {
+		return nil, fn.NewE(err)
 	}
 
 	respData, err := klFetch("cli_getSecret", map[string]any{
 		"name":    secName,
-		"envName": strings.TrimSpace(env.Name),
+		"envName": strings.TrimSpace(currentEnv.Name),
 	}, &cookie)
 
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	if fromResp, err := GetFromResp[Secret](respData); err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	} else {
 		return fromResp, nil
 	}

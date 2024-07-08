@@ -10,6 +10,7 @@ import (
 	"github.com/kloudlite/kl/domain/envclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/spf13/cobra"
 )
@@ -24,15 +25,48 @@ Examples:
 	`,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := startIntercept(cmd, args); err != nil {
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		if err := startIntercept(apic, fc, cmd, args); err != nil {
 			fn.PrintError(err)
 		}
 	},
 }
 
-func startIntercept(cmd *cobra.Command, args []string) error {
-	// app := fn.ParseStringFlag(cmd, "app")
-	app := ""
+func startIntercept(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Command, args []string) error {
+	accName, err := fc.CurrentAccountName()
+	if err != nil {
+		return err
+	}
+	currentEnv, err := fc.CurrentEnv()
+	if err != nil {
+		return err
+	}
+
+	appsList, err := apic.ListApps([]fn.Option{
+		fn.MakeOption("accountName", accName),
+		fn.MakeOption("envName", currentEnv.Name),
+	}...)
+	if err != nil {
+		return err
+	}
+
+	selectedApp, err := fzf.FindOne[apiclient.App](appsList, func(item apiclient.App) string {
+		return item.DisplayName
+	}, fzf.WithPrompt("Select app to intercept"))
+	if err != nil {
+		return err
+	}
+
+	// app := ""
 	maps, err := cmd.Flags().GetStringArray("port")
 	if err != nil {
 		return err
@@ -62,8 +96,8 @@ func startIntercept(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	err = apiclient.InterceptApp(true, ports, []fn.Option{
-		fn.MakeOption("appName", app),
+	err = apic.InterceptApp(selectedApp, true, ports, []fn.Option{
+		fn.MakeOption("appName", selectedApp.Metadata.Name),
 	}...)
 
 	if err != nil {
@@ -71,11 +105,6 @@ func startIntercept(cmd *cobra.Command, args []string) error {
 	}
 
 	bc, err := boxpkg.NewClient(cmd, args)
-	if err != nil {
-		return err
-	}
-
-	fc, err := fileclient.New()
 	if err != nil {
 		return err
 	}

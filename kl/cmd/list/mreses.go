@@ -2,6 +2,7 @@ package list
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/fileclient"
 
 	"github.com/kloudlite/kl/domain/apiclient"
@@ -22,6 +23,12 @@ var mresCmd = &cobra.Command{
 			return
 		}
 
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 		filePath := fn.ParseKlFile(cmd)
 		klFile, err := fc.GetKlFile(filePath)
 		if err != nil {
@@ -29,7 +36,13 @@ var mresCmd = &cobra.Command{
 			return
 		}
 
-		sec, err := apiclient.ListMreses([]fn.Option{
+		currentEnv, err := fc.CurrentEnv()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		sec, err := apic.ListMreses(currentEnv.Name, []fn.Option{
 			fn.MakeOption("accountName", klFile.AccountName),
 		}...)
 		if err != nil {

@@ -3,10 +3,7 @@ package apiclient
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/domain/fileclient"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
 type Mres struct {
@@ -14,113 +11,48 @@ type Mres struct {
 	Metadata    Metadata `json:"metadata"`
 }
 
-func ListMreses(options ...fn.Option) ([]Mres, error) {
-	env, err := EnsureEnv(nil, options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+func (apic *apiClient) ListMreses(envName string, options ...fn.Option) ([]Mres, error) {
 
 	cookie, err := getCookie(options...)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
-	respData, err := klFetch("cli_listMreses", map[string]any{
-		"envName": env.Name,
-		"search": map[string]any{
-			"envName": map[string]any{
-				"matchType": "exact",
-				"exact":     env.Name,
-			},
-		},
-		"pq": PaginationDefault,
+	respData, err := klFetch("cli_listImportedManagedResources", map[string]any{
+		"envName": envName,
+		"pq":      PaginationDefault,
 	}, &cookie)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	fromResp, err := GetFromRespForEdge[Mres](respData)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	return fromResp, nil
 }
 
-func SelectMres(options ...fn.Option) (*Mres, error) {
-
-	mresName := fn.GetOption(options, "mresName")
-
-	m, err := ListMreses(options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-	if len(m) == 0 {
-		return nil, fmt.Errorf("no managed resources created yet on server")
-	}
-
-	if mresName != "" {
-		for _, a := range m {
-			if a.Metadata.Name == mresName {
-				return &a, nil
-			}
-		}
-		return nil, fmt.Errorf("you don't have access to this managed resource")
-	}
-
-	mres, err := fzf.FindOne(m, func(item Mres) string {
-		return fmt.Sprintf("%s (%s)", item.DisplayName, item.Metadata.Name)
-	}, fzf.WithPrompt("Select managed resource >"))
-
-	return mres, err
-}
-
-func ListMresKeys(options ...fn.Option) ([]string, error) {
-	mresName := fn.GetOption(options, "mresName")
-
-	env, err := EnsureEnv(nil, options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
+func (apic *apiClient) ListMresKeys(envName, importedManagedResource string, options ...fn.Option) ([]string, error) {
 	cookie, err := getCookie(options...)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
-
-	respData, err := klFetch("cli_getMresKeys", map[string]any{
-		"envName": env.Name,
-		"name":    mresName,
+	respData, err := klFetch("cli_getSecret", map[string]any{
+		"envName": envName,
+		"name":    importedManagedResource,
 	}, &cookie)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	s, err := GetFromResp[[]string](respData)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	return *s, nil
-}
-
-func SelectMresKey(options ...fn.Option) (*string, error) {
-	mresName := fn.GetOption(options, "mresName")
-
-	keys, err := ListMresKeys(options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	if len(keys) == 0 {
-		return nil, fmt.Errorf("no keys found in %s managed resource", mresName)
-	}
-
-	key, err := fzf.FindOne(keys, func(item string) string {
-		return item
-	}, fzf.WithPrompt("Select key >"))
-
-	return key, err
 }
 
 type MresResp struct {
@@ -129,23 +61,25 @@ type MresResp struct {
 	MresName string `json:"mresName"`
 }
 
-func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
-	fc, err := fileclient.New()
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+func (apic *apiClient) GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
+	fc := apic.fc
 
-	env, err := EnsureEnv(&fileclient.Env{
-		Name: fn.GetOption(options, "envName"),
-	}, options...)
+	// // env, err := EnsureEnv(&fileclient.Env{
+	// // 	Name: fn.GetOption(options, "envName"),
+	// // }, options...)
 
+	// if err != nil {
+	// 	return nil, fn.NewE(err)
+	// }
+
+	currentEnv, err := fc.CurrentEnv()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	kt, err := fc.GetKlFile("")
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	if kt.EnvVars.GetMreses() == nil {
@@ -154,11 +88,11 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 
 	cookie, err := getCookie(options...)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	respData, err := klFetch("cli_getMresOutputKeyValues", map[string]any{
-		"envName": env.Name,
+		"envName": currentEnv.Name,
 		"keyrefs": func() []map[string]string {
 			var keyrefs []map[string]string
 			for _, m := range kt.EnvVars.GetMreses() {
@@ -174,12 +108,12 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 	}, &cookie)
 
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	fromResp, err := GetFromResp[[]MresResp](respData)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	mresMap := map[string]map[string]*Kv{}

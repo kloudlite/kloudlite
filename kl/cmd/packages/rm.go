@@ -7,6 +7,7 @@ import (
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
+	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -26,6 +27,11 @@ var rmCmd = &cobra.Command{
 
 func rmPackages(cmd *cobra.Command, args []string) error {
 	fc, err := fileclient.New()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	apic, err := apiclient.New()
 	if err != nil {
 		return fn.NewE(err)
 	}
@@ -63,7 +69,7 @@ func rmPackages(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	if err := hashctrl.SyncBoxHash(cwd); err != nil {
+	if err := hashctrl.SyncBoxHash(apic, fc, cwd); err != nil {
 		return fn.NewE(err)
 	}
 

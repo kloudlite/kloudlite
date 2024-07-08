@@ -7,6 +7,8 @@ import (
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
 	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/kloudlite/kl/domain/apiclient"
@@ -32,15 +34,20 @@ func switchEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	apic, err := apiclient.New()
+	if err != nil {
+		return err
+	}
+
 	//TODO: add changes to the klbox-hash file
-	envName := fn.ParseStringFlag(cmd, "envname")
+	// envName := fn.ParseStringFlag(cmd, "envname")
 
 	klFile, err := fc.GetKlFile("")
 	if err != nil {
 		return err
 	}
 
-	env, err := apiclient.SelectEnv(envName, []fn.Option{
+	env, err := selectEnv(apic, fc, []fn.Option{
 		fn.MakeOption("accountName", klFile.AccountName),
 	}...)
 	if err != nil {
@@ -61,7 +68,7 @@ func switchEnv(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	if err := hashctrl.SyncBoxHash(wpath); err != nil {
+	if err := hashctrl.SyncBoxHash(apic, fc, wpath); err != nil {
 		return err
 	}
 
@@ -82,4 +89,49 @@ func init() {
 
 	switchCmd.Flags().StringP("envname", "e", "", "environment name")
 	switchCmd.Flags().StringP("account", "a", "", "account name")
+}
+
+func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient, options ...fn.Option) (*apiclient.Env, error) {
+	persistSelectedEnv := func(env fileclient.Env) error {
+		err := fc.SelectEnv(env)
+		if err != nil {
+			return functions.NewE(err)
+		}
+		return nil
+	}
+
+	envs, err := apic.ListEnvs(options...)
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+
+	oldEnv, _ := fc.CurrentEnv()
+
+	env, err := fzf.FindOne(
+		envs,
+		func(env apiclient.Env) string {
+			return fmt.Sprintf("%s (%s)", env.DisplayName, env.Metadata.Name)
+		},
+		fzf.WithPrompt("Select Environment > "),
+	)
+
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+
+	if err := persistSelectedEnv(fileclient.Env{
+		Name:     env.Metadata.Name,
+		TargetNs: env.Spec.TargetNamespace,
+		SSHPort: func() int {
+			if oldEnv == nil {
+				return 0
+			}
+			return oldEnv.SSHPort
+		}(),
+		ClusterName: env.ClusterName,
+	}); err != nil {
+		return nil, functions.NewE(err)
+	}
+
+	return env, nil
 }

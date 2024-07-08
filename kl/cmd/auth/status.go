@@ -13,7 +13,12 @@ var authStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "get the current user's name and email",
 	Run: func(_ *cobra.Command, _ []string) {
-		if u, err := apiclient.GetCurrentUser(); err != nil {
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		if u, err := apic.GetCurrentUser(); err != nil {
 			fn.PrintError(err)
 			return
 		} else {

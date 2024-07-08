@@ -3,11 +3,10 @@ package get
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/kl/domain/fileclient"
 
 	"github.com/kloudlite/kl/domain/apiclient"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
+
 	"github.com/kloudlite/kl/pkg/ui/table"
 
 	"github.com/spf13/cobra"
@@ -19,29 +18,36 @@ var secretCmd = &cobra.Command{
 	Short: "list secrets entries",
 	Long:  "use this command to list the entries of specific secret",
 	Run: func(cmd *cobra.Command, args []string) {
-		fc, err := fileclient.New()
+
+		apic, err := apiclient.New()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		secName := ""
+		// secName := ""
 
-		if len(args) >= 1 {
-			secName = args[0]
-		}
+		// if len(args) >= 1 {
+		// 	secName = args[0]
+		// }
 
-		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fc.GetKlFile(filePath)
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
+		// filePath := fn.ParseKlFile(cmd)
+		// klFile, err := fc.GetKlFile(filePath)
+		// if err != nil {
+		// 	fn.PrintError(err)
+		// 	return
+		// }
 
-		sec, err := apiclient.EnsureSecret([]fn.Option{
-			fn.MakeOption("secretName", secName),
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		// sec, err := apiclient.EnsureSecret([]fn.Option{
+		// 	fn.MakeOption("secretName", secName),
+		// 	fn.MakeOption("accountName", klFile.AccountName),
+		// }...)
+		// if err != nil {
+		// 	fn.PrintError(err)
+		// 	return
+		// }
+
+		sec, err := apic.GetSecret(fn.MakeOption("secretName", args[0]))
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -61,14 +67,14 @@ func printSecret(secret *apiclient.Secret, cmd *cobra.Command) error {
 	case "json":
 		configBytes, err := json.Marshal(secret.StringData)
 		if err != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 		fn.Println(string(configBytes))
 
 	case "yaml", "yml":
 		configBytes, err := yaml.Marshal(secret.StringData)
 		if err != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 		fn.Println(string(configBytes))
 

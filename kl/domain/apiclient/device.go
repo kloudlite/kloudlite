@@ -10,7 +10,6 @@ import (
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/miekg/dns"
 
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
@@ -49,10 +48,10 @@ type DeviceList struct {
 	Edges Edges[Env] `json:"edges"`
 }
 
-func GetVPNDevice(devName string, options ...fn.Option) (*Device, error) {
+func (apic *apiClient) GetVPNDevice(devName string, options ...fn.Option) (*Device, error) {
 	cookie, err := getCookie(options...)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	respData, err := klFetch("cli_getGlobalVpnDevice", map[string]any{
@@ -60,7 +59,7 @@ func GetVPNDevice(devName string, options ...fn.Option) (*Device, error) {
 		"deviceName": devName,
 	}, &cookie)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	return GetFromResp[Device](respData)
@@ -69,12 +68,12 @@ func GetVPNDevice(devName string, options ...fn.Option) (*Device, error) {
 func createDevice(devName string) (*Device, error) {
 	cn, err := getDeviceName(devName)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	dn := devName
@@ -101,7 +100,7 @@ func createDevice(devName string) (*Device, error) {
 
 	d, err := GetFromResp[Device](respData)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	return d, nil
@@ -116,7 +115,7 @@ const (
 	VPNDeviceType = "global_vpn_device"
 )
 
-func CheckDeviceStatus() bool {
+func (apic *apiClient) CheckDeviceStatus() bool {
 	if !envclient.InsideBox() {
 		return false
 	}
@@ -157,14 +156,13 @@ func CheckDeviceStatus() bool {
 		}
 
 	}
-
 	return true
 }
 
 func getDeviceName(devName string) (*CheckName, error) {
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	respData, err := klFetch("cli_infraCheckNameAvailability", map[string]any{
@@ -172,11 +170,11 @@ func getDeviceName(devName string) (*CheckName, error) {
 		"name":    devName,
 	}, &cookie)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	if fromResp, err := GetFromResp[CheckName](respData); err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	} else {
 		return fromResp, nil
 	}
@@ -185,11 +183,11 @@ func getDeviceName(devName string) (*CheckName, error) {
 func createVpnForAccount() (*Device, error) {
 	devName, err := os.Hostname()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 	checkNames, err := getDeviceName(devName)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 	if !checkNames.Result {
 		if len(checkNames.SuggestedNames) == 0 {
@@ -199,22 +197,19 @@ func createVpnForAccount() (*Device, error) {
 	}
 	device, err := createDevice(devName)
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 	return device, nil
 }
 
-func GetAccVPNConfig(account string) (*fileclient.AccountVpnConfig, error) {
+func (apic *apiClient) GetAccVPNConfig(account string) (*fileclient.AccountVpnConfig, error) {
 
 	fc, err := fileclient.New()
 	if err != nil {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 
 	avc, err := fc.GetVpnAccountConfig(account)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
 
 	if err != nil && os.IsNotExist(err) {
 		dev, err := createVpnForAccount()
@@ -229,10 +224,12 @@ func GetAccVPNConfig(account string) (*fileclient.AccountVpnConfig, error) {
 		if err := fc.SetVpnAccountConfig(account, &accountVpnConfig); err != nil {
 			return nil, fn.NewE(err)
 		}
+	} else {
+		return nil, fn.NewE(err)
 	}
 
 	if avc.WGconf == "" {
-		d, err := GetVPNDevice(avc.DeviceName, fn.MakeOption("accountName", account))
+		d, err := apic.GetVPNDevice(avc.DeviceName, fn.MakeOption("accountName", account))
 		if err != nil {
 			return nil, fn.NewE(err)
 		}

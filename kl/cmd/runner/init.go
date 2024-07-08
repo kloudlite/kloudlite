@@ -10,8 +10,8 @@ import (
 	"github.com/kloudlite/kl/domain/envclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	confighandler "github.com/kloudlite/kl/pkg/config-handler"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
+
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/ui/text"
 
@@ -29,9 +29,14 @@ var InitCommand = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 
 		if envclient.InsideBox() {
-			fn.PrintError(functions.Error("cannot re-initialize workspace in dev box"))
+			fn.PrintError(fn.Error("cannot re-initialize workspace in dev box"))
 			return
 		}
 
@@ -45,12 +50,12 @@ var InitCommand = &cobra.Command{
 			return
 		}
 
-		selectedAccount, err := selectAccount()
+		selectedAccount, err := selectAccount(apic)
 		if err != nil {
 			fn.PrintError(err)
 			return
 		} else {
-			if selectedEnv, err := selectEnv(*selectedAccount); err != nil {
+			if selectedEnv, err := selectEnv(apic, *selectedAccount); err != nil {
 				fn.PrintError(err)
 			} else {
 				newKlFile := fileclient.KLFileType{
@@ -73,7 +78,7 @@ var InitCommand = &cobra.Command{
 			return
 		}
 
-		if err := hashctrl.SyncBoxHash(dir); err != nil {
+		if err := hashctrl.SyncBoxHash(apic, fc, dir); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -92,8 +97,8 @@ var InitCommand = &cobra.Command{
 	},
 }
 
-func selectAccount() (*string, error) {
-	if accounts, err := apiclient.ListAccounts(); err == nil {
+func selectAccount(apic apiclient.ApiClient) (*string, error) {
+	if accounts, err := apic.ListAccounts(); err == nil {
 		if selectedAccount, err := fzf.FindOne(
 			accounts,
 			func(account apiclient.Account) string {
@@ -101,17 +106,17 @@ func selectAccount() (*string, error) {
 			},
 			fzf.WithPrompt("select kloudlite team > "),
 		); err != nil {
-			return nil, functions.NewE(err)
+			return nil, fn.NewE(err)
 		} else {
 			return &selectedAccount.Metadata.Name, nil
 		}
 	} else {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 }
 
-func selectEnv(accountName string) (*string, error) {
-	if envs, err := apiclient.ListEnvs([]fn.Option{
+func selectEnv(apic apiclient.ApiClient, accountName string) (*string, error) {
+	if envs, err := apic.ListEnvs([]fn.Option{
 		fn.MakeOption("accountName", accountName),
 	}...); err == nil {
 		if selectedEnv, err := fzf.FindOne(
@@ -121,12 +126,12 @@ func selectEnv(accountName string) (*string, error) {
 			},
 			fzf.WithPrompt("select environment > "),
 		); err != nil {
-			return nil, functions.NewE(err)
+			return nil, fn.NewE(err)
 		} else {
 			return &selectedEnv.Metadata.Name, nil
 		}
 	} else {
-		return nil, functions.NewE(err)
+		return nil, fn.NewE(err)
 	}
 }
 

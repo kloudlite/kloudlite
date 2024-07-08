@@ -1,12 +1,8 @@
 package apiclient
 
 import (
-	"fmt"
-
-	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
 type Env struct {
@@ -55,12 +51,12 @@ type EnvList struct {
 // 	}
 // }
 
-func ListEnvs(options ...fn.Option) ([]Env, error) {
+func (apic *apiClient) ListEnvs(options ...fn.Option) ([]Env, error) {
 	var err error
-	_, err = EnsureAccount(options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+	// _, err = EnsureAccount(options...)
+	// if err != nil {
+	// 	return nil, functions.NewE(err)
+	// }
 
 	cookie, err := getCookie(options...)
 	if err != nil {
@@ -86,7 +82,7 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 	}
 }
 
-func GetEnvironment(accountName, envName string) (*Env, error) {
+func (apic *apiClient) GetEnvironment(accountName, envName string) (*Env, error) {
 	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, err
@@ -106,111 +102,43 @@ func GetEnvironment(accountName, envName string) (*Env, error) {
 	}
 }
 
-func SelectEnv(envName string, options ...fn.Option) (*Env, error) {
+// func _EnsureEnv(env *fileclient.Env, options ...fn.Option) (*fileclient.Env, error) {
+// 	fc, err := fileclient.New()
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
 
-	persistSelectedEnv := func(env fileclient.Env) error {
-		err := fileclient.SelectEnv(env)
-		if err != nil {
-			return functions.NewE(err)
-		}
-		return nil
-	}
+// 	accountName := fn.GetOption(options, "accountName")
+// 	if _, err := EnsureAccount(
+// 		fn.MakeOption("accountName", accountName),
+// 	); err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
 
-	envs, err := ListEnvs(options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+// 	if env != nil && env.Name != "" {
+// 		return env, nil
+// 	}
 
-	oldEnv, _ := fileclient.CurrentEnv()
+// 	env, _ = fc.CurrentEnv()
 
-	if envName != "" {
-		for _, a := range envs {
-			if a.Metadata.Name == envName {
-				port := 0
-				if oldEnv != nil {
-					port = oldEnv.SSHPort
-				}
+// 	if env != nil {
+// 		return env, nil
+// 	}
 
-				if err := persistSelectedEnv(fileclient.Env{
-					Name:        a.Metadata.Name,
-					SSHPort:     port,
-					TargetNs:    a.Spec.TargetNamespace,
-					ClusterName: a.ClusterName,
-				}); err != nil {
-					return nil, functions.NewE(err)
-				}
-				return &a, nil
-			}
-		}
-		return nil, functions.Error("you don't have access to this account")
-	}
+// 	kl, err := fc.GetKlFile("")
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
 
-	env, err := fzf.FindOne(
-		envs,
-		func(env Env) string {
-			return fmt.Sprintf("%s (%s)", env.DisplayName, env.Metadata.Name)
-		},
-		fzf.WithPrompt("Select Environment > "),
-	)
-
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	if err := persistSelectedEnv(fileclient.Env{
-		Name:     env.Metadata.Name,
-		TargetNs: env.Spec.TargetNamespace,
-		SSHPort: func() int {
-			if oldEnv == nil {
-				return 0
-			}
-			return oldEnv.SSHPort
-		}(),
-		ClusterName: env.ClusterName,
-	}); err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	return env, nil
-}
-
-func EnsureEnv(env *fileclient.Env, options ...fn.Option) (*fileclient.Env, error) {
-	fc, err := fileclient.New()
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	accountName := fn.GetOption(options, "accountName")
-	if _, err := EnsureAccount(
-		fn.MakeOption("accountName", accountName),
-	); err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	if env != nil && env.Name != "" {
-		return env, nil
-	}
-
-	env, _ = fileclient.CurrentEnv()
-
-	if env != nil {
-		return env, nil
-	}
-
-	kl, err := fc.GetKlFile("")
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
-	if kl.DefaultEnv == "" {
-		return nil, functions.Error("please select an environment using 'kl use env'")
-	}
-	selectedEnv, err := SelectEnv(kl.DefaultEnv, options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-	return &fileclient.Env{
-		Name:     selectedEnv.DisplayName,
-		TargetNs: selectedEnv.Metadata.Namespace,
-	}, nil
-}
+// 	if kl.DefaultEnv == "" {
+// 		return nil, functions.Error("please select an environment using 'kl use env'")
+// 	}
+// 	selectedEnv, err := SelectEnv(kl.DefaultEnv, options...)
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
+// 	return &fileclient.Env{
+// 		Name:     selectedEnv.DisplayName,
+// 		TargetNs: selectedEnv.Metadata.Namespace,
+// 	}, nil
+// }

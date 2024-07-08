@@ -20,7 +20,7 @@ func (c *client) Reload() error {
 		return fn.NewE(err)
 	}
 
-	if err := hashctrl.SyncBoxHash(wpath); err != nil {
+	if err := hashctrl.SyncBoxHash(c.apic, c.fc, wpath); err != nil {
 		return fn.NewE(err)
 	}
 	return nil

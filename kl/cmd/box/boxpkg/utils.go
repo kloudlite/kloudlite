@@ -418,8 +418,6 @@ func (c *client) getFreePort() (int, error) {
 			break
 		}
 	}
-
-	defer fileclient.SelectEnvOnPath(c.cwd, *c.env)
 	return resp, nil
 }
 

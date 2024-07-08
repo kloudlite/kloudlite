@@ -30,6 +30,7 @@ type client struct {
 	env *fileclient.Env
 
 	fc     fileclient.FileClient
+	apic   apiclient.ApiClient
 	klfile *fileclient.KLFileType
 }
 
@@ -65,6 +66,7 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		return nil, fn.NewE(err)
 	}
 
+	apic, err := apiclient.New()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -78,14 +80,12 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 
 	klFile, err := fc.GetKlFile("")
 	if err != nil {
-
 		return nil, fn.NewE(err)
-
 	}
 
-	env, err := fileclient.EnvOfPath(cwd)
+	env, err := fc.EnvOfPath(cwd)
 	if err != nil && errors.Is(err, fileclient.NoEnvSelected) {
-		environment, err := apiclient.GetEnvironment(klFile.AccountName, klFile.DefaultEnv)
+		environment, err := apic.GetEnvironment(klFile.AccountName, klFile.DefaultEnv)
 		if err != nil {
 			return nil, fn.NewE(err)
 		}
@@ -123,6 +123,7 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 		containerName: contName,
 		env:           env,
 		fc:            fc,
+		apic:          apic,
 		klfile:        klFile,
 	}, nil
 }

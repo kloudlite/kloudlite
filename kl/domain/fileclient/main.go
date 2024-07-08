@@ -14,6 +14,10 @@ type FileClient interface {
 
 	WriteKLFile(fileObj KLFileType) error
 	GetKlFile(filePath string) (*KLFileType, error)
+	SelectEnv(ev Env) error
+	SelectEnvOnPath(pth string, ev Env) error
+	EnvOfPath(pth string) (*Env, error)
+	CurrentEnv() (*Env, error)
 }
 
 func New() (FileClient, error) {

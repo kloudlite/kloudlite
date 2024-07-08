@@ -17,7 +17,12 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "login to kloudlite",
 	Run: func(_ *cobra.Command, _ []string) {
-		loginId, err := apiclient.CreateRemoteLogin()
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		loginId, err := apic.CreateRemoteLogin()
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -47,7 +52,7 @@ var loginCmd = &cobra.Command{
 			}
 		}()
 
-		if err = apiclient.Login(loginId); err != nil {
+		if err = apic.Login(loginId); err != nil {
 			fn.PrintError(err)
 			return
 		}

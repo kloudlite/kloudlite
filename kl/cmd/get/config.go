@@ -3,7 +3,6 @@ package get
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/kl/domain/fileclient"
 
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -19,7 +18,8 @@ var configCmd = &cobra.Command{
 	Short: "list config entries",
 	Long:  "use this command to list entries of specific config",
 	Run: func(cmd *cobra.Command, args []string) {
-		fc, err := fileclient.New()
+
+		apic, err := apiclient.New()
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -30,17 +30,23 @@ var configCmd = &cobra.Command{
 		if len(args) >= 1 {
 			configName = args[0]
 		}
-		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fc.GetKlFile(filePath)
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
+		// filePath := fn.ParseKlFile(cmd)
+		// klFile, err := fc.GetKlFile(filePath)
+		// if err != nil {
+		// 	fn.PrintError(err)
+		// 	return
+		// }
 
-		config, err := apiclient.EnsureConfig([]fn.Option{
-			fn.MakeOption("configName", configName),
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		// config, err := apic.EnsureConfig([]fn.Option{
+		// 	fn.MakeOption("configName", configName),
+		// 	fn.MakeOption("accountName", klFile.AccountName),
+		// }...)
+		// if err != nil {
+		// 	fn.PrintError(err)
+		// 	return
+		// }
+
+		config, err := apic.GetConfig(fn.MakeOption("configName", configName))
 		if err != nil {
 			fn.PrintError(err)
 			return

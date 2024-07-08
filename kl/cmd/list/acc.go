@@ -17,7 +17,12 @@ var accCmd = &cobra.Command{
 	Use:   "accounts",
 	Short: "Get list of accounts accessible to you",
 	Run: func(cmd *cobra.Command, _ []string) {
-		err := listAccounts(cmd)
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		err = listAccounts(apic, cmd)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -25,8 +30,8 @@ var accCmd = &cobra.Command{
 	},
 }
 
-func listAccounts(cmd *cobra.Command) error {
-	accounts, err := apiclient.ListAccounts()
+func listAccounts(apic apiclient.ApiClient, cmd *cobra.Command) error {
+	accounts, err := apic.ListAccounts()
 
 	if err != nil {
 		return functions.NewE(err)

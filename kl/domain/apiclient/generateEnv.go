@@ -78,20 +78,15 @@ type Kv struct {
 type CSResp map[string]map[string]*Kv
 type MountMap map[string]string
 
-func GetLoadMaps() (map[string]string, MountMap, error) {
-	fc, err := fileclient.New()
-	if err != nil {
-		return nil, nil, functions.NewE(err)
-	}
+func (apic *apiClient) GetLoadMaps() (map[string]string, MountMap, error) {
+	fc := apic.fc
 
 	kt, err := fc.GetKlFile("")
 	if err != nil {
 		return nil, nil, functions.NewE(err)
 	}
 
-	env, err := EnsureEnv(nil, []functions.Option{
-		functions.MakeOption("accountName", kt.AccountName),
-	}...)
+	env, err := fc.CurrentEnv()
 	if err != nil {
 		return nil, nil, functions.NewE(err)
 	}

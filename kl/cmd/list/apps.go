@@ -1,28 +1,35 @@
 package list
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/spf13/cobra"
-	"strconv"
-	"strings"
 )
 
 var appsCmd = &cobra.Command{
 	Use:   "apps",
 	Short: "Get list of apps in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := listapps(cmd, args); err != nil {
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if err := listapps(apic, cmd, args); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func listapps(cmd *cobra.Command, _ []string) error {
+func listapps(apic apiclient.ApiClient, cmd *cobra.Command, _ []string) error {
 	fc, err := fileclient.New()
 	if err != nil {
 		return functions.NewE(err)
@@ -36,7 +43,7 @@ func listapps(cmd *cobra.Command, _ []string) error {
 		return functions.NewE(err)
 	}
 
-	apps, err := apiclient.ListApps([]fn.Option{
+	apps, err := apic.ListApps([]fn.Option{
 		fn.MakeOption("accountName", klFile.AccountName),
 		fn.MakeOption("envName", envName),
 	}...)

@@ -10,7 +10,7 @@ import (
 
 var NoEnvSelected = fmt.Errorf("no selected environment")
 
-func SelectEnv(ev Env) error {
+func (f *fclient) SelectEnv(ev Env) error {
 	k, err := GetExtraData()
 	if err != nil {
 		return fn.NewE(err)
@@ -39,7 +39,7 @@ func SelectEnv(ev Env) error {
 	return SaveExtraData(k)
 }
 
-func SelectEnvOnPath(pth string, ev Env) error {
+func (f *fclient) SelectEnvOnPath(pth string, ev Env) error {
 	k, err := GetExtraData()
 	if err != nil {
 		return fn.NewE(err)
@@ -54,7 +54,7 @@ func SelectEnvOnPath(pth string, ev Env) error {
 	return SaveExtraData(k)
 }
 
-func EnvOfPath(pth string) (*Env, error) {
+func (f *fclient) EnvOfPath(pth string) (*Env, error) {
 	if envclient.InsideBox() {
 		s, err := envclient.GetWorkspacePath()
 		if err != nil {
@@ -76,7 +76,7 @@ func EnvOfPath(pth string) (*Env, error) {
 	return c.SelectedEnvs[pth], nil
 }
 
-func CurrentEnv() (*Env, error) {
+func (f *fclient) CurrentEnv() (*Env, error) {
 	c, err := GetExtraData()
 	if err != nil {
 		return nil, fn.NewE(err)

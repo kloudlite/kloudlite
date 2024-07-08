@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
-	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -30,7 +29,7 @@ func (c *client) Start() error {
 	boxHash, err := hashctrl.BoxHashFile(c.cwd)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			err = hashctrl.SyncBoxHash(c.cwd)
+			err = hashctrl.SyncBoxHash(c.apic, c.fc, c.cwd)
 			if err != nil {
 				return fn.NewE(err)
 			}
@@ -41,7 +40,7 @@ func (c *client) Start() error {
 			return fn.NewE(err)
 		}
 		if klconfHash != boxHash.KLConfHash {
-			err = hashctrl.SyncBoxHash(c.cwd)
+			err = hashctrl.SyncBoxHash(c.apic, c.fc, c.cwd)
 			if err != nil {
 				return functions.NewE(err)
 			}
@@ -60,7 +59,7 @@ func (c *client) Start() error {
 		return fn.NewE(err)
 	}
 
-	vpnCfg, err := apiclient.GetAccVPNConfig(c.klfile.AccountName)
+	vpnCfg, err := c.apic.GetAccVPNConfig(c.klfile.AccountName)
 	if err != nil {
 		return functions.NewE(err)
 	}

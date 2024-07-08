@@ -7,6 +7,7 @@ import (
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg"
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
+	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -18,14 +19,24 @@ var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "add new package",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := addPackages(cmd, args); err != nil {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		if err := addPackages(apic, fc, cmd, args); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func addPackages(cmd *cobra.Command, args []string) error {
+func addPackages(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Command, args []string) error {
 	fc, err := fileclient.New()
 	if err != nil {
 		return fn.NewE(err)
@@ -68,7 +79,7 @@ func addPackages(cmd *cobra.Command, args []string) error {
 		return functions.NewE(err)
 	}
 
-	if err := hashctrl.SyncBoxHash(cwd); err != nil {
+	if err := hashctrl.SyncBoxHash(apic, fc, cwd); err != nil {
 		return functions.NewE(err)
 	}
 

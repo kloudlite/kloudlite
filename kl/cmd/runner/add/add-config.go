@@ -42,6 +42,11 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
+	apic, err := apiclient.New()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
 	filePath := fn.ParseKlFile(cmd)
 
 	name := ""
@@ -54,7 +59,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	configs, err := apiclient.ListConfigs([]fn.Option{
+	configs, err := apic.ListConfigs([]fn.Option{
 		fn.MakeOption("accountName", klFile.AccountName),
 	}...)
 	if err != nil {
@@ -232,7 +237,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	if err := hashctrl.SyncBoxHash(wpath); err != nil {
+	if err := hashctrl.SyncBoxHash(apic, fc, wpath); err != nil {
 		return fn.NewE(err)
 	}
 

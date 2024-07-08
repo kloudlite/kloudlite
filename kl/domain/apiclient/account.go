@@ -1,10 +1,7 @@
 package apiclient
 
 import (
-	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
-	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
 type Account struct {
@@ -13,7 +10,7 @@ type Account struct {
 	Status      Status   `json:"status"`
 }
 
-func ListAccounts() ([]Account, error) {
+func (apic *apiClient) ListAccounts() ([]Account, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, functions.NewE(err)
@@ -32,58 +29,58 @@ func ListAccounts() ([]Account, error) {
 	}
 }
 
-func SelectAccount(accountName string) (*Account, error) {
+// func SelectAccount(accountName string) (*Account, error) {
 
-	accounts, err := ListAccounts()
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+// 	accounts, err := ListAccounts()
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
 
-	if accountName != "" {
-		for _, a := range accounts {
-			if a.Metadata.Name == accountName {
-				return &a, nil
-			}
-		}
-		return nil, functions.Error("you don't have access to this account")
-	}
+// 	if accountName != "" {
+// 		for _, a := range accounts {
+// 			if a.Metadata.Name == accountName {
+// 				return &a, nil
+// 			}
+// 		}
+// 		return nil, functions.Error("you don't have access to this account")
+// 	}
 
-	account, err := fzf.FindOne(
-		accounts,
-		func(account Account) string {
-			return account.DisplayName
-		},
-		fzf.WithPrompt("Select Account > "),
-	)
+// 	account, err := fzf.FindOne(
+// 		accounts,
+// 		func(account Account) string {
+// 			return account.DisplayName
+// 		},
+// 		fzf.WithPrompt("Select Account > "),
+// 	)
 
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
 
-	return account, nil
-}
+// 	return account, nil
+// }
 
-func EnsureAccount(options ...fn.Option) (string, error) {
-	accountName := fn.GetOption(options, "accountName")
+// func EnsureAccount(options ...fn.Option) (string, error) {
+// 	accountName := fn.GetOption(options, "accountName")
 
-	if accountName != "" {
-		return accountName, nil
-	}
+// 	if accountName != "" {
+// 		return accountName, nil
+// 	}
 
-	fc, err := fileclient.New()
-	if err != nil {
-		return "", functions.NewE(err)
-	}
+// 	fc, err := fileclient.New()
+// 	if err != nil {
+// 		return "", functions.NewE(err)
+// 	}
 
-	s, _ := fc.CurrentAccountName()
-	if s == "" {
-		a, err := SelectAccount("")
-		if err != nil {
-			return "", functions.NewE(err)
-		}
+// 	s, _ := fc.CurrentAccountName()
+// 	if s == "" {
+// 		a, err := SelectAccount("")
+// 		if err != nil {
+// 			return "", functions.NewE(err)
+// 		}
 
-		return a.Metadata.Name, nil
-	}
+// 		return a.Metadata.Name, nil
+// 	}
 
-	return s, nil
-}
+// 	return s, nil
+// }
