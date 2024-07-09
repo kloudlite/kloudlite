@@ -43,3 +43,4 @@ Kloudlite is a platform designed to enhance developers' productivity by providin
 ## Contributing
 
 ## Hiring
+Apply [here](https://jobs.ashbyhq.com/coder?utm_source=github&utm_medium=readme&utm_campaign=unknown) if you're interested in joining our team.
