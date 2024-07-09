@@ -13,12 +13,12 @@
   <br />
 
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue)](#license)
-[![Go Report Card](https://goreportcard.com/badge/github.com/daytonaio/daytona)](https://goreportcard.com/report/github.com/daytonaio/daytona)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kloudlite/api)](https://goreportcard.com/report/github.com/kloudlite/api)
 [![Issues - daytona](https://img.shields.io/github/issues/daytonaio/daytona)](https://github.com/daytonaio/daytona/issues)
-![GitHub Release](https://img.shields.io/github/v/release/daytonaio/daytona)
-[![Open Bounties](https://img.shields.io/endpoint?url=https%3A%2F%2Fconsole.algora.io%2Fapi%2Fshields%2Fdaytonaio%2Fbounties%3Fstatus%3Dopen)](https://console.algora.io/org/daytonaio/bounties?status=open)
-[![Rewarded Bounties](https://img.shields.io/endpoint?url=https%3A%2F%2Fconsole.algora.io%2Fapi%2Fshields%2Fdaytonaio%2Fbounties%3Fstatus%3Dcompleted)](https://console.algora.io/org/daytonaio/bounties?status=completed)
+![GitHub Release](https://img.shields.io/github/v/release/kloudlite/kloudlite)
 
+[![Open Bounties](https://img.shields.io/endpoint?url=https%3A%2F%2Fconsole.algora.io%2Fapi%2Fshields%2Fkloudlite%2Fbounties%3Fstatus%3Dopen)](https://console.algora.io/org/kloudlite/bounties?status=open)
+[![Rewarded Bounties](https://img.shields.io/endpoint?url=https%3A%2F%2Fconsole.algora.io%2Fapi%2Fshields%2Fkloudlite%2Fbounties%3Fstatus%3Dcompleted)](https://console.algora.io/org/kloudlite/bounties?status=completed)
 </div>
 
 
