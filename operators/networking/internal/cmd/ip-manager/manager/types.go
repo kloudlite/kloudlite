@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"math"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/charmbracelet/log"
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	"github.com/kloudlite/operator/operators/networking/internal/cmd/ip-manager/env"
 	"github.com/kloudlite/operator/pkg/errors"
@@ -30,7 +31,7 @@ type Manager struct {
 	// private fields
 	sync.Mutex
 
-	logger *log.Logger
+	logger *slog.Logger
 
 	podIPOffset int
 
@@ -43,11 +44,11 @@ type Manager struct {
 	podPeers        map[string]string
 	svcNginxStreams map[string][]string
 
-	svcBindingsMap      map[string]*ReserveServiceResponse
+	// svcBindingsMap      map[string]*ReserveServiceResponse
 	gatewayWgExtraPeers string
 }
 
-func NewManager(ev *env.Env, kclientset *kubernetes.Clientset, kcli client.Client) (*Manager, error) {
+func NewManager(ev *env.Env, logger *slog.Logger, kclientset *kubernetes.Clientset, kcli client.Client) (*Manager, error) {
 	cfg := &corev1.ConfigMap{}
 
 	ctx := context.TODO()
@@ -89,13 +90,8 @@ func NewManager(ev *env.Env, kclientset *kubernetes.Clientset, kcli client.Clien
 		kclientset:  kclientset,
 		kcli:        kcli,
 		podPeers:    make(map[string]string),
-		logger: log.NewWithOptions(os.Stderr, log.Options{
-			Level:           log.DebugLevel,
-			Prefix:          "[ip-manager] ",
-			ReportTimestamp: false,
-			ReportCaller:    true,
-		}),
-		svcBindingsMap: make(map[string]*ReserveServiceResponse),
+		logger:      logger,
+		// svcBindingsMap: make(map[string]*ReserveServiceResponse),
 	}
 
 	if v, ok := cfg.Data["counter_pod_ip"]; ok {
@@ -120,26 +116,41 @@ func NewManager(ev *env.Env, kclientset *kubernetes.Clientset, kcli client.Clien
 		manager.FreeSvcIPs = strings.Split(v, ",")
 	}
 
+	t := TimerStart(manager.logger, "fetching pod bindings")
 	c, err := kubectl.PaginatedList[*networkingv1.PodBinding](ctx, kcli, &networkingv1.PodBindingList{}, &client.ListOptions{
 		Limit: 50,
 	})
 	if err != nil {
 		return nil, err
 	}
+	t.Stop()
 
+	t.Reset("generating pod wg peers")
 	for podBinding := range c {
 		manager.podPeers[podBinding.Spec.GlobalIP] = genGatewayWgPodPeer(podBinding)
 	}
+	t.Stop()
 
+	t.Reset("fetching service bindings")
 	sbList, err := kubectl.PaginatedList[*networkingv1.ServiceBinding](ctx, kcli, &networkingv1.ServiceBindingList{}, &client.ListOptions{Limit: 10})
 	if err != nil {
 		return nil, err
 	}
+	t.Stop()
 
+	t.Reset("generating service binding nginx streams")
 	manager.svcNginxStreams = make(map[string][]string)
 	for svcBinding := range sbList {
+		if svcBinding.Spec.ServiceRef == nil {
+			continue
+		}
+		// manager.svcBindingsMap[fmt.Sprintf("%s/%s", svcBinding.Spec.ServiceRef.Namespace, svcBinding.Spec.ServiceRef.Name)] = &ReserveServiceResponse{
+		// 	ServiceBindingIP: svcBinding.Spec.GlobalIP,
+		// 	ReservationToken: svcBinding.GetLabels()[svcReservationLabel],
+		// }
 		manager.svcNginxStreams[svcBinding.Spec.GlobalIP] = RegisterNginxStreamConfig(svcBinding)
 	}
+	t.Stop()
 
 	if ev.ExtraWireguardPeersPath != "" {
 		f, err := os.Open(ev.ExtraWireguardPeersPath)
@@ -153,13 +164,17 @@ func NewManager(ev *env.Env, kclientset *kubernetes.Clientset, kcli client.Clien
 		manager.gatewayWgExtraPeers = string(b)
 	}
 
+	t.Reset("starting wireguard")
 	if err := manager.RestartWireguard(); err != nil {
 		return nil, err
 	}
+	t.Stop()
 
+	t.Reset("syncing nginx streams")
 	if err := manager.SyncNginxStreams(); err != nil {
 		return nil, err
 	}
+	t.Stop()
 
 	manager.logger.Info("manager initialized with", "counter_pod_ip", manager.PodIPCounter, "counter_svc_ip", manager.SvcIPCounter)
 
@@ -185,4 +200,29 @@ func (e Error) Error() string {
 
 func NewError(err error, msg string) Error {
 	return Error{Err: err, Message: msg}
+}
+
+type Timed struct {
+	msg    string
+	start  time.Time
+	logger *slog.Logger
+}
+
+func TimerStart(logger *slog.Logger, msg string) *Timed {
+	t := time.Now()
+	logger.Debug(msg, "at", t)
+	return &Timed{
+		msg:    msg,
+		start:  t,
+		logger: logger,
+	}
+}
+
+func (t *Timed) Stop() {
+	t.logger.Info(t.msg, "took", fmt.Sprintf("%.2fs", time.Since(t.start).Seconds()))
+}
+
+func (t *Timed) Reset(msg string) {
+	t.start = time.Now()
+	t.msg = msg
 }

@@ -8,9 +8,9 @@ import (
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
-	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/iputils"
 	json_patch "github.com/kloudlite/operator/pkg/json-patch"
+	"github.com/pkg/errors"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
@@ -26,10 +26,6 @@ func sanitizeSvcIP(svcIP string) string {
 const (
 	svcReservationLabel = "kloudlite.io/servicebinding.reservation"
 )
-
-func svcRegistrationValue(namespace, name string) string {
-	return fn.Md5([]byte(fmt.Sprintf("%s/%s", namespace, name)))
-}
 
 var unReservedServiceLabels = map[string]string{
 	svcReservationLabel: "false",
@@ -105,31 +101,30 @@ func (m *Manager) PickFreeSvcBinding(ctx context.Context) (*networkingv1.Service
 	return m.PickFreeSvcBinding(ctx)
 }
 
-type ReserveServiceResponse struct {
-	ServiceBindingIP string `json:"service_binding_ip"`
-	ReservationToken string `json:"reservation_token"`
-}
-
-func (m *Manager) ReserveService(ctx context.Context, namespace, name string) (*ReserveServiceResponse, error) {
+func (m *Manager) ReserveService(ctx context.Context, namespace, name string) error {
 	m.Lock()
 	defer m.Unlock()
 
-	if resp, ok := m.svcBindingsMap[fmt.Sprintf("%s/%s", namespace, name)]; ok {
-		return resp, nil
-	}
+	reservationToken := fmt.Sprintf("%s.%s", namespace, name)
 
-	sb, err := m.PickFreeSvcBinding(ctx)
+	sb, err := func() (*networkingv1.ServiceBinding, error) {
+		sb2, err2 := m.getServiceBinding(ctx, namespace, name)
+		if err2 != nil {
+			if errors.Is(err2, ErrServiceBindingNotFound) {
+				return m.PickFreeSvcBinding(ctx)
+			}
+			return nil, NewError(err2, "k8s get service binding")
+		}
+		return sb2, nil
+	}()
 	if err != nil {
-		return nil, NewError(err, "picking free service binding")
+		return NewError(err, "picking free service binding")
 	}
 
 	lb := sb.Labels
 	if lb == nil {
 		lb = make(map[string]string, 1)
 	}
-
-	reservationToken := fn.CleanerNanoid(40)
-
 	lb[svcReservationLabel] = reservationToken
 	sb.SetLabels(lb)
 
@@ -140,76 +135,76 @@ func (m *Manager) ReserveService(ctx context.Context, namespace, name string) (*
 	sb.EnsureGVK()
 	sb.SetAnnotations(sb.GetEnsuredAnnotations())
 	if err := m.kcli.Update(ctx, sb); err != nil {
-		return nil, NewError(err, "updating service binding")
+		return NewError(err, "updating service binding")
 	}
 
-	resp := &ReserveServiceResponse{
-		ServiceBindingIP: sb.Spec.GlobalIP,
-	  ReservationToken: reservationToken,
+	// m.svcBindingsMap[fmt.Sprintf("%s/%s", namespace, name)] = resp
+	m.svcNginxStreams[sb.Spec.GlobalIP] = RegisterNginxStreamConfig(sb)
+	if err := m.SyncNginxStreams(); err != nil {
+		return NewError(err, "syncing nginx streams")
 	}
-	m.svcBindingsMap[fmt.Sprintf("%s/%s", namespace, name)] = resp
-	return resp, nil
+
+	return nil
 }
 
-func (m *Manager) RegisterService(ctx context.Context, svcBindingIP string) error {
-	m.Lock()
-	defer m.Unlock()
+var ErrServiceBindingNotFound = fmt.Errorf("servicebinding not found")
 
-	var sb networkingv1.ServiceBinding
-	if err := m.kcli.Get(ctx, fn.NN("", sanitizeSvcIP(svcBindingIP)), &sb); err != nil {
-		return NewError(err, "k8s get service binding")
+func (m *Manager) getServiceBinding(ctx context.Context, namespace, name string) (*networkingv1.ServiceBinding, error) {
+	var sblist networkingv1.ServiceBindingList
+	if err := m.kcli.List(ctx, &sblist, &client.ListOptions{
+		Limit: 1,
+		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+			svcReservationLabel: fmt.Sprintf("%s.%s", namespace, name),
+		}),
+	}); err != nil {
+		return nil, NewError(err, "k8s list service bindings")
 	}
 
-  // if sb.GetLabels()[svcReservationLabel] != reservationToken {
-  //   m.logger.Warn("reservation token mismatch", "got", reservationToken, "expected", sb.GetLabels()[svcReservationLabel])
-  //   return nil
-  // }
+	if len(sblist.Items) == 0 {
+		return nil, ErrServiceBindingNotFound
+	}
 
-	m.svcNginxStreams[sb.Spec.GlobalIP] = RegisterNginxStreamConfig(&sb)
+	if len(sblist.Items) != 1 {
+		return nil, fmt.Errorf("expected 1 service binding, got %d", len(sblist.Items))
+	}
 
-	return m.SyncNginxStreams()
+	return &sblist.Items[0], nil
 }
 
-func (m *Manager) DeregisterService(ctx context.Context, svcBindingIP string, reservationToken string) error {
-	var svcBinding networkingv1.ServiceBinding
-	if err := m.kcli.Get(ctx, fn.NN("", sanitizeSvcIP(svcBindingIP)), &svcBinding); err != nil {
+func (m *Manager) DeregisterService(ctx context.Context, namespace, name string) error {
+	sb, err := m.getServiceBinding(ctx, namespace, name)
+	if err != nil {
 		if apiErrors.IsNotFound(err) {
-			m.logger.Info("service binding not found, already deleted", "svc_binding_ip", svcBindingIP)
+			m.logger.Info("service binding not found, already deleted", "svc", fmt.Sprintf("%s/%s", namespace, name))
 			return nil
 		}
-		return NewError(err, "k8s get svc binding")
+		return nil
 	}
 
-  delete(m.svcBindingsMap, fmt.Sprintf("%s/%s", svcBinding.Spec.ServiceRef.Namespace, svcBinding.Spec.ServiceRef.Name))
+	// delete(m.svcBindingsMap, fmt.Sprintf("%s/%s", svcBinding.Spec.ServiceRef.Namespace, svcBinding.Spec.ServiceRef.Name))
 
-  if svcBinding.GetLabels()[svcReservationLabel] != reservationToken {
-    m.logger.Warn("reservation token mismatch", "got", reservationToken, "expected", svcBinding.GetLabels()[svcReservationLabel])
-    return nil
-  }
+	sb.Spec.ServiceIP = nil
+	sb.Spec.ServiceRef = nil
+	sb.Spec.Ports = nil
 
-	svcBinding.Spec.ServiceIP = nil
-	svcBinding.Spec.ServiceRef = nil
-	svcBinding.Spec.Ports = nil
-
-	lb := svcBinding.Labels
-	delete(svcBinding.GetLabels(), "kloudlite.io/global.hostname")
-
+	lb := sb.Labels
 	if lb == nil {
 		lb = make(map[string]string, 1)
 	}
 	lb[svcReservationLabel] = "false"
-	svcBinding.SetLabels(lb)
+	sb.SetLabels(lb)
 
-	svcBinding.SetAnnotations(svcBinding.GetEnsuredAnnotations())
+	delete(sb.Annotations, "kloudlite.io/global.hostname")
+	sb.SetAnnotations(sb.GetEnsuredAnnotations())
 
-	if err := m.kcli.Update(ctx, &svcBinding); err != nil {
+	if err := m.kcli.Update(ctx, sb); err != nil {
 		return NewError(err, "updating service binding")
 	}
 
-	if err := m.WgRemoveAddr(svcBindingIP); err != nil {
+	if err := m.WgRemoveAddr(sb.Spec.GlobalIP); err != nil {
 		return NewError(err, "removing ip addr from wg")
 	}
 
-	delete(m.svcNginxStreams, svcBindingIP)
+	delete(m.svcNginxStreams, sb.Spec.GlobalIP)
 	return m.SyncNginxStreams()
 }

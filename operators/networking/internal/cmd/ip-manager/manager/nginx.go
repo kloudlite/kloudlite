@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
-	fn "github.com/kloudlite/operator/pkg/functions"
+	// fn "github.com/kloudlite/operator/pkg/functions"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 type genNginxStreamArgs struct {
@@ -33,7 +34,10 @@ func RegisterNginxStreamConfig(svcBinding *networkingv1.ServiceBinding) []string
 	result := make([]string, 0, len(svcBinding.Spec.Ports))
 	for _, port := range svcBinding.Spec.Ports {
 		addr := fmt.Sprintf("%s:%d", svcBinding.Spec.GlobalIP, port.Port)
-		result = append(result, genNginxStreamConfig(strings.ToLower(string(port.Protocol)), addr, fmt.Sprintf("%s.%s.svc.cluster.local:%d", svcBinding.Spec.ServiceRef.Name, svcBinding.Spec.ServiceRef.Namespace, port.Port)))
+		if port.TargetPort == intstr.FromString("") {
+			port.TargetPort = intstr.FromInt(int(port.Port))
+		}
+		result = append(result, genNginxStreamConfig(strings.ToLower(string(port.Protocol)), addr, fmt.Sprintf("%s.%s.svc.cluster.local:%d", svcBinding.Spec.ServiceRef.Name, svcBinding.Spec.ServiceRef.Namespace, port.TargetPort.IntValue())))
 	}
 
 	return result
@@ -56,19 +60,19 @@ func (m *Manager) SyncNginxStreams() error {
 	return nil
 }
 
-func (m *Manager) RegisterAndSyncNginxStreams(ctx context.Context, svcBindingName string) error {
-	var svcBinding networkingv1.ServiceBinding
-	if err := m.kcli.Get(ctx, fn.NN("", svcBindingName), &svcBinding); err != nil {
-		return err
-	}
-
-	m.svcNginxStreams[svcBinding.Spec.GlobalIP] = RegisterNginxStreamConfig(&svcBinding)
-	if err := m.RestartWireguard(); err != nil {
-		return err
-	}
-
-	return m.SyncNginxStreams()
-}
+// func (m *Manager) RegisterAndSyncNginxStreams(ctx context.Context, svcBindingName string) error {
+// 	var svcBinding networkingv1.ServiceBinding
+// 	if err := m.kcli.Get(ctx, fn.NN("", svcBindingName), &svcBinding); err != nil {
+// 		return err
+// 	}
+//
+// 	m.svcNginxStreams[svcBinding.Spec.GlobalIP] = RegisterNginxStreamConfig(&svcBinding)
+// 	if err := m.RestartWireguard(); err != nil {
+// 		return err
+// 	}
+//
+// 	return m.SyncNginxStreams()
+// }
 
 func (m *Manager) DeregisterAndSyncNginxStreams(ctx context.Context, svcBindingIP string) error {
 	delete(m.svcNginxStreams, svcBindingIP)
@@ -77,7 +81,7 @@ func (m *Manager) DeregisterAndSyncNginxStreams(ctx context.Context, svcBindingI
 
 func (m *Manager) restartNginx() error {
 	if m.Env.IsDev {
-		m.logger.Infof("Restarting nginx")
+		m.logger.Info("Restarting nginx")
 		return nil
 	}
 	cmd := exec.Command("nginx", "-s", "reload")
