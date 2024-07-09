@@ -14,7 +14,6 @@
 {{- (.Values.tolerations | default list) | toYaml -}}
 {{- end -}}
 
-
 {{- define "required-node-affinity-to-masters" -}}
 requiredDuringSchedulingIgnoredDuringExecution:
   nodeSelectorTerms:
@@ -43,11 +42,3 @@ preferredDuringSchedulingIgnoredDuringExecution:
 {{- define "image-pull-policy" -}}
 {{- hasSuffix "-nightly" . | ternary "Always" "IfNotPresent"}}
 {{- end -}}
-
-{{- /* {{- define "msvc-creds-svc-shared-secret" -}} */}}
-{{- /* {{- if $.Values.operators.agentOperator.configuration.msvc.credsSvc.sharedSecret -}} */}}
-{{- /* {{$.Values.operators.agentOperator.configuration.msvc.credsSvc.sharedSecret}} */}}
-{{- /* {{- else -}} */}}
-{{- /* {{ printf "%s/%s" $.Values.accountName $.Values.clusterName | sha256sum }} */}}
-{{- /* {{- end -}} */}}
-{{- /* {{- end -}} */}}
