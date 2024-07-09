@@ -4,9 +4,6 @@ imagePullPolicy: Always
 # -- (string REQUIRED) kloudlite issued cluster token
 clusterToken: ''
 
-# -- (string) kloudlite issued access token (if already have)
-accessToken: ''
-
 # -- (string, if available) kloudlite account name
 accountName: ''
 
@@ -14,119 +11,90 @@ accountName: ''
 clusterName: ''
 
 # -- (string) cluster identity secret name, which keeps cluster token and access token
+# @ignored
 clusterIdentitySecretName: kl-cluster-identity
 
 # -- kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port', grpc-api.domain.com:443
 messageOfficeGRPCAddr: ""
 
 # -- k8s service account name, which all the pods installed by this chart uses, will always be of format <.Release.Name>-<.Values.svcAccountName>
+# @ignored
 svcAccountName: sa
 
 # -- cluster internal DNS, like 'cluster.local'
+# @ignored
 clusterInternalDNS: "cluster.local"
 
-# -- kloudlite release version
+# -- kloudlite release version, defaults to `Helm AppVersion`
 kloudliteRelease: ""
 
-jobsNamespace: "kloudlite-jobs"
-
-# -- should be one of aws|gcp|azure, check kloudlite docs for more details
-cloudProvider: ""
-
-gcp:
-  gcloudServiceAccountCreds:
-    # -- base64 encoded service account json
-    json: ""
-
 agent:
-  # -- enable/disable kloudlite agent
-  enabled: true
   # -- workload name for kloudlite agent
   # @ignored
   name: kl-agent
   # -- kloudlite agent image name and tag
+  # @ignored
   image: 
+    # -- (string) kloudlite agent image repository
     repository: ghcr.io/kloudlite/kloudlite/api/tenant-agent
-    # -- image tag for kloudlite agent, by default uses kloudlite_release
+
+    # -- (string) image tag for kloudlite agent, by default uses `.Values.kloudliteRelease`
     tag: ""
-    # -- image pull policy for kloudlite agent, default is .imagePullPolicy
+
+    # -- (string) image pull policy for kloudlite agent, default is `Values.imagePullPolicy`
     pullPolicy: ""
+
   nodeSelector: {}
   tolerations: []
 
-# -- (boolean) configuration for different kloudlite operators used in this chart
-preferOperatorsOnMasterNodes: true
-operators:
-  agentOperator:
-    # -- enable/disable kloudlite agent operator
-    enabled: true
-    # -- workload name for kloudlite agent operator
-    name: kl-agent-operator
-    # -- kloudlite resource watcher image name and tag
-    image: 
-      repository: ghcr.io/kloudlite/kloudlite/operator/agent
-      # -- image tag for kloudlite resource watcher, by default uses .Chart.AppVersion
-      tag: ""
-      # -- image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion
-      pullPolicy: ""
-    tolerations: []
-    nodeSelector: {}
+  # -- (object) kloudlite agent container resources
+  # @ignored
+  resources:
+    limits:
+      cpu: 100m
+      memory: 200Mi
+    requests:
+      cpu: 50m
+      memory: 100Mi
 
-    configuration:
-      nodepools:
-        enabled: false
+agentOperator:
+  # -- workload name for kloudlite agent operator
+  # @ignored
+  name: kl-agent-operator
+  # -- kloudlite resource watcher image name and tag
+  # @ignored
+  image: 
+    repository: ghcr.io/kloudlite/kloudlite/operator/agent
+    # -- image tag for kloudlite resource watcher, by default uses .Chart.AppVersion
+    tag: ""
+    # -- image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion
+    pullPolicy: ""
 
-        # must be one of aws,azure,gcp
-        cloudprovider: ""
-        # aws:
-        #   vpc_params:
-        #     readFromCluster: true
-        #     secret:
-        #       name: "kloudlite-aws-settings"
-        #       namespace: "kube-system"
-        #       keys:
-        #         vpcId: "vpc_id"
-        #         vpcPublicSubnets: "vpc_public_subnets"
+  tolerations: []
+  nodeSelector: {}
+  nodeAffinity: {}
 
-        iacJobImage:
-          repository: ghcr.io/kloudlite/kloudlite/infrastructure-as-code/iac-job
-          tag: ""
+  # @ignored
+  configuration:
+    # -- (object) kloudlite helm-charts controller configuration
+    helmCharts:
+      jobImage:
+        repository: ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner
+        tag: ""
+        pullPolicy: ""
 
-      helmCharts:
-        jobImage:
-          repository: ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner
-          tag: ""
-
-      msvc:
-        credsSvc:
-          name: "msvc-creds"
-
-          # -- generate using python -c "import secrets; print(secrets.token_urlsafe(64))"
-          sharedSecret: ""
-          httpPort: "3000"
-          requestPath: "/get-msvc-creds"
-
-      wireguard:
-        enabled: true
-        podCIDR: 10.42.0.0/16
-        svcCIDR: 10.43.0.0/16
-
-        deviceNamespace: kl-vpn-devices
-        publicDNSHost: ""
+  # -- (object) kloudlite agent operator resources
+  # @ignored
+  resources:
+    limits:
+      cpu: 200m
+      memory: 200Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi
 
 helmCharts:
-  kloudliteAddons:
-    enabled: false
-    name: "kloudlite-addons"
-    configuration:
-      chartVersion: ""
-
-      nodeSelector: {}
-      tolerations: {}
-
-      clusterAutoscaler:
-        enabled: true
-
+  # @ignored
   ingressNginx:
     enabled: false
     name: "ingress-nginx"
@@ -136,12 +104,14 @@ helmCharts:
       controllerKind: Deployment
       ingressClassName: kl-ingress
 
+  # @ignored
   certManager:
     enabled: false
     name: "cert-manager"
     nodeSelector: {}
     tolerations: []
     affinity: {}
+    # @ignored
     configuration:
       defaultClusterIssuer: letsencrypt-prod
       clusterIssuers:
@@ -153,14 +123,16 @@ helmCharts:
 
   vector:
     enabled: true
+    # @ignored
     name: "vector"
+    # @ignored
     debugOnStdout: false
     nodeSelector: {}
+
+    # @ignored
     configuration:
-      kubeletMetricsReexporter:
+      kubeletMetricsReExporter:
         image:
           repository: "ghcr.io/kloudlite/kloudlite/kubelet-metrics-reexporter"
           tag: ""
-
-byok:
-  enabled: false
+          pullPolicy: ""

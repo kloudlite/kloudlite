@@ -1,5 +1,3 @@
-{{- if .Values.agent.enabled }}
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,7 +25,7 @@ spec:
 
       containers:
       - name: main
-        {{- $imageTag := .Values.agent.image.tag | default (include "image-tag" .) }}
+        {{- $imageTag := .Values.agentOperator.image.tag | default (include "image-tag" .) }}
         image: {{.Values.agent.image.repository}}:{{$imageTag}}
         imagePullPolicy: {{ include "image-pull-policy" $imageTag }}
         env:
@@ -54,34 +52,16 @@ spec:
           - name: ACCESS_TOKEN_SECRET_NAMESPACE
             value: {{.Release.Namespace}}
 
-          {{- /* - name: CLUSTER_NAME */}}
-          {{- /*   valueFrom: */}}
-          {{- /*     secretKeyRef: */}}
-          {{- /*       key: CLUSTER_NAME */}}
-          {{- /*       name: {{.Values.clusterIdentitySecretName}} */}}
-          {{- /**/}}
-          {{- /* - name: ACCOUNT_NAME */}}
-          {{- /*   valueFrom: */}}
-          {{- /*     secretKeyRef: */}}
-          {{- /*       key: ACCOUNT_NAME */}}
-          {{- /*       name: {{.Values.clusterIdentitySecretName}} */}}
-
           - name: VECTOR_PROXY_GRPC_SERVER_ADDR
             value: 0.0.0.0:6000
 
           - name: RESOURCE_WATCHER_NAME
-            value: {{.Values.operators.agentOperator.name}}
+            value: {{.Values.agentOperator.name}}
 
           - name: RESOURCE_WATCHER_NAMESPACE
             value: {{.Release.Namespace}}
 
-        resources:
-          limits:
-            cpu: 100m
-            memory: 200Mi
-          requests:
-            cpu: 50m
-            memory: 100Mi
+        resources: {{.Values.agent.resources | toYaml | nindent 10}}
 
 ---
 
@@ -99,5 +79,3 @@ spec:
   selector:
     app: "{{.Values.agent.name}}"
 ---
-
-{{- end  }}

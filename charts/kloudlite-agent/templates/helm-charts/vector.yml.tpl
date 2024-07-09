@@ -88,9 +88,9 @@ spec:
 
     extraContainers:
       - name: kubelet-metrics-reexporter
-        {{- $imageTag := .Values.helmCharts.vector.configuration.kubeletMetricsReexporter.image.tag | default (include "image-tag" .) }}
-        image: {{.Values.helmCharts.vector.configuration.kubeletMetricsReexporter.image.repository}}:{{$imageTag}}
-        imagePullPolicy: {{ include "image-pull-policy" $imageTag }}
+        {{- $imageTag := .Values.helmCharts.vector.configuration.kubeletMetricsReExporter.image.tag | default (include "image-tag" .) }}
+        image: {{.Values.helmCharts.vector.configuration.kubeletMetricsReExporter.image.repository}}:{{$imageTag}}
+        imagePullPolicy: {{ .Values.helmCharts.vector.configuration.kubeletMetricsReExporter.image.pullPolicy | default (include "image-pull-policy" $imageTag) }}
         args:
           - --addr
           - "0.0.0.0:9999"
