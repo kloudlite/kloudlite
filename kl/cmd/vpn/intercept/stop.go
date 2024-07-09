@@ -43,10 +43,7 @@ Examples:
 			return
 		}
 
-		apps, err := apic.ListApps([]fn.Option{
-			fn.MakeOption("accountName", currentAcc),
-			fn.MakeOption("envName", currentEnv.Name),
-		}...)
+		apps, err := apic.ListApps(currentAcc, currentEnv.Name)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -71,7 +68,7 @@ Examples:
 			return
 		}
 
-		if err := apic.InterceptApp(appToStop, false, nil, []fn.Option{
+		if err := apic.InterceptApp(appToStop, false, nil, currentEnv.Name, []fn.Option{
 			fn.MakeOption("appName", appToStop.Metadata.Name),
 		}...); err != nil {
 			fn.PrintError(err)

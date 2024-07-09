@@ -47,9 +47,7 @@ func switchEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	env, err := selectEnv(apic, fc, []fn.Option{
-		fn.MakeOption("accountName", klFile.AccountName),
-	}...)
+	env, err := selectEnv(apic, fc)
 	if err != nil {
 		return err
 	}
@@ -91,7 +89,7 @@ func init() {
 	switchCmd.Flags().StringP("account", "a", "", "account name")
 }
 
-func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient, options ...fn.Option) (*apiclient.Env, error) {
+func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.Env, error) {
 	persistSelectedEnv := func(env fileclient.Env) error {
 		err := fc.SelectEnv(env)
 		if err != nil {
@@ -100,7 +98,12 @@ func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient, options ...fn
 		return nil
 	}
 
-	envs, err := apic.ListEnvs(options...)
+	currentAccount, err := fc.CurrentAccountName()
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+
+	envs, err := apic.ListEnvs(currentAccount)
 	if err != nil {
 		return nil, functions.NewE(err)
 	}

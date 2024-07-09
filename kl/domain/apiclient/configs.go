@@ -105,26 +105,16 @@ func (apic *apiClient) ListConfigs(accountName string, envName string) ([]Config
 // 	return config, nil
 // }
 
-func (apic *apiClient) GetConfig(options ...fn.Option) (*Config, error) {
-	configName := fn.GetOption(options, "configName")
+func (apic *apiClient) GetConfig(accountName string, envName string, configName string) (*Config, error) {
 
-	// env, err := EnsureEnv(nil, options...)
-	// if err != nil {
-	// 	return nil, fn.NewE(err)
-	// }
-	cookie, err := getCookie()
-	if err != nil {
-		return nil, fn.NewE(err)
-	}
-
-	currentEnv, err := apic.fc.CurrentEnv()
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
 
 	respData, err := klFetch("cli_getConfig", map[string]any{
 		"name":    configName,
-		"envName": strings.TrimSpace(currentEnv.Name),
+		"envName": envName,
 	}, &cookie)
 
 	if err != nil {

@@ -38,22 +38,6 @@ var secretCmd = &cobra.Command{
 			secName = args[0]
 		}
 
-		// filePath := fn.ParseKlFile(cmd)
-		// klFile, err := fc.GetKlFile(filePath)
-		// if err != nil {
-		// 	fn.PrintError(err)
-		// 	return
-		// }
-
-		// sec, err := apiclient.EnsureSecret([]fn.Option{
-		// 	fn.MakeOption("secretName", secName),
-		// 	fn.MakeOption("accountName", klFile.AccountName),
-		// }...)
-		// if err != nil {
-		// 	fn.PrintError(err)
-		// 	return
-		// }
-
 		if secName == "" {
 			currentAccount, err := fc.CurrentAccountName()
 			if err != nil {
@@ -80,7 +64,13 @@ var secretCmd = &cobra.Command{
 			secName = selectedSecret.Metadata.Name
 		}
 
-		sec, err := apic.GetSecret(fn.MakeOption("secretName", secName))
+		currentAccount, err := fc.CurrentAccountName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		sec, err := apic.GetSecret(currentAccount, secName)
 		if err != nil {
 			fn.PrintError(err)
 			return

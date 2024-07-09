@@ -37,18 +37,14 @@ type AppPort struct {
 	DevicePort int `json:"devicePort,omitempty"`
 }
 
-func (apic *apiClient) ListApps(options ...fn.Option) ([]App, error) {
-	cookie, err := getCookie(options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-	env, err := apic.fc.CurrentEnv()
+func (apic *apiClient) ListApps(accountName string, envName string) ([]App, error) {
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
 	respData, err := klFetch("cli_listApps", map[string]any{
 		"pq":      PaginationDefault,
-		"envName": env.Name,
+		"envName": envName,
 	}, &cookie)
 	if err != nil {
 		return nil, functions.NewE(err)
@@ -108,10 +104,9 @@ func (apic *apiClient) ListApps(options ...fn.Option) ([]App, error) {
 // 	return s, nil
 // }
 
-func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, options ...fn.Option) error {
+func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envName string, options ...fn.Option) error {
 
 	devName := fn.GetOption(options, "deviceName")
-	envName := fn.GetOption(options, "envName")
 	accountName := fn.GetOption(options, "accountName")
 
 	fc, err := fileclient.New()
@@ -208,7 +203,7 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, opti
 
 	query := "cli_interceptApp"
 	if !app.IsMainApp {
-		query = "cli_intercepExternalApp"
+		query = "cli_interceptExternalApp"
 	}
 
 	respData, err := klFetch(query, map[string]any{

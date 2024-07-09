@@ -116,9 +116,7 @@ func selectAccount(apic apiclient.ApiClient) (*string, error) {
 }
 
 func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient, accountName string) (*string, error) {
-	if envs, err := apic.ListEnvs([]fn.Option{
-		fn.MakeOption("accountName", accountName),
-	}...); err == nil {
+	if envs, err := apic.ListEnvs(accountName); err == nil {
 		if selectedEnv, err := fzf.FindOne(
 			envs,
 			func(env apiclient.Env) string {

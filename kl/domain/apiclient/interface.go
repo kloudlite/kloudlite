@@ -12,30 +12,30 @@ type apiClient struct {
 type ApiClient interface {
 	ListAccounts() ([]Account, error)
 
-	ListApps(options ...fn.Option) ([]App, error)
-	InterceptApp(app *App, status bool, ports []AppPort, options ...fn.Option) error
+	ListApps(accountName string, envName string) ([]App, error)
+	InterceptApp(app *App, status bool, ports []AppPort, envName string, options ...fn.Option) (err error)
 
 	CreateRemoteLogin() (loginId string, err error)
 	GetCurrentUser() (*User, error)
 	Login(loginId string) error
 
 	ListConfigs(accountName string, envName string) ([]Config, error)
-	GetConfig(options ...fn.Option) (*Config, error)
+	GetConfig(accountName string, envName string, configName string) (*Config, error)
 
-	GetVPNDevice(devName string, options ...fn.Option) (*Device, error)
+	GetVPNDevice(accountName string, devName string) (*Device, error)
 	CheckDeviceStatus() bool
 	GetAccVPNConfig(account string) (*fileclient.AccountVpnConfig, error)
 
-	ListEnvs(options ...fn.Option) ([]Env, error)
+	ListEnvs(accountName string) ([]Env, error)
 	GetEnvironment(accountName, envName string) (*Env, error)
 	GetLoadMaps() (map[string]string, MountMap, error)
 
-	ListMreses(envName string, options ...fn.Option) ([]Mres, error)
-	ListMresKeys(envName, importedManagedResource string, options ...fn.Option) ([]string, error)
-	GetMresConfigValues(options ...fn.Option) (map[string]string, error)
+	ListMreses(accountName string, envName string) ([]Mres, error)
+	ListMresKeys(accountName, envName, importedManagedResource string) ([]string, error)
+	GetMresConfigValues(accountName string) (map[string]string, error)
 
 	ListSecrets(accountName string, envName string) ([]Secret, error)
-	GetSecret(options ...fn.Option) (*Secret, error)
+	GetSecret(accountName string, secretName string) (*Secret, error)
 }
 
 func New() (ApiClient, error) {

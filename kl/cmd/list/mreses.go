@@ -29,22 +29,19 @@ var mresCmd = &cobra.Command{
 			return
 		}
 
-		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fc.GetKlFile(filePath)
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-
 		currentEnv, err := fc.CurrentEnv()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		mres, err := apic.ListMreses(currentEnv.Name, []fn.Option{
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		currentAccount, err := fc.CurrentAccountName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		mres, err := apic.ListMreses(currentAccount, currentEnv.Name)
 		if err != nil {
 			fn.PrintError(err)
 			return

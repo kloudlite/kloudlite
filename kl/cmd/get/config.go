@@ -37,21 +37,6 @@ var configCmd = &cobra.Command{
 		if len(args) >= 1 {
 			configName = args[0]
 		}
-		//filePath := fn.ParseKlFile(cmd)
-		//klFile, err := fc.GetKlFile(filePath)
-		//if err != nil {
-		//	fn.PrintError(err)
-		//	return
-		//}
-		//
-		//config, err := apic.EnsureConfig([]fn.Option{
-		//	fn.MakeOption("configName", configName),
-		//	fn.MakeOption("accountName", klFile.AccountName),
-		//}...)
-		//if err != nil {
-		//	fn.PrintError(err)
-		//	return
-		//}
 
 		if configName == "" {
 			currentAccount, err := fc.CurrentAccountName()
@@ -79,7 +64,18 @@ var configCmd = &cobra.Command{
 			configName = selectedConfig.Metadata.Name
 		}
 
-		config, err := apic.GetConfig(fn.MakeOption("configName", configName))
+		currentAccountName, err := fc.CurrentAccountName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		currentEnvName, err := fc.CurrentEnv()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		config, err := apic.GetConfig(currentAccountName, currentEnvName.Name, configName)
 		if err != nil {
 			fn.PrintError(err)
 			return

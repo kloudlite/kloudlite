@@ -36,11 +36,11 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 		return functions.NewE(err)
 	}
 
-	klFile, err := fc.GetKlFile("")
+	currentAccount, err := fc.CurrentAccountName()
 	if err != nil {
 		return functions.NewE(err)
 	}
-	envs, err := apic.ListEnvs(fn.MakeOption("accountName", klFile.AccountName))
+	envs, err := apic.ListEnvs(currentAccount)
 	if err != nil {
 		return functions.NewE(err)
 	}

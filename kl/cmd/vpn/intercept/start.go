@@ -51,10 +51,7 @@ func startIntercept(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cob
 		return err
 	}
 
-	appsList, err := apic.ListApps([]fn.Option{
-		fn.MakeOption("accountName", accName),
-		fn.MakeOption("envName", currentEnv.Name),
-	}...)
+	appsList, err := apic.ListApps(accName, currentEnv.Name)
 	if err != nil {
 		return err
 	}
@@ -96,7 +93,7 @@ func startIntercept(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cob
 		})
 	}
 
-	err = apic.InterceptApp(selectedApp, true, ports, []fn.Option{
+	err = apic.InterceptApp(selectedApp, true, ports, currentEnv.Name, []fn.Option{
 		fn.MakeOption("appName", selectedApp.Metadata.Name),
 	}...)
 

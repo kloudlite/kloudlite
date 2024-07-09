@@ -56,18 +56,13 @@ func AddMres(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Comm
 	//TODO: add changes to the klbox-hash file
 	// mresName := fn.ParseStringFlag(cmd, "resource")
 
-	mres, err := selectMres(apic, fc, []fn.Option{
-		fn.MakeOption("accountName", kt.AccountName),
-	}...)
+	mres, err := selectMres(apic, fc)
 
 	if err != nil {
 		return fn.NewE(err)
 	}
 
-	mresKey, err := selectMresKey(apic, []fn.Option{
-		fn.MakeOption("secretName", mres.SecretRefName.Name),
-		fn.MakeOption("accountName", kt.AccountName),
-	}...)
+	mresKey, err := selectMresKey(apic, fc, mres.SecretRefName.Name)
 
 	if err != nil {
 		return fn.NewE(err)
@@ -143,13 +138,16 @@ func AddMres(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Comm
 	return nil
 }
 
-func selectMres(apic apiclient.ApiClient, fc fileclient.FileClient, options ...fn.Option) (*apiclient.Mres, error) {
+func selectMres(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.Mres, error) {
 	currentEnv, err := fc.CurrentEnv()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
-	options = append(options, fn.MakeOption("envName", currentEnv.Name))
-	m, err := apic.ListMreses(currentEnv.Name, options...)
+	currentAccount, err := fc.CurrentAccountName()
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+	m, err := apic.ListMreses(currentAccount, currentEnv.Name)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -168,8 +166,12 @@ func init() {
 	fn.WithKlFile(mresCmd)
 }
 
-func selectMresKey(apic apiclient.ApiClient, options ...fn.Option) (*string, error) {
-	secret, err := apic.GetSecret(options...)
+func selectMresKey(apic apiclient.ApiClient, fc fileclient.FileClient, secretName string) (*string, error) {
+	selectedAccount, err := fc.CurrentAccountName()
+	if err != nil {
+		return nil, fn.NewE(err)
+	}
+	secret, err := apic.GetSecret(selectedAccount, secretName)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

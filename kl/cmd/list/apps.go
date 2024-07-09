@@ -22,14 +22,20 @@ var appsCmd = &cobra.Command{
 			return
 		}
 
-		if err := listapps(apic, cmd, args); err != nil {
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if err := listapps(apic, fc, cmd, args); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func listapps(apic apiclient.ApiClient, cmd *cobra.Command, _ []string) error {
+func listapps(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Command, _ []string) error {
 	fc, err := fileclient.New()
 	if err != nil {
 		return functions.NewE(err)
@@ -37,16 +43,16 @@ func listapps(apic apiclient.ApiClient, cmd *cobra.Command, _ []string) error {
 
 	envName := fn.ParseStringFlag(cmd, "env")
 
-	filePath := fn.ParseKlFile(cmd)
-	klFile, err := fc.GetKlFile(filePath)
+	currentAccountName, err := fc.CurrentAccountName()
+	if err != nil {
+		return functions.NewE(err)
+	}
+	currentEnvName, err := fc.CurrentEnv()
 	if err != nil {
 		return functions.NewE(err)
 	}
 
-	apps, err := apic.ListApps([]fn.Option{
-		fn.MakeOption("accountName", klFile.AccountName),
-		fn.MakeOption("envName", envName),
-	}...)
+	apps, err := apic.ListApps(currentAccountName, currentEnvName.Name)
 	if err != nil {
 		return functions.NewE(err)
 	}

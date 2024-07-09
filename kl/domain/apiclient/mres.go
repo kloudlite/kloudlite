@@ -12,9 +12,9 @@ type Mres struct {
 	SecretRefName Metadata `json:"secretRef"`
 }
 
-func (apic *apiClient) ListMreses(envName string, options ...fn.Option) ([]Mres, error) {
+func (apic *apiClient) ListMreses(accountName string, envName string) ([]Mres, error) {
 
-	cookie, err := getCookie(options...)
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -35,8 +35,8 @@ func (apic *apiClient) ListMreses(envName string, options ...fn.Option) ([]Mres,
 	return fromResp, nil
 }
 
-func (apic *apiClient) ListMresKeys(envName, importedManagedResource string, options ...fn.Option) ([]string, error) {
-	cookie, err := getCookie(options...)
+func (apic *apiClient) ListMresKeys(accountName, envName, importedManagedResource string) ([]string, error) {
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -62,16 +62,8 @@ type MresResp struct {
 	MresName string `json:"mresName"`
 }
 
-func (apic *apiClient) GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
+func (apic *apiClient) GetMresConfigValues(accountName string) (map[string]string, error) {
 	fc := apic.fc
-
-	// // env, err := EnsureEnv(&fileclient.Env{
-	// // 	Name: fn.GetOption(options, "envName"),
-	// // }, options...)
-
-	// if err != nil {
-	// 	return nil, fn.NewE(err)
-	// }
 
 	currentEnv, err := fc.CurrentEnv()
 	if err != nil {
@@ -87,7 +79,7 @@ func (apic *apiClient) GetMresConfigValues(options ...fn.Option) (map[string]str
 		return nil, fmt.Errorf("no managed resource selected")
 	}
 
-	cookie, err := getCookie(options...)
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

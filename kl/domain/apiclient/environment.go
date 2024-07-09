@@ -51,14 +51,9 @@ type EnvList struct {
 // 	}
 // }
 
-func (apic *apiClient) ListEnvs(options ...fn.Option) ([]Env, error) {
-	var err error
-	// _, err = EnsureAccount(options...)
-	// if err != nil {
-	// 	return nil, functions.NewE(err)
-	// }
+func (apic *apiClient) ListEnvs(accountName string) ([]Env, error) {
 
-	cookie, err := getCookie(options...)
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, functions.NewE(err)
 	}

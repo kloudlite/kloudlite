@@ -46,7 +46,12 @@ func (c *client) Start() error {
 			}
 		}
 	}
-
+	if boxHash == nil {
+		boxHash, err = hashctrl.BoxHashFile(c.cwd)
+		if err != nil {
+			return fn.NewE(err)
+		}
+	}
 	_, err = c.startContainer(boxHash.KLConfHash)
 	if err != nil {
 		return fn.NewE(err)

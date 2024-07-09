@@ -7,10 +7,11 @@ import (
 )
 
 type Secret struct {
-	DisplayName string            `yaml:"displayName"`
-	Metadata    Metadata          `yaml:"metadata"`
-	Status      Status            `yaml:"status"`
-	StringData  map[string]string `yaml:"stringData"`
+	DisplayName string            `yaml:"displayName" json:"displayName"`
+	Metadata    Metadata          `yaml:"metadata" json:"metadata"`
+	Status      Status            `yaml:"status" json:"status"`
+	StringData  map[string]string `yaml:"stringData" json:"stringData"`
+	IsReadyOnly bool              `yaml:"isReadyOnly" json:"isReadyOnly"`
 }
 
 func (apic *apiClient) ListSecrets(accountName string, envName string) ([]Secret, error) {
@@ -37,11 +38,16 @@ func (apic *apiClient) ListSecrets(accountName string, envName string) ([]Secret
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
-
 	if fromResp, err := GetFromRespForEdge[Secret](respData); err != nil {
 		return nil, fn.NewE(err)
 	} else {
-		return fromResp, nil
+		var secrets []Secret
+		for _, s := range fromResp {
+			if !s.IsReadyOnly {
+				secrets = append(secrets, s)
+			}
+		}
+		return secrets, nil
 	}
 }
 
@@ -95,15 +101,9 @@ func (apic *apiClient) ListSecrets(accountName string, envName string) ([]Secret
 // 	return secret, nil
 // }
 
-func (apic *apiClient) GetSecret(options ...fn.Option) (*Secret, error) {
-	secName := fn.GetOption(options, "secretName")
+func (apic *apiClient) GetSecret(accountName string, secretName string) (*Secret, error) {
 
-	// env, err := EnsureEnv(nil, options...)
-	// if err != nil {
-	// 	return nil, functions.NewE(err)
-	// }
-
-	cookie, err := getCookie()
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -114,7 +114,7 @@ func (apic *apiClient) GetSecret(options ...fn.Option) (*Secret, error) {
 	}
 
 	respData, err := klFetch("cli_getSecret", map[string]any{
-		"name":    secName,
+		"name":    secretName,
 		"envName": strings.TrimSpace(currentEnv.Name),
 	}, &cookie)
 

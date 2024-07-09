@@ -48,8 +48,8 @@ type DeviceList struct {
 	Edges Edges[Env] `json:"edges"`
 }
 
-func (apic *apiClient) GetVPNDevice(devName string, options ...fn.Option) (*Device, error) {
-	cookie, err := getCookie(options...)
+func (apic *apiClient) GetVPNDevice(accountName string, devName string) (*Device, error) {
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -222,9 +222,14 @@ func (apic *apiClient) GetAccVPNConfig(account string) (*fileclient.AccountVpnCo
 	} else if err != nil {
 		return nil, fn.NewE(err)
 	}
-
+	if avc == nil {
+		avc, err = apic.fc.GetVpnAccountConfig(account)
+		if err != nil {
+			return nil, fn.NewE(err)
+		}
+	}
 	if avc.WGconf == "" {
-		d, err := apic.GetVPNDevice(avc.DeviceName, fn.MakeOption("accountName", account))
+		d, err := apic.GetVPNDevice(account, avc.DeviceName)
 		if err != nil {
 			return nil, fn.NewE(err)
 		}
