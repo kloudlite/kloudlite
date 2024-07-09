@@ -104,6 +104,19 @@ tasks:
           cat $file
         done
 
+        for file in $(ls config/crd/bases/mysql.msvc.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        for file in $(ls config/crd/bases/redis.msvc.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+        for file in $(ls config/crd/bases/postgres.msvc.kloudlite.io_*.yaml); do
+          cat $file
+        done
+
+
   yaml:operator:
     summary: |+
       template args

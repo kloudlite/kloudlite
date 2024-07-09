@@ -7,9 +7,13 @@ import (
 	distribution "github.com/kloudlite/operator/operators/distribution/controller"
 	helmCharts "github.com/kloudlite/operator/operators/helm-charts/controller"
 	lifecycle "github.com/kloudlite/operator/operators/lifecycle/controller"
+
 	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
+	msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
+	msvcMysql "github.com/kloudlite/operator/operators/msvc-mysql/controller"
+	msvcPostgres "github.com/kloudlite/operator/operators/msvc-postgres/controller"
+
 	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
-	// msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
 	networkingv1 "github.com/kloudlite/operator/operators/networking/register"
 	nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	project "github.com/kloudlite/operator/operators/project/controller"
@@ -30,7 +34,9 @@ func main() {
 	// kloudlite managed services
 	msvcAndMres.RegisterInto(mgr)
 	msvcMongo.RegisterInto(mgr)
-	// msvcRedis.RegisterInto(mgr)
+	msvcRedis.RegisterInto(mgr)
+	msvcMysql.RegisterInto(mgr)
+	msvcPostgres.RegisterInto(mgr)
 
 	// kloudlite cluster management
 	nodepool.RegisterInto(mgr)

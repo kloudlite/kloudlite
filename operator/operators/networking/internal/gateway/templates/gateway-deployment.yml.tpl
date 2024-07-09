@@ -120,7 +120,7 @@ spec:
           - sh
           - -c
           - |+
-            (socat -dd tcp4-listen:8080,fork,reuseaddr tcp4:baby.default.svc.cluster.local:8090 2>&1 | grep -iE --line-buffered 'listening|exiting') &
+            (socat -dd tcp4-listen:8080,fork,reuseaddr tcp4:baby.device.local:8090 2>&1 | grep -iE --line-buffered 'listening|exiting') &
             pid="$pid $!"
 
             trap "eval kill -9 $pid || exit 0" EXIT SIGINT SIGTERM
