@@ -12,6 +12,8 @@
 
   <br />
 
+[![discord](https://img.shields.io/discord/934762910717194260?label=discord)](https://discord.gg/m5tYzQfcG8)
+
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue)](#license)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kloudlite/api)](https://goreportcard.com/report/github.com/kloudlite/api)
 [![Issues - daytona](https://img.shields.io/github/issues/kloudlite/kloudlite)](https://github.com/kloudlite/kloudlite/issues)
