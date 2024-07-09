@@ -30,6 +30,31 @@ Kloudlite is a platform designed to enhance developers' productivity by providin
 
 ## Quickstart
 
+Login and setup your kloudlite account.
+
+### Attach Cluster
+Attach your cluster in infrastructure section of kloudlite dashboard.
+
+### Setup Environment
+Start creating your environment. Add apps, configs, secrets in your environment.
+
+### Install Cli
+```bash
+# Setup docker in your machine
+
+# Install kloudlite cli.
+curl 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | bash
+```
+
+### Access Environment
+```
+# Setup workspace
+kl init
+
+# Start Development Container
+kl box ssh
+```
+
 ## Install
 
 ## Documentation
