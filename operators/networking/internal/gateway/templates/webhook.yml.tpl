@@ -1,31 +1,4 @@
-{{- /* # Certificate Issuer */}}
-{{- /* apiVersion: cert-manager.io/v1 */}}
-{{- /* kind: Issuer */}}
-{{- /* metadata: */}}
-{{- /*   name: {{.NamePrefix}}-selfsigned-issuer */}}
-{{- /*   namespace: {{.Namespace}} */}}
-{{- /*   ownerReferences: {{.OwnerReferences | toYAML |nindent 4 }} */}}
-{{- /* spec: */}}
-{{- /*   selfSigned: {} */}}
-
-{{- /* # Certificate */}}
-{{- /* apiVersion: cert-manager.io/v1 */}}
-{{- /* kind: Certificate */}}
-{{- /* metadata: */}}
-{{- /*   name: {{.NamePrefix}}-webhook-cert */}}
-{{- /*   namespace: {{.Namespace}} */}}
-{{- /*   ownerReferences: {{.OwnerReferences | toYAML |nindent 4 }} */}}
-{{- /* spec: */}}
-{{- /*   secretName: {{.NamePrefix}}-webhook-cert */}}
-{{- /*   dnsNames: */}}
-{{- /*   - {{.ServiceName}}.{{.Namespace}} */}}
-{{- /*   - {{.ServiceName}}.{{.Namespace}}.svc */}}
-{{- /*   issuerRef: */}}
-{{- /*     name: {{.NamePrefix}}-selfsigned-issuer */}}
-
 ---
-
-{{- /* Webhook */}}
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
@@ -67,7 +40,7 @@ webhooks:
     # caBundle: <CA_BUNDLE> # Replace with the base64 encoded CA certificate
     caBundle: {{.WebhookServerCertCABundle | b64enc}}
   rules:
-  - operations: ["CREATE", "DELETE"]
+  - operations: ["CREATE", "UPDATE", "DELETE"]
     apiGroups: [""]
     apiVersions: ["v1"]
     resources: ["services"]
