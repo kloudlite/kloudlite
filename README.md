@@ -73,6 +73,14 @@ The easiest way to install kloudlite is to use our helm charts.
 You can choose the kubernetes
 
 ## Documentation
+Browse our docs here or visit a specific section below:
+- Opensource installation: Install and run kloudlite on your compute.
+- Operators: Core operators that will run kloudlite and it's resoruces.
+- Architecture: Kloudlite architecture diagram.
+- Remote Envs: Remote Environment setup and management
+- Dev Envs: Development Environment setup and access
+
+
 
 ## Support
 Feel free to open an issue if you have questions, run into bugs, or have a feature request.
