@@ -6,13 +6,18 @@ type StandaloneSvcOutput struct {
 	RootUsername string `json:"ROOT_USERNAME"`
 	RootPassword string `json:"ROOT_PASSWORD"`
 
-	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
-	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
-
-	GlobalVPNHosts string `json:"GLOBAL_VPN_HOSTS,omitempty"`
-	GlobalVpnURI   string `json:"GLOBAL_VPN_URI,omitempty"`
-
+	DBName     string `json:"DB_NAME"`
 	AuthSource string `json:"AUTH_SOURCE"`
+
+	Port string `json:"PORT"`
+
+	Hosts string `json:"HOSTS"`
+	Addr  string `json:"ADDR"`
+	URI   string `json:"URI"`
+
+	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
+	ClusterLocalAddr  string `json:"CLUSTER_LOCAL_ADDR"`
+	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
 }
 
 func (sso StandaloneSvcOutput) ToMap() (map[string]string, error) {
@@ -76,4 +81,31 @@ func ExtractPVCLabelsFromStatefulSetLabels(m map[string]string) map[string]strin
 		"app.kubernetes.io/instance":  m["app.kubernetes.io/instance"],
 		"app.kubernetes.io/name":      m["app.kubernetes.io/name"],
 	}
+}
+
+type StandaloneDatabaseOutput struct {
+	Username string `json:"USERNAME"`
+	Password string `json:"PASSWORD"`
+
+	DbName string `json:"DB_NAME"`
+
+	Port string `json:"PORT"`
+
+	Host string `json:"HOST"`
+	URI  string `json:"URI"`
+
+	ClusterLocalHost string `json:"CLUSTER_LOCAL_HOST"`
+	ClusterLocalURI  string `json:"CLUSTER_LOCAL_URI"`
+}
+
+func (sdo StandaloneDatabaseOutput) ToMap() (map[string]string, error) {
+	b, err := json.Marshal(sdo)
+	if err != nil {
+		return nil, err
+	}
+	var m map[string]string
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }

@@ -30,6 +30,8 @@ type StandaloneService struct {
 
 	Spec   StandaloneServiceSpec `json:"spec"`
 	Status rApi.Status           `json:"status,omitempty"`
+
+  Output ct.ManagedServiceOutput `json:"output,omitempty"`
 }
 
 func (s *StandaloneService) EnsureGVK() {
