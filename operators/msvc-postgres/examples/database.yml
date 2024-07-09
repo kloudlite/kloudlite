@@ -1,0 +1,12 @@
+apiVersion: postgres.msvc.kloudlite.io/v1
+kind: StandaloneDatabase
+metadata:
+  name: test-db
+  namespace: default
+spec:
+  msvcRef:
+    name: postgres
+    namespace: default
+    apiVersion: postgres.msvc.kloudlite.io/v1
+    kind: Standalone
+

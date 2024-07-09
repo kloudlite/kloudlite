@@ -2,12 +2,7 @@ package database
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -166,77 +161,14 @@ type MsvcOutput struct {
 	ReplicasSetName *string
 }
 
-func (r *Reconciler) getGlobalVPNConnParams(ctx context.Context, obj *mongodbMsvcv1.Database) (map[string][]byte, error) {
-	if !obj.IsGlobalVPNEnabled() {
-		return nil, fmt.Errorf("global VPN support is not enabled")
-	}
-
-	if obj.Spec.MsvcRef.ClusterName == nil {
-		return nil, fmt.Errorf(".spec.msvcRef.clusterName must be set")
-	}
-
-	svcURL := fmt.Sprintf("http://%s.%s.svc.%s.local", r.Env.MsvcCredsSvcName, r.Env.MsvcCredsSvcNamespace, *obj.Spec.MsvcRef.ClusterName)
-	svcURL, err := url.JoinPath(svcURL, r.Env.MsvcCredsSvcRequestPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, svcURL, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	qp := req.URL.Query()
-	qp.Add("name", obj.Spec.MsvcRef.Name)
-	qp.Add("namespace", func() string {
-		if obj.Spec.MsvcRef.Namespace != "" {
-			return obj.Spec.MsvcRef.Namespace
-		}
-		return obj.Namespace
-	}())
-	req.URL.RawQuery = qp.Encode()
-
-	if obj.Spec.MsvcRef.SharedSecret != nil {
-		req.Header.Add("kloudlite-shared-secret", *obj.Spec.MsvcRef.SharedSecret)
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	m := map[string]string{}
-	err = json.Unmarshal(b, &m)
-	if err != nil {
-		return nil, errors.NewEf(err, "unmarshalling %q msvc creds into map[string]string", b)
-	}
-
-	result := make(map[string][]byte, len(m))
-
-	for k := range m {
-		b, err := base64.StdEncoding.DecodeString(m[k])
-		if err != nil {
-			return nil, errors.NewEf(err, "base64 decoding %q", m[k])
-		}
-		result[k] = b
-	}
-
-	return result, nil
-}
-
 func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMsvcv1.Database) (*MsvcOutput, error) {
 	switch obj.Spec.MsvcRef.Kind {
 	case mongodbMsvcv1.StandaloneServiceKind:
 		{
 			m, err := func() (map[string][]byte, error) {
 				if obj.IsGlobalVPNEnabled() {
-					return r.getGlobalVPNConnParams(ctx, obj)
+					return nil, fmt.Errorf("global VPN support is not enabled")
+					// return r.getGlobalVPNConnParams(ctx, obj)
 				}
 
 				msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), &mongodbMsvcv1.StandaloneService{})
@@ -263,15 +195,16 @@ func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMs
 			return &MsvcOutput{
 				ClusterLocalHosts: sso.ClusterLocalHosts,
 				ClusterLocalURI:   sso.ClusterLocalURI,
-				GlobalVPNHosts:    sso.GlobalVPNHosts,
-				GlobalVpnURI:      sso.GlobalVpnURI,
+				GlobalVPNHosts:    sso.Hosts,
+				GlobalVpnURI:      sso.URI,
 			}, nil
 		}
 	case mongodbMsvcv1.ClusterServiceKind:
 		{
 			m, err := func() (map[string][]byte, error) {
 				if obj.IsGlobalVPNEnabled() {
-					return r.getGlobalVPNConnParams(ctx, obj)
+					return nil, fmt.Errorf("global VPN support is not enabled")
+					// return r.getGlobalVPNConnParams(ctx, obj)
 				}
 
 				msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), &mongodbMsvcv1.ClusterService{})
@@ -299,7 +232,7 @@ func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMs
 				ClusterLocalHosts: cso.ClusterLocalHosts,
 				ClusterLocalURI:   cso.ClusterLocalURI,
 				GlobalVPNHosts:    cso.GlobalVpnHosts,
-		    GlobalVpnURI:      cso.GlobalVpnURI,
+				GlobalVpnURI:      cso.GlobalVpnURI,
 
 				ReplicasSetName: &cso.ReplicasSetName,
 			}, nil
