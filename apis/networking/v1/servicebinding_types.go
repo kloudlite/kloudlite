@@ -22,10 +22,8 @@ type ServiceBindingSpec struct {
 //+kubebuilder:resource:scope=Cluster
 //+kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 //+kubebuilder:printcolumn:JSONPath=".spec.globalIP",name=GlobalIP,type=string
-//+kubebuilder:printcolumn:JSONPath=".spec.serviceIP",name=ServiceIP,type=string
+//+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/servicebinding\\.reservation",name=Allocation,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/global\\.hostname",name=Host,type=string
-//+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
-//+kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // ServiceBinding is the Schema for the servicebindings API
 type ServiceBinding struct {
@@ -60,7 +58,9 @@ func (sb *ServiceBinding) GetEnsuredAnnotations() map[string]string {
 	if sb.Spec.ServiceRef == nil {
 		return map[string]string{key: "Reserved"}
 	}
-	return map[string]string{key: fmt.Sprintf("Reserved (%s/%s)", sb.Spec.ServiceRef.Namespace, sb.Spec.ServiceRef.Name)}
+	return map[string]string{
+		key: fmt.Sprintf("Reserved (%s/%s)", sb.Spec.ServiceRef.Namespace, sb.Spec.ServiceRef.Name),
+	}
 }
 
 //+kubebuilder:object:root=true

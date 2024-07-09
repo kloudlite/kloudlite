@@ -162,7 +162,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			cmsvcSecret := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(cmsvc.Spec.TargetNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), cmsvcSecret); err != nil {
+			if err := r.Get(ctx, fn.NN(cmsvc.Spec.TargetNamespace, cmsvc.Output.CredentialsRef.Name), cmsvcSecret); err != nil {
 				r.logger.Infof("cmsvc secret for service (%s), not found", obj.GetName())
 				cmsvcSecret = nil
 			}
