@@ -16,10 +16,12 @@ tasks:
       push_image: "{{.push_image | default true}}"
     cmds:
       - cmd: |+
-          echo $(docker manifest inspect "{{.image}}" || echo "not-found") >/tmp/manifest-inspect-status 2>/dev/null
-          if [ "$(cat /tmp/manifest-inspect-status)" != "not-found" ]; then
-            [ "{{.override}}" != "true" ] && echo "image '{{.image}}' already exists, skipping, use 'override=true' to override" && exit 0
-            echo "image exists, but overridden"
+          if [ "{{.override}}" != "true" ]; then
+            echo $(docker manifest inspect "{{.image}}" || echo "not-found") >/tmp/manifest-inspect-status 2>/dev/null
+            if [ "$(cat /tmp/manifest-inspect-status)" != "not-found" ]; then
+              echo "image '{{.image}}' already exists, skipping, use 'override=true' to override"
+              exit 0
+            fi
           fi
 
           docker buildx build -t {{.image}} --output=type=image,compression=zstd,force-compression=true,compression-level=12,push={{.push_image}} {{.args}}
