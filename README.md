@@ -29,33 +29,48 @@
 Kloudlite is a platform designed to enhance developers' productivity by providing seamless, secure, and **production-parity development environments**. It connects local systems and remote environments via a WireGuard network, allowing developers to build, test, and deploy distributed applications efficiently. Kloudlite eliminates the need for separate configurations by syncing configurations and secrets across environments, and it supports collaborative coding, real-time testing, and debugging.
 
 ## Quickstart
+Quickest way to start using kloudlite is to use our hosted solution. Login and setup your kloudlite account.
 
-Login and setup your kloudlite account.
-
-### Attach Cluster
+#### Attach Cluster
 Attach your cluster in infrastructure section of kloudlite dashboard.
 
-### Setup Environment
+![Frame 2](https://github.com/kloudlite/kloudlite/assets/1580519/e9629f43-0d44-4311-b6f4-e02265ec7d3b)
+
+#### Setup Environment
 Start creating your environment. Add apps, configs, secrets in your environment.
 
-### Install Cli
-```bash
-# Setup docker in your machine
+![Frame 4](https://github.com/kloudlite/kloudlite/assets/1580519/9bb3c9ec-5c25-4a99-b038-9f17b0c40710)
 
-# Install kloudlite cli.
+
+#### Install Kloudlite Cli
+```bash
+# setup docker in your machine
+
+# install kloudlite cli.
 curl 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | bash
 ```
 
-### Access Environment
-```
-# Setup workspace
+#### Access Environment
+```bash
+
+cd workspace
+
+# setup workspace
 kl init
 
-# Start Development Container
+# start development container
 kl box ssh
 ```
 
-## Install
+## Opensource Installation
+There are 3 components of kloudlite which need to be installed to run.
+1. Core Operators
+2. Platform
+3. Wireguard Gateways
+
+The easiest way to install kloudlite is to use our helm charts.
+
+You can choose the kubernetes
 
 ## Documentation
 
