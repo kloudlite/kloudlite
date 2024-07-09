@@ -8,7 +8,7 @@
   <div>No more waiting for Build & Deploy. Just code & run!</div>
   <br />
   
-[Quickstart](https://kloudlite.io) | [Docs](https://kloudlite.io/docs) | [Why Kloudlite](https://kloudlite.io/why) | [Install](https://kloudlite.io/install)
+[Quickstart](https://kloudlite.io) | [Docs](https://kloudlite.io/docs) | [Why Kloudlite?](https://kloudlite.io/why) | [Install](https://kloudlite.io/install)
 
   <br />
 
