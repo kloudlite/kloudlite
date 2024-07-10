@@ -1,7 +1,9 @@
 package service_binding
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -87,8 +89,29 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if len(sblist.Items) == 0 {
-		logger.Info("service binding not found, re-triggering serivce")
-		return r.retriggerService(ctx, svc)
+		logger.Info("service binding not found, re-triggering service")
+
+		b, err := json.Marshal(svc.Spec.Ports)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		createSvcBindingReq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/service/%s/%s", r.Env.GatewayAdminApiAddr, svc.GetNamespace(), svc.GetName()), bytes.NewReader(b))
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		resp, err := http.DefaultClient.Do(createSvcBindingReq)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return ctrl.Result{}, fmt.Errorf("unexpected response from ip-manager, got=%d, expected=%d", resp.StatusCode, http.StatusOK)
+		}
+
+		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
+		// return r.retriggerService(ctx, svc)
 	}
 
 	svcBinding := &sblist.Items[0]
@@ -153,7 +176,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	})
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: logger})
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&networkingv1.ServiceBinding{})
+	builder := ctrl.NewControllerManagedBy(mgr).For(&corev1.Node{})
 	builder.Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
 		if obj.GetLabels()[constants.KloudliteGatewayEnabledLabel] != "true" {
 			return nil

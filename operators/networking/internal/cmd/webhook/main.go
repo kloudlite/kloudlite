@@ -328,20 +328,6 @@ func processServiceAdmission(ctx HandlerContext, review admissionv1.AdmissionRev
 				return errResponse(ctx, err, review.Request.UID)
 			}
 
-			req, err := http.NewRequestWithContext(ctx, http.MethodPut, fmt.Sprintf("%s/service/%s/%s", ctx.Env.GatewayAdminApiAddr, svc.GetNamespace(), svc.GetName()), nil)
-			if err != nil {
-				return errResponse(ctx, err, review.Request.UID)
-			}
-
-			resp, err := http.DefaultClient.Do(req)
-			if err != nil {
-				return errResponse(ctx, err, review.Request.UID)
-			}
-
-			if resp.StatusCode != 200 {
-				return errResponse(ctx, fmt.Errorf("unexpected status code: %d", resp.StatusCode), review.Request.UID)
-			}
-
 			lb := svc.GetLabels()
 			if lb == nil {
 				lb = make(map[string]string, 2)
