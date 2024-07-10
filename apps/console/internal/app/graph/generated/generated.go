@@ -796,7 +796,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CoreCheckNameAvailability            func(childComplexity int, envName *string, resType entities.ResourceType, name string) int
+		CoreCheckNameAvailability            func(childComplexity int, envName *string, msvcName *string, resType entities.ResourceType, name string) int
 		CoreGetApp                           func(childComplexity int, envName string, name string) int
 		CoreGetConfig                        func(childComplexity int, envName string, name string) int
 		CoreGetConfigValues                  func(childComplexity int, envName string, queries []*domain.ConfigKeyRef) int
@@ -1050,7 +1050,7 @@ type MutationResolver interface {
 	CoreDeleteVPNDevice(ctx context.Context, deviceName string) (bool, error)
 }
 type QueryResolver interface {
-	CoreCheckNameAvailability(ctx context.Context, envName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error)
+	CoreCheckNameAvailability(ctx context.Context, envName *string, msvcName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error)
 	CoreListEnvironments(ctx context.Context, search *model.SearchEnvironments, pq *repos.CursorPagination) (*model.EnvironmentPaginatedRecords, error)
 	CoreGetEnvironment(ctx context.Context, name string) (*entities.Environment, error)
 	CoreResyncEnvironment(ctx context.Context, name string) (bool, error)
@@ -4561,7 +4561,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreCheckNameAvailability(childComplexity, args["envName"].(*string), args["resType"].(entities.ResourceType), args["name"].(string)), true
+		return e.complexity.Query.CoreCheckNameAvailability(childComplexity, args["envName"].(*string), args["msvcName"].(*string), args["resType"].(entities.ResourceType), args["name"].(string)), true
 
 	case "Query.core_getApp":
 		if e.complexity.Query.CoreGetApp == nil {
@@ -5620,11 +5620,7 @@ input CoreSearchVPNDevices {
 }
 
 type Query {
-	core_checkNameAvailability(envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
-
-	# core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
-	# core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
-	# core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_checkNameAvailability(envName: String, msvcName: String ,resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
 	core_listEnvironments(search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getEnvironment(name: String!): Environment @isLoggedInAndVerified @hasAccount
@@ -5660,18 +5656,11 @@ type Query {
 
 	core_getManagedResouceOutputKeys(msvcName: String, envName:String , name: String!): [String!]! @isLoggedInAndVerified @hasAccount
 	core_getManagedResouceOutputKeyValues(msvcName: String, envName:String, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
+
 	core_listManagedResources(search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getManagedResource(msvcName: String, envName: String, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_resyncManagedResource(msvcName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	# core_listImportedManagedResources(envName: String! ,search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
-	# core_getImportedManagedResource(envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
-
 	core_listImportedManagedResources(envName: String!, search: SearchImportedManagedResources, pq: CursorPaginationIn): ImportedManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
-
-	# core_listProjectManagedServices(search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
-	# core_getProjectManagedService( name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-	# core_resyncProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	# core_restartProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_listVPNDevicesForUser: [ConsoleVPNDevice!] @isLoggedInAndVerified @hasAccount
@@ -5679,10 +5668,6 @@ type Query {
 }
 
 type Mutation {
-	# core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
-	# core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
-	# core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
 	core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -5719,15 +5704,8 @@ type Mutation {
 	core_updateManagedResource(msvcName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_deleteManagedResource(msvcName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-	# core_importManagedResource(envName: String!, msvcName: String!, mresName: String!, importName: String!): ManagedResource @isLoggedInAndVerified @hasAccount
-	# core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
 	core_importManagedResource(envName: String!, msvcName: String!, mresName: String!, importName: String!): ImportedManagedResource @isLoggedInAndVerified @hasAccount
 	core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
-	# core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-	# core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-	# core_deleteProjectManagedService(pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 	core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
@@ -8097,24 +8075,33 @@ func (ec *executionContext) field_Query_core_checkNameAvailability_args(ctx cont
 		}
 	}
 	args["envName"] = arg0
-	var arg1 entities.ResourceType
+	var arg1 *string
+	if tmp, ok := rawArgs["msvcName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("msvcName"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["msvcName"] = arg1
+	var arg2 entities.ResourceType
 	if tmp, ok := rawArgs["resType"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resType"))
-		arg1, err = ec.unmarshalNConsoleResType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐResourceType(ctx, tmp)
+		arg2, err = ec.unmarshalNConsoleResType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐResourceType(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["resType"] = arg1
-	var arg2 string
+	args["resType"] = arg2
+	var arg3 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg2
+	args["name"] = arg3
 	return args, nil
 }
 
@@ -31847,7 +31834,7 @@ func (ec *executionContext) _Query_core_checkNameAvailability(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreCheckNameAvailability(rctx, fc.Args["envName"].(*string), fc.Args["resType"].(entities.ResourceType), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreCheckNameAvailability(rctx, fc.Args["envName"].(*string), fc.Args["msvcName"].(*string), fc.Args["resType"].(entities.ResourceType), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedIn == nil {
