@@ -446,12 +446,12 @@ func (r *mutationResolver) CoreDeleteVPNDevice(ctx context.Context, deviceName s
 }
 
 // CoreCheckNameAvailability is the resolver for the core_checkNameAvailability field.
-func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, envName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error) {
+func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, envName *string, msvcName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return r.Domain.CheckNameAvailability(ctx, cc.AccountName, envName, resType, name)
+	return r.Domain.CheckNameAvailability(ctx, cc.AccountName, envName, msvcName, resType, name)
 }
 
 // CoreListEnvironments is the resolver for the core_listEnvironments field.
