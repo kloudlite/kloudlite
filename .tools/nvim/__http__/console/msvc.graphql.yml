@@ -7,7 +7,7 @@ global:
 label: List Managed Service Templates
 query: |+
   query Core_listManagedServiceTemplates {
-    core_listManagedServiceTemplates {
+    infra_listManagedServiceTemplates {
       category
       displayName
       items {

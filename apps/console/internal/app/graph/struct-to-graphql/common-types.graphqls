@@ -1,3 +1,16 @@
+type Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef @shareable {
+  id: String!
+  name: String!
+  namespace: String!
+}
+
+type Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor @shareable {
+  name: String!
+  namespace: String!
+  refId: String!
+  resourceType: Github__com___kloudlite___api___apps___console___internal___entities__ResourceType!
+}
+
 type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
   userEmail: String!
   userId: String!
@@ -24,6 +37,11 @@ type Github__com___kloudlite___operator___apis___common____types__MsvcRef @share
   kind: String
   name: String!
   namespace: String!
+}
+
+type Github__com___kloudlite___operator___apis___common____types__SecretRef @shareable {
+  name: String!
+  namespace: String
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppContainer @shareable {
@@ -174,7 +192,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate
   apiVersion: String!
   kind: String!
   msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRef!
-  spec: Map!
+  spec: Map
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Probe @shareable {
@@ -337,12 +355,32 @@ type PageInfo @shareable {
   startCursor: String
 }
 
+input Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRefIn {
+  id: String!
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___api___pkg___types__SyncStatusIn {
+  action: Github__com___kloudlite___api___pkg___types__SyncAction!
+  error: String
+  lastSyncedAt: Date
+  recordVersion: Int!
+  state: Github__com___kloudlite___api___pkg___types__SyncState!
+  syncScheduledAt: Date
+}
+
 input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
   apiVersion: String
   clusterName: String
   kind: String
   name: String!
   namespace: String!
+}
+
+input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
+  name: String!
+  namespace: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn {
@@ -491,7 +529,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplat
   apiVersion: String!
   kind: String!
   msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRefIn!
-  spec: Map!
+  spec: Map
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn {
@@ -634,6 +672,19 @@ input MetadataIn {
 enum Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat {
   dockerConfigJson
   params
+}
+
+enum Github__com___kloudlite___api___apps___console___internal___entities__ResourceType {
+  app
+  config
+  environment
+  external_app
+  image_pull_secret
+  imported_managed_resource
+  managed_resource
+  router
+  secret
+  vpn_device
 }
 
 enum Github__com___kloudlite___api___pkg___repos__MatchType {

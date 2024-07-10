@@ -141,6 +141,12 @@ models:
     model: github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
   ManagedResourceIn: *managed-resource-model
 
+  ImportedManagedResource: &managed-resource-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.ImportedManagedResource
+    fields:
+      managedResource:
+        resolver: true
+
   ManagedResourceKeyRefIn:
     model: github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyRef
 

@@ -21,6 +21,7 @@ type Environment struct {
 	IsArchived *bool `json:"isArchived,omitempty" graphql:"noinput"`
 
 	common.ResourceMetadata `json:",inline"`
+
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 

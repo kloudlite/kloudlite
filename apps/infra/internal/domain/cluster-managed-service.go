@@ -1,12 +1,15 @@
 package domain
 
 import (
+	"encoding/json"
 	"fmt"
+
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -129,7 +132,6 @@ func (d *domain) getClusterManagedServiceTargetNamespace(msvcName string) string
 }
 
 func (d *domain) CloneClusterManagedService(ctx InfraContext, args CloneManagedServiceArgs) (*entities.ClusterManagedService, error) {
-
 	if err := d.canPerformActionInAccount(ctx, iamT.CloneClusterManagedService); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -261,6 +263,10 @@ func (d *domain) DeleteClusterManagedService(ctx InfraContext, name string) erro
 		return errors.NewE(err)
 	}
 
+	if ucmsvc.IsArchived != nil && *ucmsvc.IsArchived {
+		return d.clusterManagedServiceRepo.DeleteById(ctx, ucmsvc.Id)
+	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, ucmsvc.ClusterName, ResourceTypeClusterManagedService, ucmsvc.Name, PublishUpdate)
 
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, ucmsvc.ClusterName, &ucmsvc.ClusterManagedService)
@@ -325,7 +331,34 @@ func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterN
 	}
 
 	patch := repos.Document{
-		fc.ClusterManagedServiceSpecTargetNamespace: service.Spec.TargetNamespace,
+		fc.ClusterManagedServiceSpecTargetNamespace:   service.Spec.TargetNamespace,
+		fc.ClusterManagedServiceSyncedOutputSecretRef: service.SyncedOutputSecretRef,
+	}
+
+	if service.SyncedOutputSecretRef != nil {
+		b, err := json.Marshal(service.SyncedOutputSecretRef)
+		if err != nil {
+			return errors.NewE(err)
+		}
+		accNs, err := d.getAccNamespace(ctx)
+		if err != nil {
+			return errors.NewE(err)
+		}
+
+		d.consoleClient.CreateManagedResource(ctx, &console.CreateManagedResourceIn{
+			UserId:              string(ctx.UserId),
+			UserName:            string(ctx.UserName),
+			UserEmail:           string(ctx.UserEmail),
+			AccountName:         ctx.AccountName,
+			ClusterName:         xService.ClusterName,
+			MsvcName:            xService.Name,
+			AccountNamespace:    accNs,
+			MsvcTargetNamespace: xService.Spec.TargetNamespace,
+			MresName:            "root-credentials",
+			MresType:            "root-credentials",
+			OutputSecret:        b,
+      MsvcApiVersion:      xService.Spec.MSVCSpec.ServiceTemplate.APIVersion,
+		})
 	}
 
 	ucmsvc, err := d.clusterManagedServiceRepo.PatchById(ctx, xService.Id, common.PatchForSyncFromAgent(&service, recordVersion, status, common.PatchOpts{
