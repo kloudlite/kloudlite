@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	Console_ArchiveEnvironmentsForCluster_FullMethodName = "/Console/ArchiveEnvironmentsForCluster"
+	Console_CreateManagedResource_FullMethodName         = "/Console/CreateManagedResource"
 )
 
 // ConsoleClient is the client API for Console service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConsoleClient interface {
 	ArchiveEnvironmentsForCluster(ctx context.Context, in *ArchiveEnvironmentsForClusterIn, opts ...grpc.CallOption) (*ArchiveEnvironmentsForClusterOut, error)
+	CreateManagedResource(ctx context.Context, in *CreateManagedResourceIn, opts ...grpc.CallOption) (*CreateManagedResourceOut, error)
 }
 
 type consoleClient struct {
@@ -46,11 +48,21 @@ func (c *consoleClient) ArchiveEnvironmentsForCluster(ctx context.Context, in *A
 	return out, nil
 }
 
+func (c *consoleClient) CreateManagedResource(ctx context.Context, in *CreateManagedResourceIn, opts ...grpc.CallOption) (*CreateManagedResourceOut, error) {
+	out := new(CreateManagedResourceOut)
+	err := c.cc.Invoke(ctx, Console_CreateManagedResource_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsoleServer is the server API for Console service.
 // All implementations must embed UnimplementedConsoleServer
 // for forward compatibility
 type ConsoleServer interface {
 	ArchiveEnvironmentsForCluster(context.Context, *ArchiveEnvironmentsForClusterIn) (*ArchiveEnvironmentsForClusterOut, error)
+	CreateManagedResource(context.Context, *CreateManagedResourceIn) (*CreateManagedResourceOut, error)
 	mustEmbedUnimplementedConsoleServer()
 }
 
@@ -60,6 +72,9 @@ type UnimplementedConsoleServer struct {
 
 func (UnimplementedConsoleServer) ArchiveEnvironmentsForCluster(context.Context, *ArchiveEnvironmentsForClusterIn) (*ArchiveEnvironmentsForClusterOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ArchiveEnvironmentsForCluster not implemented")
+}
+func (UnimplementedConsoleServer) CreateManagedResource(context.Context, *CreateManagedResourceIn) (*CreateManagedResourceOut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateManagedResource not implemented")
 }
 func (UnimplementedConsoleServer) mustEmbedUnimplementedConsoleServer() {}
 
@@ -92,6 +107,24 @@ func _Console_ArchiveEnvironmentsForCluster_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Console_CreateManagedResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateManagedResourceIn)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsoleServer).CreateManagedResource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Console_CreateManagedResource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsoleServer).CreateManagedResource(ctx, req.(*CreateManagedResourceIn))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Console_ServiceDesc is the grpc.ServiceDesc for Console service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -102,6 +135,10 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ArchiveEnvironmentsForCluster",
 			Handler:    _Console_ArchiveEnvironmentsForCluster_Handler,
+		},
+		{
+			MethodName: "CreateManagedResource",
+			Handler:    _Console_CreateManagedResource_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

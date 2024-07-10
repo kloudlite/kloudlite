@@ -55,6 +55,7 @@ type domain struct {
 	secretRepo      repos.DbRepo[*entities.Secret]
 	routerRepo      repos.DbRepo[*entities.Router]
 	mresRepo        repos.DbRepo[*entities.ManagedResource]
+	importedMresRepo repos.DbRepo[*entities.ImportedManagedResource]
 	pullSecretsRepo repos.DbRepo[*entities.ImagePullSecret]
 
 	envVars *env.Env
@@ -182,6 +183,54 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 	return errors.NewE(err)
 }
 
+type ApplyK8sResourceArgs struct {
+	ClusterName   string
+	Object        client.Object
+	RecordVersion int
+
+	Dispatcher MessageDispatcher
+}
+
+func applyK8sResource(ctx K8sContext, args ApplyK8sResourceArgs) error {
+	if args.ClusterName == "" {
+		// d.logger.Infof("skipping apply of k8s resource %s/%s, cluster name not provided", args.Object.GetNamespace(), args.Object.GetName())
+		return nil
+	}
+
+	if args.Object.GetObjectKind().GroupVersionKind().Empty() {
+		return errors.Newf("args.Objectect GVK is not set, can not apply")
+	}
+
+	ann := args.Object.GetAnnotations()
+	if ann == nil {
+		ann = make(map[string]string, 1)
+	}
+	ann[constants.RecordVersionKey] = fmt.Sprintf("%d", args.RecordVersion)
+	args.Object.SetAnnotations(ann)
+
+	m, err := fn.K8sObjToMap(args.Object)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	b, err := json.Marshal(t.AgentMessage{
+		AccountName: ctx.GetAccountName(),
+		ClusterName: args.ClusterName,
+		Action:      t.ActionApply,
+		Object:      m,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), args.ClusterName)
+
+	err = args.Dispatcher.Produce(ctx, msgTypes.ProduceMsg{
+		Subject: subject,
+		Payload: b,
+	})
+	return errors.NewE(err)
+}
+
 func (d *domain) restartK8sResource(ctx K8sContext, projectName string, namespace string, labels map[string]string) error {
 	clusterName, err := d.getClusterAttachedToEnvironment(ctx, projectName)
 	if err != nil {
@@ -250,7 +299,7 @@ func (d *domain) deleteK8sResourceOfCluster(ctx K8sContext, clusterName string, 
 func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj client.Object) error {
 	clusterName, err := d.getClusterAttachedToEnvironment(ctx, environmentName)
 	if err != nil {
-		return errors.NewE(err)
+		return ErrNoClusterAttached
 	}
 
 	if clusterName == nil || *clusterName == "" {
@@ -509,6 +558,7 @@ var Module = fx.Module("domain",
 		secretRepo repos.DbRepo[*entities.Secret],
 		routerRepo repos.DbRepo[*entities.Router],
 		mresRepo repos.DbRepo[*entities.ManagedResource],
+		importedMresRepo repos.DbRepo[*entities.ImportedManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
 		resourceMappingRepo repos.DbRepo[*entities.ResourceMapping],
 		vpnDeviceRepo repos.DbRepo[*entities.ConsoleVPNDevice],
@@ -536,6 +586,7 @@ var Module = fx.Module("domain",
 			routerRepo:          routerRepo,
 			secretRepo:          secretRepo,
 			mresRepo:            mresRepo,
+			importedMresRepo:    importedMresRepo,
 			pullSecretsRepo:     ipsRepo,
 			resourceMappingRepo: resourceMappingRepo,
 			vpnDeviceRepo:       vpnDeviceRepo,

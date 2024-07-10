@@ -505,13 +505,13 @@ func (r *queryResolver) InfraGetBYOKCluster(ctx context.Context, name string) (*
 }
 
 // InfratGetBYOKClusterSetupInstructions is the resolver for the infrat_getBYOKClusterSetupInstructions field.
-func (r *queryResolver) InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string) ([]*model.BYOKSetupInstruction, error) {
+func (r *queryResolver) InfratGetBYOKClusterSetupInstructions(ctx context.Context, name string, onlyHelmValues *bool) ([]*model.BYOKSetupInstruction, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	bcsi, err := r.Domain.GetBYOKClusterSetupInstructions(ictx, name)
+	bcsi, err := r.Domain.GetBYOKClusterSetupInstructions(ictx, name, fn.DefaultIfNil(onlyHelmValues,false))
 	if err != nil {
 		return nil, err
 	}

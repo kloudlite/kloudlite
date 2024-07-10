@@ -16,10 +16,21 @@ type Secret struct {
 	AccountName     string `json:"accountName" graphql:"noinput"`
 	EnvironmentName string `json:"environmentName" graphql:"noinput"`
 
+	// For is the resource type and name of the resource that this secret is being created for in format <resource-type>/<namespace>/<name>
+	// It is supposed to be nil for traditional secrets, and to be used by ImagePullSecrets / Imported Managed Resources
+	For *SecretCreatedFor `json:"for,omitempty" graphql:"noinput"`
+
 	common.ResourceMetadata `json:",inline"`
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 
 	IsReadOnly bool `json:"isReadyOnly" graphql:"noinput"`
+}
+
+type SecretCreatedFor struct {
+	RefId        repos.ID `json:"refId"`
+	ResourceType ResourceType   `json:"resourceType"`
+	Name         string   `json:"name"`
+	Namespace    string   `json:"namespace"`
 }
 
 func (s *Secret) GetDisplayName() string {

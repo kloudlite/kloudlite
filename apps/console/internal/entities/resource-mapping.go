@@ -17,6 +17,7 @@ const (
 	ResourceTypeImagePullSecret ResourceType = "image_pull_secret"
 	ResourceTypeRouter          ResourceType = "router"
 	ResourceTypeManagedResource ResourceType = "managed_resource"
+	ResourceTypeImportedManagedResource ResourceType = "imported_managed_resource"
 	ResourceTypeVPNDevice       ResourceType = "vpn_device"
 )
 
