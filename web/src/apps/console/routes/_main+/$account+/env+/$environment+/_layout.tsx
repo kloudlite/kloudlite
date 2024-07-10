@@ -3,7 +3,7 @@ import {
   CirclesFour,
   GearSix,
   File,
-  TreeStructure,
+  // TreeStructure,
 } from '~/console/components/icons';
 import {
   Link,
@@ -81,16 +81,16 @@ const tabs = [
     to: '/cs/configs',
     value: '/cs',
   },
-  {
-    label: (
-      <span className="flex flex-row items-center gap-lg">
-        <TreeStructure size={tabIconSize} />
-        External Apps
-      </span>
-    ),
-    to: '/external-apps',
-    value: '/external-apps',
-  },
+  // {
+  //   label: (
+  //     <span className="flex flex-row items-center gap-lg">
+  //       <TreeStructure size={tabIconSize} />
+  //       External Apps
+  //     </span>
+  //   ),
+  //   to: '/external-apps',
+  //   value: '/external-apps',
+  // },
   // {
   //   label: 'Jobs & Crons',
   //   to: '/jc/task',

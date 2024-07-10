@@ -38,7 +38,7 @@ interface IResource {
 
 const parseItem = (item: BaseType) => {
   return {
-    name: item.displayName,
+    name: item.displayName || parseName(item),
     id: parseName(item),
     entries: [`${Object.keys(item?.stringData || {}).length || 0} Entries`],
     updateInfo: {
@@ -237,10 +237,10 @@ const SecretResourcesV2 = ({
   const reloadPage = useReload();
   const { environment, account } = useParams();
 
-  const filteredItems = items.filter((item) => !item.isReadyOnly);
+  // const filteredItems = items.filter((item) => !item.isReadyOnly);
 
   useWatchReload(
-    filteredItems.map((i) => {
+    items.map((i) => {
       return `account:${account}.environment:${environment}.secret:${parseName(
         i
       )}`;
@@ -248,7 +248,7 @@ const SecretResourcesV2 = ({
   );
 
   const props: IResource = {
-    items: filteredItems,
+    items,
     hasActions,
     onClick,
     linkComponent,

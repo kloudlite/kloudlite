@@ -271,7 +271,7 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
           side="top"
           content={
             <div className="flex-1 bodySm text-text-strong pulsable whitespace-normal">
-              Last seen ({timeDifference * 60}s ago)
+              Last seen ({Math.floor(timeDifference * 60)}s ago)
             </div>
           }
         >

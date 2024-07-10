@@ -149,7 +149,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           {
             render: () => 'Resource Type',
             name: 'resource',
-            className: 'w-[120px]',
+            className: 'w-[160px]',
           },
           {
             render: () => '',
@@ -242,7 +242,7 @@ const ManagedResourceResourcesV2 = ({
 
   useWatchReload(
     items.map((i) => {
-      return `account:${account}.managed_service:${msv}.managed_resource:${parseName(
+      return `account:${account}.cluster_managed_service:${msv}.managed_resource:${parseName(
         i
       )}`;
     })

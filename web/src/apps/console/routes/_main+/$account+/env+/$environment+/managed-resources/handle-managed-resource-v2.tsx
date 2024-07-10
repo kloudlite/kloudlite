@@ -248,7 +248,7 @@ export const ViewSecret = ({
   const params = useParams();
   ensureAccountClientSide(params);
   const { data, isLoading, error } = useCustomSwr(
-    () => (onYesClick ? `secret _${item.name}` : null),
+    () => (onYesClick ? `secret _${item.secretRef?.name}` : null),
     async () => {
       if (!item.name) {
         toast.error('Secret not found');
@@ -257,7 +257,7 @@ export const ViewSecret = ({
         return api.getSecret({
           envName: parseName(environment),
 
-          name: item.name,
+          name: item.secretRef?.name,
         });
       }
     }

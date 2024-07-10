@@ -7939,20 +7939,15 @@ export type AuthCli_InfraCheckNameAvailabilityQuery = {
 
 export type AuthCli_GetConfigSecretMapQueryVariables = Exact<{
   envName: Scalars['String']['input'];
-  configQueries?: InputMaybe<
-    Array<InputMaybe<ConfigKeyRefIn>> | InputMaybe<ConfigKeyRefIn>
-  >;
+  configQueries?: InputMaybe<Array<ConfigKeyRefIn> | ConfigKeyRefIn>;
   secretQueries?: InputMaybe<Array<SecretKeyRefIn> | SecretKeyRefIn>;
-  mresQueries?: InputMaybe<
-    | Array<InputMaybe<ManagedResourceKeyRefIn>>
-    | InputMaybe<ManagedResourceKeyRefIn>
-  >;
+  mresQueries?: InputMaybe<Array<SecretKeyRefIn> | SecretKeyRefIn>;
 }>;
 
 export type AuthCli_GetConfigSecretMapQuery = {
   configs?: Array<{ configName: string; key: string; value: string }>;
   secrets?: Array<{ key: string; secretName: string; value: string }>;
-  mreses: Array<{ key: string; mresName: string; value: string }>;
+  mreses?: Array<{ key: string; secretName: string; value: string }>;
 };
 
 export type AuthCli_IntercepExternalAppMutationVariables = Exact<{
@@ -8105,6 +8100,7 @@ export type AuthCli_ListSecretsQuery = {
       node: {
         displayName: string;
         markedForDeletion?: boolean;
+        isReadyOnly: boolean;
         stringData?: any;
         metadata?: { name: string; namespace?: string };
       };
@@ -8227,6 +8223,119 @@ export type AuthCli_ClusterReferenceInstructionsQuery = {
     command: string;
     title: string;
   }>;
+};
+
+export type AuthCli_ListImportedManagedResourcesQueryVariables = Exact<{
+  envName: Scalars['String']['input'];
+  search?: InputMaybe<SearchImportedManagedResources>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type AuthCli_ListImportedManagedResourcesQuery = {
+  core_listImportedManagedResources?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        creationTime: any;
+        displayName: string;
+        environmentName: string;
+        id: string;
+        markedForDeletion?: boolean;
+        name: string;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        managedResourceRef: { id: string; name: string; namespace: string };
+        secretRef: { name: string; namespace?: string };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+        managedResource?: {
+          accountName: string;
+          apiVersion?: string;
+          clusterName: string;
+          creationTime: any;
+          displayName: string;
+          enabled?: boolean;
+          environmentName: string;
+          id: string;
+          isImported: boolean;
+          kind?: string;
+          managedServiceName: string;
+          markedForDeletion?: boolean;
+          mresRef: string;
+          recordVersion: number;
+          updateTime: any;
+          metadata?: {
+            annotations?: any;
+            creationTimestamp: any;
+            deletionTimestamp?: any;
+            generation: number;
+            labels?: any;
+            name: string;
+            namespace?: string;
+          };
+          spec: {
+            resourceNamePrefix?: string;
+            resourceTemplate: {
+              apiVersion: string;
+              kind: string;
+              spec?: any;
+              msvcRef: {
+                apiVersion?: string;
+                clusterName?: string;
+                kind?: string;
+                name: string;
+                namespace: string;
+              };
+            };
+          };
+          status?: {
+            checks?: any;
+            isReady: boolean;
+            lastReadyGeneration?: number;
+            lastReconcileTime?: any;
+            checkList?: Array<{
+              debug?: boolean;
+              description?: string;
+              hide?: boolean;
+              name: string;
+              title: string;
+            }>;
+            message?: { RawMessage?: any };
+            resources?: Array<{
+              apiVersion: string;
+              kind: string;
+              name: string;
+              namespace: string;
+            }>;
+          };
+          syncedOutputSecretRef?: {
+            apiVersion?: string;
+            data?: any;
+            immutable?: boolean;
+            kind?: string;
+            stringData?: any;
+            type?: K8s__Io___Api___Core___V1__SecretType;
+          };
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
 };
 
 export type AuthSetRemoteAuthHeaderMutationVariables = Exact<{

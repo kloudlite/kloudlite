@@ -79,7 +79,6 @@ const AppDialog = ({
 
         if (show?.type === 'config') {
           const { data, errors } = await api.listConfigs({
-            
             envName: environment,
           });
           if (errors) {
@@ -88,7 +87,6 @@ const AppDialog = ({
           setConfigs(parseNodes(data));
         } else {
           const { data, errors } = await api.listSecrets({
-            
             envName: environment,
           });
           if (errors) {
