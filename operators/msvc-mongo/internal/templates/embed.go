@@ -17,6 +17,8 @@ const (
 	HelmMongoDBStandalone     templateFile = "./helm-mongodb-standalone.yml.tpl"
 	HelmMongoDBStandaloneAuth templateFile = "./helm-mongodb-standalone-auth.yml.tpl"
 	JobCreateDBUser           templateFile = "./job-create-db-user.yml.tpl"
+
+  DBLifecycleTemplate templateFile = "./db-lifecycle.yml.tpl"
 )
 
 func Read(t templateFile) ([]byte, error) {

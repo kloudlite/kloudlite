@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	"github.com/kloudlite/operator/operator"
 	"github.com/kloudlite/operator/operators/msvc-redis/controller"
 )

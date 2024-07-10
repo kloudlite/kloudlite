@@ -21,7 +21,6 @@ import (
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
-	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/types"
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -103,12 +102,12 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			})
 		}
 
-	case BlueprintGVK.String():
-		{
-			return r.MsgSender.DispatchIotConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
-			})
-		}
+	// case BlueprintGVK.String():
+	// 	{
+	// 		return r.MsgSender.DispatchIotConsoleResourceUpdates(mctx, t.ResourceUpdate{
+	// 			Object: obj.Object,
+	// 		})
+	// 	}
 
 	case ManagedResourceGVK.String():
 		{
@@ -162,7 +161,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			cmsvcSecret := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(cmsvc.Spec.TargetNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), cmsvcSecret); err != nil {
+			if err := r.Get(ctx, fn.NN(cmsvc.Spec.TargetNamespace, cmsvc.Output.CredentialsRef.Name), cmsvcSecret); err != nil {
 				r.logger.Infof("cmsvc secret for service (%s), not found", obj.GetName())
 				cmsvcSecret = nil
 			}
@@ -176,63 +175,63 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			})
 		}
 
-	case BuildRunGVK.String():
-		{
-			return r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
-			})
-		}
+	// case BuildRunGVK.String():
+	// {
+	// 	return r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
+	// 		Object: obj.Object,
+	// 	})
+	// }
 
-	case DeviceGVK.String():
-		{
-			deviceConfig := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("wg-configs-%s", obj.GetName())), deviceConfig); err != nil {
-				r.logger.Infof("wireguard secret for device (%s), not found", obj.GetName())
-				deviceConfig = nil
-			}
-
-			if deviceConfig != nil {
-				obj.Object[t.KeyVPNDeviceConfig] = map[string]any{
-					"value":    base64.StdEncoding.EncodeToString(deviceConfig.Data["config"]),
-					"encoding": "base64",
-				}
-			}
-
-			if obj.GetNamespace() != r.Env.DeviceNamespace {
-				r.logger.Infof("device created in namespace (%s), is not acknowledged by kloudlite, ignoring it.", obj.GetNamespace())
-				return nil
-			}
-
-			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
-			})
-		}
-
-	case GlobalVPNGVK.String():
-		{
-			var gvpn wgv1.GlobalVPN
-			if err := unmarshalUnstructured(obj, &gvpn); err != nil {
-				return err
-			}
-
-			s, err := rApi.Get(ctx, r.Client, fn.NN(gvpn.Spec.WgRef.Namespace, gvpn.Spec.WgRef.Name), &corev1.Secret{})
-			if err != nil {
-				return err
-			}
-
-			wp, err := fn.ParseFromSecret[wgv1.WgParams](s)
-			if err != nil {
-				return err
-			}
-
-			if wp != nil {
-				obj.Object[t.KeyGlobalVPNWgParams] = wp
-			}
-
-			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				Object: obj.Object,
-			})
-		}
+	// case DeviceGVK.String():
+	// 	{
+	// 		deviceConfig := &corev1.Secret{}
+	// 		if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("wg-configs-%s", obj.GetName())), deviceConfig); err != nil {
+	// 			r.logger.Infof("wireguard secret for device (%s), not found", obj.GetName())
+	// 			deviceConfig = nil
+	// 		}
+	//
+	// 		if deviceConfig != nil {
+	// 			obj.Object[t.KeyVPNDeviceConfig] = map[string]any{
+	// 				"value":    base64.StdEncoding.EncodeToString(deviceConfig.Data["config"]),
+	// 				"encoding": "base64",
+	// 			}
+	// 		}
+	//
+	// 		// if obj.GetNamespace() != r.Env.DeviceNamespace {
+	// 		// 	r.logger.Infof("device created in namespace (%s), is not acknowledged by kloudlite, ignoring it.", obj.GetNamespace())
+	// 		// 	return nil
+	// 		// }
+	//
+	// 		return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+	// 			Object: obj.Object,
+	// 		})
+	// 	}
+	//
+	// case GlobalVPNGVK.String():
+	// 	{
+	// 		var gvpn wgv1.GlobalVPN
+	// 		if err := unmarshalUnstructured(obj, &gvpn); err != nil {
+	// 			return err
+	// 		}
+	//
+	// 		s, err := rApi.Get(ctx, r.Client, fn.NN(gvpn.Spec.WgRef.Namespace, gvpn.Spec.WgRef.Name), &corev1.Secret{})
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	//
+	// 		wp, err := fn.ParseFromSecret[wgv1.WgParams](s)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	//
+	// 		if wp != nil {
+	// 			obj.Object[t.KeyGlobalVPNWgParams] = wp
+	// 		}
+	//
+	// 		return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+	// 			Object: obj.Object,
+	// 		})
+	// 	}
 
 	case GatewayGVK.String():
 		{
@@ -260,12 +259,10 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			})
 		}
 
-	case NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String(), NamespaceGVK.String():
+	case /*NodePoolGVK.String(),*/ PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String(), NamespaceGVK.String():
 		{
 			// dispatch to infra
 			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				// ClusterName: r.Env.ClusterName,
-				// AccountName: r.Env.AccountName,
 				Object: obj.Object,
 			})
 		}
@@ -390,15 +387,21 @@ var (
 	ExternalAppGVK = newGVK("crds.kloudlite.io/v1", "ExternalApp")
 
 	// ManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ManagedService")
-	BlueprintGVK             = newGVK("crds.kloudlite.io/v1", "Blueprint")
-	ManagedResourceGVK       = newGVK("crds.kloudlite.io/v1", "ManagedResource")
-	EnvironmentGVK           = newGVK("crds.kloudlite.io/v1", "Environment")
-	RouterGVK                = newGVK("crds.kloudlite.io/v1", "Router")
-	NodePoolGVK              = newGVK("clusters.kloudlite.io/v1", "NodePool")
-	DeviceGVK                = newGVK("wireguard.kloudlite.io/v1", "Device")
-	GlobalVPNGVK             = newGVK("wireguard.kloudlite.io/v1", "GlobalVPN")
-	GatewayGVK               = newGVK("networking.kloudlite.io/v1", "Gateway")
-	BuildRunGVK              = newGVK("distribution.kloudlite.io/v1", "BuildRun")
+	// BlueprintGVK       = newGVK("crds.kloudlite.io/v1", "Blueprint")
+
+	ManagedResourceGVK = newGVK("crds.kloudlite.io/v1", "ManagedResource")
+	EnvironmentGVK     = newGVK("crds.kloudlite.io/v1", "Environment")
+	RouterGVK          = newGVK("crds.kloudlite.io/v1", "Router")
+
+	// NodePoolGVK        = newGVK("clusters.kloudlite.io/v1", "NodePool")
+
+	// DeviceGVK          = newGVK("wireguard.kloudlite.io/v1", "Device")
+	// GlobalVPNGVK       = newGVK("wireguard.kloudlite.io/v1", "GlobalVPN")
+
+	GatewayGVK = newGVK("networking.kloudlite.io/v1", "Gateway")
+
+	// BuildRunGVK              = newGVK("distribution.kloudlite.io/v1", "BuildRun")
+
 	ClusterManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ClusterManagedService")
 	HelmChartGVK             = newGVK("crds.kloudlite.io/v1", "HelmChart")
 	ProjectManageServiceGVK  = newGVK("crds.kloudlite.io/v1", "ProjectManagedService")
@@ -431,15 +434,15 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		EnvironmentGVK,
 		RouterGVK,
 
-		GlobalVPNGVK,
+		// GlobalVPNGVK,
 		GatewayGVK,
-		BuildRunGVK,
+		// BuildRunGVK,
 
-		DeviceGVK,
+		// DeviceGVK,
 
 		ClusterManagedServiceGVK,
 		ProjectManageServiceGVK,
-		NodePoolGVK,
+		// NodePoolGVK,
 		HelmChartGVK,
 
 		// native resources
