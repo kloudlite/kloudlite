@@ -62,15 +62,15 @@ kl init
 kl box ssh
 ```
 
-## Opensource Installation
+## Installation
 There are 3 components of kloudlite which need to be installed to run.
+
 1. Core Operators
 2. Platform
-3. Wireguard Gateways
+3. Gateways
 
-The easiest way to install kloudlite is to use our helm charts.
-
-You can choose the kubernetes
+The easiest way to install kloudlite is to use our helm charts. All the required references are available in our [helm-chart](https://github.com/kloudlite/helm-charts) repo.
+Required architecture diagram is provided [here](https://kloudlite.io/docs/architecture).
 
 ## Documentation
 Browse our docs [here](https://kloudlite.io/docs) or visit a specific sections below:
