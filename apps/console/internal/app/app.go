@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/pkg/k8s"
 
@@ -53,14 +54,13 @@ func toConsoleContext(requestCtx context.Context, accountCookieName string) (dom
 }
 
 var Module = fx.Module("app",
-	// repos.NewFxMongoRepo[*entities.Project]("projects", "prj", entities.ProjectIndexes),
-	// repos.NewFxMongoRepo[*entities.ProjectManagedService]("project_managed_service", "pmsvc", entities.ProjectManagedServiceIndices),
 	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndexes),
 	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.ExternalApp]("ext_apps", "extapp", entities.ExternalAppIndexes),
 	repos.NewFxMongoRepo[*entities.Config]("configs", "cfg", entities.ConfigIndexes),
 	repos.NewFxMongoRepo[*entities.Secret]("secrets", "scrt", entities.SecretIndexes),
 	repos.NewFxMongoRepo[*entities.ManagedResource]("managed_resources", "mres", entities.MresIndexes),
+	repos.NewFxMongoRepo[*entities.ImportedManagedResource]("imported_managed_resources", "impmres", entities.ImportedManagedResourceIndexes),
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
 	repos.NewFxMongoRepo[*entities.ImagePullSecret]("image_pull_secrets", "ips", entities.ImagePullSecretIndexes),
 	repos.NewFxMongoRepo[*entities.ResourceMapping]("resource_mappings", "rmap", entities.ResourceMappingIndices),

@@ -165,6 +165,16 @@ func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[
 	return m, nil
 }
 
+// LastSyncedAt is the resolver for the lastSyncedAt field.
+func (r *github__com___kloudlite___api___pkg___types__SyncStatusInResolver) LastSyncedAt(ctx context.Context, obj *types.SyncStatus, data *string) error {
+	panic(fmt.Errorf("not implemented: LastSyncedAt - lastSyncedAt"))
+}
+
+// SyncScheduledAt is the resolver for the syncScheduledAt field.
+func (r *github__com___kloudlite___api___pkg___types__SyncStatusInResolver) SyncScheduledAt(ctx context.Context, obj *types.SyncStatus, data *string) error {
+	panic(fmt.Errorf("not implemented: SyncScheduledAt - syncScheduledAt"))
+}
+
 // AppPort is the resolver for the appPort field.
 func (r *github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver) AppPort(ctx context.Context, obj *v12.AppInterceptPortMappings, data int) error {
 	if obj == nil {
@@ -226,6 +236,11 @@ func (r *Resolver) K8s__io___api___core___v1__Secret() generated.K8s__io___api__
 // Metadata returns generated.MetadataResolver implementation.
 func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResolver{r} }
 
+// Github__com___kloudlite___api___pkg___types__SyncStatusIn returns generated.Github__com___kloudlite___api___pkg___types__SyncStatusInResolver implementation.
+func (r *Resolver) Github__com___kloudlite___api___pkg___types__SyncStatusIn() generated.Github__com___kloudlite___api___pkg___types__SyncStatusInResolver {
+	return &github__com___kloudlite___api___pkg___types__SyncStatusInResolver{r}
+}
+
 // Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn returns generated.Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver implementation.
 func (r *Resolver) Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn() generated.Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver {
 	return &github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver{r}
@@ -239,5 +254,6 @@ type github__com___kloudlite___api___pkg___types__SyncStatusResolver struct{ *Re
 type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
 type k8s__io___api___core___v1__SecretResolver struct{ *Resolver }
 type metadataResolver struct{ *Resolver }
+type github__com___kloudlite___api___pkg___types__SyncStatusInResolver struct{ *Resolver }
 type github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsInResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }
