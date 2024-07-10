@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 
 	"github.com/kloudlite/api/common/fields"
 
@@ -27,9 +28,13 @@ func checkResourceName[T repos.Entity](ctx context.Context, filters repos.Filter
 	}, nil
 }
 
-func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, environmentName *string, resType entities.ResourceType, name string) (*CheckNameAvailabilityOutput, error) {
+func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, environmentName *string, msvcName *string, resType entities.ResourceType, name string) (*CheckNameAvailabilityOutput, error) {
 	errEnvironmentRequired := func() error {
 		return errors.Newf("param environmentName is required for resource type %q", resType)
+	}
+
+	errMsvcNameRequired := func() error {
+		return errors.Newf("param msvcName is required for resource type %q", resType)
 	}
 
 	if !fn.IsValidK8sResourceName(name) {
@@ -51,7 +56,10 @@ func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, 
 
 	case entities.ResourceTypeManagedResource:
 		{
-			return checkResourceName(ctx, repos.Filter{fields.AccountName: accountName, fields.MetadataName: name}, d.mresRepo)
+			if msvcName == nil {
+				return nil, errMsvcNameRequired()
+			}
+			return checkResourceName(ctx, repos.Filter{fields.AccountName: accountName, fields.MetadataName: name, fc.ManagedResourceManagedServiceName: msvcName}, d.mresRepo)
 		}
 
 	default:
