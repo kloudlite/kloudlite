@@ -1,12 +1,13 @@
 FROM node:20.8.1-alpine as remix
 WORKDIR  /app
 COPY ./package-production.json ./package.json
-RUN npm i
+RUN npm i --frozen-lockfile
 
 FROM node:20.8.1-alpine as install
 RUN npm i -g pnpm
 WORKDIR  /app
 COPY ./package.json ./package.json
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
 
 # typecheck
 ARG APP
@@ -14,7 +15,7 @@ ENV APP=${APP}
 COPY ./src/generated/package.json ./src/generated/package.json
 COPY ./src/generated/plugin/package.json ./src/generated/plugin/package.json
 
-RUN pnpm i -p
+RUN pnpm i -p --frozen-lockfile
 
 FROM node:20.8.1-alpine as build
 RUN npm i -g pnpm
