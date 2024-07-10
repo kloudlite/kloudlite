@@ -14,7 +14,7 @@ import (
 	// mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
 	// redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
 	// serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
-	wireguardv1 "github.com/kloudlite/operator/apis/wireguard/v1"
+	// wireguardv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operator"
 	watchAndUpdate "github.com/kloudlite/operator/operators/resource-watcher/internal/controllers/watch-and-update"
 	env "github.com/kloudlite/operator/operators/resource-watcher/internal/env"
@@ -36,7 +36,7 @@ func RegisterInto(mgr operator.Operator) {
 		// mysqlMsvcv1.AddToScheme, redisMsvcv1.AddToScheme,
 		// serverlessv1.AddToScheme,
 		clustersv1.AddToScheme,
-		wireguardv1.AddToScheme,
+		// wireguardv1.AddToScheme,
 	)
 
 	logger := logging.NewOrDie(&logging.Options{Name: "resource-watcher", Dev: mgr.Operator().IsDev})
@@ -47,9 +47,7 @@ func RegisterInto(mgr operator.Operator) {
 		MsgSender: nil,
 	}
 
-	mgr.RegisterControllers(
-		watchAndUpdateReconciler,
-	)
+	mgr.RegisterControllers(watchAndUpdateReconciler)
 
 	ping := func(cc *grpc.ClientConn) error {
 		ctx, cf := context.WithTimeout(context.TODO(), 500*time.Millisecond)

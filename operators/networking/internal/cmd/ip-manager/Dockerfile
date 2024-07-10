@@ -24,7 +24,7 @@ RUN cat >> /entrypoint.sh <<EOF
 #!/usr/bin/env sh
 nginx &
 pid1=$!
-echo "[#] ip-manager \$@"
+# echo "[#] ip-manager \$@"
 ip-manager \$@ &
 pid2=$!
 
