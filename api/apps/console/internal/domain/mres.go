@@ -270,7 +270,7 @@ func (d *domain) createAndApplyManagedResource(ctx ManagedResourceContext, clust
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx.ConsoleContext, entities.ResourceTypeManagedResource, m.Name, PublishAdd)
+	d.resourceEventPublisher.PublishClusterManagedServiceEvent(ctx.ConsoleContext, m.ManagedServiceName, entities.ResourceTypeManagedResource, m.Name, PublishAdd)
 
 	if err := d.applyK8sResourceOnCluster(ctx, clusterName, &m.ManagedResource, m.RecordVersion); err != nil {
 		return m, errors.NewE(err)
@@ -301,7 +301,7 @@ func (d *domain) importAndApplyManagedResourceSecret(ctx ConsoleContext, envName
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeManagedResource, nImpMres.Name, PublishAdd)
+	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, envName, entities.ResourceTypeManagedResource, nImpMres.Name, PublishAdd)
 
 	s, err := d.secretRepo.Create(ctx, &entities.Secret{
 		Secret: corev1.Secret{
@@ -386,7 +386,7 @@ func (d *domain) UpdateManagedResource(ctx ManagedResourceContext, mres entities
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx.ConsoleContext, entities.ResourceTypeManagedResource, upMres.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishClusterManagedServiceEvent(ctx.ConsoleContext, upMres.ManagedServiceName, entities.ResourceTypeManagedResource, upMres.Name, PublishUpdate)
 
 	if err := d.applyK8sResourceOnCluster(ctx, upMres.ClusterName, &upMres.ManagedResource, upMres.RecordVersion); err != nil {
 		return upMres, errors.NewE(err)
@@ -413,7 +413,7 @@ func (d *domain) DeleteManagedResource(ctx ManagedResourceContext, name string) 
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishConsoleEvent(ctx.ConsoleContext, entities.ResourceTypeManagedResource, umres.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishClusterManagedServiceEvent(ctx.ConsoleContext, umres.ManagedServiceName, entities.ResourceTypeManagedResource, umres.Name, PublishUpdate)
 	if err := d.deleteK8sResourceOfCluster(ctx, umres.ClusterName, &umres.ManagedResource); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.mresRepo.DeleteById(ctx, umres.Id)
@@ -434,7 +434,7 @@ func (d *domain) OnManagedResourceDeleteMessage(ctx ConsoleContext, msvcName str
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeManagedResource, mres.Name, PublishDelete)
+	d.resourceEventPublisher.PublishClusterManagedServiceEvent(ctx, msvcName, entities.ResourceTypeManagedResource, mres.Name, PublishDelete)
 	return nil
 }
 
@@ -466,7 +466,7 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ConsoleContext, msvcName str
 		return err
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, umres.GetResourceType(), umres.GetName(), PublishUpdate)
+	d.resourceEventPublisher.PublishClusterManagedServiceEvent(ctx, msvcName, umres.GetResourceType(), umres.GetName(), PublishUpdate)
 
 	if mres.SyncedOutputSecretRef != nil {
 		if mres.SyncedOutputSecretRef.Labels == nil {
@@ -534,7 +534,7 @@ func (d *domain) OnManagedResourceApplyError(ctx ConsoleContext, errMsg string, 
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeManagedResource, umres.Name, PublishDelete)
+	d.resourceEventPublisher.PublishClusterManagedServiceEvent(ctx, msvcName, entities.ResourceTypeManagedResource, umres.Name, PublishDelete)
 	return errors.NewE(err)
 }
 

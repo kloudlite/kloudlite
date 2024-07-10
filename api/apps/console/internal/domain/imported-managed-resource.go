@@ -77,7 +77,7 @@ func (d *domain) ImportManagedResource(ctx ManagedResourceContext, mresName stri
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx.ConsoleContext, entities.ResourceTypeManagedResource, imr.ManagedResourceRef.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx.ConsoleContext, imr.EnvironmentName, entities.ResourceTypeManagedResource, imr.ManagedResourceRef.Name, PublishUpdate)
 
 	return imr, nil
 }
@@ -100,7 +100,7 @@ func (d *domain) DeleteImportedManagedResource(ctx ResourceContext, importName s
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx.ConsoleContext, entities.ResourceTypeManagedResource, impMres.ManagedResourceRef.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeManagedResource, impMres.ManagedResourceRef.Name, PublishDelete)
 
 	return nil
 }
@@ -170,7 +170,7 @@ func (d *domain) OnImportedManagedResourceUpdateMessage(ctx ConsoleContext, imrI
 		return err
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeManagedResource, umres.ManagedResourceRef.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx, umres.EnvironmentName, entities.ResourceTypeManagedResource, umres.ManagedResourceRef.Name, PublishUpdate)
 	return nil
 }
 
