@@ -29,7 +29,7 @@
 Kloudlite is a platform designed to enhance developers' productivity by providing seamless, secure, and **production-parity development environments**. It connects local systems and remote environments via a WireGuard network, allowing developers to build, test, and deploy distributed applications efficiently. Kloudlite eliminates the need for separate configurations by syncing configurations and secrets across environments, and it supports collaborative coding, real-time testing, and debugging.
 
 ## Quickstart
-Quickest way to start using kloudlite is to use our hosted solution. Login and setup your kloudlite account.
+Quickest way to start using kloudlite is to use our hosted solution. [Login](https://auth.kloudlite.io) and setup your kloudlite account.
 
 #### Attach Cluster
 Attach your cluster in infrastructure section of kloudlite dashboard.
@@ -73,12 +73,12 @@ The easiest way to install kloudlite is to use our helm charts.
 You can choose the kubernetes
 
 ## Documentation
-Browse our docs here or visit a specific section below:
-- Opensource installation: Install and run kloudlite on your compute.
-- Operators: Core operators that will run kloudlite and it's resoruces.
-- Architecture: Kloudlite architecture diagram.
-- Remote Envs: Remote Environment setup and management
-- Dev Envs: Development Environment setup and access
+Browse our docs [here](https://kloudlite.io/docs) or visit a specific sections below:
+- [Opensource installation](https://kloudlite.io/docs/opensource): Install and run kloudlite on your compute.
+- [Operators](https://kloudlite.io/docs/operators): Core operators that will run kloudlite and it's resoruces.
+- [Architecture](https://kloudlite.io/docs/architecture): Kloudlite architecture diagram.
+- [Remote Envs](https://kloudlite.io/docs/remote-env): Remote Environment setup and management
+- [Dev Workspaces](https://kloudlite.io/docs/workspaces): Development Environment setup and access
 
 
 
