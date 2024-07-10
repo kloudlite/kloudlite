@@ -91,4 +91,4 @@ Join our Discord to provide feedback on in-progress features and chat with the c
 We are always happy to see new contributors to Kloudlite. If you are new to the Kloudlite codebase, we have a guide on how to get started. We also conduct webinar sessions every alternate week explaning the codebase and future plans. We'd love to see your contributions!
 
 ## Hiring
-Apply [here](https://jobs.ashbyhq.com/coder?utm_source=github&utm_medium=readme&utm_campaign=unknown) if you're interested in joining our team.
+Apply [here](https://wellfound.com/company/kloudlite1729/) if you're interested in joining our team.
