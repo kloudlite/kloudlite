@@ -7,9 +7,6 @@ import (
 type Env struct {
 	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES"`
 
-	WorkspaceRouteSwitcherService string `env:"WORKSPACE_ROUTE_SWITCHER_SERVICE" required:"true"`
-	WorkspaceRouteSwitcherPort    uint16 `env:"WORKSPACE_ROUTE_SWITCHER_PORT" required:"true"`
-
 	DefaultIngressClass  string `env:"DEFAULT_INGRESS_CLASS" required:"true"`
 	DefaultClusterIssuer string `env:"DEFAULT_CLUSTER_ISSUER" required:"true"`
 
