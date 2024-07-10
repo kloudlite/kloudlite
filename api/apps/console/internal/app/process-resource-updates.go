@@ -265,17 +265,6 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				if secret.Type == corev1.SecretTypeDockerConfigJson {
-					// secret is an image pull secret
-					ips := entities.ImagePullSecret{
-						ObjectMeta: secret.ObjectMeta,
-					}
-					if resStatus == types.ResourceStatusDeleted {
-						return d.OnImagePullSecretDeleteMessage(dctx, ips)
-					}
-					return d.OnImagePullSecretUpdateMessage(dctx, ips, resStatus, opts)
-				}
-
 				rctx, err := getResourceContext(dctx, entities.ResourceTypeSecret, ru.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
@@ -285,6 +274,15 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return d.OnSecretDeleteMessage(rctx, secret)
 				}
 				return d.OnSecretUpdateMessage(rctx, secret, resStatus, opts)
+				// 	{
+				// 		ips := entities.ImagePullSecret{
+				// 			ObjectMeta: secret.ObjectMeta,
+				// 		}
+				// 		if resStatus == types.ResourceStatusDeleted {
+				// 			return d.OnImagePullSecretDeleteMessage(dctx, ips)
+				// 		}
+				// 		return d.OnImagePullSecretUpdateMessage(dctx, ips, resStatus, opts)
+				// 	}
 			}
 
 		case routerGVK.String():
