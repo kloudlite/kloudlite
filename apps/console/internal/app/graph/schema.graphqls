@@ -96,10 +96,6 @@ input CoreSearchVPNDevices {
 type Query {
 	core_checkNameAvailability(envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
-	# core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
-	# core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
-	# core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
 	core_listEnvironments(search: SearchEnvironments, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getEnvironment(name: String!): Environment @isLoggedInAndVerified @hasAccount
 	core_resyncEnvironment(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -134,18 +130,11 @@ type Query {
 
 	core_getManagedResouceOutputKeys(msvcName: String, envName:String , name: String!): [String!]! @isLoggedInAndVerified @hasAccount
 	core_getManagedResouceOutputKeyValues(msvcName: String, envName:String, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
+
 	core_listManagedResources(search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getManagedResource(msvcName: String, envName: String, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_resyncManagedResource(msvcName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	# core_listImportedManagedResources(envName: String! ,search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
-	# core_getImportedManagedResource(envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
-
 	core_listImportedManagedResources(envName: String!, search: SearchImportedManagedResources, pq: CursorPaginationIn): ImportedManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
-
-	# core_listProjectManagedServices(search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
-	# core_getProjectManagedService( name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-	# core_resyncProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	# core_restartProjectManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_listVPNDevicesForUser: [ConsoleVPNDevice!] @isLoggedInAndVerified @hasAccount
@@ -153,10 +142,6 @@ type Query {
 }
 
 type Mutation {
-	# core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
-	# core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccount
-	# core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
 	core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
 	core_deleteEnvironment(envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -193,15 +178,8 @@ type Mutation {
 	core_updateManagedResource(msvcName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_deleteManagedResource(msvcName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-	# core_importManagedResource(envName: String!, msvcName: String!, mresName: String!, importName: String!): ManagedResource @isLoggedInAndVerified @hasAccount
-	# core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
 	core_importManagedResource(envName: String!, msvcName: String!, mresName: String!, importName: String!): ImportedManagedResource @isLoggedInAndVerified @hasAccount
 	core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
-	# core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-	# core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-	# core_deleteProjectManagedService(pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 	core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
