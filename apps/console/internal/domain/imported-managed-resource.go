@@ -13,62 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// func (d *domain) ImportManagedResource(ctx ManagedResourceContext, mresName string, importName string) (*entities.ManagedResource, error) {
-// 	mr, err := d.findMRes(ctx, mresName)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	if mr.SyncedOutputSecretRef == nil {
-// 		return nil, errors.Newf("synced output secret not found")
-// 	}
-//
-// 	outputSecret := mr.SyncedOutputSecretRef
-//
-// 	outputSecret.ObjectMeta = metav1.ObjectMeta{
-// 		Name:      importName,
-// 		Namespace: d.getEnvironmentTargetNamespace(*ctx.EnvironmentName),
-// 	}
-//
-// 	imr, err := d.importedMresRepo.Create(ctx, &entities.ImportedManagedResource{
-// 		Name: importName,
-// 		ManagedResourceRef: entities.ManagedResourceRef{
-// 			ID:        mr.Id,
-// 			Name:      mresName,
-// 			Namespace: mr.Namespace,
-// 		},
-// 		SecretRef: common_types.SecretRef{
-// 			Name:      importName,
-// 			Namespace: outputSecret.Namespace,
-// 		},
-// 		AccountName:     ctx.AccountName,
-// 		EnvironmentName: *ctx.EnvironmentName,
-// 		SyncStatus:      t.GenSyncStatus(t.SyncActionApply, mr.RecordVersion),
-// 	})
-// 	if err != nil {
-// 		return nil, errors.NewE(err)
-// 	}
-//
-// 	if _, err := d.createSecret(ResourceContext{ConsoleContext: ctx.ConsoleContext, EnvironmentName: *ctx.EnvironmentName}, entities.Secret{
-// 		Secret:          *outputSecret,
-// 		AccountName:     ctx.AccountName,
-// 		EnvironmentName: *ctx.EnvironmentName,
-// 		For: &entities.SecretCreatedFor{
-// 			RefId:        imr.Id,
-// 			ResourceType: entities.ResourceTypeImportedManagedResource,
-// 			Name:         mresName,
-// 			Namespace:    mr.Namespace,
-// 		},
-// 		IsReadOnly: true,
-// 	}); err != nil {
-// 		return nil, errors.NewE(err)
-// 	}
-//
-// 	d.resourceEventPublisher.PublishConsoleEvent(ctx.ConsoleContext, entities.ResourceTypeManagedResource, imr.ManagedResourceRef.Name, PublishUpdate)
-//
-// 	return mr, nil
-// }
-
 func (d *domain) ImportManagedResource(ctx ManagedResourceContext, mresName string, importName string) (*entities.ImportedManagedResource, error) {
 	mr, err := d.findMRes(ctx, mresName)
 	if err != nil {
@@ -181,58 +125,6 @@ func (d *domain) findImportedMRes(ctx ResourceContext, importName string) (*enti
 func (d *domain) OnImportedManagedResourceDeleteMessage(ctx ConsoleContext, imrId repos.ID) error {
 	return d.importedMresRepo.DeleteById(ctx, imrId)
 }
-
-// func (d *domain) ListImportedManagedResources(ctx ConsoleContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error) {
-// 	if err := d.canPerformActionInAccount(ctx, iamT.ListManagedResources); err != nil {
-// 		return nil, errors.NewE(err)
-// 	}
-//
-// 	filters := d.mresRepo.MergeMatchFilters(repos.Filter{
-// 		fc.AccountName: ctx.AccountName,
-// 	}, search)
-//
-// 	pr, err := d.importedMresRepo.FindPaginated(ctx, filters, pq)
-// 	if err != nil {
-// 		return nil, errors.NewE(err)
-// 	}
-//
-// 	ids := make([]any, 0, len(pr.Edges))
-// 	for i := range pr.Edges {
-// 		ids = append(ids, string(pr.Edges[i].Node.ManagedResourceRef.ID))
-// 	}
-//
-// 	filter := d.mresRepo.MergeMatchFilters(repos.Filter{}, map[string]repos.MatchFilter{
-// 		fc.Id: {
-// 			MatchType: repos.MatchTypeArray,
-// 			Array:     ids,
-// 		},
-// 	})
-// 	mr, err := d.mresRepo.Find(ctx, repos.Query{Filter: filter})
-// 	if err != nil {
-// 		return nil, errors.NewE(err)
-// 	}
-//
-// 	mrMap := make(map[repos.ID]*entities.ManagedResource, len(mr))
-// 	for i := range mr {
-// 		mrMap[mr[i].Id] = mr[i]
-// 	}
-//
-// 	var result repos.PaginatedRecord[*entities.ManagedResource]
-// 	for i := range pr.Edges {
-// 		if _, ok := mrMap[pr.Edges[i].Node.ManagedResourceRef.ID]; ok {
-// 			node := mrMap[pr.Edges[i].Node.ManagedResourceRef.ID]
-// 			node.Name = pr.Edges[i].Node.Name
-// 			node.DisplayName = node.Name
-//
-// 			result.Edges = append(result.Edges, repos.RecordEdge[*entities.ManagedResource]{
-// 				Node:   node,
-// 				Cursor: pr.Edges[i].Cursor,
-// 			})
-// 		}
-// 	}
-//
-// 	return &result, nil
-// }
 
 func (d *domain) ListImportedManagedResources(ctx ConsoleContext, envName string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImportedManagedResource], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.ListManagedResources); err != nil {
