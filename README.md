@@ -3,92 +3,90 @@
     <img src="https://github.com/kloudlite/kloudlite/assets/1580519/a31a5f78-2bde-45f1-8141-d23ee8231eb1" style="height:38px" />
   </a>
   <h1>
-    Development Environment as a Service  
+    Development Environment as a Service
   </h1>
   <div>No more waiting for Build & Deploy. Just code & run!</div>
   <br />
   
-[Quickstart](https://kloudlite.io) | [Docs](https://kloudlite.io/docs) | [Why Kloudlite?](https://kloudlite.io/why) | [Install](https://kloudlite.io/install)
-
+  <a href="https://kloudlite.io">Quickstart</a> |
+  <a href="https://kloudlite.io/docs">Docs</a> |
+  <a href="https://kloudlite.io/why">Why Kloudlite?</a> |
+  <a href="https://kloudlite.io/install">Install</a>
   <br />
 
-[![discord](https://img.shields.io/discord/934762910717194260?label=discord)](https://discord.gg/m5tYzQfcG8)
-
-[![License](https://img.shields.io/badge/License-Apache--2.0-blue)](#license)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kloudlite/api)](https://goreportcard.com/report/github.com/kloudlite/api)
-[![Issues - daytona](https://img.shields.io/github/issues/kloudlite/kloudlite)](https://github.com/kloudlite/kloudlite/issues)
-![GitHub Release](https://img.shields.io/github/v/release/kloudlite/kloudlite)
-
-[![Open Bounties](https://img.shields.io/endpoint?url=https%3A%2F%2Fconsole.algora.io%2Fapi%2Fshields%2Fkloudlite%2Fbounties%3Fstatus%3Dopen)](https://console.algora.io/org/kloudlite/bounties?status=open)
-[![Rewarded Bounties](https://img.shields.io/endpoint?url=https%3A%2F%2Fconsole.algora.io%2Fapi%2Fshields%2Fkloudlite%2Fbounties%3Fstatus%3Dcompleted)](https://console.algora.io/org/kloudlite/bounties?status=completed)
+  <a href="https://discord.gg/m5tYzQfcG8">
+    <img src="https://img.shields.io/discord/934762910717194260?label=discord" alt="Discord">
+  </a>
+  <a href="#license">
+    <img src="https://img.shields.io/badge/License-Apache--2.0-blue" alt="License">
+  </a>
+  <a href="https://goreportcard.com/report/github.com/kloudlite/api">
+    <img src="https://goreportcard.com/badge/github.com/kloudlite/api" alt="Go Report Card">
+  </a>
+  <a href="https://github.com/kloudlite/kloudlite/issues">
+    <img src="https://img.shields.io/github/issues/kloudlite/kloudlite" alt="Issues">
+  </a>
+  <img src="https://img.shields.io/github/v/release/kloudlite/kloudlite" alt="GitHub Release">
+  <a href="https://console.algora.io/org/kloudlite/bounties?status=open">
+    <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fconsole.algora.io%2Fapi%2Fshields%2Fkloudlite%2Fbounties%3Fstatus%3Dopen" alt="Open Bounties">
+  </a>
+  <a href="https://console.algora.io/org/kloudlite/bounties?status=completed">
+    <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fconsole.algora.io%2Fapi%2Fshields%2Fkloudlite%2Fbounties%3Fstatus%3Dcompleted" alt="Rewarded Bounties">
+  </a>
 </div>
 
-
-
-
-Kloudlite is a platform designed to enhance developers' productivity by providing seamless, secure, and **production-parity development environments**. It connects local systems and remote environments via a WireGuard network, allowing developers to build, test, and deploy distributed applications efficiently. Kloudlite eliminates the need for separate configurations by syncing configurations and secrets across environments, and it supports collaborative coding, real-time testing, and debugging.
+Kloudlite is a platform designed to enhance developers' productivity by providing seamless, secure, **production-parity development environments**. It connects local systems and remote environments via a WireGuard network, allowing developers to build, test, and deploy distributed applications efficiently. Kloudlite eliminates the need for separate configurations by syncing configurations and secrets across environments. It supports collaborative coding, real-time testing, and debugging.
 
 ## Quickstart
-Quickest way to start using kloudlite is to use our hosted solution. [Login](https://auth.kloudlite.io) and setup your kloudlite account.
+The quickest way to start using Kloudlite is to use our hosted solution. [Login](https://auth.kloudlite.io) and set up your Kloudlite account.
 
-#### Attach Cluster
-Attach your cluster in infrastructure section of kloudlite dashboard.
+### Attach Cluster
+Attach your cluster in the infrastructure section of the Kloudlite dashboard.
 
 ![Frame 2](https://github.com/kloudlite/kloudlite/assets/1580519/e9629f43-0d44-4311-b6f4-e02265ec7d3b)
 
-#### Setup Environment
-Start creating your environment. Add apps, configs, secrets in your environment.
+### Set Up Environment
+Create your environment. Add apps, configs, and secrets to your environment.
 
 ![Frame 4](https://github.com/kloudlite/kloudlite/assets/1580519/9bb3c9ec-5c25-4a99-b038-9f17b0c40710)
 
-
-#### Install Kloudlite Cli
+### Install Kloudlite CLI
 ```bash
-# setup docker in your machine
-
-# install kloudlite cli.
-curl 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | bash
+# Setup Docker on your machine
 ```
 
-#### Access Environment
+### Access Environment
 ```bash
-
 cd workspace
 
-# setup workspace
+# Setup workspace
 kl init
 
-# start development container
+# Start development container
 kl box ssh
 ```
 
 ## Installation
-There are 3 components of kloudlite which need to be installed to run.
+There are three components of Kloudlite that need to be installed to run:
+- Core Operators
+- Platform
+- Gateways
 
-1. Core Operators
-2. Platform
-3. Gateways
-
-The easiest way to install kloudlite is to use our helm charts. All the required references are available in our [helm-chart](https://github.com/kloudlite/helm-charts) repo.
-Required architecture diagram is provided [here](https://kloudlite.io/docs/architecture).
+The easiest way to install Kloudlite is to use our Helm charts. All the required references are available in our [Helm-chart](https://github.com/kloudlite/helm-charts) repository. The required architecture diagram is provided here.
 
 ## Documentation
-Browse our docs [here](https://kloudlite.io/docs) or visit a specific sections below:
-- [Opensource installation](https://kloudlite.io/docs/opensource): Install and run kloudlite on your compute.
-- [Operators](https://kloudlite.io/docs/operators): Core operators that will run kloudlite and it's resoruces.
-- [Architecture](https://kloudlite.io/docs/architecture): Kloudlite architecture diagram.
-- [Remote Envs](https://kloudlite.io/docs/remote-env): Remote Environment setup and management
-- [Dev Workspaces](https://kloudlite.io/docs/workspaces): Development Environment setup and access
-
-
+Browse our documentation here or visit specific sections below:
+- Opensource Installation: Install and run Kloudlite on your compute.
+- Operators: Core operators that will run Kloudlite and its resources.
+- Architecture: Kloudlite architecture diagram.
+- Remote Environments: Remote environment setup and management.
+- Dev Workspaces: Development environment setup and access.
 
 ## Support
-Feel free to open an issue if you have questions, run into bugs, or have a feature request.
 
-Join our Discord to provide feedback on in-progress features and chat with the community using Kloudlite!
+Feel free to [open an issue](https://github.com/kloudlite/kloudlite/issues/new) if you have questions, encounter bugs, or have feature requests.
 
-## Contributing
-We are always happy to see new contributors to Kloudlite. If you are new to the Kloudlite codebase, we have a guide on how to get started. We also conduct webinar sessions every alternate week explaning the codebase and future plans. We'd love to see your contributions!
+[Join our Discord](https://discord.gg/9FJZPHsJ) to provide feedback on in-progress features and chat with the community using Kloudlite!
 
-## Hiring
-Apply [here](https://wellfound.com/company/kloudlite1729/) if you're interested in joining our team.
+
+
