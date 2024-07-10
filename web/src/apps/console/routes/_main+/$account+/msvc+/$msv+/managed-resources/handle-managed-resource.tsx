@@ -388,8 +388,6 @@ export const ViewSecret = ({
     }
   );
 
-  console.log('hgdsh', data);
-
   const dataSecret = () => {
     if (isLoading) {
       return <LoadingPlaceHolder />;
