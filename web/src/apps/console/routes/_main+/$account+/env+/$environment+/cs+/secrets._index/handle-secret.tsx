@@ -27,13 +27,13 @@ const HandleSecret = ({ show, setShow }: IDialog) => {
         name: Yup.string().required(),
       }),
       onSubmit: async (val) => {
-        if ( !environment) {
+        if (!environment) {
           throw new Error('Project and Environment is required!.');
         }
         try {
           const { errors: e } = await api.createSecret({
             envName: environment,
-            
+
             secret: {
               metadata: {
                 name: val.name,

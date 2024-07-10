@@ -21,13 +21,14 @@ import ListV2 from '~/console/components/listV2';
 import { ListItem } from '~/console/components/console-list-components';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import { useEffect, useState } from 'react';
-import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { toast } from '~/components/molecule/toast';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
+import { NameIdView } from '~/console/components/name-id-view';
+import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
 import { IEnvironmentContext } from '../_layout';
 
-type BaseType = ExtractNodeType<IManagedResources>;
-type IDialog = IDialogBase<ExtractNodeType<IManagedResources>>;
+type BaseType = ExtractNodeType<IImportedManagedResources>;
+type IDialog = IDialogBase<ExtractNodeType<IImportedManagedResources>>;
 
 const SelectItem = ({ label, value }: { label: string; value: string }) => {
   return (
@@ -55,6 +56,8 @@ const Root = (props: IDialog) => {
           }
         : {
             isNameError: false,
+            name: '',
+            displayName: '',
             managedServiceName: '',
             managedResourceName: '',
           },
@@ -73,6 +76,7 @@ const Root = (props: IDialog) => {
               envName: parseName(environment),
               msvcName: val.managedServiceName || '',
               mresName: val.managedResourceName || '',
+              importName: val.name || '',
             });
             if (e) {
               throw e[0];
@@ -147,6 +151,17 @@ const Root = (props: IDialog) => {
     >
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
+          <NameIdView
+            placeholder="Enter integrated service name"
+            label="Name"
+            resType="managed_resource"
+            name={values.name || ''}
+            displayName={values.displayName || ''}
+            errors={errors.name}
+            handleChange={handleChange}
+            nameErrorLabel="isNameError"
+          />
+
           <Select
             label="Integrated Services"
             size="lg"
@@ -233,19 +248,16 @@ export const ViewSecret = ({
   const params = useParams();
   ensureAccountClientSide(params);
   const { data, isLoading, error } = useCustomSwr(
-    () =>
-      onYesClick
-        ? `secret _${item.syncedOutputSecretRef?.metadata?.name}`
-        : null,
+    () => (onYesClick ? `secret _${item.secretRef?.name}` : null),
     async () => {
-      if (!item.syncedOutputSecretRef?.metadata?.name) {
+      if (!item.name) {
         toast.error('Secret not found');
         throw new Error('Secret not found');
       } else {
         return api.getSecret({
           envName: parseName(environment),
 
-          name: item.syncedOutputSecretRef?.metadata?.name,
+          name: item.secretRef?.name,
         });
       }
     }
@@ -256,10 +268,16 @@ export const ViewSecret = ({
       return <LoadingPlaceHolder />;
     }
     if (error) {
-      return <p>Error: {error}</p>;
+      return (
+        <span className="bodyMd-medium text-text-strong">
+          Error while fetching secrets
+        </span>
+      );
     }
-    if (!data?.data) {
-      return <p>No secret found</p>;
+    if (!data?.stringData) {
+      return (
+        <span className="bodyMd-medium text-text-strong">No secret found</span>
+      );
     }
 
     return (
@@ -277,7 +295,7 @@ export const ViewSecret = ({
               className: 'flex-1 min-w-[345px] max-w-[345px] w-[345px]',
             },
           ],
-          rows: Object.entries(data.data || {}).map(([key, value]) => {
+          rows: Object.entries(data.stringData || {}).map(([key, value]) => {
             const v = value as string;
             return {
               columns: {
@@ -287,7 +305,7 @@ export const ViewSecret = ({
                 value: {
                   render: () => (
                     <CopyContentToClipboard
-                      content={atob(v)}
+                      content={v}
                       toastMessage={`${key} copied`}
                     />
                   ),
@@ -319,7 +337,7 @@ export const ViewSecret = ({
         <MultiStep.Root currentStep={currentStep}>
           <MultiStep.Step step={0}>
             <div>
-              <p>{`Are you sure you want to view the secrets of '${item.syncedOutputSecretRef?.metadata?.name}'?`}</p>
+              <p>{`Are you sure you want to view the secrets of '${item.name}'?`}</p>
             </div>
           </MultiStep.Step>
           <MultiStep.Step step={1}>{dataSecret()}</MultiStep.Step>

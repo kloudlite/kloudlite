@@ -12,10 +12,6 @@ import {
   ConsoleUpdateManagedResourceMutationVariables,
   ConsoleDeleteManagedResourceMutation,
   ConsoleDeleteManagedResourceMutationVariables,
-  ConsoleImportManagedResourceMutation,
-  ConsoleImportManagedResourceMutationVariables,
-  ConsoleDeleteImportedManagedResourceMutation,
-  ConsoleDeleteImportedManagedResourceMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IManagedResource = NN<
@@ -83,7 +79,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              spec
             }
           }
           status {
@@ -227,7 +222,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                     name
                     namespace
                   }
-                  spec
                 }
               }
               status {
@@ -303,46 +297,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleDeleteManagedResourceMutation) =>
         data.core_deleteManagedResource,
       vars(_: ConsoleDeleteManagedResourceMutationVariables) {},
-    }
-  ),
-  importManagedResource: executor(
-    gql`
-      mutation Core_importManagedResource(
-        $envName: String!
-        $msvcName: String!
-        $mresName: String!
-      ) {
-        core_importManagedResource(
-          envName: $envName
-          msvcName: $msvcName
-          mresName: $mresName
-        ) {
-          id
-        }
-      }
-    `,
-    {
-      transformer: (data: ConsoleImportManagedResourceMutation) =>
-        data.core_importManagedResource,
-      vars(_: ConsoleImportManagedResourceMutationVariables) {},
-    }
-  ),
-  deleteImportedManagedResource: executor(
-    gql`
-      mutation Core_deleteImportedManagedResource(
-        $envName: String!
-        $mresName: String!
-      ) {
-        core_deleteImportedManagedResource(
-          envName: $envName
-          mresName: $mresName
-        )
-      }
-    `,
-    {
-      transformer: (data: ConsoleDeleteImportedManagedResourceMutation) =>
-        data.core_deleteImportedManagedResource,
-      vars(_: ConsoleDeleteImportedManagedResourceMutationVariables) {},
     }
   ),
 });

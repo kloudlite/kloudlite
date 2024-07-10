@@ -146,6 +146,11 @@ tasks:
             URL_SUFFIX="-vision"
             ;;
 
+          "piyush")
+            BASE_URL=dev.kloudlite.io
+            URL_SUFFIX=""
+            ;;
+
           *)
             URL_SUFFIX=""
             ;;

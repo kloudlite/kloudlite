@@ -744,9 +744,41 @@ type Github__com___kloudlite___api___apps___comms___types__NotifyContent {
   title: String!
 }
 
+type Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef {
+  id: String!
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRefIn {
+  id: String!
+  name: String!
+  namespace: String!
+}
+
 enum Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat {
   dockerConfigJson
   params
+}
+
+enum Github__com___kloudlite___api___apps___console___internal___entities__ResourceType {
+  app
+  config
+  environment
+  external_app
+  image_pull_secret
+  imported_managed_resource
+  managed_resource
+  router
+  secret
+  vpn_device
+}
+
+type Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor {
+  name: String!
+  namespace: String!
+  refId: String!
+  resourceType: Github__com___kloudlite___api___apps___console___internal___entities__ResourceType!
 }
 
 enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus {
@@ -1002,6 +1034,15 @@ enum Github__com___kloudlite___api___pkg___types__SyncState {
 }
 
 type Github__com___kloudlite___api___pkg___types__SyncStatus {
+  action: Github__com___kloudlite___api___pkg___types__SyncAction!
+  error: String
+  lastSyncedAt: Date
+  recordVersion: Int!
+  state: Github__com___kloudlite___api___pkg___types__SyncState!
+  syncScheduledAt: Date
+}
+
+input Github__com___kloudlite___api___pkg___types__SyncStatusIn {
   action: Github__com___kloudlite___api___pkg___types__SyncAction!
   error: String
   lastSyncedAt: Date
@@ -1699,14 +1740,14 @@ type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate
   apiVersion: String!
   kind: String!
   msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRef!
-  spec: Map!
+  spec: Map
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
   apiVersion: String!
   kind: String!
   msvcRef: Github__com___kloudlite___operator___apis___common____types__MsvcRefIn!
-  spec: Map!
+  spec: Map
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Probe {
@@ -2236,6 +2277,44 @@ input ImagePullSecretIn {
 
 type ImagePullSecretPaginatedRecords {
   edges: [ImagePullSecretEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ImportedManagedResource {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  environmentName: String!
+  id: ID!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  managedResource: ManagedResource
+  managedResourceRef: Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ImportedManagedResourceEdge {
+  cursor: String!
+  node: ImportedManagedResource!
+}
+
+input ImportedManagedResourceIn {
+  displayName: String!
+  environmentName: String!
+  managedResourceRef: Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRefIn!
+  name: String!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatusIn!
+}
+
+type ImportedManagedResourcePaginatedRecords {
+  edges: [ImportedManagedResourceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
@@ -3579,12 +3658,12 @@ type Mutation {
   core_deleteEnvironment(envName: String!): Boolean!
   core_deleteExternalApp(envName: String!, externalAppName: String!): Boolean!
   core_deleteImagePullSecret(name: String!): Boolean!
-  core_deleteImportedManagedResource(envName: String!, mresName: String!): Boolean!
+  core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean!
   core_deleteManagedResource(mresName: String!, msvcName: String!): Boolean!
   core_deleteRouter(envName: String!, routerName: String!): Boolean!
   core_deleteSecret(envName: String!, secretName: String!): Boolean!
   core_deleteVPNDevice(deviceName: String!): Boolean!
-  core_importManagedResource(envName: String!, mresName: String!, msvcName: String!): ManagedResource
+  core_importManagedResource(envName: String!, importName: String!, mresName: String!, msvcName: String!): ImportedManagedResource
   core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_interceptExternalApp(deviceName: String!, envName: String!, externalAppName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_updateApp(app: AppIn!, envName: String!): App
@@ -3955,6 +4034,7 @@ type Query {
   core_listEnvironments(pq: CursorPaginationIn, search: SearchEnvironments): EnvironmentPaginatedRecords
   core_listExternalApps(envName: String!, pq: CursorPaginationIn, search: SearchExternalApps): ExternalAppPaginatedRecords
   core_listImagePullSecrets(pq: CursorPaginationIn, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
+  core_listImportedManagedResources(envName: String!, pq: CursorPaginationIn, search: SearchImportedManagedResources): ImportedManagedResourcePaginatedRecords
   core_listManagedResources(pq: CursorPaginationIn, search: SearchManagedResources): ManagedResourcePaginatedRecords
   core_listRouters(envName: String!, pq: CursorPaginationIn, search: SearchRouters): RouterPaginatedRecords
   core_listSecrets(envName: String!, pq: CursorPaginationIn, search: SearchSecrets): SecretPaginatedRecords
@@ -4015,7 +4095,7 @@ type Query {
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
   infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
-  infrat_getBYOKClusterSetupInstructions(name: String!): [BYOKSetupInstruction!]
+  infrat_getBYOKClusterSetupInstructions(name: String!, onlyHelmValues: Boolean): [BYOKSetupInstruction!]
   iot_getApp(deviceBlueprintName: String!, name: String!, projectName: String!): IOTApp
   iot_getDeployment(name: String!, projectName: String!): IOTDeployment
   iot_getDevice(deploymentName: String!, name: String!, projectName: String!): IOTDevice
@@ -4185,6 +4265,12 @@ input SearchImagePullSecrets {
   text: MatchFilterIn
 }
 
+input SearchImportedManagedResources {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+}
+
 input SearchIOTApps {
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
@@ -4285,6 +4371,7 @@ type Secret {
   data: Map
   displayName: String!
   environmentName: String!
+  for: Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor
   id: ID!
   immutable: Boolean
   isReadyOnly: Boolean!

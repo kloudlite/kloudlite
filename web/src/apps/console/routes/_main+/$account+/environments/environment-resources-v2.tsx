@@ -157,19 +157,19 @@ const ListView = ({ items, onAction }: IResource) => {
       data={{
         headers: [
           {
-            render: () => (
-              <div className="flex flex-row">
-                <span className="w-[48px]" />
-                Name
-              </div>
-            ),
+            render: () => 'Resource Name',
             name: 'name',
-            className: 'w-[400px]',
+            className: 'flex flex-1 w-[80px]',
           },
           {
             render: () => 'Cluster',
             name: 'cluster',
-            className: 'w-[300px]',
+            className: 'w-[120px]',
+          },
+          {
+            render: () => '',
+            name: 'flex-post',
+            className: 'flex-1',
           },
           {
             render: () => 'Status',

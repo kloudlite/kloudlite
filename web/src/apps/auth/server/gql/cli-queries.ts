@@ -232,9 +232,9 @@ export const cliQueries = (executor: IExecutor) => ({
     gql`
       query Core_getConfigValues(
         $envName: String!
-        $configQueries: [ConfigKeyRefIn]
+        $configQueries: [ConfigKeyRefIn!]
         $secretQueries: [SecretKeyRefIn!]
-        $mresQueries: [ManagedResourceKeyRefIn]
+        $mresQueries: [SecretKeyRefIn!]
       ) {
         configs: core_getConfigValues(
           envName: $envName
@@ -252,12 +252,9 @@ export const cliQueries = (executor: IExecutor) => ({
           secretName
           value
         }
-        mreses: core_getManagedResouceOutputKeyValues(
-          keyrefs: $mresQueries
-          envName: $envName
-        ) {
+        mreses: core_getSecretValues(envName: $envName, queries: $mresQueries) {
           key
-          mresName
+          secretName
           value
         }
       }
@@ -515,6 +512,7 @@ export const cliQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
+              isReadyOnly
               stringData
             }
           }
@@ -666,6 +664,194 @@ export const cliQueries = (executor: IExecutor) => ({
     {
       transformer: (data: any) => data.auth_getRemoteLogin,
       vars: (_: any) => {},
+    }
+  ),
+  cli_createClusterReference: executor(
+    gql`
+      mutation Infra_createBYOKCluster($cluster: BYOKClusterIn!) {
+        infra_createBYOKCluster(cluster: $cluster) {
+          id
+          metadata {
+            name
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_createBYOKCluster,
+      vars(_: any) {},
+    }
+  ),
+  cli_deleteClusterReference: executor(
+    gql`
+      mutation Infra_deleteBYOKCluster($name: String!) {
+        infra_deleteBYOKCluster(name: $name)
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_deleteBYOKCluster,
+      vars(_: any) {},
+    }
+  ),
+  cli_clusterReferenceInstructions: executor(
+    gql`
+      query Infrat_getBYOKClusterSetupInstructions($name: String!) {
+        infrat_getBYOKClusterSetupInstructions(
+          name: $name
+          onlyHelmValues: true
+        ) {
+          command
+          title
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => {
+        const instructions = JSON.parse(
+          data.infrat_getBYOKClusterSetupInstructions[0].command
+        );
+        return instructions;
+      },
+      vars(_: any) {},
+    }
+  ),
+  cli_listImportedManagedResources: executor(
+    gql`
+      query Core_listImportedManagedResources(
+        $envName: String!
+        $search: SearchImportedManagedResources
+        $pq: CursorPaginationIn
+      ) {
+        core_listImportedManagedResources(
+          envName: $envName
+          search: $search
+          pq: $pq
+        ) {
+          edges {
+            cursor
+            node {
+              accountName
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              creationTime
+              displayName
+              environmentName
+              id
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              managedResourceRef {
+                id
+                name
+                namespace
+              }
+              markedForDeletion
+              name
+              recordVersion
+              secretRef {
+                name
+                namespace
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
+              updateTime
+              managedResource {
+                accountName
+                apiVersion
+                clusterName
+                creationTime
+                displayName
+                enabled
+                environmentName
+                id
+                isImported
+                kind
+                managedServiceName
+                markedForDeletion
+                metadata {
+                  annotations
+                  creationTimestamp
+                  deletionTimestamp
+                  generation
+                  labels
+                  name
+                  namespace
+                }
+                mresRef
+                recordVersion
+                spec {
+                  resourceNamePrefix
+                  resourceTemplate {
+                    apiVersion
+                    kind
+                    msvcRef {
+                      apiVersion
+                      clusterName
+                      kind
+                      name
+                      namespace
+                    }
+                    spec
+                  }
+                }
+                status {
+                  checkList {
+                    debug
+                    description
+                    hide
+                    name
+                    title
+                  }
+                  checks
+                  isReady
+                  lastReadyGeneration
+                  lastReconcileTime
+                  message {
+                    RawMessage
+                  }
+                  resources {
+                    apiVersion
+                    kind
+                    name
+                    namespace
+                  }
+                }
+                syncedOutputSecretRef {
+                  apiVersion
+                  data
+                  immutable
+                  kind
+                  stringData
+                  type
+                }
+                updateTime
+              }
+            }
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+          totalCount
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_listImportedManagedResources,
+      vars(_: any) {},
     }
   ),
 });

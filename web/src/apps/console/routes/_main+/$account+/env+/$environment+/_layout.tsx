@@ -3,7 +3,7 @@ import {
   CirclesFour,
   GearSix,
   File,
-  TreeStructure,
+  // TreeStructure,
 } from '~/console/components/icons';
 import {
   Link,
@@ -64,23 +64,13 @@ const tabs = [
   {
     label: (
       <span className="flex flex-row items-center gap-lg">
-        <TreeStructure size={tabIconSize} />
-        External Apps
+        <BackingServices size={tabIconSize} />
+        Integrated Resources
       </span>
     ),
-    to: '/external-apps',
-    value: '/external-apps',
+    to: '/managed-resources',
+    value: '/managed-resources',
   },
-  // {
-  //   label: (
-  //     <span className="flex flex-row items-center gap-lg">
-  //       <TreeStructure size={tabIconSize} />
-  //       Router
-  //     </span>
-  //   ),
-  //   to: '/routers',
-  //   value: '/routers',
-  // },
   {
     label: (
       <span className="flex flex-row items-center gap-lg">
@@ -91,16 +81,16 @@ const tabs = [
     to: '/cs/configs',
     value: '/cs',
   },
-  {
-    label: (
-      <span className="flex flex-row items-center gap-lg">
-        <BackingServices size={tabIconSize} />
-        Integrated resources
-      </span>
-    ),
-    to: '/managed-resources',
-    value: '/managed-resources',
-  },
+  // {
+  //   label: (
+  //     <span className="flex flex-row items-center gap-lg">
+  //       <TreeStructure size={tabIconSize} />
+  //       External Apps
+  //     </span>
+  //   ),
+  //   to: '/external-apps',
+  //   value: '/external-apps',
+  // },
   // {
   //   label: 'Jobs & Crons',
   //   to: '/jc/task',

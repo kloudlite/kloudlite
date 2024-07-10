@@ -55,7 +55,7 @@ const Secrets = () => {
         }}
       >
         {({ secretsData }) => {
-          const secrets = parseNodes(secretsData);
+          const secrets = parseNodes(secretsData).filter((s) => !s.isReadyOnly);
           if (!secrets) {
             return null;
           }

@@ -25,11 +25,11 @@ import { IManagedResources } from '~/console/server/gql/queries/managed-resource
 import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
-import { SyncStatusV2 } from '~/console/components/sync-status';
 import { getManagedTemplate } from '~/console/utils/commons';
+import { Badge } from '~/components/atoms/badge';
 import HandleManagedResources, { ViewSecret } from './handle-managed-resource';
 
-const RESOURCE_NAME = 'managed resource';
+const RESOURCE_NAME = 'integrated resource';
 type BaseType = ExtractNodeType<IManagedResources>;
 
 const parseItem = (item: BaseType, templates: IMSvTemplates) => {
@@ -146,26 +146,21 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
             name: 'name',
             className: 'flex flex-1 w-[80px]',
           },
-          // {
-          //   render: () => '',
-          //   name: 'secret',
-          //   className: 'flex flex-1 w-[150px]',
-          // },
           {
             render: () => 'Resource Type',
             name: 'resource',
-            className: 'w-[120px]',
+            className: 'w-[160px]',
           },
           {
             render: () => '',
             name: 'flex-post',
             className: 'flex-1',
           },
-          // {
-          //   render: () => 'Status',
-          //   name: 'status',
-          //   className: 'flex-1 min-w-[30px]',
-          // },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px]',
+          },
           {
             render: () => 'Updated',
             name: 'updated',
@@ -202,7 +197,12 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
                 ),
               },
               status: {
-                render: () => <SyncStatusV2 item={i} />,
+                render: () =>
+                  i.status?.isReady ? (
+                    <Badge type="info">Ready</Badge>
+                  ) : (
+                    <Badge type="warning">Waiting</Badge>
+                  ),
               },
               updated: {
                 render: () => (
@@ -242,7 +242,7 @@ const ManagedResourceResourcesV2 = ({
 
   useWatchReload(
     items.map((i) => {
-      return `account:${account}.managed_service:${msv}.managed_resource:${parseName(
+      return `account:${account}.cluster_managed_service:${msv}.managed_resource:${parseName(
         i
       )}`;
     })

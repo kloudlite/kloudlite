@@ -31,6 +31,7 @@ import { consoleVpnQueries } from './queries/console-vpn-queries';
 import { imagePullSecretsQueries } from './queries/image-pull-secrets-queries';
 import { globalVpnQueries } from './queries/global-vpn-queries';
 import { commsNotificationQueries } from './queries/comms-queries';
+import { importedManagedResourceQueries } from './queries/imported-managed-resource-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -66,6 +67,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...imagePullSecretsQueries(executor),
     ...globalVpnQueries(executor),
     ...commsNotificationQueries(executor),
+    ...importedManagedResourceQueries(executor),
   };
 };
 

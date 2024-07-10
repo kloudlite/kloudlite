@@ -3314,10 +3314,13 @@ mutation consoleUpdateByokCluster($clusterName: String!, $displayName: String!) 
   }
 }
 
-query consoleGetBYOKClusterInstructions($name: String!) {
-  infrat_getBYOKClusterSetupInstructions(name: $name) {
-    title
+query consoleGetBYOKClusterInstructions($name: String!, $onlyHelmValues: Boolean) {
+  infrat_getBYOKClusterSetupInstructions(
+    name: $name
+    onlyHelmValues: $onlyHelmValues
+  ) {
     command
+    title
   }
 }
 
@@ -3563,7 +3566,6 @@ query consoleGetManagedResource($name: String!, $msvcName: String, $envName: Str
           name
           namespace
         }
-        spec
       }
     }
     status {
@@ -3673,7 +3675,6 @@ query consoleListManagedResources($search: SearchManagedResources, $pq: CursorPa
               name
               namespace
             }
-            spec
           }
         }
         status {
@@ -3732,20 +3733,6 @@ query consoleListManagedResources($search: SearchManagedResources, $pq: CursorPa
 
 mutation consoleDeleteManagedResource($msvcName: String!, $mresName: String!) {
   core_deleteManagedResource(msvcName: $msvcName, mresName: $mresName)
-}
-
-mutation consoleImportManagedResource($envName: String!, $msvcName: String!, $mresName: String!) {
-  core_importManagedResource(
-    envName: $envName
-    msvcName: $msvcName
-    mresName: $mresName
-  ) {
-    id
-  }
-}
-
-mutation consoleDeleteImportedManagedResource($envName: String!, $mresName: String!) {
-  core_deleteImportedManagedResource(envName: $envName, mresName: $mresName)
 }
 
 query consoleGetHelmChart($clusterName: String!, $name: String!) {
@@ -4418,6 +4405,145 @@ query consoleListNotifications($pagination: CursorPaginationIn) {
         read
         recordVersion
         updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleImportManagedResource($envName: String!, $mresName: String!, $msvcName: String!, $importName: String!) {
+  core_importManagedResource(
+    envName: $envName
+    mresName: $mresName
+    msvcName: $msvcName
+    importName: $importName
+  ) {
+    id
+  }
+}
+
+mutation consoleDeleteImportedManagedResource($envName: String!, $importName: String!) {
+  core_deleteImportedManagedResource(envName: $envName, importName: $importName)
+}
+
+query consoleListImportedManagedResources($envName: String!, $search: SearchImportedManagedResources, $pq: CursorPaginationIn) {
+  core_listImportedManagedResources(envName: $envName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        environmentName
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        managedResourceRef {
+          id
+          name
+          namespace
+        }
+        markedForDeletion
+        name
+        recordVersion
+        secretRef {
+          name
+          namespace
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+        managedResource {
+          accountName
+          apiVersion
+          clusterName
+          creationTime
+          displayName
+          enabled
+          environmentName
+          id
+          isImported
+          kind
+          managedServiceName
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          mresRef
+          recordVersion
+          spec {
+            resourceNamePrefix
+            resourceTemplate {
+              apiVersion
+              kind
+              msvcRef {
+                apiVersion
+                clusterName
+                kind
+                name
+                namespace
+              }
+              spec
+            }
+          }
+          status {
+            checkList {
+              debug
+              description
+              hide
+              name
+              title
+            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncedOutputSecretRef {
+            apiVersion
+            data
+            immutable
+            kind
+            stringData
+            type
+          }
+          updateTime
+        }
       }
     }
     pageInfo {
@@ -6175,7 +6301,7 @@ query authCli_infraCheckNameAvailability($resType: ResType!, $name: String!, $cl
   }
 }
 
-query authCli_getConfigSecretMap($envName: String!, $configQueries: [ConfigKeyRefIn], $secretQueries: [SecretKeyRefIn!], $mresQueries: [ManagedResourceKeyRefIn]) {
+query authCli_getConfigSecretMap($envName: String!, $configQueries: [ConfigKeyRefIn!], $secretQueries: [SecretKeyRefIn!], $mresQueries: [SecretKeyRefIn!]) {
   configs: core_getConfigValues(envName: $envName, queries: $configQueries) {
     configName
     key
@@ -6186,12 +6312,9 @@ query authCli_getConfigSecretMap($envName: String!, $configQueries: [ConfigKeyRe
     secretName
     value
   }
-  mreses: core_getManagedResouceOutputKeyValues(
-    keyrefs: $mresQueries
-    envName: $envName
-  ) {
+  mreses: core_getSecretValues(envName: $envName, queries: $mresQueries) {
     key
-    mresName
+    secretName
     value
   }
 }
@@ -6353,6 +6476,7 @@ query authCli_listSecrets($envName: String!, $pq: CursorPaginationIn) {
           name
           namespace
         }
+        isReadyOnly
         stringData
       }
     }
@@ -6445,6 +6569,150 @@ query authCli_getRemoteLogin($loginId: String!, $secret: String!) {
   auth_getRemoteLogin(loginId: $loginId, secret: $secret) {
     authHeader
     status
+  }
+}
+
+mutation authCli_createClusterReference($cluster: BYOKClusterIn!) {
+  infra_createBYOKCluster(cluster: $cluster) {
+    id
+    metadata {
+      name
+    }
+  }
+}
+
+mutation authCli_deleteClusterReference($name: String!) {
+  infra_deleteBYOKCluster(name: $name)
+}
+
+query authCli_clusterReferenceInstructions($name: String!) {
+  infrat_getBYOKClusterSetupInstructions(name: $name, onlyHelmValues: true) {
+    command
+    title
+  }
+}
+
+query authCli_listImportedManagedResources($envName: String!, $search: SearchImportedManagedResources, $pq: CursorPaginationIn) {
+  core_listImportedManagedResources(envName: $envName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        environmentName
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        managedResourceRef {
+          id
+          name
+          namespace
+        }
+        markedForDeletion
+        name
+        recordVersion
+        secretRef {
+          name
+          namespace
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+        managedResource {
+          accountName
+          apiVersion
+          clusterName
+          creationTime
+          displayName
+          enabled
+          environmentName
+          id
+          isImported
+          kind
+          managedServiceName
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          mresRef
+          recordVersion
+          spec {
+            resourceNamePrefix
+            resourceTemplate {
+              apiVersion
+              kind
+              msvcRef {
+                apiVersion
+                clusterName
+                kind
+                name
+                namespace
+              }
+              spec
+            }
+          }
+          status {
+            checkList {
+              debug
+              description
+              hide
+              name
+              title
+            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncedOutputSecretRef {
+            apiVersion
+            data
+            immutable
+            kind
+            stringData
+            type
+          }
+          updateTime
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
   }
 }
 

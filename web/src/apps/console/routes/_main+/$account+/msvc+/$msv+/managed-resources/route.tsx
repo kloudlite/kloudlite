@@ -28,6 +28,7 @@ export const loader = (ctx: IRemixCtx) => {
         managedServiceName: { matchType: 'exact', exact: msv },
       },
     });
+
     if (mErrors) {
       throw mErrors[0];
     }

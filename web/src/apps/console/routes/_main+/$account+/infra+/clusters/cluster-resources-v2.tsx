@@ -260,7 +260,7 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
           }
         >
           <div>
-            <Badge type="success">Online</Badge>
+            <Badge type="info">Online</Badge>
           </div>
         </Tooltip.Root>
       );
@@ -270,8 +270,8 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
           className="!w-fit !max-w-[500px]"
           side="top"
           content={
-            <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
-              {lastOnlineAt} ({timeDifference * 60}s ago)
+            <div className="flex-1 bodySm text-text-strong pulsable whitespace-normal">
+              Last seen ({Math.floor(timeDifference * 60)}s ago)
             </div>
           }
         >

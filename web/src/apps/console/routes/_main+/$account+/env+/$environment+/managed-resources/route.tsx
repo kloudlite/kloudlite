@@ -24,14 +24,9 @@ export const loader = (ctx: IRemixCtx) => {
 
     const { data: mData, errors: mErrors } = await GQLServerHandler(
       ctx.request
-    ).listManagedResources({
-      search: {
-        ...getSearch(ctx),
-        envName: {
-          matchType: 'exact',
-          exact: environment,
-        },
-      },
+    ).listImportedManagedResources({
+      envName: environment,
+      search: getSearch(ctx),
     });
 
     if (mErrors) {
@@ -63,11 +58,11 @@ const KlOperatorServices = () => {
           return (
             <Wrapper
               header={{
-                title: 'Integrated resources',
+                title: 'Imported Integrated Resources',
                 action: managedResources.length > 0 && (
                   <Button
                     variant="primary"
-                    content="Import Integrated resource"
+                    content="Import Integrated Resource"
                     prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
@@ -86,7 +81,7 @@ const KlOperatorServices = () => {
                   </p>
                 ),
                 action: {
-                  content: 'Import integrated resource',
+                  content: 'Import Integrated Resource',
                   prefix: <Plus />,
                   onClick: () => {
                     setVisible(true);

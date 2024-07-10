@@ -115,7 +115,7 @@ const Root = (props: IDialog) => {
               throw e[0];
             }
             resetValues();
-            toast.success('Managed service cloned successfully');
+            toast.success('Integrated service cloned successfully');
             setVisible(false);
             reloadPage();
           } catch (err) {
@@ -142,7 +142,7 @@ const Root = (props: IDialog) => {
             resType="environment"
             errors={errors.name}
             label="Name"
-            placeholder="Managed service name"
+            placeholder="Integrated service name"
             handleChange={handleChange}
             nameErrorLabel="isNameError"
           />
@@ -187,8 +187,8 @@ const CloneManagedService = (props: IDialog) => {
     <CommonPopupHandle
       {...props}
       root={Root}
-      updateTitle="Clone ManagedService"
-      createTitle="Clone ManagedService"
+      updateTitle="Clone Integrated Service"
+      createTitle="Clone Integrated Service"
     />
   );
 };
