@@ -220,8 +220,25 @@ func (d *domain) createGlobalVPNDevice(ctx InfraContext, gvpnDevice entities.Glo
 func (d *domain) buildPeerFromGlobalVPNDevice(ctx InfraContext, gvpn *entities.GlobalVPN, device *entities.GlobalVPNDevice) *networkingv1.Peer {
 	allowedIPs := []string{fmt.Sprintf("%s/32", device.IPAddr)}
 
+	// privateConns, err := d.gvpnConnRepo.Find(ctx, repos.Query{
+	// 	Filter: repos.Filter{
+	// 		fc.GlobalVPNConnectionGlobalVPNName:  gvpn.Name,
+	// 		fc.GlobalVPNConnectionVisibilityMode: entities.ClusterVisibilityModePrivate,
+	// 	},
+	// })
+	// if err != nil {
+	// 	return nil
+	// }
+
+	// privateCIDRs := make([]string, 0, len(privateConns))
+	// for _, conn := range privateConns {
+	// 	privateCIDRs = append(privateCIDRs, conn.ClusterCIDR)
+	// }
+
 	if device.IPAddr == gvpn.KloudliteGatewayDevice.IPAddr {
+		// FIXME: this should not be used
 		allowedIPs = append(allowedIPs, gvpn.NonClusterUseAllowedIPs...)
+		// allowedIPs = append(allowedIPs, privateCIDRs...)
 	}
 
 	return &networkingv1.Peer{
