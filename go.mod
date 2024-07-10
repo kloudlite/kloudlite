@@ -16,7 +16,7 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/kloudlite/operator v0.0.0-20240617232957-4400479d6f98
+	github.com/kloudlite/operator v0.0.0-20240710071747-9a61e7de9e93
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.29.1
@@ -57,15 +57,22 @@ require (
 )
 
 require (
+	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
+	github.com/charmbracelet/lipgloss v0.10.0 // indirect
+	github.com/charmbracelet/log v0.4.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
+	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/pprof v0.0.0-20230817174616-7a8ec2ada47b // indirect
 	github.com/hashicorp/go-hclog v1.4.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
+	github.com/muesli/reflow v0.3.0 // indirect
+	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nats-io/nkeys v0.4.6 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
