@@ -37,14 +37,6 @@ func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
-const (
-	bindService string = "bind-service"
-)
-
-func getJobSvcAccountName() string {
-	return "job-svc-account"
-}
-
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lifecycles,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lifecycles/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=lifecycles/finalizers,verbs=update
@@ -64,6 +56,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 	if v != "true" {
 		return ctrl.Result{}, nil
+	}
+
+	cs := pod.Status.InitContainerStatuses
+	for i := range cs {
+		if cs[i].Name == "kloudlite-wg" {
+			if cs[i].Started != nil && *cs[i].Started {
+				return ctrl.Result{}, nil
+			}
+		}
 	}
 
 	var pblist networkingv1.PodBindingList

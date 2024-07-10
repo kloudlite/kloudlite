@@ -11,6 +11,7 @@ import (
 	"github.com/kloudlite/operator/pkg/iputils"
 	json_patch "github.com/kloudlite/operator/pkg/json-patch"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
@@ -101,7 +102,7 @@ func (m *Manager) PickFreeSvcBinding(ctx context.Context) (*networkingv1.Service
 	return m.PickFreeSvcBinding(ctx)
 }
 
-func (m *Manager) ReserveService(ctx context.Context, namespace, name string) error {
+func (m *Manager) ReserveService(ctx context.Context, namespace, name string, ports []corev1.ServicePort) error {
 	m.Lock()
 	defer m.Unlock()
 
@@ -132,20 +133,36 @@ func (m *Manager) ReserveService(ctx context.Context, namespace, name string) er
 		Name:      name,
 		Namespace: namespace,
 	}
+	sb.Spec.Ports = ports
+
 	sb.EnsureGVK()
 	sb.SetAnnotations(sb.GetEnsuredAnnotations())
 	if err := m.kcli.Update(ctx, sb); err != nil {
 		return NewError(err, "updating service binding")
 	}
 
-	// m.svcBindingsMap[fmt.Sprintf("%s/%s", namespace, name)] = resp
 	m.svcNginxStreams[sb.Spec.GlobalIP] = RegisterNginxStreamConfig(sb)
 	if err := m.SyncNginxStreams(); err != nil {
 		return NewError(err, "syncing nginx streams")
 	}
+	m.logger.Info("nginx successfully synced")
 
 	return nil
 }
+
+// func (m *Manager) SyncNginx(ctx context.Context, namespace, name string) error {
+// 	sb, err := m.getServiceBinding(ctx, namespace, name)
+// 	if err != nil {
+// 		return NewError(err, "k8s get service binding")
+// 	}
+//
+// 	m.svcNginxStreams[sb.Spec.GlobalIP] = RegisterNginxStreamConfig(sb)
+// 	if err := m.SyncNginxStreams(); err != nil {
+// 		return NewError(err, "syncing nginx streams")
+// 	}
+// 	m.logger.Info("nginx successfully synced")
+// 	return nil
+// }
 
 var ErrServiceBindingNotFound = fmt.Errorf("servicebinding not found")
 
