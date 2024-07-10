@@ -10,6 +10,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func (d *domain) ListSecrets(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error) {
@@ -18,7 +19,26 @@ func (d *domain) ListSecrets(ctx ResourceContext, search map[string]repos.MatchF
 	}
 
 	filters := ctx.DBFilters()
-	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(filters, search), pq)
+	pr, err := d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(filters, search), pq)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	for i := range pr.Edges {
+		fromDataToStringData(&pr.Edges[i].Node.Secret)
+	}
+
+	return pr, nil
+}
+
+func fromDataToStringData(secret *corev1.Secret) {
+	if secret.StringData == nil {
+		secret.StringData = make(map[string]string, len(secret.Data))
+	}
+
+	for k, v := range secret.Data {
+		secret.StringData[k] = string(v)
+	}
 }
 
 func (d *domain) findSecret(ctx ResourceContext, name string) (*entities.Secret, error) {
@@ -33,14 +53,7 @@ func (d *domain) findSecret(ctx ResourceContext, name string) (*entities.Secret,
 		return nil, errors.Newf("no secret with name (%s) found", name)
 	}
 
-	if xSecret.StringData == nil {
-		xSecret.StringData = make(map[string]string, len(xSecret.Data))
-	}
-
-	for k, v := range xSecret.Data {
-		xSecret.StringData[k] = string(v)
-	}
-
+  fromDataToStringData(&xSecret.Secret)
 	return xSecret, nil
 }
 
