@@ -72,7 +72,7 @@ There are three components of Kloudlite that need to be installed to run:
 - Platform
 - Gateways
 
-The easiest way to install Kloudlite is to use our Helm charts. All the required references are available in our [Helm-chart](https://github.com/kloudlite/helm-charts) repository. The required architecture diagram is provided here.
+The easiest way to install Kloudlite is to use our Helm charts. All the required references are available in our [Helm-chart](https://github.com/kloudlite/helm-charts) repository. The required architecture diagram is provided [here](https://kloudlite.io/docs/architecture).
 
 ## Documentation
 Browse our documentation here or visit specific sections below:
