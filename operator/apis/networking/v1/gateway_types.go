@@ -6,6 +6,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type PeerVisibility string
+
+const (
+	PeerVisibilityPublic  PeerVisibility = "public"
+	PeerVisibilityPrivate PeerVisibility = "private"
+)
+
 type Peer struct {
 	DNSHostname string `json:"dnsHostname,omitempty"`
 	Comments    string `json:"comments,omitempty"`
@@ -16,6 +23,8 @@ type Peer struct {
 
 	DNSSuffix  *string  `json:"dnsSuffix,omitempty"`
 	AllowedIPs []string `json:"allowedIPs,omitempty"`
+
+	Visibility PeerVisibility `json:"visibility,omitempty"`
 }
 
 type GatewayLoadBalancer struct {

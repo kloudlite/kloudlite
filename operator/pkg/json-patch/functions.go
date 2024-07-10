@@ -18,5 +18,5 @@ func (pd *Document) Json() ([]byte, error) {
 type Patch struct {
 	Op    string `json:"op"`
 	Path  string `json:"path"`
-	Value any    `json:"value"`
+	Value any    `json:"value,omitempty"`
 }

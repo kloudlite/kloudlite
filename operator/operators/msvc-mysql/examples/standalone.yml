@@ -1,0 +1,16 @@
+apiVersion: mysql.msvc.kloudlite.io/v1
+kind: StandaloneService
+metadata:
+  name: mariadb
+  namespace: default
+spec:
+  resources:
+    cpu:
+      min: 100m
+      max: 200m
+    memory: 
+      min: 200Mi
+      max: 200Mi
+    storage:
+      size: 1Gi
+      storageClass: sc-xfs
