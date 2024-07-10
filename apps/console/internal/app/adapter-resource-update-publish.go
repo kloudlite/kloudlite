@@ -14,6 +14,11 @@ type ResourceEventPublisherImpl struct {
 	logger logging.Logger
 }
 
+func (r *ResourceEventPublisherImpl) PublishClusterManagedServiceEvent(ctx domain.ConsoleContext, msvcName string, resourceType entities.ResourceType, name string, update domain.PublishMsg) {
+	subject := fmt.Sprintf("res-updates.account.%s.cluster_managed_service.%s.%s.%s", ctx.AccountName, msvcName, resourceType, name)
+	r.publish(subject, update)
+}
+
 func (r *ResourceEventPublisherImpl) PublishEnvironmentResourceEvent(ctx domain.ConsoleContext, envName string, resourceType entities.ResourceType, name string, update domain.PublishMsg) {
 	subject := fmt.Sprintf("res-updates.account.%s.environment.%s.%s.%s", ctx.AccountName, envName, resourceType, name)
 	r.publish(subject, update)
