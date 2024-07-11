@@ -1,0 +1,63 @@
+kloudliteRelease: ""
+
+nodepoolOperator:
+  image:
+    # -- (string) kloudlite agent image repository
+    repository: ghcr.io/kloudlite/kloudlite/operator/nodepool
+
+    # -- (string) image tag for kloudlite agent, by default uses `.Values.kloudliteRelease`
+    tag: ""
+
+    # -- (string) image pull policy for kloudlite agent, default is `Values.imagePullPolicy`
+    pullPolicy: ""
+
+  nodeSelector: {}
+  tolerations: []
+  nodeAffinity: {}
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 200Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi
+
+nodepoolJob:
+  image:
+    # -- (string) kloudlite iac job image repository
+    repository: ghcr.io/kloudlite/kloudlite/iac-job
+
+    # -- (string) image tag for kloudlite iac job, by default uses `.Values.kloudliteRelease`
+    tag: ""
+
+    # -- (string) image pull policy for kloudlite iac job, default is `Values.imagePullPolicy`
+    pullPolicy: ""
+
+  nodeSelector: {}
+  tolerations: []
+  nodeAffinity: {}
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 500Mi
+    requests:
+      cpu: 300m
+      memory: 500Mi
+
+# -- (string) required only for labelling cloudprovider VMs
+accountName: ""
+
+# -- (string) required only for labelling cloudprovider VMs
+clusterName: ""
+
+cloudprovider:
+  name: ""
+  region: ""
+
+  k3s:
+    # -- (string) k3s worker nodes join token
+    joinToken: ""
+    # -- (string) k3s masters public dns host, so that workers can join them
+    serverPublicHost: ""

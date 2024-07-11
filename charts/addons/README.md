@@ -32,6 +32,13 @@ A Helm chart for kloudlite k3s cluster addons
 | common.velero.configuration.useS3Credentials.enabled | string | `"true"` | if not enabled, fallsback on IAM instance profile |
 | common.velero.description | string | `"velero is useful for cluster backup and restore"` |  |
 | common.velero.enabled | bool | `false` |  |
+| gcp.csi_driver.enabled | bool | `true` |  |
+| gcp.gcloudServiceAccountCreds.json | string | `""` | base64 encoded gcp service account json |
+| gcp.gcloudServiceAccountCreds.nameSuffix | string | `"gcp-creds"` |  |
+| gcp.spot_node_terminator.configuration.image.repository | string | `"ghcr.io/kloudlite/kloudlite/infrastructure-as-code/gcp-spot-node-terminator"` |  |
+| gcp.spot_node_terminator.configuration.image.tag | string | `""` |  |
+| gcp.spot_node_terminator.enabled | bool | `true` |  |
+| kloudliteRelease | string | `""` |  |
 | podLabels | object | `{}` |  |
 | serviceAccount.create | bool | `true` |  |
 | serviceAccount.name | string | `"addons-sa"` |  |
