@@ -57,25 +57,27 @@ Create your environment. Add apps, configs, and secrets to your environment.
 # Install kl
 curl 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | bash
 
+# Login with kloudlite
+kl auth login
+
 ```
 
 ### Access Environment
 ```bash
 cd workspace
 
-# Setup workspace
+# Setup workspace. You will be asked to choose the team and default environment of the current workspace.
 kl init
 
-# Start development container
+# SSH into the development container and access
 kl box ssh
 ```
 
-## Installation
+## Install on your own cloud
 There are three components of Kloudlite that need to be installed to run:
 - Core Operators
 - Platform
 - Gateways
-
 The easiest way to install Kloudlite is to use our Helm charts. All the required references are available in our [Helm-chart](https://github.com/kloudlite/helm-charts) repository. The required architecture diagram is provided [here](https://kloudlite.io/docs/architecture).
 
 ## Documentation
