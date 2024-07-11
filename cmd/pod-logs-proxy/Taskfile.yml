@@ -1,7 +1,7 @@
 version: 3
 
 includes:
-  go: ../../.tools/taskfiles/go-build.yml
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
 
 vars:
   app: pod-logs-proxy
@@ -11,7 +11,8 @@ tasks:
     cmds:
       - task: go:build
         vars:
-          Out: ./bin/{{.app}}-{{.GOARCH}}
+          GOARCH: '{{.GOARCH}}'
+          out: ./bin/{{.app}}-{{.GOARCH}}
 
   run:
     cmds:
@@ -19,7 +20,7 @@ tasks:
 
   container:build-and-push:
     preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
+      - sh: '[[ -n "{{.image}}" ]]'
         msg: "var Image is not set"
     cmds:
       - task: build
@@ -28,4 +29,4 @@ tasks:
       - task: build
         vars:
           GOARCH: arm64
-      - docker buildx build --platform linux/amd64,linux/arm64 --output=type=image,compression=zstd,force-compression=true,compression-level=14,push=true --build-arg BINARY="./bin/{{.app}}" -t {{.Image}} .
+      - docker buildx build --platform linux/amd64,linux/arm64 --output=type=image,compression=zstd,force-compression=true,compression-level=14,push=true --build-arg BINARY="./bin/{{.app}}" -t {{.image}} .

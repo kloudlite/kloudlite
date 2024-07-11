@@ -33,7 +33,6 @@ type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
 
 type Github__com___kloudlite___operator___apis___common____types__MsvcRef @shareable {
   apiVersion: String
-  clusterName: String
   kind: String
   name: String!
   namespace: String!
@@ -372,7 +371,6 @@ input Github__com___kloudlite___api___pkg___types__SyncStatusIn {
 
 input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
   apiVersion: String
-  clusterName: String
   kind: String
   name: String!
   namespace: String!
@@ -684,6 +682,7 @@ enum Github__com___kloudlite___api___apps___console___internal___entities__Resou
   managed_resource
   router
   secret
+  service_binding
   vpn_device
 }
 

@@ -136,11 +136,9 @@ const (
 	ManagedResourceSpecResourceTemplateKind                                = "spec.resourceTemplate.kind"
 	ManagedResourceSpecResourceTemplateMsvcRef                             = "spec.resourceTemplate.msvcRef"
 	ManagedResourceSpecResourceTemplateMsvcRefApiVersion                   = "spec.resourceTemplate.msvcRef.apiVersion"
-	ManagedResourceSpecResourceTemplateMsvcRefClusterName                  = "spec.resourceTemplate.msvcRef.clusterName"
 	ManagedResourceSpecResourceTemplateMsvcRefKind                         = "spec.resourceTemplate.msvcRef.kind"
 	ManagedResourceSpecResourceTemplateMsvcRefName                         = "spec.resourceTemplate.msvcRef.name"
 	ManagedResourceSpecResourceTemplateMsvcRefNamespace                    = "spec.resourceTemplate.msvcRef.namespace"
-	ManagedResourceSpecResourceTemplateMsvcRefSharedSecret                 = "spec.resourceTemplate.msvcRef.sharedSecret"
 	ManagedResourceSpecResourceTemplateSpec                                = "spec.resourceTemplate.spec"
 	ManagedResourceSyncedOutputSecretRef                                   = "syncedOutputSecretRef"
 	ManagedResourceSyncedOutputSecretRefApiVersion                         = "syncedOutputSecretRef.apiVersion"
@@ -235,6 +233,18 @@ const (
 	SecretCreatedForNamespace    = "namespace"
 	SecretCreatedForRefId        = "refId"
 	SecretCreatedForResourceType = "resourceType"
+)
+
+// constant vars generated for struct ServiceBinding
+const (
+	ServiceBindingSpec                    = "spec"
+	ServiceBindingSpecGlobalIP            = "spec.globalIP"
+	ServiceBindingSpecHostname            = "spec.hostname"
+	ServiceBindingSpecPorts               = "spec.ports"
+	ServiceBindingSpecServiceIP           = "spec.serviceIP"
+	ServiceBindingSpecServiceRef          = "spec.serviceRef"
+	ServiceBindingSpecServiceRefName      = "spec.serviceRef.name"
+	ServiceBindingSpecServiceRefNamespace = "spec.serviceRef.namespace"
 )
 
 // constant vars generated for struct
