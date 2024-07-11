@@ -49,14 +49,14 @@ type domain struct {
 	environmentRepo repos.DbRepo[*entities.Environment]
 	vpnDeviceRepo   repos.DbRepo[*entities.ConsoleVPNDevice]
 
-	appRepo         repos.DbRepo[*entities.App]
-	externalAppRepo repos.DbRepo[*entities.ExternalApp]
-	configRepo      repos.DbRepo[*entities.Config]
-	secretRepo      repos.DbRepo[*entities.Secret]
-	routerRepo      repos.DbRepo[*entities.Router]
-	mresRepo        repos.DbRepo[*entities.ManagedResource]
+	appRepo          repos.DbRepo[*entities.App]
+	externalAppRepo  repos.DbRepo[*entities.ExternalApp]
+	configRepo       repos.DbRepo[*entities.Config]
+	secretRepo       repos.DbRepo[*entities.Secret]
+	routerRepo       repos.DbRepo[*entities.Router]
+	mresRepo         repos.DbRepo[*entities.ManagedResource]
 	importedMresRepo repos.DbRepo[*entities.ImportedManagedResource]
-	pullSecretsRepo repos.DbRepo[*entities.ImagePullSecret]
+	pullSecretsRepo  repos.DbRepo[*entities.ImagePullSecret]
 
 	envVars *env.Env
 
