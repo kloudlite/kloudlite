@@ -10,11 +10,9 @@ metadata:
   name: example-device
   namespace: kl-vpn-devices
 spec:
-  offset: 1
   ports:
   - port: 80
     targetPort: 3000
   - port: 3001
     targetPort: 3001
-  serverName: platform
 {{- end }}

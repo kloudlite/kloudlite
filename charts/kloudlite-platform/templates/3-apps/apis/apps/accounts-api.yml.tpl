@@ -74,3 +74,13 @@ spec:
         - key: AUTH_GRPC_ADDR
           value: "auth-api:{{.Values.apps.authApi.configuration.grpcPort}}"
 
+        - key: AVAILABLE_KLOUDLITE_REGIONS_CONFIG
+          value: "/kloudlite/gateways.yml"
+
+      volumes:
+        - mountPath: /kloudlite
+          type: secret
+          refName: {{.Values.edgeGateways.secretKeyRef.name}}
+          items:
+            - key: {{.Values.edgeGateways.secretKeyRef.key}}
+              fileName: gateways.yml

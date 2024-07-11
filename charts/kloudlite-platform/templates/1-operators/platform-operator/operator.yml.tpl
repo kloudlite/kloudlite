@@ -82,6 +82,7 @@ spec:
             {{ include "nodepool-operator-env" . | nindent 12 }}
             {{ include "wg-operator-env" . | nindent 12 }}
             {{ include "helmchart-operator-env" . | nindent 12 }}
+            {{ include "msvc-operator-env" . | nindent 12 }}
 
           livenessProbe:
             httpGet:

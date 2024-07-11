@@ -18,8 +18,8 @@ spec:
   replicas: {{.Values.apps.consoleApi.configuration.replicas}}
 
   services:
-    - port: 3000
-    - port: {{.Values.apps.consoleApi.configuration.logsAndMetricsHttpPort | int }}
+    - port: {{.Values.apps.consoleApi.configuration.httpPort | int }}
+    - port: {{.Values.apps.consoleApi.configuration.grcPort | int }}
 
   containers:
     - name: main
@@ -37,10 +37,10 @@ spec:
         max: "150Mi"
       env:
         - key: HTTP_PORT
-          value: "3000"
+          value: {{.Values.apps.consoleApi.configuration.httpPort | squote}}
 
-        - key: LOGS_AND_METRICS_HTTP_PORT
-          value: {{.Values.apps.consoleApi.configuration.logsAndMetricsHttpPort | squote}}
+        - key: GRPC_PORT
+          value: {{.Values.apps.consoleApi.configuration.grpcPort | squote}}
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.global.cookieDomain}}"
@@ -93,7 +93,6 @@ spec:
 
         - key: DEVICE_NAMESPACE
           value: {{.Values.apps.consoleApi.configuration.vpnDeviceNamespace}}
-
       volumes:
         - mountPath: /console.d/templates
           type: config

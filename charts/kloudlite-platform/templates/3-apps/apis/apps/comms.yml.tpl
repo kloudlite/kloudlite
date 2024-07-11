@@ -15,7 +15,6 @@ spec:
     {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
     {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
-
   replicas: {{.Values.apps.commsApi.configuration.replicas }}
 
   services:
@@ -64,3 +63,32 @@ spec:
         {{/* TODO: url should definitely NOT be auth.{{.Values.baseDomain}} */}}
         - key: EMAIL_LINKS_BASE_URL
           value: https://auth.{{include "router-domain" .}}/
+
+        {{- /* notifications params */}}
+        - key: ACCOUNT_COOKIE_NAME
+          value: {{.Values.global.accountCookieName}}
+
+        - key: NATS_URL
+          value: {{.Values.envVars.nats.url}}
+
+        - key: NOTIFICATION_NATS_STREAM
+          value: {{.Values.envVars.nats.streams.logs.name}}
+
+        - key: SESSION_KV_BUCKET
+          value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}
+        
+        - key: IAM_GRPC_ADDR
+          value: "iam:3001"
+
+        - key: MONGO_URI
+          type: secret
+          refName: mres-comms-db-creds
+          refKey: URI
+
+        - key: MONGO_DB_NAME
+          type: secret
+          refName: mres-comms-db-creds
+          refKey: DB_NAME
+
+        - key: HTTP_PORT
+          value: "3000"
