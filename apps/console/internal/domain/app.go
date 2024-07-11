@@ -250,6 +250,33 @@ func (d *domain) RestartApp(ctx ResourceContext, appName string) error {
 	return nil
 }
 
+func (d *domain) RemoveDeviceIntercepts(ctx ResourceContext, deviceName string) error {
+	apps, err := d.appRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			fields.AccountName:          ctx.AccountName,
+			fields.EnvironmentName:      ctx.EnvironmentName,
+			fc.AppSpecInterceptToDevice: deviceName,
+		},
+		Sort: nil,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	for i := range apps {
+		patchForUpdate := repos.Document{
+			fc.AppSpecIntercept: nil,
+		}
+
+		_, err := d.appRepo.PatchById(ctx, apps[i].Id, patchForUpdate)
+		if err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	return nil
+}
+
 func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	xApp, err := d.findApp(ctx, app.Name)
 	if err != nil {

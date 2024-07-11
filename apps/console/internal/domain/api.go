@@ -174,6 +174,7 @@ type Domain interface {
 
 	InterceptApp(ctx ResourceContext, appName string, deviceName string, intercept bool, portMappings []crdsv1.AppInterceptPortMappings) (bool, error)
 	RestartApp(ctx ResourceContext, appName string) error
+	RemoveDeviceIntercepts(ctx ResourceContext, deviceName string) error
 
 	OnAppApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
 	OnAppDeleteMessage(ctx ResourceContext, app entities.App) error
