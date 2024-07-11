@@ -58,6 +58,8 @@ type domain struct {
 	importedMresRepo repos.DbRepo[*entities.ImportedManagedResource]
 	pullSecretsRepo  repos.DbRepo[*entities.ImagePullSecret]
 
+	serviceBindingRepo repos.DbRepo[*entities.ServiceBinding]
+
 	envVars *env.Env
 
 	resourceEventPublisher ResourceEventPublisher
@@ -562,6 +564,7 @@ var Module = fx.Module("domain",
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
 		resourceMappingRepo repos.DbRepo[*entities.ResourceMapping],
 		vpnDeviceRepo repos.DbRepo[*entities.ConsoleVPNDevice],
+		serviceBindingRepo repos.DbRepo[*entities.ServiceBinding],
 
 		logger logging.Logger,
 		resourceEventPublisher ResourceEventPublisher,
@@ -590,6 +593,7 @@ var Module = fx.Module("domain",
 			pullSecretsRepo:     ipsRepo,
 			resourceMappingRepo: resourceMappingRepo,
 			vpnDeviceRepo:       vpnDeviceRepo,
+			serviceBindingRepo:  serviceBindingRepo,
 
 			envVars: ev,
 

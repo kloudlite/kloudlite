@@ -222,9 +222,9 @@ func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities
 	}
 
 	mres.Namespace = msvcOut.TargetNamespace
-	if mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.ClusterName == nil {
-		mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.ClusterName = &msvcOut.ClusterName
-	}
+	// if mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.ClusterName == nil {
+	// 	mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.ClusterName = &msvcOut.ClusterName
+	// }
 
 	mres.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &mres.ManagedResource); err != nil {

@@ -313,11 +313,10 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___common____types__MsvcRef struct {
-		APIVersion  func(childComplexity int) int
-		ClusterName func(childComplexity int) int
-		Kind        func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Namespace   func(childComplexity int) int
+		APIVersion func(childComplexity int) int
+		Kind       func(childComplexity int) int
+		Name       func(childComplexity int) int
+		Namespace  func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___common____types__SecretRef struct {
@@ -768,6 +767,7 @@ type ComplexityRoot struct {
 		CoreImportManagedResource         func(childComplexity int, envName string, msvcName string, mresName string, importName string) int
 		CoreInterceptApp                  func(childComplexity int, envName string, appname string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
 		CoreInterceptExternalApp          func(childComplexity int, envName string, externalAppName string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) int
+		CoreRemoveDeviceIntercepts        func(childComplexity int, envName string, deviceName string) int
 		CoreUpdateApp                     func(childComplexity int, envName string, app entities.App) int
 		CoreUpdateConfig                  func(childComplexity int, envName string, config entities.Config) int
 		CoreUpdateEnvironment             func(childComplexity int, env entities.Environment) int
@@ -821,7 +821,6 @@ type ComplexityRoot struct {
 		CoreListSecrets                      func(childComplexity int, envName string, search *model.SearchSecrets, pq *repos.CursorPagination) int
 		CoreListVPNDevices                   func(childComplexity int, search *model.CoreSearchVPNDevices, pq *repos.CursorPagination) int
 		CoreListVPNDevicesForUser            func(childComplexity int) int
-		CoreRemoveDeviceIntercepts           func(childComplexity int, envName string, deviceName string) int
 		CoreRestartApp                       func(childComplexity int, envName string, appName string) int
 		CoreResyncApp                        func(childComplexity int, envName string, name string) int
 		CoreResyncConfig                     func(childComplexity int, envName string, name string) int
@@ -1024,6 +1023,7 @@ type MutationResolver interface {
 	CoreUpdateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
 	CoreDeleteApp(ctx context.Context, envName string, appName string) (bool, error)
 	CoreInterceptApp(ctx context.Context, envName string, appname string, deviceName string, intercept bool, portMappings []*v1.AppInterceptPortMappings) (bool, error)
+	CoreRemoveDeviceIntercepts(ctx context.Context, envName string, deviceName string) (bool, error)
 	CoreCreateExternalApp(ctx context.Context, envName string, externalApp entities.ExternalApp) (*entities.ExternalApp, error)
 	CoreUpdateExternalApp(ctx context.Context, envName string, externalApp entities.ExternalApp) (*entities.ExternalApp, error)
 	CoreDeleteExternalApp(ctx context.Context, envName string, externalAppName string) (bool, error)
@@ -1062,7 +1062,6 @@ type QueryResolver interface {
 	CoreGetApp(ctx context.Context, envName string, name string) (*entities.App, error)
 	CoreResyncApp(ctx context.Context, envName string, name string) (bool, error)
 	CoreRestartApp(ctx context.Context, envName string, appName string) (bool, error)
-	CoreRemoveDeviceIntercepts(ctx context.Context, envName string, deviceName string) (bool, error)
 	CoreListExternalApps(ctx context.Context, envName string, search *model.SearchExternalApps, pq *repos.CursorPagination) (*model.ExternalAppPaginatedRecords, error)
 	CoreGetExternalApp(ctx context.Context, envName string, name string) (*entities.ExternalApp, error)
 	CoreResyncExternalApp(ctx context.Context, envName string, name string) (bool, error)
@@ -2216,13 +2215,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.APIVersion(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___common____types__MsvcRef.clusterName":
-		if e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.ClusterName == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.ClusterName(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___common____types__MsvcRef.kind":
 		if e.complexity.Github__com___kloudlite___operator___apis___common____types__MsvcRef.Kind == nil {
@@ -4355,6 +4347,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CoreInterceptExternalApp(childComplexity, args["envName"].(string), args["externalAppName"].(string), args["deviceName"].(string), args["intercept"].(bool), args["portMappings"].([]*v1.AppInterceptPortMappings)), true
 
+	case "Mutation.core_removeDeviceIntercepts":
+		if e.complexity.Mutation.CoreRemoveDeviceIntercepts == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_removeDeviceIntercepts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreRemoveDeviceIntercepts(childComplexity, args["envName"].(string), args["deviceName"].(string)), true
+
 	case "Mutation.core_updateApp":
 		if e.complexity.Mutation.CoreUpdateApp == nil {
 			break
@@ -4847,18 +4851,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CoreListVPNDevicesForUser(childComplexity), true
-
-	case "Query.core_removeDeviceIntercepts":
-		if e.complexity.Query.CoreRemoveDeviceIntercepts == nil {
-			break
-		}
-
-		args, err := ec.field_Query_core_removeDeviceIntercepts_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.CoreRemoveDeviceIntercepts(childComplexity, args["envName"].(string), args["deviceName"].(string)), true
 
 	case "Query.core_restartApp":
 		if e.complexity.Query.CoreRestartApp == nil {
@@ -5649,7 +5641,6 @@ type Query {
 	core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
 	core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 	core_restartApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	core_removeDeviceIntercepts(envName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_listExternalApps(envName: String!, search: SearchExternalApps, pq: CursorPaginationIn): ExternalAppPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getExternalApp(envName: String!, name: String!): ExternalApp @isLoggedInAndVerified @hasAccount
@@ -5697,6 +5688,7 @@ type Mutation {
 	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_deleteApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 	core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean! @isLoggedInAndVerified @hasAccount
+	core_removeDeviceIntercepts(envName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createExternalApp(envName: String!, externalApp: ExternalAppIn!): ExternalApp @isLoggedInAndVerified @hasAccount
 	core_updateExternalApp(envName: String!, externalApp: ExternalAppIn!): ExternalApp @isLoggedInAndVerified @hasAccount
@@ -5823,7 +5815,6 @@ type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
 
 type Github__com___kloudlite___operator___apis___common____types__MsvcRef @shareable {
   apiVersion: String
-  clusterName: String
   kind: String
   name: String!
   namespace: String!
@@ -6162,7 +6153,6 @@ input Github__com___kloudlite___api___pkg___types__SyncStatusIn {
 
 input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
   apiVersion: String
-  clusterName: String
   kind: String
   name: String!
   namespace: String!
@@ -6474,6 +6464,7 @@ enum Github__com___kloudlite___api___apps___console___internal___entities__Resou
   managed_resource
   router
   secret
+  service_binding
   vpn_device
 }
 
@@ -7763,6 +7754,30 @@ func (ec *executionContext) field_Mutation_core_interceptExternalApp_args(ctx co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_core_removeDeviceIntercepts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["envName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deviceName"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_core_updateApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -8723,30 +8738,6 @@ func (ec *executionContext) field_Query_core_listVPNDevices_args(ctx context.Con
 		}
 	}
 	args["pq"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_core_removeDeviceIntercepts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["envName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["deviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deviceName"] = arg1
 	return args, nil
 }
 
@@ -15974,47 +15965,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MsvcRef_clusterName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesMsvcRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_clusterName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ClusterName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___common____types__MsvcRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MsvcRef_kind(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesMsvcRef) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_kind(ctx, field)
 	if err != nil {
@@ -20132,8 +20082,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 			switch field.Name {
 			case "apiVersion":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_apiVersion(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_clusterName(ctx, field)
 			case "kind":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_kind(ctx, field)
 			case "name":
@@ -29126,6 +29074,87 @@ func (ec *executionContext) fieldContext_Mutation_core_interceptApp(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_core_removeDeviceIntercepts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_removeDeviceIntercepts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreRemoveDeviceIntercepts(rctx, fc.Args["envName"].(string), fc.Args["deviceName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_removeDeviceIntercepts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_core_removeDeviceIntercepts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_core_createExternalApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_core_createExternalApp(ctx, field)
 	if err != nil {
@@ -32867,87 +32896,6 @@ func (ec *executionContext) fieldContext_Query_core_restartApp(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_core_restartApp_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_core_removeDeviceIntercepts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_core_removeDeviceIntercepts(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreRemoveDeviceIntercepts(rctx, fc.Args["envName"].(string), fc.Args["deviceName"].(string))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
-			}
-			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
-		}
-		directive2 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
-			}
-			return ec.directives.HasAccount(ctx, nil, directive1)
-		}
-
-		tmp, err := directive2(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(bool); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_core_removeDeviceIntercepts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_core_removeDeviceIntercepts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -40303,7 +40251,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "clusterName", "kind", "name", "namespace"}
+	fieldsInOrder := [...]string{"apiVersion", "kind", "name", "namespace"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -40317,13 +40265,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.APIVersion = data
-		case "clusterName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ClusterName = data
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -45607,8 +45548,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___common_
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___common____types__MsvcRef")
 		case "apiVersion":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MsvcRef_apiVersion(ctx, field, obj)
-		case "clusterName":
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MsvcRef_clusterName(ctx, field, obj)
 		case "kind":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MsvcRef_kind(ctx, field, obj)
 		case "name":
@@ -49153,6 +49092,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "core_removeDeviceIntercepts":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_removeDeviceIntercepts(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "core_createExternalApp":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_createExternalApp(ctx, field)
@@ -49623,28 +49569,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_core_restartApp(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "core_removeDeviceIntercepts":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_core_removeDeviceIntercepts(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

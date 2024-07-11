@@ -9,16 +9,17 @@ import (
 type ResourceType string
 
 const (
-	ResourceTypeEnvironment     ResourceType = "environment"
-	ResourceTypeApp             ResourceType = "app"
-	ResourceTypeExternalApp     ResourceType = "external_app"
-	ResourceTypeConfig          ResourceType = "config"
-	ResourceTypeSecret          ResourceType = "secret"
-	ResourceTypeImagePullSecret ResourceType = "image_pull_secret"
-	ResourceTypeRouter          ResourceType = "router"
-	ResourceTypeManagedResource ResourceType = "managed_resource"
+	ResourceTypeEnvironment             ResourceType = "environment"
+	ResourceTypeApp                     ResourceType = "app"
+	ResourceTypeExternalApp             ResourceType = "external_app"
+	ResourceTypeConfig                  ResourceType = "config"
+	ResourceTypeSecret                  ResourceType = "secret"
+	ResourceTypeImagePullSecret         ResourceType = "image_pull_secret"
+	ResourceTypeRouter                  ResourceType = "router"
+	ResourceTypeManagedResource         ResourceType = "managed_resource"
 	ResourceTypeImportedManagedResource ResourceType = "imported_managed_resource"
-	ResourceTypeVPNDevice       ResourceType = "vpn_device"
+	ResourceTypeVPNDevice               ResourceType = "vpn_device"
+	ResourceTypeServiceBinding          ResourceType = "service_binding"
 )
 
 type ResourceHeirarchy string

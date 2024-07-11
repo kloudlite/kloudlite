@@ -15,6 +15,8 @@ import (
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
+
+	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 )
 
 type ConsoleContext struct {
@@ -131,6 +133,7 @@ type ResType string
 
 type UpdateAndDeleteOpts struct {
 	MessageTimestamp time.Time
+	ClusterName      string
 }
 
 type Domain interface {
@@ -318,6 +321,13 @@ type Domain interface {
 
 	ActivateVpnDeviceOnCluster(ctx ConsoleContext, devName string, clusterName string) error
 	ActivateVPNDeviceOnNamespace(ctx ConsoleContext, devName string, namespace string) error
+
+	ServiceBinding
+}
+
+type ServiceBinding interface {
+	OnServiceBindingUpdateMessage(ctx ConsoleContext, svcb *networkingv1.ServiceBinding, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnServiceBindingDeleteMessage(ctx ConsoleContext, svcb *networkingv1.ServiceBinding) error
 }
 
 type PublishMsg string
