@@ -116,19 +116,17 @@ type GithubComKloudliteAPIPkgTypesEncodedString struct {
 }
 
 type GithubComKloudliteOperatorApisCommonTypesMsvcRef struct {
-	APIVersion  *string `json:"apiVersion,omitempty"`
-	ClusterName *string `json:"clusterName,omitempty"`
-	Kind        *string `json:"kind,omitempty"`
-	Name        string  `json:"name"`
-	Namespace   string  `json:"namespace"`
+	APIVersion *string `json:"apiVersion,omitempty"`
+	Kind       *string `json:"kind,omitempty"`
+	Name       string  `json:"name"`
+	Namespace  string  `json:"namespace"`
 }
 
 type GithubComKloudliteOperatorApisCommonTypesMsvcRefIn struct {
-	APIVersion  *string `json:"apiVersion,omitempty"`
-	ClusterName *string `json:"clusterName,omitempty"`
-	Kind        *string `json:"kind,omitempty"`
-	Name        string  `json:"name"`
-	Namespace   string  `json:"namespace"`
+	APIVersion *string `json:"apiVersion,omitempty"`
+	Kind       *string `json:"kind,omitempty"`
+	Name       string  `json:"name"`
+	Namespace  string  `json:"namespace"`
 }
 
 type GithubComKloudliteOperatorApisCommonTypesSecretRef struct {
@@ -915,6 +913,7 @@ const (
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeManagedResource         GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "managed_resource"
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeRouter                  GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "router"
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeSecret                  GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "secret"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeServiceBinding          GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "service_binding"
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeVpnDevice               GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = "vpn_device"
 )
 
@@ -928,12 +927,13 @@ var AllGithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType = []GithubCo
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeManagedResource,
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeRouter,
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeSecret,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeServiceBinding,
 	GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeVpnDevice,
 }
 
 func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType) IsValid() bool {
 	switch e {
-	case GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeApp, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeConfig, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeEnvironment, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeExternalApp, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImagePullSecret, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImportedManagedResource, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeManagedResource, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeRouter, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeSecret, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeVpnDevice:
+	case GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeApp, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeConfig, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeEnvironment, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeExternalApp, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImagePullSecret, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeImportedManagedResource, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeManagedResource, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeRouter, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeSecret, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeServiceBinding, GithubComKloudliteAPIAppsConsoleInternalEntitiesResourceTypeVpnDevice:
 		return true
 	}
 	return false

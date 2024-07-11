@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -160,6 +161,18 @@ func (r *mutationResolver) CoreInterceptApp(ctx context.Context, envName string,
 	}
 
 	return r.Domain.InterceptApp(newResourceContext(cc, envName), appname, deviceName, intercept, pmappings)
+}
+
+// CoreRemoveDeviceIntercepts is the resolver for the core_removeDeviceIntercepts field.
+func (r *mutationResolver) CoreRemoveDeviceIntercepts(ctx context.Context, envName string, deviceName string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.RemoveDeviceIntercepts(newResourceContext(cc, envName), deviceName); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // CoreCreateExternalApp is the resolver for the core_createExternalApp field.
@@ -612,18 +625,6 @@ func (r *queryResolver) CoreRestartApp(ctx context.Context, envName string, appN
 	return true, nil
 }
 
-// CoreRemoveDeviceIntercepts is the resolver for the core_removeDeviceIntercepts field.
-func (r *queryResolver) CoreRemoveDeviceIntercepts(ctx context.Context, envName string, deviceName string) (bool, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-	if err := r.Domain.RemoveDeviceIntercepts(newResourceContext(cc, envName), deviceName); err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
 // CoreListExternalApps is the resolver for the core_listExternalApps field.
 func (r *queryResolver) CoreListExternalApps(ctx context.Context, envName string, search *model.SearchExternalApps, pq *repos.CursorPagination) (*model.ExternalAppPaginatedRecords, error) {
 	cc, err := toConsoleContext(ctx)
@@ -1041,5 +1042,7 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

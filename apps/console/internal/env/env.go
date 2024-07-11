@@ -9,6 +9,8 @@ type Env struct {
 	Port     uint16 `env:"HTTP_PORT" required:"true"`
 	GrpcPort uint16 `env:"GRPC_PORT" required:"true"`
 
+  DNSAddr string `env:"DNS_ADDR" required:"true"`
+
 	ConsoleDBUri  string `env:"MONGO_URI" required:"true"`
 	ConsoleDBName string `env:"MONGO_DB_NAME" required:"true"`
 
