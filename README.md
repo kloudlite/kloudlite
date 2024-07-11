@@ -52,7 +52,11 @@ Create your environment. Add apps, configs, and secrets to your environment.
 
 ### Install Kloudlite CLI
 ```bash
-# Setup Docker on your machine
+# Setup and run docker on your machine
+
+# Install kl
+curl 'https://kl.kloudlite.io/kloudlite/kl!?select=kl' | bash
+
 ```
 
 ### Access Environment
