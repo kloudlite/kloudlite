@@ -15,6 +15,7 @@ import (
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	t "github.com/kloudlite/api/pkg/types"
+	networkingv1 "github.com/kloudlite/operator/apis/networking/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -30,15 +31,16 @@ func newResourceContext(ctx domain.ConsoleContext, environmentName string) domai
 }
 
 var (
-	appsGVK                  = fn.GVK("crds.kloudlite.io/v1", "App")
-	externalAppsGVK          = fn.GVK("crds.kloudlite.io/v1", "ExternalApp")
-	environmentGVK           = fn.GVK("crds.kloudlite.io/v1", "Environment")
-	deviceGVK                = fn.GVK("wireguard.kloudlite.io/v1", "Device")
-	configGVK                = fn.GVK("v1", "ConfigMap")
-	secretGVK                = fn.GVK("v1", "Secret")
-	routerGVK                = fn.GVK("crds.kloudlite.io/v1", "Router")
-	managedResourceGVK       = fn.GVK("crds.kloudlite.io/v1", "ManagedResource")
-	projectManagedServiceGVK = fn.GVK("crds.kloudlite.io/v1", "ProjectManagedService")
+	appsGVK            = fn.GVK("crds.kloudlite.io/v1", "App")
+	externalAppsGVK    = fn.GVK("crds.kloudlite.io/v1", "ExternalApp")
+	environmentGVK     = fn.GVK("crds.kloudlite.io/v1", "Environment")
+	deviceGVK          = fn.GVK("wireguard.kloudlite.io/v1", "Device")
+	configGVK          = fn.GVK("v1", "ConfigMap")
+	secretGVK          = fn.GVK("v1", "Secret")
+	routerGVK          = fn.GVK("crds.kloudlite.io/v1", "Router")
+	managedResourceGVK = fn.GVK("crds.kloudlite.io/v1", "ManagedResource")
+
+	serviceBindingGVK = fn.GVK("networking.kloudlite.io/v1", "ServiceBinding")
 )
 
 func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
@@ -123,7 +125,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			return err
 		}
 
-		opts := domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp}
+		opts := domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp, ClusterName: ru.ClusterName}
 
 		switch gvkStr {
 		case deviceGVK.String():
@@ -152,48 +154,6 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 
 				return d.OnVPNDeviceUpdateMessage(dctx, dev, resStatus, opts, ru.ClusterName)
 			}
-		//case projectGVK.String():
-		//	{
-		//		var p entities.Project
-		//		if err := fn.JsonConversion(ru.Object, &p); err != nil {
-		//			return errors.NewE(err)
-		//		}
-		//
-		//		if resStatus == types.ResourceStatusDeleted {
-		//			return d.OnProjectDeleteMessage(dctx, p)
-		//		}
-		//		return d.OnProjectUpdateMessage(dctx, p, resStatus, opts)
-		//	}
-
-		//case projectManagedServiceGVK.String():
-		//	{
-		//		var pmsvc entities.ProjectManagedService
-		//		if err := fn.JsonConversion(ru.Object, &pmsvc); err != nil {
-		//			return errors.NewE(err)
-		//		}
-		//
-		//		mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, ru.ClusterName, obj.GetNamespace(), obj.GetName())
-		//		if err != nil {
-		//			return err
-		//		}
-		//		if mapping == nil {
-		//			return err
-		//		}
-		//
-		//		if v, ok := ru.Object[types.KeyProjectManagedSvcSecret]; ok {
-		//			s, err := fn.JsonConvertP[corev1.Secret](v)
-		//			s.SetManagedFields(nil)
-		//			if err != nil {
-		//				return err
-		//			}
-		//			pmsvc.SyncedOutputSecretRef = s
-		//		}
-		//
-		//		if resStatus == types.ResourceStatusDeleted {
-		//			return d.OnProjectManagedServiceDeleteMessage(dctx, mapping.ProjectName, pmsvc)
-		//		}
-		//		return d.OnProjectManagedServiceUpdateMessage(dctx, mapping.ProjectName, pmsvc, resStatus, opts)
-		//	}
 
 		case environmentGVK.String():
 			{
@@ -331,6 +291,18 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				return d.OnManagedResourceUpdateMessage(dctx, mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.Name, mres, resStatus, opts)
 			}
 
+		case serviceBindingGVK.String():
+			{
+				var svcb networkingv1.ServiceBinding
+				if err := fn.JsonConversion(rwu.Object, &svcb); err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnServiceBindingDeleteMessage(dctx, &svcb)
+				}
+				return d.OnServiceBindingUpdateMessage(dctx, &svcb, resStatus, opts)
+			}
 		}
 		return nil
 	}
