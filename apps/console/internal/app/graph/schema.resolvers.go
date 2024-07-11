@@ -612,6 +612,18 @@ func (r *queryResolver) CoreRestartApp(ctx context.Context, envName string, appN
 	return true, nil
 }
 
+// CoreRemoveDeviceIntercepts is the resolver for the core_removeDeviceIntercepts field.
+func (r *queryResolver) CoreRemoveDeviceIntercepts(ctx context.Context, envName string, deviceName string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.RemoveDeviceIntercepts(newResourceContext(cc, envName), deviceName); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CoreListExternalApps is the resolver for the core_listExternalApps field.
 func (r *queryResolver) CoreListExternalApps(ctx context.Context, envName string, search *model.SearchExternalApps, pq *repos.CursorPagination) (*model.ExternalAppPaginatedRecords, error) {
 	cc, err := toConsoleContext(ctx)

@@ -109,6 +109,7 @@ type Query {
 	core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
 	core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 	core_restartApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+	core_removeDeviceIntercepts(envName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_listExternalApps(envName: String!, search: SearchExternalApps, pq: CursorPaginationIn): ExternalAppPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getExternalApp(envName: String!, name: String!): ExternalApp @isLoggedInAndVerified @hasAccount
