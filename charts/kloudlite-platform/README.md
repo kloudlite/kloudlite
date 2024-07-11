@@ -70,37 +70,78 @@ helm show values kloudlite/kloudlite-platform
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| apps.accountsApi.configuration.grpcPort | int | `3001` |  |
+| apps.accountsApi.configuration.httpPort | int | `3000` |  |
+| apps.accountsApi.configuration.replicas | int | `1` |  |
 | apps.accountsApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/accounts","tag":""}` | image (with tag) for accounts api |
+| apps.auditLoggingWorker.configuration.replicas | int | `1` |  |
 | apps.auditLoggingWorker.image.repository | string | `"ghcr.io/kloudlite/kloudlite/api/worker-audit-logging"` |  |
 | apps.auditLoggingWorker.image.tag | string | `""` |  |
+| apps.authApi.configuration.grpcPort | int | `3001` |  |
+| apps.authApi.configuration.httpPort | int | `3000` |  |
+| apps.authApi.configuration.replicas | int | `1` |  |
 | apps.authApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/auth","tag":""}` | image (with tag) for auth api |
+| apps.authWeb.configuration.httpPort | int | `3000` |  |
+| apps.authWeb.configuration.replicas | int | `1` |  |
 | apps.authWeb.enabled | bool | `true` |  |
 | apps.authWeb.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/web/auth","tag":""}` | image (with tag) for auth web |
+| apps.commsApi.configuration.grpcPort | int | `3001` |  |
+| apps.commsApi.configuration.replicas | int | `1` |  |
 | apps.commsApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/comms","tag":""}` | image (with tag) for comms api |
+| apps.consoleApi.configuration.grpcPort | int | `3001` |  |
+| apps.consoleApi.configuration.httpPort | int | `3000` |  |
 | apps.consoleApi.configuration.logsAndMetricsHttpPort | int | `9100` |  |
+| apps.consoleApi.configuration.replicas | int | `1` |  |
 | apps.consoleApi.configuration.vpnDeviceNamespace | string | `"kl-vpn-devices"` |  |
 | apps.consoleApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/console","tag":""}` | image (with tag) for console api |
+| apps.consoleWeb.configuration.artifactHubKeyID | string | `""` |  |
+| apps.consoleWeb.configuration.artifactHubKeySecret | string | `""` |  |
+| apps.consoleWeb.configuration.httpPort | int | `3000` |  |
+| apps.consoleWeb.configuration.replicas | int | `1` |  |
 | apps.consoleWeb.enabled | bool | `true` |  |
 | apps.consoleWeb.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/web/console","tag":""}` | image (with tag) for console web |
 | apps.containerRegistryApi.configuration.authorizerPort | int | `4000` |  |
 | apps.containerRegistryApi.configuration.buildClusterAccountName | string | `""` |  |
 | apps.containerRegistryApi.configuration.buildClusterName | string | `""` |  |
 | apps.containerRegistryApi.configuration.eventListenerPort | number | `4001` | port on which container registry event listener should listen |
+| apps.containerRegistryApi.configuration.grpcPort | int | `3001` |  |
+| apps.containerRegistryApi.configuration.httpPort | int | `3000` |  |
 | apps.containerRegistryApi.configuration.jobBuildNamespace | string | `"kloudlite"` | namespace, in which build runs should be created |
 | apps.containerRegistryApi.configuration.registrySecret | string | `""` |  |
+| apps.containerRegistryApi.configuration.replicas | int | `1` |  |
 | apps.containerRegistryApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/container-registry","tag":""}` | image (with tag) for container registry api |
+| apps.gatewayApi.configuration.httpPort | int | `3000` |  |
+| apps.gatewayApi.configuration.replicas | int | `1` |  |
 | apps.gatewayApi.image.repository | string | `"ghcr.io/kloudlite/kloudlite/api/gateway"` |  |
 | apps.gatewayApi.image.tag | string | `""` |  |
+| apps.iamApi.configuration.grpcPort | int | `3001` |  |
+| apps.iamApi.configuration.httpPort | int | `3000` |  |
+| apps.iamApi.configuration.replicas | int | `1` |  |
 | apps.iamApi.image.repository | string | `"ghcr.io/kloudlite/kloudlite/api/iam"` |  |
 | apps.iamApi.image.tag | string | `""` |  |
+| apps.infraApi.configuration.globalVpnKubeReverseProxyAuthzToken | string | `""` |  |
+| apps.infraApi.configuration.grpcPort | int | `3001` |  |
+| apps.infraApi.configuration.httpPort | int | `3000` |  |
 | apps.infraApi.configuration.kloudliteRelease | string | `""` |  |
+| apps.infraApi.configuration.replicas | int | `1` |  |
 | apps.infraApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/infra","tag":""}` | image (with tag) for infra api |
+| apps.iotConsoleApi.configuration.replicas | int | `1` |  |
+| apps.iotConsoleApi.image.repository | string | `"ghcr.io/kloudlite/kloudlite/api/iot-console"` |  |
+| apps.iotConsoleApi.image.tag | string | `""` |  |
+| apps.klInstaller.configuration.replicas | int | `1` |  |
 | apps.klInstaller.image.repository | string | `"ghcr.io/kloudlite/bin-installer"` |  |
 | apps.klInstaller.image.tag | string | `""` |  |
 | apps.messageOfficeApi.configuration.platformAccessToken | string | `"sample"` |  |
+| apps.messageOfficeApi.configuration.replicas | int | `1` |  |
 | apps.messageOfficeApi.configuration.tokenHashingSecret | string | `""` | consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"` |
 | apps.messageOfficeApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/message-office","tag":""}` | image (with tag) for message office api |
+| apps.observabilityApi.configuration.httpPort | string | `"3000"` |  |
+| apps.observabilityApi.configuration.replicas | int | `1` |  |
+| apps.observabilityApi.image.repository | string | `"ghcr.io/kloudlite/kloudlite/api/observability"` |  |
+| apps.observabilityApi.image.tag | string | `""` |  |
+| apps.webhooksApi.configuration.replicas | int | `1` |  |
 | apps.webhooksApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/webhook","tag":""}` | image (with tag) for webhooks api |
+| apps.websocketApi.configuration.replicas | int | `1` |  |
 | apps.websocketApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/websocket-server","tag":""}` | image (with tag) for websocket-server api |
 | aws.accessKey | string | `""` |  |
 | aws.cloudformation.instanceProfileNamePrefix | string | `"kloudlite-instance-profile"` |  |
@@ -123,25 +164,34 @@ helm show values kloudlite/kloudlite-platform
 | cloudflareWildCardCert.tlsSecretName | string | `"kl-cert-wildcard-tls"` |  |
 | descheduler.enabled | bool | `true` |  |
 | distribution.domain | string | `"cr.khost.dev"` |  |
-| distribution.s3.accessKey | string | `""` |  |
-| distribution.s3.bucketName | string | `""` |  |
-| distribution.s3.enabled | bool | `false` |  |
-| distribution.s3.endpoint | string | `""` |  |
-| distribution.s3.region | string | `""` |  |
-| distribution.s3.secretKey | string | `""` |  |
 | distribution.secret | string | `"<distribution-secret>"` |  |
+| distribution.storage.driver | string | `""` | should be one of gcs or s3 |
+| distribution.storage.gcs.bucket | string | `""` |  |
+| distribution.storage.gcs.keyfileJson | string | `""` |  |
+| distribution.storage.s3.accessKey | string | `""` |  |
+| distribution.storage.s3.bucketName | string | `""` |  |
+| distribution.storage.s3.enabled | bool | `false` |  |
+| distribution.storage.s3.endpoint | string | `""` |  |
+| distribution.storage.s3.region | string | `""` |  |
+| distribution.storage.s3.secretKey | string | `""` |  |
 | distribution.tls.enabled | bool | `true` |  |
+| edgeGateways.secretKeyRef.key | string | `""` |  |
+| edgeGateways.secretKeyRef.name | string | `""` | assumes, that the secret is in the same namespace as the chart |
 | envVars.db.accountsDB | string | `"accounts-db"` |  |
 | envVars.db.authDB | string | `"auth-db"` |  |
+| envVars.db.commsDB | string | `"comms-db"` |  |
 | envVars.db.consoleDB | string | `"console-db"` |  |
 | envVars.db.eventsDB | string | `"events-db"` |  |
 | envVars.db.iamDB | string | `"iam-db"` |  |
 | envVars.db.infraDB | string | `"infra-db"` |  |
+| envVars.db.iotConsoleDB | string | `"iot-console-db"` |  |
 | envVars.db.messageOfficeDB | string | `"message-office-db"` |  |
 | envVars.db.registryDB | string | `"registry-db"` |  |
 | envVars.grpc.authGRPCAddr | string | `"auth-api:3001"` |  |
 | envVars.nats.buckets.consoleCacheBucket.name | string | `"console-cache"` |  |
 | envVars.nats.buckets.consoleCacheBucket.storage | string | `"file"` |  |
+| envVars.nats.buckets.iotConsoleCacheBucket.name | string | `"iot-console-cache"` |  |
+| envVars.nats.buckets.iotConsoleCacheBucket.storage | string | `"file"` |  |
 | envVars.nats.buckets.resetTokenBucket.name | string | `"reset-token"` |  |
 | envVars.nats.buckets.resetTokenBucket.storage | string | `"file"` |  |
 | envVars.nats.buckets.sessionKVBucket.name | string | `"auth-session"` |  |
@@ -194,6 +244,7 @@ helm show values kloudlite/kloudlite-platform
 | loki.configuration.s3credentials.region | string | `""` |  |
 | loki.enabled | bool | `false` |  |
 | loki.name | string | `"loki-stack"` |  |
+| longhorn.enabled | bool | `false` |  |
 | mongo.configuration.nodeSelector | object | `{}` |  |
 | mongo.configuration.volumeSize | string | `"2Gi"` |  |
 | mongo.externalDB.authDBName | string | `""` |  |
@@ -205,12 +256,7 @@ helm show values kloudlite/kloudlite-platform
 | nats.configuration.volumeSize | string | `"10Gi"` |  |
 | nats.replicas | int | `3` |  |
 | nats.runAsCluster | bool | `false` |  |
-| nodepools.iac.aws.vpcId | string | `""` |  |
-| nodepools.iac.aws.vpcSubnetId | string | `""` |  |
-| nodepools.iac.enabled | bool | `true` |  |
 | nodepools.iac.labels."kloudlite.io/nodepool.role" | string | `"iac"` |  |
-| nodepools.iac.max | int | `10` |  |
-| nodepools.iac.min | int | `2` |  |
 | nodepools.iac.taints[0].effect | string | `"NoExecute"` |  |
 | nodepools.iac.taints[0].key | string | `"kloudlite.io/nodepool.role"` |  |
 | nodepools.iac.taints[0].value | string | `"iac"` |  |
@@ -218,11 +264,7 @@ helm show values kloudlite/kloudlite-platform
 | nodepools.iac.tolerations[0].key | string | `"kloudlite.io/nodepool.role"` |  |
 | nodepools.iac.tolerations[0].operator | string | `"Equal"` |  |
 | nodepools.iac.tolerations[0].value | string | `"iac"` |  |
-| nodepools.stateful.aws.vpcId | string | `""` |  |
-| nodepools.stateful.aws.vpcSubnetId | string | `""` |  |
 | nodepools.stateful.labels."kloudlite.io/nodepool.role" | string | `"stateful"` |  |
-| nodepools.stateful.max | int | `2` |  |
-| nodepools.stateful.min | int | `2` |  |
 | nodepools.stateful.taints[0].effect | string | `"NoExecute"` |  |
 | nodepools.stateful.taints[0].key | string | `"kloudlite.io/nodepool.role"` |  |
 | nodepools.stateful.taints[0].value | string | `"stateful"` |  |
@@ -230,16 +272,8 @@ helm show values kloudlite/kloudlite-platform
 | nodepools.stateful.tolerations[0].key | string | `"kloudlite.io/nodepool.role"` |  |
 | nodepools.stateful.tolerations[0].operator | string | `"Equal"` |  |
 | nodepools.stateful.tolerations[0].value | string | `"stateful"` |  |
-| nodepools.stateless.aws.vpcId | string | `""` |  |
-| nodepools.stateless.aws.vpcSubnetId | string | `""` |  |
 | nodepools.stateless.labels."kloudlite.io/nodepool.role" | string | `"stateless"` |  |
-| nodepools.stateless.max | int | `2` |  |
-| nodepools.stateless.min | int | `2` |  |
-| nodepools.stateless.taints | list | `[]` |  |
-| nodepools.stateless.tolerations[0].effect | string | `"NoExecute"` |  |
-| nodepools.stateless.tolerations[0].key | string | `"kloudlite.io/nodepool.role"` |  |
-| nodepools.stateless.tolerations[0].operator | string | `"Equal"` |  |
-| nodepools.stateless.tolerations[0].value | string | `"stateless"` |  |
+| nodepools.stateless.tolerations | list | `[]` |  |
 | oAuth.enabled | bool | `true` |  |
 | oAuth.providers.github.appId | string | `""` | GitHub app id |
 | oAuth.providers.github.appPrivateKey | string | `""` | GitHub app private key (base64 encoded) |

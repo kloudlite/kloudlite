@@ -314,6 +314,12 @@ webhookSecrets:
   # -- webhook authz secret for kloudlite internal calls
   kloudliteSecret: ""
 
+edgeGateways:
+  secretKeyRef:
+    # -- assumes, that the secret is in the same namespace as the chart
+    name: ""
+    key: ""
+
 # Microservices
 apps:
   websocketApi:
@@ -393,6 +399,7 @@ apps:
       kloudliteRelease: ""
       httpPort: 3000
       grpcPort: 3001
+      globalVpnKubeReverseProxyAuthzToken: ""
 
   gatewayApi:
     image:
@@ -466,6 +473,7 @@ apps:
       tag: ""
     configuration:
       replicas: 1
+      httpPort: "3000"
 
   iotConsoleApi:
     image:
@@ -560,6 +568,7 @@ envVars:
   db:
     authDB: auth-db
     consoleDB: console-db
+    commsDB: comms-db
     iotConsoleDB: "iot-console-db"
     accountsDB: accounts-db
     registryDB: registry-db
@@ -577,17 +586,34 @@ envVars:
         subjects: "events.>"
         maxMsgBytes: 500kB
         maxMsgsPerSubject: 2
+
       resourceSync:
         name: resource-sync
         subjects: "resource-sync.>"
         maxMsgBytes: 500kB
         # maxMsgsPerSubject: 2
-      logs:
-        name: logs
-        subjects: "logs.>"
-        maxMsgBytes: 2MB
-        maxAge: "3h"
+
+      send-to-agent:
+        name: send-to-agent
+        subjects: "send-to-agent.>"
+        maxMsgBytes: 500kB
+
+        workQueue: true
         # maxMsgsPerSubject: 2
+
+      receive-from-agent:
+        name: receive-from-agent
+        subjects: "receive-from-agent.>"
+        maxMsgBytes: 500kB
+        maxMsgsPerSubject: 1  # apiVersion.namespace.name in subject
+        workQueue: true
+
+      # logs:
+      #   name: logs
+      #   subjects: "logs.>"
+      #   maxMsgBytes: 2MB
+      #   maxAge: "3h"
+
     buckets:
       sessionKVBucket:
         name: auth-session

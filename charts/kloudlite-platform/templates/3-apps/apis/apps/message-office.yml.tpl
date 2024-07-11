@@ -69,3 +69,6 @@ spec:
         - key: TOKEN_HASHING_SECRET
           value: {{.Values.apps.messageOfficeApi.configuration.tokenHashingSecret | squote}}
 
+        - key: INFRA_GRPC_ADDR
+          value: "infra-api:3001"
+

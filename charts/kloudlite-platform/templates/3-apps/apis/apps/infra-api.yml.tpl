@@ -17,7 +17,6 @@ spec:
 
   replicas: {{.Values.apps.consoleApi.configuration.replicas}}
 
-
   services:
     - port: 3000
     - port: 3001
@@ -72,6 +71,9 @@ spec:
         - key: IAM_GRPC_ADDR
           value: "iam:3001"
 
+        - key: CONSOLE_GRPC_ADDR
+          value: "console-api:3001"
+
         - key: NATS_STREAM
           value: {{.Values.envVars.nats.streams.resourceSync.name}}
 
@@ -114,6 +116,18 @@ spec:
         - key: MSVC_TEMPLATE_FILE_PATH
           value: /infra.d/templates/managed-svc-templates.yml
 
+        - key: GLOBAL_VPN_KUBE_REVERSE_PROXY_IMAGE
+          value: ghcr.io/kloudlite/api/cmds/global-vpn-kube-proxy:v1.0.7-nightly
+
+        - key: GLOBAL_VPN_KUBE_REVERSE_PROXY_AUTHZ_TOKEN
+          value: {{.Values.apps.infraApi.configuration.globalVpnKubeReverseProxyAuthzToken}}
+
+        - key: KLOUDLITE_GLOBAL_VPN_DEVICE_HOST
+          value: wg-gateways.{{.Values.global.baseDomain}}
+
+        - key: AVAILABLE_KLOUDLITE_REGIONS_CONFIG
+          value: "/kloudlite/gateways.yml"
+
       volumes:
         - mountPath: /infra.d/templates
           type: config
@@ -121,4 +135,10 @@ spec:
           items:
             - key: managed-svc-templates.yml
 
+        - mountPath: /kloudlite
+          type: secret
+          refName: {{.Values.edgeGateways.secretKeyRef.name}}
+          items:
+            - key: {{.Values.edgeGateways.secretKeyRef.key}}
+              fileName: gateways.yml
 

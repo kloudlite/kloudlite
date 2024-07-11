@@ -31,6 +31,7 @@ spec:
              {{if $stream.maxMsgsPerSubject }} --max-msgs-per-subject={{$stream.maxMsgsPerSubject}} {{end}} \
              --storage=file \
              {{ if $stream.maxAge }} --max-age={{$stream.maxAge}} {{ end }} \
+             {{ if $stream.workQueue }} --retention="work" {{ end }} \
              --compression=s2 \
              --discard=old \
              --defaults

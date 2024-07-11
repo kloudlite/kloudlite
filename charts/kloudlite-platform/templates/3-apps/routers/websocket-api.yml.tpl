@@ -19,10 +19,10 @@ spec:
   routes:
     - app: websocket-api
       path: /ws
-      port: 80
+      port: 3000
       rewrite: false
     - app: websocket-api
       path: /logs
-      port: 80
+      port: 3000
       rewrite: false
 ---

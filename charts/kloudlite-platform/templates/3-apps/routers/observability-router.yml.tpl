@@ -20,5 +20,5 @@ spec:
   routes:
     - app: observability-api
       path: /
-      port: 80
+      port: {{.Values.apps.observabilityApi.configuration.httpPort}}
 ---

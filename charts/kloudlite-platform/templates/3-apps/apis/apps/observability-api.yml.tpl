@@ -19,6 +19,7 @@ spec:
 
   services:
     - port: 3000
+
   containers:
     - name: main
       image: {{.Values.apps.observabilityApi.image.repository}}:{{.Values.apps.observabilityApi.image.tag | default (include "image-tag" .) }}
@@ -50,3 +51,6 @@ spec:
 
         - key: PROM_HTTP_ADDR
           value: {{ include "prom-http-addr" .}}
+
+        - key: GLOBAL_VPN_AUTHZ_SECRET
+          value: {{.Values.apps.infraApi.configuration.globalVpnKubeReverseProxyAuthzToken}}
