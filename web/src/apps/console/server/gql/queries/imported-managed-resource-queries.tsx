@@ -139,7 +139,6 @@ export const importedManagedResourceQueries = (executor: IExecutor) => ({
                     kind
                     msvcRef {
                       apiVersion
-                      clusterName
                       kind
                       name
                       namespace

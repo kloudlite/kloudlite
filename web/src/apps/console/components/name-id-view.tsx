@@ -147,7 +147,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
       return error;
     };
 
-    const { cluster, environment } = params;
+    const { cluster, environment, msv } = params;
     useDebounce(
       async () => {
         const tempResType = resType;
@@ -167,12 +167,17 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
                   'secret',
                   'console_vpn_device',
                   'router',
-                  'managed_resource',
                 ].includes(tempResType)
                   ? {
                       envName: environment,
                     }
                   : {}),
+                ...(['managed_resource'].includes(tempResType)
+                  ? {
+                      msvcName: msv,
+                    }
+                  : {}),
+
                 ...([
                   'nodepool',
                   'vpn_device',

@@ -74,11 +74,13 @@ export const baseQueries = (executor: IExecutor) => ({
         $resType: ConsoleResType!
         $name: String!
         $envName: String
+        $msvcName: String
       ) {
         core_checkNameAvailability(
           resType: $resType
           name: $name
           envName: $envName
+          msvcName: $msvcName
         ) {
           result
         }

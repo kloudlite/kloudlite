@@ -558,6 +558,13 @@ const ManagedServiceLayout = () => {
         displayName: Yup.string().test('required', 'Name is required', (v) => {
           return !(currentStep === 2 && !v);
         }),
+        clusterName: Yup.string().test(
+          'required',
+          'Cluster name is required',
+          (v) => {
+            return !(currentStep === 2 && !v);
+          }
+        ),
         selectedTemplate: Yup.object({}).required('Template is required.'),
         // @ts-ignore
         res: Yup.object({}).test({

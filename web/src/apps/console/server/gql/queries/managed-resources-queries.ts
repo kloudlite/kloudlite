@@ -74,7 +74,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
               kind
               msvcRef {
                 apiVersion
-                clusterName
                 kind
                 name
                 namespace
@@ -217,7 +216,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                   kind
                   msvcRef {
                     apiVersion
-                    clusterName
                     kind
                     name
                     namespace
