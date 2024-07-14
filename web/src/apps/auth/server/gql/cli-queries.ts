@@ -2,11 +2,8 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { AuthCli_ListAppsQuery } from '~/root/src/generated/gql/server';
-import { vpnQueries } from './queries/device-queries';
 
 export const cliQueries = (executor: IExecutor) => ({
-  ...vpnQueries(executor),
-
   cli_createGlobalVPNDevice: executor(
     gql`
       mutation Infra_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
@@ -769,7 +766,6 @@ export const cliQueries = (executor: IExecutor) => ({
               managedResource {
                 accountName
                 apiVersion
-                clusterName
                 creationTime
                 displayName
                 enabled
@@ -797,7 +793,6 @@ export const cliQueries = (executor: IExecutor) => ({
                     kind
                     msvcRef {
                       apiVersion
-                      clusterName
                       kind
                       name
                       namespace

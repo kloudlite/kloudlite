@@ -428,49 +428,6 @@ enum ConsoleResType {
   vpn_device
 }
 
-type ConsoleVPNDevice {
-  accountName: String!
-  apiVersion: String
-  clusterName: String
-  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  creationTime: Date!
-  displayName: String!
-  environmentName: String
-  id: ID!
-  kind: String
-  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  linkedClusters: [String!]
-  markedForDeletion: Boolean
-  metadata: Metadata
-  recordVersion: Int!
-  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
-  status: Github__com___kloudlite___operator___pkg___operator__Status
-  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
-  updateTime: Date!
-  wireguardConfig: Github__com___kloudlite___api___pkg___types__EncodedString
-}
-
-type ConsoleVPNDeviceEdge {
-  cursor: String!
-  node: ConsoleVPNDevice!
-}
-
-input ConsoleVPNDeviceIn {
-  apiVersion: String
-  clusterName: String
-  displayName: String!
-  environmentName: String
-  kind: String
-  metadata: MetadataIn
-  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
-}
-
-type ConsoleVPNDevicePaginatedRecords {
-  edges: [ConsoleVPNDeviceEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
 input CoreSearchVPNDevices {
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
@@ -763,6 +720,7 @@ enum Github__com___kloudlite___api___apps___console___internal___entities__PullS
 
 enum Github__com___kloudlite___api___apps___console___internal___entities__ResourceType {
   app
+  cluster_managed_service
   config
   environment
   external_app
@@ -771,7 +729,7 @@ enum Github__com___kloudlite___api___apps___console___internal___entities__Resou
   managed_resource
   router
   secret
-  vpn_device
+  service_binding
 }
 
 type Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor {
@@ -1011,11 +969,6 @@ enum Github__com___kloudlite___api___pkg___repos__MatchType {
   exact
   not_in_array
   regex
-}
-
-type Github__com___kloudlite___api___pkg___types__EncodedString {
-  encoding: String!
-  value: String!
 }
 
 enum Github__com___kloudlite___api___pkg___types__SyncAction {
@@ -1332,7 +1285,6 @@ input Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn
 
 type Github__com___kloudlite___operator___apis___common____types__MsvcRef {
   apiVersion: String
-  clusterName: String
   kind: String
   name: String!
   namespace: String!
@@ -1340,7 +1292,6 @@ type Github__com___kloudlite___operator___apis___common____types__MsvcRef {
 
 input Github__com___kloudlite___operator___apis___common____types__MsvcRefIn {
   apiVersion: String
-  clusterName: String
   kind: String
   name: String!
   namespace: String!
@@ -1919,41 +1870,6 @@ type Github__com___kloudlite___operator___apis___distribution___v1__Resource {
 input Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn {
   cpu: Int!
   memoryInMb: Int!
-}
-
-type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord {
-  host: String
-  target: String
-}
-
-input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn {
-  host: String
-  target: String
-}
-
-type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec {
-  activeNamespace: String
-  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
-  disabled: Boolean
-  nodeSelector: Map
-  noExternalService: Boolean
-  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
-}
-
-input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
-  activeNamespace: String
-  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
-  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
-}
-
-type Github__com___kloudlite___operator___apis___wireguard___v1__Port {
-  port: Int
-  targetPort: Int
-}
-
-input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
-  port: Int
-  targetPort: Int
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check {
@@ -3652,7 +3568,6 @@ type Mutation {
   core_createManagedResource(mres: ManagedResourceIn!, msvcName: String!): ManagedResource
   core_createRouter(envName: String!, router: RouterIn!): Router
   core_createSecret(envName: String!, secret: SecretIn!): Secret
-  core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice
   core_deleteApp(appName: String!, envName: String!): Boolean!
   core_deleteConfig(configName: String!, envName: String!): Boolean!
   core_deleteEnvironment(envName: String!): Boolean!
@@ -3662,10 +3577,10 @@ type Mutation {
   core_deleteManagedResource(mresName: String!, msvcName: String!): Boolean!
   core_deleteRouter(envName: String!, routerName: String!): Boolean!
   core_deleteSecret(envName: String!, secretName: String!): Boolean!
-  core_deleteVPNDevice(deviceName: String!): Boolean!
   core_importManagedResource(envName: String!, importName: String!, mresName: String!, msvcName: String!): ImportedManagedResource
   core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
   core_interceptExternalApp(deviceName: String!, envName: String!, externalAppName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean!
+  core_removeDeviceIntercepts(deviceName: String!, envName: String!): Boolean!
   core_updateApp(app: AppIn!, envName: String!): App
   core_updateConfig(config: ConfigIn!, envName: String!): Config
   core_updateEnvironment(env: EnvironmentIn!): Environment
@@ -3674,11 +3589,6 @@ type Mutation {
   core_updateManagedResource(mres: ManagedResourceIn!, msvcName: String!): ManagedResource
   core_updateRouter(envName: String!, router: RouterIn!): Router
   core_updateSecret(envName: String!, secret: SecretIn!): Secret
-  core_updateVpnClusterName(clusterName: String!, deviceName: String!): Boolean!
-  core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice
-  core_updateVPNDeviceEnv(deviceName: String!, envName: String!): Boolean!
-  core_updateVpnDeviceNs(deviceName: String!, ns: String!): Boolean!
-  core_updateVPNDevicePorts(deviceName: String!, ports: [PortIn!]!): Boolean!
   cr_addBuild(build: BuildIn!): Build
   cr_createCred(credential: CredentialIn!): Credential
   cr_createRepo(repository: RepositoryIn!): Repository
@@ -4015,7 +3925,7 @@ type Query {
   comms_getNotificationConfig: NotificationConf
   comms_getSubscriptionConfig(id: ID!): Subscription
   comms_listNotifications(pagination: CursorPaginationIn): NotificationPaginatedRecords
-  core_checkNameAvailability(envName: String, name: String!, resType: ConsoleResType!): ConsoleCheckNameAvailabilityOutput!
+  core_checkNameAvailability(envName: String, msvcName: String, name: String!, resType: ConsoleResType!): ConsoleCheckNameAvailabilityOutput!
   core_getApp(envName: String!, name: String!): App
   core_getConfig(envName: String!, name: String!): Config
   core_getConfigValues(envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!]
@@ -4028,7 +3938,6 @@ type Query {
   core_getRouter(envName: String!, name: String!): Router
   core_getSecret(envName: String!, name: String!): Secret
   core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!]
-  core_getVPNDevice(name: String!): ConsoleVPNDevice
   core_listApps(envName: String!, pq: CursorPaginationIn, search: SearchApps): AppPaginatedRecords
   core_listConfigs(envName: String!, pq: CursorPaginationIn, search: SearchConfigs): ConfigPaginatedRecords
   core_listEnvironments(pq: CursorPaginationIn, search: SearchEnvironments): EnvironmentPaginatedRecords
@@ -4038,8 +3947,6 @@ type Query {
   core_listManagedResources(pq: CursorPaginationIn, search: SearchManagedResources): ManagedResourcePaginatedRecords
   core_listRouters(envName: String!, pq: CursorPaginationIn, search: SearchRouters): RouterPaginatedRecords
   core_listSecrets(envName: String!, pq: CursorPaginationIn, search: SearchSecrets): SecretPaginatedRecords
-  core_listVPNDevices(pq: CursorPaginationIn, search: CoreSearchVPNDevices): ConsoleVPNDevicePaginatedRecords
-  core_listVPNDevicesForUser: [ConsoleVPNDevice!]
   core_restartApp(appName: String!, envName: String!): Boolean!
   core_resyncApp(envName: String!, name: String!): Boolean!
   core_resyncConfig(envName: String!, name: String!): Boolean!

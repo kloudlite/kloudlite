@@ -22,7 +22,6 @@ interface INameIdView {
     | ResType
     | 'account'
     | 'username'
-    | 'console_vpn_device'
     | NonNullableString;
   onChange?: ({ name, id }: { name: string; id: string }) => void;
   prefix?: ReactNode;
@@ -70,7 +69,6 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
         case 'environment':
         case 'managed_resource':
         case 'router':
-        case 'console_vpn_device':
         case 'secret':
           ensureAccountClientSide(params);
           ensureClusterClientSide(params);
@@ -78,6 +76,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
 
         case 'cluster':
         case 'providersecret':
+        case 'global_vpn_device':
           ensureAccountClientSide(params);
           return api.infraCheckNameAvailability;
         case 'helm_release':

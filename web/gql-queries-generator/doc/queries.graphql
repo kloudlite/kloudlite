@@ -3561,7 +3561,6 @@ query consoleGetManagedResource($name: String!, $msvcName: String, $envName: Str
         kind
         msvcRef {
           apiVersion
-          clusterName
           kind
           name
           namespace
@@ -3670,7 +3669,6 @@ query consoleListManagedResources($search: SearchManagedResources, $pq: CursorPa
             kind
             msvcRef {
               apiVersion
-              clusterName
               kind
               name
               namespace
@@ -3930,199 +3928,6 @@ query consoleListNamespaces($clusterName: String!) {
     }
     totalCount
   }
-}
-
-mutation consoleCreateConsoleVpnDevice($vpnDevice: ConsoleVPNDeviceIn!) {
-  core_createVPNDevice(vpnDevice: $vpnDevice) {
-    id
-  }
-}
-
-mutation consoleUpdateConsoleVpnDevice($vpnDevice: ConsoleVPNDeviceIn!) {
-  core_updateVPNDevice(vpnDevice: $vpnDevice) {
-    id
-  }
-}
-
-query consoleListConsoleVpnDevices($search: CoreSearchVPNDevices, $pq: CursorPaginationIn) {
-  core_listVPNDevices(search: $search, pq: $pq) {
-    edges {
-      cursor
-      node {
-        createdBy {
-          userEmail
-          userId
-          userName
-        }
-        creationTime
-        displayName
-        environmentName
-        lastUpdatedBy {
-          userEmail
-          userId
-          userName
-        }
-        markedForDeletion
-        metadata {
-          generation
-          name
-          namespace
-        }
-        recordVersion
-        status {
-          checkList {
-            debug
-            description
-            name
-            title
-          }
-          checks
-          isReady
-          lastReadyGeneration
-          lastReconcileTime
-          message {
-            RawMessage
-          }
-          resources {
-            apiVersion
-            kind
-            name
-            namespace
-          }
-        }
-        syncStatus {
-          action
-          error
-          lastSyncedAt
-          recordVersion
-          state
-          syncScheduledAt
-        }
-        spec {
-          cnameRecords {
-            host
-            target
-          }
-          activeNamespace
-          disabled
-          nodeSelector
-          ports {
-            port
-            targetPort
-          }
-        }
-        updateTime
-      }
-    }
-    pageInfo {
-      endCursor
-      hasNextPage
-      hasPreviousPage
-      startCursor
-    }
-    totalCount
-  }
-}
-
-query consoleGetConsoleVpnDevice($name: String!) {
-  core_getVPNDevice(name: $name) {
-    displayName
-    environmentName
-    metadata {
-      name
-      namespace
-    }
-    recordVersion
-    spec {
-      cnameRecords {
-        host
-        target
-      }
-      activeNamespace
-      disabled
-      nodeSelector
-      ports {
-        port
-        targetPort
-      }
-    }
-    wireguardConfig {
-      encoding
-      value
-    }
-  }
-}
-
-query consoleListConsoleVpnDevicesForUser {
-  core_listVPNDevicesForUser {
-    createdBy {
-      userEmail
-      userId
-      userName
-    }
-    creationTime
-    displayName
-    environmentName
-    lastUpdatedBy {
-      userEmail
-      userId
-      userName
-    }
-    markedForDeletion
-    metadata {
-      generation
-      name
-      namespace
-    }
-    recordVersion
-    status {
-      checkList {
-        debug
-        description
-        name
-        title
-      }
-      checks
-      isReady
-      lastReadyGeneration
-      lastReconcileTime
-      message {
-        RawMessage
-      }
-      resources {
-        apiVersion
-        kind
-        name
-        namespace
-      }
-    }
-    syncStatus {
-      action
-      error
-      lastSyncedAt
-      recordVersion
-      state
-      syncScheduledAt
-    }
-    spec {
-      cnameRecords {
-        host
-        target
-      }
-      activeNamespace
-      disabled
-      nodeSelector
-      ports {
-        port
-        targetPort
-      }
-    }
-    updateTime
-  }
-}
-
-mutation consoleDeleteConsoleVpnDevice($deviceName: String!) {
-  core_deleteVPNDevice(deviceName: $deviceName)
 }
 
 mutation consoleCreateImagePullSecret($pullSecret: ImagePullSecretIn!) {
@@ -4504,7 +4309,6 @@ query consoleListImportedManagedResources($envName: String!, $search: SearchImpo
               kind
               msvcRef {
                 apiVersion
-                clusterName
                 kind
                 name
                 namespace
@@ -6091,86 +5895,6 @@ mutation iotconsoleDeleteAccountMembership($accountName: String!, $memberId: ID!
   accounts_removeAccountMembership(accountName: $accountName, memberId: $memberId)
 }
 
-mutation authCli_updateDeviceCluster($deviceName: String!, $clusterName: String!) {
-  core_updateVpnClusterName(deviceName: $deviceName, clusterName: $clusterName)
-}
-
-mutation authCli_updateDeviceNs($deviceName: String!, $ns: String!) {
-  core_updateVpnDeviceNs(deviceName: $deviceName, ns: $ns)
-}
-
-mutation authCli_updateDevicePorts($deviceName: String!, $ports: [PortIn!]!) {
-  core_updateVPNDevicePorts(deviceName: $deviceName, ports: $ports)
-}
-
-mutation authCli_updateDeviceEnv($deviceName: String!, $envName: String!) {
-  core_updateVPNDeviceEnv(deviceName: $deviceName, envName: $envName)
-}
-
-query authCli_listDevices {
-  core_listVPNDevicesForUser {
-    displayName
-    environmentName
-    metadata {
-      name
-    }
-    clusterName
-    status {
-      isReady
-      message {
-        RawMessage
-      }
-    }
-    spec {
-      cnameRecords {
-        host
-        target
-      }
-      activeNamespace
-      disabled
-      ports {
-        port
-        targetPort
-      }
-    }
-  }
-}
-
-query authCli_getDevice($name: String!) {
-  core_getVPNDevice(name: $name) {
-    displayName
-    metadata {
-      name
-    }
-    clusterName
-    environmentName
-    spec {
-      activeNamespace
-      disabled
-      ports {
-        port
-        targetPort
-      }
-    }
-    wireguardConfig {
-      encoding
-      value
-    }
-  }
-}
-
-mutation authCli_createDevice($vpnDevice: ConsoleVPNDeviceIn!) {
-  core_createVPNDevice(vpnDevice: $vpnDevice) {
-    metadata {
-      name
-    }
-    wireguardConfig {
-      encoding
-      value
-    }
-  }
-}
-
 mutation authCli_createGlobalVPNDevice($gvpnDevice: GlobalVPNDeviceIn!) {
   infra_createGlobalVPNDevice(gvpnDevice: $gvpnDevice) {
     accountName
@@ -6636,7 +6360,6 @@ query authCli_listImportedManagedResources($envName: String!, $search: SearchImp
         managedResource {
           accountName
           apiVersion
-          clusterName
           creationTime
           displayName
           enabled
@@ -6664,7 +6387,6 @@ query authCli_listImportedManagedResources($envName: String!, $search: SearchImp
               kind
               msvcRef {
                 apiVersion
-                clusterName
                 kind
                 name
                 namespace

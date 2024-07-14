@@ -513,7 +513,7 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
                       kind:
                         managedService?.spec?.msvcSpec.serviceTemplate.kind ||
                         '',
-                      clusterName: managedService.clusterName,
+                      // clusterName: managedService.clusterName,
                     },
                   },
                 },

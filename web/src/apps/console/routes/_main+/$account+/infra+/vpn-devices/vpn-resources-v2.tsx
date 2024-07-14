@@ -20,7 +20,6 @@ import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { IGlobalVpnDevices } from '~/console/server/gql/queries/global-vpn-queries';
-import { ShowWireguardConfig } from '~/console/page-components/handle-console-devices';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -29,6 +28,7 @@ import DeleteDialog from '~/console/components/delete-dialog';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
+import { ShowWireguardConfig } from '~/console/page-components/handle-console-devices';
 
 type BaseType = ExtractNodeType<IGlobalVpnDevices>;
 const RESOURCE_NAME = 'global-vpn';

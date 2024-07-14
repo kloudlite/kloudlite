@@ -27,7 +27,6 @@ import { managedResourceQueries } from './queries/managed-resources-queries';
 import { managedTemplateQueries } from './queries/managed-templates-queries';
 import { helmChartQueries } from './queries/helm-chart-queries';
 import { namespaceQueries } from './queries/namespace-queries';
-import { consoleVpnQueries } from './queries/console-vpn-queries';
 import { imagePullSecretsQueries } from './queries/image-pull-secrets-queries';
 import { globalVpnQueries } from './queries/global-vpn-queries';
 import { commsNotificationQueries } from './queries/comms-queries';
@@ -63,7 +62,6 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...managedResourceQueries(executor),
     ...helmChartQueries(executor),
     ...namespaceQueries(executor),
-    ...consoleVpnQueries(executor),
     ...imagePullSecretsQueries(executor),
     ...globalVpnQueries(executor),
     ...commsNotificationQueries(executor),
