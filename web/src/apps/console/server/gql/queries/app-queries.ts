@@ -16,6 +16,8 @@ import {
   ConsoleInterceptAppMutationVariables,
   ConsoleRestartAppQuery,
   ConsoleRestartAppQueryVariables,
+  ConsoleRemoveDeviceInterceptsMutation,
+  ConsoleRemoveDeviceInterceptsMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IApp = NN<ConsoleGetAppQuery['core_getApp']>;
@@ -84,6 +86,21 @@ export const appQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleInterceptAppMutation) =>
         data.core_interceptApp,
       vars(_: ConsoleInterceptAppMutationVariables) {},
+    }
+  ),
+  removeDeviceIntercepts: executor(
+    gql`
+      mutation Core_removeDeviceIntercepts(
+        $envName: String!
+        $deviceName: String!
+      ) {
+        core_removeDeviceIntercepts(envName: $envName, deviceName: $deviceName)
+      }
+    `,
+    {
+      transformer: (data: ConsoleRemoveDeviceInterceptsMutation) =>
+        data.core_removeDeviceIntercepts,
+      vars(_: ConsoleRemoveDeviceInterceptsMutationVariables) {},
     }
   ),
   deleteApp: executor(

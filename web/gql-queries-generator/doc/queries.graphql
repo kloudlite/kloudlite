@@ -26,8 +26,13 @@ query consoleInfraCheckNameAvailability($resType: ResType!, $name: String!, $clu
   }
 }
 
-query consoleCoreCheckNameAvailability($resType: ConsoleResType!, $name: String!, $envName: String) {
-  core_checkNameAvailability(resType: $resType, name: $name, envName: $envName) {
+query consoleCoreCheckNameAvailability($resType: ConsoleResType!, $name: String!, $envName: String, $msvcName: String) {
+  core_checkNameAvailability(
+    resType: $resType
+    name: $name
+    envName: $envName
+    msvcName: $msvcName
+  ) {
     result
   }
 }
@@ -999,6 +1004,10 @@ mutation consoleInterceptApp($portMappings: [Github__com___kloudlite___operator_
     appname: $appname
     envName: $envName
   )
+}
+
+mutation consoleRemoveDeviceIntercepts($envName: String!, $deviceName: String!) {
+  core_removeDeviceIntercepts(envName: $envName, deviceName: $deviceName)
 }
 
 mutation consoleDeleteApp($envName: String!, $appName: String!) {
@@ -6061,6 +6070,10 @@ mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator
     appname: $appName
     envName: $envName
   )
+}
+
+mutation authCli_removeDeviceIntercepts($envName: String!, $deviceName: String!) {
+  core_removeDeviceIntercepts(envName: $envName, deviceName: $deviceName)
 }
 
 query authCli_getEnvironment($name: String!) {

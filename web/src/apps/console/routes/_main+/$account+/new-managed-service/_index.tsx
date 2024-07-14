@@ -290,8 +290,7 @@ const FieldView = ({
         ref={nameRef}
         placeholder="Enter managed service name"
         label="Name"
-        // resType="cluster_managed_service"
-        resType="environment"
+        resType="cluster_managed_service"
         name={values.name}
         displayName={values.displayName}
         errors={errors.name}
@@ -558,6 +557,13 @@ const ManagedServiceLayout = () => {
         displayName: Yup.string().test('required', 'Name is required', (v) => {
           return !(currentStep === 2 && !v);
         }),
+        clusterName: Yup.string().test(
+          'required',
+          'Cluster name is required',
+          (v) => {
+            return !(currentStep === 2 && !v);
+          }
+        ),
         selectedTemplate: Yup.object({}).required('Template is required.'),
         // @ts-ignore
         res: Yup.object({}).test({

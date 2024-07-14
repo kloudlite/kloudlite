@@ -1818,6 +1818,7 @@ export type ConsoleCoreCheckNameAvailabilityQueryVariables = Exact<{
   resType: ConsoleResType;
   name: Scalars['String']['input'];
   envName?: InputMaybe<Scalars['String']['input']>;
+  msvcName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type ConsoleCoreCheckNameAvailabilityQuery = {
@@ -2722,6 +2723,15 @@ export type ConsoleInterceptAppMutationVariables = Exact<{
 }>;
 
 export type ConsoleInterceptAppMutation = { core_interceptApp: boolean };
+
+export type ConsoleRemoveDeviceInterceptsMutationVariables = Exact<{
+  envName: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type ConsoleRemoveDeviceInterceptsMutation = {
+  core_removeDeviceIntercepts: boolean;
+};
 
 export type ConsoleDeleteAppMutationVariables = Exact<{
   envName: Scalars['String']['input'];
@@ -7695,6 +7705,15 @@ export type AuthCli_InterceptAppMutationVariables = Exact<{
 }>;
 
 export type AuthCli_InterceptAppMutation = { core_interceptApp: boolean };
+
+export type AuthCli_RemoveDeviceInterceptsMutationVariables = Exact<{
+  envName: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type AuthCli_RemoveDeviceInterceptsMutation = {
+  core_removeDeviceIntercepts: boolean;
+};
 
 export type AuthCli_GetEnvironmentQueryVariables = Exact<{
   name: Scalars['String']['input'];

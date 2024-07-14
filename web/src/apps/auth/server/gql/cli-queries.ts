@@ -314,6 +314,20 @@ export const cliQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
+  cli_removeDeviceIntercepts: executor(
+    gql`
+      mutation Core_removeDeviceIntercepts(
+        $envName: String!
+        $deviceName: String!
+      ) {
+        core_removeDeviceIntercepts(envName: $envName, deviceName: $deviceName)
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_removeDeviceIntercepts,
+      vars(_: any) {},
+    }
+  ),
   cli_getEnvironment: executor(
     gql`
       query Core_getEnvironment($name: String!) {
