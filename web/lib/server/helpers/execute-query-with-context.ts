@@ -2,6 +2,8 @@ import { ASTNode, print } from 'graphql';
 import ServerCookie from 'cookie';
 import axios, { AxiosError } from 'axios';
 import { uuid } from '~/components/utils';
+import http from 'http';
+import https from 'https';
 import { gatewayUrl } from '../../configs/base-url.cjs';
 import {
   ICookies,
@@ -69,12 +71,14 @@ export const ExecuteQueryWithContext = (
           }
         }
 
+        axios.defaults.httpAgent = new http.Agent({ keepAlive: true });
+        axios.defaults.httpsAgent = new https.Agent({ keepAlive: true });
+
         const resp = await axios({
           url: gatewayUrl,
           method: 'POST',
           headers: {
             'Content-Type': 'application/json; charset=utf-8',
-            connection: 'keep-alive',
             ...{
               cookie: Object.entries(cookie)
                 .map(([key, value]) => `${key}=${value}`)

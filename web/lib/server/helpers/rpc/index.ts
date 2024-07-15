@@ -1,6 +1,8 @@
 import axios from 'axios';
 import logger from '~/root/lib/client/helpers/log';
 import { MapType } from '~/root/lib/types/common';
+import http from 'http';
+import https from 'https';
 
 export interface IMiddlewareResponse {
   data: MapType<string | number | boolean>;
@@ -60,6 +62,8 @@ const makeCall = async ({
   args: any;
   httpOptions: any;
 }) => {
+  axios.defaults.httpAgent = new http.Agent({ keepAlive: false });
+  axios.defaults.httpsAgent = new https.Agent({ keepAlive: false });
   const { data } = await axios.post(
     url,
     {
