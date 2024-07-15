@@ -195,6 +195,7 @@ type GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig struct {
 	IamInstanceProfileRole *string                                                    `json:"iamInstanceProfileRole,omitempty"`
 	NvidiaGpuEnabled       bool                                                       `json:"nvidiaGpuEnabled"`
 	PoolType               GithubComKloudliteOperatorApisClustersV1AWSPoolType        `json:"poolType"`
+	Region                 string                                                     `json:"region"`
 	RootVolumeSize         int                                                        `json:"rootVolumeSize"`
 	RootVolumeType         string                                                     `json:"rootVolumeType"`
 	SpotPool               *GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig `json:"spotPool,omitempty"`
@@ -1398,10 +1399,10 @@ type NodePoolPaginatedRecords struct {
 }
 
 type PageInfo struct {
-	EndCursor       *string `json:"endCursor,omitempty"`
-	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
-	HasPreviousPage *bool   `json:"hasPreviousPage,omitempty"`
-	StartCursor     *string `json:"startCursor,omitempty"`
+	EndCursor   *string `json:"endCursor,omitempty"`
+	HasNextPage *bool   `json:"hasNextPage,omitempty"`
+	HasPrevPage *bool   `json:"hasPrevPage,omitempty"`
+	StartCursor *string `json:"startCursor,omitempty"`
 }
 
 type PersistentVolumeClaimEdge struct {

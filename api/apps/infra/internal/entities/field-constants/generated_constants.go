@@ -334,6 +334,7 @@ const (
 	NodePoolSpecAwsIamInstanceProfileRole           = "spec.aws.iamInstanceProfileRole"
 	NodePoolSpecAwsNvidiaGpuEnabled                 = "spec.aws.nvidiaGpuEnabled"
 	NodePoolSpecAwsPoolType                         = "spec.aws.poolType"
+	NodePoolSpecAwsRegion                           = "spec.aws.region"
 	NodePoolSpecAwsRootVolumeSize                   = "spec.aws.rootVolumeSize"
 	NodePoolSpecAwsRootVolumeType                   = "spec.aws.rootVolumeType"
 	NodePoolSpecAwsSpotPool                         = "spec.aws.spotPool"

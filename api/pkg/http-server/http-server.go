@@ -49,6 +49,10 @@ func (s *server) Listen(addr string) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*1)
 	defer cancel()
 
+	s.App.Get("/_healthy", func(c *fiber.Ctx) error {
+		return c.SendStatus(http.StatusOK)
+	})
+
 	go func() {
 		errChannel <- s.App.Listen(addr)
 	}()
@@ -127,4 +131,8 @@ func (s *server) SetupGraphqlServer(es graphql.ExecutableSchema, middlewares ...
 	})
 
 	s.All("/query", adaptor.HTTPHandlerFunc(gqlServer.ServeHTTP))
+
+	s.All("/", func(c *fiber.Ctx) error {
+		return c.SendStatus(http.StatusNotFound)
+	})
 }

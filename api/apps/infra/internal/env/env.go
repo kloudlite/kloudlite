@@ -17,6 +17,8 @@ type Env struct {
 	GrpcPort     uint16 `env:"GRPC_PORT" required:"true"`
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 
+	KloudliteDNSSuffix string `env:"KLOUDLITE_DNS_SUFFIX" required:"true"`
+
 	NatsURL    string `env:"NATS_URL" required:"true"`
 	NatsStream string `env:"NATS_STREAM" required:"true"`
 
