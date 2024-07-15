@@ -43,6 +43,9 @@ spec:
             - name: CLUSTER_INTERNAL_DNS
               value: {{.Values.clusterInternalDNS}}
 
+            - name: KLOUDLITE_DNS_SUFFIX
+              value: {{.Values.kloudliteDNSSuffix}}
+
             {{ include "environment-operator-env" . | nindent 12 }}
             {{ include "resource-watcher-env" . | nindent 12 }}
             {{ include "router-operator-env" . | nindent 12 }}

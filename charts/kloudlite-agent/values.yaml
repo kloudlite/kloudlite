@@ -28,6 +28,8 @@ clusterInternalDNS: "cluster.local"
 # -- kloudlite release version, defaults to `Helm AppVersion`
 kloudliteRelease: ""
 
+kloudliteDNSSuffix: ""
+
 agent:
   # -- workload name for kloudlite agent
   # @ignored
