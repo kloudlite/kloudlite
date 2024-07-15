@@ -17,6 +17,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -106,39 +107,35 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*postgresv1.StandaloneDatabase]) stepResult.Result {
-	// ctx, obj := req.Context(), req.Object
-	//
-	// check := rApi.Check{Generation: obj.Generation}
-	//
-	// if step := req.EnsureChecks(DBUserDeleted); !step.ShouldProceed() {
-	// 	return step
-	// }
-	//
-	// msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
-	// if err != nil {
-	// 	return req.CheckFailed(DBUserDeleted, check, err.Error()).Err(nil)
-	// }
-	//
-	// msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](msvcSecret)
-	// if err != nil {
-	// 	return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output could not be parsed").Error()).Err(nil)
-	// }
-	//
-	// if obj.Status.IsReady {
-	// 	mysqlCli, err := libMysql.NewClient(msvcOutput.Hosts, "mysql", "root", msvcOutput.RootPassword)
-	// 	if err != nil {
-	// 		req.Logger.Infof("failed to create mysql client, retrying in 5 seconds")
-	// 		return req.CheckFailed(DBUserReady, check, err.Error()).Err(nil).RequeueAfter(5 * time.Second)
-	// 	}
-	//
-	// 	if err := mysqlCli.Connect(ctx); err != nil {
-	// 		return req.CheckFailed(DBUserDeleted, check, err.Error())
-	// 	}
-	//
-	// 	if err := mysqlCli.DropUser(sanitizeDbUsername(obj.Name)); err != nil {
-	// 		return req.CheckFailed(DBUserDeleted, check, err.Error())
-	// 	}
-	// }
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck("finalizing", req)
+
+	ss, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), &postgresv1.Standalone{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
+		}
+		ss = nil
+	}
+
+	if ss == nil || ss.DeletionTimestamp != nil {
+		if step := req.ForceCleanupOwnedResources(check); !step.ShouldProceed() {
+			return step
+		}
+	} else {
+		if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+			return step
+		}
+	}
+
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.Object.Output.CredentialsRef.Name,
+			Namespace: req.Object.Namespace,
+		},
+	}); err != nil {
+		return check.Failed(err)
+	}
 
 	return req.Finalize()
 }
@@ -202,14 +199,19 @@ func (r *Reconciler) createDBCreds(req *rApi.Request[*postgresv1.StandaloneDatab
 
 			// INFO: secret does not exist yet
 			out := &types.StandaloneDatabaseOutput{
-				Username:         username,
-				Password:         password,
-				DbName:           dbName,
-				Port:             so.Port,
-				Host:             so.Host,
-				URI:              fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, so.Host, so.Port, dbName),
+				Username: username,
+				Password: password,
+				DbName:   dbName,
+				Port:     so.Port,
+
+				Host: so.Host,
+				URI:  fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, so.Host, so.Port, dbName),
+
 				ClusterLocalHost: so.ClusterLocalHost,
 				ClusterLocalURI:  fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, so.ClusterLocalHost, so.Port, dbName),
+
+				GlobalVPNHost: so.GlobalVPNHost,
+				GlobalVPNURI:  fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, so.GlobalVPNHost, so.Port, dbName),
 			}
 
 			m, err := out.ToMap()
@@ -224,7 +226,6 @@ func (r *Reconciler) createDBCreds(req *rApi.Request[*postgresv1.StandaloneDatab
 		return check.Failed(err)
 	}
 
-	// function-body
 	return check.Completed()
 }
 
@@ -237,18 +238,15 @@ func (r *Reconciler) createDBUserLifecycle(req *rApi.Request[*postgresv1.Standal
 		return check.Failed(err)
 	}
 
-	lf := crdsv1.Lifecycle{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
+	lf := &crdsv1.Lifecycle{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, &lf, func() error {
-		lf.SetLabels(obj.GetLabels())
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lf, func() error {
+		for k, v := range obj.Labels {
+			fn.MapSet(&lf.Labels, k, v)
+		}
 		lf.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 		b, err := templates.ParseBytes(r.templateDBLifecycle, templates.DBLifecycleVars{
-			Metadata: metav1.ObjectMeta{
-				Name:      obj.Name,
-				Namespace: obj.Namespace,
-				Labels:    obj.GetLabels(),
-			},
 			NodeSelector:                   map[string]string{},
 			Tolerations:                    []corev1.Toleration{},
 			PostgressRootCredentialsSecret: msvc.Output.CredentialsRef.Name,
@@ -268,6 +266,8 @@ func (r *Reconciler) createDBUserLifecycle(req *rApi.Request[*postgresv1.Standal
 	}); err != nil {
 		return check.Failed(err)
 	}
+
+	req.AddToOwnedResources(rApi.ParseResourceRef(lf))
 
 	if !lf.HasCompleted() {
 		return check.StillRunning(fmt.Errorf("waiting for lifecycle job to complete"))

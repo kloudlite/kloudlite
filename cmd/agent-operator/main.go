@@ -4,7 +4,6 @@ import (
 	"github.com/kloudlite/operator/operator"
 
 	app "github.com/kloudlite/operator/operators/app-n-lambda/controller"
-	// distribution "github.com/kloudlite/operator/operators/distribution/controller"
 	helmCharts "github.com/kloudlite/operator/operators/helm-charts/controller"
 	lifecycle "github.com/kloudlite/operator/operators/lifecycle/controller"
 
@@ -13,25 +12,26 @@ import (
 	msvcPostgres "github.com/kloudlite/operator/operators/msvc-postgres/controller"
 	msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
 
+	// distribution "github.com/kloudlite/operator/operators/distribution/controller"
 	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
 	networkingv1 "github.com/kloudlite/operator/operators/networking/register"
-	// nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	project "github.com/kloudlite/operator/operators/project/controller"
 	resourceWatcher "github.com/kloudlite/operator/operators/resource-watcher/controller"
 	routers "github.com/kloudlite/operator/operators/routers/controller"
+	// nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	// wfreguard "github.com/kloudlite/operator/operators/wireguard/controller"
 )
 
 func main() {
 	mgr := operator.New("agent-operator")
 
-	// kloudlite resources
+	// // kloudlite resources
 	app.RegisterInto(mgr)
 	project.RegisterInto(mgr)
 	helmCharts.RegisterInto(mgr)
 	routers.RegisterInto(mgr)
-
-	// kloudlite managed services
+	//
+	// // kloudlite managed services
 	msvcAndMres.RegisterInto(mgr)
 	msvcMongo.RegisterInto(mgr)
 	msvcRedis.RegisterInto(mgr)

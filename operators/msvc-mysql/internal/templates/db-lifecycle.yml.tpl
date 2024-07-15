@@ -19,14 +19,14 @@ spec:
 
       containers:
         - name: mysql
-          image: ghcr.io/kloudlite/hub/mysql-client:latest
-          imagePullPolicy: Always
-          env:
+          image: &image ghcr.io/kloudlite/hub/mysql-client:latest
+          imagePullPolicy: &pull-policy Always
+          env: &env
             - name: MYSQL_HOST
               valueFrom:
                 secretKeyRef:
                   name: {{.RootCredentialsSecret}}
-                  key: CLUSTER_LOCAL_HOST
+                  key: .CLUSTER_LOCAL_HOST
 
             - name: MYSQL_USERNAME
               valueFrom:
@@ -70,51 +70,32 @@ spec:
             FLUSH PRIVILEGES;
             EOF
 
-            echo mysql -h "$MYSQL_HOST" -u "$MYSQL_USERNAME" -p"$MYSQL_PASSWORD" < /tmp/script.sql
             mysql -h "$MYSQL_HOST" -u "$MYSQL_USERNAME" -p"$MYSQL_PASSWORD" < /tmp/script.sql
       restartPolicy: Never
 
-  {{- /* onDelete: */}}
-  {{- /*   backOffLimit: 1 */}}
-  {{- /*   podSpec: */}}
-  {{- /*     tolerations: *tolerations */}}
-  {{- /*     nodeSelector: *nodeselector */}}
-  {{- /**/}}
-  {{- /*     resources: *resources */}}
-  {{- /**/}}
-  {{- /*     containers: */}}
-  {{- /*       - name: main */}}
-  {{- /*         image: {{.JobImage}} */}}
-  {{- /*         imagePullPolicy: Always */}}
-  {{- /*         env: */}}
-  {{- /*           - name: KUBE_IN_CLUSTER_CONFIG */}}
-  {{- /*             value: "true" */}}
-  {{- /**/}}
-  {{- /*           - name: KUBE_NAMESPACE */}}
-  {{- /*             value: {{.TfWorkspaceNamespace | squote}} */}}
-  {{- /*         command: */}}
-  {{- /*           - bash */}}
-  {{- /*           - -c */}}
-  {{- /*           - |+ */}}
-  {{- /*             set -o pipefail */}}
-  {{- /*             set -o errexit */}}
-  {{- /**/}}
-  {{- /*             eval $DECOMPRESS_CMD */}}
-  {{- /**/}}
-  {{- /*             pushd "$TEMPLATES_DIR/{{.CloudProvider}}/worker-nodes" */}}
-  {{- /**/}}
-  {{- /*             envsubst < state-backend.tf.tpl > state-backend.tf */}}
-  {{- /**/}}
-  {{- /*             terraform init -reconfigure -no-color 2>&1 | tee /dev/termination-log */}}
-  {{- /*             terraform workspace select --or-create {{.TFWorkspaceName}} */}}
-  {{- /**/}}
-  {{- /*             cat > values.json <<'EOF' */}}
-  {{- /*             {{.ValuesJSON}} */}}
-  {{- /*             EOF */}}
-  {{- /**/}}
-  {{- /*             terraform init -no-color 2>&1 | tee /dev/termination-log */}}
-  {{- /*             terraform plan -parallelism=2 --destroy --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log */}}
-  {{- /*             terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log */}}
-  {{- /*     restartPolicy: Never */}}
+  onDelete:
+    backOffLimit: 1
+    podSpec:
+      tolerations: *tolerations
+      nodeSelector: *nodeselector
+      resources: *resources
+
+      containers:
+        - name: mysql
+          image: *image
+          imagePullPolicy: *pull-policy
+          env: *env
+          command:
+            - sh
+            - -c
+            - |+
+              cat > script.sql <<EOF
+              DROP DATABASE $NEW_DB_NAME;
+              DROP USER $NEW_USERNAME;
+              EOF
+              
+              mysql -h "$MYSQL_HOST" -u "$MYSQL_USERNAME" -p"$MYSQL_PASSWORD" < /tmp/script.sql
+      restartPolicy: Never
+
 {{ end }}
 
