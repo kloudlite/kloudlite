@@ -3,10 +3,10 @@ syntax = "proto3";
 option go_package = "kloudlite.io/rpc/console";
 
 service Console {
-  rpc ArchiveEnvironmentsForCluster(ArchiveEnvironmentsForClusterIn) returns (ArchiveEnvironmentsForClusterOut);
+  rpc ArchiveResourcesForCluster(ArchiveResourcesForClusterIn) returns (ArchiveResourcesForClusterOut);
 }
 
-message ArchiveEnvironmentsForClusterIn {
+message ArchiveResourcesForClusterIn {
   string userId = 1;
   string userName = 2;
   string userEmail = 3;
@@ -15,6 +15,6 @@ message ArchiveEnvironmentsForClusterIn {
   string clusterName = 5;
 }
 
-message ArchiveEnvironmentsForClusterOut {
+message ArchiveResourcesForClusterOut {
   bool archived = 1;
 }
