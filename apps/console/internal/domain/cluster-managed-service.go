@@ -190,7 +190,7 @@ func (d *domain) CloneClusterManagedService(ctx ConsoleContext, args CloneManage
 	return destMsvc, nil
 }
 
-func (d *domain) ArchiveClusterManagedService(ctx ConsoleContext, clusterName string) error {
+func (d *domain) ArchiveClusterManagedServicesForCluster(ctx ConsoleContext, clusterName string) (bool, error) {
 	filter := repos.Filter{
 		fields.AccountName: ctx.AccountName,
 		fields.ClusterName: clusterName,
@@ -201,7 +201,7 @@ func (d *domain) ArchiveClusterManagedService(ctx ConsoleContext, clusterName st
 		Sort:   nil,
 	})
 	if err != nil {
-		return errors.NewE(err)
+		return false, errors.NewE(err)
 	}
 
 	for i := range msvc {
@@ -216,10 +216,10 @@ func (d *domain) ArchiveClusterManagedService(ctx ConsoleContext, clusterName st
 
 		_, err := d.clusterManagedServiceRepo.Patch(ctx, patchFilter, patchForUpdate)
 		if err != nil {
-			return errors.NewE(err)
+			return false, errors.NewE(err)
 		}
 	}
-	return nil
+	return true, nil
 }
 
 func (d *domain) UpdateClusterManagedService(ctx ConsoleContext, cmsvc entities.ClusterManagedService) (*entities.ClusterManagedService, error) {
