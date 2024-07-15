@@ -109,10 +109,6 @@ models:
     model: github.com/kloudlite/api/apps/infra/internal/entities.DomainEntry
   DomainEntryIn: *domain-entry-model
 
-  ClusterManagedService: &cluster-managed-service
-    model: github.com/kloudlite/api/apps/infra/internal/entities.ClusterManagedService
-  ClusterManagedServiceIn: *cluster-managed-service
-
   PersistentVolumeClaim: &pvc-model
     model: github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolumeClaim
   PersistentVolumeClaimIn: *pvc-model

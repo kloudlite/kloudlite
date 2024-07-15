@@ -18,7 +18,7 @@ const (
 	ResourceTypeRouter                  ResourceType = "router"
 	ResourceTypeManagedResource         ResourceType = "managed_resource"
 	ResourceTypeImportedManagedResource ResourceType = "imported_managed_resource"
-	ResourceTypeVPNDevice               ResourceType = "vpn_device"
+	ResourceTypeClusterManagedService   ResourceType = "cluster_managed_service"
 	ResourceTypeServiceBinding          ResourceType = "service_binding"
 )
 

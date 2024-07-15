@@ -82,19 +82,6 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 				}
 				return d.OnNodePoolDeleteMessage(dctx, em.ClusterName, nodepool)
 			}
-		case clusterMsvcGVK.String():
-			{
-				cmsvc, err := fn.JsonConvert[entities.ClusterManagedService](obj.Object)
-				if err != nil {
-					return err
-				}
-
-				if errObj.Action == t.ActionApply {
-					return d.OnClusterManagedServiceApplyError(dctx, em.ClusterName, obj.GetName(), errObj.Error, opts)
-				}
-				return d.OnClusterManagedServiceDeleteMessage(dctx, em.ClusterName, cmsvc)
-
-			}
 		case helmreleaseGVK.String():
 			{
 				helmRelease, err := fn.JsonConvert[entities.HelmRelease](obj.Object)

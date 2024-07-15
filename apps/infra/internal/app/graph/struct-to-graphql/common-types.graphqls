@@ -263,11 +263,6 @@ type Github__com___kloudlite___operator___apis___common____types__SecretRef @sha
   namespace: String
 }
 
-type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec @shareable {
-  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
-  targetNamespace: String!
-}
-
 type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec @shareable {
   chartName: String!
   chartRepoURL: String!
@@ -298,18 +293,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__JobVars @shareable {
   backOffLimit: Int
   nodeSelector: Map
   tolerations: [K8s__io___api___core___v1__Toleration!]
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec @shareable {
-  nodeSelector: Map
-  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate!
-  tolerations: [K8s__io___api___core___v1__Toleration!]
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @shareable {
-  apiVersion: String!
-  kind: String!
-  spec: Map
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
@@ -893,10 +876,6 @@ input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
   namespace: String
 }
 
-input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn {
-  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
-}
-
 input Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn {
   chartName: String!
   chartRepoURL: String!
@@ -914,18 +893,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn {
   backOffLimit: Int
   nodeSelector: Map
   tolerations: [K8s__io___api___core___v1__TolerationIn!]
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn {
-  nodeSelector: Map
-  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn!
-  tolerations: [K8s__io___api___core___v1__TolerationIn!]
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
-  apiVersion: String!
-  kind: String!
-  spec: Map
 }
 
 input K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn {
