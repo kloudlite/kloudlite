@@ -464,7 +464,7 @@ func (p *parser) WithPagination(types []string) {
 
 		p.structs[commonLabel].Types["PageInfo"] = []string{
 			"hasNextPage: Boolean",
-			"hasPreviousPage: Boolean",
+			"hasPrevPage: Boolean",
 			"startCursor: String",
 			"endCursor: String",
 		}

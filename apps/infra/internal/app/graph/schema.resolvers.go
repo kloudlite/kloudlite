@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -389,26 +390,7 @@ func (r *queryResolver) InfraListClusters(ctx context.Context, search *model.Sea
 		return nil, errors.NewE(err)
 	}
 
-	ce := make([]*model.ClusterEdge, len(pClusters.Edges))
-	for i := range pClusters.Edges {
-		ce[i] = &model.ClusterEdge{
-			Node:   pClusters.Edges[i].Node,
-			Cursor: pClusters.Edges[i].Cursor,
-		}
-	}
-
-	m := model.ClusterPaginatedRecords{
-		Edges: ce,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pClusters.PageInfo.EndCursor,
-			HasNextPage:     pClusters.PageInfo.HasNextPage,
-			HasPreviousPage: pClusters.PageInfo.HasPrevPage,
-			StartCursor:     &pClusters.PageInfo.StartCursor,
-		},
-		TotalCount: int(pClusters.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvertP[model.ClusterPaginatedRecords](pClusters)
 }
 
 // InfraGetCluster is the resolver for the infra_getCluster field.
@@ -582,26 +564,7 @@ func (r *queryResolver) InfraListNodePools(ctx context.Context, clusterName stri
 		return nil, errors.NewE(err)
 	}
 
-	pe := make([]*model.NodePoolEdge, len(pNodePools.Edges))
-	for i := range pNodePools.Edges {
-		pe[i] = &model.NodePoolEdge{
-			Node:   pNodePools.Edges[i].Node,
-			Cursor: pNodePools.Edges[i].Cursor,
-		}
-	}
-
-	m := model.NodePoolPaginatedRecords{
-		Edges: pe,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pNodePools.PageInfo.EndCursor,
-			HasNextPage:     pNodePools.PageInfo.HasNextPage,
-			HasPreviousPage: pNodePools.PageInfo.HasPrevPage,
-			StartCursor:     &pNodePools.PageInfo.StartCursor,
-		},
-		TotalCount: int(pNodePools.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvertP[model.NodePoolPaginatedRecords](pNodePools)
 }
 
 // InfraGetNodePool is the resolver for the infra_getNodePool field.
@@ -642,26 +605,7 @@ func (r *queryResolver) InfraListProviderSecrets(ctx context.Context, search *mo
 		return nil, errors.NewE(err)
 	}
 
-	pe := make([]*model.CloudProviderSecretEdge, len(pSecrets.Edges))
-	for i := range pSecrets.Edges {
-		pe[i] = &model.CloudProviderSecretEdge{
-			Node:   pSecrets.Edges[i].Node,
-			Cursor: pSecrets.Edges[i].Cursor,
-		}
-	}
-
-	m := model.CloudProviderSecretPaginatedRecords{
-		Edges: pe,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pSecrets.PageInfo.EndCursor,
-			HasNextPage:     pSecrets.PageInfo.HasNextPage,
-			HasPreviousPage: pSecrets.PageInfo.HasPrevPage,
-			StartCursor:     &pSecrets.PageInfo.StartCursor,
-		},
-		TotalCount: int(pSecrets.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvertP[model.CloudProviderSecretPaginatedRecords](pSecrets)
 }
 
 // InfraGetProviderSecret is the resolver for the infra_getProviderSecret field.
@@ -698,26 +642,7 @@ func (r *queryResolver) InfraListDomainEntries(ctx context.Context, search *mode
 		return nil, errors.NewE(err)
 	}
 
-	edges := make([]*model.DomainEntryEdge, len(dEntries.Edges))
-	for i := range dEntries.Edges {
-		edges[i] = &model.DomainEntryEdge{
-			Node:   dEntries.Edges[i].Node,
-			Cursor: dEntries.Edges[i].Cursor,
-		}
-	}
-
-	m := model.DomainEntryPaginatedRecords{
-		Edges: edges,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &dEntries.PageInfo.EndCursor,
-			HasNextPage:     dEntries.PageInfo.HasNextPage,
-			HasPreviousPage: dEntries.PageInfo.HasPrevPage,
-			StartCursor:     &dEntries.PageInfo.StartCursor,
-		},
-		TotalCount: int(dEntries.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvertP[model.DomainEntryPaginatedRecords](dEntries)
 }
 
 // InfraGetDomainEntry is the resolver for the infra_getDomainEntry field.
@@ -776,26 +701,7 @@ func (r *queryResolver) InfraListHelmReleases(ctx context.Context, clusterName s
 		return nil, errors.NewE(err)
 	}
 
-	ce := make([]*model.HelmReleaseEdge, len(pRelease.Edges))
-	for i := range pRelease.Edges {
-		ce[i] = &model.HelmReleaseEdge{
-			Node:   pRelease.Edges[i].Node,
-			Cursor: pRelease.Edges[i].Cursor,
-		}
-	}
-
-	m := model.HelmReleasePaginatedRecords{
-		Edges: ce,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pRelease.PageInfo.EndCursor,
-			HasNextPage:     pRelease.PageInfo.HasNextPage,
-			HasPreviousPage: pRelease.PageInfo.HasPrevPage,
-			StartCursor:     &pRelease.PageInfo.StartCursor,
-		},
-		TotalCount: int(pRelease.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvertP[model.HelmReleasePaginatedRecords](pRelease)
 }
 
 // InfraGetHelmRelease is the resolver for the infra_getHelmRelease field.
@@ -837,26 +743,7 @@ func (r *queryResolver) InfraListPVCs(ctx context.Context, clusterName string, s
 		return nil, errors.NewE(err)
 	}
 
-	ve := make([]*model.PersistentVolumeClaimEdge, len(pvcs.Edges))
-	for i := range pvcs.Edges {
-		ve[i] = &model.PersistentVolumeClaimEdge{
-			Node:   pvcs.Edges[i].Node,
-			Cursor: pvcs.Edges[i].Cursor,
-		}
-	}
-
-	m := model.PersistentVolumeClaimPaginatedRecords{
-		Edges: ve,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pvcs.PageInfo.EndCursor,
-			HasNextPage:     pvcs.PageInfo.HasNextPage,
-			HasPreviousPage: pvcs.PageInfo.HasPrevPage,
-			StartCursor:     &pvcs.PageInfo.StartCursor,
-		},
-		TotalCount: int(pvcs.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvertP[model.PersistentVolumeClaimPaginatedRecords](pvcs)
 }
 
 // InfraGetPvc is the resolver for the infra_getPVC field.
@@ -888,26 +775,7 @@ func (r *queryResolver) InfraListNamespaces(ctx context.Context, clusterName str
 		return nil, errors.NewE(err)
 	}
 
-	ve := make([]*model.NamespaceEdge, len(namespaces.Edges))
-	for i := range namespaces.Edges {
-		ve[i] = &model.NamespaceEdge{
-			Node:   namespaces.Edges[i].Node,
-			Cursor: namespaces.Edges[i].Cursor,
-		}
-	}
-
-	m := model.NamespacePaginatedRecords{
-		Edges: ve,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &namespaces.PageInfo.EndCursor,
-			HasNextPage:     namespaces.PageInfo.HasNextPage,
-			HasPreviousPage: namespaces.PageInfo.HasPrevPage,
-			StartCursor:     &namespaces.PageInfo.StartCursor,
-		},
-		TotalCount: int(namespaces.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvertP[model.NamespacePaginatedRecords](namespaces)
 }
 
 // InfraGetNamespace is the resolver for the infra_getNamespace field.
@@ -938,26 +806,7 @@ func (r *queryResolver) InfraListPVs(ctx context.Context, clusterName string, se
 		return nil, errors.NewE(err)
 	}
 
-	ve := make([]*model.PersistentVolumeEdge, len(pvs.Edges))
-	for i := range pvs.Edges {
-		ve[i] = &model.PersistentVolumeEdge{
-			Node:   pvs.Edges[i].Node,
-			Cursor: pvs.Edges[i].Cursor,
-		}
-	}
-
-	m := model.PersistentVolumePaginatedRecords{
-		Edges: ve,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pvs.PageInfo.EndCursor,
-			HasNextPage:     pvs.PageInfo.HasNextPage,
-			HasPreviousPage: pvs.PageInfo.HasPrevPage,
-			StartCursor:     &pvs.PageInfo.StartCursor,
-		},
-		TotalCount: int(pvs.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvertP[model.PersistentVolumePaginatedRecords](pvs)
 }
 
 // InfraGetPv is the resolver for the infra_getPV field.
@@ -988,26 +837,7 @@ func (r *queryResolver) InfraListVolumeAttachments(ctx context.Context, clusterN
 		return nil, errors.NewE(err)
 	}
 
-	ve := make([]*model.VolumeAttachmentEdge, len(volatt.Edges))
-	for i := range volatt.Edges {
-		ve[i] = &model.VolumeAttachmentEdge{
-			Node:   volatt.Edges[i].Node,
-			Cursor: volatt.Edges[i].Cursor,
-		}
-	}
-
-	m := model.VolumeAttachmentPaginatedRecords{
-		Edges: ve,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &volatt.PageInfo.EndCursor,
-			HasNextPage:     volatt.PageInfo.HasNextPage,
-			HasPreviousPage: volatt.PageInfo.HasPrevPage,
-			StartCursor:     &volatt.PageInfo.StartCursor,
-		},
-		TotalCount: int(volatt.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvertP[model.VolumeAttachmentPaginatedRecords](volatt)
 }
 
 // InfraGetVolumeAttachment is the resolver for the infra_getVolumeAttachment field.
@@ -1025,5 +855,7 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

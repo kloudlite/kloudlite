@@ -871,7 +871,8 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"status: Boolean!",
 						},
 						"Github__com___kloudlite___operator___pkg___operator__CheckMeta": {
-							"debug: Boolean!",
+							"debug: Boolean",
+							"hide: Boolean",
 							"description: String",
 							"name: String!",
 							"title: String!",
@@ -981,7 +982,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 					Types: map[string][]string{
 						"PageInfo": {
 							"hasNextPage: Boolean",
-							"hasPreviousPage: Boolean",
+							"hasPrevPage: Boolean",
 							"startCursor: String",
 							"endCursor: String",
 						},
