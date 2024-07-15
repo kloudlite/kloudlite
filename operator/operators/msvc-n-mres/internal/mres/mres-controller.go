@@ -3,17 +3,15 @@ package mres
 import (
 	"context"
 	"fmt"
-	"slices"
 	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
+	mongov1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
 	mysqlv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
 	postgresv1 "github.com/kloudlite/operator/apis/postgres.msvc/v1"
 	// influxdbMsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
-	// mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
-	// redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
+	redis "github.com/kloudlite/operator/apis/redis.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -56,15 +54,7 @@ const (
 	DefaultsPatched                  string = "defaults-patched"
 )
 
-var ApplyCheckList = []rApi.CheckMeta{
-	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
-	{Name: UnderlyingManagedResourceCreated, Title: "Underlying Managed Resource Created"},
-	{Name: UnderlyingManagedResourceReady, Title: "Underlying Managed Resource Ready"},
-}
-
-var DeleteCheckList = []rApi.CheckMeta{
-	{Name: Cleanup, Title: "Cleanup"},
-}
+var DeleteCheckList = []rApi.CheckMeta{}
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status,verbs=get;update;patch
@@ -98,7 +88,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
+		{Name: UnderlyingManagedResourceCreated, Title: "Underlying Managed Resource Created"},
+		{Name: UnderlyingManagedResourceReady, Title: "Underlying Managed Resource Ready"},
+	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -128,57 +122,45 @@ func getRealResourceName(obj *crdsv1.ManagedResource) string {
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+	check := rApi.NewRunningCheck(DefaultsPatched, req)
 
-	checkName := DefaultsPatched
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	hasUpdated := false
+	hasUpdate := false
 
 	if obj.Output.CredentialsRef.Name == "" {
-		hasUpdated = true
+		hasUpdate = true
 		obj.Output.CredentialsRef.Name = fmt.Sprintf("mres-%s-creds", getRealResourceName(obj))
 	}
 
-	if hasUpdated {
+	ms, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.ResourceTemplate.MsvcRef.Namespace, obj.Spec.ResourceTemplate.MsvcRef.Name), &crdsv1.ManagedService{})
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	if !fn.IsOwner(obj, fn.AsOwner(ms, true)) {
+		hasUpdate = true
+		obj.OwnerReferences = append(obj.OwnerReferences, fn.AsOwner(ms, true))
+	}
+
+	if hasUpdate {
 		if err := r.Update(ctx, obj); err != nil {
-			return fail(err)
+			return check.Failed(err)
 		}
 		return req.Done().RequeueAfter(500 * time.Second)
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
-	obj := req.Object
-
-	if !slices.Equal(obj.Status.CheckList, DeleteCheckList) {
-		if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
-			return step
-		}
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: "cleanup", Title: "Cleanup Owned Resources"},
+	}); !step.ShouldProceed() {
+		return step
 	}
 
-	checkName := "finalizing"
+	check := rApi.NewRunningCheck("cleanup", req)
 
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
+	if result := req.CleanupOwnedResourcesV2(check); !result.ShouldProceed() {
 		return result
 	}
 
@@ -187,16 +169,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepRe
 
 func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := UnderlyingManagedResourceCreated
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(UnderlyingManagedResourceCreated, req)
 
 	b, err := templates.ParseBytes(r.templateCommonMres, map[string]any{
 		"api-version": obj.Spec.ResourceTemplate.APIVersion,
@@ -213,39 +186,21 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 		"output": obj.Output,
 	})
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).Err(nil)
 	}
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	req.AddToOwnedResources(rr...)
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
-
-	checkName := UnderlyingManagedResourceReady
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
+	check := rApi.NewRunningCheck(UnderlyingManagedResourceReady, req)
 
 	uobj := unstructured.Unstructured{
 		Object: map[string]any{
@@ -255,7 +210,7 @@ func (r *Reconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResour
 	}
 
 	if err := r.Get(ctx, fn.NN(obj.GetNamespace(), getRealResourceName(obj)), &uobj); err != nil {
-		return fail(err)
+		return check.Failed(err)
 	}
 
 	realMresObj, err := fn.JsonConvert[struct {
@@ -265,29 +220,21 @@ func (r *Reconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResour
 		} `json:"output"`
 	}](uobj.Object)
 	if err != nil {
-		return fail(err).Err(nil)
+		return check.Failed(err).Err(nil)
 	}
 
 	if !realMresObj.Status.IsReady {
 		if realMresObj.Status.Message == nil {
-			return req.CheckFailed(checkName, check, "waiting for real managed service to reconcile ...").Err(nil)
+			return check.Failed(fmt.Errorf("waiting for real managed service to reconcile ...")).Err(nil)
 		}
 		b, err := realMresObj.Status.Message.MarshalJSON()
 		if err != nil {
-			return fail(err).Err(nil)
+			return check.Failed(err).Err(nil)
 		}
-		return fail(fmt.Errorf("%s", b)).Err(nil)
+		return check.Failed(fmt.Errorf("%s", b)).Err(nil)
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
+	return check.Completed()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
@@ -306,29 +253,25 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&corev1.Secret{})
 
-	children := []client.Object{
-		// &redisMsvcv1.StandaloneService{},
-		// &redisMsvcv1.ClusterService{},
-		// &redisMsvcv1.ACLAccount{},
-		// &redisMsvcv1.Prefix{},
-
-		&mongodbMsvcv1.StandaloneService{},
-		&mongodbMsvcv1.ClusterService{},
-		&mongodbMsvcv1.Database{},
-
-		&mongodbMsvcv1.StandaloneDatabase{},
-		&postgresv1.StandaloneDatabase{},
+	owns := []client.Object{
+		&mongov1.StandaloneDatabase{},
 		&mysqlv1.StandaloneDatabase{},
-
-		// &mysqlMsvcv1.ClusterService{},
-		// &mysqlMsvcv1.StandaloneService{},
-		// &mysqlMsvcv1.Database{},
-		//
-		// &influxdbMsvcv1.Bucket{},
-		// &influxdbMsvcv1.Service{},
+		&postgresv1.StandaloneDatabase{},
 	}
 
-	for _, obj := range children {
+	for i := range owns {
+		builder.Owns(owns[i])
+	}
+
+	watchlist := []client.Object{
+		&mongov1.StandaloneService{},
+		&mongov1.ClusterService{},
+		&redis.StandaloneService{},
+		&postgresv1.Standalone{},
+		&mysqlv1.StandaloneService{},
+	}
+
+	for _, obj := range watchlist {
 		builder.Watches(
 			obj,
 			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {

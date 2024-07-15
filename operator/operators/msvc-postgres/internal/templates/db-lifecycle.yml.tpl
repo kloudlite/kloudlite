@@ -19,13 +19,14 @@ spec:
 
       containers:
         - name: postgres
-          image: postgres:13
-          env:
+          image: &image postgres:13
+          imagePullPolicy: &pull-policy IfNotPresent
+          env: &env
             - name: POSTGRES_URI
               valueFrom:
                 secretKeyRef:
                   name: {{.PostgressRootCredentialsSecret}}
-                  key: CLUSTER_LOCAL_URI
+                  key: .CLUSTER_LOCAL_URI
 
             - name: NEW_DB_NAME
               valueFrom:
@@ -61,47 +62,28 @@ spec:
             psql "$POSTGRES_URI" -v ON_ERROR_STOP=1 -f ./script.sql
       restartPolicy: Never
 
-  {{- /* onDelete: */}}
-  {{- /*   backOffLimit: 1 */}}
-  {{- /*   podSpec: */}}
-  {{- /*     tolerations: *tolerations */}}
-  {{- /*     nodeSelector: *nodeselector */}}
-  {{- /**/}}
-  {{- /*     resources: *resources */}}
-  {{- /**/}}
-  {{- /*     containers: */}}
-  {{- /*       - name: main */}}
-  {{- /*         image: {{.JobImage}} */}}
-  {{- /*         imagePullPolicy: Always */}}
-  {{- /*         env: */}}
-  {{- /*           - name: KUBE_IN_CLUSTER_CONFIG */}}
-  {{- /*             value: "true" */}}
-  {{- /**/}}
-  {{- /*           - name: KUBE_NAMESPACE */}}
-  {{- /*             value: {{.TfWorkspaceNamespace | squote}} */}}
-  {{- /*         command: */}}
-  {{- /*           - bash */}}
-  {{- /*           - -c */}}
-  {{- /*           - |+ */}}
-  {{- /*             set -o pipefail */}}
-  {{- /*             set -o errexit */}}
-  {{- /**/}}
-  {{- /*             eval $DECOMPRESS_CMD */}}
-  {{- /**/}}
-  {{- /*             pushd "$TEMPLATES_DIR/{{.CloudProvider}}/worker-nodes" */}}
-  {{- /**/}}
-  {{- /*             envsubst < state-backend.tf.tpl > state-backend.tf */}}
-  {{- /**/}}
-  {{- /*             terraform init -reconfigure -no-color 2>&1 | tee /dev/termination-log */}}
-  {{- /*             terraform workspace select --or-create {{.TFWorkspaceName}} */}}
-  {{- /**/}}
-  {{- /*             cat > values.json <<'EOF' */}}
-  {{- /*             {{.ValuesJSON}} */}}
-  {{- /*             EOF */}}
-  {{- /**/}}
-  {{- /*             terraform init -no-color 2>&1 | tee /dev/termination-log */}}
-  {{- /*             terraform plan -parallelism=2 --destroy --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log */}}
-  {{- /*             terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log */}}
-  {{- /*     restartPolicy: Never */}}
+  onDelete:
+    backOffLimit: 1
+    podSpec:
+      tolerations: *tolerations
+      nodeSelector: *nodeselector
+      resources: *resources
+
+      containers:
+        - name: postgres
+          image: *image
+          imagePullPolicy: *pull-policy
+          env: *env
+          command:
+            - sh
+            - -c
+            - |+
+              cat > script.sql <<EOF
+              DROP DATABASE $NEW_DB_NAME;
+              DROP USER $NEW_USERNAME;
+              EOF
+              
+              psql "$POSTGRES_URI" -v ON_ERROR_STOP=1 -f ./script.sql
+      restartPolicy: Never
 {{ end }}
 

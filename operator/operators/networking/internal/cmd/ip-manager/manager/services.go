@@ -141,6 +141,10 @@ func (m *Manager) ReserveService(ctx context.Context, namespace, name string, po
 		return NewError(err, "updating service binding")
 	}
 
+	if err := m.WgAddAddr(sb.Spec.GlobalIP); err != nil {
+		return NewError(err, "adding ip addr from wg")
+	}
+
 	m.svcNginxStreams[sb.Spec.GlobalIP] = RegisterNginxStreamConfig(sb)
 	if err := m.SyncNginxStreams(); err != nil {
 		return NewError(err, "syncing nginx streams")
@@ -149,20 +153,6 @@ func (m *Manager) ReserveService(ctx context.Context, namespace, name string, po
 
 	return nil
 }
-
-// func (m *Manager) SyncNginx(ctx context.Context, namespace, name string) error {
-// 	sb, err := m.getServiceBinding(ctx, namespace, name)
-// 	if err != nil {
-// 		return NewError(err, "k8s get service binding")
-// 	}
-//
-// 	m.svcNginxStreams[sb.Spec.GlobalIP] = RegisterNginxStreamConfig(sb)
-// 	if err := m.SyncNginxStreams(); err != nil {
-// 		return NewError(err, "syncing nginx streams")
-// 	}
-// 	m.logger.Info("nginx successfully synced")
-// 	return nil
-// }
 
 var ErrServiceBindingNotFound = fmt.Errorf("servicebinding not found")
 

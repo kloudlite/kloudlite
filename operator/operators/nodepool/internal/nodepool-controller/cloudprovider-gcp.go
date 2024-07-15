@@ -122,7 +122,7 @@ func (r *Reconciler) GCPJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 		ClusterInternalDNSHost:   "cluster.local",
 		SaveSSHKeyToPath:         "",
 		KloudliteRelease:         r.Env.KloudliteRelease,
-		LabelCloudproviderRegion: r.Env.CloudProviderRegion,
+		LabelCloudproviderRegion: obj.Spec.GCP.Region,
 		Labels: map[string]string{
 			"kloudlite-account": r.Env.AccountName,
 			"nodepool-name":     obj.Name,

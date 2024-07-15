@@ -12,6 +12,8 @@ type Env struct {
 
 	ClusterInternalDNS string `env:"CLUSTER_INTERNAL_DNS" default:"cluster.local"`
 	GlobalVpnDNS       string `env:"GLOBAL_VPN_DNS"`
+
+	KloudliteDNSSuffix string `env:"KLOUDLITE_DNS_SUFFIX" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

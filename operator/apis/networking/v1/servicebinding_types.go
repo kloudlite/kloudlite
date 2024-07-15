@@ -15,6 +15,8 @@ type ServiceBindingSpec struct {
 	ServiceIP  *string                   `json:"serviceIP,omitempty"`
 	ServiceRef *ct.NamespacedResourceRef `json:"serviceRef,omitempty"`
 	Ports      []corev1.ServicePort      `json:"ports,omitempty"`
+
+	Hostname string `json:"hostname,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -23,7 +25,7 @@ type ServiceBindingSpec struct {
 //+kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
 //+kubebuilder:printcolumn:JSONPath=".spec.globalIP",name=GlobalIP,type=string
 //+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/servicebinding\\.reservation",name=Allocation,type=string
-//+kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/global\\.hostname",name=Host,type=string
+//+kubebuilder:printcolumn:JSONPath=".spec.hostname",name=Host,type=string
 
 // ServiceBinding is the Schema for the servicebindings API
 type ServiceBinding struct {

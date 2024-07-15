@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/kloudlite/operator/operator"
-	"github.com/kloudlite/operator/operators/helm-charts/controller"
+	"github.com/kloudlite/operator/operators/lifecycle/controller"
 )
 
 func main() {
