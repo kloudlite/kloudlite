@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Console_ArchiveEnvironmentsForCluster_FullMethodName = "/Console/ArchiveEnvironmentsForCluster"
+	Console_ArchiveResourcesForCluster_FullMethodName = "/Console/ArchiveResourcesForCluster"
 )
 
 // ConsoleClient is the client API for Console service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConsoleClient interface {
-	ArchiveEnvironmentsForCluster(ctx context.Context, in *ArchiveEnvironmentsForClusterIn, opts ...grpc.CallOption) (*ArchiveEnvironmentsForClusterOut, error)
+	ArchiveResourcesForCluster(ctx context.Context, in *ArchiveResourcesForClusterIn, opts ...grpc.CallOption) (*ArchiveResourcesForClusterOut, error)
 }
 
 type consoleClient struct {
@@ -37,9 +37,9 @@ func NewConsoleClient(cc grpc.ClientConnInterface) ConsoleClient {
 	return &consoleClient{cc}
 }
 
-func (c *consoleClient) ArchiveEnvironmentsForCluster(ctx context.Context, in *ArchiveEnvironmentsForClusterIn, opts ...grpc.CallOption) (*ArchiveEnvironmentsForClusterOut, error) {
-	out := new(ArchiveEnvironmentsForClusterOut)
-	err := c.cc.Invoke(ctx, Console_ArchiveEnvironmentsForCluster_FullMethodName, in, out, opts...)
+func (c *consoleClient) ArchiveResourcesForCluster(ctx context.Context, in *ArchiveResourcesForClusterIn, opts ...grpc.CallOption) (*ArchiveResourcesForClusterOut, error) {
+	out := new(ArchiveResourcesForClusterOut)
+	err := c.cc.Invoke(ctx, Console_ArchiveResourcesForCluster_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *consoleClient) ArchiveEnvironmentsForCluster(ctx context.Context, in *A
 // All implementations must embed UnimplementedConsoleServer
 // for forward compatibility
 type ConsoleServer interface {
-	ArchiveEnvironmentsForCluster(context.Context, *ArchiveEnvironmentsForClusterIn) (*ArchiveEnvironmentsForClusterOut, error)
+	ArchiveResourcesForCluster(context.Context, *ArchiveResourcesForClusterIn) (*ArchiveResourcesForClusterOut, error)
 	mustEmbedUnimplementedConsoleServer()
 }
 
@@ -58,8 +58,8 @@ type ConsoleServer interface {
 type UnimplementedConsoleServer struct {
 }
 
-func (UnimplementedConsoleServer) ArchiveEnvironmentsForCluster(context.Context, *ArchiveEnvironmentsForClusterIn) (*ArchiveEnvironmentsForClusterOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ArchiveEnvironmentsForCluster not implemented")
+func (UnimplementedConsoleServer) ArchiveResourcesForCluster(context.Context, *ArchiveResourcesForClusterIn) (*ArchiveResourcesForClusterOut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ArchiveResourcesForCluster not implemented")
 }
 func (UnimplementedConsoleServer) mustEmbedUnimplementedConsoleServer() {}
 
@@ -74,20 +74,20 @@ func RegisterConsoleServer(s grpc.ServiceRegistrar, srv ConsoleServer) {
 	s.RegisterService(&Console_ServiceDesc, srv)
 }
 
-func _Console_ArchiveEnvironmentsForCluster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ArchiveEnvironmentsForClusterIn)
+func _Console_ArchiveResourcesForCluster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ArchiveResourcesForClusterIn)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ConsoleServer).ArchiveEnvironmentsForCluster(ctx, in)
+		return srv.(ConsoleServer).ArchiveResourcesForCluster(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Console_ArchiveEnvironmentsForCluster_FullMethodName,
+		FullMethod: Console_ArchiveResourcesForCluster_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsoleServer).ArchiveEnvironmentsForCluster(ctx, req.(*ArchiveEnvironmentsForClusterIn))
+		return srv.(ConsoleServer).ArchiveResourcesForCluster(ctx, req.(*ArchiveResourcesForClusterIn))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -100,8 +100,8 @@ var Console_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ConsoleServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ArchiveEnvironmentsForCluster",
-			Handler:    _Console_ArchiveEnvironmentsForCluster_Handler,
+			MethodName: "ArchiveResourcesForCluster",
+			Handler:    _Console_ArchiveResourcesForCluster_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

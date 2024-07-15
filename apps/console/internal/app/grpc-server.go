@@ -15,7 +15,7 @@ type grpcServer struct {
 	kcli k8s.Client
 }
 
-func (g *grpcServer) ArchiveEnvironmentsForCluster(ctx context.Context, in *console.ArchiveEnvironmentsForClusterIn) (*console.ArchiveEnvironmentsForClusterOut, error) {
+func (g *grpcServer) ArchiveResourcesForCluster(ctx context.Context, in *console.ArchiveResourcesForClusterIn) (*console.ArchiveResourcesForClusterOut, error) {
 	consoleCtx := domain.ConsoleContext{
 		Context:     ctx,
 		UserId:      repos.ID(in.UserId),
@@ -26,10 +26,15 @@ func (g *grpcServer) ArchiveEnvironmentsForCluster(ctx context.Context, in *cons
 
 	archiveStatus, err := g.d.ArchiveEnvironmentsForCluster(consoleCtx, in.ClusterName)
 	if err != nil {
-		return &console.ArchiveEnvironmentsForClusterOut{Archived: false}, err
+		return &console.ArchiveResourcesForClusterOut{Archived: false}, err
 	}
 
-	return &console.ArchiveEnvironmentsForClusterOut{Archived: archiveStatus}, nil
+	archiveStatus, err = g.d.ArchiveClusterManagedServicesForCluster(consoleCtx, in.ClusterName)
+	if err != nil {
+		return &console.ArchiveResourcesForClusterOut{Archived: false}, err
+	}
+
+	return &console.ArchiveResourcesForClusterOut{Archived: archiveStatus}, nil
 }
 
 func newConsoleGrpcServer(d domain.Domain, kcli k8s.Client) console.ConsoleServer {

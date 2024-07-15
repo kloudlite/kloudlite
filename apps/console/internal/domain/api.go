@@ -161,6 +161,7 @@ type Domain interface {
 	UpdateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
 	DeleteEnvironment(ctx ConsoleContext, name string) error
 	ArchiveEnvironmentsForCluster(ctx ConsoleContext, clusterName string) (bool, error)
+	ArchiveClusterManagedServicesForCluster(ctx ConsoleContext, clusterName string) (bool, error)
 
 	OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, name string, opts UpdateAndDeleteOpts) error
 	OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Environment) error
