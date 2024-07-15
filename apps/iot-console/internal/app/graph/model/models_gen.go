@@ -515,11 +515,17 @@ type K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementIn struct {
 	Values   []string                                            `json:"values,omitempty"`
 }
 
+type Mutation struct {
+}
+
 type PageInfo struct {
-	EndCursor       *string `json:"endCursor,omitempty"`
-	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
-	HasPreviousPage *bool   `json:"hasPreviousPage,omitempty"`
-	StartCursor     *string `json:"startCursor,omitempty"`
+	EndCursor   *string `json:"endCursor,omitempty"`
+	HasNextPage *bool   `json:"hasNextPage,omitempty"`
+	HasPrevPage *bool   `json:"hasPrevPage,omitempty"`
+	StartCursor *string `json:"startCursor,omitempty"`
+}
+
+type Query struct {
 }
 
 type SearchIOTApps struct {

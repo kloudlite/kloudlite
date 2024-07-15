@@ -772,10 +772,10 @@ type ComplexityRoot struct {
 	}
 
 	PageInfo struct {
-		EndCursor       func(childComplexity int) int
-		HasNextPage     func(childComplexity int) int
-		HasPreviousPage func(childComplexity int) int
-		StartCursor     func(childComplexity int) int
+		EndCursor   func(childComplexity int) int
+		HasNextPage func(childComplexity int) int
+		HasPrevPage func(childComplexity int) int
+		StartCursor func(childComplexity int) int
 	}
 
 	Port struct {
@@ -4433,12 +4433,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.HasNextPage(childComplexity), true
 
-	case "PageInfo.hasPreviousPage":
-		if e.complexity.PageInfo.HasPreviousPage == nil {
+	case "PageInfo.hasPrevPage":
+		if e.complexity.PageInfo.HasPrevPage == nil {
 			break
 		}
 
-		return e.complexity.PageInfo.HasPreviousPage(childComplexity), true
+		return e.complexity.PageInfo.HasPrevPage(childComplexity), true
 
 	case "PageInfo.startCursor":
 		if e.complexity.PageInfo.StartCursor == nil {
@@ -6064,7 +6064,7 @@ type Metadata @shareable {
 type PageInfo @shareable {
   endCursor: String
   hasNextPage: Boolean
-  hasPreviousPage: Boolean
+  hasPrevPage: Boolean
   startCursor: String
 }
 
@@ -9938,8 +9938,8 @@ func (ec *executionContext) fieldContext_AppPaginatedRecords_pageInfo(ctx contex
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -11075,8 +11075,8 @@ func (ec *executionContext) fieldContext_ClusterManagedServicePaginatedRecords_p
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -12340,8 +12340,8 @@ func (ec *executionContext) fieldContext_ConfigPaginatedRecords_pageInfo(ctx con
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -13797,8 +13797,8 @@ func (ec *executionContext) fieldContext_EnvironmentPaginatedRecords_pageInfo(ct
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -14823,8 +14823,8 @@ func (ec *executionContext) fieldContext_ExternalAppPaginatedRecords_pageInfo(ct
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -23368,8 +23368,8 @@ func (ec *executionContext) fieldContext_ImagePullSecretPaginatedRecords_pageInf
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -24380,8 +24380,8 @@ func (ec *executionContext) fieldContext_ImportedManagedResourcePaginatedRecords
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -26983,8 +26983,8 @@ func (ec *executionContext) fieldContext_ManagedResourcePaginatedRecords_pageInf
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -31103,8 +31103,8 @@ func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+func (ec *executionContext) _PageInfo_hasPrevPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -31117,7 +31117,7 @@ func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.HasPreviousPage, nil
+		return obj.HasPrevPage, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -31131,7 +31131,7 @@ func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_hasPrevPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -35590,8 +35590,8 @@ func (ec *executionContext) fieldContext_RouterPaginatedRecords_pageInfo(ctx con
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -36997,8 +36997,8 @@ func (ec *executionContext) fieldContext_SecretPaginatedRecords_pageInfo(ctx con
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
 			case "hasNextPage":
 				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
 			case "startCursor":
 				return ec.fieldContext_PageInfo_startCursor(ctx, field)
 			}
@@ -48480,8 +48480,8 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
 		case "hasNextPage":
 			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
-		case "hasPreviousPage":
-			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
+		case "hasPrevPage":
+			out.Values[i] = ec._PageInfo_hasPrevPage(ctx, field, obj)
 		case "startCursor":
 			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
 		default:
@@ -52521,7 +52521,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -52529,7 +52529,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
