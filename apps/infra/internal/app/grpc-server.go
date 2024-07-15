@@ -128,29 +128,6 @@ func (g *grpcServer) ClusterExists(ctx context.Context, in *infra.ClusterExistsI
 	return &infra.ClusterExistsOut{Exists: true}, nil
 }
 
-func (g *grpcServer) GetClusterManagedService(ctx context.Context, in *infra.GetClusterManagedServiceIn) (*infra.GetClusterManagedServiceOut, error) {
-	infraCtx := domain.InfraContext{
-		Context:     ctx,
-		UserId:      repos.ID(in.UserId),
-		UserEmail:   in.UserEmail,
-		UserName:    in.UserName,
-		AccountName: in.AccountName,
-	}
-	msvc, err := g.d.GetClusterManagedService(infraCtx, in.MsvcName)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if msvc == nil {
-		return nil, errors.Newf("cluster managed service %s not found", in.MsvcName)
-	}
-
-	return &infra.GetClusterManagedServiceOut{
-		TargetNamespace: msvc.Spec.TargetNamespace,
-		ClusterName:     msvc.ClusterName,
-	}, nil
-}
-
 // MarkClusterAsOnline implements infra.InfraServer.
 func (g *grpcServer) MarkClusterOnlineAt(ctx context.Context, in *infra.MarkClusterOnlineAtIn) (*infra.MarkClusterOnlineAtOut, error) {
 	ictx := domain.InfraContext{Context: ctx, AccountName: in.AccountName}

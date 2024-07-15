@@ -43,7 +43,6 @@ var (
 	pvGVK               = fn.GVK("v1", "PersistentVolume")
 	volumeAttachmentGVK = fn.GVK("storage.k8s.io/v1", "VolumeAttachment")
 	namespaceGVK        = fn.GVK("v1", "Namespace")
-	clusterMsvcGVK      = fn.GVK("crds.kloudlite.io/v1", "ClusterManagedService")
 	ingressGVK          = fn.GVK("networking.k8s.io/v1", "Ingress")
 	secretGVK           = fn.GVK("v1", "Secret")
 )
@@ -239,28 +238,6 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				return d.OnNamespaceUpdateMessage(dctx, ru.ClusterName, ns, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
-		case clusterMsvcGVK.String():
-			{
-				var cmsvc entities.ClusterManagedService
-				if err := fn.JsonConversion(su.Object, &cmsvc); err != nil {
-					return errors.NewE(err)
-				}
-
-				if v, ok := su.Object[types.KeyClusterManagedSvcSecret]; ok {
-					v2, err := fn.JsonConvertP[corev1.Secret](v)
-					if err != nil {
-						mLogger.Infof("managed resource, invalid output secret received")
-						return errors.NewE(err)
-					}
-					v2.SetManagedFields(nil)
-					cmsvc.SyncedOutputSecretRef = v2
-				}
-
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnClusterManagedServiceDeleteMessage(dctx, ru.ClusterName, cmsvc)
-				}
-				return d.OnClusterManagedServiceUpdateMessage(dctx, ru.ClusterName, cmsvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
-			}
 
 		case ingressGVK.String():
 			{

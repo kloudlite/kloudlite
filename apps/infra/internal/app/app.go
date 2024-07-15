@@ -57,7 +57,6 @@ var Module = fx.Module(
 
 	// repos.NewFxMongoRepo[*entities.BYOKCluster]("byok_clusters", "byok", entities.BYOKClusterIndices),
 	repos.NewFxMongoRepo[*entities.BYOKCluster]("byok_cluster", "byok", entities.BYOKClusterIndices),
-	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cmsvcs", "cmsvc", entities.ClusterManagedServiceIndices),
 	repos.NewFxMongoRepo[*entities.DomainEntry]("domain_entries", "de", entities.DomainEntryIndices),
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.Node]("node", "node", entities.NodePoolIndices),

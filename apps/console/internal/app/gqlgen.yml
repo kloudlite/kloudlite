@@ -147,6 +147,10 @@ models:
       managedResource:
         resolver: true
 
+  ClusterManagedService: &custer-managed-service-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.ClusterManagedService
+  ClusterManagedServiceIn: *custer-managed-service-model
+
   ManagedResourceKeyRefIn:
     model: github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyRef
 
