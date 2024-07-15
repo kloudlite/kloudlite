@@ -52,6 +52,11 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 	}
 
 	switch typeArg {
+	// FIXME: remove me after web fixes it
+	case ResTypeClusterManagedService:
+		{
+			return &CheckNameAvailabilityOutput{Result: true}, nil
+		}
 	case ResTypeCluster:
 		{
 			return checkResourceName(ctx, repos.Filter{
@@ -101,17 +106,6 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				fields.ClusterName:  clusterName,
 				fields.MetadataName: name,
 			}, d.helmReleaseRepo)
-		}
-	case ResTypeClusterManagedService:
-		{
-			if clusterName == nil || *clusterName == "" {
-				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeClusterManagedService)
-			}
-			return checkResourceName(ctx, repos.Filter{
-				fields.AccountName:  ctx.AccountName,
-				fields.ClusterName:  clusterName,
-				fields.MetadataName: name,
-			}, d.clusterManagedServiceRepo)
 		}
 	default:
 		{

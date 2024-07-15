@@ -70,8 +70,8 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
 	repos.NewFxMongoRepo[*entities.ImagePullSecret]("image_pull_secrets", "ips", entities.ImagePullSecretIndexes),
 	repos.NewFxMongoRepo[*entities.ResourceMapping]("resource_mappings", "rmap", entities.ResourceMappingIndices),
-	repos.NewFxMongoRepo[*entities.ConsoleVPNDevice]("vpn_devices", "devs", entities.VPNDeviceIndexes),
 	repos.NewFxMongoRepo[*entities.ServiceBinding]("service_bindings", "svcb", entities.ServiceBindingIndexes),
+	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cluster_managed_services", "cmsvc", entities.ClusterManagedServiceIndices),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -220,10 +220,11 @@ var Module = fx.Module("app",
 		return domain.NewSvcBindingDomain(svcBindingRepo)
 	}),
 
-	fx.Provide(func(logger logging.Logger, sbd domain.ServiceBindingDomain) *dnsHandler {
+	fx.Provide(func(logger logging.Logger, sbd domain.ServiceBindingDomain, ev *env.Env) *dnsHandler {
 		return &dnsHandler{
 			logger:               logger,
 			serviceBindingDomain: sbd,
+			kloudliteDNSSuffix:   ev.KloudliteDNSSuffix,
 		}
 	}),
 

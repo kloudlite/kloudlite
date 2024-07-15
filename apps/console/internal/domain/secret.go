@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"strings"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -26,9 +28,24 @@ func (d *domain) ListSecrets(ctx ResourceContext, search map[string]repos.MatchF
 
 	for i := range pr.Edges {
 		fromDataToStringData(&pr.Edges[i].Node.Secret)
+		pr.Edges[i].Node.StringData = filterOutHiddenKeysFromSecret(pr.Edges[i].Node)
 	}
 
 	return pr, nil
+}
+
+func filterOutHiddenKeysFromSecret(secret *entities.Secret) map[string]string {
+	if secret.For != nil {
+		// means, this is a secret created by something other than a secret
+		fdata := make(map[string]string, len(secret.StringData))
+		for k, v := range secret.StringData {
+			if !strings.HasPrefix(k, ".") {
+				fdata[k] = v
+			}
+		}
+		return fdata
+	}
+	return secret.StringData
 }
 
 func fromDataToStringData(secret *corev1.Secret) {
@@ -53,7 +70,8 @@ func (d *domain) findSecret(ctx ResourceContext, name string) (*entities.Secret,
 		return nil, errors.Newf("no secret with name (%s) found", name)
 	}
 
-  fromDataToStringData(&xSecret.Secret)
+	fromDataToStringData(&xSecret.Secret)
+	xSecret.StringData = filterOutHiddenKeysFromSecret(xSecret)
 	return xSecret, nil
 }
 
@@ -90,11 +108,11 @@ func (d *domain) GetSecretEntries(ctx ResourceContext, keyrefs []SecretKeyRef) (
 	data := make(map[string]map[string]string)
 
 	for i := range secrets {
-		m := make(map[string]string, len(secrets[i].Data))
-		for k, v := range secrets[i].Data {
-			m[k] = string(v)
+		fromDataToStringData(&secrets[i].Secret)
+		if secrets[i].For != nil {
+			secrets[i].StringData = filterOutHiddenKeysFromSecret(secrets[i])
 		}
-
+		m := make(map[string]string, len(secrets[i].StringData))
 		for k, v := range secrets[i].StringData {
 			m[k] = v
 		}

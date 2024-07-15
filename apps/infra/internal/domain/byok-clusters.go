@@ -239,10 +239,6 @@ func (d *domain) DeleteBYOKCluster(ctx InfraContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	if err := d.ArchiveClusterManagedService(ctx, name); err != nil {
-		return errors.NewE(err)
-	}
-
 	if err := d.byokClusterRepo.DeleteOne(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, name)); err != nil {
 		return errors.NewE(err)
 	}
