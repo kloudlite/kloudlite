@@ -47,8 +47,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if pod.Status.Phase != corev1.PodRunning {
+		return ctrl.Result{}, nil
+	}
+
 	v, ok := pod.GetLabels()[constants.KloudliteGatewayEnabledLabel]
 	if !ok {
+		r.logger.Infof("pod %s/%s is not registered with gateway, deleting it", pod.GetNamespace(), pod.GetName())
 		if err := r.Delete(ctx, pod); err != nil {
 			return ctrl.Result{}, err
 		}

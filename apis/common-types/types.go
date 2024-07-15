@@ -63,32 +63,13 @@ const (
 	Xfs  FsType = "xfs"
 )
 
-// func (c CloudProvider) GetStorageClass(env *env.Env, fsType FsType, region string) (string, error) { // 	switch c {
-// 	case Digitalocean:
-// 		{
-// 			switch fsType {
-// 			case Ext4:
-// 				return env.DoBlockStorageExt4, nil
-// 			case Xfs:
-// 				return env.DoBlockStorageXFS, nil
-// 			}
-// 		}
-// 	case Azure: {
-// 		return fmt.Sprintf("kl-%s-block-%s-%s", c, fsType, region), nil
-// 	}
-// 	default:
-// 		return "", errors.NewE(errors.Newf("unknown pair (provider=%s, fstype=%s)", c, fsType))
-// 	}
-// 	return "", errors.NewE(errors.Newf("unknown pair (provider=%s, fstype=%s)", c, fsType))
-// }
-
 // +kubebuilder:object:generate=true
 type MsvcRef struct {
 	metav1.TypeMeta `json:",inline"`
-	Name            string  `json:"name"`
-	Namespace       string  `json:"namespace"`
-	ClusterName     *string `json:"clusterName,omitempty"`
-	SharedSecret    *string `json:"sharedSecret,omitempty" graphql:"ignore"`
+	Name            string `json:"name"`
+	Namespace       string `json:"namespace"`
+	// ClusterName     *string `json:"clusterName,omitempty"`
+	// SharedSecret    *string `json:"sharedSecret,omitempty" graphql:"ignore"`
 }
 
 type SecretRef struct {

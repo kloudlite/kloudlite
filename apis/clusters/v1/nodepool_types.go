@@ -40,14 +40,11 @@ type AwsSpotPoolConfig struct {
 }
 
 type AWSNodePoolConfig struct {
-	// ImageId          string `json:"imageId"`
-	// ImageSSHUsername string `json:"imageSSHUsername"`
+	Region string `json:"region" graphql:"noinput"`
+	AvailabilityZone string `json:"availabilityZone"`
 
 	VPCId       string `json:"vpcId" graphql:"noinput"`
 	VPCSubnetID string `json:"vpcSubnetId" graphql:"noinput"`
-
-	// AvailabilityZone AwsAZ `json:"availabilityZone"`
-	AvailabilityZone string `json:"availabilityZone"`
 
 	NvidiaGpuEnabled bool   `json:"nvidiaGpuEnabled"`
 	RootVolumeType   string `json:"rootVolumeType" graphql:"noinput"`

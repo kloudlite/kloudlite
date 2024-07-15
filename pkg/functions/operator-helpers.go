@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/logging"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +16,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 func ContainsFinalizers(obj client.Object, finalizers ...string) bool {
@@ -181,6 +183,54 @@ func DeleteAndWait[T client.Object](ctx context.Context, logger logging.Logger, 
 				}
 				return fmt.Errorf("waiting for deletion for %s", resourceRef)
 			}
+		}
+	}
+
+	for k, v := range deletionStatus {
+		if !v {
+			return fmt.Errorf("waiting for (%s) to be removed from k8s", k)
+		}
+	}
+
+	return nil
+}
+
+func ForceDelete[T client.Object](ctx context.Context, logger logging.Logger, kcli client.Client, resources ...T) error {
+	deletionStatus := make(map[string]bool)
+
+	for i := range resources {
+		resourceRef := fmt.Sprintf("resource (%s/%s) (gvk: %s)", resources[i].GetNamespace(), resources[i].GetName(), resources[i].GetObjectKind().GroupVersionKind().String())
+
+		deletionStatus[resourceRef] = false
+
+		if err := kcli.Get(ctx, client.ObjectKeyFromObject(resources[i]), resources[i]); err != nil {
+			if apiErrors.IsNotFound(err) {
+				deletionStatus[resourceRef] = true
+				continue
+			}
+			return err
+		}
+
+		if resources[i].GetDeletionTimestamp() == nil {
+			logger.Infof("deleting %s", resourceRef)
+
+			if err := kcli.Delete(ctx, resources[i], &client.DeleteOptions{
+				GracePeriodSeconds: New(int64(30)),
+				PropagationPolicy:  New(metav1.DeletePropagationForeground),
+			}); err != nil {
+				if !apiErrors.IsNotFound(err) {
+					return err
+				}
+				return fmt.Errorf("waiting for deletion for %s", resourceRef)
+			}
+		}
+
+		if controllerutil.ContainsFinalizer(resources[i], constants.CommonFinalizer) {
+			controllerutil.RemoveFinalizer(resources[i], constants.CommonFinalizer)
+			if err := kcli.Update(ctx, resources[i]); err != nil {
+				return err
+			}
+			return fmt.Errorf("removing finalizers from resource %s", resourceRef)
 		}
 	}
 

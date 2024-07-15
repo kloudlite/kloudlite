@@ -4,20 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
-	// elasticsearchmsvcv1 "github.com/kloudlite/operator/apis/elasticsearch.msvc/v1"
-	// influxdbmsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
-	// mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
-	// neo4jmsvcv1 "github.com/kloudlite/operator/apis/neo4j.msvc/v1"
-	// redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
-	// redpandamsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
-	// zookeeperMsvcv1 "github.com/kloudlite/operator/apis/zookeeper.msvc/v1"
+	mongov1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
+	mysqlv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
+	postgresv1 "github.com/kloudlite/operator/apis/postgres.msvc/v1"
+	redisv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
-	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/msvc/http"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -53,18 +47,17 @@ const (
 	ManagedServiceApplied string = "managed-service-applied"
 	ManagedServiceReady   string = "managed-service-ready"
 
+	OwnManagedResources string = "own-managed-resources"
+
 	ManagedServiceDeleted string = "managed-service-deleted"
 	DefaultsPatched       string = "defaults-patched"
 )
 
 var ApplyCheckList = []rApi.CheckMeta{
 	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
+	{Name: OwnManagedResources, Title: "Own Managed Resources"},
 	{Name: ManagedServiceApplied, Title: "Managed Service Applied"},
 	{Name: ManagedServiceReady, Title: "Managed Service Ready"},
-}
-
-var DeleteCheckList = []rApi.CheckMeta{
-	{Name: ManagedServiceDeleted, Title: "managed-service-deleted"},
 }
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
@@ -111,6 +104,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.ownManagedResources(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.ensureRealMsvcReady(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -144,7 +141,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepRes
 	req.LogPreCheck("finalizing")
 	defer req.LogPostCheck("finalizing")
 
-	if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: "cleanup", Title: "Cleanup Owned Resources"},
+	}); !step.ShouldProceed() {
 		return step
 	}
 
@@ -153,6 +152,34 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepRes
 	}
 
 	return req.Finalize()
+}
+
+func (r *Reconciler) ownManagedResources(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(OwnManagedResources, req)
+
+	result, err := kubectl.PaginatedList[*crdsv1.ManagedResource](ctx, r.Client, &crdsv1.ManagedResourceList{}, &client.ListOptions{
+		Namespace: obj.Namespace,
+		Limit:     10,
+	})
+	if err != nil {
+		return check.Failed(err)
+	}
+
+	for mr := range result {
+		if mr.GetDeletionTimestamp() != nil {
+			continue
+		}
+		if !fn.IsOwner(mr, fn.AsOwner(obj, true)) {
+			mr.SetOwnerReferences(append(mr.GetOwnerReferences(), fn.AsOwner(obj, true)))
+			if err := r.Update(ctx, mr); err != nil {
+				return check.Failed(err)
+			}
+		}
+		req.AddToOwnedResources(rApi.ParseResourceRef(mr))
+	}
+
+	return check.Completed()
 }
 
 func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
@@ -238,47 +265,30 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		return err
 	}
 
-	if r.Env.MsvcCredsSvcHttpPort != 0 {
-		server, err := http.NewServer(http.ServerArgs{
-			Addr:      fmt.Sprintf(":%d", r.Env.MsvcCredsSvcHttpPort),
-			K8sClient: r.Client,
-			Route:     r.Env.MsvcCredsSvcRequestPath,
-			Logger:    logger,
-		})
-		if err != nil {
-			return err
-		}
-
-		go func() {
-			log.Fatal(server.Start())
-		}()
-	}
-
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedService{})
-	msvcs := []client.Object{
-		&mongodbMsvcv1.StandaloneService{},
-		&mongodbMsvcv1.ClusterService{},
-		// &mysqlMsvcv1.StandaloneService{},
-		// &mysqlMsvcv1.ClusterService{},
-		// &redisMsvcv1.StandaloneService{},
-		// &redisMsvcv1.ClusterService{},
-		// &elasticsearchmsvcv1.Service{},
-		// &zookeeperMsvcv1.Service{},
-		// &influxdbmsvcv1.Service{},
-		// &redpandamsvcv1.Service{},
-		// &neo4jmsvcv1.StandaloneService{},
+	owns := []client.Object{
+		&mongov1.StandaloneService{},
+		&mongov1.ClusterService{},
+		&mysqlv1.StandaloneService{},
+		&postgresv1.Standalone{},
+		&redisv1.StandaloneService{},
+	}
+	for _, obj := range owns {
+		builder.Owns(obj)
 	}
 
-	for _, obj := range msvcs {
-		builder.Watches(
-			obj,
-			handler.EnqueueRequestsFromMapFunc(
-				func(_ context.Context, obj client.Object) []reconcile.Request {
-					if v, ok := obj.GetLabels()[constants.MsvcNameKey]; ok {
-						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
-					}
-					return nil
-				}))
+	watchlist := []client.Object{
+		&crdsv1.ManagedResource{},
+	}
+
+	for _, obj := range watchlist {
+		builder.Watches(obj, handler.EnqueueRequestsFromMapFunc(
+			func(_ context.Context, obj client.Object) []reconcile.Request {
+				if v, ok := obj.GetLabels()[constants.MsvcNameKey]; ok {
+					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
+				}
+				return nil
+			}))
 		builder.Owns(obj)
 	}
 

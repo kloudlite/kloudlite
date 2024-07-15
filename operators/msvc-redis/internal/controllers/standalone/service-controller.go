@@ -22,8 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type ServiceReconciler struct {
@@ -156,13 +154,23 @@ func (r *ServiceReconciler) patchDefaults(req *rApi.Request[*redisMsvcv1.Standal
 	return check.Completed()
 }
 
+func getKloudliteDNSHostname(obj *redisMsvcv1.StandaloneService) string {
+	return fmt.Sprintf("%s.svc", obj.Name)
+}
+
 func (r *ServiceReconciler) createService(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(createService, req)
 
 	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
-		svc.SetLabels(obj.GetLabels())
+		lb := svc.GetLabels()
+		fn.MapSet(&lb, constants.KloudliteDNSHostname, getKloudliteDNSHostname(obj))
+		for k, v := range obj.GetLabels() {
+			lb[k] = v
+		}
+
+		svc.SetLabels(lb)
 		svc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		svc.Spec.Ports = []corev1.ServicePort{
 			{
@@ -218,27 +226,32 @@ func (r *ServiceReconciler) createAccessCredentials(req *rApi.Request[*redisMsvc
 
 			clusterLocalHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
 			globalVPNHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.GlobalVpnDNS)
+			kloudliteDNSHostFQDN := fmt.Sprintf("%s.%s", getKloudliteDNSHostname(obj), r.Env.KloudliteDNSSuffix)
 			port := "6379"
 
 			out := types.StandaloneServiceOutput{
 				RootPassword: password,
 				Port:         port,
 
-				Host: globalVPNHost,
-				Addr: fmt.Sprintf("%s:%s", globalVPNHost, port),
-				URI:  fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", password, globalVPNHost),
+				Host: kloudliteDNSHostFQDN,
+				Addr: fmt.Sprintf("%s:%s", kloudliteDNSHostFQDN, port),
+				URI:  fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", password, kloudliteDNSHostFQDN),
 
 				ClusterLocalHost: clusterLocalHost,
 				ClusterLocalAddr: fmt.Sprintf("%s:%s", clusterLocalHost, port),
 				ClusterLocalURI:  fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", password, globalVPNHost),
+
+				GlobalVpnHost: globalVPNHost,
+				GlobalVpnAddr: fmt.Sprintf("%s:%s", globalVPNHost, port),
+				GlobalVpnURI:  fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", password, globalVPNHost),
 			}
 
-			m, err := out.ToSecretData()
+			m, err := out.ToMap()
 			if err != nil {
 				return err
 			}
 
-			secret.Data = m
+			secret.StringData = m
 		}
 
 		return nil
@@ -319,6 +332,10 @@ func (r *ServiceReconciler) createStatefulSet(req *rApi.Request[*redisMsvcv1.Sta
 		return check.Failed(err)
 	}
 
+	if sts.Status.Replicas > 0 && sts.Status.ReadyReplicas != sts.Status.Replicas {
+		return check.Failed(fmt.Errorf("waiting for statefulset pods to start"))
+	}
+
 	return check.Completed()
 }
 
@@ -333,22 +350,6 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	builder.Owns(&corev1.Service{})
 	builder.Owns(&corev1.PersistentVolumeClaim{})
 	builder.Owns(&appsv1.StatefulSet{})
-	// builder.Owns(&redisMsvcv1.ACLConfigMap{})
-	// builder.Owns(&crdsv1.HelmChart{})
-
-	builder.Watches(
-		&appsv1.StatefulSet{}, handler.EnqueueRequestsFromMapFunc(
-			func(_ context.Context, obj client.Object) []reconcile.Request {
-				value, ok := obj.GetLabels()[constants.MsvcNameKey]
-				if !ok {
-					return nil
-				}
-				return []reconcile.Request{
-					{NamespacedName: fn.NN(obj.GetNamespace(), value)},
-				}
-			},
-		),
-	)
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
