@@ -26,8 +26,13 @@ query consoleInfraCheckNameAvailability($resType: ResType!, $name: String!, $clu
   }
 }
 
-query consoleCoreCheckNameAvailability($resType: ConsoleResType!, $name: String!, $envName: String) {
-  core_checkNameAvailability(resType: $resType, name: $name, envName: $envName) {
+query consoleCoreCheckNameAvailability($resType: ConsoleResType!, $name: String!, $envName: String, $msvcName: String) {
+  core_checkNameAvailability(
+    resType: $resType
+    name: $name
+    envName: $envName
+    msvcName: $msvcName
+  ) {
     result
   }
 }
@@ -999,6 +1004,10 @@ mutation consoleInterceptApp($portMappings: [Github__com___kloudlite___operator_
     appname: $appname
     envName: $envName
   )
+}
+
+mutation consoleRemoveDeviceIntercepts($envName: String!, $deviceName: String!) {
+  core_removeDeviceIntercepts(envName: $envName, deviceName: $deviceName)
 }
 
 mutation consoleDeleteApp($envName: String!, $appName: String!) {
@@ -3561,7 +3570,6 @@ query consoleGetManagedResource($name: String!, $msvcName: String, $envName: Str
         kind
         msvcRef {
           apiVersion
-          clusterName
           kind
           name
           namespace
@@ -3670,7 +3678,6 @@ query consoleListManagedResources($search: SearchManagedResources, $pq: CursorPa
             kind
             msvcRef {
               apiVersion
-              clusterName
               kind
               name
               namespace
@@ -4504,7 +4511,6 @@ query consoleListImportedManagedResources($envName: String!, $search: SearchImpo
               kind
               msvcRef {
                 apiVersion
-                clusterName
                 kind
                 name
                 namespace
@@ -6339,6 +6345,10 @@ mutation authCli_interceptApp($portMappings: [Github__com___kloudlite___operator
   )
 }
 
+mutation authCli_removeDeviceIntercepts($envName: String!, $deviceName: String!) {
+  core_removeDeviceIntercepts(envName: $envName, deviceName: $deviceName)
+}
+
 query authCli_getEnvironment($name: String!) {
   core_getEnvironment(name: $name) {
     status {
@@ -6664,7 +6674,6 @@ query authCli_listImportedManagedResources($envName: String!, $search: SearchImp
               kind
               msvcRef {
                 apiVersion
-                clusterName
                 kind
                 name
                 namespace

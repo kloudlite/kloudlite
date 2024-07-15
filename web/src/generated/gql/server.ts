@@ -141,6 +141,7 @@ export type Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities
     | 'managed_resource'
     | 'router'
     | 'secret'
+    | 'service_binding'
     | 'vpn_device';
 
 export type SecretKeyRefIn = {
@@ -816,7 +817,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresResourceT
 export type Github__Com___Kloudlite___Operator___Apis___Common____Types__MsvcRefIn =
   {
     apiVersion?: InputMaybe<Scalars['String']['input']>;
-    clusterName?: InputMaybe<Scalars['String']['input']>;
     kind?: InputMaybe<Scalars['String']['input']>;
     name: Scalars['String']['input'];
     namespace: Scalars['String']['input'];
@@ -1851,6 +1851,7 @@ export type ConsoleCoreCheckNameAvailabilityQueryVariables = Exact<{
   resType: ConsoleResType;
   name: Scalars['String']['input'];
   envName?: InputMaybe<Scalars['String']['input']>;
+  msvcName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type ConsoleCoreCheckNameAvailabilityQuery = {
@@ -2755,6 +2756,15 @@ export type ConsoleInterceptAppMutationVariables = Exact<{
 }>;
 
 export type ConsoleInterceptAppMutation = { core_interceptApp: boolean };
+
+export type ConsoleRemoveDeviceInterceptsMutationVariables = Exact<{
+  envName: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type ConsoleRemoveDeviceInterceptsMutation = {
+  core_removeDeviceIntercepts: boolean;
+};
 
 export type ConsoleDeleteAppMutationVariables = Exact<{
   envName: Scalars['String']['input'];
@@ -5226,7 +5236,6 @@ export type ConsoleGetManagedResourceQuery = {
         kind: string;
         msvcRef: {
           apiVersion?: string;
-          clusterName?: string;
           kind?: string;
           name: string;
           namespace: string;
@@ -5335,7 +5344,6 @@ export type ConsoleListManagedResourcesQuery = {
             kind: string;
             msvcRef: {
               apiVersion?: string;
-              clusterName?: string;
               kind?: string;
               name: string;
               namespace: string;
@@ -6116,7 +6124,6 @@ export type ConsoleListImportedManagedResourcesQuery = {
               spec?: any;
               msvcRef: {
                 apiVersion?: string;
-                clusterName?: string;
                 kind?: string;
                 name: string;
                 namespace: string;
@@ -7978,6 +7985,15 @@ export type AuthCli_InterceptAppMutationVariables = Exact<{
 
 export type AuthCli_InterceptAppMutation = { core_interceptApp: boolean };
 
+export type AuthCli_RemoveDeviceInterceptsMutationVariables = Exact<{
+  envName: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type AuthCli_RemoveDeviceInterceptsMutation = {
+  core_removeDeviceIntercepts: boolean;
+};
+
 export type AuthCli_GetEnvironmentQueryVariables = Exact<{
   name: Scalars['String']['input'];
 }>;
@@ -8291,7 +8307,6 @@ export type AuthCli_ListImportedManagedResourcesQuery = {
               spec?: any;
               msvcRef: {
                 apiVersion?: string;
-                clusterName?: string;
                 kind?: string;
                 name: string;
                 namespace: string;
