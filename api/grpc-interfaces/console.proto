@@ -4,7 +4,6 @@ option go_package = "kloudlite.io/rpc/console";
 
 service Console {
   rpc ArchiveEnvironmentsForCluster(ArchiveEnvironmentsForClusterIn) returns (ArchiveEnvironmentsForClusterOut);
-  rpc CreateManagedResource(CreateManagedResourceIn) returns (CreateManagedResourceOut);
 }
 
 message ArchiveEnvironmentsForClusterIn {
@@ -18,28 +17,4 @@ message ArchiveEnvironmentsForClusterIn {
 
 message ArchiveEnvironmentsForClusterOut {
   bool archived = 1;
-}
-
-message CreateManagedResourceIn {
-  string userId = 1;
-  string userName = 2;
-  string userEmail = 3;
-
-  string accountName = 4;
-  string clusterName = 5;
-
-  string msvcName = 6;
-  string accountNamespace = 7;
-  string msvcTargetNamespace = 8;
-
-  string mresName = 9;
-
-  string mresType = 10;
-  bytes outputSecret = 11;
-
-  string msvcApiVersion = 12;
-}
-
-message CreateManagedResourceOut {
-  bool ok = 1;
 }

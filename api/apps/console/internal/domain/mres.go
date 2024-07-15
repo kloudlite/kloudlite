@@ -9,11 +9,11 @@ import (
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
-	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -150,7 +150,7 @@ func (d *domain) GetManagedResourceOutputKeys(ctx ManagedResourceContext, name s
 }
 
 // mutations
-func (d *domain) CreateRootManagedResource(ctx ConsoleContext, accountNamespace string, mres *entities.ManagedResource) (*entities.ManagedResource, error) {
+func (d *domain) createRootManagedResource(ctx ConsoleContext, mres *entities.ManagedResource) (*entities.ManagedResource, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateManagedResource); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -168,8 +168,17 @@ func (d *domain) CreateRootManagedResource(ctx ConsoleContext, accountNamespace 
 		return nil, errors.Newf("managed resource (%s), not ready yet, please try again", mres.Name)
 	}
 
+	rootMres, err := d.mresRepo.Upsert(ctx, repos.Filter{
+		fc.AccountName:                       ctx.AccountName,
+		fc.ManagedResourceManagedServiceName: mres.ManagedServiceName,
+		fc.MetadataName:                      mres.Name,
+		fc.ClusterName:                       mres.ClusterName,
+	}, mres)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	secret := *mres.SyncedOutputSecretRef
-	secret.Namespace = accountNamespace
 
 	if _, err := d.secretRepo.Upsert(ctx, repos.Filter{
 		fc.AccountName:       ctx.AccountName,
@@ -184,17 +193,18 @@ func (d *domain) CreateRootManagedResource(ctx ConsoleContext, accountNamespace 
 			LastUpdatedBy: mres.LastUpdatedBy,
 		},
 		SyncStatus: mres.SyncStatus,
+		For: &entities.SecretCreatedFor{
+			RefId:        rootMres.Id,
+			ResourceType: entities.ResourceTypeManagedResource,
+			Name:         rootMres.Name,
+			Namespace:    rootMres.Namespace,
+		},
 		IsReadOnly: true,
 	}); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	return d.mresRepo.Upsert(ctx, repos.Filter{
-		fields.AccountName:                   ctx.AccountName,
-		fc.ManagedResourceManagedServiceName: mres.ManagedServiceName,
-		fc.MetadataName:                      mres.Name,
-		fc.ClusterName:                       mres.ClusterName,
-	}, mres)
+	return rootMres, nil
 }
 
 func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error) {
@@ -206,13 +216,7 @@ func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities
 		return nil, errors.Newf("managed service name is required")
 	}
 
-	msvcOut, err := d.infraClient.GetClusterManagedService(ctx, &infra.GetClusterManagedServiceIn{
-		UserId:      string(ctx.UserId),
-		UserName:    ctx.UserName,
-		UserEmail:   ctx.UserEmail,
-		AccountName: ctx.AccountName,
-		MsvcName:    *ctx.ManagedServiceName,
-	})
+	cms, err := d.GetClusterManagedService(ctx.ConsoleContext, *ctx.ManagedServiceName)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -221,10 +225,7 @@ func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities
 		return nil, errors.New(".spec.resourceTemplate.apiVersion, and .spec.resourceTemplate.kind must be set")
 	}
 
-	mres.Namespace = msvcOut.TargetNamespace
-	// if mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.ClusterName == nil {
-	// 	mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.ClusterName = &msvcOut.ClusterName
-	// }
+	mres.Namespace = cms.Spec.TargetNamespace
 
 	mres.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &mres.ManagedResource); err != nil {
@@ -244,9 +245,9 @@ func (d *domain) CreateManagedResource(ctx ManagedResourceContext, mres entities
 	mres.EnvironmentName = ""
 	mres.ManagedServiceName = *ctx.ManagedServiceName
 	mres.IsImported = false
-	mres.ClusterName = msvcOut.ClusterName
+	mres.ClusterName = cms.ClusterName
 
-	return d.createAndApplyManagedResource(ctx, msvcOut.ClusterName, &mres)
+	return d.createAndApplyManagedResource(ctx, cms.ClusterName, &mres)
 }
 
 func genMresResourceName(envName string, mresName string) string {
@@ -405,15 +406,13 @@ func (d *domain) DeleteManagedResource(ctx ManagedResourceContext, name string) 
 		return errors.NewE(err)
 	}
 
-	umres, err := d.mresRepo.Patch(
-		ctx,
-		f.Add(fields.MetadataName, name),
-		common.PatchForMarkDeletion(),
-	)
+	umres, err := d.mresRepo.Patch(ctx, f.Add(fields.MetadataName, name), common.PatchForMarkDeletion())
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishClusterManagedServiceEvent(ctx.ConsoleContext, umres.ManagedServiceName, entities.ResourceTypeManagedResource, umres.Name, PublishUpdate)
+
 	if err := d.deleteK8sResourceOfCluster(ctx, umres.ClusterName, &umres.ManagedResource); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.mresRepo.DeleteById(ctx, umres.Id)
@@ -422,23 +421,59 @@ func (d *domain) DeleteManagedResource(ctx ManagedResourceContext, name string) 
 	}
 	return nil
 }
-func (d *domain) OnManagedResourceDeleteMessage(ctx ConsoleContext, msvcName string, mres entities.ManagedResource) error {
-	err := d.mresRepo.DeleteOne(
-		ctx,
-		repos.Filter{
+
+func (d *domain) deleteAllManagedResources(ctx ConsoleContext, msvcName string) error {
+	if err := d.canPerformActionInAccount(ctx, iamT.DeleteManagedResource); err != nil {
+		return errors.NewE(err)
+	}
+
+	services, err := d.mresRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
 			fields.AccountName:                   ctx.AccountName,
 			fc.ManagedResourceManagedServiceName: msvcName,
-			fields.MetadataName:                  mres.Name,
 		},
-	)
+	})
 	if err != nil {
+		return errors.NewE(err)
+	}
+
+	serviceIds := make([]any, 0, len(services))
+	for i := range services {
+		serviceIds = append(serviceIds, services[i].Id)
+	}
+
+	if err := d.secretRepo.DeleteMany(ctx, d.secretRepo.MergeMatchFilters(repos.Filter{}, map[string]repos.MatchFilter{
+		fc.SecretForRefId: {
+			MatchType: repos.MatchTypeArray,
+			Array:     serviceIds,
+		},
+	})); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.mresRepo.DeleteMany(ctx, repos.Filter{
+		fields.AccountName:                   ctx.AccountName,
+		fc.ManagedResourceManagedServiceName: msvcName,
+	}); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
+}
+
+func (d *domain) OnManagedResourceDeleteMessage(ctx ConsoleContext, msvcName string, mres crdsv1.ManagedResource) error {
+	if err := d.mresRepo.DeleteOne(ctx, repos.Filter{
+		fields.AccountName:                   ctx.AccountName,
+		fc.ManagedResourceManagedServiceName: msvcName,
+		fields.MetadataName:                  mres.Name,
+	}); err != nil {
 		return errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishClusterManagedServiceEvent(ctx, msvcName, entities.ResourceTypeManagedResource, mres.Name, PublishDelete)
 	return nil
 }
 
-func (d *domain) OnManagedResourceUpdateMessage(ctx ConsoleContext, msvcName string, mres entities.ManagedResource, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+func (d *domain) OnManagedResourceUpdateMessage(ctx ConsoleContext, msvcName string, mres crdsv1.ManagedResource, outputSecret *corev1.Secret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	xmres, err := d.findMRes(NewManagedResourceContext(ctx, msvcName), mres.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -450,16 +485,15 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ConsoleContext, msvcName str
 
 	recordVersion, err := d.MatchRecordVersion(mres.Annotations, xmres.RecordVersion)
 	if err != nil {
-		return d.resyncK8sResourceToCluster(ctx, xmres.ClusterName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
+		return d.resyncK8sResourceToCluster(ctx, xmres.ClusterName, xmres.SyncStatus.Action, &xmres.ManagedResource, xmres.RecordVersion)
 	}
 
-	umres, err := d.mresRepo.PatchById(
-		ctx,
-		xmres.Id,
-		common.PatchForSyncFromAgent(&mres, recordVersion, status, common.PatchOpts{
+	xmres.ManagedResource = mres
+	umres, err := d.mresRepo.PatchById(ctx, xmres.Id,
+		common.PatchForSyncFromAgent(xmres, recordVersion, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 			XPatch: repos.Document{
-				fc.ManagedResourceSyncedOutputSecretRef: mres.SyncedOutputSecretRef,
+				fc.ManagedResourceSyncedOutputSecretRef: outputSecret,
 			},
 		}))
 	if err != nil {
@@ -468,32 +502,38 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ConsoleContext, msvcName str
 
 	d.resourceEventPublisher.PublishClusterManagedServiceEvent(ctx, msvcName, umres.GetResourceType(), umres.GetName(), PublishUpdate)
 
-	if mres.SyncedOutputSecretRef != nil {
-		if mres.SyncedOutputSecretRef.Labels == nil {
-			mres.SyncedOutputSecretRef.Labels = map[string]string{}
+	if outputSecret != nil {
+		if outputSecret.Labels == nil {
+			outputSecret.Labels = make(map[string]string, 1)
 		}
-		mres.SyncedOutputSecretRef.Labels["kloudlite.io/secret.synced-by"] = fmt.Sprintf("%s/%s", umres.GetNamespace(), umres.GetName())
+		outputSecret.Labels["kloudlite.io/secret.synced-by"] = fmt.Sprintf("%s/%s", umres.GetNamespace(), umres.GetName())
 
-		secretData := make(map[string]string, len(mres.SyncedOutputSecretRef.Data))
+		secretData := make(map[string]string, len(outputSecret.Data))
 
-		for k, v := range mres.SyncedOutputSecretRef.Data {
+		for k, v := range outputSecret.Data {
 			secretData[k] = string(v)
 		}
 
-		mres.SyncedOutputSecretRef.Data = nil
-		mres.SyncedOutputSecretRef.StringData = secretData
+		outputSecret.Data = nil
+		outputSecret.StringData = secretData
 
 		if _, err = d.secretRepo.Upsert(ctx, repos.Filter{
 			fc.AccountName:       ctx.AccountName,
-			fc.MetadataName:      mres.SyncedOutputSecretRef.GetName(),
-			fc.MetadataNamespace: mres.SyncedOutputSecretRef.GetNamespace(),
+			fc.MetadataName:      outputSecret.GetName(),
+			fc.MetadataNamespace: outputSecret.GetNamespace(),
 		}, &entities.Secret{
-			Secret:      *mres.SyncedOutputSecretRef,
+			Secret:      *outputSecret,
 			AccountName: ctx.AccountName,
 			ResourceMetadata: common.ResourceMetadata{
 				DisplayName:   umres.GetName(),
 				CreatedBy:     common.CreatedOrUpdatedByResourceSync,
 				LastUpdatedBy: common.CreatedOrUpdatedByResourceSync,
+			},
+			For: &entities.SecretCreatedFor{
+				RefId:        xmres.Id,
+				ResourceType: entities.ResourceTypeManagedResource,
+				Name:         mres.Name,
+				Namespace:    mres.Namespace,
 			},
 			SyncStatus: t.SyncStatus{
 				LastSyncedAt:  opts.MessageTimestamp,
@@ -506,11 +546,6 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ConsoleContext, msvcName str
 		}); err != nil {
 			return errors.NewE(err)
 		}
-	}
-
-	err = d.applyMresSecrets(ctx, &mres)
-	if err != nil {
-		return errors.NewE(err)
 	}
 
 	return nil

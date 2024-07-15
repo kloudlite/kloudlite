@@ -300,52 +300,6 @@ func (r *mutationResolver) InfraDeleteNodePool(ctx context.Context, clusterName 
 	return true, nil
 }
 
-// InfraCreateClusterManagedService is the resolver for the infra_createClusterManagedService field.
-func (r *mutationResolver) InfraCreateClusterManagedService(ctx context.Context, service entities.ClusterManagedService) (*entities.ClusterManagedService, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	return r.Domain.CreateClusterManagedService(ictx, service)
-}
-
-// InfraUpdateClusterManagedService is the resolver for the infra_updateClusterManagedService field.
-func (r *mutationResolver) InfraUpdateClusterManagedService(ctx context.Context, service entities.ClusterManagedService) (*entities.ClusterManagedService, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.UpdateClusterManagedService(ictx, service)
-}
-
-// InfraDeleteClusterManagedService is the resolver for the infra_deleteClusterManagedService field.
-func (r *mutationResolver) InfraDeleteClusterManagedService(ctx context.Context, name string) (bool, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-	if err := r.Domain.DeleteClusterManagedService(ictx, name); err != nil {
-		return false, errors.NewE(err)
-	}
-	return true, nil
-}
-
-// InfraCloneClusterManagedService is the resolver for the infra_cloneClusterManagedService field.
-func (r *mutationResolver) InfraCloneClusterManagedService(ctx context.Context, clusterName string, sourceMsvcName string, destinationMsvcName string, displayName string) (*entities.ClusterManagedService, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.CloneClusterManagedService(ictx, domain.CloneManagedServiceArgs{
-		ClusterName:         clusterName,
-		SourceMsvcName:      sourceMsvcName,
-		DestinationMsvcName: destinationMsvcName,
-		DisplayName:         displayName,
-	})
-}
-
 // InfraCreateHelmRelease is the resolver for the infra_createHelmRelease field.
 func (r *mutationResolver) InfraCreateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error) {
 	ictx, err := toInfraContext(ctx)
@@ -511,7 +465,7 @@ func (r *queryResolver) InfratGetBYOKClusterSetupInstructions(ctx context.Contex
 		return nil, errors.NewE(err)
 	}
 
-	bcsi, err := r.Domain.GetBYOKClusterSetupInstructions(ictx, name, fn.DefaultIfNil(onlyHelmValues,false))
+	bcsi, err := r.Domain.GetBYOKClusterSetupInstructions(ictx, name, fn.DefaultIfNil(onlyHelmValues, false))
 	if err != nil {
 		return nil, err
 	}
@@ -792,66 +746,6 @@ func (r *queryResolver) InfraCheckAwsAccess(ctx context.Context, cloudproviderNa
 		Result:          output.Result,
 		InstallationURL: output.InstallationURL,
 	}, nil
-}
-
-// InfraListClusterManagedServices is the resolver for the infra_listClusterManagedServices field.
-func (r *queryResolver) InfraListClusterManagedServices(ctx context.Context, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) (*model.ClusterManagedServicePaginatedRecords, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if pagination == nil {
-		pagination = &repos.DefaultCursorPagination
-	}
-
-	filter := map[string]repos.MatchFilter{}
-
-	if search != nil {
-		if search.IsReady != nil {
-			filter["status.isReady"] = *search.IsReady
-		}
-
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
-		}
-	}
-
-	pClusters, err := r.Domain.ListClusterManagedServices(ictx, filter, *pagination)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	ce := make([]*model.ClusterManagedServiceEdge, len(pClusters.Edges))
-	for i := range pClusters.Edges {
-		ce[i] = &model.ClusterManagedServiceEdge{
-			Node:   pClusters.Edges[i].Node,
-			Cursor: pClusters.Edges[i].Cursor,
-		}
-	}
-
-	m := model.ClusterManagedServicePaginatedRecords{
-		Edges: ce,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pClusters.PageInfo.EndCursor,
-			HasNextPage:     pClusters.PageInfo.HasNextPage,
-			HasPreviousPage: pClusters.PageInfo.HasPrevPage,
-			StartCursor:     &pClusters.PageInfo.StartCursor,
-		},
-		TotalCount: int(pClusters.TotalCount),
-	}
-
-	return &m, nil
-}
-
-// InfraGetClusterManagedService is the resolver for the infra_getClusterManagedService field.
-func (r *queryResolver) InfraGetClusterManagedService(ctx context.Context, name string) (*entities.ClusterManagedService, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.GetClusterManagedService(ictx, name)
 }
 
 // InfraListHelmReleases is the resolver for the infra_listHelmReleases field.
