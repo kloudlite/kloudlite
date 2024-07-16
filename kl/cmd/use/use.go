@@ -7,13 +7,7 @@ var Cmd = &cobra.Command{
 	Short: "select environment and account to current context",
 }
 
-var InfraCmd = &cobra.Command{
-	Use:   "use",
-	Short: "select cluster and account to current context",
-}
-
 func init() {
 	Cmd.Aliases = append(Cmd.Aliases, "select")
 	Cmd.AddCommand(switchCmd)
-
 }

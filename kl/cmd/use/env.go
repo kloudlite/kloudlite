@@ -90,6 +90,12 @@ func init() {
 }
 
 func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.Env, error) {
+
+	err := apic.RemoveAllIntercepts()
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+
 	persistSelectedEnv := func(env fileclient.Env) error {
 		err := fc.SelectEnv(env)
 		if err != nil {

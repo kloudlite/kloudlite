@@ -143,7 +143,7 @@ func (c *client) ensureImage(i string) error {
 
 	out, err := c.cli.ImagePull(context.Background(), i, image.PullOptions{})
 	if err != nil {
-		return fn.NewE(err, "failed to pull image")
+		return fn.NewE(err, fmt.Sprintf("failed to pull image %s", i))
 	}
 	defer out.Close()
 
@@ -521,7 +521,7 @@ func (c *client) SyncVpn(wg string) error {
 
 	err := c.ensureImage(constants.GetWireguardImageName())
 	if err != nil {
-		return fn.Error("failed to pull image")
+		return err
 	}
 
 	existingVPN, err := c.cli.ContainerList(context.Background(), container.ListOptions{

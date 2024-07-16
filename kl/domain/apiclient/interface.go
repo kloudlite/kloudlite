@@ -36,6 +36,8 @@ type ApiClient interface {
 
 	ListSecrets(accountName string, envName string) ([]Secret, error)
 	GetSecret(accountName string, secretName string) (*Secret, error)
+
+	RemoveAllIntercepts(options ...fn.Option) error
 }
 
 func New() (ApiClient, error) {

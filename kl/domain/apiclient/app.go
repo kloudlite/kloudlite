@@ -2,6 +2,7 @@ package apiclient
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -149,7 +150,7 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 	}
 
 	if len(ports) == 0 {
-		if len(app.Spec.Intercept.PortMappings) != 0 {
+		if app.Spec.Intercept != nil && len(app.Spec.Intercept.PortMappings) != 0 {
 			ports = append(ports, app.Spec.Intercept.PortMappings...)
 		} else if len(app.Spec.Services) != 0 {
 			for _, v := range app.Spec.Services {
@@ -160,42 +161,6 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 			}
 		}
 	}
-
-	// if err := func() error {
-	// 	sshPort, ok := os.LookupEnv("SSH_PORT")
-	// 	if ok {
-	// 		// var prs []sshclient.StartCh
-
-	// 		// for _, v := range ports {
-	// 		// 	prs = append(prs, sshclient.StartCh{
-	// 		// 		SshPort:    sshPort,
-	// 		// 		RemotePort: fmt.Sprint(v.DevicePort),
-	// 		// 		LocalPort:  fmt.Sprint(v.DevicePort),
-	// 		// 	})
-	// 		// }
-
-	// 		// TODO: add forwarding logic here
-	// 		// p, err := proxy.NewProxy(false)
-	// 		// if err != nil {
-	// 		// 	return functions.NewE(err)
-	// 		// }
-	// 		//
-	// 		// if status {
-	// 		// 	if _, err := p.AddFwd(prs); err != nil {
-	// 		// 		fn.PrintError(err)
-	// 		// 		return functions.NewE(err)
-	// 		// 	}
-	// 		// 	return nil
-	// 		// }
-	// 		//
-	// 		// if _, err := p.RemoveFwd(prs); err != nil {
-	// 		// 	return functions.NewE(err)
-	// 		// }
-	// 	}
-	// 	return nil
-	// }(); err != nil {
-	// 	fn.PrintError(err)
-	// }
 
 	if len(ports) == 0 {
 		return fmt.Errorf("no ports provided to intercept")
@@ -212,6 +177,71 @@ func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envN
 		"deviceName":   devName,
 		"intercept":    status,
 		"portMappings": ports,
+	}, &cookie)
+
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	if _, err := GetFromResp[bool](respData); err != nil {
+		return functions.NewE(err)
+	} else {
+		return nil
+	}
+}
+
+func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
+	defer spinner.Client.UpdateMessage("Cleaning up intercepts...")()
+	devName := fn.GetOption(options, "deviceName")
+	accountName := fn.GetOption(options, "accountName")
+	currentEnv, err := apic.fc.CurrentEnv()
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	fc, err := fileclient.New()
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	if accountName == "" {
+		kt, err := fc.GetKlFile("")
+		if err != nil {
+			return functions.NewE(err)
+		}
+
+		if kt.AccountName == "" {
+			return fmt.Errorf("account name is required")
+		}
+
+		accountName = kt.AccountName
+		options = append(options, fn.MakeOption("accountName", accountName))
+	}
+
+	if devName == "" {
+		avc, err := fc.GetVpnAccountConfig(accountName)
+		if err != nil {
+			return functions.NewE(err)
+		}
+
+		if avc.DeviceName == "" {
+			return fmt.Errorf("device name is required")
+		}
+
+		devName = avc.DeviceName
+	}
+
+	cookie, err := getCookie([]fn.Option{
+		fn.MakeOption("accountName", accountName),
+	}...)
+	if err != nil {
+		return functions.NewE(err)
+	}
+	query := "cli_removeDeviceIntercepts"
+
+	respData, err := klFetch(query, map[string]any{
+		"envName":    currentEnv.Name,
+		"deviceName": devName,
 	}, &cookie)
 
 	if err != nil {
