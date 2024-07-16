@@ -47,10 +47,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if pod.Status.Phase != corev1.PodRunning {
-		return ctrl.Result{}, nil
-	}
-
 	v, ok := pod.GetLabels()[constants.KloudliteGatewayEnabledLabel]
 	if !ok {
 		r.logger.Infof("pod %s/%s is not registered with gateway, deleting it", pod.GetNamespace(), pod.GetName())
@@ -63,12 +59,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	cs := pod.Status.InitContainerStatuses
-	for i := range cs {
-		if cs[i].Name == "kloudlite-wg" {
-			if cs[i].Started != nil && *cs[i].Started {
-				return ctrl.Result{}, nil
-			}
+	for i := range pod.Status.Conditions {
+		if pod.Status.Conditions[i].Type == corev1.PodReady && pod.Status.Conditions[i].Status == corev1.ConditionFalse {
+			return ctrl.Result{}, nil
 		}
 	}
 
