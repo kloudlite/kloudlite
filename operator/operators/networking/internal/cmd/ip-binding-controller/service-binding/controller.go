@@ -131,7 +131,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		}
 
 		if v, ok := ns.Labels[constants.KloudliteNamespaceForEnvironment]; ok {
-			return v
+			return fmt.Sprintf("%s.%s", svc.GetName(), v)
 		}
 
 		if v, ok := ns.Labels[constants.KloudliteNamespaceForClusterManagedService]; ok {
