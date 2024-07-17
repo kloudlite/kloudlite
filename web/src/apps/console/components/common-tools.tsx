@@ -127,7 +127,7 @@ interface ICommonTools extends IModeProps {
 const CommonTools = ({
   options,
   noViewMode = false,
-  noSort = false,
+  noSort = true,
   commonToolPrefix,
 }: ICommonTools) => {
   const [appliedFilters, setAppliedFilters] = useState<IAppliedFilters>({});
