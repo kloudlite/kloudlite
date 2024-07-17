@@ -26,6 +26,7 @@ func (fc *fclient) Logout() error {
 		}
 	}
 	hashConfigPath := path.Join(configPath, "box-hash")
+
 	_, err = os.Stat(hashConfigPath)
 	if err == nil {
 		if err = os.RemoveAll(hashConfigPath); err != nil {
@@ -36,6 +37,7 @@ func (fc *fclient) Logout() error {
 	_, err = os.Stat(vpnConfigPath)
 	if err == nil {
 		files, err := os.ReadDir(vpnConfigPath)
+
 		if err != nil {
 			return fn.NewE(err)
 		}
