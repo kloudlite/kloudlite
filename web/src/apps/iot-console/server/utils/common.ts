@@ -14,8 +14,8 @@ export const getPagination = (ctx: IRemixCtx) => {
 
   return {
     ...{
-      orderBy: orderBy || 'updateTime',
-      sortDirection: sortDirection || 'DESC',
+      // orderBy: orderBy || 'updateTime',
+      // sortDirection: sortDirection || 'DESC',
       last,
       first: first || (last ? undefined : 10),
       before,
