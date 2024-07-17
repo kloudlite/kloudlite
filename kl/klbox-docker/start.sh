@@ -21,7 +21,7 @@ export KL_TMP_PATH="/kl-tmp"
 export KLCONFIG_PATH="$KLCONFIG_PATH"
 EOL
 
-sudo dnsmasq --server=/.local/$KL_DNS --server=1.1.1.1
+# sudo dnsmasq --server=/.local/$KL_DNS --server=1.1.1.1
 
 sudo chown kl /var/run/docker.sock
 
@@ -78,13 +78,19 @@ echo "kloudlite-entrypoint:INSTALLING_PACKAGES_DONE"
 
 source /tmp/env
 
-cat > /tmp/resolv.conf <<EOF
-nameserver 127.0.0.1
-search $KL_SEARCH_DOMAIN
-options ndots:0
-EOF
+# cat > /tmp/resolv.conf <<EOF
+# nameserver 127.0.0.1
+# search $KL_SEARCH_DOMAIN
+# options ndots:0
+# EOF
 
-sudo cp /tmp/resolv.conf /etc/resolv.conf
+RESOLV_FILE="/etc/resolv.conf"
+# add search domain to resolv.conf
+# echo "search $KL_SEARCH_DOMAIN" > $RESOLV_FILE
+# echo "options ndots:0" >> $RESOLV_FILE
+sudo sh -c "echo \"search $KL_SEARCH_DOMAIN\" >> $RESOLV_FILE"
+
+# sudo cp /tmp/resolv.conf /etc/resolv.conf
 
 
 if [ -d "/tmp/ssh2" ]; then

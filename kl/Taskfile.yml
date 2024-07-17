@@ -8,7 +8,7 @@ tasks:
     # env:
     #   CGO_ENABLED: 1
     cmds:
-      - go build --tags main -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.7-nightly -X github.com/kloudlite/kl/flags.BasePrefix=dev. -X github.com/kloudlite/kl/flags.CliName=kl -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kl main.go
+      - go build --tags main -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.0-nightly -X github.com/kloudlite/kl/flags.BasePrefix=dev. -X github.com/kloudlite/kl/flags.CliName=kl -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kl main.go
 
   kl:dev:win:
     cmds:

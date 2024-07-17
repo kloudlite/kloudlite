@@ -257,7 +257,7 @@ func generatePersistedEnv(apic apiclient.ApiClient, fc fileclient.FileClient, kf
 		return nil, fn.NewE(err)
 	}
 	ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", envName, ">")
-	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.svc.%s.local", e.TargetNs, e.ClusterName)
+	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.dns.devprod.sh", e.Name, kf.AccountName)
 
 	klConfhash, err := GenerateKLConfigHash(kf)
 	if err != nil {

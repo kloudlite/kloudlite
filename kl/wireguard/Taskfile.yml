@@ -7,7 +7,7 @@ vars:
 tasks:
   container:build:
     cmds:
-      - docker buildx build --build-context project=.. --load -t {{.ImageRegistry}}:v1.0.7-nightly --build-arg VERSION=v1.0.7-nightly .
+      - docker buildx build --build-context project=.. --load -t {{.ImageRegistry}}:v1.0.0-nightly --build-arg VERSION=v1.0.0-nightly .
 
   container:push:
     preconditions:
