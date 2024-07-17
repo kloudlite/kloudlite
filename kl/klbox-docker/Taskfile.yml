@@ -8,7 +8,7 @@ tasks:
   clean:
     cmds:
       - |+
-        # docker rmi -f {{.ImageRegistry}}:v1.0.7-nightly || echo "image already removed"
+        # docker rmi -f {{.ImageRegistry}}:v1.0.0-nightly || echo "image already removed"
         docker volume rm kl-home-cache || echo "kl-home-cache already removed"
         # docker volume rm kl-nix-store || echo "nix-store already removed"
 
@@ -35,7 +35,7 @@ tasks:
 
   container:build:
     cmds:
-      - docker buildx build --build-context project=.. --load -t {{.ImageRegistry}}:v1.0.7-nightly --build-arg VERSION=v1.0.7-nightly .
+      - docker buildx build --platform linux/amd64 --build-context project=.. --load -t {{.ImageRegistry}}:v1.0.0-nightly --build-arg VERSION=v1.0.0-nightly .
 
   container:push:
     preconditions:
