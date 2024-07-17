@@ -127,11 +127,8 @@ const ExposedPortList = ({
 };
 
 const ExposedRoute = () => {
-  const { app, readOnlyApp, setApp } = useAppState();
+  const { app, setApp } = useAppState();
 
-  useEffect(() => {
-    console.log('ddd', app, readOnlyApp);
-  }, [app]);
   return (
     <div className="flex-1">
       <Select

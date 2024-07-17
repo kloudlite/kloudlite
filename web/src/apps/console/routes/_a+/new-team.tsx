@@ -36,8 +36,6 @@ const NewAccount = () => {
       true
     );
 
-  console.log('klRegionIsLoading', kloudliteRegionsData);
-
   const klRegionData = kloudliteRegionsData?.map((d) => {
     return {
       label: d.displayName,

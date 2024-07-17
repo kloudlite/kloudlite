@@ -106,9 +106,7 @@ const Root = (props: IDialog) => {
       },
     });
 
-  useEffect(() => {
-    console.log('values.exposedIps', values.exposedIps);
-  }, [values.exposedIps]);
+  useEffect(() => {}, [values.exposedIps]);
 
   return (
     <Popup.Form

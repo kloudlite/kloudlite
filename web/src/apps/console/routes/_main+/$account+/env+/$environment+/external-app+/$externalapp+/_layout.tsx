@@ -98,7 +98,6 @@ export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
     const { externalapp, environment } = ctx.params;
-    console.log('paramx...', ctx.params);
     try {
       const { data, errors } = await GQLServerHandler(
         ctx.request

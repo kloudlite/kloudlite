@@ -113,7 +113,6 @@ const AdvancedOptions = ({
             value={values.caches || []}
             onChange={(val) => {
               handleChange('caches')(dummyEvent(val));
-              console.log(val);
             }}
             error={!!errors.caches}
             message={errors.caches}
@@ -173,11 +172,7 @@ const AdvancedOptions = ({
             resize={false}
             rows="6"
           />
-          <BuildPlatforms
-            onChange={(data) => {
-              console.log(data);
-            }}
-          />
+          <BuildPlatforms onChange={(data) => {}} />
         </div>
       )}
     </div>

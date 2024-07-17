@@ -32,8 +32,6 @@ export const loader = (ctx: IRemixCtx) => {
       throw errors[0];
     }
 
-    console.log(projects);
-
     return {
       projectsData: projects || {},
     };

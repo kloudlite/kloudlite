@@ -12,6 +12,7 @@ import { useEffect } from 'react';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { EmptyStorageImage } from '~/console/components/empty-resource-images';
+import logger from '~/root/lib/client/helpers/log';
 import Tools from './tools';
 import BackendServicesResourcesV2 from './backend-services-resources-V2';
 
@@ -46,7 +47,7 @@ const KlOperatorServices = () => {
   const { promise } = useLoaderData<typeof loader>();
 
   useEffect(() => {
-    console.log(promise);
+    logger.log(promise);
   }, [promise]);
 
   return (

@@ -229,7 +229,7 @@ export const SockProvider = ({ children }: ChildrenProps) => {
       }
     } catch (err) {
       console.error(err);
-      console.log('error parsing:', msg.data);
+      logger.log('error parsing:', msg.data);
     }
   }, []);
 

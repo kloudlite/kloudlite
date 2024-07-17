@@ -228,8 +228,6 @@ const ConfigItemResources = ({
     editItem,
     restoreItem,
     onAction: ({ action, item }) => {
-      console.log('eee', action, item);
-
       const data = {
         key: item[0],
         value: item[1],
@@ -270,7 +268,6 @@ const ConfigItemResources = ({
         show={showHandleConfig}
         setShow={setShowHandleConfig}
         onSubmit={(v, d) => {
-          console.log(v, d);
           setShowHandleConfig(null);
           editItem({ key: v.key, value: d }, v.value);
         }}

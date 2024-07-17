@@ -92,7 +92,6 @@ const CallBack = () => {
 export const loader = async (ctx: IRemixCtx) => {
   const { provider } = ctx.params;
   const queries = getQueries(ctx);
-  console.log(queries);
   const {
     state,
     setup_action: setupAction,

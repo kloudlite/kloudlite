@@ -4,6 +4,7 @@ import { authBaseUrl, consoleBaseUrl } from '../../configs/base-url.cjs';
 import { getCookie } from '../../app-setup/cookies';
 import { redirectWithContext } from '../../app-setup/with-contxt';
 import { IExtRemixCtx, MapType, IRemixReq } from '../../types/common';
+import logger from '../../client/helpers/log';
 
 export const assureNotLoggedIn = async (ctx: { request: IRemixReq }) => {
   const whoAmI = await GQLServerHandler({
@@ -32,7 +33,7 @@ export const minimalAuth = async (ctx: IExtRemixCtx) => {
   }
 
   if (whoAmI.errors) {
-    console.log('whoAmI.errors', whoAmI.errors);
+    logger.log('whoAmI.errors', whoAmI.errors);
   }
 
   if (!(whoAmI.data && whoAmI.data)) {

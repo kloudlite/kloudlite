@@ -75,7 +75,6 @@ const TagView = ({
 }) => {
   const [toggleSha, setToggleSha] = useState(false);
   const { repoName } = useOutletContext<IRepoContext>();
-  console.log('repoName', repoName);
 
   let data = (
     <code

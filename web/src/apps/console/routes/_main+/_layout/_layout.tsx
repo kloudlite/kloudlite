@@ -48,6 +48,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
 import { ICommsNotifications } from '~/console/server/gql/queries/comms-queries';
 import { LoadingPlaceHolder } from '~/console/components/loading';
+import logger from '~/root/lib/client/helpers/log';
 
 const restActions = (ctx: IExtRemixCtx) => {
   return withContext(ctx, {});
@@ -197,8 +198,15 @@ const ProfileMenu = ({ hideProfileName }: { hideProfileName: boolean }) => {
           Profile Settings
         </OptionList.Link>
 
-        <OptionList.Item>Notifications</OptionList.Item>
-        <OptionList.Item>Support</OptionList.Item>
+        {/* <OptionList.Item>Notifications</OptionList.Item> */}
+        {/* <OptionList.Item>Support</OptionList.Item> */}
+        <OptionList.Link
+          LinkComponent={Link}
+          target="_blank"
+          to="https://kloudlite.io/contact-us"
+        >
+          Support
+        </OptionList.Link>
         <OptionList.Separator />
         <OptionList.Item
           onClick={() => {
@@ -235,8 +243,6 @@ const NotificationMessageView = ({
   ) : (
     <Avatar size="xs" dot />
   );
-
-  console.log('kkk', notificationMessage);
 
   return (
     <div className="flex flex-row gap-lg">
@@ -302,9 +308,6 @@ const NotificationMenu = () => {
     );
 
   const notifications = parseNodes(notificationsData);
-
-  console.log('notifications', notificationsData);
-  console.log('nnn', notifications);
 
   // const notificationMessage: INotificationMessage[] = [
   //   {
@@ -397,7 +400,7 @@ const NotificationMenu = () => {
                   }
                   reloadPage();
                 } catch (error) {
-                  console.log(error);
+                  logger.log(error);
                 }
               }}
             />
@@ -486,7 +489,7 @@ const Console = () => {
           <div className="flex flex-row gap-2xl items-center">
             {!!devicesMenu && devicesMenu()}
             {!!headerExtra && headerExtra()}
-            <NotificationMenu />
+            {/* <NotificationMenu /> */}
             <ProfileMenu hideProfileName={hideProfileName} />
           </div>
         }

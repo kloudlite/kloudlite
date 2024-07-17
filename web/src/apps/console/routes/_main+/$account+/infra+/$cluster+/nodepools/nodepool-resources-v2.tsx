@@ -312,7 +312,6 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
         ],
         rows: items.map((i) => {
           const { name, id, updateInfo } = parseItem(i);
-          console.log('updateInfo', parseItem(i));
           const isLatest = dayjs(i.updateTime).isAfter(
             dayjs().subtract(3, 'hour')
           );

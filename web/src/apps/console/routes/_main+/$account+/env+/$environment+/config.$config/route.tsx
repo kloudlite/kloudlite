@@ -203,7 +203,6 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
                 [item.key]: { ...item.value, value },
               }));
             } else {
-              console.log('edit', item, value);
               setModifiedItems((prev) => ({
                 ...prev,
                 [item.key]: { ...item.value, newvalue: value },

@@ -12,6 +12,7 @@ import {
   IGqlReturn,
   NN,
 } from '../../types/common';
+import logger from '../../client/helpers/log';
 
 const ignoreLogsFor = ['accounts_listAccounts', 'auth_me'];
 
@@ -123,12 +124,12 @@ export const ExecuteQueryWithContext = (
       } catch (err) {
         if (!ignoreLogsFor.includes(gqlName)) {
           if ((err as AxiosError).response) {
-            console.log('\nErrorIn:', apiName, (err as Error).name, '\n');
+            logger.log('\nErrorIn:', apiName, (err as Error).name, '\n');
 
             return (err as AxiosError).response?.data;
           }
 
-          console.log('\nErrorIn:', apiName, (err as Error).message, '\n');
+          logger.log('\nErrorIn:', apiName, (err as Error).message, '\n');
         }
 
         return {

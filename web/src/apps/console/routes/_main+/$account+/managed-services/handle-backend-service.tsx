@@ -197,8 +197,6 @@ export const Fill = ({
       {selectedService?.service?.fields.map((field) => {
         const k = field.name;
         const x = k.split('.').reduce((acc, curr) => {
-          console.log(acc, curr, values);
-
           if (!acc) {
             return values.res[curr];
           }

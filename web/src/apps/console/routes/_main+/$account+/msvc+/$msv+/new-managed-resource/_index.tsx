@@ -498,7 +498,6 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
         const selectedResource =
           val.selectedResource as unknown as ISelectedResource;
 
-        console.log('aa', selectedResource);
         const submit = async () => {
           try {
             if (!msv) {

@@ -67,7 +67,6 @@ export const CustomPagination = ({ pagination }: { pagination: any }) => {
       showItemsPerPage={false}
       onClickNext={() => {
         if (cursor.ecursor) {
-          console.log('ecursor', cursor.ecursor);
           setPage(newPagination({ first: 10, after: cursor.ecursor }));
         } else {
           setPage(newPagination({ first: 10 }));

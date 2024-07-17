@@ -17,13 +17,6 @@ export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
     const { cluster } = ctx.params;
-    console.log({
-      ...getSearch(ctx),
-      clusterName: {
-        matchType: 'exact',
-        exact: cluster,
-      },
-    });
     const { data, errors } = await GQLServerHandler(ctx.request).listDomains({
       pagination: getPagination(ctx),
       search: {

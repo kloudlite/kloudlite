@@ -441,7 +441,7 @@ export const EnvironmentVariables = () => {
                       />
                       <Chip
                         item={{ name: 'mres' }}
-                        label="Managed resources"
+                        label="Integrated resources"
                         type="CLICKABLE"
                       />
                     </ChipGroup>

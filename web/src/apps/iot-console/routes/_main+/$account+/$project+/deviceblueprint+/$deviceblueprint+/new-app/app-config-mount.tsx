@@ -211,7 +211,6 @@ export const ConfigMounts = () => {
     initialValues: getContainer().volumes,
     validationSchema: Yup.array(entry),
     onSubmit: (val) => {
-      console.log('values', val);
       setContainer((c) => ({
         ...c,
         volumes: val,
@@ -224,7 +223,6 @@ export const ConfigMounts = () => {
   }, [values]);
 
   const addEntry = (val: IConfigMount) => {
-    console.log('here', val);
     const tempVal = val || [];
     setValues((v = []) => {
       const data = {

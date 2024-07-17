@@ -59,7 +59,6 @@ const Handle = ({
   onSubmit,
   isUpdate,
 }: IDialog<IModifiedItem, IConfigValue> & { isUpdate?: boolean }) => {
-  console.log(show?.data, isUpdate);
   const {
     values,
     errors,

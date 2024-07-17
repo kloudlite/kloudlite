@@ -24,8 +24,6 @@ function validateInput(
     let fieldType = fields[field].type;
     // const fieldAstNode = fields[field].astNode;
 
-    // console.log(field, fieldType.constructor.name, fieldAstNode.type.name);
-
     if (!input) {
       validationErrors.push(`${field} is ${fieldType.constructor.name}`);
       continue;
@@ -88,8 +86,6 @@ function validateInput(
 
         break;
       case 'GraphQLScalarType':
-        // console.log(fieldAstNode);
-
         switch (`${fieldType}`) {
           case 'Int':
             if (actualType !== 'number') {

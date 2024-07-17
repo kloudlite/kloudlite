@@ -115,7 +115,6 @@ const AppCompute = () => {
             <ExtendedFilledTab
               value={values.selectionMode}
               onChange={(e) => {
-                console.log(e, values.selectionMode);
                 handleChange('selectionMode')(dummyEvent(e));
               }}
               items={[
@@ -280,7 +279,6 @@ const AppCompute = () => {
               checked={values.imagePullPolicy === 'Always'}
               onChange={(val) => {
                 const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
-                console.log(imagePullPolicy);
                 handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
               }}
             />

@@ -56,7 +56,6 @@ const Workspaces = () => {
         // }}
       >
         {({ deviceBlueprintData }) => {
-          console.log(deviceBlueprintData);
 
           const deviceBlueprints = parseNodes(deviceBlueprintData);
 

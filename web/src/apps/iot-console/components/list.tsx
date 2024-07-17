@@ -7,6 +7,7 @@ import React, {
   useRef,
 } from 'react';
 import { cn } from '~/components/utils';
+import logger from '~/root/lib/client/helpers/log';
 import { LoadingPlaceHolder } from './loading';
 
 const focusableElement = 'a[href], button, input, select, textarea';
@@ -83,7 +84,7 @@ const handleKeyNavigation = (
       }
     }
   } catch {
-    console.log('Error focusing');
+    logger.log('Error focusing');
   }
 };
 
@@ -248,7 +249,7 @@ const Root = ({
                 }
               }
             } catch {
-              console.log('Error Focusing');
+              logger.log('Error Focusing');
             }
           }}
           onKeyDown={(e) => {

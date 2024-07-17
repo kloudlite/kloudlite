@@ -296,7 +296,6 @@ export const flatMapValidations = (obj: Record<string, any>) => {
   for (const key in obj) {
     const parts = key.split('.');
     const temp: Record<string, any> = flatJson;
-    // console.log('validations', obj[key]);
     if (parts.length === 1) {
       temp[key] = (() => {
         let returnYup;

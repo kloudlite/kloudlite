@@ -46,8 +46,6 @@ const YamlEditor = ({
     }
 
     try {
-      // console.log(spec);
-
       const res = validateType(
         {
           ...item,
@@ -66,11 +64,6 @@ const YamlEditor = ({
   useEffect(() => {
     setHasChanges(initialState !== ymlSpec);
   }, [initialState]);
-
-  useEffect(() => {
-    console.log(errors.length);
-    console.log('init', yamlParse(initialState));
-  }, [errors, initialState]);
 
   return (
     <Box

@@ -35,12 +35,6 @@ const parseItem = (item: BaseType, templates: IMSvTemplates) => {
     templates,
     item.managedResource?.spec?.resourceTemplate.apiVersion || ''
   );
-  console.log(
-    'logoUrl',
-    logoUrl,
-    templates,
-    item.managedResource?.spec?.resourceTemplate.apiVersion
-  );
   return {
     name: item?.displayName,
     id: item?.name,

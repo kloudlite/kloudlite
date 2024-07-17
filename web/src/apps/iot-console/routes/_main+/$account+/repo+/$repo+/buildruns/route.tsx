@@ -26,7 +26,6 @@ export const loader = async (ctx: IRemixCtx) => {
         },
       },
     });
-    console.log(data);
     if (errors) {
       throw errors[0];
     }

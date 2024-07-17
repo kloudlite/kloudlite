@@ -95,11 +95,6 @@ const AppBuildIntegration = ({
             resize={false}
             rows="6"
           />
-          {/* <BuildPlatforms */}
-          {/*   onChange={(data) => { */}
-          {/*     console.log(data); */}
-          {/*   }} */}
-          {/* /> */}
         </div>
       )}
     </div>

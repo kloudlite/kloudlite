@@ -10,8 +10,6 @@ export const plugin: PluginFunction = (
   const allTypes = Object.values(schema.getTypeMap());
   const enumTypes = allTypes.filter(isEnumType);
 
-  console.log(enumTypes, 'helllo');
-
   // const result = enumTypes
   //   .map((enumType) => {
   //     const values = enumType
