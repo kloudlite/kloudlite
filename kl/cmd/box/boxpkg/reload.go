@@ -2,7 +2,6 @@ package boxpkg
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/docker/docker/api/types/container"
@@ -20,7 +19,7 @@ func (c *client) Reload() error {
 		return fn.NewE(err)
 	}
 
-	if err := hashctrl.SyncBoxHash(wpath); err != nil {
+	if err := hashctrl.SyncBoxHash(c.apic, c.fc, wpath); err != nil {
 		return fn.NewE(err)
 	}
 	return nil
@@ -39,8 +38,7 @@ func (c *client) ConfirmBoxRestart() error {
 	})
 
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return err
 	}
 	if len(existingContainers) == 0 {
 		return nil

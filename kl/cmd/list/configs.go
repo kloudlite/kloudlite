@@ -5,8 +5,9 @@ import (
 
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
-	"github.com/kloudlite/kl/pkg/functions"
+
 	fn "github.com/kloudlite/kl/pkg/functions"
+
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
 
@@ -23,36 +24,39 @@ var configsCmd = &cobra.Command{
 			return
 		}
 
-		envName := fn.ParseStringFlag(cmd, "env")
-
-		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fc.GetKlFile(filePath)
+		apic, err := apiclient.New()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
-		config, err := apiclient.ListConfigs([]fn.Option{
-			fn.MakeOption("envName", envName),
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		currentAccount, err := fc.CurrentAccountName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		currentEnv, err := fc.CurrentEnv()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		config, err := apic.ListConfigs(currentAccount, currentEnv.Name)
 
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		if err := printConfigs(cmd, config); err != nil {
+		if err := printConfigs(fc, cmd, config); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func printConfigs(cmd *cobra.Command, configs []apiclient.Config) error {
-
-	e, err := fileclient.CurrentEnv()
+func printConfigs(fc fileclient.FileClient, cmd *cobra.Command, configs []apiclient.Config) error {
+	e, err := fc.CurrentEnv()
 	if err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	if len(configs) == 0 {

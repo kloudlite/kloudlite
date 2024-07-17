@@ -33,6 +33,12 @@ var mountCommand = &cobra.Command{
 			return
 		}
 
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 		filePath := fn.ParseKlFile(cmd)
 		klFile, err := fc.GetKlFile(filePath)
 		if err != nil {
@@ -48,7 +54,7 @@ var mountCommand = &cobra.Command{
 			return
 		}
 
-		err = selectConfigMount(path, *klFile, cmd)
+		err = selectConfigMount(apic, fc, path, *klFile, cmd)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -56,12 +62,7 @@ var mountCommand = &cobra.Command{
 	},
 }
 
-func selectConfigMount(path string, klFile fileclient.KLFileType, cmd *cobra.Command) error {
-
-	fc, err := fileclient.New()
-	if err != nil {
-		return fn.NewE(err)
-	}
+func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, path string, klFile fileclient.KLFileType, cmd *cobra.Command) error {
 
 	//TODO: add changes to the klbox-hash file
 	c := cmd.Flag("config").Value.String()
@@ -99,9 +100,16 @@ func selectConfigMount(path string, klFile fileclient.KLFileType, cmd *cobra.Com
 
 	items := make([]apiclient.ConfigORSecret, 0)
 	if cOrs == fileclient.ConfigType {
-		configs, e := apiclient.ListConfigs([]fn.Option{
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		currentAccount, err := fc.CurrentAccountName()
+		if err != nil {
+			return err
+		}
+		currentEnv, err := fc.CurrentEnv()
+		if err != nil {
+			fn.PrintError(err)
+			return err
+		}
+		configs, e := apic.ListConfigs(currentAccount, currentEnv.Name)
 
 		if e != nil {
 			return e
@@ -115,9 +123,16 @@ func selectConfigMount(path string, klFile fileclient.KLFileType, cmd *cobra.Com
 		}
 
 	} else {
-		secrets, e := apiclient.ListSecrets([]fn.Option{
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		currentAccount, err := fc.CurrentAccountName()
+		if err != nil {
+			return err
+		}
+		currentEnv, err := fc.CurrentEnv()
+		if err != nil {
+			fn.PrintError(err)
+			return err
+		}
+		secrets, e := apic.ListSecrets(currentAccount, currentEnv.Name)
 
 		if e != nil {
 			return e
@@ -220,7 +235,7 @@ func selectConfigMount(path string, klFile fileclient.KLFileType, cmd *cobra.Com
 		return fn.NewE(err)
 	}
 
-	if err = hashctrl.SyncBoxHash(wpath); err != nil {
+	if err = hashctrl.SyncBoxHash(apic, fc, wpath); err != nil {
 		return fn.NewE(err)
 	}
 

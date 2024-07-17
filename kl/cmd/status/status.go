@@ -19,7 +19,13 @@ var Cmd = &cobra.Command{
 	Short: "get status of your current context (user, account, environment, vpn status)",
 	Run: func(cmd *cobra.Command, _ []string) {
 
-		if u, err := apiclient.GetCurrentUser(); err == nil {
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if u, err := apic.GetCurrentUser(); err == nil {
 			fn.Logf("\nLogged in as %s (%s)\n",
 				text.Blue(u.Name),
 				text.Blue(u.Email),
@@ -37,7 +43,7 @@ var Cmd = &cobra.Command{
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Account: ")), acc))
 		}
 
-		e, err := fileclient.CurrentEnv()
+		e, err := fc.CurrentEnv()
 		if err == nil {
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), e.Name))
 		} else if errors.Is(err, fileclient.NoEnvSelected) {
@@ -51,7 +57,7 @@ var Cmd = &cobra.Command{
 		}
 
 		if envclient.InsideBox() {
-			b := apiclient.CheckDeviceStatus()
+			b := apic.CheckDeviceStatus()
 			avc, err := fc.GetVpnAccountConfig(acc)
 			if err != nil {
 				return

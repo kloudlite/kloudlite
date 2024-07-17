@@ -26,9 +26,8 @@ func keys[K comparable, V any](m map[K]V) []K {
 	return keys
 }
 
-func generateBoxHashContent(envName string, fpath string, klFile *fileclient.KLFileType) ([]byte, error) {
-
-	persistedConfig, err := generatePersistedEnv(klFile, envName, fpath)
+func generateBoxHashContent(apic apiclient.ApiClient, fc fileclient.FileClient, envName string, fpath string, klFile *fileclient.KLFileType) ([]byte, error) {
+	persistedConfig, err := generatePersistedEnv(apic, fc, klFile, envName, fpath)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -112,13 +111,8 @@ func BoxHashFileName(path string) (string, error) {
 	return fmt.Sprintf("hash-%x", hash.Sum(nil)), nil
 }
 
-func SyncBoxHash(fpath string) error {
+func SyncBoxHash(apic apiclient.ApiClient, fc fileclient.FileClient, fpath string) error {
 	defer spinner.Client.UpdateMessage("validating kl.yml and kl.lock")()
-
-	fc, err := fileclient.New()
-	if err != nil {
-		return fn.NewE(err)
-	}
 
 	klFile, err := fc.GetKlFile(path.Join(fpath, "kl.yml"))
 	if err != nil {
@@ -128,7 +122,7 @@ func SyncBoxHash(fpath string) error {
 
 	pathKey := fpath
 
-	e, err := fileclient.EnvOfPath(pathKey)
+	e, err := fc.EnvOfPath(pathKey)
 	if err != nil && errors.Is(err, fileclient.NoEnvSelected) {
 		envName = klFile.DefaultEnv
 	} else if err != nil {
@@ -150,7 +144,7 @@ func SyncBoxHash(fpath string) error {
 		return fn.NewE(err)
 	}
 
-	content, err := generateBoxHashContent(envName, fpath, klFile)
+	content, err := generateBoxHashContent(apic, fc, envName, fpath, klFile)
 	if err != nil {
 		return fn.NewE(err)
 	}
@@ -223,8 +217,8 @@ func GenerateKLConfigHash(kf *fileclient.KLFileType) (string, error) {
 	return fmt.Sprintf("%x", klConfhash.Sum(nil)), nil
 }
 
-func generatePersistedEnv(kf *fileclient.KLFileType, envName string, path string) (*PersistedEnv, error) {
-	envs, mm, err := apiclient.GetLoadMaps()
+func generatePersistedEnv(apic apiclient.ApiClient, fc fileclient.FileClient, kf *fileclient.KLFileType, envName string, path string) (*PersistedEnv, error) {
+	envs, mm, err := apic.GetLoadMaps()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
@@ -258,11 +252,11 @@ func generatePersistedEnv(kf *fileclient.KLFileType, envName string, path string
 		ev[ne.Key] = ne.Value
 	}
 
-	e, err := fileclient.EnvOfPath(path)
+	e, err := fc.EnvOfPath(path)
 	if err != nil {
 		return nil, fn.NewE(err)
 	}
-	ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", envName, "❯")
+	ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", envName, ">")
 	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.svc.%s.local", e.TargetNs, e.ClusterName)
 
 	klConfhash, err := GenerateKLConfigHash(kf)

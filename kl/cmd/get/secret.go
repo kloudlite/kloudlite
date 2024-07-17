@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/domain/apiclient"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
+
 	"github.com/kloudlite/kl/pkg/ui/table"
 
 	"github.com/spf13/cobra"
@@ -19,6 +20,12 @@ var secretCmd = &cobra.Command{
 	Short: "list secrets entries",
 	Long:  "use this command to list the entries of specific secret",
 	Run: func(cmd *cobra.Command, args []string) {
+
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 		fc, err := fileclient.New()
 		if err != nil {
 			fn.PrintError(err)
@@ -31,17 +38,39 @@ var secretCmd = &cobra.Command{
 			secName = args[0]
 		}
 
-		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fc.GetKlFile(filePath)
+		if secName == "" {
+			currentAccount, err := fc.CurrentAccountName()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			currentEnv, err := fc.CurrentEnv()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			secrets, err := apic.ListSecrets(currentAccount, currentEnv.Name)
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			selectedSecret, err := fzf.FindOne(secrets, func(secret apiclient.Secret) string {
+				return secret.Metadata.Name
+			}, fzf.WithPrompt("select secret > "))
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			secName = selectedSecret.Metadata.Name
+		}
+
+		currentAccount, err := fc.CurrentAccountName()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		sec, err := apiclient.EnsureSecret([]fn.Option{
-			fn.MakeOption("secretName", secName),
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		sec, err := apic.GetSecret(currentAccount, secName)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -61,14 +90,14 @@ func printSecret(secret *apiclient.Secret, cmd *cobra.Command) error {
 	case "json":
 		configBytes, err := json.Marshal(secret.StringData)
 		if err != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 		fn.Println(string(configBytes))
 
 	case "yaml", "yml":
 		configBytes, err := yaml.Marshal(secret.StringData)
 		if err != nil {
-			return functions.NewE(err)
+			return fn.NewE(err)
 		}
 		fn.Println(string(configBytes))
 

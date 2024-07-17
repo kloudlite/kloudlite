@@ -2,13 +2,11 @@ package apiclient
 
 import (
 	"fmt"
-	"os"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/sshclient"
-	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
 var PaginationDefault = map[string]any{
@@ -21,7 +19,8 @@ type AppSpec struct {
 	Services []struct {
 		Port int `json:"port"`
 	} `json:"services"`
-	Intercept struct {
+	Intercept *struct {
+		Enabled      bool      `json:"enabled"`
 		PortMappings []AppPort `json:"portMappings"`
 	} `json:"intercept"`
 }
@@ -39,30 +38,18 @@ type AppPort struct {
 	DevicePort int `json:"devicePort,omitempty"`
 }
 
-func ListApps(options ...fn.Option) ([]App, error) {
-	envName := fn.GetOption(options, "envName")
-
-	env, err := EnsureEnv(&fileclient.Env{
-		Name: envName,
-	}, options...)
+func (apic *apiClient) ListApps(accountName string, envName string) ([]App, error) {
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
-
-	cookie, err := getCookie(options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
-
 	respData, err := klFetch("cli_listApps", map[string]any{
 		"pq":      PaginationDefault,
-		"envName": env.Name,
+		"envName": envName,
 	}, &cookie)
-
 	if err != nil {
 		return nil, functions.NewE(err)
 	}
-
 	if fromResp, err := GetFromRespForEdge[App](respData); err != nil {
 		return nil, functions.NewE(err)
 	} else {
@@ -70,59 +57,57 @@ func ListApps(options ...fn.Option) ([]App, error) {
 	}
 }
 
-func SelectApp(options ...fn.Option) (*App, error) {
+// func (apic *apiClient) SelectApp(options ...fn.Option) (*App, error) {
+// 	appName := fn.GetOption(options, "appName")
 
-	appName := fn.GetOption(options, "appName")
+// 	a, err := apic.ListApps(options...)
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
 
-	a, err := ListApps(options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+// 	if len(a) == 0 {
+// 		return nil, fmt.Errorf("no app found")
+// 	}
 
-	if len(a) == 0 {
-		return nil, fmt.Errorf("no app found")
-	}
+// 	if appName != "" {
+// 		for i, a2 := range a {
+// 			if a2.Metadata.Name == appName {
+// 				return &a[i], nil
+// 			}
+// 		}
 
-	if appName != "" {
-		for i, a2 := range a {
-			if a2.Metadata.Name == appName {
-				return &a[i], nil
-			}
-		}
+// 		return nil, fmt.Errorf("app not found")
+// 	}
 
-		return nil, fmt.Errorf("app not found")
-	}
+// 	app, err := fzf.FindOne(a, func(item App) string {
+// 		return fmt.Sprintf("%s (%s)%s", item.DisplayName, item.Metadata.Name, func() string {
+// 			if item.IsMainApp {
+// 				return ""
+// 			}
 
-	app, err := fzf.FindOne(a, func(item App) string {
-		return fmt.Sprintf("%s (%s)%s", item.DisplayName, item.Metadata.Name, func() string {
-			if item.IsMainApp {
-				return ""
-			}
+// 			return " [external]"
+// 		}())
+// 	}, fzf.WithPrompt("Select App>"))
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
 
-			return " [external]"
-		}())
-	}, fzf.WithPrompt("Select App>"))
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+// 	return app, nil
+// }
 
-	return app, nil
-}
+// func EnsureApp(envName string, options ...fn.Option) (*App, error) {
 
-func EnsureApp(options ...fn.Option) (*App, error) {
+// 	s, err := SelectApp(envName, options...)
+// 	if err != nil {
+// 		return nil, functions.NewE(err)
+// 	}
 
-	s, err := SelectApp(options...)
-	if err != nil {
-		return nil, functions.NewE(err)
-	}
+// 	return s, nil
+// }
 
-	return s, nil
-}
-
-func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
+func (apic *apiClient) InterceptApp(app *App, status bool, ports []AppPort, envName string, options ...fn.Option) error {
 
 	devName := fn.GetOption(options, "deviceName")
-	envName := fn.GetOption(options, "envName")
 	accountName := fn.GetOption(options, "accountName")
 
 	fc, err := fileclient.New()
@@ -144,13 +129,93 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 		options = append(options, fn.MakeOption("accountName", accountName))
 	}
 
-	if envName == "" {
-		env, err := EnsureEnv(nil, options...)
+	if devName == "" {
+		avc, err := fc.GetVpnAccountConfig(accountName)
 		if err != nil {
 			return functions.NewE(err)
 		}
 
-		envName = env.Name
+		if avc.DeviceName == "" {
+			return fmt.Errorf("device name is required")
+		}
+
+		devName = avc.DeviceName
+	}
+
+	cookie, err := getCookie([]fn.Option{
+		fn.MakeOption("accountName", accountName),
+	}...)
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	if len(ports) == 0 {
+		if app.Spec.Intercept != nil && len(app.Spec.Intercept.PortMappings) != 0 {
+			ports = append(ports, app.Spec.Intercept.PortMappings...)
+		} else if len(app.Spec.Services) != 0 {
+			for _, v := range app.Spec.Services {
+				ports = append(ports, AppPort{
+					AppPort:    v.Port,
+					DevicePort: v.Port,
+				})
+			}
+		}
+	}
+
+	if len(ports) == 0 {
+		return fmt.Errorf("no ports provided to intercept")
+	}
+
+	query := "cli_interceptApp"
+	if !app.IsMainApp {
+		query = "cli_interceptExternalApp"
+	}
+
+	respData, err := klFetch(query, map[string]any{
+		"appName":      app.Metadata.Name,
+		"envName":      envName,
+		"deviceName":   devName,
+		"intercept":    status,
+		"portMappings": ports,
+	}, &cookie)
+
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	if _, err := GetFromResp[bool](respData); err != nil {
+		return functions.NewE(err)
+	} else {
+		return nil
+	}
+}
+
+func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
+	defer spinner.Client.UpdateMessage("Cleaning up intercepts...")()
+	devName := fn.GetOption(options, "deviceName")
+	accountName := fn.GetOption(options, "accountName")
+	currentEnv, err := apic.fc.CurrentEnv()
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	fc, err := fileclient.New()
+	if err != nil {
+		return functions.NewE(err)
+	}
+
+	if accountName == "" {
+		kt, err := fc.GetKlFile("")
+		if err != nil {
+			return functions.NewE(err)
+		}
+
+		if kt.AccountName == "" {
+			return fmt.Errorf("account name is required")
+		}
+
+		accountName = kt.AccountName
+		options = append(options, fn.MakeOption("accountName", accountName))
 	}
 
 	if devName == "" {
@@ -166,82 +231,17 @@ func InterceptApp(status bool, ports []AppPort, options ...fn.Option) error {
 		devName = avc.DeviceName
 	}
 
-	app, err := EnsureApp(options...)
-	if err != nil {
-		return functions.NewE(err)
-	}
-
 	cookie, err := getCookie([]fn.Option{
 		fn.MakeOption("accountName", accountName),
 	}...)
 	if err != nil {
 		return functions.NewE(err)
 	}
-
-	if len(ports) == 0 {
-		if len(app.Spec.Intercept.PortMappings) != 0 {
-			ports = append(ports, app.Spec.Intercept.PortMappings...)
-		} else if len(app.Spec.Services) != 0 {
-			for _, v := range app.Spec.Services {
-				ports = append(ports, AppPort{
-					AppPort:    v.Port,
-					DevicePort: v.Port,
-				})
-			}
-		}
-	}
-
-	if err := func() error {
-		sshPort, ok := os.LookupEnv("SSH_PORT")
-		if ok {
-			var prs []sshclient.StartCh
-
-			for _, v := range ports {
-				prs = append(prs, sshclient.StartCh{
-					SshPort:    sshPort,
-					RemotePort: fmt.Sprint(v.DevicePort),
-					LocalPort:  fmt.Sprint(v.DevicePort),
-				})
-			}
-
-			// TODO: add forwarding logic here
-			// p, err := proxy.NewProxy(false)
-			// if err != nil {
-			// 	return functions.NewE(err)
-			// }
-			//
-			// if status {
-			// 	if _, err := p.AddFwd(prs); err != nil {
-			// 		fn.PrintError(err)
-			// 		return functions.NewE(err)
-			// 	}
-			// 	return nil
-			// }
-			//
-			// if _, err := p.RemoveFwd(prs); err != nil {
-			// 	return functions.NewE(err)
-			// }
-		}
-		return nil
-	}(); err != nil {
-		fn.PrintError(err)
-	}
-
-	if len(ports) == 0 {
-		return fmt.Errorf("no ports provided to intercept")
-	}
-
-	query := "cli_interceptApp"
-	if !app.IsMainApp {
-		query = "cli_intercepExternalApp"
-	}
+	query := "cli_removeDeviceIntercepts"
 
 	respData, err := klFetch(query, map[string]any{
-		"appName":      app.Metadata.Name,
-		"envName":      envName,
-		"deviceName":   devName,
-		"intercept":    status,
-		"portMappings": ports,
+		"envName":    currentEnv.Name,
+		"deviceName": devName,
 	}, &cookie)
 
 	if err != nil {

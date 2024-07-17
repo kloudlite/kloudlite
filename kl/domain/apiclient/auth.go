@@ -11,7 +11,7 @@ import (
 	nanoid "github.com/matoous/go-nanoid/v2"
 )
 
-func GetCurrentUser() (*User, error) {
+func (apic *apiClient) GetCurrentUser() (*User, error) {
 	cookie, err := getCookie()
 	if err != nil && cookie == "" {
 		return nil, functions.NewE(err)
@@ -37,7 +37,7 @@ func GetCurrentUser() (*User, error) {
 	return &resp.User, nil
 }
 
-func CreateRemoteLogin() (loginId string, err error) {
+func (apic *apiClient) CreateRemoteLogin() (loginId string, err error) {
 	authSecret, err = nanoid.New(32)
 	if err != nil {
 		return "", functions.NewE(err)
@@ -63,7 +63,7 @@ func CreateRemoteLogin() (loginId string, err error) {
 	return resp.Id, nil
 }
 
-func Login(loginId string) error {
+func (apic *apiClient) Login(loginId string) error {
 	for {
 		respData, err := klFetch("cli_getRemoteLogin", map[string]any{
 			"loginId": loginId,

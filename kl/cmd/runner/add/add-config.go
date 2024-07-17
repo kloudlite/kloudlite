@@ -42,6 +42,11 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
+	apic, err := apiclient.New()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
 	filePath := fn.ParseKlFile(cmd)
 
 	name := ""
@@ -54,9 +59,17 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	configs, err := apiclient.ListConfigs([]fn.Option{
-		fn.MakeOption("accountName", klFile.AccountName),
-	}...)
+	currentAccount, err := fc.CurrentAccountName()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	currentEnv, err := fc.CurrentEnv()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	configs, err := apic.ListConfigs(currentAccount, currentEnv.Name)
 	if err != nil {
 		return fn.NewE(err)
 	}
@@ -217,7 +230,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 			},
 		})
 	}
-	//fmt.Println(currConfigs)
+
 	klFile.EnvVars.AddResTypes(currConfigs, fileclient.Res_config)
 
 	err = fc.WriteKLFile(*klFile)
@@ -232,7 +245,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fn.NewE(err)
 	}
 
-	if err := hashctrl.SyncBoxHash(wpath); err != nil {
+	if err := hashctrl.SyncBoxHash(apic, fc, wpath); err != nil {
 		return fn.NewE(err)
 	}
 

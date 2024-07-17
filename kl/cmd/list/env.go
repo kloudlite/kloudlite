@@ -31,11 +31,16 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 		return functions.NewE(err)
 	}
 
-	klFile, err := fc.GetKlFile("")
+	apic, err := apiclient.New()
 	if err != nil {
 		return functions.NewE(err)
 	}
-	envs, err := apiclient.ListEnvs(fn.MakeOption("accountName", klFile.AccountName))
+
+	currentAccount, err := fc.CurrentAccountName()
+	if err != nil {
+		return functions.NewE(err)
+	}
+	envs, err := apic.ListEnvs(currentAccount)
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -44,7 +49,7 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 		return functions.Error("no environments found")
 	}
 
-	env, _ := fileclient.CurrentEnv()
+	env, _ := fc.CurrentEnv()
 	envName := ""
 	if env != nil {
 		envName = env.Name

@@ -1,28 +1,41 @@
 package list
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/spf13/cobra"
-	"strconv"
-	"strings"
 )
 
 var appsCmd = &cobra.Command{
 	Use:   "apps",
 	Short: "Get list of apps in selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := listapps(cmd, args); err != nil {
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		fc, err := fileclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if err := listapps(apic, fc, cmd, args); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func listapps(cmd *cobra.Command, _ []string) error {
+func listapps(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Command, _ []string) error {
 	fc, err := fileclient.New()
 	if err != nil {
 		return functions.NewE(err)
@@ -30,16 +43,16 @@ func listapps(cmd *cobra.Command, _ []string) error {
 
 	envName := fn.ParseStringFlag(cmd, "env")
 
-	filePath := fn.ParseKlFile(cmd)
-	klFile, err := fc.GetKlFile(filePath)
+	currentAccountName, err := fc.CurrentAccountName()
+	if err != nil {
+		return functions.NewE(err)
+	}
+	currentEnvName, err := fc.CurrentEnv()
 	if err != nil {
 		return functions.NewE(err)
 	}
 
-	apps, err := apiclient.ListApps([]fn.Option{
-		fn.MakeOption("accountName", klFile.AccountName),
-		fn.MakeOption("envName", envName),
-	}...)
+	apps, err := apic.ListApps(currentAccountName, currentEnvName.Name)
 	if err != nil {
 		return functions.NewE(err)
 	}

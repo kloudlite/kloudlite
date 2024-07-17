@@ -26,47 +26,51 @@ func (fc *fclient) Logout() error {
 		}
 	}
 	hashConfigPath := path.Join(configPath, "box-hash")
-	if err = os.RemoveAll(hashConfigPath); err != nil && !os.IsNotExist(err) {
-		return fn.NewE(err)
-	} else if err == nil && os.IsNotExist(err) {
-		return os.Remove(path.Join(configPath, sessionFile.Name()))
+
+	_, err = os.Stat(hashConfigPath)
+	if err == nil {
+		if err = os.RemoveAll(hashConfigPath); err != nil {
+			return fn.NewE(err)
+		}
 	}
 	vpnConfigPath := path.Join(configPath, "vpn")
-	files, err := os.ReadDir(vpnConfigPath)
-	if err != nil && !os.IsNotExist(err) {
-		return fn.NewE(err)
-	} else if err == nil && os.IsNotExist(err) {
-		return os.Remove(path.Join(configPath, sessionFile.Name()))
-	}
-	for _, file := range files {
-		_, err := os.Stat(path.Join(vpnConfigPath, file.Name()))
-		if err != nil {
-			fn.PrintError(err)
-			continue
-		}
-		content, err := os.ReadFile(path.Join(vpnConfigPath, file.Name()))
-		if err != nil {
-			fn.PrintError(err)
-			continue
-		}
+	_, err = os.Stat(vpnConfigPath)
+	if err == nil {
+		files, err := os.ReadDir(vpnConfigPath)
 
-		var data AccountVpnConfig
-		err = json.Unmarshal(content, &data)
 		if err != nil {
-			fn.PrintError(err)
-			continue
+			return fn.NewE(err)
 		}
-		data.WGconf = ""
+		for _, file := range files {
+			_, err := os.Stat(path.Join(vpnConfigPath, file.Name()))
+			if err != nil {
+				fn.PrintError(err)
+				continue
+			}
+			content, err := os.ReadFile(path.Join(vpnConfigPath, file.Name()))
+			if err != nil {
+				fn.PrintError(err)
+				continue
+			}
 
-		modifiedContent, err := json.Marshal(data)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+			var data AccountVpnConfig
+			err = json.Unmarshal(content, &data)
+			if err != nil {
+				fn.PrintError(err)
+				continue
+			}
+			data.WGconf = ""
 
-		err = os.WriteFile(path.Join(vpnConfigPath, file.Name()), modifiedContent, 0644)
-		if err != nil {
-			fmt.Println(err)
+			modifiedContent, err := json.Marshal(data)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			err = os.WriteFile(path.Join(vpnConfigPath, file.Name()), modifiedContent, 0644)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}
 

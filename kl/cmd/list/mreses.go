@@ -2,6 +2,7 @@ package list
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/fileclient"
 
 	"github.com/kloudlite/kl/domain/apiclient"
@@ -22,22 +23,31 @@ var mresCmd = &cobra.Command{
 			return
 		}
 
-		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fc.GetKlFile(filePath)
+		apic, err := apiclient.New()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		sec, err := apiclient.ListMreses([]fn.Option{
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		currentEnv, err := fc.CurrentEnv()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		if err := printMres(cmd, sec); err != nil {
+		currentAccount, err := fc.CurrentAccountName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		mres, err := apic.ListMreses(currentAccount, currentEnv.Name)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if err := printMres(cmd, mres); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -52,13 +62,13 @@ func printMres(_ *cobra.Command, secrets []apiclient.Mres) error {
 	header := table.Row{
 		table.HeaderText("Display Name"),
 		table.HeaderText("Name"),
-		// table.HeaderText("entries"),
+		table.HeaderText("Secret Ref Name"),
 	}
 
 	rows := make([]table.Row, 0)
 
 	for _, a := range secrets {
-		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name})
+		rows = append(rows, table.Row{a.DisplayName, a.Name, a.SecretRefName.Name})
 	}
 
 	fmt.Println(table.Table(&header, rows))

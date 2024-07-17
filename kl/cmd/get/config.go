@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kloudlite/kl/domain/fileclient"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -19,6 +20,12 @@ var configCmd = &cobra.Command{
 	Short: "list config entries",
 	Long:  "use this command to list entries of specific config",
 	Run: func(cmd *cobra.Command, args []string) {
+
+		apic, err := apiclient.New()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
 		fc, err := fileclient.New()
 		if err != nil {
 			fn.PrintError(err)
@@ -30,17 +37,45 @@ var configCmd = &cobra.Command{
 		if len(args) >= 1 {
 			configName = args[0]
 		}
-		filePath := fn.ParseKlFile(cmd)
-		klFile, err := fc.GetKlFile(filePath)
+
+		if configName == "" {
+			currentAccount, err := fc.CurrentAccountName()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			currentEnv, err := fc.CurrentEnv()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			configs, err := apic.ListConfigs(currentAccount, currentEnv.Name)
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			selectedConfig, err := fzf.FindOne(configs, func(config apiclient.Config) string {
+				return config.DisplayName
+			}, fzf.WithPrompt("select config > "))
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			configName = selectedConfig.Metadata.Name
+		}
+
+		currentAccountName, err := fc.CurrentAccountName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		currentEnvName, err := fc.CurrentEnv()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		config, err := apiclient.EnsureConfig([]fn.Option{
-			fn.MakeOption("configName", configName),
-			fn.MakeOption("accountName", klFile.AccountName),
-		}...)
+		config, err := apic.GetConfig(currentAccountName, currentEnvName.Name, configName)
 		if err != nil {
 			fn.PrintError(err)
 			return

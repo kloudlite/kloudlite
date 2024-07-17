@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 )
 
@@ -69,11 +69,11 @@ func Search(ctx context.Context, query string) (*SearchResults, error) {
 	return caller[SearchResults](ctx, url)
 }
 
-func Resolve(ctx context.Context, name string) (string, error) {
+func Resolve(ctx context.Context, name string) (string, string, error) {
 	if !strings.Contains(name, "@") {
 		sr, err := Search(ctx, name)
 		if err != nil {
-			return "", fn.NewE(err)
+			return "", "", fn.NewE(err)
 		}
 
 		pkg, err := fzf.FindOne(sr.Packages, func(item Package) string {
@@ -81,7 +81,7 @@ func Resolve(ctx context.Context, name string) (string, error) {
 		}, fzf.WithPrompt("select a package"))
 
 		if err != nil {
-			return "", fn.NewE(err)
+			return "", "", fn.NewE(err)
 		}
 
 		version, err := fzf.FindOne(pkg.Versions, func(item PackageVersion) string {
@@ -89,16 +89,16 @@ func Resolve(ctx context.Context, name string) (string, error) {
 		}, fzf.WithPrompt("select a version"))
 
 		if err != nil {
-			return "", fn.NewE(err)
+			return "", "", fn.NewE(err)
 		}
 
-		return fmt.Sprintf("%s@%s", pkg.Name, version.Version), nil
+		return version.Name, version.CommitHash, nil
 	}
 
 	splits := strings.Split(name, "@")
 
 	if strings.TrimSpace(splits[0]) == "" || strings.TrimSpace(splits[1]) == "" {
-		return "", fmt.Errorf("package %s is invalid", name)
+		return "", "", fmt.Errorf("package %s is invalid", name)
 	}
 
 	type Res struct {
@@ -109,12 +109,12 @@ func Resolve(ctx context.Context, name string) (string, error) {
 	sr, err := caller[Res](ctx, fmt.Sprintf("%s/v1/resolve?name=%s&version=%s", searchAPIEndpoint, splits[0], splits[1]))
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			return "", fmt.Errorf("package %s not found", name)
+			return "", "", fmt.Errorf("package %s not found", name)
 		}
-		return "", fn.NewE(err)
+		return "", "", fn.NewE(err)
 	}
 
-	return fmt.Sprintf("%s@%s", splits[0], sr.Version), nil
+	return fmt.Sprintf("%s@%s", splits[0], sr.Version), sr.CommitHash, nil
 }
 
 var ErrNotFound = fn.Error("not found")
