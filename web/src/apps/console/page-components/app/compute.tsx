@@ -15,6 +15,7 @@ import { useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$environment+/_layout';
+import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { plans } from './datas';
 import appInitialFormValues, { mapFormValuesToApp } from './app-utils';
 
@@ -40,11 +41,19 @@ const valueRender = ({
 };
 
 const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
-  const { app, setApp, setPage, markPageAsCompleted, getContainer } =
-    useAppState();
+  const {
+    app,
+    readOnlyApp,
+    setApp,
+    setPage,
+    markPageAsCompleted,
+    getReadOnlyContainer,
+    getContainer,
+  } = useAppState();
   const api = useConsoleApi();
   const { cluster } = useOutletContext<IEnvironmentContext>();
   const [advancedOptions, setAdvancedOptions] = useState(false);
+  const { performAction } = useUnsavedChanges();
 
   const {
     data: nodepoolData,
@@ -61,25 +70,26 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     });
   });
 
-  const { values, errors, handleChange, isLoading, submit } = useForm({
-    initialValues: appInitialFormValues({
-      app,
-      getContainer,
-    }),
-    validationSchema: Yup.object({
-      pullSecret: Yup.string(),
-      cpuMode: Yup.string().required(),
-      selectedPlan: Yup.string().required(),
-    }),
-    onSubmit: (val) => {
-      setApp((s) =>
-        mapFormValuesToApp({
-          appIn: val,
-          oldAppIn: s,
-        })
-      );
-    },
-  });
+  const { values, errors, handleChange, isLoading, submit, resetValues } =
+    useForm({
+      initialValues: appInitialFormValues({
+        app: mode === 'edit' ? readOnlyApp : app,
+        getContainer: mode === 'edit' ? getReadOnlyContainer : getContainer,
+      }),
+      validationSchema: Yup.object({
+        pullSecret: Yup.string(),
+        cpuMode: Yup.string().required(),
+        selectedPlan: Yup.string().required(),
+      }),
+      onSubmit: (val) => {
+        setApp((s) =>
+          mapFormValuesToApp({
+            appIn: val,
+            oldAppIn: s,
+          })
+        );
+      },
+    });
 
   const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
     label: val.metadata?.name || '',
@@ -92,6 +102,12 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       submit();
     }
   }, [values, mode]);
+
+  useEffect(() => {
+    if (performAction === 'discard-changes') {
+      resetValues();
+    }
+  }, [performAction]);
 
   return (
     <FadeIn

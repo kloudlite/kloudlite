@@ -100,6 +100,19 @@ export const useAppState = () => {
     );
   };
 
+  const getReadOnlyContainer = (index: number = activeContIndex) => {
+    if (!index) {
+      // eslint-disable-next-line no-param-reassign
+      index = 0;
+    }
+    return (
+      readOnlyApp.spec.containers[index] || {
+        name: `container-${index}`,
+        image: '',
+      }
+    );
+  };
+
   const setExistingBuildID: ISetState<string | null> = (fn) => {
     if (typeof fn === 'function') {
       setState((s) => ({ ...s, existingBuildId: fn(s.existingBuildId) }));
@@ -306,6 +319,7 @@ export const useAppState = () => {
     state,
     setState,
     getContainer,
+    getReadOnlyContainer,
     setContainer,
     activeContIndex: activeContIndex || 0,
     services: app.spec.services || [],

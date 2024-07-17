@@ -148,7 +148,7 @@ export const clusterQueries = (executor: IExecutor) => ({
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount
@@ -158,7 +158,7 @@ export const clusterQueries = (executor: IExecutor) => ({
           totalCount
           pageInfo {
             startCursor
-            hasPreviousPage
+            hasPrevPage
             hasNextPage
             endCursor
           }
@@ -284,7 +284,7 @@ export const clusterQueries = (executor: IExecutor) => ({
           totalCount
           pageInfo {
             startCursor
-            hasPreviousPage
+            hasPrevPage
             hasNextPage
             endCursor
           }

@@ -63,7 +63,26 @@ type IExtraButton = {
 };
 
 const ExtraButton = ({ onAction, item }: IExtraButton) => {
-  return (
+  return item.spec?.resourceTemplate?.kind === 'RootCredentials' ? (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Edit',
+          icon: <PencilSimple size={16} />,
+          type: 'item',
+          onClick: () => onAction({ action: 'edit', item }),
+          key: 'edit',
+        },
+        {
+          label: 'View Secret',
+          icon: <LockSimple size={16} />,
+          type: 'item',
+          onClick: () => onAction({ action: 'view_secret', item }),
+          key: 'view_secret',
+        },
+      ]}
+    />
+  ) : (
     <ResourceExtraAction
       options={[
         {

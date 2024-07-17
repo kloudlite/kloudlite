@@ -66,6 +66,7 @@ type App {
   markedForDeletion: Boolean
   metadata: Metadata
   recordVersion: Int!
+  serviceHost: String
   spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
@@ -421,6 +422,7 @@ enum ConsoleResType {
   app
   config
   environment
+  imported_managed_resource
   managed_resource
   managed_service
   router
@@ -1064,6 +1066,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfi
   iamInstanceProfileRole: String
   nvidiaGpuEnabled: Boolean!
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
+  region: String!
   rootVolumeSize: Int!
   rootVolumeType: String!
   spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig
@@ -3811,7 +3814,7 @@ type OAuthProviderStatus {
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean
-  hasPreviousPage: Boolean
+  hasPrevPage: Boolean
   startCursor: String
 }
 

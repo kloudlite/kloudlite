@@ -1,4 +1,4 @@
-import { Copy, GearSix, Trash } from '~/console/components/icons';
+import { GearSix, Trash } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -70,13 +70,6 @@ const ExtraButton = ({ item, onAction }: IExtraButton) => {
     <ResourceExtraAction
       options={[
         {
-          label: 'Clone',
-          icon: <Copy size={16} />,
-          type: 'item',
-          key: 'clone',
-          onClick: () => onAction({ action: 'clone', item }),
-        },
-        {
           label: 'Delete',
           icon: <Trash size={16} />,
           type: 'item',
@@ -89,13 +82,6 @@ const ExtraButton = ({ item, onAction }: IExtraButton) => {
   ) : (
     <ResourceExtraAction
       options={[
-        {
-          label: 'Clone',
-          icon: <Copy size={16} />,
-          type: 'item',
-          key: 'clone',
-          onClick: () => onAction({ action: 'clone', item }),
-        },
         {
           label: 'Settings',
           icon: <GearSix size={16} />,

@@ -70,6 +70,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
         case 'managed_resource':
         case 'router':
         case 'secret':
+        case 'imported_managed_resource':
           ensureAccountClientSide(params);
           ensureClusterClientSide(params);
           return api.coreCheckNameAvailability;
@@ -166,6 +167,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
                   'secret',
                   'console_vpn_device',
                   'router',
+                  'imported_managed_resource',
                 ].includes(tempResType)
                   ? {
                       envName: environment,

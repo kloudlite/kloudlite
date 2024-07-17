@@ -302,13 +302,16 @@ export const appQueries = (executor: IExecutor) => ({
     gql`
       query Core_listApps(
         $envName: String!
-        $search: SearchApps
         $pq: CursorPaginationIn
+        $search: SearchApps
       ) {
-        core_listApps(envName: $envName, search: $search, pq: $pq) {
+        core_listApps(envName: $envName, pq: $pq, search: $search) {
           edges {
             cursor
             node {
+              accountName
+              apiVersion
+              ciBuildId
               createdBy {
                 userEmail
                 userId
@@ -318,6 +321,8 @@ export const appQueries = (executor: IExecutor) => ({
               displayName
               enabled
               environmentName
+              id
+              kind
               lastUpdatedBy {
                 userEmail
                 userId
@@ -325,15 +330,16 @@ export const appQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
                 generation
+                labels
                 name
                 namespace
               }
               recordVersion
               spec {
-                router {
-                  domains
-                }
                 containers {
                   args
                   command
@@ -351,6 +357,23 @@ export const appQueries = (executor: IExecutor) => ({
                   }
                   image
                   imagePullPolicy
+                  livenessProbe {
+                    failureThreshold
+                    httpGet {
+                      httpHeaders
+                      path
+                      port
+                    }
+                    initialDelay
+                    interval
+                    shell {
+                      command
+                    }
+                    tcp {
+                      port
+                    }
+                    type
+                  }
                   name
                   readinessProbe {
                     failureThreshold
@@ -366,6 +389,15 @@ export const appQueries = (executor: IExecutor) => ({
                     max
                     min
                   }
+                  volumes {
+                    items {
+                      fileName
+                      key
+                    }
+                    mountPath
+                    refName
+                    type
+                  }
                 }
                 displayName
                 freeze
@@ -378,18 +410,52 @@ export const appQueries = (executor: IExecutor) => ({
                 }
                 intercept {
                   enabled
-                  toDevice
                   portMappings {
-                    devicePort
                     appPort
+                    devicePort
                   }
+                  toDevice
                 }
                 nodeSelector
                 region
                 replicas
+                router {
+                  backendProtocol
+                  basicAuth {
+                    enabled
+                    secretName
+                    username
+                  }
+                  cors {
+                    allowCredentials
+                    enabled
+                    origins
+                  }
+                  domains
+                  https {
+                    clusterIssuer
+                    enabled
+                    forceRedirect
+                  }
+                  ingressClass
+                  maxBodySizeInMB
+                  rateLimit {
+                    connections
+                    enabled
+                    rpm
+                    rps
+                  }
+                  routes {
+                    app
+                    path
+                    port
+                    rewrite
+                  }
+                }
                 serviceAccount
                 services {
                   port
+                  protocol
                 }
                 tolerations {
                   effect
@@ -398,8 +464,32 @@ export const appQueries = (executor: IExecutor) => ({
                   tolerationSeconds
                   value
                 }
+                topologySpreadConstraints {
+                  labelSelector {
+                    matchExpressions {
+                      key
+                      operator
+                      values
+                    }
+                    matchLabels
+                  }
+                  matchLabelKeys
+                  maxSkew
+                  minDomains
+                  nodeAffinityPolicy
+                  nodeTaintsPolicy
+                  topologyKey
+                  whenUnsatisfiable
+                }
               }
               status {
+                checkList {
+                  debug
+                  description
+                  hide
+                  name
+                  title
+                }
                 checks
                 isReady
                 lastReadyGeneration
@@ -413,12 +503,6 @@ export const appQueries = (executor: IExecutor) => ({
                   name
                   namespace
                 }
-                checkList {
-                  description
-                  debug
-                  title
-                  name
-                }
               }
               syncStatus {
                 action
@@ -429,12 +513,73 @@ export const appQueries = (executor: IExecutor) => ({
                 syncScheduledAt
               }
               updateTime
+              build {
+                id
+                buildClusterName
+                creationTime
+                credUser {
+                  userEmail
+                  userId
+                  userName
+                }
+                errorMessages
+                markedForDeletion
+                name
+                recordVersion
+                source {
+                  branch
+                  provider
+                  repository
+                  webhookId
+                }
+                spec {
+                  accountName
+                  buildOptions {
+                    buildArgs
+                    buildContexts
+                    contextDir
+                    dockerfileContent
+                    dockerfilePath
+                    targetPlatforms
+                  }
+                  caches {
+                    name
+                    path
+                  }
+                  registry {
+                    repo {
+                      name
+                      tags
+                    }
+                  }
+                  resource {
+                    cpu
+                    memoryInMb
+                  }
+                }
+                status
+                updateTime
+                latestBuildRun {
+                  accountName
+                  apiVersion
+                  buildId
+                  clusterName
+                  creationTime
+                  displayName
+                  id
+                  kind
+                  markedForDeletion
+                  recordVersion
+                  updateTime
+                }
+              }
+              serviceHost
             }
           }
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount

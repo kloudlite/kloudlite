@@ -11,7 +11,7 @@ import { Button } from '~/components/atoms/button';
 import { useState } from 'react';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { EmptyManagedResourceImage } from '~/console/components/empty-resource-images';
-import { getSearch } from '~/console/server/utils/common';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import Tools from './tools';
 import ManagedResourceResourcesV2 from './managed-resources-resource-v2';
@@ -27,6 +27,7 @@ export const loader = (ctx: IRemixCtx) => {
     ).listImportedManagedResources({
       envName: environment,
       search: getSearch(ctx),
+      pq: getPagination(ctx),
     });
 
     if (mErrors) {

@@ -268,8 +268,8 @@ export const managedResourceQueries = (executor: IExecutor) => ({
           }
           pageInfo {
             endCursor
+            hasPrevPage
             hasNextPage
-            hasPreviousPage
             startCursor
           }
           totalCount

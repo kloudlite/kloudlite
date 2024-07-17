@@ -9,7 +9,7 @@ import {
 } from '~/root/lib/client/hooks/use-search';
 
 export const CustomPagination = ({ pagination }: { pagination: any }) => {
-  const { startCursor, endCursor, hasPreviousPage, hasNextPage } =
+  const { startCursor, endCursor, hasPrevPage, hasNextPage } =
     pagination?.pageInfo || {};
 
   const { totalCount } = pagination || {};
@@ -46,7 +46,7 @@ export const CustomPagination = ({ pagination }: { pagination: any }) => {
     <Pagination
       {...pagination}
       showNumbers={false}
-      isPrevDisabled={!hasPreviousPage}
+      isPrevDisabled={!hasPrevPage}
       isNextDisabled={!hasNextPage}
       showItemsPerPage={false}
       onClickNext={() => {

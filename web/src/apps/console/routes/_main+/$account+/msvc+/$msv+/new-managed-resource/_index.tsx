@@ -9,7 +9,7 @@ import { NameIdView } from '~/console/components/name-id-view';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm, { dummyEvent } from '~/lib/client/hooks/use-form';
 import Yup from '~/lib/server/helpers/yup';
-import { FormEventHandler, useEffect, useState } from 'react';
+import { FormEventHandler, useCallback, useEffect, useState } from 'react';
 import { IMSvTemplate } from '~/console/server/gql/queries/managed-templates-queries';
 import { Switch } from '~/components/atoms/switch';
 import { NumberInput, TextInput } from '~/components/atoms/input';
@@ -457,12 +457,31 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
 
   const { managedService } = useOutletContext<IManagedServiceContext>();
 
+  const commonTemplates = useCallback(() => {
+    return getManagedTemplate({
+      templates: msvtemplates || [],
+      kind: managedService?.spec?.msvcSpec.serviceTemplate.kind || '',
+      apiVersion:
+        managedService?.spec?.msvcSpec.serviceTemplate.apiVersion || '',
+    });
+  }, [managedService, msvtemplates]);
+
   const { values, errors, handleSubmit, handleChange, isLoading, setValues } =
     useForm({
       initialValues: {
         name: '',
         displayName: '',
-        selectedResource: null,
+        selectedResource: (() => {
+          const ct = commonTemplates()?.resources;
+          if (ct && ct.length === 1) {
+            return {
+              label: ct[0].displayName || '',
+              value: ct[0].name || '',
+              resource: ct[0],
+            };
+          }
+          return null;
+        })(),
         res: {},
         isNameError: false,
       },
@@ -478,6 +497,8 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
       onSubmit: async (val) => {
         const selectedResource =
           val.selectedResource as unknown as ISelectedResource;
+
+        console.log('aa', selectedResource);
         const submit = async () => {
           try {
             if (!msv) {
@@ -561,14 +582,7 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
   }, [values.selectedResource]);
 
   const resources = useMapper(
-    [
-      ...(getManagedTemplate({
-        templates: msvtemplates || [],
-        kind: managedService?.spec?.msvcSpec.serviceTemplate.kind || '',
-        apiVersion:
-          managedService?.spec?.msvcSpec.serviceTemplate.apiVersion || '',
-      })?.resources || []),
-    ],
+    [...(commonTemplates()?.resources || [])],
     (res) => ({
       label: res.displayName,
       value: res.name,

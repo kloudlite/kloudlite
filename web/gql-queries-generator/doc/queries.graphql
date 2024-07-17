@@ -176,7 +176,7 @@ query consoleListAllClusters($search: SearchCluster, $pagination: CursorPaginati
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -185,7 +185,7 @@ query consoleListAllClusters($search: SearchCluster, $pagination: CursorPaginati
     totalCount
     pageInfo {
       startCursor
-      hasPreviousPage
+      hasPrevPage
       hasNextPage
       endCursor
     }
@@ -299,7 +299,7 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
     totalCount
     pageInfo {
       startCursor
-      hasPreviousPage
+      hasPrevPage
       hasNextPage
       endCursor
     }
@@ -531,7 +531,7 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -805,7 +805,7 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -961,7 +961,7 @@ query consoleListEnvironments($search: SearchEnvironments, $pq: CursorPagination
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -1189,11 +1189,14 @@ query consoleGetApp($envName: String!, $name: String!) {
   }
 }
 
-query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginationIn) {
-  core_listApps(envName: $envName, search: $search, pq: $pq) {
+query consoleListApps($envName: String!, $pq: CursorPaginationIn, $search: SearchApps) {
+  core_listApps(envName: $envName, pq: $pq, search: $search) {
     edges {
       cursor
       node {
+        accountName
+        apiVersion
+        ciBuildId
         createdBy {
           userEmail
           userId
@@ -1203,6 +1206,8 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
         displayName
         enabled
         environmentName
+        id
+        kind
         lastUpdatedBy {
           userEmail
           userId
@@ -1210,15 +1215,16 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
         }
         markedForDeletion
         metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
           generation
+          labels
           name
           namespace
         }
         recordVersion
         spec {
-          router {
-            domains
-          }
           containers {
             args
             command
@@ -1236,6 +1242,23 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
             }
             image
             imagePullPolicy
+            livenessProbe {
+              failureThreshold
+              httpGet {
+                httpHeaders
+                path
+                port
+              }
+              initialDelay
+              interval
+              shell {
+                command
+              }
+              tcp {
+                port
+              }
+              type
+            }
             name
             readinessProbe {
               failureThreshold
@@ -1251,6 +1274,15 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
               max
               min
             }
+            volumes {
+              items {
+                fileName
+                key
+              }
+              mountPath
+              refName
+              type
+            }
           }
           displayName
           freeze
@@ -1263,18 +1295,52 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
           }
           intercept {
             enabled
-            toDevice
             portMappings {
-              devicePort
               appPort
+              devicePort
             }
+            toDevice
           }
           nodeSelector
           region
           replicas
+          router {
+            backendProtocol
+            basicAuth {
+              enabled
+              secretName
+              username
+            }
+            cors {
+              allowCredentials
+              enabled
+              origins
+            }
+            domains
+            https {
+              clusterIssuer
+              enabled
+              forceRedirect
+            }
+            ingressClass
+            maxBodySizeInMB
+            rateLimit {
+              connections
+              enabled
+              rpm
+              rps
+            }
+            routes {
+              app
+              path
+              port
+              rewrite
+            }
+          }
           serviceAccount
           services {
             port
+            protocol
           }
           tolerations {
             effect
@@ -1283,8 +1349,32 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
             tolerationSeconds
             value
           }
+          topologySpreadConstraints {
+            labelSelector {
+              matchExpressions {
+                key
+                operator
+                values
+              }
+              matchLabels
+            }
+            matchLabelKeys
+            maxSkew
+            minDomains
+            nodeAffinityPolicy
+            nodeTaintsPolicy
+            topologyKey
+            whenUnsatisfiable
+          }
         }
         status {
+          checkList {
+            debug
+            description
+            hide
+            name
+            title
+          }
           checks
           isReady
           lastReadyGeneration
@@ -1298,12 +1388,6 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
             name
             namespace
           }
-          checkList {
-            description
-            debug
-            title
-            name
-          }
         }
         syncStatus {
           action
@@ -1314,12 +1398,73 @@ query consoleListApps($envName: String!, $search: SearchApps, $pq: CursorPaginat
           syncScheduledAt
         }
         updateTime
+        build {
+          id
+          buildClusterName
+          creationTime
+          credUser {
+            userEmail
+            userId
+            userName
+          }
+          errorMessages
+          markedForDeletion
+          name
+          recordVersion
+          source {
+            branch
+            provider
+            repository
+            webhookId
+          }
+          spec {
+            accountName
+            buildOptions {
+              buildArgs
+              buildContexts
+              contextDir
+              dockerfileContent
+              dockerfilePath
+              targetPlatforms
+            }
+            caches {
+              name
+              path
+            }
+            registry {
+              repo {
+                name
+                tags
+              }
+            }
+            resource {
+              cpu
+              memoryInMb
+            }
+          }
+          status
+          updateTime
+          latestBuildRun {
+            accountName
+            apiVersion
+            buildId
+            clusterName
+            creationTime
+            displayName
+            id
+            kind
+            markedForDeletion
+            recordVersion
+            updateTime
+          }
+        }
+        serviceHost
       }
     }
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -1509,7 +1654,7 @@ query consoleListExternalApps($envName: String!, $search: SearchExternalApps, $p
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -1626,7 +1771,7 @@ query consoleListRouters($envName: String!, $search: SearchRouters, $pq: CursorP
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -1766,7 +1911,7 @@ query consoleListConfigs($envName: String!, $search: SearchConfigs, $pq: CursorP
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -1817,7 +1962,7 @@ query consoleListSecrets($envName: String!, $search: SearchSecrets, $pq: CursorP
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -1970,7 +2115,7 @@ query consoleListCred($search: SearchCreds, $pagination: CursorPaginationIn) {
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -2014,7 +2159,7 @@ query consoleListRepo($search: SearchRepos, $pagination: CursorPaginationIn) {
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -2036,7 +2181,7 @@ query consoleListDigest($repoName: String!, $search: SearchRepos, $pagination: C
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -2210,7 +2355,7 @@ query consoleListDomains($search: SearchDomainEntry, $pagination: CursorPaginati
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -2333,7 +2478,7 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -2493,7 +2638,7 @@ query consoleListPvcs($clusterName: String!, $search: SearchPersistentVolumeClai
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -2977,7 +3122,7 @@ query consoleListPvs($clusterName: String!, $search: SearchPersistentVolumes, $p
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -3063,7 +3208,7 @@ query consoleListBuildRuns($search: SearchBuildRuns, $pq: CursorPaginationIn) {
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -3296,7 +3441,7 @@ query consoleListClusterMSvs($pagination: CursorPaginationIn, $search: SearchClu
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -3421,7 +3566,7 @@ query consoleListByokClusters($search: SearchCluster, $pagination: CursorPaginat
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -3730,8 +3875,8 @@ query consoleListManagedResources($search: SearchManagedResources, $pq: CursorPa
     }
     pageInfo {
       endCursor
+      hasPrevPage
       hasNextPage
-      hasPreviousPage
       startCursor
     }
     totalCount
@@ -3867,7 +4012,7 @@ query consoleListHelmChart($clusterName: String!, $search: SearchHelmRelease, $p
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -3932,7 +4077,7 @@ query consoleListNamespaces($clusterName: String!) {
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -4004,7 +4149,7 @@ query consoleListImagePullSecrets($search: SearchImagePullSecrets, $pq: CursorPa
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -4111,7 +4256,7 @@ query consoleListGlobalVpnDevices($gvpn: String!, $search: SearchGlobalVPNDevice
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -4224,7 +4369,7 @@ query consoleListNotifications($pagination: CursorPaginationIn) {
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -4362,7 +4507,7 @@ query consoleListImportedManagedResources($envName: String!, $search: SearchImpo
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -4515,7 +4660,7 @@ query iotconsoleListIotProjects($search: SearchIOTProjects, $pq: CursorPaginatio
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -4599,7 +4744,7 @@ query iotconsoleListIotDeviceBlueprints($search: SearchIOTDeviceBlueprints, $pq:
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -4683,7 +4828,7 @@ query iotconsoleListIotDeployments($search: SearchIOTDeployments, $pq: CursorPag
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -5049,7 +5194,7 @@ query iotconsoleListIotApps($deviceBlueprintName: String!, $search: SearchIOTApp
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -5156,7 +5301,7 @@ query iotconsoleListIotDevices($deploymentName: String!, $search: SearchIOTDevic
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -5190,7 +5335,7 @@ query iotconsoleListRepo($search: SearchRepos, $pagination: CursorPaginationIn) 
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -5212,7 +5357,7 @@ query iotconsoleListDigest($repoName: String!, $search: SearchRepos, $pagination
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -5300,7 +5445,7 @@ query iotconsoleListConfigs($envName: String!, $search: SearchConfigs, $pq: Curs
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -5351,7 +5496,7 @@ query iotconsoleListSecrets($envName: String!, $search: SearchSecrets, $pq: Curs
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -5432,7 +5577,7 @@ query iotconsoleListCred($search: SearchCreds, $pagination: CursorPaginationIn) 
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -5654,7 +5799,7 @@ query iotconsoleListBuilds($repoName: String!, $search: SearchBuilds, $paginatio
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -5756,7 +5901,7 @@ query iotconsoleListBuildRuns($search: SearchBuildRuns, $pq: CursorPaginationIn)
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -6246,7 +6391,7 @@ query authCli_listEnvironments($pq: CursorPaginationIn) {
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount
@@ -6444,7 +6589,7 @@ query authCli_listImportedManagedResources($envName: String!, $search: SearchImp
     pageInfo {
       endCursor
       hasNextPage
-      hasPreviousPage
+      hasPrevPage
       startCursor
     }
     totalCount

@@ -59,6 +59,7 @@ export type ConsoleResType =
   | 'app'
   | 'config'
   | 'environment'
+  | 'imported_managed_resource'
   | 'managed_resource'
   | 'managed_service'
   | 'router'
@@ -1977,7 +1978,7 @@ export type ConsoleListAllClustersQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -1985,7 +1986,7 @@ export type ConsoleListAllClustersQuery = {
     totalCount: number;
     pageInfo: {
       startCursor?: string;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       hasNextPage?: boolean;
       endCursor?: string;
     };
@@ -2083,7 +2084,7 @@ export type ConsoleListClustersQuery = {
     totalCount: number;
     pageInfo: {
       startCursor?: string;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       hasNextPage?: boolean;
       endCursor?: string;
     };
@@ -2292,7 +2293,7 @@ export type ConsoleListProviderSecretsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
     edges: Array<{
@@ -2521,7 +2522,7 @@ export type ConsoleListNodePoolsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -2672,7 +2673,7 @@ export type ConsoleListEnvironmentsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -2876,8 +2877,8 @@ export type ConsoleGetAppQuery = {
 
 export type ConsoleListAppsQueryVariables = Exact<{
   envName: Scalars['String']['input'];
-  search?: InputMaybe<SearchApps>;
   pq?: InputMaybe<CursorPaginationIn>;
+  search?: InputMaybe<SearchApps>;
 }>;
 
 export type ConsoleListAppsQuery = {
@@ -2886,16 +2887,30 @@ export type ConsoleListAppsQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        accountName: string;
+        apiVersion?: string;
+        ciBuildId?: string;
         creationTime: any;
         displayName: string;
         enabled?: boolean;
         environmentName: string;
+        id: string;
+        kind?: string;
         markedForDeletion?: boolean;
         recordVersion: number;
         updateTime: any;
+        serviceHost?: string;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { generation: number; name: string; namespace?: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
         spec: {
           displayName?: string;
           freeze?: boolean;
@@ -2903,7 +2918,6 @@ export type ConsoleListAppsQuery = {
           region?: string;
           replicas?: number;
           serviceAccount?: string;
-          router?: { domains: Array<string> };
           containers: Array<{
             args?: Array<string>;
             command?: Array<string>;
@@ -2922,6 +2936,15 @@ export type ConsoleListAppsQuery = {
               refName: string;
               type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
             }>;
+            livenessProbe?: {
+              failureThreshold?: number;
+              initialDelay?: number;
+              interval?: number;
+              type: string;
+              httpGet?: { httpHeaders?: any; path: string; port: number };
+              shell?: { command?: Array<string> };
+              tcp?: { port: number };
+            };
             readinessProbe?: {
               failureThreshold?: number;
               initialDelay?: number;
@@ -2930,6 +2953,12 @@ export type ConsoleListAppsQuery = {
             };
             resourceCpu?: { max?: string; min?: string };
             resourceMemory?: { max?: string; min?: string };
+            volumes?: Array<{
+              mountPath: string;
+              refName: string;
+              type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
+              items?: Array<{ fileName?: string; key: string }>;
+            }>;
           }>;
           hpa?: {
             enabled: boolean;
@@ -2941,9 +2970,42 @@ export type ConsoleListAppsQuery = {
           intercept?: {
             enabled: boolean;
             toDevice: string;
-            portMappings?: Array<{ devicePort: number; appPort: number }>;
+            portMappings?: Array<{ appPort: number; devicePort: number }>;
           };
-          services?: Array<{ port: number }>;
+          router?: {
+            backendProtocol?: string;
+            domains: Array<string>;
+            ingressClass?: string;
+            maxBodySizeInMB?: number;
+            basicAuth?: {
+              enabled: boolean;
+              secretName?: string;
+              username?: string;
+            };
+            cors?: {
+              allowCredentials?: boolean;
+              enabled?: boolean;
+              origins?: Array<string>;
+            };
+            https?: {
+              clusterIssuer?: string;
+              enabled: boolean;
+              forceRedirect?: boolean;
+            };
+            rateLimit?: {
+              connections?: number;
+              enabled?: boolean;
+              rpm?: number;
+              rps?: number;
+            };
+            routes?: Array<{
+              app: string;
+              path: string;
+              port: number;
+              rewrite?: boolean;
+            }>;
+          };
+          services?: Array<{ port: number; protocol?: string }>;
           tolerations?: Array<{
             effect?: K8s__Io___Api___Core___V1__TaintEffect;
             key?: string;
@@ -2951,24 +3013,42 @@ export type ConsoleListAppsQuery = {
             tolerationSeconds?: number;
             value?: string;
           }>;
+          topologySpreadConstraints?: Array<{
+            matchLabelKeys?: Array<string>;
+            maxSkew: number;
+            minDomains?: number;
+            nodeAffinityPolicy?: string;
+            nodeTaintsPolicy?: string;
+            topologyKey: string;
+            whenUnsatisfiable: K8s__Io___Api___Core___V1__UnsatisfiableConstraintAction;
+            labelSelector?: {
+              matchLabels?: any;
+              matchExpressions?: Array<{
+                key: string;
+                operator: K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorOperator;
+                values?: Array<string>;
+              }>;
+            };
+          }>;
         };
         status?: {
           checks?: any;
           isReady: boolean;
           lastReadyGeneration?: number;
           lastReconcileTime?: any;
+          checkList?: Array<{
+            debug?: boolean;
+            description?: string;
+            hide?: boolean;
+            name: string;
+            title: string;
+          }>;
           message?: { RawMessage?: any };
           resources?: Array<{
             apiVersion: string;
             kind: string;
             name: string;
             namespace: string;
-          }>;
-          checkList?: Array<{
-            description?: string;
-            debug?: boolean;
-            title: string;
-            name: string;
           }>;
         };
         syncStatus: {
@@ -2979,12 +3059,57 @@ export type ConsoleListAppsQuery = {
           state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
           syncScheduledAt?: any;
         };
+        build?: {
+          id: string;
+          buildClusterName: string;
+          creationTime: any;
+          errorMessages: any;
+          markedForDeletion?: boolean;
+          name: string;
+          recordVersion: number;
+          status: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__BuildStatus;
+          updateTime: any;
+          credUser: { userEmail: string; userId: string; userName: string };
+          source: {
+            branch: string;
+            provider: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GitProvider;
+            repository: string;
+            webhookId?: number;
+          };
+          spec: {
+            accountName: string;
+            buildOptions?: {
+              buildArgs?: any;
+              buildContexts?: any;
+              contextDir?: string;
+              dockerfileContent?: string;
+              dockerfilePath?: string;
+              targetPlatforms?: Array<string>;
+            };
+            caches?: Array<{ name: string; path: string }>;
+            registry: { repo: { name: string; tags: Array<string> } };
+            resource: { cpu: number; memoryInMb: number };
+          };
+          latestBuildRun?: {
+            accountName: string;
+            apiVersion?: string;
+            buildId: string;
+            clusterName: string;
+            creationTime: any;
+            displayName: string;
+            id: string;
+            kind?: string;
+            markedForDeletion?: boolean;
+            recordVersion: number;
+            updateTime: any;
+          };
+        };
       };
     }>;
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3175,7 +3300,7 @@ export type ConsoleListExternalAppsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3293,7 +3418,7 @@ export type ConsoleListRoutersQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3432,7 +3557,7 @@ export type ConsoleListConfigsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3484,7 +3609,7 @@ export type ConsoleListSecretsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3679,7 +3804,7 @@ export type ConsoleListCredQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3722,7 +3847,7 @@ export type ConsoleListRepoQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3752,7 +3877,7 @@ export type ConsoleListDigestQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
     edges: Array<{
@@ -3956,7 +4081,7 @@ export type ConsoleListDomainsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
     edges: Array<{
@@ -4052,7 +4177,7 @@ export type ConsoleListBuildsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -4216,7 +4341,7 @@ export type ConsoleListPvcsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -4619,7 +4744,7 @@ export type ConsoleListPvsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -4703,7 +4828,7 @@ export type ConsoleListBuildRunsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -4922,7 +5047,7 @@ export type ConsoleListClusterMSvsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5055,7 +5180,7 @@ export type ConsoleListByokClustersQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5358,8 +5483,8 @@ export type ConsoleListManagedResourcesQuery = {
     }>;
     pageInfo: {
       endCursor?: string;
+      hasPrevPage?: boolean;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5484,7 +5609,7 @@ export type ConsoleListHelmChartQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5554,7 +5679,7 @@ export type ConsoleListNamespacesQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5631,7 +5756,7 @@ export type ConsoleListImagePullSecretsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5735,7 +5860,7 @@ export type ConsoleListGlobalVpnDevicesQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5837,7 +5962,7 @@ export type ConsoleListNotificationsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5969,7 +6094,7 @@ export type ConsoleListImportedManagedResourcesQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6148,7 +6273,7 @@ export type IotconsoleListIotProjectsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6232,7 +6357,7 @@ export type IotconsoleListIotDeviceBlueprintsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6316,7 +6441,7 @@ export type IotconsoleListIotDeploymentsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6618,7 +6743,7 @@ export type IotconsoleListIotAppsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6713,7 +6838,7 @@ export type IotconsoleListIotDevicesQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6744,7 +6869,7 @@ export type IotconsoleListRepoQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6774,7 +6899,7 @@ export type IotconsoleListDigestQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
     edges: Array<{
@@ -6874,7 +6999,7 @@ export type IotconsoleListConfigsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6926,7 +7051,7 @@ export type IotconsoleListSecretsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -7020,7 +7145,7 @@ export type IotconsoleListCredQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -7245,7 +7370,7 @@ export type IotconsoleListBuildsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -7347,7 +7472,7 @@ export type IotconsoleListBuildRunsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -7866,7 +7991,7 @@ export type AuthCli_ListEnvironmentsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -8067,7 +8192,7 @@ export type AuthCli_ListImportedManagedResourcesQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };

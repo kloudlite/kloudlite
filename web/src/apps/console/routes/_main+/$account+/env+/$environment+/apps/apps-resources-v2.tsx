@@ -239,8 +239,7 @@ const GridView = ({ items = [], onAction: _ }: IResource) => {
 };
 
 const ListView = ({ items = [], onAction }: IResource) => {
-  const { environment, cluster, account } =
-    useOutletContext<IEnvironmentContext>();
+  const { environment, account } = useOutletContext<IEnvironmentContext>();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -309,15 +308,16 @@ const ListView = ({ items = [], onAction }: IResource) => {
                 render: () => (
                   <div className="flex w-fit truncate">
                     <AppServiceView
-                      service={
-                        environment?.spec?.targetNamespace
-                          ? `${parseName(i)}.${
-                              environment?.spec?.targetNamespace
-                            }.svc.${parseName(cluster)}.local`
-                          : `${parseName(i)}.${parseName(
-                              environment
-                            )}.svc.${parseName(cluster)}.local`
-                      }
+                      service={i.serviceHost || ''}
+                      // service={
+                      //   environment?.spec?.targetNamespace
+                      //     ? `${parseName(i)}.${
+                      //         environment?.spec?.targetNamespace
+                      //       }.svc.${parseName(cluster)}.local`
+                      //     : `${parseName(i)}.${parseName(
+                      //         environment
+                      //       )}.svc.${parseName(cluster)}.local`
+                      // }
                     />
                   </div>
                 ),
