@@ -81,7 +81,7 @@ var Module = fx.Module("app",
 
 	fx.Invoke(
 		func(server httpServer.Server, d domain.Domain, sessionRepo kv.Repo[*common.AuthSession], ev *env.Env) {
-			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
+			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d, EnvVars: ev}}
 
 			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
