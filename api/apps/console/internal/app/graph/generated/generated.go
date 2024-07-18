@@ -104,6 +104,7 @@ type ComplexityRoot struct {
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
+		ServiceHost       func(childComplexity int) int
 		Spec              func(childComplexity int) int
 		Status            func(childComplexity int) int
 		SyncStatus        func(childComplexity int) int
@@ -909,6 +910,7 @@ type AppResolver interface {
 
 	UpdateTime(ctx context.Context, obj *entities.App) (string, error)
 	Build(ctx context.Context, obj *entities.App) (*model.Build, error)
+	ServiceHost(ctx context.Context, obj *entities.App) (*string, error)
 }
 type ClusterManagedServiceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.ClusterManagedService) (string, error)
@@ -1268,6 +1270,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.App.RecordVersion(childComplexity), true
+
+	case "App.serviceHost":
+		if e.complexity.App.ServiceHost == nil {
+			break
+		}
+
+		return e.complexity.App.ServiceHost(childComplexity), true
 
 	case "App.spec":
 		if e.complexity.App.Spec == nil {
@@ -5629,6 +5638,7 @@ type Build @key(fields: "id") {
 
 extend type App {
 	build: Build
+	serviceHost: String
 }
 
 extend type ImportedManagedResource {
@@ -9717,6 +9727,47 @@ func (ec *executionContext) fieldContext_App_build(ctx context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _App_serviceHost(ctx context.Context, field graphql.CollectedField, obj *entities.App) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_App_serviceHost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.App().ServiceHost(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_App_serviceHost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "App",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AppEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.AppEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AppEdge_cursor(ctx, field)
 	if err != nil {
@@ -9838,6 +9889,8 @@ func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field
 				return ec.fieldContext_App_updateTime(ctx, field)
 			case "build":
 				return ec.fieldContext_App_build(ctx, field)
+			case "serviceHost":
+				return ec.fieldContext_App_serviceHost(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -28374,6 +28427,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createApp(ctx context.Con
 				return ec.fieldContext_App_updateTime(ctx, field)
 			case "build":
 				return ec.fieldContext_App_build(ctx, field)
+			case "serviceHost":
+				return ec.fieldContext_App_serviceHost(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -28492,6 +28547,8 @@ func (ec *executionContext) fieldContext_Mutation_core_updateApp(ctx context.Con
 				return ec.fieldContext_App_updateTime(ctx, field)
 			case "build":
 				return ec.fieldContext_App_build(ctx, field)
+			case "serviceHost":
+				return ec.fieldContext_App_serviceHost(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -32102,6 +32159,8 @@ func (ec *executionContext) fieldContext_Query_core_getApp(ctx context.Context, 
 				return ec.fieldContext_App_updateTime(ctx, field)
 			case "build":
 				return ec.fieldContext_App_build(ctx, field)
+			case "serviceHost":
+				return ec.fieldContext_App_serviceHost(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type App", field.Name)
 		},
@@ -42891,6 +42950,39 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "serviceHost":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._App_serviceHost(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -52521,7 +52613,7 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -52529,7 +52621,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

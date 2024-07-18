@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -25,6 +26,14 @@ func (r *appResolver) Build(ctx context.Context, obj *entities.App) (*model.Buil
 		return nil, nil
 	}
 	return &model.Build{ID: *obj.CIBuildId}, nil
+}
+
+// ServiceHost is the resolver for the serviceHost field.
+func (r *appResolver) ServiceHost(ctx context.Context, obj *entities.App) (*string, error) {
+	if obj == nil {
+		return nil, errNilApp
+	}
+	return fn.New(fmt.Sprintf("%s.%s.%s.%s", obj.Name, obj.EnvironmentName, obj.AccountName, r.EnvVars.KloudliteDNSSuffix)), nil
 }
 
 // ManagedResource is the resolver for the ManagedResource field.
@@ -977,5 +986,7 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

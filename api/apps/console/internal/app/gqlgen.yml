@@ -111,6 +111,8 @@ models:
     fields:
       build:
         resolver: true
+      serviceHost:
+        resolver: true
     model: github.com/kloudlite/api/apps/console/internal/entities.App
   AppIn: *app-model
 
