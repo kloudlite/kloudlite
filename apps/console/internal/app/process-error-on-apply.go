@@ -16,6 +16,7 @@ import (
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 )
 
 type ErrorOnApplyConsumer messaging.Consumer
@@ -69,20 +70,6 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 		gvkStr := obj.GroupVersionKind().String()
 
 		switch gvkStr {
-		case deviceGVK.String():
-			{
-				if errObj.Action == t.ActionApply {
-					return d.OnVPNDeviceApplyError(dctx, errObj.Error, obj.GetName(), opts)
-				}
-
-				p, err := fn.JsonConvert[entities.ConsoleVPNDevice](obj.Object)
-				if err != nil {
-					return err
-				}
-
-				return d.OnVPNDeviceDeleteMessage(dctx, p)
-			}
-
 		case environmentGVK.String():
 			{
 				if errObj.Action == t.ActionApply {
@@ -185,15 +172,27 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case managedResourceGVK.String():
 			{
-				mres, err := fn.JsonConvert[entities.ManagedResource](obj.Object)
+				mres, err := fn.JsonConvert[crdsv1.ManagedResource](obj.Object)
 				if err != nil {
 					return err
 				}
 
 				if errObj.Action == t.ActionApply {
-					return d.OnManagedResourceApplyError(dctx, errObj.Error, mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.Name, obj.GetName(), opts)
+					return d.OnManagedResourceApplyError(dctx, errObj.Error, mres.Spec.ResourceTemplate.MsvcRef.Name, obj.GetName(), opts)
 				}
-				return d.OnManagedResourceDeleteMessage(dctx, mres.ManagedResource.Spec.ResourceTemplate.MsvcRef.Name, mres)
+				return d.OnManagedResourceDeleteMessage(dctx, mres.Spec.ResourceTemplate.MsvcRef.Name, mres)
+			}
+		case clusterMsvcGVK.String():
+			{
+				cmsvc, err := fn.JsonConvert[entities.ClusterManagedService](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnClusterManagedServiceApplyError(dctx, em.ClusterName, obj.GetName(), errObj.Error, opts)
+				}
+				return d.OnClusterManagedServiceDeleteMessage(dctx, em.ClusterName, cmsvc)
 			}
 
 		default:

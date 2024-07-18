@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
@@ -23,8 +24,7 @@ func main() {
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 	flag.Parse()
 
-
-	logger, err := logging.New(&logging.Options{Name: "console", Dev: isDev})
+	logger, err := logging.New(&logging.Options{Name: "console", ShowDebugLog: isDev || strings.ToLower(os.Getenv("LOG_LEVEL")) == "debug"})
 	if err != nil {
 		panic(err)
 	}

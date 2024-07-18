@@ -15,6 +15,7 @@ const (
 	NotificationId                = "id"
 	NotificationMarkedForDeletion = "markedForDeletion"
 	NotificationNotificationType  = "notificationType"
+	NotificationPriority          = "priority"
 	NotificationRead              = "read"
 	NotificationRecordVersion     = "recordVersion"
 	NotificationUpdateTime        = "updateTime"

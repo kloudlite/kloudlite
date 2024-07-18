@@ -9,6 +9,7 @@ enum ConsoleResType {
 	router
 	managed_service
 	managed_resource
+	imported_managed_resource
 	environment
 	vpn_device
 }
@@ -74,6 +75,11 @@ input SearchManagedResources {
 	markedForDeletion: MatchFilterIn
 }
 
+input SearchClusterManagedService {
+  isReady: MatchFilterIn
+  text: MatchFilterIn
+}
+
 input SearchImportedManagedResources {
 	text: MatchFilterIn
 	isReady: MatchFilterIn
@@ -109,7 +115,6 @@ type Query {
 	core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
 	core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 	core_restartApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	core_removeDeviceIntercepts(envName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_listExternalApps(envName: String!, search: SearchExternalApps, pq: CursorPaginationIn): ExternalAppPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getExternalApp(envName: String!, name: String!): ExternalApp @isLoggedInAndVerified @hasAccount
@@ -132,14 +137,13 @@ type Query {
 	core_getManagedResouceOutputKeys(msvcName: String, envName:String , name: String!): [String!]! @isLoggedInAndVerified @hasAccount
 	core_getManagedResouceOutputKeyValues(msvcName: String, envName:String, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
 
+  infra_listClusterManagedServices(search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_getClusterManagedService(name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+
 	core_listManagedResources(search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getManagedResource(msvcName: String, envName: String, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_resyncManagedResource(msvcName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 	core_listImportedManagedResources(envName: String!, search: SearchImportedManagedResources, pq: CursorPaginationIn): ImportedManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
-
-	core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-	core_listVPNDevicesForUser: [ConsoleVPNDevice!] @isLoggedInAndVerified @hasAccount
-	core_getVPNDevice(name: String!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -157,6 +161,7 @@ type Mutation {
 	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_deleteApp(envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 	core_interceptApp(envName: String!, appname: String!, deviceName: String!, intercept: Boolean!, portMappings: [Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappingsIn!]): Boolean! @isLoggedInAndVerified @hasAccount
+	core_removeDeviceIntercepts(envName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_createExternalApp(envName: String!, externalApp: ExternalAppIn!): ExternalApp @isLoggedInAndVerified @hasAccount
 	core_updateExternalApp(envName: String!, externalApp: ExternalAppIn!): ExternalApp @isLoggedInAndVerified @hasAccount
@@ -175,22 +180,17 @@ type Mutation {
 	core_updateRouter(envName: String!, router: RouterIn!): Router @isLoggedInAndVerified @hasAccount
 	core_deleteRouter(envName: String!, routerName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
+  infra_createClusterManagedService(service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+  infra_updateClusterManagedService(service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+  infra_deleteClusterManagedService(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+  infra_cloneClusterManagedService(clusterName: String!, sourceMsvcName: String!, destinationMsvcName: String!, displayName: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+
 	core_createManagedResource(msvcName: String! ,mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_updateManagedResource(msvcName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
 	core_deleteManagedResource(msvcName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
 	core_importManagedResource(envName: String!, msvcName: String!, mresName: String!, importName: String!): ImportedManagedResource @isLoggedInAndVerified @hasAccount
 	core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
-	core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
-	core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
-
-	core_updateVPNDevicePorts(deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
-	core_updateVPNDeviceEnv(deviceName: String!,envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	core_updateVpnDeviceNs(deviceName: String!,ns: String!): Boolean! @isLoggedInAndVerified @hasAccount
-	core_updateVpnClusterName(deviceName: String!,clusterName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
-	core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type Build @key(fields: "id") {
@@ -199,6 +199,7 @@ type Build @key(fields: "id") {
 
 extend type App {
 	build: Build
+	serviceHost: String
 }
 
 extend type ImportedManagedResource {

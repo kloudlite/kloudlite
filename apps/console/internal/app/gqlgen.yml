@@ -111,6 +111,8 @@ models:
     fields:
       build:
         resolver: true
+      serviceHost:
+        resolver: true
     model: github.com/kloudlite/api/apps/console/internal/entities.App
   AppIn: *app-model
 
@@ -146,6 +148,10 @@ models:
     fields:
       managedResource:
         resolver: true
+
+  ClusterManagedService: &custer-managed-service-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.ClusterManagedService
+  ClusterManagedServiceIn: *custer-managed-service-model
 
   ManagedResourceKeyRefIn:
     model: github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyRef

@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
@@ -20,6 +21,8 @@ import (
 	"github.com/kloudlite/api/pkg/grpc"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
+
+	"github.com/miekg/dns"
 )
 
 type fm struct {
@@ -126,5 +129,17 @@ var Module = fx.Module("framework",
 				return server.Close()
 			},
 		})
+	}),
+
+	fx.Provide(func(ev *env.Env) *app.DNSServer {
+		return &app.DNSServer{
+			Server: &dns.Server{
+				Addr:      ev.DNSAddr,
+				Net:       "udp",
+				// Handler:   handler,
+				UDPSize:   0xffff,
+				ReusePort: true,
+			},
+		}
 	}),
 )

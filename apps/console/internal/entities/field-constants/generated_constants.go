@@ -53,25 +53,53 @@ const (
 	AppSpecTopologySpreadConstraints  = "spec.topologySpreadConstraints"
 )
 
+// constant vars generated for struct ClusterManagedService
+const (
+	ClusterManagedServiceIsArchived                                              = "isArchived"
+	ClusterManagedServiceOutput                                                  = "output"
+	ClusterManagedServiceOutputCredentialsRef                                    = "output.credentialsRef"
+	ClusterManagedServiceOutputCredentialsRefName                                = "output.credentialsRef.name"
+	ClusterManagedServiceSpec                                                    = "spec"
+	ClusterManagedServiceSpecMsvcSpec                                            = "spec.msvcSpec"
+	ClusterManagedServiceSpecMsvcSpecNodeSelector                                = "spec.msvcSpec.nodeSelector"
+	ClusterManagedServiceSpecMsvcSpecServiceTemplate                             = "spec.msvcSpec.serviceTemplate"
+	ClusterManagedServiceSpecMsvcSpecServiceTemplateApiVersion                   = "spec.msvcSpec.serviceTemplate.apiVersion"
+	ClusterManagedServiceSpecMsvcSpecServiceTemplateKind                         = "spec.msvcSpec.serviceTemplate.kind"
+	ClusterManagedServiceSpecMsvcSpecServiceTemplateSpec                         = "spec.msvcSpec.serviceTemplate.spec"
+	ClusterManagedServiceSpecMsvcSpecSharedSecret                                = "spec.msvcSpec.sharedSecret"
+	ClusterManagedServiceSpecMsvcSpecTolerations                                 = "spec.msvcSpec.tolerations"
+	ClusterManagedServiceSpecSharedSecret                                        = "spec.sharedSecret"
+	ClusterManagedServiceSpecTargetNamespace                                     = "spec.targetNamespace"
+	ClusterManagedServiceSyncedOutputSecretRef                                   = "syncedOutputSecretRef"
+	ClusterManagedServiceSyncedOutputSecretRefApiVersion                         = "syncedOutputSecretRef.apiVersion"
+	ClusterManagedServiceSyncedOutputSecretRefData                               = "syncedOutputSecretRef.data"
+	ClusterManagedServiceSyncedOutputSecretRefImmutable                          = "syncedOutputSecretRef.immutable"
+	ClusterManagedServiceSyncedOutputSecretRefKind                               = "syncedOutputSecretRef.kind"
+	ClusterManagedServiceSyncedOutputSecretRefMetadata                           = "syncedOutputSecretRef.metadata"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataAnnotations                = "syncedOutputSecretRef.metadata.annotations"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataCreationTimestamp          = "syncedOutputSecretRef.metadata.creationTimestamp"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataDeletionGracePeriodSeconds = "syncedOutputSecretRef.metadata.deletionGracePeriodSeconds"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataDeletionTimestamp          = "syncedOutputSecretRef.metadata.deletionTimestamp"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataFinalizers                 = "syncedOutputSecretRef.metadata.finalizers"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataGenerateName               = "syncedOutputSecretRef.metadata.generateName"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataGeneration                 = "syncedOutputSecretRef.metadata.generation"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataLabels                     = "syncedOutputSecretRef.metadata.labels"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataManagedFields              = "syncedOutputSecretRef.metadata.managedFields"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataName                       = "syncedOutputSecretRef.metadata.name"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataNamespace                  = "syncedOutputSecretRef.metadata.namespace"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataOwnerReferences            = "syncedOutputSecretRef.metadata.ownerReferences"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataResourceVersion            = "syncedOutputSecretRef.metadata.resourceVersion"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataSelfLink                   = "syncedOutputSecretRef.metadata.selfLink"
+	ClusterManagedServiceSyncedOutputSecretRefMetadataUid                        = "syncedOutputSecretRef.metadata.uid"
+	ClusterManagedServiceSyncedOutputSecretRefStringData                         = "syncedOutputSecretRef.stringData"
+	ClusterManagedServiceSyncedOutputSecretRefType                               = "syncedOutputSecretRef.type"
+)
+
 // constant vars generated for struct Config
 const (
 	ConfigBinaryData = "binaryData"
 	ConfigData       = "data"
 	ConfigImmutable  = "immutable"
-)
-
-// constant vars generated for struct ConsoleVPNDevice
-const (
-	ConsoleVPNDeviceLinkedClusters        = "linkedClusters"
-	ConsoleVPNDeviceSpec                  = "spec"
-	ConsoleVPNDeviceSpecActiveNamespace   = "spec.activeNamespace"
-	ConsoleVPNDeviceSpecCnameRecords      = "spec.cnameRecords"
-	ConsoleVPNDeviceSpecDisabled          = "spec.disabled"
-	ConsoleVPNDeviceSpecNoExternalService = "spec.noExternalService"
-	ConsoleVPNDeviceSpecNodeSelector      = "spec.nodeSelector"
-	ConsoleVPNDeviceSpecPorts             = "spec.ports"
-	ConsoleVPNDeviceWireguardConfig       = "wireguardConfig"
-	ConsoleVPNDeviceWireguardConfigs      = "wireguardConfigs"
 )
 
 // constant vars generated for struct Environment
@@ -136,11 +164,9 @@ const (
 	ManagedResourceSpecResourceTemplateKind                                = "spec.resourceTemplate.kind"
 	ManagedResourceSpecResourceTemplateMsvcRef                             = "spec.resourceTemplate.msvcRef"
 	ManagedResourceSpecResourceTemplateMsvcRefApiVersion                   = "spec.resourceTemplate.msvcRef.apiVersion"
-	ManagedResourceSpecResourceTemplateMsvcRefClusterName                  = "spec.resourceTemplate.msvcRef.clusterName"
 	ManagedResourceSpecResourceTemplateMsvcRefKind                         = "spec.resourceTemplate.msvcRef.kind"
 	ManagedResourceSpecResourceTemplateMsvcRefName                         = "spec.resourceTemplate.msvcRef.name"
 	ManagedResourceSpecResourceTemplateMsvcRefNamespace                    = "spec.resourceTemplate.msvcRef.namespace"
-	ManagedResourceSpecResourceTemplateMsvcRefSharedSecret                 = "spec.resourceTemplate.msvcRef.sharedSecret"
 	ManagedResourceSpecResourceTemplateSpec                                = "spec.resourceTemplate.spec"
 	ManagedResourceSyncedOutputSecretRef                                   = "syncedOutputSecretRef"
 	ManagedResourceSyncedOutputSecretRefApiVersion                         = "syncedOutputSecretRef.apiVersion"
@@ -235,6 +261,18 @@ const (
 	SecretCreatedForNamespace    = "namespace"
 	SecretCreatedForRefId        = "refId"
 	SecretCreatedForResourceType = "resourceType"
+)
+
+// constant vars generated for struct ServiceBinding
+const (
+	ServiceBindingSpec                    = "spec"
+	ServiceBindingSpecGlobalIP            = "spec.globalIP"
+	ServiceBindingSpecHostname            = "spec.hostname"
+	ServiceBindingSpecPorts               = "spec.ports"
+	ServiceBindingSpecServiceIP           = "spec.serviceIP"
+	ServiceBindingSpecServiceRef          = "spec.serviceRef"
+	ServiceBindingSpecServiceRefName      = "spec.serviceRef.name"
+	ServiceBindingSpecServiceRefNamespace = "spec.serviceRef.namespace"
 )
 
 // constant vars generated for struct

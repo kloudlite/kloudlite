@@ -105,6 +105,34 @@ func (d *domain) DeleteImportedManagedResource(ctx ResourceContext, importName s
 	return nil
 }
 
+func (d *domain) deleteImportedManagedResources(ctx ConsoleContext, mresNamespace string) error {
+	if err := d.canPerformActionInAccount(ctx, iamT.DeleteManagedResource); err != nil {
+		return errors.NewE(err)
+	}
+
+	records, err := d.importedMresRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			fc.AccountName: ctx.AccountName,
+			fc.ImportedManagedResourceManagedResourceRefNamespace: mresNamespace,
+		},
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	for i := range records {
+		if err := d.deleteSecret(ResourceContext{ConsoleContext: ctx, EnvironmentName: records[i].EnvironmentName}, records[i].SecretRef.Name); err != nil {
+			return errors.NewE(err)
+		}
+
+		if err := d.importedMresRepo.DeleteById(ctx, records[i].Id); err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	return nil
+}
+
 func (d *domain) findImportedMRes(ctx ResourceContext, importName string) (*entities.ImportedManagedResource, error) {
 	imr, err := d.importedMresRepo.FindOne(ctx, repos.Filter{
 		fc.AccountName:                 ctx.AccountName,
