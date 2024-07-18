@@ -199,6 +199,7 @@ type Build @key(fields: "id") {
 
 extend type App {
 	build: Build
+	serviceHost: String
 }
 
 extend type ImportedManagedResource {

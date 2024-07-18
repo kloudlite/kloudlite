@@ -47,9 +47,9 @@ PrivateKey = {{.PrivateKey}}
 ListenPort = {{.ListenPort}}
 {{- end }}
 
-{{- if .DNS }}
-DNS = {{.DNS}}
-{{- end }}
+{{- /* {{- if .DNS }} */}}
+{{- /* DNS = {{.DNS}} */}}
+{{- /* {{- end }} */}}
 
 {{- range .PostUp -}}
 PostUp = {{.}}
