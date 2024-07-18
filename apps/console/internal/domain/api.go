@@ -161,7 +161,6 @@ type Domain interface {
 	UpdateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
 	DeleteEnvironment(ctx ConsoleContext, name string) error
 	ArchiveEnvironmentsForCluster(ctx ConsoleContext, clusterName string) (bool, error)
-	ArchiveClusterManagedServicesForCluster(ctx ConsoleContext, clusterName string) (bool, error)
 
 	OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, name string, opts UpdateAndDeleteOpts) error
 	OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Environment) error
@@ -310,7 +309,7 @@ type ClusterManagedService interface {
 	// CloneClusterManagedService(ctx ConsoleContext, args CloneManagedServiceArgs) (*entities.ClusterManagedService, error)
 	UpdateClusterManagedService(ctx ConsoleContext, cmsvc entities.ClusterManagedService) (*entities.ClusterManagedService, error)
 	DeleteClusterManagedService(ctx ConsoleContext, name string) error
-	ArchiveClusterManagedService(ctx ConsoleContext, clusterName string) error
+	ArchiveClusterManagedServicesForCluster(ctx ConsoleContext, clusterName string) (bool, error)
 
 	OnClusterManagedServiceApplyError(ctx ConsoleContext, clusterName, name, errMsg string, opts UpdateAndDeleteOpts) error
 	OnClusterManagedServiceDeleteMessage(ctx ConsoleContext, clusterName string, service entities.ClusterManagedService) error

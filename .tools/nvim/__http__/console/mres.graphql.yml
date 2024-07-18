@@ -12,7 +12,8 @@ query: |+ #graphql
       totalCount
       pageInfo {
         hasNextPage
-        hasPreviousPage
+        hasPrevPage
+        # endCursor
       }
       edges {
         cursor
@@ -27,8 +28,11 @@ query: |+ #graphql
   }
 variables:
   pq:
-    first: 10
-    after: NjY5NTUxMTE3YTU0Njk4MTBkZWNlNDRl
+    # first: 5
+    # after: NjY5NTUxMTk3YTU0Njk4MTBkZWNlNDRm
+
+    last: 5
+    before: NjY5NTUxMTk3YTU0Njk4MTBkZWNlNDRm
   search:
     managedServiceName: 
       matchType: exact
