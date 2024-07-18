@@ -2179,6 +2179,7 @@ export type ConsoleGetClusterQuery = {
   infra_getCluster?: {
     accountName: string;
     apiVersion?: string;
+    lastOnlineAt?: any;
     creationTime: any;
     displayName: string;
     id: string;

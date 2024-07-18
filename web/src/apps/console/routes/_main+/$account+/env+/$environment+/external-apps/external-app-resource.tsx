@@ -357,9 +357,9 @@ const ExternalNameResource = ({ items = [] }: Omit<IResource, 'onAction'>) => {
 
   useWatchReload(
     items.map((i) => {
-      return `account:${account}.environment:${environment}.app:${parseName(
-        i
-      )}`;
+      return `account:${parseName(account)}.environment:${parseName(
+        environment
+      )}.app:${parseName(i)}`;
     })
   );
 

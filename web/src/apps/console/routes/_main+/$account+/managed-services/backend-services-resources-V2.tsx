@@ -13,7 +13,7 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
-import { getManagedTemplate } from '~/console/utils/commons';
+import { getClusterStatus, getManagedTemplate } from '~/console/utils/commons';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { SyncStatusV2 } from '~/console/components/sync-status';
@@ -157,7 +157,7 @@ const GridView = ({ items, templates, onAction }: IResource) => {
 };
 
 const ListView = ({ items, templates, onAction }: IResource) => {
-  const { account } = useOutletContext<IAccountContext>();
+  const { account, clustersMap } = useOutletContext<IAccountContext>();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -195,6 +195,7 @@ const ListView = ({ items, templates, onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
+          const isClusterOnline = getClusterStatus(clustersMap[i.clusterName]);
           const { name, id, logo, updateInfo } = parseItem(i, templates);
           return {
             columns: {
@@ -217,12 +218,16 @@ const ListView = ({ items, templates, onAction }: IResource) => {
                 ),
               },
               status: {
-                render: () =>
-                  i.isArchived ? (
-                    <Badge type="neutral">Archived</Badge>
-                  ) : (
-                    <SyncStatusV2 item={i} />
-                  ),
+                render: () => {
+                  if (i.isArchived) {
+                    return <Badge type="neutral">Archived</Badge>;
+                  }
+                  if (!isClusterOnline) {
+                    return <Badge type="warning">Cluster Offline</Badge>;
+                  }
+
+                  return <SyncStatusV2 item={i} />;
+                },
               },
               updated: {
                 render: () => (
@@ -254,12 +259,12 @@ const BackendServicesResourcesV2 = ({
   items: BaseType[];
   templates: IMSvTemplates;
 }) => {
-  const { cluster, account } = useOutletContext<IClusterContext>();
+  const { account } = useOutletContext<IClusterContext>();
   useWatchReload(
     items.map((i) => {
-      return `account:${parseName(account)}.cluster:${parseName(
-        cluster
-      )}.cluster_managed_service:${parseName(i)}`;
+      return `account:${parseName(account)}.cluster:${
+        i.clusterName
+      }.cluster_managed_service:${parseName(i)}`;
     })
   );
 
