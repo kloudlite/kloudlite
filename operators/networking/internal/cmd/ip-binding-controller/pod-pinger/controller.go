@@ -83,20 +83,23 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		r.logger.Errorf(err, "failed to create pinger for %s", v)
 		return ctrl.Result{}, err
 	}
+
 	pinger.Count = 1
 	pinger.Timeout = 500 * time.Millisecond
+
 	if err = pinger.RunWithContext(ctx); err != nil {
 		r.logger.Errorf(err, "failed to ping %s", v)
-		if _, ok := pod.Labels[KloudlitePodActiveLabel]; ok {
-			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		if _, ok := pod.Labels[KloudlitePodActiveLabel]; !ok {
+			return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
 		}
 		if err := r.Delete(ctx, pod); err != nil {
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, err
 	}
+
 	if _, ok := pod.Labels[KloudlitePodActiveLabel]; !ok {
-		pod.Labels[KloudlitePodActiveLabel] = "true"
+		fn.MapSet(&pod.Labels, KloudlitePodActiveLabel, "true")
 		if err := r.Update(ctx, pod); err != nil {
 			r.logger.Errorf(err, "failed to update pod %s/%s", pod.GetNamespace(), pod.GetName())
 			return ctrl.Result{}, err
