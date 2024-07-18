@@ -50,6 +50,10 @@ const (
 	createStatefulSet       string = "create-statefulset"
 )
 
+const (
+	kloudliteMsvcComponent string = "kloudlite.io/msvc.component"
+)
+
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/finalizers,verbs=update
@@ -178,7 +182,7 @@ func (r *ServiceReconciler) createService(req *rApi.Request[*mysqlMsvcv1.Standal
 				Port:     3306,
 			},
 		}
-		svc.Spec.Selector = fn.MapFilter(obj.GetLabels(), "kloudlite.io/")
+		svc.Spec.Selector = fn.MapMerge(fn.MapFilter(obj.GetLabels(), "kloudlite.io/"), map[string]string{kloudliteMsvcComponent: "statefulset"})
 		return nil
 	}); err != nil {
 		return check.Failed(err)
@@ -275,7 +279,12 @@ func (r *ServiceReconciler) createStatefulSet(req *rApi.Request[*mysqlMsvcv1.Sta
 	sts := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, sts, func() error {
 		sts.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		sts.SetLabels(obj.GetLabels())
+		lb := sts.GetLabels()
+		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+			lb[k] = v
+		}
+		fn.MapSet(&lb, kloudliteMsvcComponent, "statefulset")
+		sts.SetLabels(lb)
 
 		sts.Spec = appsv1.StatefulSetSpec{
 			Replicas: fn.New(int32(1)),
