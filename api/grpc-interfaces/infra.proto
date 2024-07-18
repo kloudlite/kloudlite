@@ -9,7 +9,6 @@ service Infra {
   rpc GetNodepool(GetNodepoolIn) returns (GetNodepoolOut);
   rpc ClusterExists(ClusterExistsIn) returns (ClusterExistsOut);
   rpc GetClusterKubeconfig(GetClusterIn) returns (GetClusterKubeconfigOut);
-  rpc GetClusterManagedService(GetClusterManagedServiceIn) returns (GetClusterManagedServiceOut);
   rpc MarkClusterOnlineAt(MarkClusterOnlineAtIn) returns (MarkClusterOnlineAtOut);
 }
 
@@ -60,20 +59,6 @@ message ClusterExistsOut {
 
 message GetClusterKubeconfigOut {
   bytes kubeconfig = 1;
-}
-
-message GetClusterManagedServiceIn {
-  string userId = 1;
-  string userName = 2;
-  string userEmail = 3;
-
-  string accountName = 4;
-  string msvcName = 5;
-}
-
-message GetClusterManagedServiceOut {
-  string targetNamespace = 1;
-  string clusterName = 2;
 }
 
 message MarkClusterOnlineAtIn {

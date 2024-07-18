@@ -19,12 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Infra_GetCluster_FullMethodName               = "/Infra/GetCluster"
-	Infra_GetNodepool_FullMethodName              = "/Infra/GetNodepool"
-	Infra_ClusterExists_FullMethodName            = "/Infra/ClusterExists"
-	Infra_GetClusterKubeconfig_FullMethodName     = "/Infra/GetClusterKubeconfig"
-	Infra_GetClusterManagedService_FullMethodName = "/Infra/GetClusterManagedService"
-	Infra_MarkClusterOnlineAt_FullMethodName      = "/Infra/MarkClusterOnlineAt"
+	Infra_GetCluster_FullMethodName           = "/Infra/GetCluster"
+	Infra_GetNodepool_FullMethodName          = "/Infra/GetNodepool"
+	Infra_ClusterExists_FullMethodName        = "/Infra/ClusterExists"
+	Infra_GetClusterKubeconfig_FullMethodName = "/Infra/GetClusterKubeconfig"
+	Infra_MarkClusterOnlineAt_FullMethodName  = "/Infra/MarkClusterOnlineAt"
 )
 
 // InfraClient is the client API for Infra service.
@@ -35,7 +34,6 @@ type InfraClient interface {
 	GetNodepool(ctx context.Context, in *GetNodepoolIn, opts ...grpc.CallOption) (*GetNodepoolOut, error)
 	ClusterExists(ctx context.Context, in *ClusterExistsIn, opts ...grpc.CallOption) (*ClusterExistsOut, error)
 	GetClusterKubeconfig(ctx context.Context, in *GetClusterIn, opts ...grpc.CallOption) (*GetClusterKubeconfigOut, error)
-	GetClusterManagedService(ctx context.Context, in *GetClusterManagedServiceIn, opts ...grpc.CallOption) (*GetClusterManagedServiceOut, error)
 	MarkClusterOnlineAt(ctx context.Context, in *MarkClusterOnlineAtIn, opts ...grpc.CallOption) (*MarkClusterOnlineAtOut, error)
 }
 
@@ -83,15 +81,6 @@ func (c *infraClient) GetClusterKubeconfig(ctx context.Context, in *GetClusterIn
 	return out, nil
 }
 
-func (c *infraClient) GetClusterManagedService(ctx context.Context, in *GetClusterManagedServiceIn, opts ...grpc.CallOption) (*GetClusterManagedServiceOut, error) {
-	out := new(GetClusterManagedServiceOut)
-	err := c.cc.Invoke(ctx, Infra_GetClusterManagedService_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *infraClient) MarkClusterOnlineAt(ctx context.Context, in *MarkClusterOnlineAtIn, opts ...grpc.CallOption) (*MarkClusterOnlineAtOut, error) {
 	out := new(MarkClusterOnlineAtOut)
 	err := c.cc.Invoke(ctx, Infra_MarkClusterOnlineAt_FullMethodName, in, out, opts...)
@@ -109,7 +98,6 @@ type InfraServer interface {
 	GetNodepool(context.Context, *GetNodepoolIn) (*GetNodepoolOut, error)
 	ClusterExists(context.Context, *ClusterExistsIn) (*ClusterExistsOut, error)
 	GetClusterKubeconfig(context.Context, *GetClusterIn) (*GetClusterKubeconfigOut, error)
-	GetClusterManagedService(context.Context, *GetClusterManagedServiceIn) (*GetClusterManagedServiceOut, error)
 	MarkClusterOnlineAt(context.Context, *MarkClusterOnlineAtIn) (*MarkClusterOnlineAtOut, error)
 	mustEmbedUnimplementedInfraServer()
 }
@@ -129,9 +117,6 @@ func (UnimplementedInfraServer) ClusterExists(context.Context, *ClusterExistsIn)
 }
 func (UnimplementedInfraServer) GetClusterKubeconfig(context.Context, *GetClusterIn) (*GetClusterKubeconfigOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetClusterKubeconfig not implemented")
-}
-func (UnimplementedInfraServer) GetClusterManagedService(context.Context, *GetClusterManagedServiceIn) (*GetClusterManagedServiceOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetClusterManagedService not implemented")
 }
 func (UnimplementedInfraServer) MarkClusterOnlineAt(context.Context, *MarkClusterOnlineAtIn) (*MarkClusterOnlineAtOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MarkClusterOnlineAt not implemented")
@@ -221,24 +206,6 @@ func _Infra_GetClusterKubeconfig_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Infra_GetClusterManagedService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetClusterManagedServiceIn)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(InfraServer).GetClusterManagedService(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Infra_GetClusterManagedService_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InfraServer).GetClusterManagedService(ctx, req.(*GetClusterManagedServiceIn))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Infra_MarkClusterOnlineAt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MarkClusterOnlineAtIn)
 	if err := dec(in); err != nil {
@@ -279,10 +246,6 @@ var Infra_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetClusterKubeconfig",
 			Handler:    _Infra_GetClusterKubeconfig_Handler,
-		},
-		{
-			MethodName: "GetClusterManagedService",
-			Handler:    _Infra_GetClusterManagedService_Handler,
 		},
 		{
 			MethodName: "MarkClusterOnlineAt",

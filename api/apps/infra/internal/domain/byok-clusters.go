@@ -191,6 +191,7 @@ func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string, 
 				"clusterName":           name,
 				"clusterToken":          cluster.ClusterToken,
 				"messageOfficeGRPCAddr": d.env.MessageOfficeExternalGrpcAddr,
+				"kloudliteDNSSuffix":    fmt.Sprintf("%s.%s", ctx.AccountName, d.env.KloudliteDNSSuffix),
 			},
 		})
 		if err != nil {
@@ -209,7 +210,7 @@ func (d *domain) GetBYOKClusterSetupInstructions(ctx InfraContext, name string, 
 		{Title: "Add Helm Repo", Command: "helm repo add kloudlite https://kloudlite.github.io/helm-charts"},
 		{Title: "Update Kloudlite Repo", Command: "helm repo update kloudlite"},
 		{Title: "Install kloudlite CRDs", Command: fmt.Sprintf("kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/%s/crds-all.yml --server-side", d.env.KloudliteRelease)},
-		{Title: "Install Kloudlite Agent", Command: fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --version %s --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s"`, d.env.KloudliteRelease, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr)},
+		{Title: "Install Kloudlite Agent", Command: fmt.Sprintf(`helm upgrade --install kloudlite --namespace kloudlite --create-namespace kloudlite/kloudlite-agent --version %s --set accountName="%s" --set clusterName="%s" --set clusterToken="%s" --set messageOfficeGRPCAddr="%s" --set kloudliteDNSSuffix="%s"`, d.env.KloudliteRelease, ctx.AccountName, name, cluster.ClusterToken, d.env.MessageOfficeExternalGrpcAddr, fmt.Sprintf("%s.%s", ctx.AccountName, d.env.KloudliteDNSSuffix))},
 	}, nil
 }
 
@@ -229,17 +230,13 @@ func (d *domain) DeleteBYOKCluster(ctx InfraContext, name string) error {
 		}
 	}
 
-	if _, err := d.consoleClient.ArchiveEnvironmentsForCluster(ctx, &console.ArchiveEnvironmentsForClusterIn{
+	if _, err := d.consoleClient.ArchiveResourcesForCluster(ctx, &console.ArchiveResourcesForClusterIn{
 		UserId:      string(ctx.UserId),
 		UserName:    ctx.UserName,
 		UserEmail:   ctx.UserEmail,
 		AccountName: ctx.AccountName,
 		ClusterName: name,
 	}); err != nil {
-		return errors.NewE(err)
-	}
-
-	if err := d.ArchiveClusterManagedService(ctx, name); err != nil {
 		return errors.NewE(err)
 	}
 

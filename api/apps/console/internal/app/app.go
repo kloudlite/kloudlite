@@ -28,6 +28,8 @@ import (
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
 	"github.com/kloudlite/api/pkg/nats"
 	"github.com/kloudlite/api/pkg/repos"
+
+	"github.com/miekg/dns"
 )
 
 type (
@@ -38,6 +40,10 @@ type (
 type (
 	ConsoleGrpcServer grpc.Server
 )
+
+type DNSServer struct {
+	*dns.Server
+}
 
 func toConsoleContext(requestCtx context.Context, accountCookieName string) (domain.ConsoleContext, error) {
 	sess := httpServer.GetSession[*common.AuthSession](requestCtx)
@@ -64,7 +70,8 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
 	repos.NewFxMongoRepo[*entities.ImagePullSecret]("image_pull_secrets", "ips", entities.ImagePullSecretIndexes),
 	repos.NewFxMongoRepo[*entities.ResourceMapping]("resource_mappings", "rmap", entities.ResourceMappingIndices),
-	repos.NewFxMongoRepo[*entities.ConsoleVPNDevice]("vpn_devices", "devs", entities.VPNDeviceIndexes),
+	repos.NewFxMongoRepo[*entities.ServiceBinding]("service_bindings", "svcb", entities.ServiceBindingIndexes),
+	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cluster_managed_services", "cmsvc", entities.ClusterManagedServiceIndices),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -74,7 +81,7 @@ var Module = fx.Module("app",
 
 	fx.Invoke(
 		func(server httpServer.Server, d domain.Domain, sessionRepo kv.Repo[*common.AuthSession], ev *env.Env) {
-			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
+			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d, EnvVars: ev}}
 
 			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
@@ -205,6 +212,38 @@ var Module = fx.Module("app",
 			},
 			OnStop: func(ctx context.Context) error {
 				return consumer.Stop(ctx)
+			},
+		})
+	}),
+
+	fx.Provide(func(svcBindingRepo repos.DbRepo[*entities.ServiceBinding]) domain.ServiceBindingDomain {
+		return domain.NewSvcBindingDomain(svcBindingRepo)
+	}),
+
+	fx.Provide(func(logger logging.Logger, sbd domain.ServiceBindingDomain, ev *env.Env) *dnsHandler {
+		return &dnsHandler{
+			logger:               logger,
+			serviceBindingDomain: sbd,
+			kloudliteDNSSuffix:   ev.KloudliteDNSSuffix,
+		}
+	}),
+
+	fx.Invoke(func(server *DNSServer, handler *dnsHandler, lf fx.Lifecycle, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				logger.Infof("starting dns server at %s", server.Addr)
+				server.Handler = handler
+				go func() {
+					err := server.ListenAndServe()
+					if err != nil {
+						logger.Errorf(err, "failed to start dns server")
+						panic(err)
+					}
+				}()
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return server.ShutdownContext(ctx)
 			},
 		})
 	}),

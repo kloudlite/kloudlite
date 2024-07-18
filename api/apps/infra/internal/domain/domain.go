@@ -33,12 +33,11 @@ type domain struct {
 	logger logging.Logger
 	env    *env.Env
 
-	clusterRepo               repos.DbRepo[*entities.Cluster]
-	byokClusterRepo           repos.DbRepo[*entities.BYOKCluster]
-	clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService]
-	helmReleaseRepo           repos.DbRepo[*entities.HelmRelease]
-	nodeRepo                  repos.DbRepo[*entities.Node]
-	nodePoolRepo              repos.DbRepo[*entities.NodePool]
+	clusterRepo     repos.DbRepo[*entities.Cluster]
+	byokClusterRepo repos.DbRepo[*entities.BYOKCluster]
+	helmReleaseRepo repos.DbRepo[*entities.HelmRelease]
+	nodeRepo        repos.DbRepo[*entities.Node]
+	nodePoolRepo    repos.DbRepo[*entities.NodePool]
 
 	gvpnConnRepo            repos.DbRepo[*entities.GlobalVPNConnection]
 	freeClusterSvcCIDRRepo  repos.DbRepo[*entities.FreeClusterSvcCIDR]
@@ -172,7 +171,6 @@ var Module = fx.Module("domain",
 			env *env.Env,
 			clusterRepo repos.DbRepo[*entities.Cluster],
 			byokClusterRepo repos.DbRepo[*entities.BYOKCluster],
-			clustermanagedserviceRepo repos.DbRepo[*entities.ClusterManagedService],
 			nodeRepo repos.DbRepo[*entities.Node],
 			nodePoolRepo repos.DbRepo[*entities.NodePool],
 			secretRepo repos.DbRepo[*entities.CloudProviderSecret],
@@ -203,7 +201,6 @@ var Module = fx.Module("domain",
 			msgOfficeInternalClient message_office_internal.MessageOfficeInternalClient,
 			logger logging.Logger,
 			resourceEventPublisher ResourceEventPublisher,
-
 		) (Domain, error) {
 			open, err := os.Open(env.MsvcTemplateFilePath)
 			if err != nil {
@@ -250,7 +247,6 @@ var Module = fx.Module("domain",
 				gvpnDevicesRepo: gvpnDevicesRepo,
 
 				byokClusterRepo:             byokClusterRepo,
-				clusterManagedServiceRepo:   clustermanagedserviceRepo,
 				nodeRepo:                    nodeRepo,
 				nodePoolRepo:                nodePoolRepo,
 				secretRepo:                  secretRepo,
