@@ -120,6 +120,31 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	svcBinding.Spec.ServiceIP = &svc.Spec.ClusterIP
 	svcBinding.Spec.Ports = svc.Spec.Ports
 
+	ns, err := rApi.Get(ctx, r.Client, fn.NN("", svc.GetNamespace()), &corev1.Namespace{})
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	klDNSHostname := func() string {
+		if v, ok := svc.GetLabels()[constants.KloudliteDNSHostname]; ok {
+			return v
+		}
+
+		if v, ok := ns.Labels[constants.KloudliteNamespaceForEnvironment]; ok {
+			return fmt.Sprintf("%s.%s", svc.GetName(), v)
+		}
+
+		if v, ok := ns.Labels[constants.KloudliteNamespaceForClusterManagedService]; ok {
+			return v
+		}
+
+		return ""
+	}()
+
+	if klDNSHostname != "" {
+		svcBinding.Spec.Hostname = klDNSHostname
+	}
+
 	svcHost := fmt.Sprintf("%s.%s.%s", svc.Name, svc.Namespace, r.Env.GatewayDNSSuffix)
 
 	ann := svcBinding.GetAnnotations()
@@ -128,10 +153,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 	ann["kloudlite.io/global.hostname"] = svcHost
 	svcBinding.SetAnnotations(ann)
+	if err := r.Update(ctx, svcBinding); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
 	svcBinding.Status.IsReady = true
 	svcBinding.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-
-	if err := r.Update(ctx, svcBinding); err != nil {
+	if err := r.Status().Update(ctx, svcBinding); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 

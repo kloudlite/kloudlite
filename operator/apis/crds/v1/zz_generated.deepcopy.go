@@ -1366,7 +1366,7 @@ func (in *ManagedServiceSpec) DeepCopy() *ManagedServiceSpec {
 func (in *MresResourceTemplate) DeepCopyInto(out *MresResourceTemplate) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	in.MsvcRef.DeepCopyInto(&out.MsvcRef)
+	out.MsvcRef = in.MsvcRef
 	if in.Spec != nil {
 		in, out := &in.Spec, &out.Spec
 		*out = make(map[string]apiextensionsv1.JSON, len(*in))

@@ -50,6 +50,10 @@ const (
 	createStatefulSet       string = "create-statefulset"
 )
 
+const (
+	kloudliteMsvcComponent string = "kloudlite.io/msvc.component"
+)
+
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/finalizers,verbs=update
@@ -118,10 +122,19 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *ServiceReconciler) finalize(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
+	check := "finalizing"
+
+	req.LogPreCheck(check)
+	defer req.LogPostCheck(check)
+
+	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
+		return result
+	}
+
 	return req.Finalize()
 }
 
@@ -145,13 +158,22 @@ func (r *ServiceReconciler) patchDefaults(req *rApi.Request[*mysqlMsvcv1.Standal
 	return check.Completed()
 }
 
+func getKloudliteDNSHostname(obj *mysqlMsvcv1.StandaloneService) string {
+	return fmt.Sprintf("%s.svc", obj.Name)
+}
+
 func (r *ServiceReconciler) createService(req *rApi.Request[*mysqlMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(createService, req)
 
 	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
-		svc.SetLabels(obj.GetLabels())
+		lb := svc.GetLabels()
+		fn.MapSet(&lb, constants.KloudliteDNSHostname, getKloudliteDNSHostname(obj))
+		for k, v := range obj.GetLabels() {
+			lb[k] = v
+		}
+		svc.SetLabels(lb)
 		svc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		svc.Spec.Ports = []corev1.ServicePort{
 			{
@@ -160,7 +182,7 @@ func (r *ServiceReconciler) createService(req *rApi.Request[*mysqlMsvcv1.Standal
 				Port:     3306,
 			},
 		}
-		svc.Spec.Selector = fn.MapFilter(obj.GetLabels(), "kloudlite.io/")
+		svc.Spec.Selector = fn.MapMerge(fn.MapFilter(obj.GetLabels(), "kloudlite.io/"), map[string]string{kloudliteMsvcComponent: "statefulset"})
 		return nil
 	}); err != nil {
 		return check.Failed(err)
@@ -208,28 +230,36 @@ func (r *ServiceReconciler) createAccessCredentials(req *rApi.Request[*mysqlMsvc
 
 			clusterLocalHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
 			globalVPNHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.GlobalVpnDNS)
+			kloudliteDNSHost := fmt.Sprintf("%s.%s", getKloudliteDNSHostname(obj), r.Env.KloudliteDNSSuffix)
 			port := "3306"
 
 			dbName := "mysql"
 
 			out := types.StandaloneServiceOutput{
-				StandaloneDatabaseOutput: types.StandaloneDatabaseOutput{
-					Username: username,
-					Password: password,
-					Port:     port,
-					DbName:   dbName,
+				Username: username,
+				Password: password,
+				Port:     port,
+				DbName:   dbName,
 
-					Host: globalVPNHost,
-					URI:  fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, globalVPNHost, port, dbName),
-					DSN:  fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s", username, password, globalVPNHost, port, dbName),
+				Host: kloudliteDNSHost,
+				URI:  fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, kloudliteDNSHost, port, dbName),
+				DSN:  fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s", username, password, kloudliteDNSHost, port, dbName),
 
-					ClusterLocalHost: clusterLocalHost,
-					ClusterLocalURI:  fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, clusterLocalHost, port, dbName),
-					ClusterLocalDSN:  fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s", username, password, clusterLocalHost, port, dbName),
-				},
+				ClusterLocalHost: clusterLocalHost,
+				ClusterLocalURI:  fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, clusterLocalHost, port, dbName),
+				ClusterLocalDSN:  fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s", username, password, clusterLocalHost, port, dbName),
+
+				GlobalVPNHost: globalVPNHost,
+				GlobalVPNURI:  fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, globalVPNHost, port, dbName),
+				GlobalVPNDSN:  fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s", username, password, globalVPNHost, port, dbName),
 			}
 
-			secret.Data = out.ToSecretData()
+			m, err := out.ToMap()
+			if err != nil {
+				return err
+			}
+
+			secret.StringData = m
 		}
 
 		return nil
@@ -249,7 +279,12 @@ func (r *ServiceReconciler) createStatefulSet(req *rApi.Request[*mysqlMsvcv1.Sta
 	sts := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, sts, func() error {
 		sts.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		sts.SetLabels(obj.GetLabels())
+		lb := sts.GetLabels()
+		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+			lb[k] = v
+		}
+		fn.MapSet(&lb, kloudliteMsvcComponent, "statefulset")
+		sts.SetLabels(lb)
 
 		sts.Spec = appsv1.StatefulSetSpec{
 			Replicas: fn.New(int32(1)),
@@ -305,6 +340,10 @@ func (r *ServiceReconciler) createStatefulSet(req *rApi.Request[*mysqlMsvcv1.Sta
 		return nil
 	}); err != nil {
 		return check.Failed(err)
+	}
+
+	if sts.Status.Replicas > 0 && sts.Status.ReadyReplicas != sts.Status.Replicas {
+		return check.Failed(fmt.Errorf("waiting for statefulset pods to start"))
 	}
 
 	return check.Completed()

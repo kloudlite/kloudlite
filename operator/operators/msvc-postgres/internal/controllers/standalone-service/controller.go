@@ -44,6 +44,10 @@ const (
 	createStatefulSet       string = "create-statefulset"
 )
 
+const (
+	kloudliteMsvcComponent string = "kloudlite.io/msvc.component"
+)
+
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mysql.msvc.kloudlite.io,resources=standalone/finalizers,verbs=update
@@ -115,6 +119,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*postgresv1.Standalone]) stepResult.Result {
+	check := "finalizing"
+
+	req.LogPreCheck(check)
+	defer req.LogPostCheck(check)
+
+	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
+		return result
+	}
+
 	return req.Finalize()
 }
 
@@ -138,13 +151,22 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*postgresv1.Standalone]) st
 	return check.Completed()
 }
 
+func getKloudliteDNSHostname(obj *postgresv1.Standalone) string {
+	return fmt.Sprintf("%s.svc", obj.Name)
+}
+
 func (r *Reconciler) createService(req *rApi.Request[*postgresv1.Standalone]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(createService, req)
 
 	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
-		svc.SetLabels(obj.GetLabels())
+		lb := svc.GetLabels()
+		fn.MapSet(&lb, constants.KloudliteDNSHostname, getKloudliteDNSHostname(obj))
+		for k, v := range obj.GetLabels() {
+			lb[k] = v
+		}
+		svc.SetLabels(lb)
 		svc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		svc.Spec = corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
@@ -154,7 +176,7 @@ func (r *Reconciler) createService(req *rApi.Request[*postgresv1.Standalone]) st
 					Port:     5432,
 				},
 			},
-			Selector: fn.MapFilter(obj.GetLabels(), "kloudlite.io/"),
+			Selector: fn.MapMerge(fn.MapFilter(obj.GetLabels(), "kloudlite.io/"), map[string]string{kloudliteMsvcComponent: "statefulset"}),
 			Type:     corev1.ServiceTypeClusterIP,
 		}
 		return nil
@@ -207,16 +229,22 @@ func (r *Reconciler) createAccessCredentials(req *rApi.Request[*postgresv1.Stand
 
 			gvpnHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.GlobalVpnDNS)
 			clusterLocalHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
+			kloudliteDNSHost := fmt.Sprintf("%s.%s", getKloudliteDNSHostname(obj), r.Env.KloudliteDNSSuffix)
 
 			creds := types.StandaloneOutput{
-				Username:         username,
-				Password:         password,
-				DbName:           dbName,
-				Port:             port,
-				Host:             gvpnHost,
-				URI:              fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, gvpnHost, port, dbName),
+				Username: username,
+				Password: password,
+				DbName:   dbName,
+				Port:     port,
+
+				Host: kloudliteDNSHost,
+				URI:  fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, kloudliteDNSHost, port, dbName),
+
 				ClusterLocalHost: clusterLocalHost,
 				ClusterLocalURI:  fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, clusterLocalHost, port, dbName),
+
+				GlobalVPNHost: gvpnHost,
+				GlobalVPNURI:  fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, gvpnHost, port, dbName),
 			}
 
 			m, err := creds.ToMap()
@@ -244,7 +272,12 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*postgresv1.Standalone]
 	sts := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, sts, func() error {
 		sts.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		sts.SetLabels(obj.GetLabels())
+		lb := sts.GetLabels()
+		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+			lb[k] = v
+		}
+		fn.MapSet(&lb, kloudliteMsvcComponent, "statefulset")
+		sts.SetLabels(lb)
 
 		sts.Spec = appsv1.StatefulSetSpec{
 			Replicas: fn.New(int32(1)),
@@ -323,6 +356,10 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*postgresv1.Standalone]
 		return nil
 	}); err != nil {
 		return check.Failed(err)
+	}
+
+	if sts.Status.Replicas > 0 && sts.Status.ReadyReplicas != sts.Status.Replicas {
+		return check.Failed(fmt.Errorf("waiting for statefulset pods to start"))
 	}
 
 	return check.Completed()

@@ -17,6 +17,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -106,8 +107,34 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*mysqlv1.StandaloneDatabase]) stepResult.Result {
-	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
-		return step
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck("finalizing", req)
+
+	ss, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), &mysqlv1.StandaloneService{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
+		}
+		ss = nil
+	}
+
+	if ss == nil || ss.DeletionTimestamp != nil {
+		if step := req.ForceCleanupOwnedResources(check); !step.ShouldProceed() {
+			return step
+		}
+	} else {
+		if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+			return step
+		}
+	}
+
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.Object.Output.CredentialsRef.Name,
+			Namespace: req.Object.Namespace,
+		},
+	}); err != nil {
+		return check.Failed(err)
 	}
 
 	return req.Finalize()
@@ -172,14 +199,22 @@ func (r *Reconciler) createDBCreds(req *rApi.Request[*mysqlv1.StandaloneDatabase
 
 			// INFO: secret does not exist yet
 			out := &types.StandaloneDatabaseOutput{
-				Username:         username,
-				Password:         password,
-				DbName:           dbName,
-				Port:             so.Port,
-				Host:             so.Host,
-				URI:              fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, so.Host, so.Port, dbName),
+				Username: username,
+				Password: password,
+				DbName:   dbName,
+				Port:     so.Port,
+
+				Host: so.Host,
+				URI:  fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, so.Host, so.Port, dbName),
+				DSN:  fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s", username, password, so.Host, so.Port, dbName),
+
 				ClusterLocalHost: so.ClusterLocalHost,
 				ClusterLocalURI:  fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, so.ClusterLocalHost, so.Port, dbName),
+				ClusterLocalDSN:  fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s", username, password, so.ClusterLocalHost, so.Port, dbName),
+
+				GlobalVPNHost: so.GlobalVPNHost,
+				GlobalVPNURI:  fmt.Sprintf("mysql://%s:%s@%s:%s/%s", username, password, so.GlobalVPNHost, so.Port, dbName),
+				GlobalVPNDSN:  fmt.Sprintf("mysql://%s:%s@tcp(%s:%s)/%s", username, password, so.GlobalVPNHost, so.Port, dbName),
 			}
 
 			m, err := out.ToMap()
@@ -210,15 +245,12 @@ func (r *Reconciler) createDBUserLifecycle(req *rApi.Request[*mysqlv1.Standalone
 	lf := &crdsv1.Lifecycle{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lf, func() error {
-		lf.SetLabels(obj.GetLabels())
+		for k, v := range obj.Labels {
+			fn.MapSet(&lf.Labels, k, v)
+		}
 		lf.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 		b, err := templates.ParseBytes(r.templateDBLifecycle, templates.DBLifecycleVars{
-			Metadata: metav1.ObjectMeta{
-				Name:      obj.Name,
-				Namespace: obj.Namespace,
-				Labels:    obj.GetLabels(),
-			},
 			NodeSelector:          map[string]string{},
 			Tolerations:           []corev1.Toleration{},
 			RootCredentialsSecret: msvc.Output.CredentialsRef.Name,
@@ -239,7 +271,7 @@ func (r *Reconciler) createDBUserLifecycle(req *rApi.Request[*mysqlv1.Standalone
 		return check.Failed(err)
 	}
 
-  req.AddToOwnedResources(rApi.ParseResourceRef(lf))
+	req.AddToOwnedResources(rApi.ParseResourceRef(lf))
 
 	if !lf.HasCompleted() {
 		return check.StillRunning(fmt.Errorf("waiting for lifecycle job to complete"))

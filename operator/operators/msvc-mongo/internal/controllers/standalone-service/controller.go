@@ -31,9 +31,6 @@ type Reconciler struct {
 	Name       string
 	Env        *env.Env
 	yamlClient kubectl.YAMLClient
-
-	templateHelmMongoDB     []byte
-	templateHelmMongoDBAuth []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -41,22 +38,22 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	Cleanup       string = "cleanup"
-	KeyMsvcOutput string = "msvc-output"
-
-	AnnotationCurrentStorageSize string = "kloudlite.io/msvc.storage-size"
-)
-
-const (
 	patchDefaults           string = "patch-defaults"
 	createPVC               string = "create-pvc"
 	createService           string = "create-service"
 	createAccessCredentials string = "create-access-credentials"
 	createStatefulSet       string = "create-statefulset"
+
+	cleanupOwnedResources string = "cleanupOwnedResources"
 )
 
-// DefaultsPatched string = "defaults-patched"
-var DeleteCheckList = []rApi.CheckMeta{}
+const (
+	kloudliteMsvcComponent string = "kloudlite.io/msvc.component"
+)
+
+var DeleteCheckList = []rApi.CheckMeta{
+	{Name: cleanupOwnedResources, Title: "Cleaning owned resources"},
+}
 
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
@@ -157,13 +154,23 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.StandaloneSe
 	return check.Completed()
 }
 
+func getKloudliteDNSHostname(obj *mongodbMsvcv1.StandaloneService) string {
+	return fmt.Sprintf("%s.svc", obj.Name)
+}
+
 func (r *Reconciler) createService(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(createService, req)
 
 	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
-		svc.SetLabels(obj.GetLabels())
+		lb := svc.GetLabels()
+		fn.MapSet(&lb, constants.KloudliteDNSHostname, getKloudliteDNSHostname(obj))
+		for k, v := range obj.GetLabels() {
+			lb[k] = v
+		}
+
+		svc.SetLabels(lb)
 		svc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		svc.Spec.Ports = []corev1.ServicePort{
 			{
@@ -172,7 +179,7 @@ func (r *Reconciler) createService(req *rApi.Request[*mongodbMsvcv1.StandaloneSe
 				Port:     27017,
 			},
 		}
-		svc.Spec.Selector = fn.MapFilter(obj.GetLabels(), "kloudlite.io/")
+		svc.Spec.Selector = fn.MapMerge(fn.MapFilter(obj.GetLabels(), "kloudlite.io/"), map[string]string{"kloudlite.io/msvc.component": "statefulset"})
 		return nil
 	}); err != nil {
 		return check.Failed(err)
@@ -197,6 +204,9 @@ func (r *Reconciler) createPVC(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 		}
 
 		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = resource.MustParse(string(obj.Spec.Resources.Storage.Size))
+		if obj.Spec.Resources.Storage.StorageClass != "" {
+			pvc.Spec.StorageClassName = &obj.Spec.Resources.Storage.StorageClass
+		}
 		return nil
 	}); err != nil {
 		return check.Failed(err)
@@ -220,23 +230,29 @@ func (r *Reconciler) createAccessCredentials(req *rApi.Request[*mongodbMsvcv1.St
 
 			clusterLocalHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
 			globalVPNHost := fmt.Sprintf("%s.%s.svc.%s", obj.Name, obj.Namespace, r.Env.GlobalVpnDNS)
+			kloudliteDNSHost := fmt.Sprintf("%s.%s", getKloudliteDNSHostname(obj), r.Env.KloudliteDNSSuffix)
 			port := "27017"
 
+			dbName := "admin"
 			out := types.StandaloneSvcOutput{
 				RootUsername: username,
 				RootPassword: password,
-				DBName:       "admin",
-				AuthSource:   "admin",
+				DBName:       dbName,
+				AuthSource:   dbName,
 
 				Port: port,
 
-				Hosts: globalVPNHost,
-				Addr:  fmt.Sprintf("%s:%s", globalVPNHost, port),
-				URI:   fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=%s", username, password, globalVPNHost, "admin", "admin"),
+				Host: kloudliteDNSHost,
+				Addr: fmt.Sprintf("%s:%s", kloudliteDNSHost, port),
+				URI:  fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=%s", username, password, kloudliteDNSHost, port, dbName, dbName),
 
-				ClusterLocalHosts: clusterLocalHost,
-				ClusterLocalAddr:  fmt.Sprintf("%s:%s", clusterLocalHost, port),
-				ClusterLocalURI:   fmt.Sprintf("mongodb://%s:%s@%s/%s?authSource=%s", username, password, clusterLocalHost, "admin", "admin"),
+				ClusterLocalHost: clusterLocalHost,
+				ClusterLocalAddr: fmt.Sprintf("%s:%s", clusterLocalHost, port),
+				ClusterLocalURI:  fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=%s", username, password, clusterLocalHost, port, dbName, dbName),
+
+				GlobalVpnHost: globalVPNHost,
+				GlobalVpnAddr: fmt.Sprintf("%s:%s", globalVPNHost, port),
+				GlobalVpnURI:  fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=%s", username, password, globalVPNHost, port, dbName, dbName),
 			}
 
 			m, err := out.ToMap()
@@ -265,7 +281,13 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, sts, func() error {
 		sts.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		sts.SetLabels(obj.GetLabels())
+		lb := sts.GetLabels()
+		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+			lb[k] = v
+		}
+		fn.MapSet(&lb, kloudliteMsvcComponent, "statefulset")
 
+		sts.SetLabels(lb)
 		sts.Spec = appsv1.StatefulSetSpec{
 			Replicas: fn.New(int32(1)),
 			Selector: &metav1.LabelSelector{
@@ -290,8 +312,7 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 					},
 					Containers: []corev1.Container{
 						{
-							Name: "mongodb",
-							// Image: "chainguard/mongodb@sha256:393fef34550e77d390da54855c81f5665a2a51af3a8cf24c13563d22eda0c8ae",
+							Name:  "mongodb",
 							Image: "mongo:latest",
 							VolumeMounts: []corev1.VolumeMount{
 								{
@@ -339,204 +360,6 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 
 	return check.Completed()
 }
-
-// func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
-// 	ctx, obj := req.Context(), req.Object
-// 	check := rApi.NewRunningCheck(MongoDBHelmApplied, req)
-//
-// 	if _, ok := obj.GetAnnotations()[AnnotationCurrentStorageSize]; !ok {
-// 		fn.MapSet(&obj.Annotations, AnnotationCurrentStorageSize, string(obj.Spec.Resources.Storage.Size))
-// 		if err := r.Update(ctx, obj); err != nil {
-// 			return check.Failed(err)
-// 		}
-// 	}
-//
-// 	hc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.HelmChart{})
-// 	if err != nil {
-// 		if !apiErrors.IsNotFound(err) {
-// 			return check.Failed(err)
-// 		}
-// 		hc = nil
-// 	}
-//
-// 	if hc != nil {
-// 		req.AddToOwnedResources(rApi.ParseResourceRef(hc))
-// 	}
-//
-// 	hasPVCUpdates := false
-//
-// 	if hc != nil {
-// 		oldSize, ok := obj.GetAnnotations()[AnnotationCurrentStorageSize]
-// 		if ok {
-// 			oldSizeNum, err := ct.StorageSize(oldSize).ToInt()
-// 			if err != nil {
-// 				return check.Failed(err).Err(nil)
-// 			}
-//
-// 			newSizeNum, err := ct.StorageSize(obj.Spec.Resources.Storage.Size).ToInt()
-// 			if err != nil {
-// 				return check.Failed(err).Err(nil)
-// 			}
-//
-// 			if oldSizeNum > newSizeNum {
-// 				return check.Failed(fmt.Errorf("new storage size (%s), must be higher than or equal to old size (%s)", obj.Spec.Resources.Storage.Size, oldSize)).Err(nil)
-// 			}
-//
-// 			hasPVCUpdates = newSizeNum > oldSizeNum
-// 		}
-//
-// 		if !ok {
-// 			hasPVCUpdates = true
-// 		}
-//
-// 		if hasPVCUpdates {
-// 			// need to do something
-// 			// 1. Patch the PVC directly
-// 			// 2. Rollout the Statefulsets
-//
-// 			ss, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.StatefulSet{})
-// 			if err != nil {
-// 				if !apiErrors.IsNotFound(err) {
-// 					return check.Failed(err).Err(nil)
-// 				}
-// 				ss = nil
-// 			}
-//
-// 			if ss != nil {
-// 				m := types.ExtractPVCLabelsFromStatefulSetLabels(ss.GetLabels())
-//
-// 				var pvclist corev1.PersistentVolumeClaimList
-// 				if err := r.List(ctx, &pvclist, &client.ListOptions{
-// 					LabelSelector: apiLabels.SelectorFromValidatedSet(m),
-// 					Namespace:     obj.Namespace,
-// 				}); err != nil {
-// 					return check.Failed(err)
-// 				}
-//
-// 				for i := range pvclist.Items {
-// 					pvclist.Items[i].Spec.Resources.Requests[corev1.ResourceStorage] = resource.MustParse(string(obj.Spec.Resources.Storage.Size))
-// 					if err := r.Update(ctx, &pvclist.Items[i]); err != nil {
-// 						return check.Failed(err)
-// 					}
-// 				}
-//
-// 				// STEP 2: rollout statefulset
-// 				if err := fn.RolloutRestart(r.Client, fn.StatefulSet, obj.Namespace, ss.GetLabels()); err != nil {
-// 					return check.Failed(err)
-// 				}
-//
-// 				fn.MapSet(&obj.Annotations, AnnotationCurrentStorageSize, string(obj.Spec.Resources.Storage.Size))
-// 				if err := r.Update(ctx, obj); err != nil {
-// 					return check.Failed(err)
-// 				}
-// 			}
-// 		}
-// 	}
-//
-// 	if !hasPVCUpdates {
-// 		b, err := templates.ParseBytes(r.templateHelmMongoDB, map[string]any{
-// 			"name":          obj.Name,
-// 			"namespace":     obj.Namespace,
-// 			"labels":        obj.GetLabels(),
-// 			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
-// 			"node-selector": obj.Spec.NodeSelector,
-// 			"tolerations":   obj.Spec.Tolerations,
-//
-// 			"pod-labels":      obj.GetLabels(),
-// 			"pod-annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
-//
-// 			"storage-class": obj.Spec.Resources.Storage.StorageClass,
-// 			"storage-size":  obj.Spec.Resources.Storage.Size,
-//
-// 			"requests-cpu": obj.Spec.Resources.Cpu.Min,
-// 			"requests-mem": obj.Spec.Resources.Memory.Min,
-//
-// 			"limits-cpu": obj.Spec.Resources.Cpu.Max,
-// 			"limits-mem": obj.Spec.Resources.Memory.Max,
-//
-// 			"existing-secret": getHelmSecretName(obj.Name),
-// 		})
-// 		if err != nil {
-// 			return check.Failed(err).Err(nil)
-// 		}
-//
-// 		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-// 			return check.Failed(err)
-// 		}
-// 	}
-//
-// 	return check.Completed()
-// }
-//
-// func (r *Reconciler) checkHelmReady(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
-// 	ctx, obj := req.Context(), req.Object
-// 	check := rApi.NewRunningCheck(MongoDBHelmReady, req)
-//
-// 	hc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.HelmChart{})
-// 	if err != nil {
-// 		return check.Failed(err)
-// 	}
-//
-// 	if !hc.Status.IsReady {
-// 		return check.Failed(fmt.Errorf("waiting for helm installation to complete"))
-// 	}
-//
-// 	return check.Completed()
-// }
-//
-// func (r *Reconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
-// 	ctx, obj := req.Context(), req.Object
-// 	check := rApi.NewRunningCheck(MongoDBStatefulSetsReady, req)
-//
-// 	var stsList appsv1.StatefulSetList
-// 	if err := r.List(
-// 		ctx, &stsList, &client.ListOptions{
-// 			LabelSelector: apiLabels.SelectorFromValidatedSet(
-// 				map[string]string{constants.MsvcNameKey: obj.Name},
-// 			),
-// 			Namespace: obj.Namespace,
-// 		},
-// 	); err != nil {
-// 		return check.Failed(err)
-// 	}
-//
-// 	if len(stsList.Items) == 0 {
-// 		return check.Failed(fmt.Errorf("no statefulset pods found, waiting for helm controller to reconcile the resource"))
-// 	}
-//
-// 	for i := range stsList.Items {
-// 		item := stsList.Items[i]
-// 		if item.Status.AvailableReplicas != item.Status.Replicas {
-// 			check.Status = false
-//
-// 			var podsList corev1.PodList
-// 			if err := r.List(
-// 				ctx, &podsList, &client.ListOptions{
-// 					LabelSelector: apiLabels.SelectorFromValidatedSet(
-// 						map[string]string{
-// 							constants.MsvcNameKey: obj.Name,
-// 						},
-// 					),
-// 				},
-// 			); err != nil {
-// 				return check.Failed(err)
-// 			}
-//
-// 			messages := rApi.GetMessagesFromPods(podsList.Items...)
-// 			if len(messages) > 0 {
-// 				b, err := json.Marshal(messages)
-// 				if err != nil {
-// 					return check.Failed(err).Err(nil)
-// 				}
-// 				return check.Failed(fmt.Errorf("%s", b)).Err(nil)
-// 			}
-//
-// 			return check.StillRunning(fmt.Errorf("waiting for statefulset pods to start"))
-// 		}
-// 	}
-//
-// 	return check.Completed()
-// }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
