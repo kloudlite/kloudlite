@@ -45,10 +45,6 @@ func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, 
 	}
 
 	switch resType {
-	case entities.ResourceTypeVPNDevice:
-		{
-			return checkResourceName(ctx, repos.Filter{fields.AccountName: accountName, fields.MetadataName: name}, d.vpnDeviceRepo)
-		}
 	case entities.ResourceTypeEnvironment:
 		{
 			return checkResourceName(ctx, repos.Filter{fields.AccountName: accountName, fields.MetadataName: name}, d.environmentRepo)

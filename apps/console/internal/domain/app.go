@@ -265,7 +265,7 @@ func (d *domain) RemoveDeviceIntercepts(ctx ResourceContext, deviceName string) 
 
 	for i := range apps {
 		patchForUpdate := repos.Document{
-			fc.AppSpecIntercept: nil,
+			fc.AppSpecInterceptEnabled: false,
 		}
 
 		_, err := d.appRepo.PatchById(ctx, apps[i].Id, patchForUpdate)

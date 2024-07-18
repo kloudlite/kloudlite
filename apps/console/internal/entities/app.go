@@ -1,6 +1,7 @@
 package entities
 
 import (
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
@@ -54,5 +55,10 @@ var AppIndexes = []repos.IndexField{
 			{Key: fields.EnvironmentName, Value: repos.IndexAsc},
 		},
 		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: fc.AppSpecInterceptToDevice, Value: repos.IndexAsc},
+		},
 	},
 }

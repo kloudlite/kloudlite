@@ -47,7 +47,6 @@ type domain struct {
 	infraClient infra.InfraClient
 
 	environmentRepo repos.DbRepo[*entities.Environment]
-	vpnDeviceRepo   repos.DbRepo[*entities.ConsoleVPNDevice]
 
 	appRepo          repos.DbRepo[*entities.App]
 	externalAppRepo  repos.DbRepo[*entities.ExternalApp]
@@ -57,6 +56,9 @@ type domain struct {
 	mresRepo         repos.DbRepo[*entities.ManagedResource]
 	importedMresRepo repos.DbRepo[*entities.ImportedManagedResource]
 	pullSecretsRepo  repos.DbRepo[*entities.ImagePullSecret]
+
+	serviceBindingRepo        repos.DbRepo[*entities.ServiceBinding]
+	clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService]
 
 	envVars *env.Env
 
@@ -137,6 +139,8 @@ func (d *domain) applyK8sResourceOnCluster(ctx K8sContext, clusterName string, o
 	})
 	return errors.NewE(err)
 }
+
+// func (d *domain) applyK8sResource(ctx K8sContext, clusterName string, obj client.Object, recordVersion int) error {|}
 
 func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Object, recordVersion int) error {
 	clusterName, err := d.getClusterAttachedToEnvironment(ctx, envName)
@@ -224,10 +228,7 @@ func applyK8sResource(ctx K8sContext, args ApplyK8sResourceArgs) error {
 
 	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), args.ClusterName)
 
-	err = args.Dispatcher.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: subject,
-		Payload: b,
-	})
+	err = args.Dispatcher.Produce(ctx, msgTypes.ProduceMsg{Subject: subject, Payload: b})
 	return errors.NewE(err)
 }
 
@@ -561,7 +562,8 @@ var Module = fx.Module("domain",
 		importedMresRepo repos.DbRepo[*entities.ImportedManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
 		resourceMappingRepo repos.DbRepo[*entities.ResourceMapping],
-		vpnDeviceRepo repos.DbRepo[*entities.ConsoleVPNDevice],
+		serviceBindingRepo repos.DbRepo[*entities.ServiceBinding],
+		clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService],
 
 		logger logging.Logger,
 		resourceEventPublisher ResourceEventPublisher,
@@ -579,17 +581,18 @@ var Module = fx.Module("domain",
 			infraClient: infraClient,
 			logger:      logger,
 
-			environmentRepo:     environmentRepo,
-			appRepo:             appRepo,
-			externalAppRepo:     externalAppRepo,
-			configRepo:          configRepo,
-			routerRepo:          routerRepo,
-			secretRepo:          secretRepo,
-			mresRepo:            mresRepo,
-			importedMresRepo:    importedMresRepo,
-			pullSecretsRepo:     ipsRepo,
-			resourceMappingRepo: resourceMappingRepo,
-			vpnDeviceRepo:       vpnDeviceRepo,
+			environmentRepo:           environmentRepo,
+			appRepo:                   appRepo,
+			externalAppRepo:           externalAppRepo,
+			configRepo:                configRepo,
+			routerRepo:                routerRepo,
+			secretRepo:                secretRepo,
+			mresRepo:                  mresRepo,
+			importedMresRepo:          importedMresRepo,
+			pullSecretsRepo:           ipsRepo,
+			resourceMappingRepo:       resourceMappingRepo,
+			serviceBindingRepo:        serviceBindingRepo,
+			clusterManagedServiceRepo: clusterManagedServiceRepo,
 
 			envVars: ev,
 
