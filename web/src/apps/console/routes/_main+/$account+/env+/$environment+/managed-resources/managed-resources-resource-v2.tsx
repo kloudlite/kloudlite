@@ -18,14 +18,18 @@ import { useReload } from '~/lib/client/helpers/reloader';
 import { useState } from 'react';
 import { handleError } from '~/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
-import { useParams } from '@remix-run/react';
+import { useOutletContext, useParams } from '@remix-run/react';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
-import { getManagedTemplateLogo } from '~/console/utils/commons';
+import {
+  getClusterStatus,
+  getManagedTemplateLogo,
+} from '~/console/utils/commons';
 import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
 import { Badge } from '~/components/atoms/badge';
 import { ViewSecret } from './handle-managed-resource-v2';
+import { IEnvironmentContext } from '../_layout';
 
 const RESOURCE_NAME = 'integrated resource';
 type BaseType = ExtractNodeType<IImportedManagedResources>;
@@ -134,6 +138,7 @@ const GridView = ({ items = [], onAction, templates }: IResource) => {
 };
 
 const ListView = ({ items = [], onAction, templates }: IResource) => {
+  const { cluster } = useOutletContext<IEnvironmentContext>();
   return (
     <ListV2.Root
       data={{
@@ -180,6 +185,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           },
         ],
         rows: items.map((i) => {
+          const isClusterOnline = getClusterStatus(cluster);
           const { name, id, logo, updateInfo } = parseItem(i, templates);
           return {
             columns: {
@@ -223,12 +229,17 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
                 ),
               },
               status: {
-                render: () =>
-                  i.syncStatus?.state === 'UPDATED_AT_AGENT' ? (
-                    <Badge type="info">Ready</Badge>
-                  ) : (
-                    <Badge type="warning">Waiting</Badge>
-                  ),
+                render: () => {
+                  if (!isClusterOnline) {
+                    return <Badge type="warning">Cluster Offline</Badge>;
+                  }
+
+                  if (i.syncStatus?.state === 'UPDATED_AT_AGENT') {
+                    return <Badge type="info">Ready</Badge>;
+                  }
+
+                  return <Badge type="warning">Waiting</Badge>;
+                },
               },
               updated: {
                 render: () => (

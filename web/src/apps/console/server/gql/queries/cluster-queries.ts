@@ -404,6 +404,7 @@ export const clusterQueries = (executor: IExecutor) => ({
         infra_getCluster(name: $name) {
           accountName
           apiVersion
+          lastOnlineAt
           createdBy {
             userEmail
             userId

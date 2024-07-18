@@ -411,6 +411,7 @@ query consoleGetCluster($name: String!) {
   infra_getCluster(name: $name) {
     accountName
     apiVersion
+    lastOnlineAt
     createdBy {
       userEmail
       userId

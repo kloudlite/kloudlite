@@ -352,3 +352,22 @@ export const flatMapValidations = (obj: Record<string, any>) => {
 
   return flatJson;
 };
+
+export const getClusterStatus = (item?: { lastOnlineAt?: string }): boolean => {
+  if (!item || !item.lastOnlineAt) {
+    return false;
+  }
+
+  const lastTime = new Date(item.lastOnlineAt);
+  const currentTime = new Date();
+
+  const timeDifference =
+    (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
+
+  switch (true) {
+    case timeDifference <= 2:
+      return true;
+    default:
+      return false;
+  }
+};

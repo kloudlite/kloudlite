@@ -25,7 +25,11 @@ import {
   IAccount,
   IAccounts,
 } from '~/console/server/gql/queries/account-queries';
-import { parseName } from '~/console/server/r-utils/common';
+import {
+  ExtractNodeType,
+  parseName,
+  parseNodes,
+} from '~/console/server/r-utils/common';
 
 import {
   ensureAccountClientSide,
@@ -45,6 +49,7 @@ import { cn } from '~/components/utils';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
+import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
 import { IConsoleRootContext } from '../_layout/_layout';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -63,15 +68,32 @@ export const loader = async (ctx: IRemixCtx) => {
     const { data: msvTemplates, errors: msvError } = await GQLServerHandler(
       ctx.request
     ).listMSvTemplates({});
-
     if (msvError) {
       throw msvError[0];
     }
+
+    const { data: clusterList, errors: clusterError } = await GQLServerHandler(
+      ctx.request
+    ).listByokClusters({
+      pagination: {
+        first: 100,
+      },
+    });
+
+    if (clusterError) {
+      throw clusterError[0];
+    }
+
+    const cMaps = parseNodes(clusterList).reduce((acc, c) => {
+      acc[c.metadata.name] = c;
+      return acc;
+    }, {} as { [key: string]: ExtractNodeType<IByocClusters> });
 
     acccountData = data;
     return {
       msvtemplates: msvTemplates,
       account: data,
+      clustersMap: cMaps,
     };
   } catch (err) {
     handleError(err);
@@ -79,6 +101,7 @@ export const loader = async (ctx: IRemixCtx) => {
     return k as {
       account: typeof acccountData;
       msvtemplates: IMSvTemplates;
+      clustersMap: { [key: string]: ExtractNodeType<IByocClusters> };
     };
   }
 };
@@ -156,7 +179,7 @@ const _AccountMenu = ({ account }: { account: IAccount }) => {
 };
 
 const Account = () => {
-  const { account, msvtemplates } = useLoaderData<typeof loader>();
+  const { account, msvtemplates, clustersMap } = useLoaderData<typeof loader>();
   const rootContext = useOutletContext<IConsoleRootContext>();
   const { unloadState, reset, proceed } = useUnsavedChanges();
 
@@ -166,7 +189,9 @@ const Account = () => {
   }, []);
   return (
     <>
-      <Outlet context={{ ...rootContext, account, msvtemplates }} />
+      <Outlet
+        context={{ ...rootContext, account, msvtemplates, clustersMap }}
+      />
       <Popup.Root
         show={unloadState === 'blocked'}
         onOpenChange={() => {
@@ -482,6 +507,7 @@ export const handle = ({ account }: any) => {
 export interface IAccountContext extends IConsoleRootContext {
   account: LoaderResult<typeof loader>['account'];
   msvtemplates: IMSvTemplates;
+  clustersMap: { [key: string]: ExtractNodeType<IByocClusters> };
 }
 
 export const shouldRevalidate: ShouldRevalidateFunction = ({

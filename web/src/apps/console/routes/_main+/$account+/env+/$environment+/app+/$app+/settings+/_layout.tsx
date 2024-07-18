@@ -10,7 +10,7 @@ import { toast } from '~/components/molecule/toast';
 import { getAppIn } from '~/console/server/r-utils/resource-getter';
 import useForm from '~/lib/client/hooks/use-form';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AppContextProvider,
   useAppState,
@@ -22,6 +22,7 @@ import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { parseName } from '~/console/server/r-utils/common';
 import { constants } from '~/console/server/utils/constants';
 import { registryHost } from '~/root/lib/configs/base-url.cjs';
+import { Button } from '~/components/atoms/button';
 import { IAppContext } from '../_layout';
 import { getImageTag } from '../../../new-app/app-utils';
 import appFun from '../../../new-app/app-pre-submit';
@@ -60,6 +61,8 @@ const Layout = () => {
     parseName(account),
     parseName(app),
   ];
+
+  const [showDiff, setShowDiff] = useState(false);
 
   useEffect(() => {
     setIgnorePaths(
@@ -235,20 +238,42 @@ const Layout = () => {
       >
         <Popup.Header>Review Changes</Popup.Header>
         <Popup.Content>
-          <DiffViewer
-            oldValue={yamlDump(getAppIn(rootContext.app)).toString()}
-            newValue={yamlDump(getAppIn(app)).toString()}
-            leftTitle="Previous State"
-            rightTitle="New State"
-            splitView
-          />
-          <DiffViewer
-            oldValue={yamlDump(rootContext.app.build).toString()}
-            newValue={yamlDump(buildData).toString()}
-            leftTitle="Previous State"
-            rightTitle="New State"
-            splitView
-          />
+          <div className="flex flex-row justify-center items-center gap-md">
+            <span className="bodyMd-medium text-text-strong">
+              Do you want to
+            </span>
+            <Button
+              size="sm"
+              content={
+                <span className="truncate text-center">
+                  {showDiff ? 'Hide Changes?' : 'View Changes?'}
+                </span>
+              }
+              variant="primary-plain"
+              className="truncate"
+              onClick={() => {
+                setShowDiff(!showDiff);
+              }}
+            />
+          </div>
+          {showDiff && (
+            <>
+              <DiffViewer
+                oldValue={yamlDump(getAppIn(rootContext.app)).toString()}
+                newValue={yamlDump(getAppIn(app)).toString()}
+                leftTitle="Previous State"
+                rightTitle="New State"
+                splitView
+              />
+              <DiffViewer
+                oldValue={yamlDump(rootContext.app.build).toString()}
+                newValue={yamlDump(buildData).toString()}
+                leftTitle="Previous State"
+                rightTitle="New State"
+                splitView
+              />
+            </>
+          )}
         </Popup.Content>
 
         <Popup.Footer>
