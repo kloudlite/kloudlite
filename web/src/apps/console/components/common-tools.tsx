@@ -4,8 +4,7 @@ import {
   ArrowsDownUp,
   Plus,
 } from '~/console/components/icons';
-import { useSearchParams } from '@remix-run/react';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import OptionList from '~/components/atoms/option-list';
 import Toolbar from '~/components/atoms/toolbar';
 import { cn } from '~/components/utils';
@@ -30,16 +29,25 @@ interface ISortbyOptionList {
 }
 
 const SortbyOptionList = (_: ISortbyOptionList) => {
-  const { setQueryParameters } = useQueryParameters();
-  const [searchparams] = useSearchParams();
-  const page = decodeUrl(searchparams.get('page')) || {};
+  const { setQueryParameters, sparams } = useQueryParameters();
+
+  const page = useCallback(
+    () => decodeUrl(sparams.get('page')) || '',
+    [sparams]
+  )();
 
   const { orderBy = 'updateTime', sortDirection = 'DESC' } = page || {};
 
   const updateOrder = ({ order, direction }: any) => {
+    const po = { ...page };
+    delete po.first;
+    delete po.after;
+    delete po.last;
+    delete po.before;
+
     setQueryParameters({
       page: encodeUrl({
-        ...page,
+        ...po,
         orderBy: order,
         sortDirection: direction,
       }),
@@ -127,7 +135,7 @@ interface ICommonTools extends IModeProps {
 const CommonTools = ({
   options,
   noViewMode = false,
-  noSort = true,
+  noSort = false,
   commonToolPrefix,
 }: ICommonTools) => {
   const [appliedFilters, setAppliedFilters] = useState<IAppliedFilters>({});

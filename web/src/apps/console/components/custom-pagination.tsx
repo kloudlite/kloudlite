@@ -1,8 +1,5 @@
-import { useSearchParams } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import Pagination from '~/components/molecule/pagination';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import { useLog } from '~/root/lib/client/hooks/use-log';
 import {
   decodeUrl,
   encodeUrl,
@@ -15,45 +12,26 @@ export const CustomPagination = ({ pagination }: { pagination: any }) => {
 
   const { totalCount } = pagination || {};
 
-  const getCursor = (c: any) => {
-    const cLength = c?.edges?.length || 0;
-    return {
-      sCursor: c?.edges?.[0]?.cursor,
-      ecursor: c?.edges?.[cLength - 1]?.cursor,
-    };
+  const { setQueryParameters, sparams } = useQueryParameters();
+  const page = useCallback(
+    () => decodeUrl(sparams.get('page')) || '',
+    [sparams]
+  )();
+
+  const updatePage = (p: { [key: string]: string | number }) => {
+    const po = { ...page };
+    if (p.first || p.after) {
+      delete po.last;
+      delete po.before;
+    }
+
+    if (p.last || p.before) {
+      delete po.first;
+      delete po.after;
+    }
+
+    setQueryParameters({ page: encodeUrl({ ...po, ...p }) }, false);
   };
-  const [cursor, setCursor] = useState(() => getCursor(pagination));
-
-  useEffect(() => {
-    setCursor(getCursor(pagination));
-  }, [pagination]);
-
-  useLog(cursor);
-
-  const [sp] = useSearchParams();
-
-  const [page, setPage] = useState(() => decodeUrl(sp.get('page')) || '');
-
-  const { setQueryParameters } = useQueryParameters();
-  const [isFirstTime, setIsFirstTime] = useState(true);
-
-  useDebounce(
-    () => {
-      if (isFirstTime) {
-        setIsFirstTime(false);
-        return;
-      }
-      if (page) {
-        setQueryParameters({
-          page: encodeUrl(page),
-        });
-      }
-    },
-    300,
-    [page]
-  );
-
-  const newPagination = (k: any) => k;
 
   if (totalCount <= 10) {
     return null;
@@ -66,17 +44,27 @@ export const CustomPagination = ({ pagination }: { pagination: any }) => {
       isNextDisabled={!hasNextPage}
       showItemsPerPage={false}
       onClickNext={() => {
-        if (cursor.ecursor) {
-          setPage(newPagination({ first: 10, after: cursor.ecursor }));
+        if (endCursor) {
+          updatePage({
+            first: 10,
+            after: endCursor,
+          });
         } else {
-          setPage(newPagination({ first: 10 }));
+          updatePage({
+            ...{ first: 10 },
+          });
         }
       }}
       onClickPrev={() => {
-        if (cursor.sCursor) {
-          setPage(newPagination({ last: 10, before: cursor.sCursor }));
+        if (startCursor) {
+          updatePage({
+            last: 10,
+            before: startCursor,
+          });
         } else {
-          setPage(newPagination({ last: 10 }));
+          updatePage({
+            ...{ last: 10 },
+          });
         }
       }}
     />

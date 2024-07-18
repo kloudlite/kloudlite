@@ -84,7 +84,7 @@ const KlOperatorServices = () => {
               },
             }}
             tools={<Tools />}
-            // pagination={managedResourcesData}
+            pagination={managedResourcesData}
           >
             <ManagedResourceResourcesV2
               items={managedResources}
