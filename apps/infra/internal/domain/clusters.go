@@ -953,17 +953,13 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	if _, err := d.consoleClient.ArchiveEnvironmentsForCluster(ctx, &console.ArchiveEnvironmentsForClusterIn{
+	if _, err := d.consoleClient.ArchiveResourcesForCluster(ctx, &console.ArchiveResourcesForClusterIn{
 		UserId:      string(ctx.UserId),
 		UserName:    ctx.UserName,
 		UserEmail:   ctx.UserEmail,
 		AccountName: ctx.AccountName,
 		ClusterName: name,
 	}); err != nil {
-		return errors.NewE(err)
-	}
-
-	if err := d.ArchiveClusterManagedService(ctx, name); err != nil {
 		return errors.NewE(err)
 	}
 

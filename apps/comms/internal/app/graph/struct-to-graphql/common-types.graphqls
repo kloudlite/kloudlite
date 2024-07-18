@@ -36,7 +36,7 @@ type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
 type PageInfo @shareable {
   endCursor: String
   hasNextPage: Boolean
-  hasPreviousPage: Boolean
+  hasPrevPage: Boolean
   startCursor: String
 }
 

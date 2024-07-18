@@ -16,7 +16,7 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/kloudlite/operator v0.0.0-20240710071747-9a61e7de9e93
+	github.com/kloudlite/operator v0.0.0-20240718072819-c625b77c43b2
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.29.1
@@ -44,6 +44,7 @@ require (
 require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
+	github.com/miekg/dns v1.1.55
 	github.com/nats-io/nats.go v1.31.0
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10

@@ -9,6 +9,9 @@ type Env struct {
 	Port     uint16 `env:"HTTP_PORT" required:"true"`
 	GrpcPort uint16 `env:"GRPC_PORT" required:"true"`
 
+	DNSAddr            string `env:"DNS_ADDR" required:"true"`
+	KloudliteDNSSuffix string `env:"KLOUDLITE_DNS_SUFFIX" required:"true"`
+
 	ConsoleDBUri  string `env:"MONGO_URI" required:"true"`
 	ConsoleDBName string `env:"MONGO_DB_NAME" required:"true"`
 
@@ -22,8 +25,6 @@ type Env struct {
 
 	IAMGrpcAddr   string `env:"IAM_GRPC_ADDR" required:"true"`
 	InfraGrpcAddr string `env:"INFRA_GRPC_ADDR" required:"true"`
-
-	// DefaultProjectWorkspaceName string `env:"DEFAULT_PROJECT_WORKSPACE_NAME" required:"true"`
 
 	PromHttpAddr         string `env:"PROM_HTTP_ADDR" required:"true"`
 	SessionKVBucket      string `env:"SESSION_KV_BUCKET" required:"true"`

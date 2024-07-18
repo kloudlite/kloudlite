@@ -55,17 +55,6 @@ type ClusterEdge struct {
 	Node   *entities.Cluster `json:"node"`
 }
 
-type ClusterManagedServiceEdge struct {
-	Cursor string                          `json:"cursor"`
-	Node   *entities.ClusterManagedService `json:"node"`
-}
-
-type ClusterManagedServicePaginatedRecords struct {
-	Edges      []*ClusterManagedServiceEdge `json:"edges"`
-	PageInfo   *PageInfo                    `json:"pageInfo"`
-	TotalCount int                          `json:"totalCount"`
-}
-
 type ClusterPaginatedRecords struct {
 	Edges      []*ClusterEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -206,6 +195,7 @@ type GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig struct {
 	IamInstanceProfileRole *string                                                    `json:"iamInstanceProfileRole,omitempty"`
 	NvidiaGpuEnabled       bool                                                       `json:"nvidiaGpuEnabled"`
 	PoolType               GithubComKloudliteOperatorApisClustersV1AWSPoolType        `json:"poolType"`
+	Region                 string                                                     `json:"region"`
 	RootVolumeSize         int                                                        `json:"rootVolumeSize"`
 	RootVolumeType         string                                                     `json:"rootVolumeType"`
 	SpotPool               *GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig `json:"spotPool,omitempty"`
@@ -439,15 +429,6 @@ type GithubComKloudliteOperatorApisCommonTypesSecretRefIn struct {
 	Namespace *string `json:"namespace,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec struct {
-	MsvcSpec        *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec `json:"msvcSpec"`
-	TargetNamespace string                                                  `json:"targetNamespace"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn struct {
-	MsvcSpec *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn `json:"msvcSpec"`
-}
-
 type GithubComKloudliteOperatorApisCrdsV1HelmChartSpec struct {
 	ChartName     string                                       `json:"chartName"`
 	ChartRepoURL  string                                       `json:"chartRepoURL"`
@@ -497,30 +478,6 @@ type GithubComKloudliteOperatorApisCrdsV1JobVarsIn struct {
 	BackOffLimit *int                          `json:"backOffLimit,omitempty"`
 	NodeSelector map[string]interface{}        `json:"nodeSelector,omitempty"`
 	Tolerations  []*K8sIoAPICoreV1TolerationIn `json:"tolerations,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
-	NodeSelector    map[string]interface{}                               `json:"nodeSelector,omitempty"`
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"serviceTemplate"`
-	Tolerations     []*K8sIoAPICoreV1Toleration                          `json:"tolerations,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn struct {
-	NodeSelector    map[string]interface{}                                 `json:"nodeSelector,omitempty"`
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"serviceTemplate"`
-	Tolerations     []*K8sIoAPICoreV1TolerationIn                          `json:"tolerations,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ServiceTemplate struct {
-	APIVersion string                 `json:"apiVersion"`
-	Kind       string                 `json:"kind"`
-	Spec       map[string]interface{} `json:"spec,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
-	APIVersion string                 `json:"apiVersion"`
-	Kind       string                 `json:"kind"`
-	Spec       map[string]interface{} `json:"spec,omitempty"`
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
@@ -1442,10 +1399,10 @@ type NodePoolPaginatedRecords struct {
 }
 
 type PageInfo struct {
-	EndCursor       *string `json:"endCursor,omitempty"`
-	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
-	HasPreviousPage *bool   `json:"hasPreviousPage,omitempty"`
-	StartCursor     *string `json:"startCursor,omitempty"`
+	EndCursor   *string `json:"endCursor,omitempty"`
+	HasNextPage *bool   `json:"hasNextPage,omitempty"`
+	HasPrevPage *bool   `json:"hasPrevPage,omitempty"`
+	StartCursor *string `json:"startCursor,omitempty"`
 }
 
 type PersistentVolumeClaimEdge struct {
@@ -1478,11 +1435,6 @@ type SearchCluster struct {
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
 	Region            *repos.MatchFilter `json:"region,omitempty"`
 	Text              *repos.MatchFilter `json:"text,omitempty"`
-}
-
-type SearchClusterManagedService struct {
-	IsReady *repos.MatchFilter `json:"isReady,omitempty"`
-	Text    *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type SearchDomainEntry struct {

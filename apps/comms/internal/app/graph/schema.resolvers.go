@@ -6,13 +6,11 @@ package graph
 
 import (
 	"context"
-
-	"github.com/kloudlite/api/pkg/errors"
-
 	"github.com/kloudlite/api/apps/comms/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/comms/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/comms/internal/domain/entities"
 	"github.com/kloudlite/api/apps/comms/types"
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )

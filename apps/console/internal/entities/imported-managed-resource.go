@@ -52,4 +52,9 @@ var ImportedManagedResourceIndexes = []repos.IndexField{
 		},
 		Unique: true,
 	},
+	{
+		Field: []repos.IndexKey{
+			{Key: fc.ImportedManagedResourceManagedResourceRefId, Value: repos.IndexAsc},
+		},
+	},
 }

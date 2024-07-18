@@ -24,7 +24,6 @@ tasks:
         --struct github.com/kloudlite/api/apps/console/internal/entities.ExternalApp
         --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
         --struct github.com/kloudlite/api/apps/console/internal/entities.Config
-        --struct github.com/kloudlite/api/apps/console/internal/entities.ConsoleVPNDevice
         --struct github.com/kloudlite/operator/apis/wireguard/v1.Port
         --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyRef
         --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyValueRef
@@ -34,6 +33,7 @@ tasks:
         --struct github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyValueRef
         --struct github.com/kloudlite/api/apps/console/internal/entities.Router
         --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ClusterManagedService
         --struct github.com/kloudlite/api/apps/console/internal/entities.ImportedManagedResource
         --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
         --struct github.com/kloudlite/api/pkg/repos.MatchFilter
@@ -41,7 +41,7 @@ tasks:
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,ExternalApp,Secret,Config,Router,ManagedResource,ImportedManagedResource,ImagePullSecret,ConsoleVPNDevice
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Environment,App,ExternalApp,Secret,Config,Router,ManagedResource,ImportedManagedResource,ImagePullSecret,ClusterManagedService
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
@@ -81,6 +81,6 @@ tasks:
 
       - task: docker:build-and-push
         vars:
-          args: "-t {{.image}} . --build-arg BINARY={{.binary}}"
+          args: "--platform linux/amd64,linux/arm64 -t {{.image}} . --build-arg BINARY={{.binary}}"
           image: "{{.image}}"
 
