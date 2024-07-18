@@ -42,6 +42,7 @@ require (
 )
 
 require (
+	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
 	github.com/miekg/dns v1.1.55
@@ -58,6 +59,7 @@ require (
 )
 
 require (
+	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v0.10.0 // indirect
 	github.com/charmbracelet/log v0.4.0 // indirect
