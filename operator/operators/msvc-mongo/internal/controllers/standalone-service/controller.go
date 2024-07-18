@@ -47,6 +47,10 @@ const (
 	cleanupOwnedResources string = "cleanupOwnedResources"
 )
 
+const (
+	kloudliteMsvcComponent string = "kloudlite.io/msvc.component"
+)
+
 var DeleteCheckList = []rApi.CheckMeta{
 	{Name: cleanupOwnedResources, Title: "Cleaning owned resources"},
 }
@@ -281,7 +285,7 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
 			lb[k] = v
 		}
-		fn.MapSet(&lb, "kloudlite.io/msvc.component", "statefulset")
+		fn.MapSet(&lb, kloudliteMsvcComponent, "statefulset")
 
 		sts.SetLabels(lb)
 		sts.Spec = appsv1.StatefulSetSpec{
