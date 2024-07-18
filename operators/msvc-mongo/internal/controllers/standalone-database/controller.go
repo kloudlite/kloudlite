@@ -3,7 +3,6 @@ package standalone_database
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	mongov1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
@@ -17,6 +16,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -106,26 +106,37 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*mongov1.StandaloneDatabase]) stepResult.Result {
-	ctx := req.Context()
+	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck("finalizing", req)
 
-	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
-		return step
+	ss, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), &mongov1.StandaloneService{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
+		}
+		ss = nil
 	}
 
-	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: req.Object.Output.CredentialsRef.Name, Namespace: req.Object.Namespace}}); err != nil {
+	if ss == nil || ss.DeletionTimestamp != nil {
+		if step := req.ForceCleanupOwnedResources(check); !step.ShouldProceed() {
+			return step
+		}
+	} else {
+		if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+			return step
+		}
+	}
+
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.Object.Output.CredentialsRef.Name,
+			Namespace: req.Object.Namespace,
+		},
+	}); err != nil {
 		return check.Failed(err)
 	}
 
 	return req.Finalize()
-}
-
-func sanitizeDbName(dbName string) string {
-	return strings.ReplaceAll(dbName, "-", "_")
-}
-
-func sanitizeDbUsername(username string) string {
-	return fn.Md5([]byte(username))
 }
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*mongov1.StandaloneDatabase]) stepResult.Result {
@@ -170,7 +181,9 @@ func (r *Reconciler) createDBCreds(req *rApi.Request[*mongov1.StandaloneDatabase
 
 	creds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, creds, func() error {
-		creds.SetLabels(obj.GetLabels())
+		for k, v := range obj.Labels {
+			fn.MapSet(&creds.Labels, k, v)
+		}
 		// creds.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 		if creds.Data == nil {
@@ -181,14 +194,18 @@ func (r *Reconciler) createDBCreds(req *rApi.Request[*mongov1.StandaloneDatabase
 
 			// INFO: secret does not exist yet
 			out := &types.StandaloneDatabaseOutput{
-				Username:         username,
-				Password:         password,
-				DbName:           dbName,
-				Port:             so.Port,
-				Host:             so.Hosts,
-				URI:              fmt.Sprintf("mongodb://%s:%s@%s:%s/%s", username, password, so.Hosts, so.Port, dbName),
-				ClusterLocalHost: so.ClusterLocalHosts,
-				ClusterLocalURI:  fmt.Sprintf("mongodb://%s:%s@%s:%s/%s", username, password, so.ClusterLocalHosts, so.Port, dbName),
+				Username: username,
+				Password: password,
+				DbName:   dbName,
+				Port:     so.Port,
+				Host:     so.Host,
+				URI:      fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=%s", username, password, so.Host, so.Port, dbName, dbName),
+
+				ClusterLocalHost: so.ClusterLocalHost,
+				ClusterLocalURI:  fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=%s", username, password, so.ClusterLocalHost, so.Port, dbName, dbName),
+
+				GlobalVpnHost: so.GlobalVpnHost,
+				GlobalVpnURI:  fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=%s", username, password, so.GlobalVpnHost, so.Port, dbName, dbName),
 			}
 
 			m, err := out.ToMap()
@@ -203,7 +220,6 @@ func (r *Reconciler) createDBCreds(req *rApi.Request[*mongov1.StandaloneDatabase
 		return check.Failed(err)
 	}
 
-	// function-body
 	return check.Completed()
 }
 
@@ -219,15 +235,9 @@ func (r *Reconciler) createDBUserLifecycle(req *rApi.Request[*mongov1.Standalone
 	lf := &crdsv1.Lifecycle{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lf, func() error {
-		lf.SetLabels(obj.GetLabels())
-		lf.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		lf.SetOwnerReferences(append(lf.GetOwnerReferences(), fn.AsOwner(obj, true)))
 
 		b, err := templates.ParseBytes(r.templateDBLifecycle, templates.DBLifecycleVars{
-			Metadata: metav1.ObjectMeta{
-				Name:      obj.Name,
-				Namespace: obj.Namespace,
-				Labels:    obj.GetLabels(),
-			},
 			NodeSelector:          map[string]string{},
 			Tolerations:           []corev1.Toleration{},
 			RootCredentialsSecret: msvc.Output.CredentialsRef.Name,
@@ -291,13 +301,12 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 					}
 
 					var dbList mongov1.StandaloneDatabaseList
-					if err := r.List(
-						context.TODO(), &dbList, &client.ListOptions{
-							LabelSelector: labels.SelectorFromValidatedSet(
-								map[string]string{constants.MsvcNameKey: msvcName},
-							),
-							Namespace: obj.GetNamespace(),
-						},
+					if err := r.List(ctx, &dbList, &client.ListOptions{
+						LabelSelector: labels.SelectorFromValidatedSet(
+							map[string]string{constants.MsvcNameKey: msvcName},
+						),
+						Namespace: obj.GetNamespace(),
+					},
 					); err != nil {
 						return nil
 					}

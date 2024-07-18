@@ -55,7 +55,6 @@ spec:
               aws:
                 properties:
                   availabilityZone:
-                    description: AvailabilityZone AwsAZ `json:"availabilityZone"`
                     type: string
                   ec2Pool:
                     properties:
@@ -80,6 +79,8 @@ spec:
                     enum:
                     - ec2
                     - spot
+                    type: string
+                  region:
                     type: string
                   rootVolumeSize:
                     type: integer
@@ -146,6 +147,7 @@ spec:
                 - availabilityZone
                 - nvidiaGpuEnabled
                 - poolType
+                - region
                 - rootVolumeSize
                 - rootVolumeType
                 - vpcId

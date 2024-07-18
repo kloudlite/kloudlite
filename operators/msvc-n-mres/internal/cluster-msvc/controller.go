@@ -183,8 +183,9 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.ClusterManagedSer
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
 		if ns.Generation == 0 {
 			fn.MapSet(&ns.Annotations, NamespaceCreatedByLabel, "true")
-			fn.MapSet(&ns.Labels, constants.KloudliteGatewayEnabledLabel, "true")
 		}
+		fn.MapSet(&ns.Labels, constants.KloudliteGatewayEnabledLabel, "true")
+		fn.MapSet(&ns.Labels, constants.KloudliteNamespaceForClusterManagedService, obj.Name)
 		return nil
 	}); err != nil {
 		return check.Failed(err)
@@ -199,8 +200,10 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ClusterMa
 
 	msvc := &crdsv1.ManagedService{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Spec.TargetNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, msvc, func() error {
-		msvc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		fn.MapSet(&msvc.Labels, constants.ProjectManagedServiceNameKey, obj.Name)
+		if !fn.IsOwner(obj, fn.AsOwner(obj, true)) {
+			msvc.SetOwnerReferences(append(msvc.GetOwnerReferences(), fn.AsOwner(obj, true)))
+		}
+		fn.MapSet(&msvc.Labels, constants.ClusterManagedServiceNameKey, obj.Name)
 
 		msvc.Spec = obj.Spec.MSVCSpec
 		msvc.Output = obj.Output

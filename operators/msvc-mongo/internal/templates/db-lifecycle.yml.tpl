@@ -1,7 +1,4 @@
 {{ with . }}
-{{- /* apiVersion: crds.kloudlite.io/v1 */}}
-{{- /* kind: Lifecycle */}}
-{{- /* metadata: {{.Metadata | toYAML |nindent 2}} */}}
 spec:
   onApply:
     backOffLimit: 1
@@ -26,7 +23,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{.RootCredentialsSecret}}
-                  key: CLUSTER_LOCAL_URI
+                  key: .CLUSTER_LOCAL_URI
 
             - name: NEW_DB_NAME
               valueFrom:
@@ -72,6 +69,7 @@ spec:
 
             EOF
             
+            echo connecting to "$MONGODB_URI"
             mongosh "$MONGODB_URI" < /tmp/mongoscript.js
       restartPolicy: Never
 
@@ -93,11 +91,11 @@ spec:
             - -c
             - |+
               cat > /tmp/mongoscript.js <<EOF
-              use "$NEW_DB_NAME";
-
-              if (db.getUser("$NEW_USERNAME") == null) {
+              use $NEW_DB_NAME;
+              if (db.getUser("$NEW_USERNAME") != null) {
                 db.dropUser("$NEW_USERNAME");
               }
+              db.dropDatabase();
               EOF
               
               mongosh "$MONGODB_URI" < /tmp/mongoscript.js

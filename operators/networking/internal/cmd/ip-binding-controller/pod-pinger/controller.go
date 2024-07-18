@@ -33,6 +33,8 @@ type Reconciler struct {
 	yamlClient kubectl.YAMLClient
 }
 
+const KloudlitePodActiveLabel = "kloudlite.io/pod.active"
+
 func (r *Reconciler) GetName() string {
 	return r.Name
 }
@@ -49,6 +51,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	v, ok := pod.GetLabels()[constants.KloudliteGatewayEnabledLabel]
 	if !ok {
+		r.logger.Infof("pod %s/%s is not registered with gateway, deleting it", pod.GetNamespace(), pod.GetName())
 		if err := r.Delete(ctx, pod); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -58,12 +61,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	cs := pod.Status.InitContainerStatuses
-	for i := range cs {
-		if cs[i].Name == "kloudlite-wg" {
-			if cs[i].Started != nil && *cs[i].Started {
-				return ctrl.Result{}, nil
-			}
+	for i := range pod.Status.Conditions {
+		if pod.Status.Conditions[i].Type == corev1.PodReady && pod.Status.Conditions[i].Status == corev1.ConditionFalse {
+			return ctrl.Result{}, nil
 		}
 	}
 
@@ -83,14 +83,27 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		r.logger.Errorf(err, "failed to create pinger for %s", v)
 		return ctrl.Result{}, err
 	}
+
 	pinger.Count = 1
 	pinger.Timeout = 500 * time.Millisecond
+
 	if err = pinger.RunWithContext(ctx); err != nil {
 		r.logger.Errorf(err, "failed to ping %s", v)
+		if _, ok := pod.Labels[KloudlitePodActiveLabel]; !ok {
+			return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
+		}
 		if err := r.Delete(ctx, pod); err != nil {
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, err
+	}
+
+	if _, ok := pod.Labels[KloudlitePodActiveLabel]; !ok {
+		fn.MapSet(&pod.Labels, KloudlitePodActiveLabel, "true")
+		if err := r.Update(ctx, pod); err != nil {
+			r.logger.Errorf(err, "failed to update pod %s/%s", pod.GetNamespace(), pod.GetName())
+			return ctrl.Result{}, err
+		}
 	}
 
 	r.logger.Debugf("ping success for %s, requeing after 5s", v)

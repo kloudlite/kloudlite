@@ -175,6 +175,10 @@ func processPodAdmission(ctx HandlerContext, review admissionv1.AdmissionReview)
 				return errResponse(ctx, err, review.Request.UID)
 			}
 
+			if pod.GetLabels()[constants.KloudliteGatewayEnabledLabel] == "false" {
+				return mutateAndAllow(review, nil)
+			}
+
 			isDebugMode := pod.GetAnnotations()[debugWebhookAnnotation] == "true"
 
 			wgContainer := corev1.Container{

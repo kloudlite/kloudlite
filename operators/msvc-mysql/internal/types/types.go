@@ -22,44 +22,60 @@ type MresOutput struct {
 }
 
 type StandaloneServiceOutput struct {
-  StandaloneDatabaseOutput `json:",inline"`
+	Username string `json:"USERNAME"`
+	Password string `json:"PASSWORD"`
+
+	Port string `json:"PORT"`
+
+	DbName string `json:"DB_NAME"`
+
+	Host string `json:"HOST"`
+	URI  string `json:"URI"`
+	DSN  string `json:"DSN"`
+
+	ClusterLocalHost string `json:".CLUSTER_LOCAL_HOST"`
+	ClusterLocalURI  string `json:".CLUSTER_LOCAL_URI"`
+	ClusterLocalDSN  string `json:".CLUSTER_LOCAL_DSN"`
+
+	GlobalVPNHost string `json:".GLOBAL_VPN_HOST"`
+	GlobalVPNURI  string `json:".GLOBAL_VPN_URI"`
+	GlobalVPNDSN  string `json:".GLOBAL_VPN_DSN"`
 }
 
-func (o *StandaloneServiceOutput) ToSecretData() map[string][]byte {
-  m := make(map[string][]byte)
-  m["USERNAME"] = []byte(o.Username)
-  m["PASSWORD"] = []byte(o.Password)
+func (o *StandaloneServiceOutput) ToMap() (map[string]string, error) {
+	b, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
 
-  m["PORT"] = []byte(o.Port)
+	m := make(map[string]string)
+	err = json.Unmarshal(b, &m)
+	if err != nil {
+		return nil, err
+	}
 
-  m["DB_NAME"] = []byte(o.DbName)
-
-  m["HOST"] = []byte(o.Host)
-  m["URI"] = []byte(o.URI)
-  m["DSN"] = []byte(o.DSN)
-
-  m["CLUSTER_LOCAL_HOST"] = []byte(o.ClusterLocalHost)
-  m["CLUSTER_LOCAL_URI"] = []byte(o.ClusterLocalURI)
-  m["CLUSTER_LOCAL_DSN"] = []byte(o.ClusterLocalDSN)
-
-  return m
+	return m, nil
 }
 
 type StandaloneDatabaseOutput struct {
-  Username    string `json:"USERNAME"`
-  Password    string `json:"PASSWORD"`
+	Username string `json:"USERNAME"`
+	Password string `json:"PASSWORD"`
 
-  Port       string `json:"PORT"`
+	Port string `json:"PORT"`
 
-  DbName      string `json:"DB_NAME"`
+	DbName string `json:"DB_NAME"`
 
-  Host       string `json:"HOST"`
-  URI         string `json:"URI"`
-  DSN         string `json:"DSN"`
+	Host string `json:"HOST"`
+	URI  string `json:"URI"`
+	DSN  string `json:"DSN"`
 
-  ClusterLocalHost string `json:"CLUSTER_LOCAL_HOST"`
-  ClusterLocalURI string `json:"CLUSTER_LOCAL_URI"`
-  ClusterLocalDSN string `json:"CLUSTER_LOCAL_DSN"`
+	ClusterLocalHost string `json:".CLUSTER_LOCAL_HOST"`
+	ClusterLocalURI  string `json:".CLUSTER_LOCAL_URI"`
+	ClusterLocalDSN  string `json:".CLUSTER_LOCAL_DSN"`
+
+	GlobalVPNHost string `json:".GLOBAL_VPN_HOST"`
+	GlobalVPNURI  string `json:".GLOBAL_VPN_URI"`
+	GlobalVPNDSN  string `json:".GLOBAL_VPN_DSN"`
 }
 
 func (do *StandaloneDatabaseOutput) ToMap() (map[string]string, error) {
@@ -69,10 +85,10 @@ func (do *StandaloneDatabaseOutput) ToMap() (map[string]string, error) {
 		return nil, err
 	}
 
-  err = json.Unmarshal(b, &m)
-  if err != nil {
-    return nil, err
-  }
+	err = json.Unmarshal(b, &m)
+	if err != nil {
+		return nil, err
+	}
 
-  return m, nil
+	return m, nil
 }

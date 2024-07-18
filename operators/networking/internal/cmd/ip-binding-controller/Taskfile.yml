@@ -12,6 +12,7 @@ tasks:
     cmds:
       - task: go:build
         vars:
+          GOARCH: "{{.GOARCH}}"
           Out: "./bin/{{.binary}}-{{.GOARCH}}"
 
   run:

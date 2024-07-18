@@ -73,7 +73,7 @@ func (r *Reconciler) AwsJobValuesJson(obj *clustersv1.NodePool, nodesMap map[str
 		// INFO: there will be no aws_access_key, aws_secret_key thing, as we expect this autoscaler to run on AWS instances configured with proper IAM instance profile
 		// "aws_access_key":             nil,
 		// "aws_secret_key":             nil,
-		"aws_region":                 r.Env.CloudProviderRegion,
+		"aws_region":                 obj.Spec.AWS.Region,
 		"tracker_id":                 fmt.Sprintf("cluster-%s", r.Env.ClusterName),
 		"nodepool_name":              obj.Name,
 		"k3s_join_token":             r.Env.K3sJoinToken,

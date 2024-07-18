@@ -272,6 +272,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 
 		ns.Labels[constants.EnvironmentNameKey] = obj.Name
 		ns.Labels[constants.KloudliteGatewayEnabledLabel] = "true"
+		ns.Labels[constants.KloudliteNamespaceForEnvironment] = obj.Name
 
 		if ns.Annotations == nil {
 			ns.Annotations = make(map[string]string, 1)

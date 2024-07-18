@@ -13,8 +13,11 @@ type StandaloneOutput struct {
 	Host string `json:"HOST"`
 	URI  string `json:"URI"`
 
-	ClusterLocalHost string `json:"CLUSTER_LOCAL_HOST"`
-	ClusterLocalURI  string `json:"CLUSTER_LOCAL_URI"`
+	ClusterLocalHost string `json:".CLUSTER_LOCAL_HOST"`
+	ClusterLocalURI  string `json:".CLUSTER_LOCAL_URI"`
+
+	GlobalVPNHost string `json:".GLOBAL_VPN_HOST"`
+	GlobalVPNURI  string `json:".GLOBAL_VPN_URI"`
 }
 
 func (so *StandaloneOutput) ToMap() (map[string]string, error) {
@@ -24,12 +27,12 @@ func (so *StandaloneOutput) ToMap() (map[string]string, error) {
 		return nil, err
 	}
 
-  err = json.Unmarshal(b, &m)
-  if err != nil {
-    return nil, err
-  }
+	err = json.Unmarshal(b, &m)
+	if err != nil {
+		return nil, err
+	}
 
-  return m, nil
+	return m, nil
 }
 
 type StandaloneDatabaseOutput struct {
@@ -43,8 +46,11 @@ type StandaloneDatabaseOutput struct {
 	Host string `json:"HOST"`
 	URI  string `json:"URI"`
 
-	ClusterLocalHost string `json:"CLUSTER_LOCAL_HOST"`
-	ClusterLocalURI  string `json:"CLUSTER_LOCAL_URI"`
+	ClusterLocalHost string `json:".CLUSTER_LOCAL_HOST"`
+	ClusterLocalURI  string `json:".CLUSTER_LOCAL_URI"`
+
+	GlobalVPNHost string `json:".GLOBAL_VPN_HOST"`
+	GlobalVPNURI  string `json:".GLOBAL_VPN_URI"`
 }
 
 func (do *StandaloneDatabaseOutput) ToMap() (map[string]string, error) {
@@ -54,10 +60,10 @@ func (do *StandaloneDatabaseOutput) ToMap() (map[string]string, error) {
 		return nil, err
 	}
 
-  err = json.Unmarshal(b, &m)
-  if err != nil {
-    return nil, err
-  }
+	err = json.Unmarshal(b, &m)
+	if err != nil {
+		return nil, err
+	}
 
-  return m, nil
+	return m, nil
 }
