@@ -43,12 +43,16 @@ type StandaloneServiceOutput struct {
 
 	URI string `json:"URI"`
 
-	ClusterLocalHost string `json:"CLUSTER_LOCAL_HOST"`
-	ClusterLocalAddr string `json:"CLUSTER_LOCAL_ADDR"`
-	ClusterLocalURI  string `json:"CLUSTER_LOCAL_URI"`
+	ClusterLocalHost string `json:".CLUSTER_LOCAL_HOST"`
+	ClusterLocalAddr string `json:".CLUSTER_LOCAL_ADDR"`
+	ClusterLocalURI  string `json:".CLUSTER_LOCAL_URI"`
+
+	GlobalVpnHost string `json:".GLOBAL_VPN_HOST"`
+	GlobalVpnAddr string `json:".GLOBAL_VPN_ADDR"`
+	GlobalVpnURI  string `json:".GLOBAL_VPN_URI"`
 }
 
-func (mo *StandaloneServiceOutput) ToSecretData() (map[string][]byte, error) {
+func (mo *StandaloneServiceOutput) ToMap() (map[string]string, error) {
 	b, err := json.Marshal(mo)
 	if err != nil {
 		return nil, err
@@ -58,12 +62,7 @@ func (mo *StandaloneServiceOutput) ToSecretData() (map[string][]byte, error) {
 		return nil, err
 	}
 
-	m2 := make(map[string][]byte, len(m))
-	for k, v := range m {
-		m2[k] = []byte(v)
-	}
-
-	return m2, nil
+	return m, nil
 }
 
 type MresOutput struct {

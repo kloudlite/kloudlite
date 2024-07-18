@@ -38,7 +38,11 @@ func (cw *checkWrapper[T]) Failed(err error) step_result.Result {
 
 	cw.Check.State = ErroredState
 	cw.Check.Status = false
-	cw.Check.Message = err.Error()
+  if err != nil {
+    cw.Check.Message = err.Error()
+    // if apiErrors.IsConflict(err) {
+    // }
+  }
 
 	cw.request.Object.GetStatus().Checks[cw.checkName] = cw.Check
 

@@ -11,13 +11,17 @@ type StandaloneSvcOutput struct {
 
 	Port string `json:"PORT"`
 
-	Hosts string `json:"HOSTS"`
-	Addr  string `json:"ADDR"`
-	URI   string `json:"URI"`
+	Host string `json:"HOST"`
+	Addr string `json:"ADDR"`
+	URI  string `json:"URI"`
 
-	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
-	ClusterLocalAddr  string `json:"CLUSTER_LOCAL_ADDR"`
-	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
+	ClusterLocalHost string `json:".CLUSTER_LOCAL_HOST"`
+	ClusterLocalAddr string `json:".CLUSTER_LOCAL_ADDR"`
+	ClusterLocalURI  string `json:".CLUSTER_LOCAL_URI"`
+
+	GlobalVpnHost string `json:".GLOBAL_VPN_HOST,omitempty"`
+	GlobalVpnAddr string `json:".GLOBAL_VPN_ADDR,omitempty"`
+	GlobalVpnURI  string `json:".GLOBAL_VPN_URI,omitempty"`
 }
 
 func (sso StandaloneSvcOutput) ToMap() (map[string]string, error) {
@@ -37,8 +41,8 @@ type ClusterSvcOutput struct {
 	RootPassword string `json:"ROOT_PASSWORD"`
 	AuthSource   string `json:"AUTH_SOURCE"`
 
-	ClusterLocalHosts string `json:"CLUSTER_LOCAL_HOSTS"`
-	ClusterLocalURI   string `json:"CLUSTER_LOCAL_URI"`
+	ClusterLocalHosts string `json:".CLUSTER_LOCAL_HOSTS"`
+	ClusterLocalURI   string `json:".CLUSTER_LOCAL_URI"`
 
 	GlobalVpnHosts string `json:"GLOBAL_VPN_HOSTS,omitempty"`
 	GlobalVpnURI   string `json:"GLOBAL_VPN_URI,omitempty"`
@@ -75,13 +79,13 @@ type DatabaseOutput struct {
 	GlobalVpnURI   string `json:"GLOBAL_VPN_URI,omitempty"`
 }
 
-func ExtractPVCLabelsFromStatefulSetLabels(m map[string]string) map[string]string {
-	return map[string]string{
-		"app.kubernetes.io/component": m["app.kubernetes.io/name"],
-		"app.kubernetes.io/instance":  m["app.kubernetes.io/instance"],
-		"app.kubernetes.io/name":      m["app.kubernetes.io/name"],
-	}
-}
+// func ExtractPVCLabelsFromStatefulSetLabels(m map[string]string) map[string]string {
+// 	return map[string]string{
+// 		"app.kubernetes.io/component": m["app.kubernetes.io/name"],
+// 		"app.kubernetes.io/instance":  m["app.kubernetes.io/instance"],
+// 		"app.kubernetes.io/name":      m["app.kubernetes.io/name"],
+// 	}
+// }
 
 type StandaloneDatabaseOutput struct {
 	Username string `json:"USERNAME"`
@@ -94,8 +98,11 @@ type StandaloneDatabaseOutput struct {
 	Host string `json:"HOST"`
 	URI  string `json:"URI"`
 
-	ClusterLocalHost string `json:"CLUSTER_LOCAL_HOST"`
-	ClusterLocalURI  string `json:"CLUSTER_LOCAL_URI"`
+	ClusterLocalHost string `json:".CLUSTER_LOCAL_HOST"`
+	ClusterLocalURI  string `json:".CLUSTER_LOCAL_URI"`
+
+	GlobalVpnHost string `json:".GLOBAL_VPN_HOST"`
+	GlobalVpnURI  string `json:".GLOBAL_VPN_URI"`
 }
 
 func (sdo StandaloneDatabaseOutput) ToMap() (map[string]string, error) {
