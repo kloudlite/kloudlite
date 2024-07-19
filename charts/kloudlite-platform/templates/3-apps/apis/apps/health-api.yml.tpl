@@ -26,7 +26,7 @@ spec:
       imagePullPolicy: {{ include "image-pull-policy" .}}
       resourceCpu:
         min: "10m"
-        max: "200m"
+        max: "20m"
       resourceMemory:
         min: "10Mi"
         max: "20Mi"

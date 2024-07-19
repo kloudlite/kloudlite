@@ -384,7 +384,7 @@ apps:
   healthApi:
     # -- image (with tag) for console api
     image:
-      repository: ghcr.io/kloudlite/api/kube-svc-health
+      repository: ghcr.io/kloudlite/kloudlite/api/kube-svc-health
       tag: ""
     configuration:
       replicas: 2
