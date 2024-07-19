@@ -24,6 +24,39 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 )
 
+func (d *domain) cleanupEnvironment(ctx ConsoleContext, envName string) error {
+	filter := repos.Filter{
+		fields.AccountName:     ctx.AccountName,
+		fields.EnvironmentName: envName,
+	}
+
+	if err := d.appRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.externalAppRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.secretRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.configRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.routerRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.importedMresRepo.DeleteMany(ctx, filter); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
+}
+
 func (d *domain) findEnvironment(ctx ConsoleContext, name string) (*entities.Environment, error) {
 	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{
 		fields.AccountName:  ctx.AccountName,
@@ -515,6 +548,10 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, name string) error {
 	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
 
 	if uenv.IsArchived != nil && *uenv.IsArchived {
+		if err := d.cleanupEnvironment(ctx, name); err != nil {
+			return errors.NewE(err)
+		}
+
 		return d.environmentRepo.DeleteById(ctx, uenv.Id)
 	}
 
@@ -553,18 +590,21 @@ func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, 
 }
 
 func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Environment) error {
-	err := d.environmentRepo.DeleteOne(
+	if err := d.cleanupEnvironment(ctx, env.Name); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.environmentRepo.DeleteOne(
 		ctx,
 		repos.Filter{
 			fields.AccountName:  ctx.AccountName,
 			fields.MetadataName: env.Name,
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return errors.NewE(err)
 	}
 
-	if _, err = d.iamClient.RemoveResource(ctx, &iam.RemoveResourceIn{
+	if _, err := d.iamClient.RemoveResource(ctx, &iam.RemoveResourceIn{
 		ResourceRef: iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, env.Name),
 	}); err != nil {
 		return errors.NewE(err)
