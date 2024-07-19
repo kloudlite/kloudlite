@@ -91,7 +91,8 @@ func (d *domain) ensureNamespaceForAccount(ctx context.Context, accountName stri
 }
 
 func (d *domain) deleteNamespaceForAccount(ctx context.Context, targetNamespace string) error {
-	panic("not implemented. Yet to decide if we want to delete namespace when account is deleted")
+	// panic("not implemented. Yet to decide if we want to delete namespace when account is deleted")
+	return fmt.Errorf("not supported yet")
 }
 
 func (d *domain) ensureKloudliteRegistryCredentials(ctx UserContext, account *entities.Account) error {
