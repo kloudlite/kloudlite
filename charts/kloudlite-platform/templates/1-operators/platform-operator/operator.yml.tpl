@@ -1,21 +1,5 @@
 {{if .Values.operators.platformOperator.enabled}}
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: kloudlite-platform-operator
-  namespace: {{.Release.Namespace}}
-  labels:
-    control-plane: kloudlite-platform-operator
-spec:
-  ports:
-    - name: https
-      port: 8443
-      protocol: TCP
-      targetPort: https
-  selector:
-    control-plane: kloudlite-platform-operator
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -82,7 +66,10 @@ spec:
             {{ include "nodepool-operator-env" . | nindent 12 }}
             {{ include "wg-operator-env" . | nindent 12 }}
             {{ include "helmchart-operator-env" . | nindent 12 }}
-            {{ include "msvc-operator-env" . | nindent 12 }}
+            {{- /* {{ include "msvc-operator-env" . | nindent 12 }} */}}
+
+            - name: KLOUDLITE_DNS_SUFFIX
+              value: ""
 
           livenessProbe:
             httpGet:

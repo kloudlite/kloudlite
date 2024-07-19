@@ -1,4 +1,12 @@
+# -- (string) kloudlite release version, to pick container images
 kloudliteRelease: ""
+
+# -- (string) required only for labelling cloudprovider VMs
+accountName: ""
+
+# -- (string) required only for labelling cloudprovider VMs
+clusterName: ""
+
 
 nodepoolOperator:
   image:
@@ -26,7 +34,7 @@ nodepoolOperator:
 nodepoolJob:
   image:
     # -- (string) kloudlite iac job image repository
-    repository: ghcr.io/kloudlite/kloudlite/iac-job
+    repository: ghcr.io/kloudlite/kloudlite/infrastructure-as-code/iac-job
 
     # -- (string) image tag for kloudlite iac job, by default uses `.Values.kloudliteRelease`
     tag: ""
@@ -46,18 +54,8 @@ nodepoolJob:
       cpu: 300m
       memory: 500Mi
 
-# -- (string) required only for labelling cloudprovider VMs
-accountName: ""
-
-# -- (string) required only for labelling cloudprovider VMs
-clusterName: ""
-
-cloudprovider:
-  name: ""
-  region: ""
-
-  k3s:
-    # -- (string) k3s worker nodes join token
-    joinToken: ""
-    # -- (string) k3s masters public dns host, so that workers can join them
-    serverPublicHost: ""
+k3s:
+  # -- (string) k3s worker nodes join token
+  joinToken: ""
+  # -- (string) k3s masters public dns host, so that workers can join them
+  serverPublicHost: ""

@@ -23,7 +23,8 @@ spec:
         - key: DB_URI
           type: secret
           refName: mres-events-db-creds
-          refKey: URI
+          refKey: .CLUSTER_LOCAL_URI
+
         - key: DB_NAME
           type: secret
           refName: mres-events-db-creds

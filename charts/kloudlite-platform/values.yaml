@@ -55,6 +55,8 @@ global:
 
   ingressClassName: "ingress-nginx"
 
+  kloudliteDNSSuffix: ""
+
 # Cluster Management
 certManager:
   # -- whether to enable cert-manager
@@ -79,11 +81,33 @@ ingressController:
       - key: node-role.kubernetes.io/master
         effect: NoSchedule
 
+scheduling:
+  stateful:
+    nodeSelector: {}
+    tolerations:
+      - key: "kloudlite.io/nodepool.role"
+        operator: "Equal"
+        value: "stateful"
+        effect: "NoExecute"
+    topologySpreadConstraints: []
+  stateless:
+    nodeSelector: {}
+    tolerations:
+      - key: "kloudlite.io/nodepool.role"
+        operator: "Equal"
+        value: "stateless"
+        effect: "NoExecute"
+    topologySpreadConstraints: []
+
 nodepools:
   stateless:
     labels:
       kloudlite.io/nodepool.role: "stateless"
     tolerations: []
+    #   - key: "kloudlite.io/nodepool.role"
+    #     operator: "Equal"
+    #     value: "stateless"
+    #     effect: "NoExecute"
     # taints
     #   - key: "kloudlite.io/nodepool.role"
     #     value: "stateless"

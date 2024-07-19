@@ -43,7 +43,7 @@ spec:
         - key: MONGO_DB_URI
           type: secret
           refName: mres-infra-db-creds
-          refKey: URI
+          refKey: .CLUSTER_LOCAL_URI
 
         - key: MONGO_DB_NAME
           type: secret
@@ -55,6 +55,9 @@ spec:
 
         - key: GRPC_PORT
           value: "3001"
+
+        - key: KLOUDLITE_DNS_SUFFIX
+          value: "{{.Values.global.kloudliteDNSSuffix}}"
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.global.cookieDomain}}"
