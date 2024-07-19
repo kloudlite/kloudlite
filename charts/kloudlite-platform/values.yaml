@@ -381,6 +381,15 @@ apps:
       replicas: 1
       grpcPort: 3001
 
+  healthApi:
+    # -- image (with tag) for console api
+    image:
+      repository: ghcr.io/kloudlite/api/kube-svc-health
+      tag: ""
+    configuration:
+      replicas: 2
+      httpPort: 3000
+
   consoleApi:
     # -- image (with tag) for console api
     image:
