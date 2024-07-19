@@ -54,7 +54,7 @@ spec:
         - key: DB_URI
           type: secret
           refName: mres-registry-db-creds
-          refKey: URI
+          refKey: .CLUSTER_LOCAL_URI
 
         - key: DB_NAME
           type: secret

@@ -43,7 +43,7 @@ spec:
         - key: MONGO_URI
           type: secret
           refName: mres-accounts-db-creds
-          refKey: URI
+          refKey: .CLUSTER_LOCAL_URI
 
         - key: MONGO_DB_NAME
           type: secret

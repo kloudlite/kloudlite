@@ -12,7 +12,7 @@ data:
           kind: StandaloneService
           name: mongo_standalone
           logoUrl: https://img.icons8.com/color/344/mongodb.png
-          displayName: MongoDB Standalone
+          displayName: MongoDB
           description: MongoDB Server in a standalone instance
           active: true
           fields:  &input-fields
@@ -54,7 +54,7 @@ data:
           resources:
             - name: db
               apiVersion: mongodb.msvc.kloudlite.io/v1
-              kind: Database
+              kind: StandaloneDatabase
               displayName: Database
               description: Creates and Manages a mongodb database and user with proper access to this database
 
@@ -62,7 +62,7 @@ data:
           kind: Standalone
           logoUrl: https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg
           apiVersion: postgres.msvc.kloudlite.io/v1
-          displayName: Postgres Standalone
+          displayName: Postgres
           description: Postgres Standalond distribution
           active: true
           fields: *input-fields
@@ -77,8 +77,8 @@ data:
         - apiVersion: mysql.msvc.kloudlite.io/v1
           kind: StandaloneService
           name: mysql_standalone
-          logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
-          displayName: MySQL Standalone
+          logoUrl: https://mariadb.com/wp-content/uploads/2019/11/vertical-logo_black.svg
+          displayName: MySQL
           description: MySQL/MariaDB running in standalone fashion
 
           active: true
@@ -100,8 +100,8 @@ data:
           kind: StandaloneService
           name: redis_standalone
           logoUrl: https://img.icons8.com/color/344/redis.png
-          displayName: Redis Standalone
-          description: Redis Standalone
+          displayName: Redis
+          description: Redis running as a standalone database
 
           active: true
 

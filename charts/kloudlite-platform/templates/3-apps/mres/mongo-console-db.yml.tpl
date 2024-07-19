@@ -1,5 +1,5 @@
 apiVersion: mongodb.msvc.kloudlite.io/v1
-kind: Database
+kind: {{.Values.mongo.runAsCluster | ternary "Database" "StandaloneDatabase" }}
 metadata:
   name: {{.Values.envVars.db.consoleDB}}
   namespace: {{.Release.Namespace}}
