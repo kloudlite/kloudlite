@@ -20,4 +20,12 @@ spec:
       path: /{{.Release.Namespace}}/*
       port:  {{.Values.apps.healthApi.configuration.httpPort | int }}
       rewrite: false
+    - app: health-api
+      path: /sts/{{.Release.Namespace}}/*
+      port:  {{.Values.apps.healthApi.configuration.httpPort | int }}
+      rewrite: false
+    - app: health-api
+      path: /deploy/{{.Release.Namespace}}/*
+      port:  {{.Values.apps.healthApi.configuration.httpPort | int }}
+      rewrite: false
 ---
