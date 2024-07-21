@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 )
 
@@ -28,6 +29,14 @@ func NewSlogLogger(opts SlogOptions) *slog.Logger {
 	}
 
 	logger := log.NewWithOptions(opts.Writer, log.Options{ReportCaller: opts.ShowCaller, ReportTimestamp: opts.ShowTimestamp, Prefix: opts.Prefix, Level: level})
+
+	styles := log.DefaultStyles()
+	styles.Levels[log.DebugLevel] = styles.Levels[log.DebugLevel].Foreground(lipgloss.Color("#5b717f"))
+
+	// styles.Key = lipgloss.NewStyle().Background(lipgloss.Color("#083e54")).Foreground(lipgloss.Color("#9dbdc9")).Bold(true)
+	styles.Key = lipgloss.NewStyle().Foreground(lipgloss.Color("#36cbfa")).Bold(true)
+
+	logger.SetStyles(styles)
 
 	return slog.New(logger)
 }
