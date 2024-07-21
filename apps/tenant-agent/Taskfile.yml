@@ -17,7 +17,7 @@ tasks:
     dotenv:
       - .secrets/env
     cmds:
-      - go run . --dev
+      - go run . --dev --debug
 
   build:
     cmds:
