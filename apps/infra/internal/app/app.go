@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -121,7 +122,7 @@ var Module = fx.Module(
 	}),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ReceiveResourceUpdatesConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.InfraReceiver, common.EventResourceUpdate)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.InfraReceiver, common.EventResourceUpdate)
 
 		consumerName := "infra:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
@@ -148,7 +149,7 @@ var Module = fx.Module(
 	}),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ErrorOnApplyConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.InfraReceiver, common.EventErrorOnApply)
 
 		consumerName := "infra:error-on-apply"
 
