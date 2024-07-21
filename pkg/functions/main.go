@@ -58,6 +58,14 @@ func CleanerNanoidOrDie(n int) string {
 	return id
 }
 
+// UUID returns a UUID string of the given size, if specified, otherwise a default size of 16 is used.
+func UUID(size ...int) string {
+	if len(size) > 0 {
+		return nanoid.Must(size[0])
+	}
+	return nanoid.Must(16)
+}
+
 func JsonConversion(from any, to any) error {
 	if from == nil {
 		return nil
