@@ -663,3 +663,18 @@ envVars:
       resetTokenBucket:
         name: reset-token
         storage: file
+
+crons:
+  natsBackup:
+    enabled: true
+    name: nats-backup
+    configuration:
+      image: natsio/nats-box:latest
+      server: ""
+      numBackups: 5
+      schedule: "0 */2 * * *" # Runs every 2 hours
+      bucket: ""
+    credentials:
+      accessKeyId: ""
+      secretKey: ""
+      endpoint: ""
