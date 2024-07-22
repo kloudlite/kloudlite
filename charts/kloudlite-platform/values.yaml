@@ -674,7 +674,7 @@ crons:
       numBackups: 5
       schedule: "0 */2 * * *" # Runs every 2 hours
       bucket: ""
-    credentials:
+    s3:
       accessKeyId: ""
       secretKey: ""
       endpoint: ""
