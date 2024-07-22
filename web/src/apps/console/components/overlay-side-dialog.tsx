@@ -50,7 +50,7 @@ const OverlaySideDialog = ({
                 className={cn(
                   'flex flex-col',
                   'z-[99999999] outline-none transform overflow-hidden md:rounded bg-surface-basic-default shadow-modal',
-                  'fixed right-0 top-0 h-screen w-[80vw] max-w-screen-2xl',
+                  'fixed right-0 top-0 h-screen w-[50vw] max-w-screen-2xl',
                   'border border-border-default',
                   className
                 )}

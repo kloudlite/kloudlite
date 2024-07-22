@@ -70,7 +70,7 @@ const YamlEditor = ({
       className="!shadow-none h-full !border-none"
       title={
         <div className="flex justify-between">
-          <span>Edit App As Yaml</span>
+          <span>App as yaml</span>
           <IconButton
             variant="plain"
             onClick={() => {
@@ -85,6 +85,25 @@ const YamlEditor = ({
         </div>
       }
     >
+      <div className="h-full flex flex-col overflow-hidden">
+        <CodeEditorClient
+          height="calc(70vh - 20px)" ///
+          value={initialState}
+          onChange={(v) => {
+            if (v) {
+              setState(v);
+            }
+          }}
+          lang="yaml"
+        />
+        <div className="p-xl overflow-y-auto h-[16vh] border-l border-b border-r border-border-default rounded-b-lg transition-all">
+          <pre className=" text-text-critical">
+            {errors.map((r) => {
+              return <pre key={r}>{r}</pre>;
+            })}
+          </pre>
+        </div>
+      </div>
       <div className="flex gap-lg justify-end">
         {hasChanges && (
           <Button
@@ -119,27 +138,6 @@ const YamlEditor = ({
             }
           }}
         />
-      </div>
-      <div className="h-full">
-        <div className="mb-[2px]">
-          <CodeEditorClient
-            height="calc(70vh - 132px - 2px - 20px)" ///
-            value={initialState}
-            onChange={(v) => {
-              if (v) {
-                setState(v);
-              }
-            }}
-            lang="yaml"
-          />
-        </div>
-        <div className="px-[54px] py-[54px] overflow-y-auto h-[30vh] border border-border-critical transition-all">
-          <pre className=" text-text-critical">
-            {errors.map((r) => {
-              return <pre key={r}>{r}</pre>;
-            })}
-          </pre>
-        </div>
       </div>
       {/* <CodeEditorClient
         height="50vh"

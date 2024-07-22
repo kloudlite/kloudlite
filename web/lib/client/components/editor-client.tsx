@@ -36,7 +36,7 @@ const CodeEditorClient = (
         ...props,
         className: cn(
           className,
-          'h-full w-full border border-text-soft rounded-sm'
+          'h-full w-full border border-border-default overflow-hidden rounded-t-lg'
         ),
       }}
     />

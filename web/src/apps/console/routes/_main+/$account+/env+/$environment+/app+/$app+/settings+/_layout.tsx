@@ -23,6 +23,7 @@ import { parseName } from '~/console/server/r-utils/common';
 import { constants } from '~/console/server/utils/constants';
 import { registryHost } from '~/root/lib/configs/base-url.cjs';
 import { Button } from '~/components/atoms/button';
+import { cn } from '~/components/utils';
 import { IAppContext } from '../_layout';
 import { getImageTag } from '../../../new-app/app-utils';
 import appFun from '../../../new-app/app-pre-submit';
@@ -232,21 +233,27 @@ const Layout = () => {
   return (
     <SidebarLayout navItems={navItems} parentPath="/settings">
       <Popup.Root
-        className="w-[90vw] max-w-[1440px] min-w-[1000px]"
+        className={cn('w-[90vw] max-w-[1440px]', {
+          'min-w-[1000px]': showDiff,
+          'min-w-[500px]': !showDiff,
+        })}
         show={performAction === 'view-changes'}
         onOpenChange={(v) => setPerformAction(v)}
       >
-        <Popup.Header>Review Changes</Popup.Header>
+        <Popup.Header>Commit Changes</Popup.Header>
         <Popup.Content>
-          <div className="flex flex-row justify-center items-center gap-md">
+          <div className="flex flex-col gap-md">
             <span className="bodyMd-medium text-text-strong">
-              Do you want to
+              Please confirm if you want to update this app. This action will
+              overwrite existing app details.
             </span>
             <Button
               size="sm"
               content={
-                <span className="truncate text-center">
-                  {showDiff ? 'Hide Changes?' : 'View Changes?'}
+                <span className="truncate text-left">
+                  {showDiff
+                    ? 'Hide Changes?'
+                    : 'Click here to review changes before proceeding.'}
                 </span>
               }
               variant="primary-plain"
