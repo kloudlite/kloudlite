@@ -1,4 +1,4 @@
-{{- $cronName := "nats-csi-s3-backup" }}
+{{- $cronName := "mongo-csi-s3-backup" }}
 
 apiVersion: batch/v1
 kind: CronJob
@@ -6,7 +6,7 @@ metadata:
   name: {{$cronName}}
   namespace: {{.Release.Namespace}}
 spec:
-  schedule: "{{.Values.crons.natsBackup.configuration.schedule}}"
+  schedule: "{{.Values.crons.mongoBackup.configuration.schedule}}"
   jobTemplate:
     spec:
       template:
@@ -16,7 +16,7 @@ spec:
         spec:
           containers:
             - name: {{$cronName}}
-              image: {{.Values.crons.natsBackup.configuration.image}}
+              image: {{.Values.crons.mongoBackup.configuration.image}}
               command: 
                 - /bin/sh
                 - -c
@@ -27,7 +27,7 @@ spec:
 
                   trap 'echo "Backup failed"; exit 1' ERR
 
-                  BACKUP_DEST="/nats-backups"
+                  BACKUP_DEST="/mongo-backups"
 
                   TIMESTAMP=$(date +"%Y%m%d%H%M%S")
                   FILENAME="backup_${TIMESTAMP}"
@@ -36,7 +36,7 @@ spec:
                   BACKUP_TEMP_DIR="/tmp/${FILENAME}"
 
                   mkdir -p "$BACKUP_DEST"
-                  nats account backup --server  $NATS_SERVER "$BACKUP_TEMP_DIR" -f
+                  mongodump --uri ${MONGODB_URI} --archive=${BACKUP_TEMP_DIR} --dumpDbUsersAndRoles --gzip
 
                   zip -r -P "$ENCRYPTION_PASSWORD" "${BACKUP_TEMP_DIR}.zip" "$BACKUP_TEMP_DIR"
 
@@ -56,18 +56,18 @@ spec:
 
                   echo "Backup completed"
               env:
-                - name: NATS_SERVER
-                  value: {{.Values.crons.natsBackup.configuration.server}}
+                - name: MONGODB_URI
+                  value: {{.Values.crons.mongoBackup.configuration.mongodbUri}}
                 - name: NUM_BACKUPS
-                  value: {{.Values.crons.natsBackup.configuration.numBackups | default "5"}}
+                  value: {{.Values.crons.mongoBackup.configuration.numBackups | default "5"}}
                 - name: ENCRYPTION_PASSWORD
-                  value: {{.Values.crons.natsBackup.configuration.encryptionPassword}}
+                  value: {{.Values.crons.mongoBackup.configuration.encryptionPassword}}
               volumeMounts:
-                - mountPath: /nats-backups
-                  name: nats-backups
+                - mountPath: /mongo-backups
+                  name: mongo-backups
           restartPolicy: OnFailure
           volumes:
-            - name: nats-backups
+            - name: mongo-backups
               persistentVolumeClaim:
                 claimName: {{$cronName}}
                 readOnly: false

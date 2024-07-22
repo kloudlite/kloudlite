@@ -665,8 +665,19 @@ envVars:
         storage: file
 
 crons:
+  mongoBackup:
+    name: mongo-backup
+    configuration:
+      image: mongo:latest
+      mongodbUri: ""
+      numBackups: 5
+      schedule: "0 */2 * * *" # Runs every 2 hours
+      encryptionPassword: ""
+    s3:
+      accessKeyId: ""
+      secretKey: ""
+      endpoint: ""
   natsBackup:
-    enabled: true
     name: nats-backup
     configuration:
       image: natsio/nats-box:latest
@@ -674,6 +685,7 @@ crons:
       numBackups: 5
       schedule: "0 */2 * * *" # Runs every 2 hours
       bucket: ""
+      encryptionPassword: ""
     s3:
       accessKeyId: ""
       secretKey: ""
