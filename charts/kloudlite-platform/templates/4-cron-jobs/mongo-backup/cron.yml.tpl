@@ -21,7 +21,7 @@ spec:
                 - /bin/sh
                 - -c
                 - |
-                  apk add zip
+                  apt update && apt install zip -y
                   set -o errexit
                   set -o pipefail
 
