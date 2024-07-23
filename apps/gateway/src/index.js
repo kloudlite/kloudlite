@@ -27,6 +27,10 @@ class CustomDataSource extends RemoteGraphQLDataSource {
   }
 
   // eslint-disable-next-line class-methods-use-this
+  shouldBatchRequest({ request }) {
+    return request.http?.headers?.get('x-hasura-admin-secret') !== undefined;
+  }
+}
   didReceiveResponse({ response, context }) {
     const x = response.http.headers.get('set-cookie');
     if (!x) return response;
@@ -58,10 +62,10 @@ const server = new ApolloServer({
     credentials: true,
   },
   gateway,
-  // plugins: [graphqlExecutionLogger],
-  // context: async ({ req, res }) => {
-  //   return { req, res };
-  // },
+// plugins: [graphqlExecutionLogger],
+// context: async ({ req, res }) => {
+//   return { req, res };
+// },
 });
 
 const app = express()
@@ -87,6 +91,8 @@ app.listen(port, (err) => {
 
 console.log(String.raw`
                     ,                       
+
+`)
                   #####                 
                ########                 
              ########                   
@@ -105,4 +111,3 @@ console.log(String.raw`
                     ,                       
 
 `)
-

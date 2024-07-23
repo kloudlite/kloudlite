@@ -12,11 +12,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@apollo/gateway": "^2.7.2",
+    "@apollo/gateway": "2.8.3",
     "@apollo/server": "^4.10.2",
     "cookie": "^0.6.0",
     "express": "^4.19.2",
-    "graphql": "^16.8.1",
+    "graphql": "16.9.0",
     "js-yaml": "^4.1.0"
   }
 }
