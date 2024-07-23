@@ -35,6 +35,7 @@ import { Badge } from '~/components/atoms/badge';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import Tooltip from '~/components/atoms/tooltip';
 import { NN } from '~/root/lib/types/common';
+import { getClusterStatus } from '~/console/utils/commons';
 import HandleIntercept from './handle-intercept';
 import { IEnvironmentContext } from '../_layout';
 
@@ -239,8 +240,9 @@ const GridView = ({ items = [], onAction: _ }: IResource) => {
 };
 
 const ListView = ({ items = [], onAction }: IResource) => {
-  const { environment, cluster, account } =
+  const { environment, account, cluster } =
     useOutletContext<IEnvironmentContext>();
+
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -288,6 +290,8 @@ const ListView = ({ items = [], onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
+          const isClusterOnline = getClusterStatus(cluster);
+
           const { name, id, updateInfo } = parseItem(i);
           return {
             columns: {
@@ -308,24 +312,18 @@ const ListView = ({ items = [], onAction }: IResource) => {
               service: {
                 render: () => (
                   <div className="flex w-fit truncate">
-                    <AppServiceView
-                      service={
-                        environment?.spec?.targetNamespace
-                          ? `${parseName(i)}.${
-                              environment?.spec?.targetNamespace
-                            }.svc.${parseName(cluster)}.local`
-                          : `${parseName(i)}.${parseName(
-                              environment
-                            )}.svc.${parseName(cluster)}.local`
-                      }
-                    />
+                    <AppServiceView service={i.serviceHost || ''} />
                   </div>
                 ),
               },
               status: {
                 render: () => (
                   <div className="inline-block">
-                    <SyncStatusV2 item={i} />
+                    {isClusterOnline ? (
+                      <SyncStatusV2 item={i} />
+                    ) : (
+                      <Badge type="warning">Cluster Offline</Badge>
+                    )}
                   </div>
                 ),
               },
@@ -361,9 +359,9 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
 
   useWatchReload(
     items.map((i) => {
-      return `account:${account}.environment:${environment}.app:${parseName(
-        i
-      )}`;
+      return `account:${parseName(account)}.environment:${parseName(
+        environment
+      )}.app:${parseName(i)}`;
     })
   );
 

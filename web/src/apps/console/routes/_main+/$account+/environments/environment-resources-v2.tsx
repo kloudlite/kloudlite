@@ -28,6 +28,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { Badge } from '~/components/atoms/badge';
+import { getClusterStatus } from '~/console/utils/commons';
 import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'environment';
@@ -150,6 +151,7 @@ const GridView = ({ items = [], onAction }: IResource) => {
 
 const ListView = ({ items, onAction }: IResource) => {
   const { account } = useParams();
+  const { clustersMap } = useOutletContext<IAccountContext>();
 
   return (
     <ListV2.Root
@@ -188,6 +190,8 @@ const ListView = ({ items, onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
+          const isClusterOnline = getClusterStatus(clustersMap[i.clusterName]);
+
           const { name, id, updateInfo } = parseItem(i);
           return {
             columns: {
@@ -206,12 +210,16 @@ const ListView = ({ items, onAction }: IResource) => {
                 ),
               },
               status: {
-                render: () =>
-                  i.isArchived ? (
-                    <Badge type="neutral">Archived</Badge>
-                  ) : (
-                    <SyncStatusV2 item={i} />
-                  ),
+                render: () => {
+                  if (i.isArchived) {
+                    return <Badge type="neutral">Archived</Badge>;
+                  }
+                  if (!isClusterOnline) {
+                    return <Badge type="warning">Cluster Offline</Badge>;
+                  }
+
+                  return <SyncStatusV2 item={i} />;
+                },
               },
               updated: {
                 render: () => (

@@ -173,8 +173,6 @@ const ByokInstructionsPopup = ({
 const ByokButton = ({ item }: { item: CombinedBaseType }) => {
   const [show, setShow] = useState(false);
 
-  console.log('item', item);
-
   return (
     <div>
       {show ? (

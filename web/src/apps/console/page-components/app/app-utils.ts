@@ -45,7 +45,6 @@ export const mapFormValuesToApp = ({
   oldAppIn: AppIn;
   appIn: ReturnType<typeof appInitialFormValues>;
 }): AppIn => {
-  console.log('nodepool names', val.nodepoolName);
   return {
     ...s,
     metadata: {

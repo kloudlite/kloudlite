@@ -11,7 +11,6 @@ import { NameIdView } from '~/iotconsole/components/name-id-view';
 import { IDeviceBlueprintContext } from '../_layout';
 
 const AppDetail = () => {
-  console.log('use', useAppState());
   const { app, setApp, setPage, markPageAsCompleted, activeContIndex } =
     useAppState();
 

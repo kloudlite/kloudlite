@@ -8,7 +8,7 @@ import Yup from '~/lib/server/helpers/yup';
 import { handleError, sleep } from '~/lib/utils/common';
 import { validateType } from '~/root/src/generated/gql/validator';
 import { parseName } from '~/console/server/r-utils/common';
-import { FadeIn } from '~/console/page-components/util';
+import { FadeIn, parseValue } from '~/console/page-components/util';
 import {
   BottomNavigation,
   GitDetailRaw,
@@ -71,7 +71,7 @@ const AppState = ({ message, state }: { message: string; state: string }) => {
 };
 
 const AppReview = () => {
-  const { app, buildData, setPage, resetState, existingBuildId } =
+  const { app, buildData, setPage, resetState, existingBuildId, getContainer } =
     useAppState();
   const [createState, setCreateState] = useState({
     build: {
@@ -296,7 +296,25 @@ const AppReview = () => {
                 <div className="bodyMd-medium text-text-default">
                   Essential plan
                 </div>
-                <div className="bodySm text-text-soft">0.35vCPU & 0.35GB</div>
+                <div className="bodySm text-text-soft">
+                  <code className="bodyMd text-text-soft flex-1 text-end">
+                    {(
+                      parseValue(getContainer().resourceCpu?.max || 1, 250) /
+                      1000
+                    ).toFixed(2)}
+                    vCPU &{' '}
+                    {(
+                      (parseValue(getContainer().resourceCpu?.max || 1, 250) *
+                        parseValue(
+                          app.metadata?.annotations?.[keyconstants.memPerCpu] ||
+                            '1',
+                          4
+                        )) /
+                      1000
+                    ).toFixed(2)}
+                    GB
+                  </code>
+                </div>
               </div>
             </div>
           </div>

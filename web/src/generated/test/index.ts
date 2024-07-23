@@ -93,7 +93,6 @@ function validateInput(
           break;
 
         default:
-          // console.log(ft.constructor.name, ft.name, field);
           validationErrors = [
             ...validationErrors,
             ...validateInput(

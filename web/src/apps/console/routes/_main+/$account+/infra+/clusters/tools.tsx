@@ -53,7 +53,6 @@ const FilterByCLusterType = ({ onChange, value }: IFilterByClusterType) => {
 
 const Tools = ({ onChange, value }: IFilterByClusterType) => {
   const [searchParams] = useSearchParams();
-  console.log('cc params', searchParams);
   const options = useMemo(
     () => [
       // {
@@ -101,7 +100,6 @@ const Tools = ({ onChange, value }: IFilterByClusterType) => {
       // commonToolPrefix={
       //   <FilterByCLusterType
       //     onChange={(e) => {
-      //       console.log(e);
       //       onChange?.(e);
       //     }}
       //     value={value}

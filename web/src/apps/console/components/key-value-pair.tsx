@@ -45,8 +45,6 @@ const KeyValuePair = ({
     id: string | number,
     target = {}
   ) => {
-    console.log(typeof _value, id);
-
     const tempItems = items.map((i) => {
       if (i.id === id) {
         switch (target) {

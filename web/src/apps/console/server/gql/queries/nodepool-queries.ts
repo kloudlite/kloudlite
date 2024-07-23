@@ -241,7 +241,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount

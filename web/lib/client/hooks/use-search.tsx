@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from '@remix-run/react';
+import { useLocation, useNavigate, useSearchParams } from '@remix-run/react';
 import { MapType } from '../../types/common';
 
 export interface IQueryParams {
@@ -17,8 +17,9 @@ export const decodeUrl = (values: string | null = btoa('{}')) => {
 export const useQueryParameters = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [sp] = useSearchParams();
 
-  function setQueryParameters(params: IQueryParams) {
+  function setQueryParameters(params: IQueryParams, replace = true) {
     const searchParams = new URLSearchParams(location.search);
 
     // Loop through the params object and set each key/value pair
@@ -31,8 +32,9 @@ export const useQueryParameters = () => {
 
     // navigate({ ...location, search: searchParams.toString() });
     navigate(`${location.pathname}?${searchParams.toString()}`, {
-      replace: true,
+      replace,
       state: {},
+      preventScrollReset: true,
     });
   }
 
@@ -52,5 +54,9 @@ export const useQueryParameters = () => {
     });
   }
 
-  return { setQueryParameters, deleteQueryParameters };
+  return {
+    setQueryParameters,
+    deleteQueryParameters,
+    sparams: sp,
+  };
 };

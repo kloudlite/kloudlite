@@ -100,7 +100,6 @@ const KeyValuePairSelect = ({
                   value={item[keyLabel]}
                   options={async () => options}
                   onChange={(_, val) => {
-                    console.log('val', val);
                     handleChange(val, item.id, 'key');
                   }}
                   error={selectError}

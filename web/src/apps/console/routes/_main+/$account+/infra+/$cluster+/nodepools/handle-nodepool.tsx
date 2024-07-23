@@ -123,7 +123,6 @@ const Root = (props: IDialog) => {
         poolType: Yup.string().required().oneOf(['ec2', 'spot']),
       }),
       onSubmit: async (val) => {
-        console.log(val.labels);
         const getNodeConf = () => {
           const getAwsNodeSpecs = () => {
             switch (val.poolType) {

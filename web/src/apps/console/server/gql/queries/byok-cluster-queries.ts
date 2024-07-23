@@ -192,7 +192,7 @@ export const byokClusterQueries = (executor: IExecutor) => ({
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount

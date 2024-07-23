@@ -2,6 +2,8 @@ import { ASTNode, print } from 'graphql';
 import ServerCookie from 'cookie';
 import axios, { AxiosError } from 'axios';
 import { uuid } from '~/components/utils';
+import http from 'http';
+import https from 'https';
 import { gatewayUrl } from '../../configs/base-url.cjs';
 import {
   ICookies,
@@ -10,6 +12,7 @@ import {
   IGqlReturn,
   NN,
 } from '../../types/common';
+import logger from '../../client/helpers/log';
 
 const ignoreLogsFor = ['accounts_listAccounts', 'auth_me'];
 
@@ -69,12 +72,14 @@ export const ExecuteQueryWithContext = (
           }
         }
 
+        axios.defaults.httpAgent = new http.Agent({ keepAlive: true });
+        axios.defaults.httpsAgent = new https.Agent({ keepAlive: true });
+
         const resp = await axios({
           url: gatewayUrl,
           method: 'POST',
           headers: {
             'Content-Type': 'application/json; charset=utf-8',
-            connection: 'keep-alive',
             ...{
               cookie: Object.entries(cookie)
                 .map(([key, value]) => `${key}=${value}`)
@@ -119,12 +124,12 @@ export const ExecuteQueryWithContext = (
       } catch (err) {
         if (!ignoreLogsFor.includes(gqlName)) {
           if ((err as AxiosError).response) {
-            console.log('\nErrorIn:', apiName, (err as Error).name, '\n');
+            logger.log('\nErrorIn:', apiName, (err as Error).name, '\n');
 
             return (err as AxiosError).response?.data;
           }
 
-          console.log('\nErrorIn:', apiName, (err as Error).message, '\n');
+          logger.log('\nErrorIn:', apiName, (err as Error).message, '\n');
         }
 
         return {

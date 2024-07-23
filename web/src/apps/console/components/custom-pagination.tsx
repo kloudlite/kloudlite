@@ -1,7 +1,5 @@
-import { useSearchParams } from '@remix-run/react';
-import { useState } from 'react';
+import { useCallback } from 'react';
 import Pagination from '~/components/molecule/pagination';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import {
   decodeUrl,
   encodeUrl,
@@ -9,35 +7,31 @@ import {
 } from '~/root/lib/client/hooks/use-search';
 
 export const CustomPagination = ({ pagination }: { pagination: any }) => {
-  const { startCursor, endCursor, hasPreviousPage, hasNextPage } =
+  const { startCursor, endCursor, hasPrevPage, hasNextPage } =
     pagination?.pageInfo || {};
 
   const { totalCount } = pagination || {};
 
-  const [sp] = useSearchParams();
+  const { setQueryParameters, sparams } = useQueryParameters();
+  const page = useCallback(
+    () => decodeUrl(sparams.get('page')) || '',
+    [sparams]
+  )();
 
-  const [page, setPage] = useState(() => decodeUrl(sp.get('page')) || '');
+  const updatePage = (p: { [key: string]: string | number }) => {
+    const po = { ...page };
+    if (p.first || p.after) {
+      delete po.last;
+      delete po.before;
+    }
 
-  const { setQueryParameters } = useQueryParameters();
-  const [isFirstTime, setIsFirstTime] = useState(true);
+    if (p.last || p.before) {
+      delete po.first;
+      delete po.after;
+    }
 
-  useDebounce(
-    () => {
-      if (isFirstTime) {
-        setIsFirstTime(false);
-        return;
-      }
-      if (page) {
-        setQueryParameters({
-          page: encodeUrl(page),
-        });
-      }
-    },
-    300,
-    [page]
-  );
-
-  const newPagination = (k: any) => k;
+    setQueryParameters({ page: encodeUrl({ ...po, ...p }) }, false);
+  };
 
   if (totalCount <= 10) {
     return null;
@@ -46,21 +40,31 @@ export const CustomPagination = ({ pagination }: { pagination: any }) => {
     <Pagination
       {...pagination}
       showNumbers={false}
-      isPrevDisabled={!hasPreviousPage}
+      isPrevDisabled={!hasPrevPage}
       isNextDisabled={!hasNextPage}
       showItemsPerPage={false}
       onClickNext={() => {
         if (endCursor) {
-          setPage(newPagination({ first: 10, after: endCursor }));
+          updatePage({
+            first: 10,
+            after: endCursor,
+          });
         } else {
-          setPage(newPagination({ first: 10 }));
+          updatePage({
+            ...{ first: 10 },
+          });
         }
       }}
       onClickPrev={() => {
         if (startCursor) {
-          setPage(newPagination({ last: 10, before: startCursor }));
+          updatePage({
+            last: 10,
+            before: startCursor,
+          });
         } else {
-          setPage(newPagination({ last: 10 }));
+          updatePage({
+            ...{ last: 10 },
+          });
         }
       }}
     />

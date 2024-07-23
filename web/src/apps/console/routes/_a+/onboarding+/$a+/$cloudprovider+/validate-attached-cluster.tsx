@@ -39,8 +39,6 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const Validator = ({ cluster }: { cluster: any }) => {
   const { a: accountName } = useParams();
-  const { params } = useParams();
-  console.log('ppp', params, cluster.metadata.name);
   const api = useConsoleApi();
 
   const rootUrl = `/${accountName}/infra/clusters`;

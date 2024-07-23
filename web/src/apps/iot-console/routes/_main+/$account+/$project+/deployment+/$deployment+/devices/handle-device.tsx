@@ -55,7 +55,6 @@ const Root = (props: IDialog) => {
       onSubmit: async (val) => {
         try {
           if (!isUpdate) {
-            console.log('ttt', deployment.name, project.name);
             const { errors: e } = await api.createIotDevice({
               projectName: project.name,
               deploymentName: deployment.name,

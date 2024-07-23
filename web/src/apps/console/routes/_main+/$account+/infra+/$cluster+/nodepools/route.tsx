@@ -14,6 +14,7 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import fake from '~/root/fake-data-generator/fake';
 import { EmptyNodepoolImage } from '~/console/components/empty-resource-images';
+import logger from '~/root/lib/client/helpers/log';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
 import NodepoolResourcesV2 from './nodepool-resources-v2';
@@ -31,7 +32,7 @@ export const loader = async (ctx: IRemixCtx) => {
     });
 
     if (errors) {
-      console.log(errors);
+      logger.log(errors);
 
       throw errors[0];
     }

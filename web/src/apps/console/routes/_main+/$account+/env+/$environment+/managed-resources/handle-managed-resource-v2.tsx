@@ -154,7 +154,7 @@ const Root = (props: IDialog) => {
           <NameIdView
             placeholder="Enter integrated service name"
             label="Name"
-            resType="managed_resource"
+            resType="imported_managed_resource"
             name={values.name || ''}
             displayName={values.displayName || ''}
             errors={errors.name}

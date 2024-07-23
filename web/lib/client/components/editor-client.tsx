@@ -1,6 +1,6 @@
 import { Editor, EditorProps } from '@monaco-editor/react';
-import { useEffect } from 'react';
 import { cn } from '~/components/utils';
+import logger from '../helpers/log';
 
 type codelang = 'yaml' | 'json';
 // @ts-ignore
@@ -12,10 +12,6 @@ const CodeEditorClient = (
 ) => {
   const { lang, className } = props;
 
-  useEffect(() => {
-    console.log('aaa', props);
-  }, [props]);
-
   return (
     <Editor
       // className="h-full w-full border-text-soft rounded-sm"
@@ -24,7 +20,7 @@ const CodeEditorClient = (
         // theme: 'vs-dark',
         defaultLanguage: lang,
         onValidate: (v) => {
-          console.log(v);
+          logger.log(v);
         },
         options: {
           padding: {
@@ -40,7 +36,7 @@ const CodeEditorClient = (
         ...props,
         className: cn(
           className,
-          'h-full w-full border border-text-soft rounded-sm'
+          'h-full w-full border border-border-default overflow-hidden rounded-t-lg'
         ),
       }}
     />

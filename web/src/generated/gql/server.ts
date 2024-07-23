@@ -59,6 +59,7 @@ export type ConsoleResType =
   | 'app'
   | 'config'
   | 'environment'
+  | 'imported_managed_resource'
   | 'managed_resource'
   | 'managed_service'
   | 'router'
@@ -133,6 +134,7 @@ export type K8s__Io___Api___Core___V1__SecretType =
 export type Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__ResourceType =
 
     | 'app'
+    | 'cluster_managed_service'
     | 'config'
     | 'environment'
     | 'external_app'
@@ -141,8 +143,7 @@ export type Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities
     | 'managed_resource'
     | 'router'
     | 'secret'
-    | 'service_binding'
-    | 'vpn_device';
+    | 'service_binding';
 
 export type SecretKeyRefIn = {
   key: Scalars['String']['input'];
@@ -214,12 +215,6 @@ export type SearchRouters = {
 };
 
 export type SearchSecrets = {
-  isReady?: InputMaybe<MatchFilterIn>;
-  markedForDeletion?: InputMaybe<MatchFilterIn>;
-  text?: InputMaybe<MatchFilterIn>;
-};
-
-export type CoreSearchVpnDevices = {
   isReady?: InputMaybe<MatchFilterIn>;
   markedForDeletion?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
@@ -857,44 +852,6 @@ export type SecretIn = {
   type?: InputMaybe<K8s__Io___Api___Core___V1__SecretType>;
 };
 
-export type ConsoleVpnDeviceIn = {
-  apiVersion?: InputMaybe<Scalars['String']['input']>;
-  clusterName?: InputMaybe<Scalars['String']['input']>;
-  displayName: Scalars['String']['input'];
-  environmentName?: InputMaybe<Scalars['String']['input']>;
-  kind?: InputMaybe<Scalars['String']['input']>;
-  metadata?: InputMaybe<MetadataIn>;
-  spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__DeviceSpecIn>;
-};
-
-export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__DeviceSpecIn =
-  {
-    activeNamespace?: InputMaybe<Scalars['String']['input']>;
-    cnameRecords?: InputMaybe<
-      Array<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__CNameRecordIn>
-    >;
-    ports?: InputMaybe<
-      Array<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn>
-    >;
-  };
-
-export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__CNameRecordIn =
-  {
-    host?: InputMaybe<Scalars['String']['input']>;
-    target?: InputMaybe<Scalars['String']['input']>;
-  };
-
-export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn =
-  {
-    port?: InputMaybe<Scalars['Int']['input']>;
-    targetPort?: InputMaybe<Scalars['Int']['input']>;
-  };
-
-export type PortIn = {
-  port?: InputMaybe<Scalars['Int']['input']>;
-  targetPort?: InputMaybe<Scalars['Int']['input']>;
-};
-
 export type BuildIn = {
   buildClusterName: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -1350,6 +1307,12 @@ export type ConfigKeyValueRefIn = {
   value: Scalars['String']['input'];
 };
 
+export type CoreSearchVpnDevices = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
 export type Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__ManagedResourceRefIn =
   {
     id: Scalars['String']['input'];
@@ -1785,6 +1748,11 @@ export type PersistentVolumeIn = {
   status?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeStatusIn>;
 };
 
+export type PortIn = {
+  port?: InputMaybe<Scalars['Int']['input']>;
+  targetPort?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type SearchProjectManagedService = {
   isReady?: InputMaybe<MatchFilterIn>;
   managedServiceName?: InputMaybe<MatchFilterIn>;
@@ -2010,7 +1978,7 @@ export type ConsoleListAllClustersQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -2018,7 +1986,7 @@ export type ConsoleListAllClustersQuery = {
     totalCount: number;
     pageInfo: {
       startCursor?: string;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       hasNextPage?: boolean;
       endCursor?: string;
     };
@@ -2116,7 +2084,7 @@ export type ConsoleListClustersQuery = {
     totalCount: number;
     pageInfo: {
       startCursor?: string;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       hasNextPage?: boolean;
       endCursor?: string;
     };
@@ -2211,6 +2179,7 @@ export type ConsoleGetClusterQuery = {
   infra_getCluster?: {
     accountName: string;
     apiVersion?: string;
+    lastOnlineAt?: any;
     creationTime: any;
     displayName: string;
     id: string;
@@ -2325,7 +2294,7 @@ export type ConsoleListProviderSecretsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
     edges: Array<{
@@ -2554,7 +2523,7 @@ export type ConsoleListNodePoolsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -2705,7 +2674,7 @@ export type ConsoleListEnvironmentsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -2909,8 +2878,8 @@ export type ConsoleGetAppQuery = {
 
 export type ConsoleListAppsQueryVariables = Exact<{
   envName: Scalars['String']['input'];
-  search?: InputMaybe<SearchApps>;
   pq?: InputMaybe<CursorPaginationIn>;
+  search?: InputMaybe<SearchApps>;
 }>;
 
 export type ConsoleListAppsQuery = {
@@ -2919,16 +2888,30 @@ export type ConsoleListAppsQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        accountName: string;
+        apiVersion?: string;
+        ciBuildId?: string;
         creationTime: any;
         displayName: string;
         enabled?: boolean;
         environmentName: string;
+        id: string;
+        kind?: string;
         markedForDeletion?: boolean;
         recordVersion: number;
         updateTime: any;
+        serviceHost?: string;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { generation: number; name: string; namespace?: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
         spec: {
           displayName?: string;
           freeze?: boolean;
@@ -2936,7 +2919,6 @@ export type ConsoleListAppsQuery = {
           region?: string;
           replicas?: number;
           serviceAccount?: string;
-          router?: { domains: Array<string> };
           containers: Array<{
             args?: Array<string>;
             command?: Array<string>;
@@ -2955,6 +2937,15 @@ export type ConsoleListAppsQuery = {
               refName: string;
               type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
             }>;
+            livenessProbe?: {
+              failureThreshold?: number;
+              initialDelay?: number;
+              interval?: number;
+              type: string;
+              httpGet?: { httpHeaders?: any; path: string; port: number };
+              shell?: { command?: Array<string> };
+              tcp?: { port: number };
+            };
             readinessProbe?: {
               failureThreshold?: number;
               initialDelay?: number;
@@ -2963,6 +2954,12 @@ export type ConsoleListAppsQuery = {
             };
             resourceCpu?: { max?: string; min?: string };
             resourceMemory?: { max?: string; min?: string };
+            volumes?: Array<{
+              mountPath: string;
+              refName: string;
+              type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
+              items?: Array<{ fileName?: string; key: string }>;
+            }>;
           }>;
           hpa?: {
             enabled: boolean;
@@ -2974,9 +2971,42 @@ export type ConsoleListAppsQuery = {
           intercept?: {
             enabled: boolean;
             toDevice: string;
-            portMappings?: Array<{ devicePort: number; appPort: number }>;
+            portMappings?: Array<{ appPort: number; devicePort: number }>;
           };
-          services?: Array<{ port: number }>;
+          router?: {
+            backendProtocol?: string;
+            domains: Array<string>;
+            ingressClass?: string;
+            maxBodySizeInMB?: number;
+            basicAuth?: {
+              enabled: boolean;
+              secretName?: string;
+              username?: string;
+            };
+            cors?: {
+              allowCredentials?: boolean;
+              enabled?: boolean;
+              origins?: Array<string>;
+            };
+            https?: {
+              clusterIssuer?: string;
+              enabled: boolean;
+              forceRedirect?: boolean;
+            };
+            rateLimit?: {
+              connections?: number;
+              enabled?: boolean;
+              rpm?: number;
+              rps?: number;
+            };
+            routes?: Array<{
+              app: string;
+              path: string;
+              port: number;
+              rewrite?: boolean;
+            }>;
+          };
+          services?: Array<{ port: number; protocol?: string }>;
           tolerations?: Array<{
             effect?: K8s__Io___Api___Core___V1__TaintEffect;
             key?: string;
@@ -2984,24 +3014,42 @@ export type ConsoleListAppsQuery = {
             tolerationSeconds?: number;
             value?: string;
           }>;
+          topologySpreadConstraints?: Array<{
+            matchLabelKeys?: Array<string>;
+            maxSkew: number;
+            minDomains?: number;
+            nodeAffinityPolicy?: string;
+            nodeTaintsPolicy?: string;
+            topologyKey: string;
+            whenUnsatisfiable: K8s__Io___Api___Core___V1__UnsatisfiableConstraintAction;
+            labelSelector?: {
+              matchLabels?: any;
+              matchExpressions?: Array<{
+                key: string;
+                operator: K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorOperator;
+                values?: Array<string>;
+              }>;
+            };
+          }>;
         };
         status?: {
           checks?: any;
           isReady: boolean;
           lastReadyGeneration?: number;
           lastReconcileTime?: any;
+          checkList?: Array<{
+            debug?: boolean;
+            description?: string;
+            hide?: boolean;
+            name: string;
+            title: string;
+          }>;
           message?: { RawMessage?: any };
           resources?: Array<{
             apiVersion: string;
             kind: string;
             name: string;
             namespace: string;
-          }>;
-          checkList?: Array<{
-            description?: string;
-            debug?: boolean;
-            title: string;
-            name: string;
           }>;
         };
         syncStatus: {
@@ -3012,12 +3060,57 @@ export type ConsoleListAppsQuery = {
           state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
           syncScheduledAt?: any;
         };
+        build?: {
+          id: string;
+          buildClusterName: string;
+          creationTime: any;
+          errorMessages: any;
+          markedForDeletion?: boolean;
+          name: string;
+          recordVersion: number;
+          status: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__BuildStatus;
+          updateTime: any;
+          credUser: { userEmail: string; userId: string; userName: string };
+          source: {
+            branch: string;
+            provider: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GitProvider;
+            repository: string;
+            webhookId?: number;
+          };
+          spec: {
+            accountName: string;
+            buildOptions?: {
+              buildArgs?: any;
+              buildContexts?: any;
+              contextDir?: string;
+              dockerfileContent?: string;
+              dockerfilePath?: string;
+              targetPlatforms?: Array<string>;
+            };
+            caches?: Array<{ name: string; path: string }>;
+            registry: { repo: { name: string; tags: Array<string> } };
+            resource: { cpu: number; memoryInMb: number };
+          };
+          latestBuildRun?: {
+            accountName: string;
+            apiVersion?: string;
+            buildId: string;
+            clusterName: string;
+            creationTime: any;
+            displayName: string;
+            id: string;
+            kind?: string;
+            markedForDeletion?: boolean;
+            recordVersion: number;
+            updateTime: any;
+          };
+        };
       };
     }>;
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3208,7 +3301,7 @@ export type ConsoleListExternalAppsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3326,7 +3419,7 @@ export type ConsoleListRoutersQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3465,7 +3558,7 @@ export type ConsoleListConfigsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3517,7 +3610,7 @@ export type ConsoleListSecretsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3712,7 +3805,7 @@ export type ConsoleListCredQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3755,7 +3848,7 @@ export type ConsoleListRepoQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -3785,7 +3878,7 @@ export type ConsoleListDigestQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
     edges: Array<{
@@ -3989,7 +4082,7 @@ export type ConsoleListDomainsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
     edges: Array<{
@@ -4085,7 +4178,7 @@ export type ConsoleListBuildsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -4249,7 +4342,7 @@ export type ConsoleListPvcsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -4652,7 +4745,7 @@ export type ConsoleListPvsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -4736,7 +4829,7 @@ export type ConsoleListBuildRunsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -4955,7 +5048,7 @@ export type ConsoleListClusterMSvsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5088,7 +5181,7 @@ export type ConsoleListByokClustersQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5391,8 +5484,8 @@ export type ConsoleListManagedResourcesQuery = {
     }>;
     pageInfo: {
       endCursor?: string;
+      hasPrevPage?: boolean;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5517,7 +5610,7 @@ export type ConsoleListHelmChartQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5587,172 +5680,10 @@ export type ConsoleListNamespacesQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
-};
-
-export type ConsoleCreateConsoleVpnDeviceMutationVariables = Exact<{
-  vpnDevice: ConsoleVpnDeviceIn;
-}>;
-
-export type ConsoleCreateConsoleVpnDeviceMutation = {
-  core_createVPNDevice?: { id: string };
-};
-
-export type ConsoleUpdateConsoleVpnDeviceMutationVariables = Exact<{
-  vpnDevice: ConsoleVpnDeviceIn;
-}>;
-
-export type ConsoleUpdateConsoleVpnDeviceMutation = {
-  core_updateVPNDevice?: { id: string };
-};
-
-export type ConsoleListConsoleVpnDevicesQueryVariables = Exact<{
-  search?: InputMaybe<CoreSearchVpnDevices>;
-  pq?: InputMaybe<CursorPaginationIn>;
-}>;
-
-export type ConsoleListConsoleVpnDevicesQuery = {
-  core_listVPNDevices?: {
-    totalCount: number;
-    edges: Array<{
-      cursor: string;
-      node: {
-        creationTime: any;
-        displayName: string;
-        environmentName?: string;
-        markedForDeletion?: boolean;
-        recordVersion: number;
-        updateTime: any;
-        createdBy: { userEmail: string; userId: string; userName: string };
-        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { generation: number; name: string; namespace?: string };
-        status?: {
-          checks?: any;
-          isReady: boolean;
-          lastReadyGeneration?: number;
-          lastReconcileTime?: any;
-          checkList?: Array<{
-            debug?: boolean;
-            description?: string;
-            name: string;
-            title: string;
-          }>;
-          message?: { RawMessage?: any };
-          resources?: Array<{
-            apiVersion: string;
-            kind: string;
-            name: string;
-            namespace: string;
-          }>;
-        };
-        syncStatus: {
-          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
-          error?: string;
-          lastSyncedAt?: any;
-          recordVersion: number;
-          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
-          syncScheduledAt?: any;
-        };
-        spec?: {
-          activeNamespace?: string;
-          disabled?: boolean;
-          nodeSelector?: any;
-          cnameRecords?: Array<{ host?: string; target?: string }>;
-          ports?: Array<{ port?: number; targetPort?: number }>;
-        };
-      };
-    }>;
-    pageInfo: {
-      endCursor?: string;
-      hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
-      startCursor?: string;
-    };
-  };
-};
-
-export type ConsoleGetConsoleVpnDeviceQueryVariables = Exact<{
-  name: Scalars['String']['input'];
-}>;
-
-export type ConsoleGetConsoleVpnDeviceQuery = {
-  core_getVPNDevice?: {
-    displayName: string;
-    environmentName?: string;
-    recordVersion: number;
-    metadata?: { name: string; namespace?: string };
-    spec?: {
-      activeNamespace?: string;
-      disabled?: boolean;
-      nodeSelector?: any;
-      cnameRecords?: Array<{ host?: string; target?: string }>;
-      ports?: Array<{ port?: number; targetPort?: number }>;
-    };
-    wireguardConfig?: { encoding: string; value: string };
-  };
-};
-
-export type ConsoleListConsoleVpnDevicesForUserQueryVariables = Exact<{
-  [key: string]: never;
-}>;
-
-export type ConsoleListConsoleVpnDevicesForUserQuery = {
-  core_listVPNDevicesForUser?: Array<{
-    creationTime: any;
-    displayName: string;
-    environmentName?: string;
-    markedForDeletion?: boolean;
-    recordVersion: number;
-    updateTime: any;
-    createdBy: { userEmail: string; userId: string; userName: string };
-    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-    metadata?: { generation: number; name: string; namespace?: string };
-    status?: {
-      checks?: any;
-      isReady: boolean;
-      lastReadyGeneration?: number;
-      lastReconcileTime?: any;
-      checkList?: Array<{
-        debug?: boolean;
-        description?: string;
-        name: string;
-        title: string;
-      }>;
-      message?: { RawMessage?: any };
-      resources?: Array<{
-        apiVersion: string;
-        kind: string;
-        name: string;
-        namespace: string;
-      }>;
-    };
-    syncStatus: {
-      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
-      error?: string;
-      lastSyncedAt?: any;
-      recordVersion: number;
-      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
-      syncScheduledAt?: any;
-    };
-    spec?: {
-      activeNamespace?: string;
-      disabled?: boolean;
-      nodeSelector?: any;
-      cnameRecords?: Array<{ host?: string; target?: string }>;
-      ports?: Array<{ port?: number; targetPort?: number }>;
-    };
-  }>;
-};
-
-export type ConsoleDeleteConsoleVpnDeviceMutationVariables = Exact<{
-  deviceName: Scalars['String']['input'];
-}>;
-
-export type ConsoleDeleteConsoleVpnDeviceMutation = {
-  core_deleteVPNDevice: boolean;
 };
 
 export type ConsoleCreateImagePullSecretMutationVariables = Exact<{
@@ -5826,7 +5757,7 @@ export type ConsoleListImagePullSecretsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -5930,7 +5861,7 @@ export type ConsoleListGlobalVpnDevicesQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6032,7 +5963,7 @@ export type ConsoleListNotificationsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6164,7 +6095,7 @@ export type ConsoleListImportedManagedResourcesQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6343,7 +6274,7 @@ export type IotconsoleListIotProjectsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6427,7 +6358,7 @@ export type IotconsoleListIotDeviceBlueprintsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6511,7 +6442,7 @@ export type IotconsoleListIotDeploymentsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6813,7 +6744,7 @@ export type IotconsoleListIotAppsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6908,7 +6839,7 @@ export type IotconsoleListIotDevicesQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6939,7 +6870,7 @@ export type IotconsoleListRepoQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -6969,7 +6900,7 @@ export type IotconsoleListDigestQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
     edges: Array<{
@@ -7069,7 +7000,7 @@ export type IotconsoleListConfigsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -7121,7 +7052,7 @@ export type IotconsoleListSecretsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -7215,7 +7146,7 @@ export type IotconsoleListCredQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -7440,7 +7371,7 @@ export type IotconsoleListBuildsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -7542,7 +7473,7 @@ export type IotconsoleListBuildRunsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -7711,90 +7642,6 @@ export type IotconsoleDeleteAccountMembershipMutationVariables = Exact<{
 
 export type IotconsoleDeleteAccountMembershipMutation = {
   accounts_removeAccountMembership: boolean;
-};
-
-export type AuthCli_UpdateDeviceClusterMutationVariables = Exact<{
-  deviceName: Scalars['String']['input'];
-  clusterName: Scalars['String']['input'];
-}>;
-
-export type AuthCli_UpdateDeviceClusterMutation = {
-  core_updateVpnClusterName: boolean;
-};
-
-export type AuthCli_UpdateDeviceNsMutationVariables = Exact<{
-  deviceName: Scalars['String']['input'];
-  ns: Scalars['String']['input'];
-}>;
-
-export type AuthCli_UpdateDeviceNsMutation = {
-  core_updateVpnDeviceNs: boolean;
-};
-
-export type AuthCli_UpdateDevicePortsMutationVariables = Exact<{
-  deviceName: Scalars['String']['input'];
-  ports: Array<PortIn> | PortIn;
-}>;
-
-export type AuthCli_UpdateDevicePortsMutation = {
-  core_updateVPNDevicePorts: boolean;
-};
-
-export type AuthCli_UpdateDeviceEnvMutationVariables = Exact<{
-  deviceName: Scalars['String']['input'];
-  envName: Scalars['String']['input'];
-}>;
-
-export type AuthCli_UpdateDeviceEnvMutation = {
-  core_updateVPNDeviceEnv: boolean;
-};
-
-export type AuthCli_ListDevicesQueryVariables = Exact<{ [key: string]: never }>;
-
-export type AuthCli_ListDevicesQuery = {
-  core_listVPNDevicesForUser?: Array<{
-    displayName: string;
-    environmentName?: string;
-    clusterName?: string;
-    metadata?: { name: string };
-    status?: { isReady: boolean; message?: { RawMessage?: any } };
-    spec?: {
-      activeNamespace?: string;
-      disabled?: boolean;
-      cnameRecords?: Array<{ host?: string; target?: string }>;
-      ports?: Array<{ port?: number; targetPort?: number }>;
-    };
-  }>;
-};
-
-export type AuthCli_GetDeviceQueryVariables = Exact<{
-  name: Scalars['String']['input'];
-}>;
-
-export type AuthCli_GetDeviceQuery = {
-  core_getVPNDevice?: {
-    displayName: string;
-    clusterName?: string;
-    environmentName?: string;
-    metadata?: { name: string };
-    spec?: {
-      activeNamespace?: string;
-      disabled?: boolean;
-      ports?: Array<{ port?: number; targetPort?: number }>;
-    };
-    wireguardConfig?: { encoding: string; value: string };
-  };
-};
-
-export type AuthCli_CreateDeviceMutationVariables = Exact<{
-  vpnDevice: ConsoleVpnDeviceIn;
-}>;
-
-export type AuthCli_CreateDeviceMutation = {
-  core_createVPNDevice?: {
-    metadata?: { name: string };
-    wireguardConfig?: { encoding: string; value: string };
-  };
 };
 
 export type AuthCli_CreateGlobalVpnDeviceMutationVariables = Exact<{
@@ -8145,7 +7992,7 @@ export type AuthCli_ListEnvironmentsQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };
@@ -8277,7 +8124,6 @@ export type AuthCli_ListImportedManagedResourcesQuery = {
         managedResource?: {
           accountName: string;
           apiVersion?: string;
-          clusterName: string;
           creationTime: any;
           displayName: string;
           enabled?: boolean;
@@ -8347,7 +8193,7 @@ export type AuthCli_ListImportedManagedResourcesQuery = {
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
+      hasPrevPage?: boolean;
       startCursor?: string;
     };
   };

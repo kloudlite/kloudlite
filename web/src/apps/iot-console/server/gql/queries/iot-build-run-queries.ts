@@ -91,7 +91,7 @@ export const iotBuildRunQueries = (executor: IExecutor) => ({
           pageInfo {
             endCursor
             hasNextPage
-            hasPreviousPage
+            hasPrevPage
             startCursor
           }
           totalCount

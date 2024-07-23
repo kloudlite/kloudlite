@@ -121,7 +121,6 @@ const ListView = ({ items }: { items: BaseType[] }) => {
         ],
         rows: items.map((i) => {
           const { name, id, updateInfo } = parseItem(i);
-          console.log('updateInfo', parseItem(i));
           return {
             columns: {
               name: {

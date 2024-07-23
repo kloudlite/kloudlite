@@ -55,7 +55,6 @@ export const useWatchReload = (topic: string | string[]) => {
 
   useSocketWatch((rd) => {
     if (rd.find((v) => topicMap[v.id])) {
-      console.log('reloading due to watch event');
       reloadPage();
     }
   }, topic);

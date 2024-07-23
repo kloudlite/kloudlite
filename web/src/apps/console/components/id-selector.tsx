@@ -120,7 +120,6 @@ export const IdSelector = ({
           if (errors) {
             throw errors[0];
           }
-          // console.log(data, errors);
           if (data.result) {
             setId(`${name}`);
             setPopupId(`${name}`);

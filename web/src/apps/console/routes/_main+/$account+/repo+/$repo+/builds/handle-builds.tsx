@@ -145,7 +145,6 @@ const Root = (props: IDialog) => {
         const submit = async () => {
           try {
             if (isUpdate) {
-              console.log('build data', props.data);
               const { errors: e } = await api.updateBuild({
                 crUpdateBuildId: props.data.id,
                 build: {

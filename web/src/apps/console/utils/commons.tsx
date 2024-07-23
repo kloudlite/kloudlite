@@ -296,7 +296,6 @@ export const flatMapValidations = (obj: Record<string, any>) => {
   for (const key in obj) {
     const parts = key.split('.');
     const temp: Record<string, any> = flatJson;
-    // console.log('validations', obj[key]);
     if (parts.length === 1) {
       temp[key] = (() => {
         let returnYup;
@@ -352,4 +351,23 @@ export const flatMapValidations = (obj: Record<string, any>) => {
   }
 
   return flatJson;
+};
+
+export const getClusterStatus = (item?: { lastOnlineAt?: string }): boolean => {
+  if (!item || !item.lastOnlineAt) {
+    return false;
+  }
+
+  const lastTime = new Date(item.lastOnlineAt);
+  const currentTime = new Date();
+
+  const timeDifference =
+    (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
+
+  switch (true) {
+    case timeDifference <= 2:
+      return true;
+    default:
+      return false;
+  }
 };

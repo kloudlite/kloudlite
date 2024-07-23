@@ -31,6 +31,7 @@ import { ChildrenProps } from '~/components/types';
 // import Select from './log-select';
 import { logsMockData } from './dummy';
 import { LoadingIndicator } from '../reload-indicator';
+import logger from '../../helpers/log';
 
 const pulsableContext = createContext(false);
 
@@ -352,7 +353,6 @@ const FilterdHighlightIt = ({
               // const validIndices = curr.indices.filter((i) => {
               //   return i[1] - i[0] >= searchText.length - 1;
               // });
-              // console.log(curr.indices, validIndices);
               return [...acc, ...curr.indices];
             }, def),
           }}
@@ -810,7 +810,7 @@ const LogComp = ({
                       }}
                       className="hljs bg-transparent border border-surface-tertiary-default rounded-md px-lg py-xs w-[10rem]"
                       onSelect={(e) => {
-                        console.log('select', e);
+                        logger.log('select', e);
                       }}
                       value={selectedPod}
                     >

@@ -81,7 +81,6 @@ export const ManagedServiceStateProvider = ({
 };
 const useManagedServiceState = ({ steps = [] }: { steps: IStep[] }) => {
   const context = useContext(ManagedServiceStateContext);
-  console.log(steps);
 
   useEffect(() => {
     context.setSteps(steps);

@@ -19,6 +19,7 @@ import { NameIdView } from '~/console/components/name-id-view';
 import { IImagePullSecrets } from '~/console/server/gql/queries/image-pull-secrets-queries';
 import { PasswordInput, TextArea, TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
+import logger from '~/root/lib/client/helpers/log';
 
 type IDialog = IDialogBase<ExtractNodeType<IImagePullSecrets>>;
 
@@ -106,8 +107,6 @@ const Root = (props: IDialog) => {
 
       onSubmit: async (val) => {
         const addImagePullSecret = async () => {
-          console.log('format', val.format);
-
           switch (val?.format) {
             case 'params':
               return api.createImagePullSecret({
@@ -208,8 +207,7 @@ const Root = (props: IDialog) => {
   }, [nameIDRef]);
 
   useEffect(() => {
-    console.log('fff', values.format, values.dockerConfigJson);
-    console.log(errors);
+    logger.log(errors);
   }, [values.format, values.dockerConfigJson, errors]);
 
   return (

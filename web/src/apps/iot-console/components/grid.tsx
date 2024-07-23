@@ -7,6 +7,7 @@ import React, {
   useRef,
 } from 'react';
 import { cn } from '~/components/utils';
+import logger from '~/root/lib/client/helpers/log';
 
 const focusableElement = 'a[href], button, input, select, textarea';
 
@@ -82,7 +83,7 @@ const handleKeyNavigation = (
       }
     }
   } catch {
-    console.log('Error focusing');
+    logger.log('Error focusing');
   }
 };
 
@@ -203,7 +204,7 @@ const Root = ({ children, className = '', linkComponent }: IRoot) => {
             }
           }
         } catch {
-          console.log('Error Focusing');
+          logger.log('Error Focusing');
         }
       }}
       onKeyDown={(e) => {
