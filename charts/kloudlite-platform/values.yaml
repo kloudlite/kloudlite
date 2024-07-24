@@ -626,7 +626,7 @@ envVars:
         maxMsgBytes: 500kB
         # maxMsgsPerSubject: 2
 
-      send-to-agent:
+      sendToAgent:
         name: send-to-agent
         subjects: "send-to-agent.>"
         maxMsgBytes: 500kB
@@ -634,7 +634,7 @@ envVars:
         workQueue: true
         # maxMsgsPerSubject: 2
 
-      receive-from-agent:
+      receiveFromAgent:
         name: receive-from-agent
         subjects: "receive-from-agent.>"
         maxMsgBytes: 500kB
