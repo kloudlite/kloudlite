@@ -77,8 +77,8 @@ spec:
         - key: CONSOLE_GRPC_ADDR
           value: "console-api:3001"
 
-        - key: NATS_STREAM
-          value: {{.Values.envVars.nats.streams.resourceSync.name}}
+        - key: NATS_RECEIVE_FROM_AGENT_STREAM
+          value: {{.Values.envVars.nats.streams.receiveFromAgent.name}}
 
         - key: SESSION_KV_BUCKET
           value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}

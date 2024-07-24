@@ -47,8 +47,11 @@ spec:
         - key: PLATFORM_ACCESS_TOKEN
           value: {{.Values.apps.messageOfficeApi.configuration.platformAccessToken | squote}}
 
-        - key: NATS_STREAM
-          value: {{.Values.envVars.nats.streams.resourceSync.name}}
+        - key: NATS_SEND_TO_AGENT_STREAM
+          value: {{ .Values.envVars.nats.streams.sendToAgent.name }}
+
+        - key: NATS_RECEIVE_FROM_AGENT_STREAM
+          value: {{ .Values.envVars.nats.streams.receiveFromAgent.name }}
 
         - key: MONGO_URI
           type: secret
