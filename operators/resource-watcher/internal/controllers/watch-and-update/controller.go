@@ -84,7 +84,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 	case ProjectGVK.String(), AppGVK.String(), ExternalAppGVK.String(), EnvironmentGVK.String(), RouterGVK.String(), ConfigmapGVK.String():
 		{
 			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, r.logger}, t.ResourceUpdate{
-				Object: obj.Object,
+				Object: obj,
 			})
 		}
 
@@ -93,12 +93,12 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 			// we can also have BYOKCluster kubeconfig secret, which needs to be send to `kloudlite-infra`
 			if v, ok := obj.GetAnnotations()[DispatchToKloudliteInfra]; ok && v == "true" {
 				return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
-					Object: obj.Object,
+					Object: obj,
 				})
 			}
 
 			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
-				Object: obj.Object,
+				Object: obj,
 			})
 		}
 
@@ -127,7 +127,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 			}
 
 			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
-				Object: obj.Object,
+				Object: obj,
 			})
 		}
 
@@ -149,7 +149,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 			}
 
 			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
-				Object: obj.Object,
+				Object: obj,
 			})
 		}
 
@@ -171,7 +171,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 			}
 
 			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
-				Object: obj.Object,
+				Object: obj,
 			})
 		}
 
@@ -255,7 +255,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 			}
 
 			return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
-				Object: obj.Object,
+				Object: obj,
 			})
 		}
 
@@ -266,7 +266,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 			}
 
 			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
-				Object: obj.Object,
+				Object: obj,
 			})
 		}
 
@@ -274,7 +274,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 		{
 			// dispatch to infra
 			return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
-				Object: obj.Object,
+				Object: obj,
 			})
 		}
 
