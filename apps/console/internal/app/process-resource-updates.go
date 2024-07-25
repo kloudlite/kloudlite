@@ -81,12 +81,12 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 
 		var rwu types.ResourceUpdate
 		if err := json.Unmarshal(ru.WatcherUpdate, &rwu); err != nil {
-			logger.Error("unmarshaling into resource watcher update, got", "err", err)
+			logger.Error("unmarshaling into resource update, got", "err", err)
 			return nil
 		}
 
 		if rwu.Object == nil {
-			logger.Debug("msg.Object is nil, so could not extract any info from message, ignoring ...")
+			logger.Debug("msg.object is nil, so could not extract any info from message, ignoring ...")
 			return nil
 		}
 
@@ -100,11 +100,6 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			"cluster", ru.ClusterName,
 		)
 
-		mlogger.Debug("validated message")
-		defer func() {
-			mlogger.Info("PROCESSED message", "took", fmt.Sprintf("%dms", time.Since(start).Milliseconds()))
-		}()
-
 		if len(strings.TrimSpace(ru.AccountName)) == 0 {
 			mlogger.Warn("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
@@ -114,6 +109,11 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			mlogger.Warn("message does not contain 'clusterName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}
+
+		mlogger.Debug("validated message")
+		defer func() {
+			mlogger.Info("PROCESSED message", "took", fmt.Sprintf("%dms", time.Since(start).Milliseconds()))
+		}()
 
 		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:console-resource-updater", ru.AccountName)
 

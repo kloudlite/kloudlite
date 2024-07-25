@@ -20,7 +20,7 @@ type Env struct {
 	KloudliteDNSSuffix string `env:"KLOUDLITE_DNS_SUFFIX" required:"true"`
 
 	NatsURL    string `env:"NATS_URL" required:"true"`
-	NatsStream string `env:"NATS_STREAM" required:"true"`
+	NatsReceiveFromAgentStream string `env:"NATS_RECEIVE_FROM_AGENT_STREAM" required:"true"`
 
 	AccountCookieName       string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
 	ProviderSecretNamespace string `env:"PROVIDER_SECRET_NAMESPACE" required:"true"`
