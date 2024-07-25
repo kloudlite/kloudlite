@@ -90,9 +90,8 @@ func main() {
 	logger := logging.NewSlogLogger(logging.SlogOptions{
 		Writer:        os.Stderr,
 		Prefix:        "[webhook]",
-		ShowTimestamp: false,
 		ShowCaller:    true,
-		LogLevel:      logging.ParseLogLevelFromString(logLevel),
+		ShowDebugLogs: logLevel == "debug",
 	})
 
 	r := chi.NewRouter()
