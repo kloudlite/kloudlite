@@ -21,8 +21,8 @@ type grpcMsgSender struct {
 	messageProtocolVersion string
 }
 
-func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx MessageSenderContext, stu t.ResourceUpdate) error {
-	b, err := json.Marshal(stu)
+func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx MessageSenderContext, ru t.ResourceUpdate) error {
+	b, err := json.Marshal(ru)
 	if err != nil {
 		return err
 	}
@@ -38,6 +38,9 @@ func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx MessageSend
 		if _, err := g.msgDispatchCli.ReceiveContainerRegistryUpdate(gctx, &messages.ResourceUpdate{
 			ProtocolVersion: g.messageProtocolVersion,
 			Message:         b,
+			Gvk:             ru.Object.GetObjectKind().GroupVersionKind().String(),
+			Namespace:       ru.Object.GetNamespace(),
+			Name:            ru.Object.GetName(),
 		}); err != nil {
 			errCh <- err
 			return
@@ -74,6 +77,9 @@ func (g *grpcMsgSender) DispatchInfraResourceUpdates(ctx MessageSenderContext, r
 		if _, err := g.msgDispatchCli.ReceiveInfraResourceUpdate(gctx, &messages.ResourceUpdate{
 			ProtocolVersion: g.messageProtocolVersion,
 			Message:         b,
+			Gvk:             ru.Object.GetObjectKind().GroupVersionKind().String(),
+			Namespace:       ru.Object.GetNamespace(),
+			Name:            ru.Object.GetName(),
 		}); err != nil {
 			errCh <- err
 			return
@@ -111,6 +117,9 @@ func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx MessageSenderContext,
 		if _, err = g.msgDispatchCli.ReceiveConsoleResourceUpdate(gctx, &messages.ResourceUpdate{
 			ProtocolVersion: g.messageProtocolVersion,
 			Message:         b,
+			Gvk:             ru.Object.GetObjectKind().GroupVersionKind().String(),
+			Namespace:       ru.Object.GetNamespace(),
+			Name:            ru.Object.GetName(),
 		}); err != nil {
 			errCh <- err
 			return
@@ -148,6 +157,9 @@ func (g *grpcMsgSender) DispatchIotConsoleResourceUpdates(ctx MessageSenderConte
 		if _, err = g.msgDispatchCli.ReceiveIotConsoleResourceUpdate(gctx, &messages.ResourceUpdate{
 			ProtocolVersion: g.messageProtocolVersion,
 			Message:         b,
+			Gvk:             ru.Object.GetObjectKind().GroupVersionKind().String(),
+			Namespace:       ru.Object.GetNamespace(),
+			Name:            ru.Object.GetName(),
 		}); err != nil {
 			errCh <- err
 			return

@@ -4,14 +4,12 @@ import (
 	"strings"
 
 	"github.com/kloudlite/operator/pkg/constants"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ResourceUpdate struct {
-	// AuthToken string `json:"authToken"`
-	// AccountName string         `json:"accountName"`
-	// ClusterName string         `json:"clusterName"`
-	Object map[string]any `json:"object"`
+	Object *unstructured.Unstructured `json:"object"`
 }
 
 type ResourceStatus string
