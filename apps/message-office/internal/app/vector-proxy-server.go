@@ -2,22 +2,24 @@ package app
 
 import (
 	"context"
+	"log/slog"
+	"sync"
 
 	"github.com/kloudlite/api/pkg/errors"
 
 	proto_rpc "github.com/kloudlite/api/apps/message-office/internal/app/proto-rpc"
 	"github.com/kloudlite/api/apps/message-office/internal/domain"
-	"github.com/kloudlite/api/pkg/logging"
 )
 
 type vectorProxyServer struct {
 	proto_rpc.UnimplementedVectorServer
 	realVectorClient   proto_rpc.VectorClient
-	logger             logging.Logger
+	logger             *slog.Logger
 	domain             domain.Domain
 	tokenHashingSecret string
-	pushEventsCounter  int
-	healthCheckCounter int
+
+	sync.Mutex
+	pushEventsCounter int
 }
 
 func (v *vectorProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.PushEventsRequest) (*proto_rpc.PushEventsResponse, error) {
@@ -26,16 +28,20 @@ func (v *vectorProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.PushE
 		return nil, errors.NewE(err)
 	}
 
-	logger := v.logger.WithKV("accountName", accountName, "clusterName", clusterName)
+	v.Lock()
 	v.pushEventsCounter++
-	logger.Debugf("[%v] received push-events message", v.pushEventsCounter)
-	defer logger.Debugf("[%v] dispatched push-events message to vector aggregator", v.pushEventsCounter)
+	v.Unlock()
+
+	logger := v.logger.With("account", accountName, "cluster", clusterName, "counter", v.pushEventsCounter)
+
+	logger.Debug("RECEIVED push-events message")
 
 	per, err := v.realVectorClient.PushEvents(ctx, msg)
 	if err != nil {
-		logger.Errorf(err)
+		logger.Error("FAILED to dispatch push-events message, got", "err", err)
 		return nil, errors.NewE(err)
 	}
+	logger.Debug("DISPATCHED push-events message")
 	return per, nil
 }
 
@@ -45,15 +51,13 @@ func (v *vectorProxyServer) HealthCheck(ctx context.Context, msg *proto_rpc.Heal
 		return nil, errors.NewE(err)
 	}
 
-	logger := v.logger.WithKV("accountName", accountName, "clusterName", clusterName)
-	v.healthCheckCounter++
-	logger.Debugf("[%v] received health-check message", v.healthCheckCounter)
-	defer logger.Debugf("[%v] dispatched health-check message to vector aggregator", v.healthCheckCounter)
-
+	logger := v.logger.With("account", accountName, "cluster", clusterName)
+	logger.Debug("RECEIVED health-check message")
 	hcr, err := v.realVectorClient.HealthCheck(ctx, msg)
 	if err != nil {
-		logger.Errorf(err)
+		logger.Error("FAILED to dispatch health-check message, got", "err", err)
 		return nil, errors.NewE(err)
 	}
+	logger.Debug("DISPATCHED health-check message")
 	return hcr, nil
 }

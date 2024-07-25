@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	"go.uber.org/fx"
@@ -85,11 +86,11 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle,logr logging.Logger, server app.ExternalGrpcServer, ev *env.Env) {
+	fx.Invoke(func(lf fx.Lifecycle, logr logging.Logger, server app.ExternalGrpcServer, ev *env.Env) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go func() {
-					if err:=server.Listen(fmt.Sprintf(":%d", ev.ExternalGrpcPort)); err!=nil{
+					if err := server.Listen(fmt.Sprintf(":%d", ev.ExternalGrpcPort)); err != nil {
 						logr.Errorf(err, "while starting external grpc server")
 					}
 				}()
