@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 	"time"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/logging"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -725,16 +725,17 @@ func NewFxMongoRepo[T Entity](collectionName, shortName string, indexFields []In
 			},
 		),
 		fx.Invoke(
-			func(lifecycle fx.Lifecycle, repo DbRepo[T], logger logging.Logger) {
+			// func(lifecycle fx.Lifecycle, repo DbRepo[T], logger logging.Logger) {
+			func(lifecycle fx.Lifecycle, repo DbRepo[T]) {
 				lifecycle.Append(
 					fx.Hook{
 						OnStart: func(ctx context.Context) error {
 							go func() {
 								err := repo.IndexFields(ctx, indexFields)
 								if err != nil {
-									logger.Errorf(err, "failed to update indexes on DB for repo %T", repo)
+									slog.Error("failed to update indexes", "collection", collectionName, "err", err)
 								}
-								logger.Infof("indexes updated on DB for repo %T", repo)
+								slog.Info("indexes updated on DB", "collection", collectionName)
 							}()
 							return nil
 						},
