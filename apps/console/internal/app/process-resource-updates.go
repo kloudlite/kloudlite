@@ -4,14 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	msgOfficeT "github.com/kloudlite/api/apps/message-office/types"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -44,10 +46,8 @@ var (
 	serviceBindingGVK = fn.GVK("networking.kloudlite.io/v1", "ServiceBinding")
 )
 
-func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
-	counter := 0
-
-	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, clusterName string, obj unstructured.Unstructured) (domain.ResourceContext, error) {
+func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger *slog.Logger) {
+	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, clusterName string, obj *unstructured.Unstructured) (domain.ResourceContext, error) {
 		mapping, err := d.GetEnvironmentResourceMapping(ctx, rt, clusterName, obj.GetNamespace(), obj.GetName())
 		if err != nil {
 			return domain.ResourceContext{}, err
@@ -59,59 +59,66 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		return newResourceContext(ctx, mapping.EnvironmentName), nil
 	}
 
-	msgReader := func(msg *msgTypes.ConsumeMsg) error {
-		logger := logger.WithKV("subject", msg.Subject)
+	counter := 0
+	mu := sync.Mutex{}
 
+	msgReader := func(msg *msgTypes.ConsumeMsg) error {
+		mu.Lock()
 		counter += 1
-		logger.Debugf("[%d] received message", counter)
+		mu.Unlock()
+
+		start := time.Now()
+
+		logger := logger.With("subject", msg.Subject, "counter", counter)
+
+		logger.Debug("INCOMING message")
 
 		ru, err := msgOfficeT.UnmarshalResourceUpdate(msg.Payload)
 		if err != nil {
-			logger.Errorf(err, "unmarshaling resource update")
+			logger.Error("unmarshaling resource update, got", "err", err)
 			return nil
 		}
 
 		var rwu types.ResourceUpdate
 		if err := json.Unmarshal(ru.WatcherUpdate, &rwu); err != nil {
-			logger.Errorf(err, "unmarshaling into resource watcher update")
+			logger.Error("unmarshaling into resource watcher update, got", "err", err)
 			return nil
 		}
 
 		if rwu.Object == nil {
-			logger.Infof("msg.Object is nil, so could not extract any info from message, ignoring ...")
+			logger.Debug("msg.Object is nil, so could not extract any info from message, ignoring ...")
 			return nil
 		}
 
-		obj := unstructured.Unstructured{Object: rwu.Object}
+		obj := rwu.Object
+		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
 
-		mLogger := logger.WithKV(
-			"gvk", obj.GetObjectKind().GroupVersionKind(),
-			"resource", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
-			"accountName", ru.AccountName,
-			"clusterName", ru.ClusterName,
+		mlogger := logger.With(
+			"GVK", gvkStr,
+			"NN", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
+			"account", ru.AccountName,
+			"cluster", ru.ClusterName,
 		)
 
-		mLogger.Infof("received message")
+		mlogger.Debug("validated message")
 		defer func() {
-			mLogger.Infof("processed message")
+			mlogger.Info("PROCESSED message", "took", fmt.Sprintf("%dms", time.Since(start).Milliseconds()))
 		}()
 
 		if len(strings.TrimSpace(ru.AccountName)) == 0 {
-			logger.Infof("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
+			mlogger.Warn("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}
 
 		if len(strings.TrimSpace(ru.ClusterName)) == 0 {
-			logger.Infof("message does not contain 'clusterName', so won't be able to find a resource uniquely, thus ignoring ...")
+			mlogger.Warn("message does not contain 'clusterName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}
 
 		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:console-resource-updater", ru.AccountName)
 
-		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
-
 		resStatus, err := func() (types.ResourceStatus, error) {
-			v, ok := rwu.Object[types.ResourceStatusKey]
+			v, ok := obj.Object[types.ResourceStatusKey]
 			if !ok {
 				return "", errors.NewE(fmt.Errorf("field %s not found in object", types.ResourceStatusKey))
 			}
@@ -244,14 +251,13 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 
 				var outputSecret *corev1.Secret
-				if v, ok := rwu.Object[types.KeyManagedResSecret]; ok {
+				if v, ok := obj.Object[types.KeyManagedResSecret]; ok {
 					s, err := fn.JsonConvertP[corev1.Secret](v)
 					if err != nil {
-						mLogger.Infof("managed resource, invalid output secret received")
+						mlogger.Error("managed resource, invalid output secret received, got", "err", err)
 						return errors.NewE(err)
 					}
 					s.SetManagedFields(nil)
-					mLogger.Infof("seting managed resource output secret")
 					outputSecret = s
 				}
 
@@ -281,10 +287,10 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				if v, ok := rwu.Object[types.KeyClusterManagedSvcSecret]; ok {
+				if v, ok := obj.Object[types.KeyClusterManagedSvcSecret]; ok {
 					v2, err := fn.JsonConvertP[corev1.Secret](v)
 					if err != nil {
-						mLogger.Infof("managed resource, invalid output secret received")
+						mlogger.Warn("managed resource, invalid output secret received, got", "err", err)
 						return errors.NewE(err)
 					}
 					v2.SetManagedFields(nil)
@@ -302,10 +308,10 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 
 	if err := consumer.Consume(msgReader, msgTypes.ConsumeOpts{
 		OnError: func(err error) error {
-			logger.Errorf(err, "received while reading messages, ignoring it")
+			logger.Error("while reading messages, got", "err", err)
 			return nil
 		},
 	}); err != nil {
-		logger.Errorf(err, "error while consuming messages")
+		logger.Error("while consuming messages, got", "err", err)
 	}
 }

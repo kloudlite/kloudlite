@@ -18,10 +18,8 @@ type Env struct {
 	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
 	ClusterCookieName string `env:"CLUSTER_COOKIE_NAME" required:"true"`
 
-	// NATS:start
-	NatsURL                string `env:"NATS_URL" required:"true"`
-	NatsResourceSyncStream string `env:"NATS_RESOURCE_STREAM" required:"true"`
-	// NATS:end
+	NatsURL                    string `env:"NATS_URL" required:"true"`
+	NatsReceiveFromAgentStream string `env:"NATS_RECEIVE_FROM_AGENT_STREAM" required:"true"`
 
 	IAMGrpcAddr   string `env:"IAM_GRPC_ADDR" required:"true"`
 	InfraGrpcAddr string `env:"INFRA_GRPC_ADDR" required:"true"`
