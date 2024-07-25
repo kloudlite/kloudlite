@@ -52,7 +52,7 @@ func (a *resourceDispatcherImpl) ApplyToTargetCluster(ctx domain.RegistryContext
 	}
 
 	err = a.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, clusterName),
+		Subject: common.SendToAgentSubjectName(ctx.AccountName, clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName()),
 		Payload: b,
 	})
 
@@ -76,7 +76,7 @@ func (d *resourceDispatcherImpl) DeleteFromTargetCluster(ctx domain.RegistryCont
 	}
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, clusterName),
+		Subject: common.SendToAgentSubjectName(ctx.AccountName, clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName()),
 		Payload: b,
 	})
 

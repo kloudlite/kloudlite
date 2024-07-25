@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/kloudlite/api/apps/comms/internal/app"
@@ -35,7 +36,7 @@ var Module = fx.Module(
 		return &fm{ev}
 	}),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.Client, error) {
+	fx.Provide(func(ev *env.Env, logger *slog.Logger) (*nats.Client, error) {
 		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   "comms",
 			Logger: logger,

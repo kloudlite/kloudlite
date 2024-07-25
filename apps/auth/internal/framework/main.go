@@ -3,6 +3,8 @@ package framework
 import (
 	"context"
 	"fmt"
+	"log/slog"
+
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/kv"
@@ -57,7 +59,7 @@ var Module fx.Option = fx.Module(
 
 	repos.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+	fx.Provide(func(ev *env.Env, logger *slog.Logger) (*nats.JetstreamClient, error) {
 		name := "auth:jetstream-client"
 		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   name,
