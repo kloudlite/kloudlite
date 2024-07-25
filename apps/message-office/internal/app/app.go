@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/kloudlite/api/apps/message-office/internal/app/graph"
 	"github.com/kloudlite/api/apps/message-office/internal/app/graph/generated"
@@ -53,22 +54,21 @@ var Module = fx.Module("app",
 		},
 	),
 
-	fx.Provide(func(logger logging.Logger, jc *nats.JetstreamClient, producer UpdatesProducer, ev *env.Env, d domain.Domain, infraConn InfraGRPCClient) (messages.MessageDispatchServiceServer, error) {
-		return NewMessageOfficeServer(producer, jc, ev, d, logger.WithName("message-office"), infraConn)
+	fx.Provide(func(logger *slog.Logger, jc *nats.JetstreamClient, producer UpdatesProducer, ev *env.Env, d domain.Domain, infraCli infra.InfraClient) (messages.MessageDispatchServiceServer, error) {
+		return NewMessageOfficeServer(producer, jc, ev, d, logger.With("component", "message-office"), infraCli)
 	}),
 
 	fx.Provide(func(conn RealVectorGrpcClient) proto_rpc.VectorClient {
 		return proto_rpc.NewVectorClient(conn)
 	}),
 
-	fx.Provide(func(vectorGrpcClient proto_rpc.VectorClient, logger logging.Logger, d domain.Domain, ev *env.Env) proto_rpc.VectorServer {
+	fx.Provide(func(vectorGrpcClient proto_rpc.VectorClient, logger *slog.Logger, d domain.Domain, ev *env.Env) proto_rpc.VectorServer {
 		return &vectorProxyServer{
 			realVectorClient:   vectorGrpcClient,
-			logger:             logger.WithName("vector-proxy"),
+			logger:             logger,
 			domain:             d,
 			tokenHashingSecret: ev.TokenHashingSecret,
 			pushEventsCounter:  0,
-			healthCheckCounter: 0,
 		}
 	}),
 

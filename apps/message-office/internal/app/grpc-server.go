@@ -46,7 +46,7 @@ type (
 
 		domain domain.Domain
 
-		createConsumer func(ctx context.Context, accountName string, clusterName string) (messaging.Consumer, error)
+		createConsumer func(ctx context.Context, accountName string, clusterName string) (messaging.Consumer, string, error)
 	}
 )
 
@@ -58,16 +58,8 @@ func (g *grpcServer) ReceiveConsoleResourceUpdate(ctx context.Context, msg *mess
 	}
 
 	start := time.Now()
-	logger := g.logger.With("accountName", accountName, "cluster", "GVK", msg.Gvk, "NN", fmt.Sprintf("%s/%s", msg.Namespace, msg.Name), clusterName, "for", common.ConsoleReceiver, "request-id", fn.UUID())
+	logger := g.logger.With("account", accountName, "cluster", clusterName, "GVK", msg.Gvk, "NN", fmt.Sprintf("%s/%s", msg.Namespace, msg.Name), "for", common.ContainerRegistryReceiver, "request-id", fn.UUID())
 	logger.Debug("RECEIVED resource update")
-	defer func() {
-		if err != nil {
-			logger.Error("FAILED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()), "err", err)
-			return
-		}
-
-		logger.Info("DISPATCHED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()))
-	}()
 
 	if err := dispatchResourceUpdate(ctx, common.ConsoleReceiver, ResourceUpdateArgs{
 		logger:          logger,
@@ -77,9 +69,11 @@ func (g *grpcServer) ReceiveConsoleResourceUpdate(ctx context.Context, msg *mess
 		ClusterName: clusterName,
 		Message:     msg,
 	}); err != nil {
+		logger.Error("FAILED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()), "err", err)
 		return nil, err
 	}
 
+	logger.Info("DISPATCHED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()))
 	return &messages.Empty{}, nil
 }
 
@@ -91,15 +85,8 @@ func (g *grpcServer) ReceiveContainerRegistryUpdate(ctx context.Context, msg *me
 	}
 
 	start := time.Now()
-	logger := g.logger.With("accountName", accountName, "cluster", "GVK", msg.Gvk, "NN", fmt.Sprintf("%s/%s", msg.Namespace, msg.Name), clusterName, "for", common.ContainerRegistryReceiver, "request-id", fn.UUID())
+	logger := g.logger.With("account", accountName, "cluster", clusterName, "GVK", msg.Gvk, "NN", fmt.Sprintf("%s/%s", msg.Namespace, msg.Name), "for", common.ContainerRegistryReceiver, "request-id", fn.UUID())
 	logger.Debug("RECEIVED resource update")
-	defer func() {
-		if err != nil {
-			logger.Error("FAILED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()), "err", err)
-			return
-		}
-		logger.Info("DISPATCHED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()))
-	}()
 
 	if err := dispatchResourceUpdate(ctx, common.ContainerRegistryReceiver, ResourceUpdateArgs{
 		logger:          logger,
@@ -109,29 +96,25 @@ func (g *grpcServer) ReceiveContainerRegistryUpdate(ctx context.Context, msg *me
 		ClusterName: clusterName,
 		Message:     msg,
 	}); err != nil {
+		logger.Error("FAILED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()), "err", err)
 		return nil, err
 	}
 
+	logger.Info("DISPATCHED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()))
 	return &messages.Empty{}, nil
 }
 
 // ReceiveError implements messages.MessageDispatchServiceServer.
-func (g *grpcServer) ReceiveError(ctx context.Context, msg *messages.ErrorData) (*messages.Empty, error) {
+func (g *grpcServer) ReceiveError(ctx context.Context, msg *messages.ErrorData) (_ *messages.Empty, err error) {
 	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(ctx, g.ev.TokenHashingSecret)
 	if err != nil {
 		return nil, err
 	}
 
 	start := time.Now()
-	logger := g.logger.With("accountName", accountName, "cluster", "GVK", msg.Gvk, "NN", fmt.Sprintf("%s/%s", msg.Namespace, msg.Name), clusterName, "for", common.ContainerRegistryReceiver, "request-id", fn.UUID())
+	logger := g.logger.With("account", accountName, "cluster", clusterName, "GVK", msg.Gvk, "NN", fmt.Sprintf("%s/%s", msg.Namespace, msg.Name), "for", common.ContainerRegistryReceiver, "request-id", fn.UUID())
+
 	logger.Debug("RECEIVED error-on-apply update")
-	defer func() {
-		if err != nil {
-			logger.Error("FAILED error-on-apply update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()), "err", err)
-			return
-		}
-		logger.Info("DISPATCHED error-on-apply update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()))
-	}()
 
 	if err := processError(ctx, ProcessErrorArgs{
 		logger:          logger,
@@ -141,9 +124,11 @@ func (g *grpcServer) ReceiveError(ctx context.Context, msg *messages.ErrorData) 
 		ClusterName: clusterName,
 		Error:       msg,
 	}); err != nil {
+		logger.Error("FAILED error-on-apply update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()), "err", err)
 		return nil, err
 	}
 
+	logger.Info("DISPATCHED error-on-apply update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()))
 	return &messages.Empty{}, nil
 }
 
@@ -155,15 +140,8 @@ func (g *grpcServer) ReceiveInfraResourceUpdate(ctx context.Context, msg *messag
 	}
 
 	start := time.Now()
-	logger := g.logger.With("accountName", accountName, "cluster", "GVK", msg.Gvk, "NN", fmt.Sprintf("%s/%s", msg.Namespace, msg.Name), clusterName, "for", common.ContainerRegistryReceiver, "request-id", fn.UUID())
+	logger := g.logger.With("account", accountName, "cluster", clusterName, "GVK", msg.Gvk, "NN", fmt.Sprintf("%s/%s", msg.Namespace, msg.Name), "for", common.ContainerRegistryReceiver, "request-id", fn.UUID())
 	logger.Debug("RECEIVED resource update")
-	defer func() {
-		if err != nil {
-			logger.Error("FAILED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()), "err", err)
-			return
-		}
-		logger.Info("DISPATCHED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()))
-	}()
 
 	if err := dispatchResourceUpdate(ctx, common.InfraReceiver, ResourceUpdateArgs{
 		logger:          logger,
@@ -173,9 +151,11 @@ func (g *grpcServer) ReceiveInfraResourceUpdate(ctx context.Context, msg *messag
 		ClusterName: clusterName,
 		Message:     msg,
 	}); err != nil {
+		logger.Error("FAILED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()), "err", err)
 		return nil, err
 	}
 
+	logger.Info("DISPATCHED resource update", "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()))
 	return &messages.Empty{}, nil
 }
 
@@ -339,7 +319,7 @@ func processError(ctx context.Context, args ProcessErrorArgs) (err error) {
 
 // GetAccessToken implements messages.MessageDispatchServiceServer
 func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetAccessTokenIn) (*messages.GetAccessTokenOut, error) {
-	g.logger.Info("request received for cluster-token (%q) exchange", msg.ClusterToken)
+	g.logger.Debug("request received for cluster-token exchange")
 
 	ct, err := g.domain.FindClusterToken(ctx, msg.ClusterToken)
 	if err != nil {
@@ -350,7 +330,7 @@ func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetAccess
 	}
 
 	s := encodeAccessToken(ct.AccountName, ct.ClusterName, msg.ClusterToken, g.ev.TokenHashingSecret)
-	g.logger.Info("SUCCESSFUL cluster-token exchange for account=%q, cluster=%q", ct.AccountName, ct.ClusterName)
+	g.logger.With("account", ct.AccountName, "cluster", ct.ClusterName).Info("SUCCESSFUL cluster-token exchange")
 
 	return &messages.GetAccessTokenOut{
 		ProtocolVersion: g.ev.GrpcMessageProtocolVersion,
@@ -366,21 +346,22 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 		return klErrors.NewE(err)
 	}
 
-	logger := g.logger.With("accountName", accountName, "clusterName", clusterName)
-	logger.Info("request received for sending actions to cluster")
+	logger := g.logger.With("account", accountName, "cluster", clusterName)
+	logger.Debug("request received for sending actions to cluster")
 	defer func() {
-		logger.Info("stopped sending actions to cluster")
+		logger.Info("STOPPED transmitting messages to agent")
 	}()
 
 	key := fmt.Sprintf("%s/%s", accountName, clusterName)
 
-	consumer, err := g.createConsumer(server.Context(), accountName, clusterName)
+	consumer, subject, err := g.createConsumer(server.Context(), accountName, clusterName)
 	if err != nil {
 		return klErrors.NewE(err)
 	}
 
-	// TODO: implement cluster online feature, so that we can mark the cluster as online/offline
-	logger.Info("consumer is available now")
+	logger = logger.With("subject", subject)
+
+	logger.Info("READY to transmit messages to agent")
 
 	if _, err := g.infraClient.MarkClusterOnlineAt(server.Context(), &infra.MarkClusterOnlineAtIn{
 		AccountName: accountName,
@@ -398,22 +379,23 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 		if err := consumer.Stop(context.TODO()); err != nil {
 			logger.Error("while stopping consumer", "err", err)
 		}
-		logger.Info("consumer is closed now")
+		logger.Debug("consumer is closed now")
 	}()
 
 	if err := consumer.Consume(func(msg *types.ConsumeMsg) error {
+		start := time.Now()
 		logger.Info("read message from consumer", "subject", msg.Subject)
 		defer func() {
-			logger.Info("dispatched message to agent", "subject", msg.Subject)
+			logger.Info("dispatched message to agent", "subject", msg.Subject, "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()))
 		}()
 		return server.Send(&messages.Action{Message: msg.Payload})
 	}, types.ConsumeOpts{
-		OnError: func(error) error {
-			logger.Info("error occurrred on agent side, while parsing/applying the message, ignoring as we don't want to block the queue")
+		OnError: func(err error) error {
+			logger.Warn("error occurrred on agent side, while parsing/applying the message, ignoring as we don't want to block the queue, got", "err", err)
 			return nil
 		},
 	}); err != nil {
-		logger.Error("while consuming messages from consumer", "err", err)
+		logger.Error("while consuming messages from consumer, got", "err", err)
 	}
 
 	return nil
@@ -453,36 +435,39 @@ func dispatchResourceUpdate(ctx context.Context, receiver common.MessageReceiver
 		Subject: subject,
 		Payload: b,
 	}); err != nil {
-		return errors.Wrap(err, "producing resource update")
+		return errors.Wrap(err, fmt.Sprintf("producing resource update to topic (%s)", subject))
 	}
 
 	return nil
 }
 
-func NewMessageOfficeServer(producer UpdatesProducer, jc *nats.JetstreamClient, ev *env.Env, d domain.Domain, logger *slog.Logger, infraConn InfraGRPCClient) (messages.MessageDispatchServiceServer, error) {
+func NewMessageOfficeServer(producer UpdatesProducer, jc *nats.JetstreamClient, ev *env.Env, d domain.Domain, logger *slog.Logger, infraCli infra.InfraClient) (messages.MessageDispatchServiceServer, error) {
 	return &grpcServer{
 		UnimplementedMessageDispatchServiceServer: messages.UnimplementedMessageDispatchServiceServer{},
-		infraClient:     infra.NewInfraClient(infraConn),
+		infraClient:     infraCli,
 		logger:          logger,
 		updatesProducer: producer,
 		consumers:       make(map[string]messaging.Consumer),
 		ev:              ev,
 		domain:          d,
-		createConsumer: func(ctx context.Context, accountName string, clusterName string) (messaging.Consumer, error) {
+		createConsumer: func(ctx context.Context, accountName string, clusterName string) (messaging.Consumer, string, error) {
 			name := fmt.Sprintf("tenant-consumer-for-account-%s-cluster-%s", accountName, clusterName)
 
-			return msg_nats.NewJetstreamConsumer(ctx, jc, msg_nats.JetstreamConsumerArgs{
-				Stream: ev.NatsStream,
+			filterSubject := fmt.Sprintf("%s.>", common.SendToAgentSubjectPrefix(accountName, clusterName))
+
+			jc, err := msg_nats.NewJetstreamConsumer(ctx, jc, msg_nats.JetstreamConsumerArgs{
+				Stream: ev.NatsSendToAgentStream,
 				ConsumerConfig: msg_nats.ConsumerConfig{
-					Name:        name,
-					Durable:     name,
-					Description: "this consumer consumes messages from platform, and dispatches them to the tenant cluster via kloudlite agent",
-					FilterSubjects: []string{
-						fmt.Sprintf("%s.>", common.SendToAgentSubjectPrefix(accountName, clusterName)),
-						// common.GetTenantClusterMessagingTopic(accountName, clusterName),
-					},
+					Name:           name,
+					Durable:        name,
+					Description:    "this consumer consumes messages from platform, and dispatches them to the tenant cluster via kloudlite agent",
+					FilterSubjects: []string{filterSubject},
 				},
 			})
+			if err != nil {
+				return nil, "", klErrors.NewEf(err, "creating consumer")
+			}
+			return jc, filterSubject, nil
 		},
 	}, nil
 }
