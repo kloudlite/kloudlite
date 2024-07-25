@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"os"
 
@@ -73,12 +72,7 @@ func main() {
 		Writer:        os.Stderr,
 		ShowTimestamp: false,
 		ShowCaller:    true,
-		LogLevel: func() slog.Level {
-			if isDev {
-				return slog.LevelDebug
-			}
-			return slog.LevelInfo
-		}(),
+		ShowDebugLogs: isDev,
 	})
 
 	mg, err := manager.NewManager(ev, logger, yamlClient.Client(), cli)

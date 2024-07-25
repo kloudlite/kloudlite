@@ -56,12 +56,18 @@ message ErrorData {
   string protocolVersion = 1;
 
   bytes message = 2;
+  string gvk = 3;
+  string namespace = 4;
+  string name = 5;
 }
 
 message ResourceUpdate {
   string protocolVersion = 1;
 
   bytes message = 2;
+  string gvk = 3;
+  string namespace = 4;
+  string name = 5;
 }
 
 message PingOutput {
