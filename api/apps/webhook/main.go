@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log/slog"
 
 	"github.com/kloudlite/api/apps/webhook/internal/env"
 	"github.com/kloudlite/api/apps/webhook/internal/framework"
@@ -22,6 +23,15 @@ func main() {
 				return logging.New(&logging.Options{Name: "webhooks", Dev: isDev})
 			},
 		),
+
+		fx.Provide(func() *slog.Logger {
+			return logging.NewSlogLogger(logging.SlogOptions{
+				ShowCaller:         true,
+				ShowDebugLogs:      isDev,
+				SetAsDefaultLogger: true,
+			})
+		}),
+
 		fn.FxErrorHandler(),
 		config.EnvFx[env.Env](),
 		framework.Module,

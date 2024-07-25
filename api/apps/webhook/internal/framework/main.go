@@ -3,6 +3,8 @@ package framework
 import (
 	"context"
 	"fmt"
+	"log/slog"
+
 	"github.com/kloudlite/api/apps/webhook/internal/app"
 	"github.com/kloudlite/api/apps/webhook/internal/env"
 	"github.com/kloudlite/api/pkg/errors"
@@ -32,7 +34,7 @@ var Module = fx.Module(
 		},
 	),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+	fx.Provide(func(ev *env.Env, logger *slog.Logger) (*nats.JetstreamClient, error) {
 		name := "webhook:jetstream-client"
 		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   name,
