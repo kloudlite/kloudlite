@@ -27,7 +27,6 @@ import (
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 
-	// libGrpc "github.com/kloudlite/operator/pkg/grpc"
 	libGrpc "github.com/kloudlite/api/pkg/grpc"
 	"github.com/kloudlite/operator/pkg/kubectl"
 
@@ -319,7 +318,6 @@ func main() {
 		realVectorClient: nil,
 		logger:           logger,
 		accessToken:      ev.AccessToken,
-		errCh:            nil,
 	}
 
 	gs, err := libGrpc.NewGrpcServer(libGrpc.ServerOpts{Slogger: logger.With("component", "vector-grpc-proxy")})
@@ -339,7 +337,7 @@ func main() {
 	common.PrintReadyBanner()
 
 	for {
-		cc, err := libGrpc.NewGrpcClientV2(ev.GrpcAddr, libGrpc.GrpcConnectOpts{TLSConnect: isDev, Logger: logger})
+		cc, err := libGrpc.NewGrpcClientV2(ev.GrpcAddr, libGrpc.GrpcConnectOpts{TLSConnect: !isDev, Logger: logger})
 		if err != nil {
 			logger.Error("failed to connect to message office, got", "err", err)
 			<-time.After(1 * time.Second)
@@ -355,12 +353,7 @@ func main() {
 
 		vps.accessToken = g.ev.AccessToken
 		vps.realVectorClient = proto_rpc.NewVectorClient(cc)
-		vps.errCh = make(chan error, 1)
-
-		// go func() {
-		// 	<-time.After(10 * time.Second)
-		// 	vps.errCh <- errors.Newf("FAKE connection timeout")
-		// }()
+		vps.connCancelFn = cf
 
 		go func() {
 			defer cf()
@@ -369,21 +362,11 @@ func main() {
 			}
 		}()
 
-		select {
-		case err := <-vps.errCh:
-			{
-				logger.Error("from vector grpc proxy server, got", "err", err)
-			}
-		case <-ctx.Done():
-			{
-				logger.Debug("MAX_CONNECTION_DURATION reached, will re-initialize connection")
-			}
-		}
+		<-ctx.Done()
+		logger.Debug("MAX_CONNECTION_DURATION reached, will re-initialize connection")
 
 		if err = cc.Close(); err != nil {
 			logger.Error("Failed to close connection, got", "err", err)
 		}
-
-		cf()
 	}
 }
