@@ -198,9 +198,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Scheme = mgr.GetScheme()
 	r.logger = logging.NewSlogLogger(logging.SlogOptions{
 		Prefix:        r.Name,
-		ShowTimestamp: false,
 		ShowCaller:    true,
-		LogLevel:      slog.LevelInfo,
+		ShowDebugLogs: false,
 	})
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: logger})
 

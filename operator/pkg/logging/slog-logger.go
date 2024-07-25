@@ -14,8 +14,7 @@ type SlogOptions struct {
 
 	ShowTimestamp bool
 	ShowCaller    bool
-
-	LogLevel slog.Level
+	ShowDebugLogs bool
 }
 
 func ParseLogLevelFromString(s string) slog.Level {
@@ -34,11 +33,16 @@ func ParseLogLevelFromEnv(key string) slog.Level {
 	return ParseLogLevelFromString(s)
 }
 
-
 func NewSlogLogger(opts SlogOptions) *slog.Logger {
 	if opts.Writer == nil {
 		opts.Writer = os.Stderr
 	}
-	log := log.NewWithOptions(opts.Writer, log.Options{ReportCaller: opts.ShowCaller, ReportTimestamp: opts.ShowTimestamp, Prefix: opts.Prefix, Level: log.Level(opts.LogLevel.Level())})
-	return slog.New(log)
+
+	level := log.InfoLevel
+	if opts.ShowDebugLogs {
+		level = log.DebugLevel
+	}
+
+	logger := log.NewWithOptions(opts.Writer, log.Options{ReportCaller: opts.ShowCaller, ReportTimestamp: opts.ShowTimestamp, Prefix: opts.Prefix, Level: level})
+	return slog.New(logger)
 }
