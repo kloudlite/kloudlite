@@ -49,22 +49,6 @@ func NewSlogLogger(opts SlogOptions) *slog.Logger {
 		level = log.DebugLevel
 	}
 
-	logger := log.NewWithOptions(opts.Writer, log.Options{
-		ReportCaller:    opts.ShowCaller,
-		ReportTimestamp: opts.ShowTimestamp,
-		Prefix:          opts.Prefix,
-		Level:           level,
-	})
-
-	styles := log.DefaultStyles()
-	styles.Levels[log.DebugLevel] = styles.Levels[log.DebugLevel].Foreground(lipgloss.Color("#5b717f"))
-	styles.Levels[log.InfoLevel] = styles.Levels[log.InfoLevel].Foreground(lipgloss.Color("#36cbfa"))
-
-	styles.Key = lipgloss.NewStyle().Foreground(lipgloss.Color("#36cbfa")).Bold(true)
-
-	logger.SetStyles(styles)
-
-	l := slog.New(logger)
-
-	return l
+	logger := log.NewWithOptions(opts.Writer, log.Options{ReportCaller: opts.ShowCaller, ReportTimestamp: opts.ShowTimestamp, Prefix: opts.Prefix, Level: level})
+	return slog.New(logger)
 }
