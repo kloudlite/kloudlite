@@ -261,7 +261,9 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 				obj.Object[t.KeyGatewayWgParams] = wp
 			}
 
-			return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{Object: obj})
+			return r.MsgSender.DispatchInfraResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
+				Object: obj,
+			})
 		}
 
 	case ServiceBindingGVK.String():
