@@ -14,16 +14,16 @@ const (
 )
 
 const (
-	SendToAgentSubjectNamePrefix      = "send-to-agent"
-	ReceiveFromAgentSubjectNamePrefix = "receive-from-agent"
+	sendToAgentSubjectPrefix      = "send-to-agent"
+	receiveFromAgentSubjectPrefix = "receive-from-agent"
 )
 
 func SendToAgentSubjectPrefix(accountName string, clusterName string) string {
-	return fmt.Sprintf("%s.%s.%s", SendToAgentSubjectNamePrefix, accountName, clusterName)
+	return fmt.Sprintf("%s.%s.%s", sendToAgentSubjectPrefix, accountName, clusterName)
 }
 
 func ReceiveFromAgentSubjectPrefix(accountName string, clusterName string) string {
-	return fmt.Sprintf("%s.%s.%s", ReceiveFromAgentSubjectNamePrefix, accountName, clusterName)
+	return fmt.Sprintf("%s.%s.%s", receiveFromAgentSubjectPrefix, accountName, clusterName)
 }
 
 // func GetKafkaTopicName(accountName string, clusterName string) string {
@@ -36,9 +36,9 @@ func ReceiveFromAgentSubjectPrefix(accountName string, clusterName string) strin
 // }
 
 func SendToAgentSubjectName(accountName string, clusterName string, gvk string, namespace string, name string) string {
-	slug := base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%s.%s/%s", gvk, namespace, name)))
+	slug := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%s.%s/%s", gvk, namespace, name)))
 
-	return fmt.Sprintf("%s.%s.%s.%s", SendToAgentSubjectNamePrefix, accountName, clusterName, slug)
+	return fmt.Sprintf("%s.%s.%s.%s", sendToAgentSubjectPrefix, accountName, clusterName, slug)
 }
 
 type platformEvent string
@@ -59,11 +59,20 @@ const (
 type ReceiveFromAgentArgs struct {
 	AccountName string
 	ClusterName string
+
+	GVK       string
+	Namespace string
+	Name      string
 }
 
 func ReceiveFromAgentSubjectName(args ReceiveFromAgentArgs, receiver MessageReceiver, ev platformEvent) string {
-	slug := "*"
-	return fmt.Sprintf("%s.%s.%s.%s.%s.%s", ReceiveFromAgentSubjectNamePrefix, args.AccountName, args.ClusterName, slug, receiver, ev)
+	if args.AccountName == "*" && args.ClusterName == "*" {
+		slug := "*"
+		return fmt.Sprintf("%s.%s.%s.%s.%s.%s", receiveFromAgentSubjectPrefix, args.AccountName, args.ClusterName, slug, receiver, ev)
+	}
+
+	slug := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%s.%s/%s", args.GVK, args.Namespace, args.Name)))
+	return fmt.Sprintf("%s.%s.%s.%s.%s.%s", receiveFromAgentSubjectPrefix, args.AccountName, args.ClusterName, slug, receiver, ev)
 }
 
 // func GetPlatformClusterMessagingTopic(accountName string, clusterName string, controller messageReceiver, ev platformEvent) string {

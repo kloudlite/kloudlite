@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
@@ -22,6 +23,9 @@ import (
 func main() {
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
+
+	var debug bool
+	flag.BoolVar(&debug, "debug", false, "--debug")
 	flag.Parse()
 
 	logger, err := logging.New(&logging.Options{Name: "console", ShowDebugLog: isDev || strings.ToLower(os.Getenv("LOG_LEVEL")) == "debug"})
@@ -34,6 +38,10 @@ func main() {
 
 		fx.Provide(func() logging.Logger {
 			return logger
+		}),
+
+		fx.Provide(func() *slog.Logger {
+			return logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug, SetDefaultLogger: true})
 		}),
 
 		fx.Provide(func() (*env.Env, error) {

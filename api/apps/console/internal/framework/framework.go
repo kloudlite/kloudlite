@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/common"
@@ -10,7 +11,6 @@ import (
 
 	app "github.com/kloudlite/api/apps/console/internal/app"
 	"github.com/kloudlite/api/apps/console/internal/env"
-	rpc "github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/kv"
@@ -40,7 +40,7 @@ var Module = fx.Module("framework",
 
 	mongoDb.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.Client, error) {
+	fx.Provide(func(ev *env.Env, logger *slog.Logger) (*nats.Client, error) {
 		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   "console",
 			Logger: logger,
@@ -69,11 +69,11 @@ var Module = fx.Module("framework",
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
-		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
+		return grpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.InfraClient, error) {
-		return rpc.NewGrpcClient(ev.InfraGrpcAddr)
+		return grpc.NewGrpcClient(ev.InfraGrpcAddr)
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient, c2 app.InfraClient) {
@@ -136,7 +136,6 @@ var Module = fx.Module("framework",
 			Server: &dns.Server{
 				Addr:      ev.DNSAddr,
 				Net:       "udp",
-				// Handler:   handler,
 				UDPSize:   0xffff,
 				ReusePort: true,
 			},
