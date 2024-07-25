@@ -91,6 +91,7 @@ func NewGrpcClientV2(serverAddr string, opts GrpcConnectOpts) (Client, error) {
 			}
 			if cstate == connectivity.Ready && prevState != connectivity.Ready {
 				if attempt > 0 {
+				  attempt = 0
 					reconnecting = false
 					opts.Logger.Info("RE-CONNECTED", "attempt", attempt, "took", fmt.Sprintf("%.3fs", time.Since(start).Seconds()))
 				}
