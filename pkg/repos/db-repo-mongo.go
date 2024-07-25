@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/PaesslerAG/jsonpath"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/PaesslerAG/jsonpath"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/fx"
@@ -136,7 +137,7 @@ func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	item, err := bsonToStruct[T](one)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return item, errors.Newf("no document found")
+			return item, ErrNoDocuments
 		}
 		return item, errors.NewE(err)
 	}
@@ -399,12 +400,14 @@ func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedDat
 	return nil
 }
 
+var ErrNoDocuments error = fmt.Errorf("no documents found")
+
 func (repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error) {
 	var x T
 
 	res, err := repo.findOne(ctx, filter)
 	if err != nil {
-		return x, errors.NewE(err)
+		return x, err
 	}
 
 	return repo.patchRecordByID(ctx, res.GetId(), patch, res.IsMarkedForDeletion(), opts...)
