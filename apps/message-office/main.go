@@ -46,8 +46,9 @@ func main() {
 
 		fx.Provide(func() *slog.Logger {
 			return logging.NewSlogLogger(logging.SlogOptions{
-				ShowCaller:    true,
-				ShowDebugLogs: debug,
+				ShowCaller:         true,
+				ShowDebugLogs:      debug,
+				SetAsDefaultLogger: true,
 			})
 		}),
 

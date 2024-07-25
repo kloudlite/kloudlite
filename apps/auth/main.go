@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
@@ -36,6 +37,15 @@ func main() {
 				return logging.New(&logging.Options{Name: "auth", Dev: isDev})
 			},
 		),
+
+		fx.Provide(func() *slog.Logger {
+			return logging.NewSlogLogger(logging.SlogOptions{
+				ShowCaller:         true,
+				ShowDebugLogs:      isDev,
+				SetAsDefaultLogger: true,
+			})
+		}),
+
 		framework.Module,
 	)
 

@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/kloudlite/api/pkg/errors"
 
@@ -39,7 +40,7 @@ var Module = fx.Module("framework",
 		return grpc.NewGrpcClient(f.VectorGrpcAddr)
 	}),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+	fx.Provide(func(ev *env.Env, logger *slog.Logger) (*nats.JetstreamClient, error) {
 		nc, err := nats.NewClient(ev.NatsUrl, nats.ClientOpts{
 			Name:   "message-offfice",
 			Logger: logger,
