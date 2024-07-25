@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 
@@ -126,7 +127,7 @@ var Module = fx.Module(
 
 		consumerName := "infra:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsStream,
+			Stream: ev.NatsReceiveFromAgentStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -136,7 +137,7 @@ var Module = fx.Module(
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go processResourceUpdates(consumer, d, logger)
@@ -154,7 +155,7 @@ var Module = fx.Module(
 		consumerName := "infra:error-on-apply"
 
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsStream,
+			Stream: ev.NatsReceiveFromAgentStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -164,7 +165,7 @@ var Module = fx.Module(
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go ProcessErrorOnApply(consumer, logger, d)

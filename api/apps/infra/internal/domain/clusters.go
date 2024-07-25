@@ -325,7 +325,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 				},
 			}
 		}(),
-		MessageQueueTopicName: common.GetTenantClusterMessagingTopic(ctx.AccountName, cluster.Name),
+		MessageQueueTopicName: common.SendToAgentSubjectPrefix(ctx.AccountName, cluster.Name),
 		KloudliteRelease:      d.env.KloudliteRelease,
 		Output:                nil,
 	}
@@ -376,10 +376,10 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 }
 
 func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) error {
-  t := time.Now()
-  defer func() {
-    d.logger.Infof("syncKloudliteGatewayDevice took %.2fs", time.Since(t).Seconds())
-  }()
+	t := time.Now()
+	defer func() {
+		d.logger.Infof("syncKloudliteGatewayDevice took %.2fs", time.Since(t).Seconds())
+	}()
 	// 1. parse deployment template
 	b, err := templates.Read(templates.GlobalVPNKloudliteDeviceTemplate)
 	if err != nil {
@@ -427,9 +427,9 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 
 	publicPeers := make([]wgutils.PublicPeer, 0, len(wgParams.PublicPeers))
 	for _, p := range wgParams.PublicPeers {
-	  if p.PublicKey != clDevice.PublicKey {
-	    publicPeers = append(publicPeers, p)
-	  }
+		if p.PublicKey != clDevice.PublicKey {
+			publicPeers = append(publicPeers, p)
+		}
 	}
 
 	deviceSvcHosts := make([]string, 0, len(deviceHosts))
@@ -437,7 +437,7 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 		deviceSvcHosts = append(deviceSvcHosts, fmt.Sprintf("%s=%s", k, v))
 	}
 
-  wgParams.PublicPeers = publicPeers
+	wgParams.PublicPeers = publicPeers
 	wgParams.DNS = klDevice.IPAddr
 	wgParams.ListenPort = 31820
 
@@ -533,17 +533,17 @@ func (d *domain) syncKloudliteGatewayDevice(ctx InfraContext, gvpnName string) e
 	}
 
 	deploymentBytes, err := templates.ParseBytes(b, templates.GVPNKloudliteDeviceTemplateVars{
-		Name:                  resourceName,
-		Namespace:             accNs,
-		WgConfig:              wgConfig,
+		Name:                   resourceName,
+		Namespace:              accNs,
+		WgConfig:               wgConfig,
 		EnableKubeReverseProxy: false,
-		KubeReverseProxyImage: d.env.GlobalVPNKubeReverseProxyImage,
-		AuthzToken:            d.env.GlobalVPNKubeReverseProxyAuthzToken,
-		GatewayDNSServers:     strings.Join(dnsServerArgs, ","),
-		GatewayServiceHosts:   strings.Join(deviceSvcHosts, ","),
-		WireguardPort:         wgParams.ListenPort,
+		KubeReverseProxyImage:  d.env.GlobalVPNKubeReverseProxyImage,
+		AuthzToken:             d.env.GlobalVPNKubeReverseProxyAuthzToken,
+		GatewayDNSServers:      strings.Join(dnsServerArgs, ","),
+		GatewayServiceHosts:    strings.Join(deviceSvcHosts, ","),
+		WireguardPort:          wgParams.ListenPort,
 
-    KloudliteAccount: gv.AccountName,
+		KloudliteAccount: gv.AccountName,
 	})
 	if err != nil {
 		return err
@@ -598,7 +598,6 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		return err
 	}
 
-
 	wgParams, deviceHosts, err := d.buildGlobalVPNDeviceWgBaseParams(ctx, gvpnConns, clDevice)
 	if err != nil {
 		return err
@@ -611,9 +610,9 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 
 	publicPeers := make([]wgutils.PublicPeer, 0, len(wgParams.PublicPeers))
 	for _, p := range wgParams.PublicPeers {
-	  if p.PublicKey != klDevice.PublicKey {
-	    publicPeers = append(publicPeers, p)
-	  }
+		if p.PublicKey != klDevice.PublicKey {
+			publicPeers = append(publicPeers, p)
+		}
 	}
 
 	deviceSvcHosts := make([]string, 0, len(deviceHosts))
@@ -621,7 +620,7 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 		deviceSvcHosts = append(deviceSvcHosts, fmt.Sprintf("%s=%s", k, v))
 	}
 
-  wgParams.PublicPeers = publicPeers
+	wgParams.PublicPeers = publicPeers
 	wgParams.DNS = clDevice.IPAddr
 	wgParams.ListenPort = 31820
 
@@ -689,17 +688,17 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 	}
 
 	deploymentBytes, err := templates.ParseBytes(b, templates.GVPNKloudliteDeviceTemplateVars{
-		Name:                  resourceName,
-		Namespace:             accNs,
-		WgConfig:              wgConfig,
+		Name:                   resourceName,
+		Namespace:              accNs,
+		WgConfig:               wgConfig,
 		EnableKubeReverseProxy: true,
-		KubeReverseProxyImage: d.env.GlobalVPNKubeReverseProxyImage,
-		AuthzToken:            d.env.GlobalVPNKubeReverseProxyAuthzToken,
-		GatewayDNSServers:     strings.Join(dnsServerArgs, ","),
-		GatewayServiceHosts:   strings.Join(deviceSvcHosts, ","),
-		WireguardPort:         wgParams.ListenPort,
+		KubeReverseProxyImage:  d.env.GlobalVPNKubeReverseProxyImage,
+		AuthzToken:             d.env.GlobalVPNKubeReverseProxyAuthzToken,
+		GatewayDNSServers:      strings.Join(dnsServerArgs, ","),
+		GatewayServiceHosts:    strings.Join(deviceSvcHosts, ","),
+		WireguardPort:          wgParams.ListenPort,
 
-    KloudliteAccount: gv.AccountName,
+		KloudliteAccount: gv.AccountName,
 	})
 	if err != nil {
 		return err
@@ -1078,6 +1077,9 @@ func (d *domain) MarkClusterOnlineAt(ctx InfraContext, clusterName string, times
 		if _, err := d.byokClusterRepo.Patch(ctx, entities.UniqueBYOKClusterFilter(ctx.AccountName, clusterName), repos.Document{
 			fc.BYOKClusterLastOnlineAt: timestamp,
 		}); err != nil {
+			if errors.Is(err, repos.ErrNoDocuments) {
+				return nil
+			}
 			return errors.NewEf(err, "failed to patch last online time for byok cluster %q,", clusterName)
 		}
 		return nil
@@ -1089,6 +1091,9 @@ func (d *domain) MarkClusterOnlineAt(ctx InfraContext, clusterName string, times
 	}, repos.Document{
 		fc.ClusterLastOnlineAt: timestamp,
 	}); err != nil {
+		if errors.Is(err, repos.ErrNoDocuments) {
+			return nil
+		}
 		return errors.NewEf(err, "failed to patch last online time for cluster %q", clusterName)
 	}
 
