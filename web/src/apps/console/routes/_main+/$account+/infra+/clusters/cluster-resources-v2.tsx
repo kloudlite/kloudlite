@@ -5,12 +5,7 @@ import {
   Trash,
 } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import {
-  generateKey,
-  titleCase,
-  useAppend,
-  useMapper,
-} from '~/components/utils';
+import { generateKey, titleCase, useMapper } from '~/components/utils';
 import { listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -523,25 +518,18 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
 };
 
 const ClusterResourcesV2 = ({
-  items,
   byokItems,
 }: {
-  items: Omit<BaseType, 'type'>[];
   byokItems: Omit<ByokBaseType, 'type'>[];
 }) => {
   const { account } = useOutletContext<IAccountContext>();
-  const normalItems = useMapper(items, (i) => {
-    return { ...i, type: 'normal' as BaseType['type'] };
-  });
 
   const bItems = useMapper(byokItems, (i) => {
     return { ...i, type: 'byok' as ByokBaseType['type'] };
   });
 
-  const finalItems = useAppend(normalItems, bItems);
-
   useWatchReload(
-    finalItems.map((i) => {
+    bItems.map((i) => {
       return `account:${parseName(account)}.cluster:${parseName(i)}`;
     })
   );
@@ -557,7 +545,7 @@ const ClusterResourcesV2 = ({
   const reloadPage = useReload();
 
   const props: IResource = {
-    items: finalItems,
+    items: bItems,
     onDelete: (item) => {
       setShowDeleteDialog(item);
     },

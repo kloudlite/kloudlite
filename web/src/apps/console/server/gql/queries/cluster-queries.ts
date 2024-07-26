@@ -154,122 +154,122 @@ export const clusterQueries = (executor: IExecutor) => ({
           totalCount
         }
 
-        clusters: infra_listClusters(search: $search, pagination: $pagination) {
-          totalCount
-          pageInfo {
-            startCursor
-            hasPrevPage
-            hasNextPage
-            endCursor
-          }
-          edges {
-            cursor
-            node {
-              id
-              displayName
-              lastOnlineAt
-              markedForDeletion
-              metadata {
-                name
-                annotations
-                generation
-              }
-              creationTime
-              lastUpdatedBy {
-                userId
-                userName
-                userEmail
-              }
-              createdBy {
-                userEmail
-                userId
-                userName
-              }
-              updateTime
-              status {
-                checks
-                checkList {
-                  description
-                  debug
-                  name
-                  title
-                }
-                isReady
-                lastReadyGeneration
-                lastReconcileTime
-                message {
-                  RawMessage
-                }
-                resources {
-                  apiVersion
-                  kind
-                  name
-                  namespace
-                }
-              }
-              syncStatus {
-                action
-                error
-                lastSyncedAt
-                recordVersion
-                state
-                syncScheduledAt
-              }
-              recordVersion
-              spec {
-                messageQueueTopicName
-                kloudliteRelease
+        # clusters: infra_listClusters(search: $search, pagination: $pagination) {
+        #   totalCount
+        #   pageInfo {
+        #     startCursor
+        #     hasPrevPage
+        #     hasNextPage
+        #     endCursor
+        #   }
+        #   edges {
+        #     cursor
+        #     node {
+        #       id
+        #       displayName
+        #       lastOnlineAt
+        #       markedForDeletion
+        #       metadata {
+        #         name
+        #         annotations
+        #         generation
+        #       }
+        #       creationTime
+        #       lastUpdatedBy {
+        #         userId
+        #         userName
+        #         userEmail
+        #       }
+        #       createdBy {
+        #         userEmail
+        #         userId
+        #         userName
+        #       }
+        #       updateTime
+        #       status {
+        #         checks
+        #         checkList {
+        #           description
+        #           debug
+        #           name
+        #           title
+        #         }
+        #         isReady
+        #         lastReadyGeneration
+        #         lastReconcileTime
+        #         message {
+        #           RawMessage
+        #         }
+        #         resources {
+        #           apiVersion
+        #           kind
+        #           name
+        #           namespace
+        #         }
+        #       }
+        #       syncStatus {
+        #         action
+        #         error
+        #         lastSyncedAt
+        #         recordVersion
+        #         state
+        #         syncScheduledAt
+        #       }
+        #       recordVersion
+        #       spec {
+        #         messageQueueTopicName
+        #         kloudliteRelease
 
-                clusterTokenRef {
-                  key
-                  name
-                  namespace
-                }
-                accountId
-                accountName
-                availabilityMode
-                aws {
-                  k3sMasters {
-                    iamInstanceProfileRole
-                    instanceType
-                    nodes
-                    nvidiaGpuEnabled
-                    rootVolumeSize
-                    rootVolumeType
-                  }
-                  nodePools
-                  region
-                  spotNodePools
-                }
-                gcp {
-                  credentialsRef {
-                    name
-                    namespace
-                  }
-                  gcpProjectID
-                  region
-                }
-                cloudProvider
-                backupToS3Enabled
-                cloudflareEnabled
-                clusterInternalDnsHost
-                clusterServiceCIDR
-                output {
-                  keyK3sAgentJoinToken
-                  keyK3sServerJoinToken
-                  keyKubeconfig
-                  secretName
-                }
-                publicDNSHost
-                taintMasterNodes
-              }
-            }
-          }
-        }
+        #         clusterTokenRef {
+        #           key
+        #           name
+        #           namespace
+        #         }
+        #         accountId
+        #         accountName
+        #         availabilityMode
+        #         aws {
+        #           k3sMasters {
+        #             iamInstanceProfileRole
+        #             instanceType
+        #             nodes
+        #             nvidiaGpuEnabled
+        #             rootVolumeSize
+        #             rootVolumeType
+        #           }
+        #           nodePools
+        #           region
+        #           spotNodePools
+        #         }
+        #         gcp {
+        #           credentialsRef {
+        #             name
+        #             namespace
+        #           }
+        #           gcpProjectID
+        #           region
+        #         }
+        #         cloudProvider
+        #         backupToS3Enabled
+        #         cloudflareEnabled
+        #         clusterInternalDnsHost
+        #         clusterServiceCIDR
+        #         output {
+        #           keyK3sAgentJoinToken
+        #           keyK3sServerJoinToken
+        #           keyKubeconfig
+        #           secretName
+        #         }
+        #         publicDNSHost
+        #         taintMasterNodes
+        #       }
+        #     }
+        #   }
+        # }
       }
     `,
     {
-      transformer: (data: ConsoleListAllClustersQuery) => data,
+      transformer: (data: ConsoleListAllClustersQuery) => data.byok_clusters,
       vars(_: ConsoleListAllClustersQueryVariables) {},
     }
   ),
