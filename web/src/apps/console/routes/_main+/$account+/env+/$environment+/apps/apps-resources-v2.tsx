@@ -36,7 +36,6 @@ import ListV2 from '~/console/components/listV2';
 import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
-import Tooltip from '~/components/atoms/tooltip';
 import { NN } from '~/root/lib/types/common';
 import { getClusterStatus } from '~/console/utils/commons';
 import HandleIntercept from './handle-intercept';
@@ -181,7 +180,6 @@ interface IResource {
 const AppServiceView = ({ service }: { service: string }) => {
   return (
     <CopyContentToClipboard
-      toolTip
       content={service}
       toastMessage="App service url copied successfully."
     />

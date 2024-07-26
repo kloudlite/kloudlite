@@ -87,7 +87,6 @@ interface IResource {
 const DeviceHostView = ({ hostName }: { hostName: string }) => {
   return (
     <CopyContentToClipboard
-      toolTip
       content={hostName}
       toastMessage="Device host copied successfully."
     />
