@@ -4,46 +4,49 @@ on:
 
 jobs:
   build-images:
-  strategy:
-    fail-fast: false
-    matrix:
-      images:
-        - name: agent-operator
-        - name: platform-operator
-        - name: wireguard-operator
-        - name: helm-charts-operator
-        - name: networking-operator
-        - name: networking/cmd/ip-binding-controller
-        - name: networking/cmd/ip-manager
-        - name: networking/cmd/webhook
-        - name: networking/cmd/dns
+    strategy:
+      fail-fast: false
+      matrix:
+        images:
+          - name: agent-operator
+          - name: platform-operator
+          - name: wireguard-operator
+          - name: helm-charts-operator
+          - name: networking-operator
+          - name: networking/cmd/ip-binding-controller
+          - name: networking/cmd/ip-manager
+          - name: networking/cmd/webhook
+          - name: networking/cmd/dns
 
-  runs-on: ubuntu-latest
-  name: ${{ matrix.images.name }}
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    runs-on: ubuntu-latest
+    name: ${{ matrix.images.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
-    - name: build-and-push
-      uses: ./.github/actions/build-operator-images/
-      with:
-        image_tag: ${{github.event.inputs.image_tag}}
+      - name: build-and-push
+        uses: ./operator/.github/actions/build-operator-images/
+        with:
+          image_tag: ${{github.event.inputs.image_tag}}
 
-        cachix_enabled: true
-        cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          cachix_enabled: true
+          cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
-        docker_enabled: true
+          docker_enabled: true
 
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        git_directory: "./operator"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git_directory: "./operator"
 
-        platform-operator: ${{ matrix.images.name == 'platform-operator' }}
-        agent-operator: ${{ matrix.images.name == 'agent-operator' }}
-        wireguard-operator: ${{ matrix.images.name == 'wireguard-operator' }}
-        helm-charts-operator: ${{ matrix.images.name == 'helm-charts-operator' }}
-        networking-operator: ${{ matrix.images.name == 'networking-operator' }}
+          platform-operator: ${{ matrix.images.name == 'platform-operator' }}
+          agent-operator: ${{ matrix.images.name == 'agent-operator' }}
+          wireguard-operator: ${{ matrix.images.name == 'wireguard-operator' }}
+          helm-charts-operator: ${{ matrix.images.name == 'helm-charts-operator' }}
+          networking-operator: ${{ matrix.images.name == 'networking-operator' }}
 
-        networking_ip-binding-controller: ${{ matrix.images.name == 'networking/cmd/ip-binding-controller' }}
-        networking_ip-manager: ${{ matrix.images.name == 'networking/cmd/ip-manager' }}
-        networking_dns: ${{ matrix.images.name == 'networking/cmd/dns' }}
-        networking_webhook: ${{ matrix.images.name == 'networking/cmd/webhook' }}
+          networking_ip-binding-controller: ${{ matrix.images.name == 'networking/cmd/ip-binding-controller' }}
+          networking_ip-manager: ${{ matrix.images.name == 'networking/cmd/ip-manager' }}
+          networking_dns: ${{ matrix.images.name == 'networking/cmd/dns' }}
+          networking_webhook: ${{ matrix.images.name == 'networking/cmd/webhook' }}
