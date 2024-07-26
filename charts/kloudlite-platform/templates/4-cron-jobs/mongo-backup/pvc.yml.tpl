@@ -1,14 +1,12 @@
-{{- $cronName := "mongo-csi-s3-backup" }}
-
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{$cronName}}
+  name: {{.Values.crons.mongoBackup.name}}
   namespace: {{.Release.Namespace}}
 spec:
   accessModes:
   - ReadWriteMany
   resources:
     requests:
-      storage: 200Gi
-  storageClassName: {{$cronName}}
+      storage: 10Gi
+  storageClassName: {{.Values.csiS3.storageClass}}

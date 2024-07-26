@@ -1,14 +1,12 @@
-{{- $cronName := "nats-csi-s3-backup" }}
-
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{$cronName}}
+  name: {{.Values.crons.natsBackup.name}}
   namespace: {{.Release.Namespace}}
 spec:
   accessModes:
   - ReadWriteMany
   resources:
     requests:
-      storage: 200Gi
-  storageClassName: {{$cronName}}
+      storage: 50Gi
+  storageClassName: {{.Values.csiS3.storageClass}}
