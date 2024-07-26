@@ -13,7 +13,10 @@ import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import {
   ListItem,
+  ListItemV2,
   ListTitle,
+  ListTitleV2,
+  listClass,
 } from '~/console/components/console-list-components';
 import Handle from './handle';
 
@@ -157,12 +160,12 @@ const ListView = ({ items, onAction }: IResource) => {
           {
             render: () => 'Value',
             name: 'value',
-            className: 'flex-1',
+            className: listClass.flex,
           },
           {
             render: () => '',
             name: 'action',
-            className: 'w-[24px]',
+            className: listClass.action,
           },
         ],
         rows: items.map((item) => {
@@ -170,19 +173,14 @@ const ListView = ({ items, onAction }: IResource) => {
             columns: {
               key: {
                 render: () => (
-                  <ListTitle
-                    title={<span className={cc(item[1])}>{item[0]}</span>}
-                  />
+                  <ListTitleV2 title={item[0]} titleClass={cc(item[1])} />
                 ),
               },
               value: {
                 render: () => (
-                  <ListItem
-                    subtitle={
-                      <span className={cc(item[1])}>
-                        {item[1].newvalue || item[1].value}
-                      </span>
-                    }
+                  <ListItemV2
+                    subtitleClass={cc(item[1])}
+                    subtitle={item[1].newvalue || item[1].value}
                   />
                 ),
               },
@@ -218,7 +216,7 @@ const ConfigItemResources = ({
           return true;
         }
         return false;
-      })
+      }),
     );
   }, [searchText, modifiedItems]);
 

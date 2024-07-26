@@ -2,7 +2,10 @@ import { GearSix, Trash } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
+  ListItemV2,
   ListTitle,
+  ListTitleV2,
+  listClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
@@ -166,32 +169,32 @@ const ListView = ({ items, templates, onAction }: IResource) => {
           {
             render: () => 'Resource Name',
             name: 'name',
-            className: 'flex flex-1 w-[80px]',
+            className: listClass.title,
           },
           {
             render: () => 'Cluster',
             name: 'cluster',
-            className: 'w-[120px]',
+            className: listClass.item,
           },
           {
             render: () => '',
             name: 'flex-post',
-            className: 'flex-1',
+            className: listClass.flex,
           },
           {
             render: () => 'Status',
             name: 'status',
-            className: 'flex-1 min-w-[30px]',
+            className: listClass.status,
           },
           {
             render: () => 'Updated',
             name: 'updated',
-            className: 'w-[180px]',
+            className: listClass.updated,
           },
           {
             render: () => '',
             name: 'action',
-            className: 'w-[24px]',
+            className: listClass.action,
           },
         ],
         rows: items.map((i) => {
@@ -201,7 +204,7 @@ const ListView = ({ items, templates, onAction }: IResource) => {
             columns: {
               name: {
                 render: () => (
-                  <ListTitle
+                  <ListTitleV2
                     title={name}
                     subtitle={id}
                     avatar={
@@ -214,7 +217,7 @@ const ListView = ({ items, templates, onAction }: IResource) => {
               },
               cluster: {
                 render: () => (
-                  <ListItem data={i.isArchived ? '' : i.clusterName} />
+                  <ListItemV2 data={i.isArchived ? '' : i.clusterName} />
                 ),
               },
               status: {
@@ -231,7 +234,7 @@ const ListView = ({ items, templates, onAction }: IResource) => {
               },
               updated: {
                 render: () => (
-                  <ListItem
+                  <ListItemV2
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
@@ -265,11 +268,11 @@ const BackendServicesResourcesV2 = ({
       return `account:${parseName(account)}.cluster:${
         i.clusterName
       }.cluster_managed_service:${parseName(i)}`;
-    })
+    }),
   );
 
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
+    null,
   );
   const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();

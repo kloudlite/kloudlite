@@ -9,7 +9,10 @@ import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import {
   ListBody,
   ListItem,
+  ListItemV2,
   ListTitle,
+  ListTitleV2,
+  listClass,
 } from '../components/console-list-components';
 import DeleteDialog from '../components/delete-dialog';
 import Grid from '../components/grid';
@@ -40,7 +43,7 @@ const parseItem = (item: BaseType) => {
   return {
     name: item.displayName,
     id: parseName(item),
-    entries: [`${Object.keys(item?.data).length || 0} Entries`],
+    entries: `${Object.keys(item?.data).length || 0} Entries`,
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
@@ -160,7 +163,7 @@ const ListView = ({
           {
             render: () => 'Name',
             name: 'name',
-            className: 'w-[180px]',
+            className: listClass.title,
           },
           {
             render: () => 'Entries',
@@ -170,12 +173,12 @@ const ListView = ({
           {
             render: () => 'Updated',
             name: 'updated',
-            className: 'w-[180px]',
+            className: listClass.updated,
           },
           {
             render: () => '',
             name: 'action',
-            className: 'w-[24px]',
+            className: listClass.action,
           },
         ],
         rows: items.map((i) => {
@@ -188,14 +191,14 @@ const ListView = ({
             pressed: !linkComponent ? selected === id : false,
             columns: {
               name: {
-                render: () => <ListTitle title={name} />,
+                render: () => <ListTitleV2 title={name} />,
               },
               entries: {
-                render: () => <ListBody data={entries} />,
+                render: () => <ListItemV2 data={entries} />,
               },
               updated: {
                 render: () => (
-                  <ListItem
+                  <ListItemV2
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
@@ -230,7 +233,7 @@ const ConfigResourcesV2 = ({
   linkComponent = null,
 }: Omit<IResource, 'onDelete'>) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
+    null,
   );
 
   const api = useConsoleApi();
@@ -240,9 +243,9 @@ const ConfigResourcesV2 = ({
   useWatchReload(
     items.map((i) => {
       return `account:${account}.environment:${environment}.config:${parseName(
-        i
+        i,
       )}`;
-    })
+    }),
   );
 
   const props: IResource = {
@@ -266,13 +269,13 @@ const ConfigResourcesV2 = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if ( !environment) {
+          if (!environment) {
             throw new Error('Project and Environment name is required!.');
           }
           try {
             const { errors } = await api.deleteConfig({
               configName: parseName(showDeleteDialog),
-              
+
               envName: environment,
             });
 

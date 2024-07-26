@@ -5,7 +5,10 @@ import { CopyButton, listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,
+  ListItemV2,
   ListTitle,
+  ListTitleV2,
+  listClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
@@ -155,12 +158,12 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
               </div>
             ),
             name: 'name',
-            className: 'flex-1 w-[80px]',
+            className: listClass.title,
           },
           {
             render: () => 'Device Config',
             name: 'config',
-            className: 'flex  w-[150px]',
+            className: listClass.item,
           },
           {
             render: () => 'Host',
@@ -170,17 +173,17 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
           {
             render: () => 'IP',
             name: 'ip',
-            className: 'flex  w-[150px]',
+            className: listClass.item,
           },
           {
             render: () => 'Updated',
             name: 'updated',
-            className: 'w-[180px]',
+            className: listClass.updated,
           },
           {
             render: () => '',
             name: 'action',
-            className: 'w-[24px]',
+            className: listClass.action,
           },
         ],
         rows: items.map((i) => {
@@ -190,7 +193,7 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
             columns: {
               name: {
                 render: () => (
-                  <ListTitle
+                  <ListTitleV2
                     title={name || id}
                     subtitle={id}
                     avatar={<ConsoleAvatar name={id} />}
@@ -200,38 +203,24 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
               config: {
                 render: () =>
                   i.creationMethod === '' ? (
-                    <ListItem
-                      noTooltip
-                      data={
-                        <div>
-                          <Button
-                            variant="plain"
-                            onClick={() => showWgConfig(i)}
-                            content="View"
-                            suffix={<Eye />}
-                          />
-                        </div>
-                      }
+                    <Button
+                      variant="plain"
+                      onClick={() => showWgConfig(i)}
+                      content="View"
+                      suffix={<Eye />}
                     />
                   ) : (
-                    <ListItem
-                      noTooltip
-                      data={
-                        <div>
-                          <Button
-                            variant="plain"
-                            onClick={() => showWgConfig(i)}
-                            content="View"
-                            suffix={<Eye />}
-                          />
-                        </div>
-                      }
+                    <Button
+                      variant="plain"
+                      onClick={() => showWgConfig(i)}
+                      content="View"
+                      suffix={<Eye />}
                     />
                   ),
               },
               host: {
                 render: () => (
-                  <div className="flex w-fit truncate">
+                  <div className="flex w-fit pulsable truncate">
                     <DeviceHostView hostName={`${parseName(i)}.device.local`} />
                   </div>
                 ),
@@ -266,7 +255,7 @@ const ListView = ({ items = [], onDelete, showWgConfig }: IResource) => {
               },
               updated: {
                 render: () => (
-                  <ListItem
+                  <ListItemV2
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
@@ -293,7 +282,7 @@ const VPNResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const { account } = useOutletContext<IAccountContext>();
 
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
+    null,
   );
   const [showWireguardConfig, setShowWireguardConfig] =
     useState<BaseType | null>(null);
@@ -318,7 +307,7 @@ const VPNResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   useWatchReload(
     items.map((i) => {
       return `account:${parseName(account)}.cluster:${parseName(i)}`;
-    })
+    }),
   );
 
   return (
