@@ -85,6 +85,7 @@ const Apps = () => {
                 },
               }}
               tools={<Tools />}
+              pagination={appsData}
             >
               <AppsResourcesV2 items={apps} />
             </Wrapper>

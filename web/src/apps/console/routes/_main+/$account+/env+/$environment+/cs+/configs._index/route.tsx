@@ -56,7 +56,6 @@ const Configs = () => {
       >
         {({ configsData }) => {
           const configs = parseNodes(configsData);
-          const { pageInfo, totalCount } = configsData;
 
           return (
             <Wrapper
@@ -89,10 +88,7 @@ const Configs = () => {
                   },
                 },
               }}
-              pagination={{
-                pageInfo,
-                totalCount,
-              }}
+              pagination={configsData}
               tools={<Tools />}
             >
               <ConfigResourcesV2 items={configs} linkComponent={Link} />

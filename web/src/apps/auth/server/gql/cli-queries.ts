@@ -393,8 +393,8 @@ export const cliQueries = (executor: IExecutor) => ({
 
   cli_listApps: executor(
     gql`
-      query Core_listApps($envName: String!) {
-        apps: core_listExternalApps(envName: $envName) {
+      query Core_listApps($pq: CursorPaginationIn, $envName: String!) {
+        apps: core_listExternalApps(pq: $pq, envName: $envName) {
           edges {
             node {
               spec {
@@ -425,7 +425,7 @@ export const cliQueries = (executor: IExecutor) => ({
             }
           }
         }
-        mapps: core_listApps(envName: $envName) {
+        mapps: core_listApps(pq: $pq, envName: $envName) {
           edges {
             node {
               displayName
@@ -489,8 +489,8 @@ export const cliQueries = (executor: IExecutor) => ({
   ),
   cli_listConfigs: executor(
     gql`
-      query Core_listConfigs($envName: String!) {
-        core_listConfigs(envName: $envName) {
+      query Core_listConfigs($pq: CursorPaginationIn, $envName: String!) {
+        core_listConfigs(pq: $pq, envName: $envName) {
           totalCount
           edges {
             node {

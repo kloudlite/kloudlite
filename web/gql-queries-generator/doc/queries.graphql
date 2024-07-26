@@ -6263,8 +6263,8 @@ query authCli_getConfig($envName: String!, $name: String!) {
   }
 }
 
-query authCli_listApps($envName: String!) {
-  apps: core_listExternalApps(envName: $envName) {
+query authCli_listApps($pq: CursorPaginationIn, $envName: String!) {
+  apps: core_listExternalApps(pq: $pq, envName: $envName) {
     edges {
       node {
         spec {
@@ -6295,7 +6295,7 @@ query authCli_listApps($envName: String!) {
       }
     }
   }
-  mapps: core_listApps(envName: $envName) {
+  mapps: core_listApps(pq: $pq, envName: $envName) {
     edges {
       node {
         displayName
@@ -6332,8 +6332,8 @@ query authCli_listApps($envName: String!) {
   }
 }
 
-query authCli_listConfigs($envName: String!) {
-  core_listConfigs(envName: $envName) {
+query authCli_listConfigs($pq: CursorPaginationIn, $envName: String!) {
+  core_listConfigs(pq: $pq, envName: $envName) {
     totalCount
     edges {
       node {
