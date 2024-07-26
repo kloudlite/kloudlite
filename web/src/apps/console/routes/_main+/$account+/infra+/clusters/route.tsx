@@ -32,7 +32,6 @@ export const loader = async (ctx: IRemixCtx) => {
     }
     return {
       clustersData: data,
-      // secretsCount: -1,
     };
   });
 
