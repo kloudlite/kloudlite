@@ -41,10 +41,6 @@ interface WrapperProps {
   noResultFound?: INoResultsFound;
 }
 
-const Test = () => {
-  return <div>hello world</div>;
-};
-
 const Wrapper = ({
   children,
   empty,
