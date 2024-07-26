@@ -75,3 +75,20 @@ spec:
         - key: INFRA_GRPC_ADDR
           value: "infra-api:3001"
 
+      livenessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.messageOfficeApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+
+      readinessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.messageOfficeApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+
+
