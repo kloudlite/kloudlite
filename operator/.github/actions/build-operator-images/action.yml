@@ -90,6 +90,12 @@ runs:
 
         echo "PUSH_IMAGE=false" >> $GITHUB_ENV
 
+        if [ "${{ inputs.git_directory }}" != "." ]; then
+          echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}/$(basename ${{inputs.git_directory}})" >> $GITHUB_ENV
+        else
+          echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}" >> $GITHUB_ENV
+        fi
+
     - name: check if image needs to be pushed
       if: github.event_name != 'pull_request'
       shell: bash
@@ -186,7 +192,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/cmd/platform-operator
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/platform:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/platform:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
     - name: agent operator cache
       if: ${{ inputs.agent-operator == 'true' }}
@@ -204,7 +210,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/cmd/agent-operator
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/agent:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/agent:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
     - name: networking operator cache
       if: ${{ inputs.networking-operator == 'true' }}
@@ -222,7 +228,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/operators/networking
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/networking:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
     - name: wireguard operator cache
       if: ${{ inputs.wireguard-operator == 'true' }}
@@ -240,7 +246,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/operators/wireguard
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/wireguard:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/wireguard:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
     - name: helm-charts operator cache
       if: ${{ inputs.helm-charts-operator == 'true' }}
@@ -258,7 +264,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/operators/helm-charts
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/helm-charts:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/helm-charts:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
     - name: networking/ip-manager cache
       if: ${{ inputs.networking_ip-manager == 'true' }}
@@ -276,7 +282,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/ip-manager
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/ip-manager:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/ip-manager:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
     - name: networking/ip-binding-controller cache
       if: ${{ inputs.networking_ip-binding-controller == 'true' }}
@@ -294,7 +300,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/ip-binding-controller
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/ip-binding-controller:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/ip-binding-controller:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
     - name: networking/dns cache
       if: ${{ inputs.networking_dns == 'true' }}
@@ -312,7 +318,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/dns
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/dns:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/dns:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
     - name: networking/weebhook cache
       if: ${{ inputs.networking_webhook == 'true' }}
@@ -330,4 +336,4 @@ runs:
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/webhook
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/networking/cmd/webhook:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/webhook:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
