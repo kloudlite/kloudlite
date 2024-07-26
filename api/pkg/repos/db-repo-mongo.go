@@ -4,18 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/PaesslerAG/jsonpath"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"log/slog"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/PaesslerAG/jsonpath"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/fx"
 
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/logging"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -136,7 +137,7 @@ func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	item, err := bsonToStruct[T](one)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return item, errors.Newf("no document found")
+			return item, ErrNoDocuments
 		}
 		return item, errors.NewE(err)
 	}
@@ -399,12 +400,14 @@ func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedDat
 	return nil
 }
 
+var ErrNoDocuments error = fmt.Errorf("no documents found")
+
 func (repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error) {
 	var x T
 
 	res, err := repo.findOne(ctx, filter)
 	if err != nil {
-		return x, errors.NewE(err)
+		return x, err
 	}
 
 	return repo.patchRecordByID(ctx, res.GetId(), patch, res.IsMarkedForDeletion(), opts...)
@@ -722,16 +725,17 @@ func NewFxMongoRepo[T Entity](collectionName, shortName string, indexFields []In
 			},
 		),
 		fx.Invoke(
-			func(lifecycle fx.Lifecycle, repo DbRepo[T], logger logging.Logger) {
+			// func(lifecycle fx.Lifecycle, repo DbRepo[T], logger logging.Logger) {
+			func(lifecycle fx.Lifecycle, repo DbRepo[T]) {
 				lifecycle.Append(
 					fx.Hook{
 						OnStart: func(ctx context.Context) error {
 							go func() {
 								err := repo.IndexFields(ctx, indexFields)
 								if err != nil {
-									logger.Errorf(err, "failed to update indexes on DB for repo %T", repo)
+									slog.Error("failed to update indexes", "collection", collectionName, "err", err)
 								}
-								logger.Infof("indexes updated on DB for repo %T", repo)
+								slog.Info("indexes updated on DB", "collection", collectionName)
 							}()
 							return nil
 						},

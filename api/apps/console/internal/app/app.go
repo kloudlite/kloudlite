@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/pkg/k8s"
@@ -164,10 +165,10 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.ConsoleReceiver, common.EventErrorOnApply)
 		consumerName := "console:error-on-apply"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsResourceSyncStream,
+			Stream: ev.NatsReceiveFromAgentStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -177,7 +178,7 @@ var Module = fx.Module("app",
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go ProcessErrorOnApply(consumer, d, logger)
@@ -190,11 +191,11 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventResourceUpdate)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.ConsoleReceiver, common.EventResourceUpdate)
 
 		consumerName := "console:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsResourceSyncStream,
+			Stream: ev.NatsReceiveFromAgentStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -204,7 +205,7 @@ var Module = fx.Module("app",
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go ProcessResourceUpdates(consumer, d, logger)
@@ -220,7 +221,7 @@ var Module = fx.Module("app",
 		return domain.NewSvcBindingDomain(svcBindingRepo)
 	}),
 
-	fx.Provide(func(logger logging.Logger, sbd domain.ServiceBindingDomain, ev *env.Env) *dnsHandler {
+	fx.Provide(func(logger *slog.Logger, sbd domain.ServiceBindingDomain, ev *env.Env) *dnsHandler {
 		return &dnsHandler{
 			logger:               logger,
 			serviceBindingDomain: sbd,
@@ -228,15 +229,15 @@ var Module = fx.Module("app",
 		}
 	}),
 
-	fx.Invoke(func(server *DNSServer, handler *dnsHandler, lf fx.Lifecycle, logger logging.Logger) {
+	fx.Invoke(func(server *DNSServer, handler *dnsHandler, lf fx.Lifecycle, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
-				logger.Infof("starting dns server at %s", server.Addr)
 				server.Handler = handler
 				go func() {
+					logger.Info("starting dns server", "at", server.Addr)
 					err := server.ListenAndServe()
 					if err != nil {
-						logger.Errorf(err, "failed to start dns server")
+						logger.Error("failed to start dns server, got", "err", err)
 						panic(err)
 					}
 				}()
