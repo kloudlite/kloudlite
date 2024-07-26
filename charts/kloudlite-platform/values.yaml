@@ -520,13 +520,6 @@ apps:
       replicas: 1
       httpPort: "3000"
 
-  iotConsoleApi:
-    image:
-      repository: "ghcr.io/kloudlite/kloudlite/api/iot-console"
-      tag: ""
-    configuration:
-      replicas: 1
-
   consoleWeb:
     enabled: true
     # -- image (with tag) for console web
@@ -614,7 +607,6 @@ envVars:
     authDB: auth-db
     consoleDB: console-db
     commsDB: comms-db
-    iotConsoleDB: "iot-console-db"
     accountsDB: accounts-db
     registryDB: registry-db
     eventsDB: events-db
@@ -668,9 +660,6 @@ envVars:
         storage: file
       consoleCacheBucket:
         name: console-cache
-        storage: file
-      iotConsoleCacheBucket:
-        name: iot-console-cache
         storage: file
       resetTokenBucket:
         name: reset-token
