@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"os"
 	"time"
 
@@ -19,6 +20,10 @@ import (
 func main() {
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
+
+	var debug bool
+	flag.BoolVar(&debug, "debug", false, "--debug")
+
 	flag.Parse()
 
 	logger, err := logging.New(&logging.Options{Name: "message-office", ShowDebugLog: isDev, HideCallerTrace: false})
@@ -38,6 +43,14 @@ func main() {
 				return logger
 			},
 		),
+
+		fx.Provide(func() *slog.Logger {
+			return logging.NewSlogLogger(logging.SlogOptions{
+				ShowCaller:         true,
+				ShowDebugLogs:      debug,
+				SetAsDefaultLogger: true,
+			})
+		}),
 
 		fx.Provide(func() (*rest.Config, error) {
 			if isDev {

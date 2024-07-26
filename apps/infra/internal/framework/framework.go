@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/kloudlite/api/apps/infra/internal/app"
 	"github.com/kloudlite/api/apps/infra/internal/env"
@@ -41,7 +42,7 @@ var Module = fx.Module("framework",
 
 	mongoRepo.NewMongoClientFx[*framework](),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.Client, error) {
+	fx.Provide(func(ev *env.Env, logger *slog.Logger) (*nats.Client, error) {
 		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   "infra",
 			Logger: logger,

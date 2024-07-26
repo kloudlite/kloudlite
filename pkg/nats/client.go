@@ -2,17 +2,17 @@ package nats
 
 import (
 	"context"
-	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
+	"log/slog"
 	"time"
 
-	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/errors"
+
 	"github.com/nats-io/nats.go"
 )
 
 type Client struct {
 	Conn   *nats.Conn
-	logger logging.Logger
+	logger *slog.Logger
 }
 
 // Close implements Client.
@@ -33,7 +33,7 @@ type ClientOpts struct {
 	Name string
 	// https://pkg.go.dev/github.com/nats-io/nats.go#Options
 	Servers []string
-	Logger  logging.Logger
+	Logger  *slog.Logger
 
 	DisconnectedCB func()
 	ReconnectedCB  func()
@@ -47,14 +47,7 @@ func NewClient(url string, opts ClientOpts) (*Client, error) {
 	}
 
 	if opts.Logger == nil {
-		var err error
-		opts.Logger, err = logging.New(&logging.Options{
-			Name: fmt.Sprintf("nats-client:%s", opts.Name),
-			Dev:  true,
-		})
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
+		opts.Logger = slog.Default()
 	}
 
 	connectOpts := []nats.Option{
@@ -91,34 +84,34 @@ func NewClient(url string, opts ClientOpts) (*Client, error) {
 						opts.ClosedCB()
 						return
 					}
-					opts.Logger.Infof("[%s] connection closed with nats server", opts.Name)
+					opts.Logger.Warn("connection closed with nats server", "name", opts.Name)
 				},
 				DisconnectedCB: func(*nats.Conn) {
 					if opts.DisconnectedCB != nil {
 						opts.DisconnectedCB()
 						return
 					}
-					opts.Logger.Infof("[%s] disconnected with nats server", opts.Name)
+					opts.Logger.Warn("disconnected with nats server", "name", opts.Name)
 				},
 				ConnectedCB: func(*nats.Conn) {
 					if opts.ConnectedCB != nil {
 						opts.ConnectedCB()
 						return
 					}
-					opts.Logger.Infof("[%s] connected to nats server", opts.Name)
+					opts.Logger.Info("connected to nats server", "name", opts.Name)
 				},
 				ReconnectedCB: func(*nats.Conn) {
 					if opts.ReconnectedCB != nil {
 						opts.ReconnectedCB()
 						return
 					}
-					opts.Logger.Infof("[%s] reconnected to nats server", opts.Name)
+					opts.Logger.Info("re-connected to nats server", "name", opts.Name)
 				},
 				DiscoveredServersCB: func(c *nats.Conn) {
-					opts.Logger.Infof("[%s] discovered additional nats servers: %+v\n", c.DiscoveredServers())
+					opts.Logger.Info("discovered additional nats servers", "servers", c.DiscoveredServers())
 				},
 				AsyncErrorCB: func(_ *nats.Conn, sub *nats.Subscription, err error) {
-					opts.Logger.Warnf("[%s] async error received in subject(%s): %v", opts.Name, sub.Subject, err)
+					opts.Logger.Warn("got async error for", "name", opts.Name, "subject", sub.Subject, "err", err)
 				},
 				RetryOnFailedConnect: true,
 				Compression:          true,

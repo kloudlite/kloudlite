@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"runtime/trace"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/env"
@@ -35,6 +36,14 @@ func main() {
 				return logging.New(&logging.Options{Name: "container-registry", Dev: isDev})
 			},
 		),
+
+		fx.Provide(func() *slog.Logger {
+			return logging.NewSlogLogger(logging.SlogOptions{
+				ShowCaller:         true,
+				ShowDebugLogs:      isDev,
+				SetAsDefaultLogger: true,
+			})
+		}),
 
 		fn.FxErrorHandler(),
 		framework.Module,

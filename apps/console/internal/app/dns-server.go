@@ -3,16 +3,17 @@ package app
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/domain"
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/miekg/dns"
 )
 
 type dnsHandler struct {
-	logger               logging.Logger
+	logger               *slog.Logger
 	serviceBindingDomain domain.ServiceBindingDomain
 	kloudliteDNSSuffix   string
 }
@@ -22,8 +23,10 @@ const (
 )
 
 func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
-	logger := h.logger.WithKV("query", r.Question[0].Name)
-	logger.Debugf("incoming dns request")
+	logger := h.logger.With("query", r.Question[0].Name)
+	logger.Debug("INCOMING dns request")
+	start := time.Now()
+
 	msg := new(dns.Msg)
 	msg.SetReply(r)
 	msg.Authoritative = true
@@ -34,7 +37,7 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	for _, question := range r.Question {
 		answers, err := h.resolver(ctx, question.Name, question.Qtype)
 		if err != nil {
-			h.logger.Errorf(err)
+			logger.Error("FAILED to resolve dns record, got", "err", err, "question", question.Name)
 			msg.Rcode = dns.RcodeNameError
 			continue
 		}
@@ -42,7 +45,9 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	}
 
 	w.WriteMsg(msg)
-	logger.WithKV("answers", msg.Answer).Debugf("outgoing dns request")
+	if msg.Rcode != dns.RcodeNameError {
+		logger.Info("RESOLVED dns request", "answers", msg.Answer, "took", fmt.Sprintf("%.2fs", time.Since(start).Seconds()))
+	}
 }
 
 func (h *dnsHandler) newRR(domain string, ttl int, ip string) ([]dns.RR, error) {

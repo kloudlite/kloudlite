@@ -23,18 +23,22 @@ type JetstreamConsumer struct {
 // Consume implements messaging.Consumer.
 func (jc *JetstreamConsumer) Consume(consumeFn func(msg *types.ConsumeMsg) error, opts types.ConsumeOpts) error {
 	cctx, err := jc.consumer.Consume(func(msg jetstream.Msg) {
+		logger := jc.client.Logger.With("subject", msg.Subject())
+
 		mm, err := msg.Metadata()
 		if err != nil {
 			if err := msg.Nak(); err != nil {
-				jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
+				logger.Error("failed to send NAK", "err", err)
 				return
 			}
 			return
 		}
 
+		logger = logger.With("consumer", mm.Consumer, "stream", mm.Stream)
+
 		if err = msg.InProgress(); err != nil {
 			if err := msg.Nak(); err != nil {
-				jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
+				logger.Error("failed to send NAK", "err", err)
 				return
 			}
 			return
@@ -46,9 +50,8 @@ func (jc *JetstreamConsumer) Consume(consumeFn func(msg *types.ConsumeMsg) error
 			Payload:   msg.Data(),
 		}); err != nil {
 			if opts.OnError == nil {
-				jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
 				if err := msg.Nak(); err != nil {
-					jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
+					logger.Error("failed to send NAK", "err", err)
 					return
 				}
 				return
@@ -56,9 +59,8 @@ func (jc *JetstreamConsumer) Consume(consumeFn func(msg *types.ConsumeMsg) error
 
 			if opts.OnError != nil {
 				if err := opts.OnError(err); err != nil {
-					jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
 					if err := msg.Nak(); err != nil {
-						jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
+						logger.Error("failed to send NAK", "err", err)
 						return
 					}
 					return
@@ -67,10 +69,10 @@ func (jc *JetstreamConsumer) Consume(consumeFn func(msg *types.ConsumeMsg) error
 		}
 
 		if err := msg.Ack(); err != nil {
-			jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending ACK", msg.Subject())
+			logger.Error("failed to send ACK, got", "err", err)
 			return
 		}
-		jc.client.Logger.Infof("acknowledged message, stream: %s, consumer: %s", mm.Stream, mm.Consumer)
+		logger.Debug("CONSUMED message", "stream", mm.Stream, "consumer", mm.Consumer)
 	})
 	if err != nil {
 		return errors.NewE(err)
