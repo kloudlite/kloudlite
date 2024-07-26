@@ -54,3 +54,20 @@ spec:
 
         - key: GLOBAL_VPN_AUTHZ_SECRET
           value: {{.Values.apps.infraApi.configuration.globalVpnKubeReverseProxyAuthzToken}}
+
+      livenessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.observabilityApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+
+      readinessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.observabilityApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+

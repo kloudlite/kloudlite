@@ -92,3 +92,20 @@ spec:
             - key: github-app-pk.pem
               fileName: github-app-pk.pem
       {{- end }}
+
+      livenessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.consoleApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+
+      readinessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.consoleApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+

@@ -1,4 +1,4 @@
-{{- $appName := "accounts-api" }}
+{{- $appName := "infra-api" }}
 
 apiVersion: crds.kloudlite.io/v1
 kind: App
@@ -145,3 +145,18 @@ spec:
             - key: {{.Values.edgeGateways.secretKeyRef.key}}
               fileName: gateways.yml
 
+      livenessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.infraApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+
+      readinessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.infraApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10

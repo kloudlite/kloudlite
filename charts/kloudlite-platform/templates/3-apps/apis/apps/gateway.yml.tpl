@@ -51,7 +51,7 @@ spec:
         httpGet:
           path: /healthz 
           port: {{.Values.apps.gatewayApi.configuration.httpPort}}
-        initialDelay: 7
+        initialDelay: 10
         interval: 10
 
       readinessProbe:
