@@ -254,6 +254,18 @@ mongo:
     dbURL: ""
     authDBName: ""
 
+# setting up csi-s3 driver
+csiS3:
+  storageClass: "csi-s3"
+  s3:
+    accessKey: ""
+    secretKey: ""
+
+    # https endpoint like https://s3.ap-south-1.amazonaws.com
+    endpoint: ""
+
+    bucketName: ""
+
 # Storage
 persistence:
   storageClasses:
@@ -669,24 +681,16 @@ crons:
     name: mongo-backup
     configuration:
       image: mongo:latest
-      mongodbUri: ""
+      # mongodbUri: ""
       numBackups: 5
       schedule: "0 */2 * * *" # Runs every 2 hours
       encryptionPassword: ""
-    s3:
-      accessKeyId: ""
-      secretKey: ""
-      endpoint: ""
   natsBackup:
     name: nats-backup
     configuration:
       image: natsio/nats-box:latest
-      server: ""
+      # server: ""
       numBackups: 5
       schedule: "0 */2 * * *" # Runs every 2 hours
-      bucket: ""
+      # bucket: ""
       encryptionPassword: ""
-    s3:
-      accessKeyId: ""
-      secretKey: ""
-      endpoint: ""

@@ -1,9 +1,7 @@
-{{- $cronName := "mongo-csi-s3-backup" }}
-
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{$cronName}}
+  name: {{.Values.crons.mongoBackup.name}}
   namespace: {{.Release.Namespace}}
 spec:
   schedule: "{{.Values.crons.mongoBackup.configuration.schedule}}"
@@ -12,32 +10,32 @@ spec:
       template:
         metadata:
           labels:
-            app: {{$cronName}}
+            app: {{.Values.crons.mongoBackup.name}}
         spec:
           containers:
-            - name: {{$cronName}}
+            - name: {{.Values.crons.mongoBackup.name}}
               image: {{.Values.crons.mongoBackup.configuration.image}}
               command: 
-                - /bin/sh
+                - bash
                 - -c
                 - |
-                  apt update && apt install zip -y
                   set -o errexit
                   set -o pipefail
+
+                  apt update && apt install zip -y
 
                   trap 'echo "Backup failed"; exit 1' ERR
 
                   BACKUP_DEST="/mongo-backups"
 
-                  TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-                  FILENAME="backup_${TIMESTAMP}"
+                  TIMESTAMP=$(date +"%Y_%m_%d_%H_%M_%S")
+                  FILENAME="mongo_backup_${TIMESTAMP}"
                   BACKUP_DIR="${BACKUP_DEST}/${FILENAME}.zip"
 
                   BACKUP_TEMP_DIR="/tmp/${FILENAME}"
 
                   mkdir -p "$BACKUP_DEST"
-                  mongodump --uri ${MONGODB_URI} --archive=${BACKUP_TEMP_DIR} --dumpDbUsersAndRoles --gzip
-
+                  mongodump --uri="${MONGODB_URI}" --archive=${BACKUP_TEMP_DIR} --dumpDbUsersAndRoles --gzip
                   zip -r -P "$ENCRYPTION_PASSWORD" "${BACKUP_TEMP_DIR}.zip" "$BACKUP_TEMP_DIR"
 
                   cp "${BACKUP_TEMP_DIR}.zip" "$BACKUP_DIR"
@@ -57,9 +55,14 @@ spec:
                   echo "Backup completed"
               env:
                 - name: MONGODB_URI
-                  value: {{.Values.crons.mongoBackup.configuration.mongodbUri}}
+                  valueFrom:
+                    secretKeyRef:
+                      name: "msvc-mongo-svc-creds"
+                      key: .CLUSTER_LOCAL_URI
+
                 - name: NUM_BACKUPS
-                  value: {{.Values.crons.mongoBackup.configuration.numBackups | default "5"}}
+                  value: {{.Values.crons.mongoBackup.configuration.numBackups | default 5 | squote}}
+
                 - name: ENCRYPTION_PASSWORD
                   value: {{.Values.crons.mongoBackup.configuration.encryptionPassword}}
               volumeMounts:
@@ -69,5 +72,5 @@ spec:
           volumes:
             - name: mongo-backups
               persistentVolumeClaim:
-                claimName: {{$cronName}}
+                claimName: {{.Values.crons.mongoBackup.name}}
                 readOnly: false
