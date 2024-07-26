@@ -27,7 +27,15 @@ interface WrapperProps {
     title: ReactNode;
     action?: ReactNode;
   };
-  pagination?: any;
+  pagination?: {
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPrevPage?: boolean;
+      startCursor?: string;
+    };
+    totalCount: number;
+  };
   tools?: ReactNode;
   noResultFound?: INoResultsFound;
 }
@@ -37,7 +45,7 @@ const Wrapper = ({
   empty,
   header,
   secondaryHeader,
-  pagination = null,
+  pagination,
   tools,
   noResultFound,
 }: WrapperProps) => {

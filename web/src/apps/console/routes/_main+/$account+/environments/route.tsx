@@ -98,6 +98,7 @@ const Workspaces = () => {
                 },
               }}
               tools={<Tools />}
+              pagination={environmentData}
             >
               <EnvironmentResourcesV2 items={environments || []} />
             </Wrapper>

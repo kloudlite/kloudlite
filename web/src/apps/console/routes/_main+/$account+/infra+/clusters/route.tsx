@@ -4,7 +4,7 @@ import { useLoaderData } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
 import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
-import { getPagination, getSearch } from '~/console/server/utils/common';
+import { getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
@@ -24,7 +24,9 @@ export const loader = async (ctx: IRemixCtx) => {
     const { data, errors } = await GQLServerHandler(
       ctx.request
     ).listAllClusters({
-      pagination: getPagination(ctx),
+      pagination: {
+        first: 200,
+      },
       search: getSearch(ctx),
     });
 
@@ -153,7 +155,6 @@ const ClusterComponent = ({
   if (!clusters || !byokClusters) {
     return null;
   }
-
   return (
     <Wrapper
       secondaryHeader={{

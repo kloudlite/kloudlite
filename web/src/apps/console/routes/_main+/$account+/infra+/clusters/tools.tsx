@@ -96,7 +96,7 @@ const Tools = ({ onChange, value }: IFilterByClusterType) => {
   );
   return (
     <CommonTools
-      {...{ options }}
+      {...{ options, noSort: true }}
       // commonToolPrefix={
       //   <FilterByCLusterType
       //     onChange={(e) => {
