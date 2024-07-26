@@ -8,7 +8,6 @@ import { CustomPagination } from './custom-pagination';
 import { EmptyState } from './empty-state';
 import NoResultsFound, { INoResultsFound } from './no-results-found';
 import SecondarySubHeader from './secondary-sub-header';
-import TooltipV2 from '~/components/atoms/tooltipV2';
 
 interface WrapperProps {
   children?: ReactNode;
