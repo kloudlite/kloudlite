@@ -253,7 +253,7 @@ const ManagedResourceResourcesV2 = ({
   templates: IMSvTemplates;
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null,
+    null
   );
   const [showSecret, setShowSecret] = useState<BaseType | null>(null);
   const [visible, setVisible] = useState<BaseType | null>(null);
@@ -265,9 +265,9 @@ const ManagedResourceResourcesV2 = ({
   useWatchReload(
     items.map((i) => {
       return `account:${account}.cluster_managed_service:${msv}.managed_resource:${parseName(
-        i,
+        i
       )}`;
-    }),
+    })
   );
 
   const props: IResource = {

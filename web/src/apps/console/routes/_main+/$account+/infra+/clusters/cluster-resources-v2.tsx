@@ -5,12 +5,7 @@ import {
   Trash,
 } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import {
-  generateKey,
-  titleCase,
-  useAppend,
-  useMapper,
-} from '~/components/utils';
+import { generateKey, titleCase, useMapper } from '~/components/utils';
 import { listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -54,9 +49,8 @@ import { Badge } from '~/components/atoms/badge';
 // import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
 import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
-import Tooltip from '~/components/atoms/tooltip';
-import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 import TooltipV2 from '~/components/atoms/tooltipV2';
+import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
 type ByokBaseType = ExtractNodeType<IByocClusters> & { type: 'byok' };
@@ -126,7 +120,7 @@ const ByokInstructionsPopup = ({
       return api.getBYOKClusterInstructions({
         name: item.metadata.name,
       });
-    },
+    }
   );
 
   return (
@@ -523,27 +517,20 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
 };
 
 const ClusterResourcesV2 = ({
-  items,
   byokItems,
 }: {
-  items: Omit<BaseType, 'type'>[];
   byokItems: Omit<ByokBaseType, 'type'>[];
 }) => {
   const { account } = useOutletContext<IAccountContext>();
-  const normalItems = useMapper(items, (i) => {
-    return { ...i, type: 'normal' as BaseType['type'] };
-  });
 
   const bItems = useMapper(byokItems, (i) => {
     return { ...i, type: 'byok' as ByokBaseType['type'] };
   });
 
-  const finalItems = useAppend(normalItems, bItems);
-
   useWatchReload(
-    finalItems.map((i) => {
+    bItems.map((i) => {
       return `account:${parseName(account)}.cluster:${parseName(i)}`;
-    }),
+    })
   );
 
   const [showDeleteDialog, setShowDeleteDialog] =
@@ -557,7 +544,7 @@ const ClusterResourcesV2 = ({
   const reloadPage = useReload();
 
   const props: IResource = {
-    items: finalItems,
+    items: bItems,
     onDelete: (item) => {
       setShowDeleteDialog(item);
     },

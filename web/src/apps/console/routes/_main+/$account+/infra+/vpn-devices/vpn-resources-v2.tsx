@@ -281,7 +281,7 @@ const VPNResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const { account } = useOutletContext<IAccountContext>();
 
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null,
+    null
   );
   const [showWireguardConfig, setShowWireguardConfig] =
     useState<BaseType | null>(null);
@@ -306,7 +306,7 @@ const VPNResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   useWatchReload(
     items.map((i) => {
       return `account:${parseName(account)}.cluster:${parseName(i)}`;
-    }),
+    })
   );
 
   return (
