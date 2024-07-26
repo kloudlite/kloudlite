@@ -1,4 +1,4 @@
-{{- $appName := "accounts-api" }}
+{{- $appName := "infra-api" }}
 
 apiVersion: crds.kloudlite.io/v1
 kind: App
@@ -43,7 +43,7 @@ spec:
         - key: MONGO_DB_URI
           type: secret
           refName: mres-infra-db-creds
-          refKey: URI
+          refKey: .CLUSTER_LOCAL_URI
 
         - key: MONGO_DB_NAME
           type: secret
@@ -55,6 +55,9 @@ spec:
 
         - key: GRPC_PORT
           value: "3001"
+
+        - key: KLOUDLITE_DNS_SUFFIX
+          value: "{{.Values.global.kloudliteDNSSuffix}}"
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.global.cookieDomain}}"
@@ -74,8 +77,8 @@ spec:
         - key: CONSOLE_GRPC_ADDR
           value: "console-api:3001"
 
-        - key: NATS_STREAM
-          value: {{.Values.envVars.nats.streams.resourceSync.name}}
+        - key: NATS_RECEIVE_FROM_AGENT_STREAM
+          value: {{.Values.envVars.nats.streams.receiveFromAgent.name}}
 
         - key: SESSION_KV_BUCKET
           value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}
@@ -142,3 +145,18 @@ spec:
             - key: {{.Values.edgeGateways.secretKeyRef.key}}
               fileName: gateways.yml
 
+      livenessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.infraApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+
+      readinessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.infraApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10

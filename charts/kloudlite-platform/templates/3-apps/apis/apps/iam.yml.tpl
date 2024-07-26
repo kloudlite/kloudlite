@@ -35,11 +35,10 @@ spec:
         min: "50Mi"
         max: "100Mi"
       env:
-
         - key: MONGO_DB_URI
           type: secret
           refName: mres-iam-db-creds
-          refKey: URI
+          refKey: .CLUSTER_LOCAL_URI
 
         - key: MONGO_DB_NAME
           type: secret
@@ -48,6 +47,9 @@ spec:
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.global.cookieDomain}}"
+
+        - key: ACCOUNTS_GRPC_ADDR
+          value: accounts-api:{{.Values.apps.accountsApi.configuration.grpcPort}}
 
         - key: GRPC_PORT
           value: "3001"

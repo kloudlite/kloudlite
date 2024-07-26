@@ -86,5 +86,6 @@ helm show values kloudlite/kloudlite-agent
 | helmCharts.vector.enabled | bool | `true` |  |
 | helmCharts.vector.nodeSelector | object | `{}` |  |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
+| kloudliteDNSSuffix | string | `""` |  |
 | kloudliteRelease | string | `""` | kloudlite release version, defaults to `Helm AppVersion` |
 | messageOfficeGRPCAddr | string | `""` | kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port', grpc-api.domain.com:443 |

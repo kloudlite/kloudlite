@@ -9,14 +9,12 @@ Kloudlite Nodepools enables nodepool management with kloudlite orchesterated kub
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | accountName | string | `""` | required only for labelling cloudprovider VMs |
-| cloudprovider.k3s.joinToken | string | `""` | k3s worker nodes join token |
-| cloudprovider.k3s.serverPublicHost | string | `""` | k3s masters public dns host, so that workers can join them |
-| cloudprovider.name | string | `""` |  |
-| cloudprovider.region | string | `""` |  |
 | clusterName | string | `""` | required only for labelling cloudprovider VMs |
-| kloudliteRelease | string | `""` |  |
+| k3s.joinToken | string | `""` | k3s worker nodes join token |
+| k3s.serverPublicHost | string | `""` | k3s masters public dns host, so that workers can join them |
+| kloudliteRelease | string | `""` | kloudlite release version, to pick container images |
 | nodepoolJob.image.pullPolicy | string | `""` | image pull policy for kloudlite iac job, default is `Values.imagePullPolicy` |
-| nodepoolJob.image.repository | string | `"ghcr.io/kloudlite/kloudlite/iac-job"` | kloudlite iac job image repository |
+| nodepoolJob.image.repository | string | `"ghcr.io/kloudlite/kloudlite/infrastructure-as-code/iac-job"` | kloudlite iac job image repository |
 | nodepoolJob.image.tag | string | `""` | image tag for kloudlite iac job, by default uses `.Values.kloudliteRelease` |
 | nodepoolJob.nodeAffinity | object | `{}` |  |
 | nodepoolJob.nodeSelector | object | `{}` |  |
