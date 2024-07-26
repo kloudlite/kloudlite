@@ -260,7 +260,7 @@ const SecretItemResources = ({
           return true;
         }
         return false;
-      }),
+      })
     );
   }, [searchText, modifiedItems]);
 

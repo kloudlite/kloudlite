@@ -40,7 +40,7 @@ type BaseType = ExtractNodeType<IImportedManagedResources>;
 const parseItem = (item: BaseType, templates: IMSvTemplates) => {
   const logoUrl = getManagedTemplateLogo(
     templates,
-    item.managedResource?.spec?.resourceTemplate.apiVersion || '',
+    item.managedResource?.spec?.resourceTemplate.apiVersion || ''
   );
   return {
     name: item?.displayName,
@@ -272,7 +272,7 @@ const ManagedResourceResourcesV2 = ({
   templates: IMSvTemplates;
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null,
+    null
   );
   const [showSecret, setShowSecret] = useState<BaseType | null>(null);
   const api = useConsoleApi();
@@ -284,7 +284,7 @@ const ManagedResourceResourcesV2 = ({
   useWatchReload(
     items.map((i) => {
       return `account:${account}.environment:${environment}.managed_resource:${i.name}`;
-    }),
+    })
   );
 
   const props: IResource = {

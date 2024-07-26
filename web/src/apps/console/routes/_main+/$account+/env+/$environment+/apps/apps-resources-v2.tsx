@@ -38,9 +38,9 @@ import { Badge } from '~/components/atoms/badge';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import { NN } from '~/root/lib/types/common';
 import { getClusterStatus } from '~/console/utils/commons';
+import TooltipV2 from '~/components/atoms/tooltipV2';
 import HandleIntercept from './handle-intercept';
 import { IEnvironmentContext } from '../_layout';
-import TooltipV2 from '~/components/atoms/tooltipV2';
 
 const RESOURCE_NAME = 'app';
 type BaseType = ExtractNodeType<IApps>;
@@ -128,7 +128,7 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
       icon: <GearSix size={iconSize} />,
       type: 'item',
       to: `/${account}/env/${environment}/app/${parseName(
-        item,
+        item
       )}/settings/general`,
       key: 'settings',
     },
@@ -339,7 +339,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
               },
             },
             to: `/${parseName(account)}/env/${parseName(
-              environment,
+              environment
             )}/app/${id}`,
           };
         }),
@@ -359,9 +359,9 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
   useWatchReload(
     items.map((i) => {
       return `account:${parseName(account)}.environment:${parseName(
-        environment,
+        environment
       )}.app:${parseName(i)}`;
-    }),
+    })
   );
 
   const interceptApp = async (item: BaseType, intercept: boolean) => {
@@ -388,7 +388,7 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
           intercept
             ? 'App Intercepted successfully'
             : 'App Intercept removed successfully'
-        }`,
+        }`
       );
       reload();
     } catch (error) {

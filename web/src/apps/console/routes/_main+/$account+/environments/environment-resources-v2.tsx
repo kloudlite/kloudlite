@@ -248,11 +248,11 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   useWatchReload(
     items.map((i) => {
       return `account:${parseName(account)}.environment:${parseName(i)}`;
-    }),
+    })
   );
 
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null,
+    null
   );
   const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();

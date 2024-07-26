@@ -49,9 +49,8 @@ import { Badge } from '~/components/atoms/badge';
 // import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
 import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
-import Tooltip from '~/components/atoms/tooltip';
-import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 import TooltipV2 from '~/components/atoms/tooltipV2';
+import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
 type ByokBaseType = ExtractNodeType<IByocClusters> & { type: 'byok' };
@@ -121,7 +120,7 @@ const ByokInstructionsPopup = ({
       return api.getBYOKClusterInstructions({
         name: item.metadata.name,
       });
-    },
+    }
   );
 
   return (
@@ -531,7 +530,7 @@ const ClusterResourcesV2 = ({
   useWatchReload(
     bItems.map((i) => {
       return `account:${parseName(account)}.cluster:${parseName(i)}`;
-    }),
+    })
   );
 
   const [showDeleteDialog, setShowDeleteDialog] =
