@@ -96,7 +96,6 @@ const Devices = () => {
             return null;
           }
 
-          const { pageInfo, totalCount } = devicesData;
           return (
             <Wrapper
               secondaryHeader={{
@@ -116,10 +115,7 @@ const Devices = () => {
               empty={getEmptyState({
                 deviceCount: vpnDevices.length,
               })}
-              pagination={{
-                pageInfo,
-                totalCount,
-              }}
+              pagination={devicesData}
               tools={<Tools />}
             >
               <VPNResourcesV2 items={vpnDevices} />

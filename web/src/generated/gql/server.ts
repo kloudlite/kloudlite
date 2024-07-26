@@ -7882,6 +7882,7 @@ export type AuthCli_GetConfigQuery = {
 };
 
 export type AuthCli_ListAppsQueryVariables = Exact<{
+  pq?: InputMaybe<CursorPaginationIn>;
   envName: Scalars['String']['input'];
 }>;
 
@@ -7935,6 +7936,7 @@ export type AuthCli_ListAppsQuery = {
 };
 
 export type AuthCli_ListConfigsQueryVariables = Exact<{
+  pq?: InputMaybe<CursorPaginationIn>;
   envName: Scalars['String']['input'];
 }>;
 
