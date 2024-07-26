@@ -114,6 +114,9 @@ helm show values kloudlite/kloudlite-platform
 | apps.gatewayApi.configuration.replicas | int | `1` |  |
 | apps.gatewayApi.image.repository | string | `"ghcr.io/kloudlite/kloudlite/api/gateway"` |  |
 | apps.gatewayApi.image.tag | string | `""` |  |
+| apps.healthApi.configuration.httpPort | int | `3000` |  |
+| apps.healthApi.configuration.replicas | int | `2` |  |
+| apps.healthApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/kube-svc-health","tag":""}` | image (with tag) for console api |
 | apps.iamApi.configuration.grpcPort | int | `3001` |  |
 | apps.iamApi.configuration.httpPort | int | `3000` |  |
 | apps.iamApi.configuration.replicas | int | `1` |  |
@@ -159,6 +162,21 @@ helm show values kloudlite/kloudlite-platform
 | cloudflareWildCardCert.domains[0] | string | `"*.platform.kloudlite.io"` | should default to basedomain |
 | cloudflareWildCardCert.enabled | bool | `true` |  |
 | cloudflareWildCardCert.tlsSecretName | string | `"kl-cert-wildcard-tls"` |  |
+| crons.mongoBackup.configuration.encryptionPassword | string | `""` |  |
+| crons.mongoBackup.configuration.image | string | `"mongo:latest"` |  |
+| crons.mongoBackup.configuration.numBackups | int | `5` |  |
+| crons.mongoBackup.configuration.schedule | string | `"0 */2 * * *"` |  |
+| crons.mongoBackup.name | string | `"mongo-backup"` |  |
+| crons.natsBackup.configuration.encryptionPassword | string | `""` |  |
+| crons.natsBackup.configuration.image | string | `"natsio/nats-box:latest"` |  |
+| crons.natsBackup.configuration.numBackups | int | `5` |  |
+| crons.natsBackup.configuration.schedule | string | `"0 */2 * * *"` |  |
+| crons.natsBackup.name | string | `"nats-backup"` |  |
+| csiS3.s3.accessKey | string | `""` |  |
+| csiS3.s3.bucketName | string | `""` |  |
+| csiS3.s3.endpoint | string | `""` |  |
+| csiS3.s3.secretKey | string | `""` |  |
+| csiS3.storageClass | string | `"csi-s3"` |  |
 | descheduler.enabled | bool | `true` |  |
 | distribution.domain | string | `"cr.khost.dev"` |  |
 | distribution.secret | string | `"<distribution-secret>"` |  |
@@ -196,13 +214,18 @@ helm show values kloudlite/kloudlite-platform
 | envVars.nats.streams.events.maxMsgsPerSubject | int | `2` |  |
 | envVars.nats.streams.events.name | string | `"events"` |  |
 | envVars.nats.streams.events.subjects | string | `"events.>"` |  |
-| envVars.nats.streams.logs.maxAge | string | `"3h"` |  |
-| envVars.nats.streams.logs.maxMsgBytes | string | `"2MB"` |  |
-| envVars.nats.streams.logs.name | string | `"logs"` |  |
-| envVars.nats.streams.logs.subjects | string | `"logs.>"` |  |
+| envVars.nats.streams.receiveFromAgent.maxMsgBytes | string | `"500kB"` |  |
+| envVars.nats.streams.receiveFromAgent.maxMsgsPerSubject | int | `1` |  |
+| envVars.nats.streams.receiveFromAgent.name | string | `"receive-from-agent"` |  |
+| envVars.nats.streams.receiveFromAgent.subjects | string | `"receive-from-agent.>"` |  |
+| envVars.nats.streams.receiveFromAgent.workQueue | bool | `true` |  |
 | envVars.nats.streams.resourceSync.maxMsgBytes | string | `"500kB"` |  |
 | envVars.nats.streams.resourceSync.name | string | `"resource-sync"` |  |
 | envVars.nats.streams.resourceSync.subjects | string | `"resource-sync.>"` |  |
+| envVars.nats.streams.sendToAgent.maxMsgBytes | string | `"500kB"` |  |
+| envVars.nats.streams.sendToAgent.name | string | `"send-to-agent"` |  |
+| envVars.nats.streams.sendToAgent.subjects | string | `"send-to-agent.>"` |  |
+| envVars.nats.streams.sendToAgent.workQueue | bool | `true` |  |
 | envVars.nats.url | string | `"nats://nats:4222"` |  |
 | global.accountName | string | `"kloudlite"` | kloudlite account name, required only for labelling purposes, does not need to be a real kloudlite account name |
 | global.baseDomain | string | `"platform.kloudlite.io"` | base domain for all routers exposed through this culuster |
@@ -214,6 +237,7 @@ helm show values kloudlite/kloudlite-platform
 | global.imagePullPolicy | string | `""` | image pull policies for kloudlite pods, belonging to this chart, could be Always | IfNotPresent |
 | global.ingressClassName | string | `"ingress-nginx"` |  |
 | global.isDev | bool | `false` |  |
+| global.kloudliteDNSSuffix | string | `""` |  |
 | global.kloudlite_release | string | `""` | if not set, defaults to .Chart.AppVersion |
 | global.nodeSelector | object | `{}` |  |
 | global.normalSvcAccount | string | `"kloudlite-svc-account"` | service account for non k8s operations, just for specifying image pull secrets |
@@ -315,6 +339,18 @@ helm show values kloudlite/kloudlite-platform
 | prometheus.configuration.prometheus.volumeSize | string | `"2Gi"` |  |
 | prometheus.enabled | bool | `true` |  |
 | prometheus.name | string | `"prometheus"` |  |
+| scheduling.stateful.nodeSelector | object | `{}` |  |
+| scheduling.stateful.tolerations[0].effect | string | `"NoExecute"` |  |
+| scheduling.stateful.tolerations[0].key | string | `"kloudlite.io/nodepool.role"` |  |
+| scheduling.stateful.tolerations[0].operator | string | `"Equal"` |  |
+| scheduling.stateful.tolerations[0].value | string | `"stateful"` |  |
+| scheduling.stateful.topologySpreadConstraints | list | `[]` |  |
+| scheduling.stateless.nodeSelector | object | `{}` |  |
+| scheduling.stateless.tolerations[0].effect | string | `"NoExecute"` |  |
+| scheduling.stateless.tolerations[0].key | string | `"kloudlite.io/nodepool.role"` |  |
+| scheduling.stateless.tolerations[0].operator | string | `"Equal"` |  |
+| scheduling.stateless.tolerations[0].value | string | `"stateless"` |  |
+| scheduling.stateless.topologySpreadConstraints | list | `[]` |  |
 | sendGrid.apiKey | string | `""` | sendgrid api key for email communications, if (sendgrid.enabled) |
 | sendGrid.supportEmail | string | `""` | email through which we should be sending emails to target users, if (sendgrid.enabled) |
 | vector.enabled | bool | `true` |  |
