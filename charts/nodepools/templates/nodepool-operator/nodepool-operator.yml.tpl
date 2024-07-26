@@ -1,15 +1,14 @@
 {{ $name := "nodepool-operator" }}
 
 ---
-
 apiVersion: v1
 kind: Secret
 metadata:
   name: {{$name}}
   namespace: {{.Release.Namespace}}
 data:
-  k3s_join_token: {{.Values.k3sJoinToken | b64enc}}
-
+  k3s_join_token: {{.Values.k3s.joinToken | b64enc}}
+  k3s_server_public_host: {{.Values.k3s.serverPublicHost | b64enc}}
 ---
 
 apiVersion: apps/v1
@@ -35,9 +34,9 @@ spec:
       tolerations: {{.Values.nodepoolOperator.tolerations |  toYaml | nindent 8}}
 
       affinity: 
-        nodeAffinity: {{.Values.nodeepoolOperator.nodeAffinity | toYaml | nindent 10 }}
+        nodeAffinity: {{.Values.nodepoolOperator.nodeAffinity | toYaml | nindent 10 }}
 
-      priorityClassName: nodepool-critical
+      priorityClassName: {{ include "priority-class.name" .}}
 
       containers:
         - args:
@@ -50,12 +49,6 @@ spec:
 
             - name: ENABLE_NODEPOOLS
               value: "true"
-
-            - name: CLOUD_PROVIDER_NAME
-              value: {{.Values.cloudprovider.name}}
-
-            - name: CLOUD_PROVIDER_REGION
-              value: {{.Values.cloudprovider.region}}
 
             - name: KLOUDLITE_RELEASE
               value: {{.Values.kloudliteRelease}}
@@ -73,7 +66,10 @@ spec:
                   key: k3s_join_token
 
             - name: "K3S_SERVER_PUBLIC_HOST"
-              value: "{{.Values.cloudprovider.k3s.serverPublicHost}}"
+              valueFrom:
+                secretKeyRef:
+                  name: {{$name}}
+                  key: k3s_server_public_host
 
             - name: "TF_STATE_SECRET_NAMESPACE"
               value: "{{.Release.Namespace}}"
@@ -89,6 +85,10 @@ spec:
           name: manager
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
           livenessProbe:
             httpGet:
               path: /healthz
@@ -103,21 +103,5 @@ spec:
             periodSeconds: 10
           resources: {{.Values.nodepoolOperator.resources | toYaml | nindent 12}}
 
-      serviceAccountName: "nodepool-operator"
+      serviceAccountName: {{ include "service-account.name" .}}
       terminationGracePeriodSeconds: 10
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{$name}}-metrics
-  namespace: {{.Release.Namespace}}
-  labels: &labels
-    app: {{$name}}
-spec:
-  ports:
-    - name: metrics
-      port: 9090
-      protocol: TCP
-  selector: *labels

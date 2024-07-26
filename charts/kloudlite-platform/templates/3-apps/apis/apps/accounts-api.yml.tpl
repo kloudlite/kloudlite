@@ -43,7 +43,7 @@ spec:
         - key: MONGO_URI
           type: secret
           refName: mres-accounts-db-creds
-          refKey: URI
+          refKey: .CLUSTER_LOCAL_URI
 
         - key: MONGO_DB_NAME
           type: secret
@@ -84,3 +84,20 @@ spec:
           items:
             - key: {{.Values.edgeGateways.secretKeyRef.key}}
               fileName: gateways.yml
+
+      livenessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.accountsApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+
+      readinessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.accountsApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+

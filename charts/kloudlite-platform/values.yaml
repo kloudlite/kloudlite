@@ -55,6 +55,8 @@ global:
 
   ingressClassName: "ingress-nginx"
 
+  kloudliteDNSSuffix: ""
+
 # Cluster Management
 certManager:
   # -- whether to enable cert-manager
@@ -79,11 +81,33 @@ ingressController:
       - key: node-role.kubernetes.io/master
         effect: NoSchedule
 
+scheduling:
+  stateful:
+    nodeSelector: {}
+    tolerations:
+      - key: "kloudlite.io/nodepool.role"
+        operator: "Equal"
+        value: "stateful"
+        effect: "NoExecute"
+    topologySpreadConstraints: []
+  stateless:
+    nodeSelector: {}
+    tolerations:
+      - key: "kloudlite.io/nodepool.role"
+        operator: "Equal"
+        value: "stateless"
+        effect: "NoExecute"
+    topologySpreadConstraints: []
+
 nodepools:
   stateless:
     labels:
       kloudlite.io/nodepool.role: "stateless"
     tolerations: []
+    #   - key: "kloudlite.io/nodepool.role"
+    #     operator: "Equal"
+    #     value: "stateless"
+    #     effect: "NoExecute"
     # taints
     #   - key: "kloudlite.io/nodepool.role"
     #     value: "stateless"
@@ -230,6 +254,18 @@ mongo:
     dbURL: ""
     authDBName: ""
 
+# setting up csi-s3 driver
+csiS3:
+  storageClass: "csi-s3"
+  s3:
+    accessKey: ""
+    secretKey: ""
+
+    # https endpoint like https://s3.ap-south-1.amazonaws.com
+    endpoint: ""
+
+    bucketName: ""
+
 # Storage
 persistence:
   storageClasses:
@@ -357,6 +393,15 @@ apps:
       replicas: 1
       grpcPort: 3001
 
+  healthApi:
+    # -- image (with tag) for console api
+    image:
+      repository: ghcr.io/kloudlite/kloudlite/api/kube-svc-health
+      tag: ""
+    configuration:
+      replicas: 2
+      httpPort: 3000
+
   consoleApi:
     # -- image (with tag) for console api
     image:
@@ -475,13 +520,6 @@ apps:
       replicas: 1
       httpPort: "3000"
 
-  iotConsoleApi:
-    image:
-      repository: "ghcr.io/kloudlite/kloudlite/api/iot-console"
-      tag: ""
-    configuration:
-      replicas: 1
-
   consoleWeb:
     enabled: true
     # -- image (with tag) for console web
@@ -569,7 +607,6 @@ envVars:
     authDB: auth-db
     consoleDB: console-db
     commsDB: comms-db
-    iotConsoleDB: "iot-console-db"
     accountsDB: accounts-db
     registryDB: registry-db
     eventsDB: events-db
@@ -593,7 +630,7 @@ envVars:
         maxMsgBytes: 500kB
         # maxMsgsPerSubject: 2
 
-      send-to-agent:
+      sendToAgent:
         name: send-to-agent
         subjects: "send-to-agent.>"
         maxMsgBytes: 500kB
@@ -601,7 +638,7 @@ envVars:
         workQueue: true
         # maxMsgsPerSubject: 2
 
-      receive-from-agent:
+      receiveFromAgent:
         name: receive-from-agent
         subjects: "receive-from-agent.>"
         maxMsgBytes: 500kB
@@ -624,9 +661,25 @@ envVars:
       consoleCacheBucket:
         name: console-cache
         storage: file
-      iotConsoleCacheBucket:
-        name: iot-console-cache
-        storage: file
       resetTokenBucket:
         name: reset-token
         storage: file
+
+crons:
+  mongoBackup:
+    name: mongo-backup
+    configuration:
+      image: mongo:latest
+      # mongodbUri: ""
+      numBackups: 5
+      schedule: "0 */2 * * *" # Runs every 2 hours
+      encryptionPassword: ""
+  natsBackup:
+    name: nats-backup
+    configuration:
+      image: natsio/nats-box:latest
+      # server: ""
+      numBackups: 5
+      schedule: "0 */2 * * *" # Runs every 2 hours
+      # bucket: ""
+      encryptionPassword: ""

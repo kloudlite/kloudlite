@@ -19,7 +19,7 @@ spec:
 
   services:
     - port: {{.Values.apps.consoleApi.configuration.httpPort | int }}
-    - port: {{.Values.apps.consoleApi.configuration.grcPort | int }}
+    - port: {{.Values.apps.consoleApi.configuration.grpcPort | int }}
 
   containers:
     - name: main
@@ -45,10 +45,16 @@ spec:
         - key: COOKIE_DOMAIN
           value: "{{.Values.global.cookieDomain}}"
 
+        - key: DNS_ADDR
+          value: :5353
+
+        - key: KLOUDLITE_DNS_SUFFIX
+          value: "{{.Values.global.kloudliteDNSSuffix}}"
+
         - key: MONGO_URI
           type: secret
           refName: mres-console-db-creds
-          refKey: URI
+          refKey: .CLUSTER_LOCAL_URI
 
         - key: MONGO_DB_NAME
           type: secret
@@ -64,8 +70,8 @@ spec:
         - key: NATS_URL
           value: {{.Values.envVars.nats.url}}
 
-        - key: NATS_RESOURCE_STREAM
-          value: {{.Values.envVars.nats.streams.resourceSync.name}}
+        - key: NATS_RECEIVE_FROM_AGENT_STREAM
+          value: {{.Values.envVars.nats.streams.receiveFromAgent.name}}
 
         - key: SESSION_KV_BUCKET
           value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}
@@ -93,9 +99,26 @@ spec:
 
         - key: DEVICE_NAMESPACE
           value: {{.Values.apps.consoleApi.configuration.vpnDeviceNamespace}}
+
       volumes:
         - mountPath: /console.d/templates
           type: config
           refName: managed-svc-template
           items:
             - key: managed-svc-templates.yml
+
+      livenessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.consoleApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+
+      readinessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.consoleApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10

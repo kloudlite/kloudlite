@@ -40,7 +40,7 @@ spec:
         - key: MONGO_URI
           type: secret
           refName: mres-{{.Values.envVars.db.authDB}}-creds
-          refKey: URI
+          refKey: .CLUSTER_LOCAL_URI
 
         - key: MONGO_DB_NAME
           type: secret
@@ -92,3 +92,20 @@ spec:
             - key: github-app-pk.pem
               fileName: github-app-pk.pem
       {{- end }}
+
+      livenessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.consoleApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+
+      readinessProbe:
+        type: httpGet
+        httpGet:
+          path: /_healthy
+          port: {{.Values.apps.consoleApi.configuration.httpPort}}
+        initialDelay: 5
+        interval: 10
+

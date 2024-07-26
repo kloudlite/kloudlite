@@ -57,6 +57,9 @@ spec:
         - key: NATS_URL
           value: "nats://nats:4222"
 
+        - key: NATS_STREAM
+          value: "nats://nats:4222"
+
         - key: GIT_WEBHOOKS_TOPIC
           value: "{{.Values.global.cookieDomain}}"
 
