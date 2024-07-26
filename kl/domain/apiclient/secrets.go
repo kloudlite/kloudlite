@@ -28,7 +28,7 @@ func (apic *apiClient) ListSecrets(accountName string, envName string) ([]Secret
 
 	respData, err := klFetch("cli_listSecrets", map[string]any{
 		"pq": map[string]any{
-			"orderBy":       "name",
+			"orderBy":       "updateTime",
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},

@@ -36,7 +36,7 @@ func (apic *apiClient) ListConfigs(accountName string, envName string) ([]Config
 
 	respData, err := klFetch("cli_listConfigs", map[string]any{
 		"pq": map[string]any{
-			"orderBy":       "name",
+			"orderBy":       "updateTime",
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},

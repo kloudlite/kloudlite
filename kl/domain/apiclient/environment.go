@@ -60,7 +60,7 @@ func (apic *apiClient) ListEnvs(accountName string) ([]Env, error) {
 
 	respData, err := klFetch("cli_listEnvironments", map[string]any{
 		"pq": map[string]any{
-			"orderBy":       "name",
+			"orderBy":       "updateTime",
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},

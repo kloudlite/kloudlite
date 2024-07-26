@@ -2,15 +2,15 @@ package apiclient
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
-
 	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
+	"os"
 )
 
 var PaginationDefault = map[string]any{
-	"orderBy":       "name",
+	"orderBy":       "updateTime",
 	"sortDirection": "ASC",
 	"first":         99999999,
 }
@@ -220,7 +220,9 @@ func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
 
 	if devName == "" {
 		avc, err := fc.GetVpnAccountConfig(accountName)
-		if err != nil {
+		if err != nil && os.IsNotExist(err) {
+			return nil
+		} else if err != nil {
 			return functions.NewE(err)
 		}
 
