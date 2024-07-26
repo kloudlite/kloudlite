@@ -16,7 +16,10 @@ import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
   ListItem,
+  ListItemV2,
   ListTitle,
+  ListTitleV2,
+  listClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
@@ -53,6 +56,7 @@ import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import Tooltip from '~/components/atoms/tooltip';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
+import TooltipV2 from '~/components/atoms/tooltipV2';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
 type ByokBaseType = ExtractNodeType<IByocClusters> & { type: 'byok' };
@@ -122,7 +126,7 @@ const ByokInstructionsPopup = ({
       return api.getBYOKClusterInstructions({
         name: item.metadata.name,
       });
-    }
+    },
   );
 
   return (
@@ -221,13 +225,9 @@ const GetByokClusterMessage = ({
   switch (true) {
     case timeDifference <= 2:
       return (
-        <ListItem
-          data={
-            <div className="flex flex-row gap-sm">
-              <span>Attached Cluster</span>
-            </div>
-          }
-        />
+        <div className="flex flex-row gap-sm bodyMd-medium text-text-strong pulsable">
+          <span>Attached Cluster</span>
+        </div>
       );
     default:
       return <ByokButton item={item} />;
@@ -235,7 +235,8 @@ const GetByokClusterMessage = ({
 };
 
 const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
-  if (lastOnlineAt === null) {
+  const tooltipOffset = 5;
+  if (lastOnlineAt === null || typeof lastOnlineAt === 'object') {
     return <Badge type="warning">Offline</Badge>;
   }
 
@@ -248,9 +249,10 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
   switch (true) {
     case timeDifference <= 2:
       return (
-        <Tooltip.Root
+        <TooltipV2
           className="!w-fit !max-w-[500px]"
-          side="top"
+          place="top"
+          offset={tooltipOffset}
           content={
             <div className="flex-1 bodySm text-text-strong pulsable whitespace-normal">
               Last seen ({Math.floor(timeDifference * 60)}s ago)
@@ -260,13 +262,14 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
           <div>
             <Badge type="info">Online</Badge>
           </div>
-        </Tooltip.Root>
+        </TooltipV2>
       );
     case timeDifference > 2:
       return (
-        <Tooltip.Root
+        <TooltipV2
           className="!w-fit !max-w-[500px]"
-          side="top"
+          place="top"
+          offset={tooltipOffset}
           content={
             <div className="flex-1 bodySm text-text-strong pulsable whitespace-normal">
               Last seen ({Math.floor(timeDifference * 60)}s ago)
@@ -276,13 +279,14 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
           <div>
             <Badge type="warning">Offline</Badge>
           </div>
-        </Tooltip.Root>
+        </TooltipV2>
       );
     default:
       return (
-        <Tooltip.Root
+        <TooltipV2
           className="!w-fit !max-w-[500px]"
-          side="top"
+          place="top"
+          offset={tooltipOffset}
           content={
             <div className="flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal">
               {lastOnlineAt}
@@ -292,7 +296,7 @@ const GetSyncStatus = ({ lastOnlineAt }: { lastOnlineAt: string }) => {
           <div>
             <Badge type="warning">Offline</Badge>
           </div>
-        </Tooltip.Root>
+        </TooltipV2>
       );
   }
 };
@@ -430,28 +434,28 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
               </div>
             ),
             name: 'name',
-            className: 'w-[280px]',
+            className: listClass.title,
           },
           {
             render: () => '',
             name: 'provider',
-            className: 'flex flex-1 ',
+            className: listClass.flex,
           },
           {
             render: () => 'Status',
             name: 'status',
-            className: 'min-w-[150px] max-w-[150px]',
+            className: listClass.status,
           },
 
           {
             render: () => 'Updated',
             name: 'updated',
-            className: 'w-[180px]',
+            className: listClass.updated,
           },
           {
             render: () => '',
             name: 'action',
-            className: 'w-[24px]',
+            className: listClass.action,
           },
         ],
         rows: items.map((i) => {
@@ -465,7 +469,7 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
             columns: {
               name: {
                 render: () => (
-                  <ListTitle
+                  <ListTitleV2
                     title={name}
                     subtitle={id}
                     avatar={<ConsoleAvatar name={id} />}
@@ -475,14 +479,10 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
               provider: {
                 render: () =>
                   i.type === 'normal' ? (
-                    <ListItem
-                      data={
-                        <span>
-                          <span className="pr-lg">Managed by kloudlite on</span>{' '}
-                          {provider}
-                        </span>
-                      }
-                    />
+                    <span className="bodyMd-medium text-text-strong pulsable">
+                      <span className="pr-lg">Managed by kloudlite on</span>{' '}
+                      {provider}
+                    </span>
                   ) : (
                     <GetByokClusterMessage
                       lastOnlineAt={i.lastOnlineAt}
@@ -495,7 +495,7 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
               },
               updated: {
                 render: () => (
-                  <ListItem
+                  <ListItemV2
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
@@ -543,7 +543,7 @@ const ClusterResourcesV2 = ({
   useWatchReload(
     finalItems.map((i) => {
       return `account:${parseName(account)}.cluster:${parseName(i)}`;
-    })
+    }),
   );
 
   const [showDeleteDialog, setShowDeleteDialog] =

@@ -14,6 +14,7 @@ import {
   Github__Com___Kloudlite___Operator___Pkg___Operator__CheckMetaIn as ICheckList,
 } from '~/root/src/generated/gql/server';
 import { Badge } from '~/components/atoms/badge';
+import TooltipV2 from '~/components/atoms/tooltipV2';
 
 interface IStatusMetaV2 {
   recordVersion: number;
@@ -216,7 +217,7 @@ const parseOverallState = (item: IStatusMetaV2): OverallStates => {
     {
       value: 'idle',
       progress: 'init',
-    }
+    },
   );
 
   return (mainStatus?.value as OverallStates) || 'idle';
@@ -359,7 +360,7 @@ export const SyncStatusV2 = ({
         } & ICheckList)[],
         message: '',
         progress: 'init',
-      }
+      },
     );
 
     return items?.items;
@@ -396,9 +397,10 @@ export const SyncStatusV2 = ({
 
   return (
     <div>
-      <Tooltip.Root
-        align="center"
-        className="!max-w-[300px]"
+      <TooltipV2
+        className="max-w-[300px]"
+        place="right"
+        offset={5}
         content={
           isByok ? (
             <div className="p-md flex flex-col gap-lg">
@@ -448,7 +450,7 @@ export const SyncStatusV2 = ({
             }).component
           }
         </div>
-      </Tooltip.Root>
+      </TooltipV2>
     </div>
   );
 };

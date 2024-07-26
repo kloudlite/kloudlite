@@ -8,7 +8,10 @@ import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
+  ListItemV2,
   ListTitle,
+  ListTitleV2,
+  listClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
@@ -33,11 +36,11 @@ import ListV2 from '~/console/components/listV2';
 import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
-import Tooltip from '~/components/atoms/tooltip';
 import { NN } from '~/root/lib/types/common';
 import { getClusterStatus } from '~/console/utils/commons';
 import HandleIntercept from './handle-intercept';
 import { IEnvironmentContext } from '../_layout';
+import TooltipV2 from '~/components/atoms/tooltipV2';
 
 const RESOURCE_NAME = 'app';
 type BaseType = ExtractNodeType<IApps>;
@@ -75,16 +78,12 @@ const InterceptPortView = ({
   devName: string;
 }) => {
   return (
-    <div className="flex flex-row items-center gap-md">
-      <Tooltip.Root
-        align="start"
-        side="top"
-        className="!max-w-fit "
+    <div className="flex flex-row items-center gap-md pulsable">
+      <TooltipV2
         content={
           <div>
             <span className="bodyMd-medium text-text-soft">
-              {' '}
-              intercepted to{' '}
+              Intercepted to{' '}
               <span className="bodyMd-medium text-text-strong">{devName}</span>
             </span>
             <div className="flex flex-row gap-md py-md">
@@ -115,7 +114,7 @@ const InterceptPortView = ({
             </span>
           </span>
         </div>
-      </Tooltip.Root>
+      </TooltipV2>
     </div>
   );
 };
@@ -129,7 +128,7 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
       icon: <GearSix size={iconSize} />,
       type: 'item',
       to: `/${account}/env/${environment}/app/${parseName(
-        item
+        item,
       )}/settings/general`,
       key: 'settings',
     },
@@ -181,7 +180,6 @@ interface IResource {
 const AppServiceView = ({ service }: { service: string }) => {
   return (
     <CopyContentToClipboard
-      toolTip
       content={service}
       toastMessage="App service url copied successfully."
     />
@@ -251,7 +249,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
           {
             render: () => 'Name',
             name: 'name',
-            className: 'w-[180px]',
+            className: listClass.title,
           },
           {
             render: () => '',
@@ -261,7 +259,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
           {
             render: () => '',
             name: 'flex-pre',
-            className: 'flex-1',
+            className: listClass.flex,
           },
           {
             render: () => 'Service',
@@ -271,22 +269,27 @@ const ListView = ({ items = [], onAction }: IResource) => {
           {
             render: () => '',
             name: 'flex-post',
-            className: 'flex-1',
+            className: listClass.flex,
           },
           {
             render: () => 'Status',
             name: 'status',
-            className: 'w-[180px] ',
+            className: 'min-w-[120px]',
+          },
+          {
+            render: () => '',
+            name: 'flex-post',
+            className: listClass.flex,
           },
           {
             render: () => 'Updated',
             name: 'updated',
-            className: 'w-[180px]',
+            className: listClass.updated,
           },
           {
             render: () => '',
             name: 'action',
-            className: 'w-[24px]',
+            className: listClass.action,
           },
         ],
         rows: items.map((i) => {
@@ -296,7 +299,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
           return {
             columns: {
               name: {
-                render: () => <ListTitle title={name} subtitle={id} />,
+                render: () => <ListTitleV2 title={name} subtitle={id} />,
               },
               intercept: {
                 render: () =>
@@ -310,11 +313,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
                   ) : null,
               },
               service: {
-                render: () => (
-                  <div className="flex w-fit truncate">
-                    <AppServiceView service={i.serviceHost || ''} />
-                  </div>
-                ),
+                render: () => <AppServiceView service={i.serviceHost || ''} />,
               },
               status: {
                 render: () => (
@@ -329,7 +328,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
               },
               updated: {
                 render: () => (
-                  <ListItem
+                  <ListItemV2
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
@@ -340,7 +339,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
               },
             },
             to: `/${parseName(account)}/env/${parseName(
-              environment
+              environment,
             )}/app/${id}`,
           };
         }),
@@ -360,9 +359,9 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
   useWatchReload(
     items.map((i) => {
       return `account:${parseName(account)}.environment:${parseName(
-        environment
+        environment,
       )}.app:${parseName(i)}`;
-    })
+    }),
   );
 
   const interceptApp = async (item: BaseType, intercept: boolean) => {
@@ -389,7 +388,7 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
           intercept
             ? 'App Intercepted successfully'
             : 'App Intercept removed successfully'
-        }`
+        }`,
       );
       reload();
     } catch (error) {

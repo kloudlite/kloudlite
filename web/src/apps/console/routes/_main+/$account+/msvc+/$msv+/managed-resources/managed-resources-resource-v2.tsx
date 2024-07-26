@@ -2,7 +2,10 @@ import { LockSimple, PencilSimple, Trash } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
+  ListItemV2,
   ListTitle,
+  ListTitleV2,
+  listClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
@@ -163,32 +166,32 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           {
             render: () => 'Resource Name',
             name: 'name',
-            className: 'flex flex-1 w-[80px]',
+            className: listClass.author,
           },
           {
             render: () => 'Resource Type',
             name: 'resource',
-            className: 'w-[160px]',
+            className: listClass.item,
           },
           {
             render: () => '',
             name: 'flex-post',
-            className: 'flex-1',
+            className: listClass.flex,
           },
           {
             render: () => 'Status',
             name: 'status',
-            className: 'flex-1 min-w-[30px]',
+            className: listClass.status,
           },
           {
             render: () => 'Updated',
             name: 'updated',
-            className: 'w-[180px]',
+            className: listClass.updated,
           },
           {
             render: () => '',
             name: 'action',
-            className: 'w-[24px]',
+            className: listClass.action,
           },
         ],
         rows: items.map((i) => {
@@ -196,7 +199,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           return {
             columns: {
               name: {
-                render: () => <ListTitle title={name} subtitle={id} />,
+                render: () => <ListTitleV2 title={name} subtitle={id} />,
               },
               secret: {
                 render: () =>
@@ -212,7 +215,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
               },
               resource: {
                 render: () => (
-                  <ListItem data={`${i.spec?.resourceTemplate?.kind}`} />
+                  <ListItemV2 data={`${i.spec?.resourceTemplate?.kind}`} />
                 ),
               },
               status: {
@@ -225,7 +228,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
               },
               updated: {
                 render: () => (
-                  <ListItem
+                  <ListItemV2
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
@@ -250,7 +253,7 @@ const ManagedResourceResourcesV2 = ({
   templates: IMSvTemplates;
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
+    null,
   );
   const [showSecret, setShowSecret] = useState<BaseType | null>(null);
   const [visible, setVisible] = useState<BaseType | null>(null);
@@ -262,9 +265,9 @@ const ManagedResourceResourcesV2 = ({
   useWatchReload(
     items.map((i) => {
       return `account:${account}.cluster_managed_service:${msv}.managed_resource:${parseName(
-        i
+        i,
       )}`;
-    })
+    }),
   );
 
   const props: IResource = {

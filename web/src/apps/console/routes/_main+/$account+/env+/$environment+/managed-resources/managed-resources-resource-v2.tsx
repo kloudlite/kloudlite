@@ -2,7 +2,10 @@ import { LockSimple, Trash } from '~/console/components/icons';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
+  ListItemV2,
   ListTitle,
+  ListTitleV2,
+  listClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
@@ -37,7 +40,7 @@ type BaseType = ExtractNodeType<IImportedManagedResources>;
 const parseItem = (item: BaseType, templates: IMSvTemplates) => {
   const logoUrl = getManagedTemplateLogo(
     templates,
-    item.managedResource?.spec?.resourceTemplate.apiVersion || ''
+    item.managedResource?.spec?.resourceTemplate.apiVersion || '',
   );
   return {
     name: item?.displayName,
@@ -146,42 +149,42 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           {
             render: () => 'Resource Name',
             name: 'name',
-            className: 'flex flex-1 w-[120px]',
+            className: listClass.title,
           },
           {
             render: () => 'Resource Type',
             name: 'resource',
-            className: 'w-[140px]',
+            className: listClass.item,
           },
           {
             render: () => '',
             name: 'flex-pre',
-            className: 'flex-1',
+            className: listClass.flex,
           },
           {
             render: () => 'Integrated Service',
             name: 'service',
-            className: 'w-[200px]',
+            className: 'w-[175px]',
           },
           {
             render: () => '',
             name: 'flex-post',
-            className: 'flex-1',
+            className: listClass.flex,
           },
           {
             render: () => 'Status',
             name: 'status',
-            className: 'flex-1 min-w-[30px]',
+            className: listClass.status,
           },
           {
             render: () => 'Updated',
             name: 'updated',
-            className: 'w-[180px]',
+            className: listClass.updated,
           },
           {
             render: () => '',
             name: 'action',
-            className: 'w-[24px]',
+            className: listClass.action,
           },
         ],
         rows: items.map((i) => {
@@ -191,7 +194,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
             columns: {
               name: {
                 render: () => (
-                  <ListTitle
+                  <ListTitleV2
                     title={name}
                     subtitle={id}
                     // avatar={
@@ -205,25 +208,26 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
               },
               resource: {
                 render: () => (
-                  <ListItem
+                  <ListItemV2
                     data={`${i.managedResource?.spec?.resourceTemplate?.kind}`}
                   />
                 ),
               },
               service: {
                 render: () => (
-                  <ListItem
-                    data={
-                      <div className="flex flex-row gap-xl">
-                        <span>
-                          <img
-                            src={logo}
-                            alt={`${i.managedResource?.spec?.resourceTemplate?.msvcRef?.name}`}
-                            className="w-4xl h-4xl"
-                          />
-                        </span>
-                        <span>{`${i.managedResource?.spec?.resourceTemplate?.msvcRef?.name}`}</span>
+                  <ListItemV2
+                    pre={
+                      <div className="pulsable">
+                        <img
+                          src={logo}
+                          alt={`${i.managedResource?.spec?.resourceTemplate?.msvcRef?.name}`}
+                          className="w-4xl h-4xl"
+                        />
                       </div>
+                    }
+                    data={
+                      i.managedResource?.spec?.resourceTemplate?.msvcRef
+                        ?.name || ''
                     }
                   />
                 ),
@@ -243,7 +247,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
               },
               updated: {
                 render: () => (
-                  <ListItem
+                  <ListItemV2
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
@@ -268,7 +272,7 @@ const ManagedResourceResourcesV2 = ({
   templates: IMSvTemplates;
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
+    null,
   );
   const [showSecret, setShowSecret] = useState<BaseType | null>(null);
   const api = useConsoleApi();
@@ -280,7 +284,7 @@ const ManagedResourceResourcesV2 = ({
   useWatchReload(
     items.map((i) => {
       return `account:${account}.environment:${environment}.managed_resource:${i.name}`;
-    })
+    }),
   );
 
   const props: IResource = {

@@ -3,7 +3,10 @@ import { useState } from 'react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
+  ListItemV2,
   ListTitle,
+  ListTitleV2,
+  listClass,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
@@ -143,27 +146,27 @@ const ListView = ({ items, onAction }: IResource) => {
               </div>
             ),
             name: 'name',
-            className: 'w-[180px] flex-1',
+            className: listClass.title,
           },
           {
             render: () => 'Registry Url',
             name: 'registryUrl',
-            className: 'flex-1 w-[180px]',
+            className: listClass.item + ' flex-1',
           },
           {
             render: () => 'Username',
             name: 'userName',
-            className: 'w-[180px]',
+            className: listClass.author,
           },
           {
             render: () => 'Updated',
             name: 'updated',
-            className: 'w-[180px]',
+            className: listClass.updated,
           },
           {
             render: () => '',
             name: 'action',
-            className: 'w-[24px]',
+            className: listClass.action,
           },
         ],
         rows: items.map((i) => {
@@ -172,7 +175,7 @@ const ListView = ({ items, onAction }: IResource) => {
             columns: {
               name: {
                 render: () => (
-                  <ListTitle
+                  <ListTitleV2
                     title={name}
                     subtitle={id}
                     avatar={<ConsoleAvatar name={id} />}
@@ -189,11 +192,11 @@ const ListView = ({ items, onAction }: IResource) => {
                 ),
               },
               userName: {
-                render: () => <ListItem data={i.registryUsername} />,
+                render: () => <ListItemV2 data={i.registryUsername} />,
               },
               updated: {
                 render: () => (
-                  <ListItem
+                  <ListItemV2
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
@@ -213,7 +216,7 @@ const ListView = ({ items, onAction }: IResource) => {
 
 const ImagePullSecretsResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
+    null,
   );
   const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
