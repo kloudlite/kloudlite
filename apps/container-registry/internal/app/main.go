@@ -109,7 +109,7 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ReceiveResourceUpdatesConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ContainerRegistryReceiver, common.EventResourceUpdate)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.ContainerRegistryReceiver, common.EventResourceUpdate)
 
 		consumerName := "cr:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
@@ -136,7 +136,7 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ErrorOnApplyConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.ContainerRegistryReceiver, common.EventErrorOnApply)
 
 		consumerName := "cr:error-on-apply"
 

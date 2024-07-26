@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
@@ -28,7 +29,7 @@ var Module = fx.Module("framework",
 		return &fm{env: ev}
 	}),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.Client, error) {
+	fx.Provide(func(ev *env.Env, logger *slog.Logger) (*nats.Client, error) {
 		name := "RUP:nat-client"
 		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   name,

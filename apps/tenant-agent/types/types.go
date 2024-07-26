@@ -12,8 +12,7 @@ type AgentMessage struct {
 	AccountName string `json:"accountName"`
 	ClusterName string `json:"clusterName"`
 
-	Action Action `json:"action"`
-	// Yamls  []byte        `json:"yamls,omitempty"`
+	Action Action         `json:"action"`
 	Object map[string]any `json:"object"`
 }
 
@@ -24,5 +23,4 @@ type AgentErrMessage struct {
 	Error  string         `json:"error"`
 	Action Action         `json:"action"`
 	Object map[string]any `json:"object"`
-	// Yamls  []byte        `json:"yamls"`
 }
