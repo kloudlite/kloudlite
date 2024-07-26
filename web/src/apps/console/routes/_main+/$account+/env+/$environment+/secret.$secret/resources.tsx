@@ -11,7 +11,11 @@ import {
   IShowDialog,
 } from '~/console/components/types.d';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { ListTitle } from '~/console/components/console-list-components';
+import {
+  ListTitle,
+  ListTitleV2,
+  listClass,
+} from '~/console/components/console-list-components';
 import ListV2 from '~/console/components/listV2';
 import Handle from './handle';
 
@@ -194,12 +198,12 @@ const ListView = ({ items, onAction, onShow }: IResource) => {
           {
             render: () => 'Value',
             name: 'value',
-            className: 'flex-1',
+            className: listClass.flex,
           },
           {
             render: () => '',
             name: 'action',
-            className: 'w-[24px]',
+            className: listClass.action,
           },
         ],
         rows: items.map((item) => {
@@ -207,9 +211,7 @@ const ListView = ({ items, onAction, onShow }: IResource) => {
             columns: {
               key: {
                 render: () => (
-                  <ListTitle
-                    title={<span className={cc(item[1])}>{item[0]}</span>}
-                  />
+                  <ListTitleV2 titleClass={cc(item[1])} title={item[0]} />
                 ),
               },
               value: {
@@ -258,7 +260,7 @@ const SecretItemResources = ({
           return true;
         }
         return false;
-      })
+      }),
     );
   }, [searchText, modifiedItems]);
 

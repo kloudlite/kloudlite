@@ -4,7 +4,8 @@ import { cn } from '~/components/utils';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { toast } from '~/components/molecule/toast';
 import { Copy, Check } from '~/console/components/icons';
-import { ListItem } from './console-list-components';
+import { Truncate } from '~/root/lib/utils/common';
+import TooltipV2 from '~/components/atoms/tooltipV2';
 
 interface IDeleteContainer {
   title: ReactNode;
@@ -47,7 +48,7 @@ export const Box = ({ children, title, className }: IBox) => {
     <div
       className={cn(
         'rounded border border-border-default bg-surface-basic-default shadow-button p-3xl flex flex-col gap-3xl ',
-        className
+        className,
       )}
     >
       <div className="text-text-strong headingLg">{title}</div>
@@ -59,13 +60,11 @@ export const Box = ({ children, title, className }: IBox) => {
 export const CopyContentToClipboard = ({
   content,
   toastMessage,
-  label,
-  toolTip = false,
+  truncateLength = 20,
 }: {
   content: string;
   toastMessage: string;
-  label?: ReactNode;
-  toolTip?: boolean;
+  truncateLength?: number;
 }) => {
   const iconSize = 16;
   const { copy } = useClipboard({});
@@ -83,7 +82,7 @@ export const CopyContentToClipboard = ({
 
   return (
     <div
-      className="flex flex-row items-center truncate flex-1 cursor-pointer group"
+      className="flex flex-row items-center flex-1 cursor-pointer group"
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -92,15 +91,15 @@ export const CopyContentToClipboard = ({
         }
       }}
     >
-      <ListItem
-        className="flex-1"
-        noTooltip={!toolTip}
-        data={
-          <span className="cursor-pointer items-center gap-lg hover:text-text-default group-hover:text-text-default group-[.is-data]:truncate">
-            {label || content}
-          </span>
-        }
-      />
+      <span className="bodyMd-medium text-text-strong">
+        {content.length >= truncateLength ? (
+          <TooltipV2 content={content}>
+            <Truncate length={truncateLength}>{content}</Truncate>
+          </TooltipV2>
+        ) : (
+          content
+        )}
+      </span>
       <div className="shrink-0 ml-md">
         {copied ? (
           <span>

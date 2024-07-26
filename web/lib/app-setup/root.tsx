@@ -34,6 +34,7 @@ import { ChildrenProps } from '~/components/types';
 import Page404 from '~/components/organisms/page-404';
 import { getClientEnv, getServerEnv } from '~/root/lib/configs/base-url.cjs';
 import { useDataFromMatches } from '../client/hooks/use-custom-matches';
+import { TooltipContainer } from '~/components/atoms/tooltipV2';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesUrl },
@@ -119,8 +120,8 @@ export function ErrorBoundary() {
               ? error.stack
               : JSON.stringify(error.stack, null, 2)
             : typeof error.stack === 'string'
-            ? error.stack
-            : JSON.stringify(error.stack, null, 2)}
+              ? error.stack
+              : JSON.stringify(error.stack, null, 2)}
         </code>
       </ErrorWrapper>
     );
@@ -261,6 +262,7 @@ const Root = ({
               </Tooltip.Provider>
             </Wrapper>
           )}
+          <TooltipContainer />
         </ProgressContainer>
         <Scripts />
       </body>

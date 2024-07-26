@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
 import Tooltip from '~/components/atoms/tooltip';
+import TooltipV2 from '~/components/atoms/tooltipV2';
 import { cn } from '~/components/utils';
+import { Truncate } from '~/root/lib/utils/common';
 
 interface IBase {
   className?: string;
@@ -126,6 +128,88 @@ const ListItem = ({
   );
 };
 
+const ListItemV2 = ({
+  data,
+  subtitle,
+  className = '',
+  action,
+  noTooltip = false,
+  truncateLength = 20,
+  pre,
+  subtitleClass,
+  titleClass,
+}: {
+  pre?: ReactNode;
+  data?: string;
+  subtitle?: string;
+  noTooltip?: boolean;
+  truncateLength?: number;
+  titleClass?: string;
+  subtitleClass?: string;
+} & IBase) => {
+  return (
+    <div className={cn(BaseStyle, className)}>
+      {pre && <div className="flex-shrink-0">{pre}</div>}
+      <div className="flex flex-col flex-1">
+        {noTooltip ? (
+          <div className="flex flex-col gap-sm max-w-full w-fit pulsable">
+            {data && (
+              <div
+                className={cn(
+                  'flex-1 bodyMd-medium text-text-strong pulsable',
+                  titleClass,
+                )}
+              >
+                <Truncate length={truncateLength}>{data}</Truncate>
+              </div>
+            )}
+            {subtitle && (
+              <div
+                className={cn('pulsable bodyMd text-text-soft', subtitleClass)}
+              >
+                <Truncate length={truncateLength}>{subtitle}</Truncate>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col flex-1">
+            {data && (
+              <div
+                className={cn(
+                  'flex-1 bodyMd-medium text-text-strong pulsable whitespace-normal',
+                  titleClass,
+                )}
+              >
+                {data.length >= truncateLength ? (
+                  <TooltipV2 content={data}>
+                    <Truncate length={truncateLength}>{data}</Truncate>
+                  </TooltipV2>
+                ) : (
+                  <Truncate length={truncateLength}>{data}</Truncate>
+                )}
+              </div>
+            )}
+            {subtitle && (
+              <div
+                className={cn('pulsable bodyMd text-text-soft', subtitleClass)}
+              >
+                {subtitle.length >= truncateLength ? (
+                  <TooltipV2 content={subtitle}>
+                    <Truncate length={truncateLength}>{subtitle}</Truncate>
+                  </TooltipV2>
+                ) : (
+                  <Truncate length={truncateLength}>{subtitle}</Truncate>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      {action}
+    </div>
+  );
+};
+
 const ListTitle = ({
   className,
   action,
@@ -184,6 +268,63 @@ const ListTitle = ({
   );
 };
 
+const ListTitleV2 = ({
+  className,
+  action,
+  title,
+  avatar,
+  subtitle,
+  truncateLength = 20,
+  titleClass,
+  subtitleClass,
+}: {
+  className?: string;
+  action?: ReactNode;
+  title?: string;
+  subtitle?: string;
+  avatar?: ReactNode;
+  truncateLength?: number;
+  titleClass?: string;
+  subtitleClass?: string;
+}) => {
+  return (
+    <div className={cn(BaseStyle, className)}>
+      <div className="flex flex-row items-center gap-xl flex-1 truncate">
+        {avatar}
+        <div className="flex flex-col gap-sm flex-1">
+          {title && (
+            <div className="bodyMd-semibold text-text-default pulsable">
+              <span className={cn('w-fit', titleClass)}>
+                {title.length >= truncateLength ? (
+                  <TooltipV2 content={title}>
+                    <Truncate length={truncateLength}>{title}</Truncate>
+                  </TooltipV2>
+                ) : (
+                  <Truncate length={truncateLength}>{title}</Truncate>
+                )}
+              </span>
+            </div>
+          )}
+
+          {subtitle && (
+            <div
+              className={cn('bodySm text-text-soft pulsable', subtitleClass)}
+            >
+              {subtitle.length >= truncateLength ? (
+                <TooltipV2 content={subtitle}>
+                  <Truncate length={truncateLength}>{subtitle}</Truncate>
+                </TooltipV2>
+              ) : (
+                <Truncate length={truncateLength}>{subtitle}</Truncate>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      {action}
+    </div>
+  );
+};
 const listFlex = ({ key }: { key: string }) => ({
   key,
   className: 'flex-1',
@@ -191,7 +332,21 @@ const listFlex = ({ key }: { key: string }) => ({
 });
 
 const listClass = {
-  title: 'w-[180px] min-w-[180px] max-w-[180px] mr-2xl',
-  author: 'w-[180px] min-w-[180px] max-w-[180px]',
+  title: 'w-[80px] flex flex-1',
+  author: 'w-[180px]',
+  updated: 'w-[180px]',
+  status: 'flex-1 min-w-[30px] w-fit',
+  action: 'w-[24px]',
+  flex: 'flex-1',
+  item: 'w-[146px]',
 };
-export { ListBody, ListItem, ListTitle, ListSecondary, listFlex, listClass };
+export {
+  ListBody,
+  ListItem,
+  ListTitle,
+  ListTitleV2,
+  ListItemV2,
+  ListSecondary,
+  listFlex,
+  listClass,
+};
