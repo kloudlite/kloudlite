@@ -3,119 +3,54 @@ on:
   workflow_call:
 
 jobs:
-  api-go-modules-cache:
-    runs-on: ubuntu-latest
-    name: API go modules cache
-    env:
-      SUBMODULE: api
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup Build Environment
-        id: setup
-        uses: ./.github/actions/setup/
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
-
-          enable_go: true
-          go_mod_file: ${{ env.SUBMODULE }}/go.mod
-          go_sum_file: ${{ env.SUBMODULE }}/go.sum
-
-          enable_task: false
-          enable_upx: false
-
-          enable_docker: false
-
-      - name: Setup Go Modules Cache
-        shell: bash
-        run: |+
-          pushd $SUBMODULE
-          go mod download
-          popd
-
-  api:
-    needs: api-go-modules-cache
+  build-api-images:
     strategy:
+      fail-fast: true
       matrix:
-        app:
-          # golang builds
-          - accounts
-          - auth
-          - comms
-          - console
-          - iot-console
-          - container-registry
-          - iam
-          - infra
-          - worker-audit-logging
-          - webhook
-          - websocket-server
-          - message-office
-          - tenant-agent
-          - observability
-
-          - gateway # nodejs process
+        images:
+          - name: accounts-api
+          - name: auth-api
+          - name: comms-api
+          - name: console-api
+          - name: container-registry-api
+          - name: gateway-api
+          - name: iam-api
+          - name: infra-api
+          - name: message-office-api
+          - name: observability-api
+          - name: tenant-agent
+          - name: webhook-api
+          - name: websocket-server-api
 
     runs-on: ubuntu-latest
-    name: kloudlite API
-    env:
-      SUBMODULE: api
+    name: ${{ matrix.images.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: build-and-push
+        uses: ./api/.github/actions/build-api-images/
         with:
-          submodules: recursive
+          image_tag: ${{ inputs.image_tag }}
 
-      - name: Setup Build Environment
-        id: setup
-        uses: ./.github/actions/setup/
-        with:
-          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          cachix_enabled: true
+          cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
-          enable_go: true
-          go_mod_file: ${{ env.SUBMODULE }}/go.mod
-          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+          docker_enabled: true
 
-          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.app}}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git_directory: "./api"
 
-          enable_task: true
-          enable_upx: true
-          enable_docker: true
-
-      - name: Install Rover
-        if: matrix.app == 'gateway'
-        run: |
-          curl -sSL https://rover.apollo.dev/nix/v0.23.0-rc.3 | sh
-          
-          # Add Rover to the $GITHUB_PATH so it can be used in another step
-          # https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#adding-a-system-path
-          echo "$HOME/.rover/bin" >> $GITHUB_PATH
-
-      - name: Build & Push Container Images
-        env:
-          IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
-          OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
-        run: |
-          pushd $SUBMODULE
-          ls -al .
-
-          set +e
-          image="ghcr.io/${{ github.repository }}/$SUBMODULE/${{ matrix.app }}:$IMAGE_TAG"
-          echo "image is $image"
-          docker manifest inspect $image
-          exit_status=$?
-          if [ $exit_status -eq 0 ]; then
-            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image) already exists, and override image is disable, exiting" && exit 0
-            echo "image exists, but override pushed image is set to true. proceeding with building image"
-          fi
-
-          set -e
-
-          pushd apps/${{ matrix.app }}
-          task container:build-and-push Image="$image" upx=true multi-platform=true
-          popd
-
-          popd
+          accounts-api: ${{ matrix.images.name == 'accounts-api' }}
+          auth-api: ${{ matrix.images.name == 'auth-api' }}
+          comms-api: ${{ matrix.images.name == 'comms-api' }}
+          console-api: ${{ matrix.images.name == 'console-api' }}
+          container-registry-api: ${{ matrix.images.name == 'container-registry-api' }}
+          gateway-api: ${{ matrix.images.name == 'gateway-api' }}
+          iam-api: ${{ matrix.images.name == 'iam-api' }}
+          infra-api: ${{ matrix.images.name == 'infra-api' }}
+          message-office-api: ${{ matrix.images.name == 'message-office-api' }}
+          observability-api: ${{ matrix.images.name == 'observability-api' }}
+          tenant-agent: ${{ matrix.images.name == 'tenant-agent' }}
+          webhook-api: ${{ matrix.images.name == 'webhook-api' }}
+          websocket-server-api: ${{ matrix.images.name == 'websocket-server-api' }}
