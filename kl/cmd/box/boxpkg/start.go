@@ -1,9 +1,13 @@
 package boxpkg
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/kloudlite/kl/cmd/box/boxpkg/hashctrl"
@@ -72,6 +76,31 @@ func (c *client) Start() error {
 
 	if err = c.SyncVpn(vpnCfg.WGconf); err != nil {
 		return functions.NewE(err)
+	}
+
+	if c.env.SSHPort == 0 {
+		existingContainers, err := c.cli.ContainerList(context.Background(), container.ListOptions{
+			Filters: filters.NewArgs(
+				dockerLabelFilter(CONT_MARK_KEY, "true"),
+				dockerLabelFilter(CONT_WORKSPACE_MARK_KEY, "true"),
+				dockerLabelFilter(CONT_PATH_KEY, c.cwd),
+			),
+			All: true,
+		})
+		if err != nil {
+			return fn.NewE(err)
+		}
+
+		if len(existingContainers) == 0 {
+			return fn.Error("no container running in current directory")
+		}
+
+		cr := existingContainers[0]
+
+		c.env.SSHPort, err = strconv.Atoi(cr.Labels[SSH_PORT_KEY])
+		if err != nil {
+			return fn.NewE(err)
+		}
 	}
 
 	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(c.env.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
