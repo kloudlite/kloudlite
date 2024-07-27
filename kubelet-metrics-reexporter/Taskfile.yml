@@ -28,7 +28,7 @@ tasks:
 
   test:
     cmds:
-      - go test ./internal/parser/...
+      - go test -v ./internal/parser/...
 
   test:watch:
     cmds:
