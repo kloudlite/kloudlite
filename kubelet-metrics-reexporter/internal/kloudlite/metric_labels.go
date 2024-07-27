@@ -40,6 +40,8 @@ const (
 	KloudliteClusterName Label = "kl_cluster_name"
 	KloudliteTrackingId  Label = "kl_tracking_id"
 
+	// KloudliteRecordVersion Label = "kl_record_version"
+
 	NodeName Label = "node_name"
 
 	NetworkInterface Label = "iface"

@@ -29,6 +29,7 @@ func TestParser_ParseAndEnhanceMetricsInto(t *testing.T) {
 	type args struct {
 		b []byte
 	}
+
 	tests := []struct {
 		name       string
 		fields     fields

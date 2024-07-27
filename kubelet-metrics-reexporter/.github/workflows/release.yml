@@ -69,7 +69,7 @@ jobs:
         env:
           CGO_ENABLED: 0
         run: |
-          task build Out=kubelet-metrics-reexporter
+          task build out=kubelet-metrics-reexporter GOARCH=$(go env GOARCH)
 
       - name: Create Image Tag from branch name
         if: startsWith(github.ref, 'refs/heads/release')
@@ -109,5 +109,5 @@ jobs:
           fi
           set -e
 
-          task docker:build-n-push Image="$image_name:$IMAGE_TAG"
+          task container:build-and-push image="$image_name:$IMAGE_TAG"
 
