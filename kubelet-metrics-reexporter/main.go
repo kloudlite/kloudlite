@@ -83,7 +83,7 @@ func main() {
 		extraTags[s[0]] = s[1]
 	}
 
-  fmt.Printf("extra tags: %+v\n", extraTags)
+	fmt.Printf("extra tags: %+v\n", extraTags)
 
 	kcli, err := k8s.NewClient(restCfg)
 	if err != nil {

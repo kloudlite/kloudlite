@@ -4,11 +4,12 @@ tasks:
   build:
     env:
       CGO_ENABLED: 0
-    preconditions:
-      - sh: '[ -n "{{.Out}}" ]'
-        msg: "var Out must be provided"
+    requires:
+      vars:
+        - out
+        - GOARCH
     cmds:
-      - go build -ldflags='-s -w' -o ./bin/{{.Out}} .
+      - go build -ldflags='-s -w' -o ./bin/{{.out}}-{{.GOARCH}} .
 
   dev:
     preconditions:
@@ -27,18 +28,31 @@ tasks:
 
   test:
     cmds:
+      - go test ./internal/parser/...
+
+  test:watch:
+    cmds:
       - fwatcher --ext '.go' --exec 'go test ./internal/parser/...'
 
   coverage:
     cmds:
       - go-test-cover.sh ./internal/parser/...
 
-  docker:build-n-push:
-    preconditions:
-      - sh: '[ -n "{{.Image}}" ]'
-        msg: "env var Tag must be provided"
+  container:build-and-push:
+    requires:
+      vars:
+        - image
+    vars:
+      BINARY: kubelet-metrics-reexporter
     cmds:
       - task: build
         vars:
-          Out: kubelet-metrics-reexporter 
-      - docker buildx build --build-arg BIN=kubelet-metrics-reexporter -t {{.Image}} . --push
+          out: "{{.BINARY}}"
+          GOARCH: amd64
+
+      - task: build
+        vars:
+          out: "{{.BINARY}}"
+          GOARCH: arm64
+
+      - docker buildx build --platform linux/amd64,linux/arm64 --build-arg BIN={{.BINARY}} -t {{.image}} . --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true
