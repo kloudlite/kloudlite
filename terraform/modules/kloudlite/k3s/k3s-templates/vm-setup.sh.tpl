@@ -10,7 +10,7 @@ KLOUDLITE_RUNNER_DOWNLOAD_URL="${kloudlite_runner_download_url}"
 # LOG_FILE=$KLOUDLITE_CONFIG_DIRECTORY/execution.log
 
 debug() {
-	echo "[#] $*" >>"$KLOUDLITE_CONFIG_DIRECTORY/execution.log"
+  echo "[#] $*" >>"$KLOUDLITE_CONFIG_DIRECTORY/execution.log"
 }
 
 debug "ensuring $KLOUDLITE_CONFIG_DIRECTORY exists"
@@ -61,4 +61,10 @@ WantedBy=multi-user.target
 EOF
 
 systemctl enable --now kloudlite-k3s.service
+
+systemctl stop systemd-resolved
+systemctl disable systemd-resolved
+
+rm /etc/resolv.conf
+echo "nameserver 1.1.1.1" >/etc/resolv.conf
 debug "----------------- execution finished at $(date) ----------------------"

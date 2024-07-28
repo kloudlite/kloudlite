@@ -25,8 +25,6 @@ tasks:
 
   local:build:iac-job:
     vars:
-      # output_dir: 
-      #   sh: mktemp -d --suffix '.nix'
       output_dir: ./result
       nix_store_closure: /tmp/nix-store-closure
     cmds:
@@ -50,7 +48,6 @@ tasks:
         # tar cf - $tdir | zstd -12 --compress > tf.zst
         tar cf - $tdir | zstd --compress > tf.zst
 
-      # - docker buildx build -f DockerfileNIX2 --build-arg CLOUD_PROVIDER={{.cloudprovider}} --build-context builder=result --build-context nixstore={{.nix_store_closure}} -t {{.Image}} --output type=image,oci-mediatypes=true,compression=zstd,compression-level=10,force-compression=true,push=true . --no-cache
       - |+
         dir=$(mktemp -d)
         rm -rf context.tar
@@ -61,7 +58,6 @@ tasks:
         tar cf context.tar .
         popd
         mv $dir/context.tar .
-      # - docker buildx build -f DockerfileNIX2 --build-arg CLOUD_PROVIDER={{.cloudprovider}} --output=type=image,compression=zstd,force-compression=true,compression-level=22,push=true,oci-mediatypes=true -t {{.Image}} .
       - nerdctl build -f DockerfileNIX2 -o type=oci,push=true,name={{.Image}},compression=zstd,compression-level=22,force-compression=true,oci-mediatype=true -t {{.Image}} .
       - rm ./context.tar
 
@@ -72,7 +68,7 @@ tasks:
     vars:
       push: true
     cmds:
-      - docker buildx build -f DockerfileNIX --output=type=image,compression=zstd,force-compression=true,compression-level=22,push=true,oci-mediatypes=true -t {{.Image}} .
+      - docker buildx build -f Dockerfile --output=type=image,compression=zstd,force-compression=true,compression-level=22,push=true,oci-mediatypes=true -t {{.Image}} .
       # - docker build -f ./DockerfileNIX -t {{.Image}} . {{.dockerArgs}}
       # - |+
       #   if [ "{{.push}}" == "true" ]; then

@@ -56,7 +56,6 @@ resource "google_compute_instance" "standard" {
     block-project-ssh-keys = "TRUE"
     enable-oslogin         = "TRUE"
     "ssh-keys"             = "ubuntu:${var.ssh_key}"
-    # join("\n", [for user, key in var.ssh_keys : "${user}:${key}"])
   }
 
   network_interface {
