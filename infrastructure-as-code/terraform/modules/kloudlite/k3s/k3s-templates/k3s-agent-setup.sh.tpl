@@ -19,9 +19,9 @@ ${jsonencode({
 })}
 EOF2
 
-if [ "${tf_use_cloudflare_nameserver}" = "true" ]; then
-lineNo=$(sudo cat /etc/resolv.conf -n | grep "nameserver" | awk '{print $1}')
-sudo sed -i "$lineNo i nameserver 1.1.1.1" /etc/resolv.conf
-fi
+{{- /* if [ "${tf_use_cloudflare_nameserver}" = "true" ]; then */}}
+{{- /* lineNo=$(sudo cat /etc/resolv.conf -n | grep "nameserver" | awk '{print $1}') */}}
+{{- /* sudo sed -i "$lineNo i nameserver 1.1.1.1" /etc/resolv.conf */}}
+{{- /* fi */}}
 
 sudo systemctl restart kloudlite-k3s.service
