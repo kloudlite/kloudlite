@@ -262,7 +262,6 @@ func generatePersistedEnv(apic apiclient.ApiClient, fc fileclient.FileClient, kf
 	if flags.IsDev() {
 		ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.dns.devprod.sh", e.Name, kf.AccountName)
 	}
-	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.dns.devprod.sh", e.Name, kf.AccountName)
 
 	klConfhash, err := GenerateKLConfigHash(kf)
 	if err != nil {
