@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/logging"
 )
@@ -46,8 +45,6 @@ func main() {
 		SilentPaths: []string{},
 	})
 	r.Use(httpLogger.Use)
-	_ = middleware.Logger
-	// r.Use(middleware.Logger)
 
 	kloudliteAuthzHeader := "X-Kloudlite-Authz"
 
@@ -65,7 +62,6 @@ func main() {
 			return
 		}
 
-		// clusterName := sp[0]
 		clusterName := chi.URLParam(req, "cluster_name")
 
 		urlh := strings.ReplaceAll(proxyAddr, "{{.CLUSTER_NAME}}", clusterName)
