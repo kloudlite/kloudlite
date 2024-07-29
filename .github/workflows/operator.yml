@@ -17,6 +17,7 @@ jobs:
           - name: networking/cmd/ip-manager
           - name: networking/cmd/webhook
           - name: networking/cmd/dns
+          - name: networking/cmd/logs-proxy
 
     runs-on: ubuntu-latest
     name: ${{ matrix.images.name }}
@@ -50,3 +51,4 @@ jobs:
           networking_ip-manager: ${{ matrix.images.name == 'networking/cmd/ip-manager' }}
           networking_dns: ${{ matrix.images.name == 'networking/cmd/dns' }}
           networking_webhook: ${{ matrix.images.name == 'networking/cmd/webhook' }}
+          networking_logs_proxy: ${{ matrix.images.name == 'networking/cmd/logs-proxy' }}
