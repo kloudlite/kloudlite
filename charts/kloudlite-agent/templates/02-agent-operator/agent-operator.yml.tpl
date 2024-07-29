@@ -51,6 +51,7 @@ spec:
             {{ include "router-operator-env" . | nindent 12 }}
             {{ include "msvc-mongo-operator-env" . | nindent 12 }}
             {{ include "helmchart-operator-env" . | nindent 12 }}
+            {{ include "networking-operator-env" . | nindent 12 }}
 
           {{- $imageTag := .Values.agentOperator.image.tag | default (include "image-tag" .) }}
           image: {{.Values.agentOperator.image.repository}}:{{$imageTag}}
