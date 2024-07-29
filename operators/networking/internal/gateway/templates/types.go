@@ -10,9 +10,6 @@ type GatewayDeploymentArgs struct {
 
 	ServiceAccountName string
 
-	GatewayAdminAPIImage string
-	WebhookServerImage   string
-
 	GatewayWgSecretName          string
 	GatewayGlobalIP              string
 	GatewayDNSSuffix             string
@@ -28,6 +25,12 @@ type GatewayDeploymentArgs struct {
 
 	IPManagerConfigName      string
 	IPManagerConfigNamespace string
+
+	ImageWebhookServer       string
+	ImageIPManager           string
+	ImageIPBindingController string
+	ImageDNS                 string
+	ImageLogsProxy           string
 }
 
 type WebhookTemplateArgs struct {
