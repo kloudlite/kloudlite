@@ -62,11 +62,15 @@ inputs:
     default: false
 
   networking_dns:
-    description: 'build networking/dns'
+    description: 'build networking/cmd/dns'
     default: false
 
   networking_webhook:
-    description: 'build networking/webhook'
+    description: 'build networking/cmd/webhook'
+    default: false
+
+  networking_logs_proxy:
+    description: 'build networking/cmd/logs-proxy'
     default: false
 
 runs:
@@ -90,7 +94,7 @@ runs:
 
         echo "PUSH_IMAGE=false" >> $GITHUB_ENV
 
-        if [ "${{ inputs.git_directory }}" != "." ]; then
+        if [ "$(basename ${{ inputs.git_directory }})" != "." ]; then
           echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}/$(basename ${{inputs.git_directory}})" >> $GITHUB_ENV
         else
           echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}" >> $GITHUB_ENV
@@ -98,8 +102,10 @@ runs:
 
     - name: check if image needs to be pushed
       if: github.event_name != 'pull_request'
+
       shell: bash
       run: |+
+        echo "[github.event_name] => ${{ github.event_name }}"
         echo "PUSH_IMAGE=true" >> $GITHUB_ENV
 
     - name: ensures path to setup action exists
@@ -320,7 +326,7 @@ runs:
       run: |
         task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/dns:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
-    - name: networking/weebhook cache
+    - name: networking/webhook cache
       if: ${{ inputs.networking_webhook == 'true' }}
       uses: actions/cache@v4
       with:
@@ -337,3 +343,10 @@ runs:
       shell: bash
       run: |
         task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/webhook:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
+
+    - name: networking/cmd/logs-proxy
+      if: ${{ inputs.networking_logs_proxy == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/logs-proxy
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/logs-proxy:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"

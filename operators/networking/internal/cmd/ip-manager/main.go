@@ -38,6 +38,8 @@ func main() {
 
 	ev.IsDev = isDev
 
+	common.PrintKloudliteBanner()
+
 	restCfg, err := func() (*rest.Config, error) {
 		if isDev {
 			return &rest.Config{Host: "localhost:8080", QPS: 200, Burst: 200}, nil
@@ -82,9 +84,7 @@ func main() {
 
 	r := chi.NewRouter()
 
-	httpLogger := logging.NewHttpLogger(logger, logging.HttpLoggerOptions{
-		SilentPaths: []string{"/healthz"},
-	})
+	httpLogger := logging.NewHttpLogger(logging.HttpLoggerOptions{SilentPaths: []string{"/healthz"}})
 
 	r.Use(httpLogger.Use)
 
@@ -111,18 +111,6 @@ func main() {
 		}
 		w.WriteHeader(http.StatusOK)
 	})
-
-	// r.Post("/service/{svc_namespace}/{svc_name}", func(w http.ResponseWriter, r *http.Request) {
-	// 	svcNamespace, svcName := chi.URLParam(r, "svc_namespace"), chi.URLParam(r, "svc_name")
-	//
-	// 	if err := mg.ReserveService(r.Context(), svcNamespace, svcName); err != nil {
-	// 		logger.Error("reserving service", "err", err)
-	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 		return
-	// 	}
-	//
-	// 	w.WriteHeader(http.StatusOK)
-	// })
 
 	r.Post("/service/{svc_namespace}/{svc_name}", func(w http.ResponseWriter, r *http.Request) {
 		svcNamespace, svcName := chi.URLParam(r, "svc_namespace"), chi.URLParam(r, "svc_name")
