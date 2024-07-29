@@ -132,16 +132,16 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesGCPSecretCredentialsIn struct
 }
 
 type GithubComKloudliteAPIAppsInfraInternalEntitiesInputField struct {
-	DefaultValue interface{} `json:"defaultValue,omitempty"`
-	DisplayUnit  *string     `json:"displayUnit,omitempty"`
-	InputType    string      `json:"inputType"`
-	Label        string      `json:"label"`
-	Max          *float64    `json:"max,omitempty"`
-	Min          *float64    `json:"min,omitempty"`
-	Multiplier   *float64    `json:"multiplier,omitempty"`
-	Name         string      `json:"name"`
-	Required     *bool       `json:"required,omitempty"`
-	Unit         *string     `json:"unit,omitempty"`
+	DefaultValue any      `json:"defaultValue,omitempty"`
+	DisplayUnit  *string  `json:"displayUnit,omitempty"`
+	InputType    string   `json:"inputType"`
+	Label        string   `json:"label"`
+	Max          *float64 `json:"max,omitempty"`
+	Min          *float64 `json:"min,omitempty"`
+	Multiplier   *float64 `json:"multiplier,omitempty"`
+	Name         string   `json:"name"`
+	Required     *bool    `json:"required,omitempty"`
+	Unit         *string  `json:"unit,omitempty"`
 }
 
 type GithubComKloudliteAPIAppsInfraInternalEntitiesMresTemplate struct {
@@ -489,7 +489,7 @@ type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 }
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
-	RawMessage interface{} `json:"RawMessage,omitempty"`
+	RawMessage any `json:"RawMessage,omitempty"`
 }
 
 type GlobalVPNDeviceEdge struct {
