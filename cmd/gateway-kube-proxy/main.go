@@ -3,13 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/http/httputil"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/logging"
 )
 
 func main() {
@@ -28,20 +28,23 @@ func main() {
 		panic("authz token is required, use --authz <authz-token>")
 	}
 
-	logger := slog.Default()
+	common.PrintKloudliteBanner()
+
+	logger := logging.NewSlogLogger(logging.SlogOptions{
+		ShowCaller:         true,
+		ShowDebugLogs:      debug,
+		SetAsDefaultLogger: true,
+	})
 
 	reverseProxyMap := make(map[string]*httputil.ReverseProxy)
 
 	r := chi.NewRouter()
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/healthy" {
-				next.ServeHTTP(w, r)
-				return
-			}
-			middleware.Logger(next).ServeHTTP(w, r)
-		})
+	httpLogger := logging.NewHttpLogger(logger, logging.HttpLoggerOptions{
+		ShowQuery:   true,
+		ShowHeaders: true,
+		SilentPaths: []string{},
 	})
+	r.Use(httpLogger.Use)
 
 	kloudliteAuthzHeader := "X-Kloudlite-Authz"
 
@@ -59,7 +62,6 @@ func main() {
 			return
 		}
 
-		// clusterName := sp[0]
 		clusterName := chi.URLParam(req, "cluster_name")
 
 		urlh := strings.ReplaceAll(proxyAddr, "{{.CLUSTER_NAME}}", clusterName)
