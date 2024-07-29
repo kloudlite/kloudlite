@@ -7,6 +7,12 @@ import (
 type Env struct {
 	MaxConcurrentReconciles int    `env:"MAX_CONCURRENT_RECONCILES" required:"true"`
 	GatewayAdminNamespace   string `env:"GATEWAY_ADMIN_NAMESPACE" default:"kl-gateway"`
+
+	ImageWebhookServer            string `env:"IMAGE_WEBHOOK_SERVER" required:"true"`
+	ImageIPManager                string `env:"IMAGE_IP_MANAGER" required:"true"`
+	ImageIPBindingController string `env:"IMAGE_IP_BINDING_CONTROLLER" required:"true"`
+	ImageDNS                      string `env:"IMAGE_DNS" required:"true"`
+	ImageLogsProxy                string `env:"IMAGE_LOGS_PROXY" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {
