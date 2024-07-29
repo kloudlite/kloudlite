@@ -93,6 +93,14 @@ const ExtraButton = ({ item, onAction }: IExtraButton) => {
           onClick: () => onAction({ action: 'clone', item }),
         },
         {
+          label: 'Delete',
+          icon: <Trash size={16} />,
+          type: 'item',
+          onClick: () => onAction({ action: 'delete', item }),
+          key: 'delete',
+          className: '!text-text-critical',
+        },
+        {
           label: 'Settings',
           icon: <GearSix size={16} />,
           type: 'item',
