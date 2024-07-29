@@ -277,32 +277,26 @@ func (r *Reconciler) setupGatewayDeployment(req *rApi.Request[*networkingv1.Gate
 	gatewayDNSServers = append(gatewayDNSServers, fmt.Sprintf("%s=%s:53", "svc.cluster.local", dnsService.Spec.ClusterIP))
 
 	b, err := templates.ParseBytes(r.templateDeployment, templates.GatewayDeploymentArgs{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            obj.Name,
-			Namespace:       obj.Spec.AdminNamespace,
-			Labels:          map[string]string{"kloudlite.io/managed-by-gateway": "true"},
-			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		},
-
-		ServiceAccountName: fmt.Sprintf("%s-svc-account", obj.Name),
-
-		GatewayAdminAPIImage: "ghcr.io/kloudlite/operator/networking/cmd/ip-manager:v1.0.7-nightly",
-		WebhookServerImage:   "ghcr.io/kloudlite/operator/networking/cmd/webhook:v1.0.7-nightly",
-
+		ObjectMeta:                   metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Spec.AdminNamespace, Labels: map[string]string{"kloudlite.io/managed-by-gateway": "true"}, OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)}},
+		ServiceAccountName:           fmt.Sprintf("%s-svc-account", obj.Name),
 		GatewayWgSecretName:          obj.Spec.WireguardKeysRef.Name,
 		GatewayGlobalIP:              obj.Spec.GlobalIP,
 		GatewayDNSSuffix:             obj.Spec.DNSSuffix,
 		GatewayInternalDNSNameserver: gatewayInternalDNSNameServer,
 		GatewayWgExtraPeersHash:      fn.Md5([]byte(extraPeersCfg.Data["peers.conf"])),
 		GatewayDNSServers:            strings.Join(gatewayDNSServers, ","),
+		GatewayServiceType:           obj.Spec.ServiceType,
+		GatewayNodePort:              fn.DefaultIfNil(obj.Spec.NodePort),
+		ClusterCIDR:                  obj.Spec.ClusterCIDR,
+		ServiceCIDR:                  obj.Spec.SvcCIDR,
+		IPManagerConfigName:          "gateway-ip-manager",
+		IPManagerConfigNamespace:     obj.Spec.AdminNamespace,
 
-		ClusterCIDR:              obj.Spec.ClusterCIDR,
-		ServiceCIDR:              obj.Spec.SvcCIDR,
-		IPManagerConfigName:      "gateway-ip-manager",
-		IPManagerConfigNamespace: obj.Spec.AdminNamespace,
-
-		GatewayServiceType: obj.Spec.ServiceType,
-		GatewayNodePort:    fn.DefaultIfNil(obj.Spec.NodePort),
+		ImageWebhookServer:       r.Env.ImageWebhookServer,
+		ImageIPManager:           r.Env.ImageIPManager,
+		ImageIPBindingController: r.Env.ImageIPBindingController,
+		ImageDNS:                 r.Env.ImageDNS,
+		ImageLogsProxy:           r.Env.ImageLogsProxy,
 	})
 	if err != nil {
 		return check.Failed(err)
