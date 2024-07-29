@@ -85,6 +85,27 @@ agentOperator:
         tag: ""
         pullPolicy: ""
 
+    gateway:
+      imageWebhookServer:
+        repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/webhook
+        tag: ""
+
+      imageIPManager:
+        repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-manager
+        tag: ""
+
+      imageIPBindingController:
+        repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-binding-controller
+        tag: ""
+
+      imageDNS:
+        repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/dns
+        tag: ""
+
+      imageLogsProxy:
+        repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/logs-proxy
+        tag: ""
+
   # -- (object) kloudlite agent operator resources
   # @ignored
   resources:
