@@ -86,6 +86,10 @@ inputs:
     description: 'build websocket-server api'
     default: false
 
+  gateway-kube-proxy:
+    description: 'build gateway kube proxy'
+    default: false
+
 runs:
   using: 'composite'
   steps:
@@ -103,7 +107,7 @@ runs:
         echo "GOCACHE=$GOCACHE" >> $GITHUB_ENV
         echo "FILES_HASH=${{ hashFiles('**/*.go', '**/go.mod', '**/go.sum')}}" >> $GITHUB_OUTPUT
         echo "PUSH_IMAGE=false" >> $GITHUB_ENV
-        if [ "${{ inputs.git_directory }}" != "." ]; then
+        if [ "$(basename ${{ inputs.git_directory }})" != "." ]; then
           echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}/$(basename ${{inputs.git_directory}})" >> $GITHUB_ENV
         else
           echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}" >> $GITHUB_ENV
@@ -430,3 +434,20 @@ runs:
       run: |
         task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/websocket-server:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
+    - name: gateway kube proxy api build cache
+      if: ${{ inputs.gateway-kube-proxy == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-gateway-kube-proxy-${{ steps.env-vars.outputs.FILES_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-gateway-kube-proxy-
+
+    - name: gateway logs proxy
+      if: ${{ inputs.gateway-kube-proxy == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/cmd/gateway-kube-proxy
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/cmd/gateway-kube-proxy:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
