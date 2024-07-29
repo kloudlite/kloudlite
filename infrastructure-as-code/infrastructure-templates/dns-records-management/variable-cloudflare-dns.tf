@@ -25,7 +25,7 @@ variable "DNS_records" {
 
   validation {
     error_message = "record_type should be a valid DNS record type"
-    condition     = alltrue([for item in var.DNS_records : contains(["A", "MX", "CNAME", "TXT"], item.record_type)])
+    condition     = alltrue([for item in var.DNS_records : contains(["A", "MX", "CNAME", "TXT", "NS"], item.record_type)])
   }
 }
 
