@@ -21,6 +21,7 @@ jobs:
           - name: tenant-agent
           - name: webhook-api
           - name: websocket-server-api
+          - name: gateway-kube-proxy
 
     runs-on: ubuntu-latest
     name: ${{ matrix.images.name }}
@@ -57,3 +58,4 @@ jobs:
           tenant-agent: ${{ matrix.images.name == 'tenant-agent' }}
           webhook-api: ${{ matrix.images.name == 'webhook-api' }}
           websocket-server-api: ${{ matrix.images.name == 'websocket-server-api' }}
+          gateway-kube-proxy: ${{ matrix.images.name == 'gateway-kube-proxy' }}
