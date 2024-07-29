@@ -97,7 +97,7 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 
-	httpLogger := logging.NewHttpLogger(logger, logging.HttpLoggerOptions{})
+	httpLogger := logging.NewHttpLogger(logging.HttpLoggerOptions{})
 	r.Use(httpLogger.Use)
 
 	r.HandleFunc("/mutate/pod", func(w http.ResponseWriter, r *http.Request) {
