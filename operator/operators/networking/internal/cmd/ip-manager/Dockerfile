@@ -20,16 +20,16 @@ EOF
 ARG BINARY TARGETARCH
 COPY ${BINARY}-${TARGETARCH} /usr/local/bin/ip-manager
 # ENTRYPOINT ["ip-manager"]
-RUN cat >> /entrypoint.sh <<EOF
+RUN cat >> /entrypoint.sh <<'EOF'
 #!/usr/bin/env sh
 nginx &
 pid1=$!
 # echo "[#] ip-manager \$@"
-ip-manager \$@ &
+ip-manager $@ &
 pid2=$!
 
-trap "eval kill $pid1 $pid2" SIGINT SIGTERM
-wait $pid1 $pid2
+trap "eval kill -9 $pid1 $pid2" SIGINT SIGTERM
+wait $pid2
 EOF
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
