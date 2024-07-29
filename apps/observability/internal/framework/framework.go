@@ -55,7 +55,13 @@ var Module = fx.Module("framework",
 		return http.NewServeMux()
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, ev *env.Env, mux *http.ServeMux) {
+	fx.Invoke(func(lf fx.Lifecycle, ev *env.Env, mux *http.ServeMux, logger *slog.Logger) {
+		mux.HandleFunc("/_healthy", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		logger.Info("starting observability api HTTP server on", "port", ev.HttpPort)
+
 		server := &http.Server{Addr: fmt.Sprintf(":%d", ev.HttpPort), Handler: mux}
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {

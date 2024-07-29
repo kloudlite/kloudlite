@@ -21,6 +21,9 @@ import (
 func main() {
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
+
+	var debug bool
+	flag.BoolVar(&debug, "debug", false, "--debug")
 	flag.Parse()
 
 	ev, err := env.LoadEnv()
@@ -45,7 +48,7 @@ func main() {
 		fx.Provide(func() *slog.Logger {
 			return logging.NewSlogLogger(logging.SlogOptions{
 				ShowCaller:         true,
-				ShowDebugLogs:      isDev,
+				ShowDebugLogs:      debug,
 				SetAsDefaultLogger: true,
 			})
 		}),

@@ -201,7 +201,7 @@ var Module = fx.Module(
 			}
 
 			if len(pods) == 0 {
-				// it sends http.StatusTooEarly, for the client to retry request after some time
+				// INFO: it sends http.StatusTooEarly, for the client to retry request after some time
 				logger.Infof("no pods found")
 				http.Error(w, "no pods found", http.StatusTooEarly)
 				return
