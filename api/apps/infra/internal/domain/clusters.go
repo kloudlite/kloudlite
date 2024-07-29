@@ -622,6 +622,7 @@ func (d *domain) syncKloudliteDeviceOnPlatform(ctx InfraContext, gvpnName string
 
 	wgParams.PublicPeers = publicPeers
 	wgParams.DNS = clDevice.IPAddr
+	wgParams.WithDNS = true
 	wgParams.ListenPort = 31820
 
 	dnsServerArgs := make([]string, 0, len(gvpnConns))
