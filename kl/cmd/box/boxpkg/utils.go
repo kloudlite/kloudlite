@@ -407,6 +407,10 @@ func (c *client) getFreePort() (int, error) {
 	}
 
 	var resp int
+	data, err := fileclient.GetExtraData()
+	if err != nil {
+		return 0, fn.NewE(err)
+	}
 	for {
 		port := rand.Intn(65535-1024) + 1025
 		addr := fmt.Sprintf(":%d", port)
@@ -414,6 +418,11 @@ func (c *client) getFreePort() (int, error) {
 		if err == nil {
 			listener.Close()
 			resp = port
+			for _, v := range data.SelectedEnvs {
+				if v.SSHPort == resp {
+					continue
+				}
+			}
 			c.env.SSHPort = resp
 			break
 		}

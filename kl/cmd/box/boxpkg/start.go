@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/kloudlite/kl/domain/fileclient"
 	"os"
 	"strconv"
 	"strings"
@@ -99,6 +100,17 @@ func (c *client) Start() error {
 
 		c.env.SSHPort, err = strconv.Atoi(cr.Labels[SSH_PORT_KEY])
 		if err != nil {
+			return fn.NewE(err)
+		}
+	}
+
+	data, err := fileclient.GetExtraData()
+	if err != nil {
+		return fn.NewE(err)
+	}
+	if data.SelectedEnvs[c.cwd].SSHPort == 0 {
+		data.SelectedEnvs[c.cwd].SSHPort = c.env.SSHPort
+		if err := fileclient.SaveExtraData(data); err != nil {
 			return fn.NewE(err)
 		}
 	}
