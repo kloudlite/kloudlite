@@ -194,7 +194,7 @@ func (apic *apiClient) RemoveAllIntercepts(options ...fn.Option) error {
 	defer spinner.Client.UpdateMessage("Cleaning up intercepts...")()
 	devName := fn.GetOption(options, "deviceName")
 	accountName := fn.GetOption(options, "accountName")
-	currentEnv, err := apic.fc.CurrentEnv()
+	currentEnv, err := apic.EnsureEnv()
 	if err != nil {
 		return functions.NewE(err)
 	}

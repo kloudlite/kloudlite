@@ -2,6 +2,7 @@ package list
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/kloudlite/kl/domain/fileclient"
 
@@ -35,7 +36,7 @@ var secretsCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		currentEnv, err := fc.CurrentEnv()
+		currentEnv, err := apic.EnsureEnv()
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -47,16 +48,21 @@ var secretsCmd = &cobra.Command{
 			return
 		}
 
-		if err := printSecrets(cmd, sec); err != nil {
+		if err := printSecrets(apic, cmd, sec); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func printSecrets(_ *cobra.Command, secrets []apiclient.Secret) error {
+func printSecrets(apic apiclient.ApiClient, cmd *cobra.Command, secrets []apiclient.Secret) error {
+	e, err := apic.EnsureEnv()
+	if err != nil {
+		return fn.NewE(err)
+	}
+
 	if len(secrets) == 0 {
-		return fn.Error("no secrets found")
+		return fmt.Errorf("[#] no secrets found in environemnt: %s", text.Blue(e.Name))
 	}
 
 	header := table.Row{

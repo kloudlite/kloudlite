@@ -34,7 +34,7 @@ var configsCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		currentEnv, err := fc.CurrentEnv()
+		currentEnv, err := apic.EnsureEnv()
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -46,15 +46,15 @@ var configsCmd = &cobra.Command{
 			return
 		}
 
-		if err := printConfigs(fc, cmd, config); err != nil {
+		if err := printConfigs(apic, cmd, config); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func printConfigs(fc fileclient.FileClient, cmd *cobra.Command, configs []apiclient.Config) error {
-	e, err := fc.CurrentEnv()
+func printConfigs(apic apiclient.ApiClient, cmd *cobra.Command, configs []apiclient.Config) error {
+	e, err := apic.EnsureEnv()
 	if err != nil {
 		return fn.NewE(err)
 	}

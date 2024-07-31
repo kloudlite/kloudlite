@@ -43,7 +43,7 @@ var Cmd = &cobra.Command{
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Account: ")), acc))
 		}
 
-		e, err := fc.CurrentEnv()
+		e, err := apic.EnsureEnv()
 		if err == nil {
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Environment: ")), e.Name))
 		} else if errors.Is(err, fileclient.NoEnvSelected) {

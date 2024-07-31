@@ -114,7 +114,7 @@ func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.E
 		return nil, functions.NewE(err)
 	}
 
-	oldEnv, _ := fc.CurrentEnv()
+	oldEnv, _ := apic.EnsureEnv()
 
 	env, err := fzf.FindOne(
 		envs,

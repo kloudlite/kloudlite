@@ -2,6 +2,7 @@ package list
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/kloudlite/kl/domain/apiclient"
 	"github.com/kloudlite/kl/domain/fileclient"
@@ -46,10 +47,10 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(envs) == 0 {
-		return functions.Error("no environments found")
+		return fmt.Errorf("[#] no environments found in account: %s", text.Blue(currentAccount))
 	}
 
-	env, _ := fc.CurrentEnv()
+	env, _ := apic.EnsureEnv()
 	envName := ""
 	if env != nil {
 		envName = env.Name

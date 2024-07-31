@@ -139,7 +139,7 @@ func AddMres(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Comm
 }
 
 func selectMres(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.Mres, error) {
-	currentEnv, err := fc.CurrentEnv()
+	currentEnv, err := apic.EnsureEnv()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

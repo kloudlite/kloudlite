@@ -44,7 +44,7 @@ var secretCmd = &cobra.Command{
 				fn.PrintError(err)
 				return
 			}
-			currentEnv, err := fc.CurrentEnv()
+			currentEnv, err := apic.EnsureEnv()
 			if err != nil {
 				fn.PrintError(err)
 				return

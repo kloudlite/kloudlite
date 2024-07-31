@@ -108,7 +108,7 @@ func (apic *apiClient) GetSecret(accountName string, secretName string) (*Secret
 		return nil, fn.NewE(err)
 	}
 
-	currentEnv, err := apic.fc.CurrentEnv()
+	currentEnv, err := apic.EnsureEnv()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

@@ -65,7 +65,7 @@ type MresResp struct {
 func (apic *apiClient) GetMresConfigValues(accountName string) (map[string]string, error) {
 	fc := apic.fc
 
-	currentEnv, err := fc.CurrentEnv()
+	currentEnv, err := apic.EnsureEnv()
 	if err != nil {
 		return nil, fn.NewE(err)
 	}

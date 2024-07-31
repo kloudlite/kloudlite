@@ -62,7 +62,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fn.NewE(err)
 	}
-	currentEnv, err := fc.CurrentEnv()
+	currentEnv, err := apic.EnsureEnv()
 	if err != nil {
 		return fn.NewE(err)
 	}

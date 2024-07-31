@@ -38,7 +38,7 @@ func listAccounts(apic apiclient.ApiClient, cmd *cobra.Command) error {
 	}
 
 	if len(accounts) == 0 {
-		return functions.Error("no accounts found")
+		return fmt.Errorf("[#] no accounts found")
 	}
 
 	fc, err := fileclient.New()

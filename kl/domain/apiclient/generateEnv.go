@@ -86,7 +86,7 @@ func (apic *apiClient) GetLoadMaps() (map[string]string, MountMap, error) {
 		return nil, nil, functions.NewE(err)
 	}
 
-	env, err := fc.CurrentEnv()
+	env, err := apic.EnsureEnv()
 	if err != nil {
 		return nil, nil, functions.NewE(err)
 	}

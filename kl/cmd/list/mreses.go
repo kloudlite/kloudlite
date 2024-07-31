@@ -2,11 +2,11 @@ package list
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/kloudlite/kl/domain/fileclient"
 
 	"github.com/kloudlite/kl/domain/apiclient"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -29,7 +29,7 @@ var mresCmd = &cobra.Command{
 			return
 		}
 
-		currentEnv, err := fc.CurrentEnv()
+		currentEnv, err := apic.EnsureEnv()
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -47,16 +47,20 @@ var mresCmd = &cobra.Command{
 			return
 		}
 
-		if err := printMres(cmd, mres); err != nil {
+		if err := printMres(apic, cmd, mres); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func printMres(_ *cobra.Command, secrets []apiclient.Mres) error {
-	if len(secrets) == 0 {
-		return functions.Error("no managed resources found")
+func printMres(apic apiclient.ApiClient, cmd *cobra.Command, mres []apiclient.Mres) error {
+	e, err := apic.EnsureEnv()
+	if err != nil {
+		return fn.NewE(err)
+	}
+	if len(mres) == 0 {
+		return fmt.Errorf("[#] no managed resources found in environemnt: %s", text.Blue(e.Name))
 	}
 
 	header := table.Row{
@@ -67,12 +71,12 @@ func printMres(_ *cobra.Command, secrets []apiclient.Mres) error {
 
 	rows := make([]table.Row, 0)
 
-	for _, a := range secrets {
+	for _, a := range mres {
 		rows = append(rows, table.Row{a.DisplayName, a.Name, a.SecretRefName.Name})
 	}
 
 	fmt.Println(table.Table(&header, rows))
-	table.TotalResults(len(secrets), true)
+	table.TotalResults(len(mres), true)
 	return nil
 }
 

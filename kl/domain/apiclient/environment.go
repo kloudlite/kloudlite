@@ -1,6 +1,7 @@
 package apiclient
 
 import (
+	"github.com/kloudlite/kl/domain/fileclient"
 	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
@@ -95,6 +96,32 @@ func (apic *apiClient) GetEnvironment(accountName, envName string) (*Env, error)
 	} else {
 		return fromResp, nil
 	}
+}
+
+func (apic *apiClient) EnsureEnv() (*fileclient.Env, error) {
+	CurrentEnv, err := apic.fc.CurrentEnv()
+	if err != nil && err.Error() != fileclient.NoEnvSelected.Error() {
+		return nil, functions.NewE(err)
+	} else if err == nil {
+		return CurrentEnv, nil
+	}
+	kt, err := apic.fc.GetKlFile("")
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+	if kt.DefaultEnv == "" {
+		return nil, functions.Error("please initialize kl.yml by running `kl init` in current workspace")
+	}
+	e, err := apic.GetEnvironment(kt.AccountName, kt.DefaultEnv)
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+	return &fileclient.Env{
+		Name:        e.DisplayName,
+		TargetNs:    e.Metadata.Namespace,
+		SSHPort:     0,
+		ClusterName: e.ClusterName,
+	}, nil
 }
 
 // func _EnsureEnv(env *fileclient.Env, options ...fn.Option) (*fileclient.Env, error) {

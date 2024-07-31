@@ -28,6 +28,7 @@ type ApiClient interface {
 
 	ListEnvs(accountName string) ([]Env, error)
 	GetEnvironment(accountName, envName string) (*Env, error)
+	EnsureEnv() (*fileclient.Env, error)
 	GetLoadMaps() (map[string]string, MountMap, error)
 
 	ListMreses(accountName string, envName string) ([]Mres, error)

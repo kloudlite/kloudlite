@@ -44,7 +44,7 @@ var configCmd = &cobra.Command{
 				fn.PrintError(err)
 				return
 			}
-			currentEnv, err := fc.CurrentEnv()
+			currentEnv, err := apic.EnsureEnv()
 			if err != nil {
 				fn.PrintError(err)
 				return
@@ -69,7 +69,7 @@ var configCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
-		currentEnvName, err := fc.CurrentEnv()
+		currentEnvName, err := apic.EnsureEnv()
 		if err != nil {
 			fn.PrintError(err)
 			return

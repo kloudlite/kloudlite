@@ -1,6 +1,8 @@
 package list
 
 import (
+	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"strconv"
 	"strings"
 
@@ -47,7 +49,7 @@ func listapps(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Com
 	if err != nil {
 		return functions.NewE(err)
 	}
-	currentEnvName, err := fc.CurrentEnv()
+	currentEnvName, err := apic.EnsureEnv()
 	if err != nil {
 		return functions.NewE(err)
 	}
@@ -58,7 +60,7 @@ func listapps(apic apiclient.ApiClient, fc fileclient.FileClient, cmd *cobra.Com
 	}
 
 	if len(apps) == 0 {
-		return functions.Error("no apps found")
+		return fmt.Errorf("[#] no apps found in environemnt: %s", text.Blue(currentEnvName.Name))
 	}
 
 	header := table.Row{

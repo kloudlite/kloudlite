@@ -104,7 +104,7 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, path 
 		if err != nil {
 			return err
 		}
-		currentEnv, err := fc.CurrentEnv()
+		currentEnv, err := apic.EnsureEnv()
 		if err != nil {
 			fn.PrintError(err)
 			return err
@@ -127,7 +127,7 @@ func selectConfigMount(apic apiclient.ApiClient, fc fileclient.FileClient, path 
 		if err != nil {
 			return err
 		}
-		currentEnv, err := fc.CurrentEnv()
+		currentEnv, err := apic.EnsureEnv()
 		if err != nil {
 			fn.PrintError(err)
 			return err
