@@ -258,7 +258,7 @@ func generatePersistedEnv(apic apiclient.ApiClient, fc fileclient.FileClient, kf
 		return nil, fn.NewE(err)
 	}
 	ev["PURE_PROMPT_SYMBOL"] = fmt.Sprintf("(%s) %s", envName, ">")
-	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.khost.dev.sh", e.Name, kf.AccountName)
+	ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.khost.dev", e.Name, kf.AccountName)
 	if flags.IsDev() {
 		ev["KL_SEARCH_DOMAIN"] = fmt.Sprintf("%s.%s.dns.devprod.sh", e.Name, kf.AccountName)
 	}
