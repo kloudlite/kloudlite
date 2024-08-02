@@ -15,7 +15,6 @@ import { ReactNode, useEffect } from 'react';
 import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
 import styleReactPulsable from 'react-pulsable/index.css';
 import reactToast from 'react-toastify/dist/ReactToastify.css';
-import styleZenerSelect from '@oshq/react-select/index.css';
 import rcss from 'react-highlightjs-logs/dist/index.css';
 import Container from '~/components/atoms/container';
 import ProgressContainer, {
@@ -42,7 +41,6 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: skeletonCSS },
   { rel: 'stylesheet', href: rcSlide },
   { rel: 'stylesheet', href: styleReactPulsable },
-  { rel: 'stylesheet', href: styleZenerSelect },
   { rel: 'stylesheet', href: rcss },
   {
     rel: 'stylesheet',
