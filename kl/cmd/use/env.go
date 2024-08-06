@@ -129,15 +129,13 @@ func selectEnv(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.E
 	}
 
 	if err := persistSelectedEnv(fileclient.Env{
-		Name:     env.Metadata.Name,
-		TargetNs: env.Spec.TargetNamespace,
+		Name: env.Metadata.Name,
 		SSHPort: func() int {
 			if oldEnv == nil {
 				return 0
 			}
 			return oldEnv.SSHPort
 		}(),
-		ClusterName: env.ClusterName,
 	}); err != nil {
 		return nil, functions.NewE(err)
 	}

@@ -11,6 +11,8 @@ COPY --from=project . /kl-app
 
 ARG VERSION
 
+ENV CGO_ENABLED=0
+
 RUN go build --tags=box -ldflags="-X github.com/kloudlite/kl/flags.Version=${VERSION} -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl main.go
 
 

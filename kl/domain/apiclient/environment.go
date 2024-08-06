@@ -117,10 +117,8 @@ func (apic *apiClient) EnsureEnv() (*fileclient.Env, error) {
 		return nil, functions.NewE(err)
 	}
 	return &fileclient.Env{
-		Name:        e.DisplayName,
-		TargetNs:    e.Metadata.Namespace,
-		SSHPort:     0,
-		ClusterName: e.ClusterName,
+		Name:    e.DisplayName,
+		SSHPort: 0,
 	}, nil
 }
 

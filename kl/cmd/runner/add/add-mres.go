@@ -163,6 +163,7 @@ func selectMres(apic apiclient.ApiClient, fc fileclient.FileClient) (*apiclient.
 }
 
 func init() {
+	mresCmd.Aliases = append(mresCmd.Aliases, "managed-resources", "mresources", "mreses")
 	fn.WithKlFile(mresCmd)
 }
 

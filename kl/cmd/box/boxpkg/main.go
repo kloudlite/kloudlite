@@ -90,10 +90,8 @@ func NewClient(cmd *cobra.Command, args []string) (BoxClient, error) {
 			return nil, fn.NewE(err)
 		}
 		env = &fileclient.Env{
-			Name:        environment.DisplayName,
-			TargetNs:    environment.Spec.TargetNamespace,
-			SSHPort:     0,
-			ClusterName: environment.ClusterName,
+			Name:    environment.DisplayName,
+			SSHPort: 0,
 		}
 		data, err := fileclient.GetExtraData()
 		if err != nil {

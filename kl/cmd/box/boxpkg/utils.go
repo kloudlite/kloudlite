@@ -282,7 +282,7 @@ func (c *client) startContainer(klconfHash string) (string, error) {
 			fmt.Sprintf("SSH_PORT=%d", sshPort),
 			fmt.Sprintf("KL_WORKSPACE=%s", c.cwd),
 			"KLCONFIG_PATH=/workspace/kl.yml",
-			"KL_DNS=100.64.0.1",
+			fmt.Sprintf("KL_DNS=%s", constants.KLDNS),
 			fmt.Sprintf("KL_BASE_URL=%s", constants.BaseURL),
 		},
 		Hostname:     "box",

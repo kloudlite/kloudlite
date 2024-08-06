@@ -24,10 +24,8 @@ const (
 )
 
 type Env struct {
-	Name        string `json:"name"`
-	TargetNs    string `json:"targetNamespace"`
-	SSHPort     int    `json:"sshPort"`
-	ClusterName string `json:"clusterName"`
+	Name    string `json:"name"`
+	SSHPort int    `json:"sshPort"`
 }
 
 type Session struct {
