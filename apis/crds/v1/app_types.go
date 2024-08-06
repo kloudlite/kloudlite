@@ -324,6 +324,10 @@ func (app *App) IsInterceptEnabled() bool {
 	return app.Spec.Intercept != nil && app.Spec.Intercept.Enabled
 }
 
+func (app *App) IsHPAEnabled() bool {
+	return app.Spec.Hpa != nil && app.Spec.Hpa.Enabled
+}
+
 // +kubebuilder:object:root=true
 
 // AppList contains a list of App
