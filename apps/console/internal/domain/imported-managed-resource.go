@@ -23,63 +23,12 @@ func (d *domain) ImportManagedResource(ctx ManagedResourceContext, mresName stri
 		return nil, errors.Newf("synced output secret not found")
 	}
 
-	outputSecret := mr.SyncedOutputSecretRef
-
-	outputSecret.ObjectMeta = metav1.ObjectMeta{
-		Name:      importName,
-		Namespace: d.getEnvironmentTargetNamespace(*ctx.EnvironmentName),
-	}
-
-	imr, err := d.importedMresRepo.Create(ctx, &entities.ImportedManagedResource{
-		Name: importName,
-		ManagedResourceRef: entities.ManagedResourceRef{
-			ID:        mr.Id,
-			Name:      mresName,
-			Namespace: mr.Namespace,
-		},
-		SecretRef: common_types.SecretRef{
-			Name:      importName,
-			Namespace: outputSecret.Namespace,
-		},
-		ResourceMetadata: common.ResourceMetadata{
-			DisplayName: importName,
-			CreatedBy: common.CreatedOrUpdatedBy{
-				UserId:    ctx.UserId,
-				UserName:  ctx.UserName,
-				UserEmail: ctx.UserEmail,
-			},
-			LastUpdatedBy: common.CreatedOrUpdatedBy{
-				UserId:    ctx.UserId,
-				UserName:  ctx.UserName,
-				UserEmail: ctx.UserEmail,
-			},
-		},
-		AccountName:     ctx.AccountName,
-		EnvironmentName: *ctx.EnvironmentName,
-		SyncStatus:      t.GenSyncStatus(t.SyncActionApply, mr.RecordVersion),
-	})
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if _, err := d.createSecret(ResourceContext{ConsoleContext: ctx.ConsoleContext, EnvironmentName: *ctx.EnvironmentName}, entities.Secret{
-		Secret:          *outputSecret,
-		AccountName:     ctx.AccountName,
-		EnvironmentName: *ctx.EnvironmentName,
-		For: &entities.SecretCreatedFor{
-			RefId:        imr.Id,
-			ResourceType: entities.ResourceTypeImportedManagedResource,
-			Name:         mresName,
-			Namespace:    mr.Namespace,
-		},
-		IsReadOnly: true,
-	}); err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx.ConsoleContext, imr.EnvironmentName, entities.ResourceTypeManagedResource, imr.ManagedResourceRef.Name, PublishUpdate)
-
-	return imr, nil
+	return d.createAndApplyImportedManagedResource(
+		ResourceContext{ConsoleContext: ctx.ConsoleContext, EnvironmentName: *ctx.EnvironmentName},
+		CreateAndApplyImportedManagedResourceArgs{
+			ImportedManagedResourceName: importName,
+			ManagedResourceRefID:        mr.Id,
+		})
 }
 
 func (d *domain) DeleteImportedManagedResource(ctx ResourceContext, importName string) error {
@@ -146,6 +95,82 @@ func (d *domain) findImportedMRes(ctx ResourceContext, importName string) (*enti
 	if imr == nil {
 		return nil, errors.Newf("no imported managed resource found")
 	}
+
+	return imr, nil
+}
+
+type CreateAndApplyImportedManagedResourceArgs struct {
+	ImportedManagedResourceName string
+	ManagedResourceRefID        repos.ID
+}
+
+func (d *domain) createAndApplyImportedManagedResource(ctx ResourceContext, args CreateAndApplyImportedManagedResourceArgs) (*entities.ImportedManagedResource, error) {
+	mr, err := d.mresRepo.FindById(ctx, args.ManagedResourceRefID)
+	if err != nil {
+		return nil, err
+	}
+
+	if mr.SyncedOutputSecretRef == nil {
+		return nil, errors.Newf("synced output secret not found")
+	}
+
+	outputSecret := mr.SyncedOutputSecretRef
+
+	envTargetNamespace := d.getEnvironmentTargetNamespace(ctx.EnvironmentName)
+
+	outputSecret.ObjectMeta = metav1.ObjectMeta{
+		Name:      args.ImportedManagedResourceName,
+		Namespace: envTargetNamespace,
+	}
+
+	imr, err := d.importedMresRepo.Create(ctx, &entities.ImportedManagedResource{
+		Name: args.ImportedManagedResourceName,
+		ManagedResourceRef: entities.ManagedResourceRef{
+			ID:        mr.Id,
+			Name:      mr.Name,
+			Namespace: mr.Namespace,
+		},
+		SecretRef: common_types.SecretRef{
+			Name:      args.ImportedManagedResourceName,
+			Namespace: envTargetNamespace,
+		},
+		ResourceMetadata: common.ResourceMetadata{
+			DisplayName: args.ImportedManagedResourceName,
+			CreatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+			LastUpdatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+		},
+		AccountName:     ctx.AccountName,
+		EnvironmentName: ctx.EnvironmentName,
+		SyncStatus:      t.GenSyncStatus(t.SyncActionApply, mr.RecordVersion),
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if _, err := d.createSecret(ctx, entities.Secret{
+		Secret:          *outputSecret,
+		AccountName:     ctx.AccountName,
+		EnvironmentName: ctx.EnvironmentName,
+		For: &entities.SecretCreatedFor{
+			RefId:        imr.Id,
+			ResourceType: entities.ResourceTypeImportedManagedResource,
+			Name:         imr.Name,
+			Namespace:    mr.Namespace,
+		},
+		IsReadOnly: true,
+	}); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	d.resourceEventPublisher.PublishEnvironmentResourceEvent(ctx.ConsoleContext, imr.EnvironmentName, entities.ResourceTypeImportedManagedResource, imr.Name, PublishUpdate)
 
 	return imr, nil
 }
