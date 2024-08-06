@@ -164,13 +164,11 @@ func (r *Reconciler) createService(req *rApi.Request[*mongodbMsvcv1.StandaloneSe
 
 	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
-		lb := svc.GetLabels()
-		fn.MapSet(&lb, constants.KloudliteDNSHostname, getKloudliteDNSHostname(obj))
+		fn.MapSet(&svc.Labels, constants.KloudliteDNSHostname, getKloudliteDNSHostname(obj))
 		for k, v := range obj.GetLabels() {
-			lb[k] = v
+			fn.MapSet(&svc.Labels, k, v)
 		}
 
-		svc.SetLabels(lb)
 		svc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		svc.Spec.Ports = []corev1.ServicePort{
 			{
@@ -195,7 +193,9 @@ func (r *Reconciler) createPVC(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, pvc, func() error {
-		pvc.SetLabels(obj.GetLabels())
+		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+			fn.MapSet(&pvc.Labels, k, v)
+		}
 		pvc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
 
@@ -221,7 +221,9 @@ func (r *Reconciler) createAccessCredentials(req *rApi.Request[*mongodbMsvcv1.St
 
 	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
-		secret.SetLabels(obj.GetLabels())
+		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+			fn.MapSet(&secret.Labels, k, v)
+		}
 		secret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 		if secret.Data == nil {
@@ -280,23 +282,27 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 	sts := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, sts, func() error {
 		sts.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		sts.SetLabels(obj.GetLabels())
-		lb := sts.GetLabels()
-		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
-			lb[k] = v
-		}
-		fn.MapSet(&lb, kloudliteMsvcComponent, "statefulset")
 
-		sts.SetLabels(lb)
+		selectorLabels := fn.MapMerge(
+			fn.MapFilter(obj.GetLabels(), "kloudlite.io/"),
+			map[string]string{kloudliteMsvcComponent: "statefulset"},
+		)
+
+		for k, v := range selectorLabels {
+			fn.MapSet(&sts.Labels, k, v)
+		}
+
+		sts.Spec.Replicas = fn.New(int32(1))
+
 		sts.Spec = appsv1.StatefulSetSpec{
 			Replicas: fn.New(int32(1)),
 			Selector: &metav1.LabelSelector{
-				MatchLabels: fn.MapFilter(obj.GetLabels(), "kloudlite.io/"),
+				MatchLabels: selectorLabels,
 			},
 			ServiceName: obj.Name,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: fn.MapFilter(obj.GetLabels(), "kloudlite.io/"),
+					Labels: selectorLabels,
 				},
 				Spec: corev1.PodSpec{
 					Volumes: []corev1.Volume{
@@ -351,14 +357,15 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 		}
 		return nil
 	}); err != nil {
+		r.logger.Infof("Failed to create statefulset: err=%v, resource:\n%+v\n", err, sts)
 		return check.Failed(err)
 	}
 
-	if sts.Status.Replicas > 0 && sts.Status.ReadyReplicas != sts.Status.Replicas {
-		return check.Failed(fmt.Errorf("waiting for statefulset pods to start"))
+	if sts.Status.Replicas > 0 && sts.Status.ReadyReplicas == sts.Status.Replicas {
+		return check.Completed()
 	}
 
-	return check.Completed()
+	return check.StillRunning(fmt.Errorf("waiting for statefulset pods to start"))
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

@@ -163,12 +163,17 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ClusterManagedService]) 
 	req.Logger.Infof("proceeding forward to delete namespace %s", obj.Spec.TargetNamespace)
 	ns, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.TargetNamespace), &corev1.Namespace{})
 	if err != nil {
-		return check.Failed(err)
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
+		}
+		return req.Finalize()
 	}
 
 	if v, ok := ns.GetAnnotations()[NamespaceCreatedByLabel]; ok && v == "true" {
 		if err := r.Delete(ctx, ns); err != nil {
-			return check.Failed(err)
+			if !apiErrors.IsNotFound(err) {
+				return check.Failed(err)
+			}
 		}
 	}
 
@@ -215,7 +220,7 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ClusterMa
 	req.AddToOwnedResources(rApi.ParseResourceRef(msvc))
 
 	if !msvc.Status.IsReady {
-		return check.Failed(fmt.Errorf("managed service is not ready, yet"))
+		return check.StillRunning(fmt.Errorf("managed service is not ready, yet"))
 	}
 
 	return check.Completed()
