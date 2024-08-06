@@ -190,7 +190,9 @@ func (r *Reconciler) createDBCreds(req *rApi.Request[*postgresv1.StandaloneDatab
 
 	creds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, creds, func() error {
-		creds.SetLabels(obj.GetLabels())
+		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+			fn.MapSet(&creds.Labels, k, v)
+		}
 		if creds.Data == nil {
 			username := sanitizeDbName(obj.Name)
 			password := fn.CleanerNanoid(40)
