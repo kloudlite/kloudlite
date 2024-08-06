@@ -694,7 +694,6 @@ const ManagedServiceLayout = () => {
         },
       }));
     }
-    console.log('hello');
   }, [values.selectedTemplate]);
 
   useEffect(() => {
