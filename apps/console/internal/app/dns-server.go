@@ -66,9 +66,14 @@ func (h *dnsHandler) resolver(ctx context.Context, domain string, qtype uint16) 
 	m.RecursionDesired = true
 
 	question := m.Question[0]
-	sp := strings.SplitN(question.Name, fmt.Sprintf(".%s", h.kloudliteDNSSuffix), 2)
+	sp := strings.SplitN(strings.ToLower(question.Name), fmt.Sprintf(".%s", h.kloudliteDNSSuffix), 2)
 	if len(sp) < 2 {
 		return nil, fmt.Errorf("failed to split into 2 over .%s", h.kloudliteDNSSuffix)
+	}
+
+	if strings.HasSuffix(sp[0], ".local") {
+		// INFO: domains ending with .local are supposed to be reserved for local machine only
+		return h.newRR(question.Name, 7*24*60*60, "127.0.0.1")
 	}
 
 	comps := strings.Split(sp[0], ".")
