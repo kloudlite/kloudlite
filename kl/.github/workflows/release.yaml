@@ -9,7 +9,7 @@ on:
 
 jobs:
   docker-build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Setup Python
         uses: actions/setup-python@v2
