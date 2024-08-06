@@ -39,8 +39,8 @@ jobs:
               env_out.write(f"TAG_NAME={tag}\n")
         shell: python
 
-      # - name: Set up QEMU
-      #   uses: docker/setup-qemu-action@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
