@@ -217,7 +217,7 @@ const parseOverallState = (item: IStatusMetaV2): OverallStates => {
     {
       value: 'idle',
       progress: 'init',
-    },
+    }
   );
 
   return (mainStatus?.value as OverallStates) || 'idle';
@@ -360,7 +360,7 @@ export const SyncStatusV2 = ({
         } & ICheckList)[],
         message: '',
         progress: 'init',
-      },
+      }
     );
 
     return items?.items;

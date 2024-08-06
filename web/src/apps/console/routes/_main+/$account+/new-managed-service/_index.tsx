@@ -7,6 +7,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import {
   FormEventHandler,
   ReactNode,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -18,7 +19,7 @@ import {
 import { Switch } from '~/components/atoms/switch';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import { handleError } from '~/root/lib/utils/common';
-import { titleCase, useAppend, useMapper } from '~/components/utils';
+import { titleCase } from '~/components/utils';
 import { flatMapValidations, flatM } from '~/console/utils/commons';
 import MultiStepProgress, {
   useMultiStepProgress,
@@ -29,7 +30,6 @@ import {
   ReviewComponent,
 } from '~/console/components/commons';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
-import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { toast } from 'react-toastify';
 import { IAccountContext } from '../_layout';
@@ -302,7 +302,6 @@ const FieldView = ({
         label="Select Cluster"
         size="lg"
         value={values.clusterName}
-        // disabled={cIsLoading}
         placeholder="Select a Cluster"
         options={async () => [
           ...((clusters &&
@@ -539,6 +538,29 @@ const ManagedServiceLayout = () => {
     totalSteps: 3,
   });
 
+  const [clusterList, setClusterList] = useState<any[]>([]);
+
+  const getClusters = useCallback(async () => {
+    try {
+      const byokClusters = await api.listByokClusters({});
+      const data = parseNodes(byokClusters.data).map((c) => ({
+        label: c.displayName,
+        value: parseName(c),
+        ready: true,
+        render: () => (
+          <ClusterSelectItem label={c.displayName} value={parseName(c)} />
+        ),
+      }));
+      setClusterList(data);
+    } catch (err) {
+      handleError(err);
+    }
+  }, []);
+
+  useEffect(() => {
+    getClusters();
+  }, []);
+
   const { values, errors, handleSubmit, handleChange, isLoading, setValues } =
     useForm({
       initialValues: {
@@ -657,63 +679,6 @@ const ManagedServiceLayout = () => {
       },
     });
 
-  // const { data: nodepoolData } = useCustomSwr('/nodepools', async () => {
-  //   return api.listNodePools({ clusterName: parseName(cluster) });
-  // });
-
-  const { data: clustersData } = useCustomSwr(
-    'clusters',
-    async () => api.listClusters({}),
-    true
-  );
-
-  const { data: byokClustersData } = useCustomSwr(
-    'byokclusters',
-    async () => api.listByokClusters({}),
-    true
-  );
-
-  const cData = useMapper(parseNodes(clustersData), (item) => {
-    return {
-      label: item.displayName,
-      value: parseName(item),
-      ready: item.status?.isReady,
-      render: () => (
-        <ClusterSelectItem label={item.displayName} value={parseName(item)} />
-      ),
-    };
-  });
-
-  const bCData = useMapper(parseNodes(byokClustersData), (item) => {
-    return {
-      label: item.displayName,
-      value: parseName(item),
-      ready: true,
-      render: () => (
-        <ClusterSelectItem label={item.displayName} value={parseName(item)} />
-      ),
-    };
-  });
-
-  const clusterList = useAppend(cData, bCData);
-
-  // const { data: nodepoolData, isLoading: nodepoolIsLoading } = useCustomSwr(
-  //   () => `/nodepools${values.clusterName}`,
-  //   async () => {
-  //     return api.listNodePools({ clusterName: values.clusterName });
-  //   }
-  // );
-
-  // const statefulNodepools = useMapper(parseNodes(nodepoolData), (val) => ({
-  //   label: val.metadata?.name || '',
-  //   value: val.metadata?.name || '',
-  //   nodepoolStateType: val.spec.nodeLabels[keyconstants.nodepoolStateType],
-  // }));
-
-  // const statefulNodepools = nodepools.filter(
-  //   (np) => np.nodepoolStateType === 'stateful'
-  // );
-
   useEffect(() => {
     const selectedTemplate =
       values.selectedTemplate as unknown as ISelectedTemplate;
@@ -729,7 +694,17 @@ const ManagedServiceLayout = () => {
         },
       }));
     }
+    console.log('hello');
   }, [values.selectedTemplate]);
+
+  useEffect(() => {
+    if (clusterList.length > 0) {
+      setValues((v) => ({
+        ...v,
+        clusterName: clusterList.find((c) => c.ready)?.value || '',
+      }));
+    }
+  }, [clusterList]);
 
   return (
     <MultiStepProgressWrapper

@@ -364,6 +364,8 @@ export const getClusterStatus = (item?: { lastOnlineAt?: string }): boolean => {
   const timeDifference =
     (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
 
+  console.log(timeDifference, window.location.href);
+
   switch (true) {
     case timeDifference <= 2:
       return true;
