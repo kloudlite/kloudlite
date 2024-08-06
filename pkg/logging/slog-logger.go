@@ -21,6 +21,11 @@ type SlogOptions struct {
 }
 
 func NewSlogLogger(opts SlogOptions) *slog.Logger {
+	// INFO: force colored output, otherwise honor the env-var `CLICOLOR_FORCE`
+	if _, ok := os.LookupEnv("CLICOLOR_FORCE"); !ok {
+		os.Setenv("CLICOLOR_FORCE", "1")
+	}
+
 	if opts.Writer == nil {
 		opts.Writer = os.Stderr
 	}
