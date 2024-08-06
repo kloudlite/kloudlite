@@ -319,8 +319,13 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 	}
 
 	secrets, err := d.secretRepo.Find(ctx, repos.Query{
-		Filter: filters,
-		Sort:   nil,
+		Filter: d.secretRepo.MergeMatchFilters(filters, map[string]repos.MatchFilter{
+			fc.SecretFor: {
+				MatchType: repos.MatchTypeExact,
+				Exact:     nil,
+			},
+		}),
+		Sort: nil,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -333,7 +338,16 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+
 	routers, err := d.routerRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Sort:   nil,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	mresources, err := d.importedMresRepo.Find(ctx, repos.Query{
 		Filter: filters,
 		Sort:   nil,
 	})
@@ -444,6 +458,15 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, args CloneEnvironmentArgs)
 			AccountName:      ctx.AccountName,
 			EnvironmentName:  destEnv.Name,
 			ResourceMetadata: resourceMetadata(routers[i].DisplayName),
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	for i := range mresources {
+		if _, err := d.createAndApplyImportedManagedResource(resCtx, CreateAndApplyImportedManagedResourceArgs{
+			ImportedManagedResourceName: mresources[i].Name,
+			ManagedResourceRefID:        mresources[i].ManagedResourceRef.ID,
 		}); err != nil {
 			return nil, err
 		}

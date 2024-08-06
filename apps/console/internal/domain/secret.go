@@ -250,16 +250,19 @@ func (d *domain) deleteSecret(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	usecret, err := d.secretRepo.Patch(
-		ctx,
-		ctx.DBFilters().Add(fields.MetadataName, name),
-		common.PatchForMarkDeletion(),
-	)
+	defer func() {
+		d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, name, PublishUpdate)
+	}()
+
+	filters := ctx.DBFilters().Add(fields.MetadataName, name)
+
+	usecret, err := d.secretRepo.Patch(ctx, filters, common.PatchForMarkDeletion())
 	if err != nil {
+		if errors.Is(err, repos.ErrNoDocuments) {
+			return nil
+		}
 		return errors.NewE(err)
 	}
-
-	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, usecret.Name, PublishUpdate)
 
 	if err := d.deleteK8sResource(ctx, usecret.EnvironmentName, &usecret.Secret); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
