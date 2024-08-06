@@ -25,13 +25,13 @@ import (
 func main() {
 	mgr := operator.New("agent-operator")
 
-	// // kloudlite resources
+	// kloudlite resources
 	app.RegisterInto(mgr)
 	project.RegisterInto(mgr)
 	helmCharts.RegisterInto(mgr)
 	routers.RegisterInto(mgr)
-	//
-	// // kloudlite managed services
+
+	// kloudlite managed services
 	msvcAndMres.RegisterInto(mgr)
 	msvcMongo.RegisterInto(mgr)
 	msvcRedis.RegisterInto(mgr)
