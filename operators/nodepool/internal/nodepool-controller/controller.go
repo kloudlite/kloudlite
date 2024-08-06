@@ -302,8 +302,6 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 		}
 	}
 
-	// checksum := nodesChecksum(nodesMap)
-
 	varfileJson, err := r.parseSpecToVarFileJson(ctx, obj, nodesMap)
 	if err != nil {
 		return check.Failed(err)

@@ -344,6 +344,17 @@ runs:
       run: |
         task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/networking/cmd/webhook:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image="${PUSH_IMAGE}"
 
+    - name: networking/cmd/logs-proxy cache
+      if: ${{ inputs.networking_logs_proxy == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-networking_logs_proxy-${{ steps.env-vars.outputs.GOPKG_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-networking_logs_proxy-
+
     - name: networking/cmd/logs-proxy
       if: ${{ inputs.networking_logs_proxy == 'true' }}
       working-directory: ${{ inputs.git_directory }}/operators/networking/internal/cmd/logs-proxy

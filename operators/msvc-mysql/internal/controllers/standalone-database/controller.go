@@ -134,7 +134,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*mysqlv1.StandaloneDatabase]) st
 			Namespace: req.Object.Namespace,
 		},
 	}); err != nil {
-		return check.Failed(err)
+		if !apiErrors.IsNotFound(err) {
+			return check.Failed(err)
+		}
 	}
 
 	return req.Finalize()
@@ -190,7 +192,9 @@ func (r *Reconciler) createDBCreds(req *rApi.Request[*mysqlv1.StandaloneDatabase
 
 	creds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, creds, func() error {
-		creds.SetLabels(obj.GetLabels())
+		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+			fn.MapSet(&creds.Labels, k, v)
+		}
 		if creds.Data == nil {
 			username := sanitizeDbName(obj.Name)
 			password := fn.CleanerNanoid(40)
@@ -229,7 +233,6 @@ func (r *Reconciler) createDBCreds(req *rApi.Request[*mysqlv1.StandaloneDatabase
 		return check.Failed(err)
 	}
 
-	// function-body
 	return check.Completed()
 }
 
@@ -245,7 +248,7 @@ func (r *Reconciler) createDBUserLifecycle(req *rApi.Request[*mysqlv1.Standalone
 	lf := &crdsv1.Lifecycle{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lf, func() error {
-		for k, v := range obj.Labels {
+		for k, v := range fn.MapFilter(obj.Labels, "kloudlite.io/") {
 			fn.MapSet(&lf.Labels, k, v)
 		}
 		lf.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
