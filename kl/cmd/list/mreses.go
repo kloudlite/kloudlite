@@ -81,8 +81,6 @@ func printMres(apic apiclient.ApiClient, cmd *cobra.Command, mres []apiclient.Mr
 }
 
 func init() {
-	mresCmd.Aliases = append(mresCmd.Aliases, "mres")
-	mresCmd.Aliases = append(mresCmd.Aliases, "managed-resources")
-	mresCmd.Aliases = append(mresCmd.Aliases, "mresources")
+	mresCmd.Aliases = append(mresCmd.Aliases, "mres", "managed-resources", "res")
 	fn.WithOutputVariant(mresCmd)
 }
