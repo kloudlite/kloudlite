@@ -11,6 +11,7 @@ import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
 import {
   ExtractNodeType,
+  parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
@@ -25,12 +26,10 @@ import { useOutletContext, useParams } from '@remix-run/react';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
-import {
-  getClusterStatus,
-  getManagedTemplateLogo,
-} from '~/console/utils/commons';
+import { getManagedTemplateLogo } from '~/console/utils/commons';
 import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
 import { Badge } from '~/components/atoms/badge';
+import useClusterStatus from '~/console/hooks/use-cluster-status';
 import { ViewSecret } from './handle-managed-resource-v2';
 import { IEnvironmentContext } from '../_layout';
 
@@ -142,6 +141,8 @@ const GridView = ({ items = [], onAction, templates }: IResource) => {
 
 const ListView = ({ items = [], onAction, templates }: IResource) => {
   const { cluster } = useOutletContext<IEnvironmentContext>();
+  const { findClusterStatus, clusters } = useClusterStatus();
+
   return (
     <ListV2.Root
       data={{
@@ -188,23 +189,17 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const isClusterOnline = getClusterStatus(cluster);
           const { name, id, logo, updateInfo } = parseItem(i, templates);
+          const isClusterOnline = findClusterStatus(
+            clusters.length > 0
+              ? clusters.find((c) => parseName(c) === parseName(cluster))
+              : cluster
+          );
+
           return {
             columns: {
               name: {
-                render: () => (
-                  <ListTitleV2
-                    title={name}
-                    subtitle={id}
-                    // avatar={
-                    //   <div className="pulsable pulsable-circle aspect-square">
-                    //     <img src={i.} alt={name} className="w-4xl h-4xl" />
-                    //   </div>
-                    // }
-                    // avatar={<ConsoleAvatar name={id} />}
-                  />
-                ),
+                render: () => <ListTitleV2 title={name} subtitle={id} />,
               },
               resource: {
                 render: () => (

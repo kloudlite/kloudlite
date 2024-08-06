@@ -20,7 +20,7 @@ import { LoadingPlaceHolder } from '~/console/components/loading';
 import ListV2 from '~/console/components/listV2';
 import { ListItem } from '~/console/components/console-list-components';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { NameIdView } from '~/console/components/name-id-view';
@@ -48,71 +48,90 @@ const Root = (props: IDialog) => {
   const reloadPage = useReload();
   const { environment } = useOutletContext<IEnvironmentContext>();
 
-  const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
-    useForm({
-      initialValues: isUpdate
-        ? {
-            isNameError: false,
-          }
-        : {
-            isNameError: false,
-            name: '',
-            displayName: '',
-            managedServiceName: '',
-            managedResourceName: '',
-          },
-      validationSchema: Yup.object({
-        managedServiceName: Yup.string().required(
-          'integrated service is required'
-        ),
-        managedResourceName: Yup.string().required(
-          'integrated resource name is required'
-        ),
-      }),
-      onSubmit: async (val) => {
-        try {
-          if (!isUpdate) {
-            const { errors: e } = await api.importManagedResource({
-              envName: parseName(environment),
-              msvcName: val.managedServiceName || '',
-              mresName: val.managedResourceName || '',
-              importName: val.name || '',
-            });
-            if (e) {
-              throw e[0];
-            }
-          }
-          reloadPage();
-          resetValues();
-          toast.success(
-            `integrated resource ${
-              isUpdate ? 'updated' : 'imported'
-            } successfully`
-          );
-          setVisible(false);
-        } catch (err) {
-          handleError(err);
-        }
-      },
-    });
+  const [msvcList, setMsvcList] = useState<any[]>([]);
 
-  const { data: msvcData, isLoading: msvcIsLoading } = useCustomSwr(
-    () => 'managed-services',
-    async () => {
-      return api.listClusterMSvs();
+  const getMsvcs = useCallback(async () => {
+    try {
+      const msvcs = await api.listClusterMSvs({});
+      const data = parseNodes(msvcs.data).map((c) => ({
+        label: c.displayName,
+        value: parseName(c),
+        ready: true,
+        render: () => <SelectItem label={c.displayName} value={parseName(c)} />,
+      }));
+      setMsvcList(data);
+    } catch (err) {
+      handleError(err);
     }
-  );
+  }, []);
 
-  const msvcList = useMapper(parseNodes(msvcData), (item) => {
-    return {
-      label: item.displayName,
-      value: parseName(item),
-      ready: item.status?.isReady,
-      render: () => (
-        <SelectItem label={item.displayName} value={parseName(item)} />
+  useEffect(() => {
+    getMsvcs();
+  }, []);
+
+  const {
+    values,
+    errors,
+    handleChange,
+    handleSubmit,
+    resetValues,
+    setValues,
+    isLoading,
+  } = useForm({
+    initialValues: isUpdate
+      ? {
+          isNameError: false,
+        }
+      : {
+          isNameError: false,
+          name: '',
+          displayName: '',
+          managedServiceName: '',
+          managedResourceName: '',
+        },
+    validationSchema: Yup.object({
+      managedServiceName: Yup.string().required(
+        'integrated service is required'
       ),
-    };
+      managedResourceName: Yup.string().required(
+        'integrated resource name is required'
+      ),
+    }),
+    onSubmit: async (val) => {
+      try {
+        if (!isUpdate) {
+          const { errors: e } = await api.importManagedResource({
+            envName: parseName(environment),
+            msvcName: val.managedServiceName || '',
+            mresName: val.managedResourceName || '',
+            importName: val.name || '',
+          });
+          if (e) {
+            throw e[0];
+          }
+        }
+        reloadPage();
+        resetValues();
+        toast.success(
+          `integrated resource ${
+            isUpdate ? 'updated' : 'imported'
+          } successfully`
+        );
+        setVisible(false);
+      } catch (err) {
+        handleError(err);
+      }
+    },
   });
+
+  useEffect(() => {
+    if (msvcList.length > 0) {
+      setValues((v) => ({
+        ...v,
+        managedServiceName: msvcList.find((c) => c.ready)?.value || '',
+      }));
+    }
+  }, [msvcList]);
 
   const { data: mresData, isLoading: mresIsLoading } = useCustomSwr(
     () => `/managed-services${values.managedServiceName}`,
@@ -166,7 +185,7 @@ const Root = (props: IDialog) => {
             label="Integrated Services"
             size="lg"
             value={values.managedServiceName}
-            disabled={msvcIsLoading}
+            // disabled={msvcIsLoading}
             placeholder="Select a Integrated Service"
             options={async () => [
               ...((msvcList &&
@@ -180,7 +199,7 @@ const Root = (props: IDialog) => {
             }}
             error={!!errors.managedServiceName}
             message={errors.clusterName}
-            loading={msvcIsLoading}
+            // loading={msvcIsLoading}
           />
 
           <Select

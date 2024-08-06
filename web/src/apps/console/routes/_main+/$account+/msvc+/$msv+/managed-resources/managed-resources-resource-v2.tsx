@@ -166,7 +166,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
           {
             render: () => 'Resource Name',
             name: 'name',
-            className: listClass.author,
+            className: listClass.title,
           },
           {
             render: () => 'Resource Type',
