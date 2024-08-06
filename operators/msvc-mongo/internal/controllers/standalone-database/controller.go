@@ -181,7 +181,7 @@ func (r *Reconciler) createDBCreds(req *rApi.Request[*mongov1.StandaloneDatabase
 
 	creds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, creds, func() error {
-		for k, v := range obj.Labels {
+		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
 			fn.MapSet(&creds.Labels, k, v)
 		}
 		// creds.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})

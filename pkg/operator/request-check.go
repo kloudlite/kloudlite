@@ -4,6 +4,7 @@ import (
 	"time"
 
 	step_result "github.com/kloudlite/operator/pkg/operator/step-result"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -38,11 +39,11 @@ func (cw *checkWrapper[T]) Failed(err error) step_result.Result {
 
 	cw.Check.State = ErroredState
 	cw.Check.Status = false
-  if err != nil {
-    cw.Check.Message = err.Error()
-    // if apiErrors.IsConflict(err) {
-    // }
-  }
+	if err != nil {
+		if !apiErrors.IsConflict(err) {
+			cw.Check.Message = err.Error()
+		}
+	}
 
 	cw.request.Object.GetStatus().Checks[cw.checkName] = cw.Check
 
@@ -56,7 +57,9 @@ func (cw *checkWrapper[T]) StillRunning(err error) step_result.Result {
 	cw.Check.State = RunningState
 	cw.Check.Status = false
 	if err != nil {
-		cw.Check.Message = err.Error()
+		if !apiErrors.IsConflict(err) {
+			cw.Check.Message = err.Error()
+		}
 	}
 
 	cw.request.Object.GetStatus().Checks[cw.checkName] = cw.Check
