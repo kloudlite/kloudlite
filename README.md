@@ -7,12 +7,6 @@
   </h1>
   <div>No more waiting for Build & Deploy. Just code & run!</div>
   <br />
-  
-  <a href="https://kloudlite.io">Quickstart</a> |
-  <a href="https://kloudlite.io/docs">Docs</a> |
-  <a href="https://kloudlite.io/why">Why Kloudlite?</a> |
-  <a href="https://kloudlite.io/install">Install</a>
-  <br />
 
   <a href="https://discord.gg/m5tYzQfcG8">
     <img src="https://img.shields.io/discord/934762910717194260?label=discord" alt="Discord">
