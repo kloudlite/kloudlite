@@ -44,28 +44,22 @@ Kloudlite is a platform designed to enhance developers' productivity by providin
 - Watch [a video overview]() of Kloudlite
 
 ## Contact
-- [Twitter](): Follow us on Twitter!
-- [Discord](): Click [here]() to join. You can ask question to our maintainers and to the rich and active community.
+- [Twitter](https://x.com/kloudlite): Follow us on Twitter!
+- [Discord](https://discord.com/invite/m5tYzQfcG8): Click [here](https://discord.com/invite/m5tYzQfcG8) to join. You can ask question to our maintainers and to the rich and active community.
 
 ## Contributing
 If you are interested in contributing to Kloudlite, read about our...
 
-- [contributing guide]()
-- [Report an issue and propose Pull Requests]()
+- [contributing guide](https://kloudlite.io/docs/contributing/code-of-conduct)
+- [Report an issue and propose Pull Requests](https://github.com/kloudlite)
 
 ## Roadmap
-The NATS product roadmap can be found [here]().
-
-## Adopters
-Who uses Kloudlite? See our [list of users]() of users on [kloudlite](https://kloudlite.io).
+The Kloudlite product roadmap can be found [here](https://github.com/orgs/kloudlite/projects/18).
 
 ## Security
 
-### Security Audit
-A third party security audit was performed by Cure53, you can see the full report [here]().
-
 ### Reporting Security Vulnerabilities
-If you've found a vulnerability or a potential vulnerability in the Kloudlite server, please let us know at [kloudlite-security]().
+If you've found a vulnerability or a potential vulnerability in the Kloudlite server, please let us know at (support@kloudlite.io).
 
 ## License
 Unless otherwise noted, the NATS source files are distributed under the Apache Version 2.0 license found in the LICENSE file.
