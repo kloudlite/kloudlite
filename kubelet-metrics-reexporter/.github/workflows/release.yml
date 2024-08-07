@@ -24,53 +24,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: docker setup
-        uses: nxtcoder17/actions/.github/actions/setup-docker@main
+      - name: build-and-push
+        uses: ./.github/actions/build-with-nix
         with:
-          docker_username: ${{ github.actor }}
-          docker_password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: go cache
-        uses: nxtcoder17/actions/.github/actions/setup-cache-go@gh-actions/tricks
-        with:
-          cache_key: "kubelet-metrics-reexporter"
-
-      - name: use nix flakes
-        uses: nxtcoder17/actions/.github/actions/setup-nix-cachix@main
-        with:
-          flake_lock: ./flake.lock
-          nix_develop_arguments: ".#default"
-
-          cachix_cache_name: "kloudlite"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           cachix_auth_token: ${{ secrets.CACHIX_AUTH_TOKEN }}
-
-      - name: generate image tag
-        uses: nxtcoder17/actions/.github/actions/generate-image-tag@gh-actions/tricks
-
-      - name: Building Binary
-        env:
-          CGO_ENABLED: 0
-        run: |
-          task build out=kubelet-metrics-reexporter GOARCH=$(go env GOARCH)
-
-      - name: Build And Push Image
-        if: ${{ env.IMAGE_TAG != '' }}
-        # if: startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/tags/')
-        run: |+
-          set +e
-          image_name="ghcr.io/${{ github.repository }}"
-
-          docker manifest inspect $image_name:$IMAGE_TAG
-          exit_status=$?
-          if [ $exit_status -eq 0 ]; then
-            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
-            echo "image exists, but override pushed image is set to true. proceeding with building image"
-          fi
-          set -e
-
-          task container:build-and-push image="$image_name:$IMAGE_TAG"
-
+          git_directory: "."

@@ -1,0 +1,61 @@
+name: 'builds kubelet-metrics-reexporter'
+description: 'builds kubelet-metrics-reexporter'
+
+inputs:
+  github_token:
+    description: 'GitHub Token'
+    required: true
+
+  cachix_auth_token:
+    description: "cachix auth token"
+    required: true
+
+  git_directory:
+    description: 'base directory'
+    default: "."
+
+runs:
+  using: 'composite'
+  steps:
+    - name: setup-docker
+      uses: nxtcoder17/actions/.github/actions/setup-docker@main
+      with:
+        docker_username: ${{ github.actor }}
+        docker_password: ${{ inputs.github_token }}
+
+    - name: go cache
+      uses: nxtcoder17/actions/.github/actions/setup-cache-go@gh-actions/tricks
+      with:
+        cache_key: "kubelet-metrics-reexporter"
+
+    - name: use nix flakes
+      uses: nxtcoder17/actions/.github/actions/setup-nix-cachix@main
+      with:
+        flake_lock: ${{ inputs.git_directory }}/flake.lock
+        nix_develop_arguments: "${{ inputs.git_directory }}#default"
+
+        cachix_cache_name: "kloudlite"
+        cachix_auth_token: ${{ inputs.cachix_auth_token }}
+
+    - name: generate image tag
+      uses: nxtcoder17/actions/.github/actions/generate-image-tag@gh-actions/tricks
+
+    - name: Build And Push Image
+      working-directory: ${{ inputs.git_directory }}
+      if: ${{ env.IMAGE_TAG != '' }}
+      # if: startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      run: |+
+        set +e
+        image_name="ghcr.io/${{ github.repository }}"
+
+        docker manifest inspect $image_name:$IMAGE_TAG
+        exit_status=$?
+        if [ $exit_status -eq 0 ]; then
+          [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+          echo "image exists, but override pushed image is set to true. proceeding with building image"
+        fi
+        set -e
+
+        task container:build-and-push image="$image_name:$IMAGE_TAG"
+
