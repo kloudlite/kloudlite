@@ -34,11 +34,8 @@
           ];
 
           shellHook = ''
-            echo "using nix flake"
           '';
         };
       }
     );
 }
-
-
