@@ -40,7 +40,7 @@ Kloudlite is a platform designed to enhance developers' productivity by providin
 ## Contributing
 If you are interested in contributing to Kloudlite, read about our...
 
-- [contributing guide](https://kloudlite.io/docs/contributing/code-of-conduct)
+- [Contributing Guide](https://kloudlite.io/docs/contributing/code-of-conduct)
 - [Report an issue and propose Pull Requests](https://github.com/kloudlite)
 
 ## Roadmap
