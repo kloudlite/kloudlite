@@ -49,11 +49,7 @@ The Kloudlite product roadmap can be found [here](https://github.com/orgs/kloudl
 ## Security
 
 ### Reporting Security Vulnerabilities
-If you've found a vulnerability or a potential vulnerability in the Kloudlite server, please let us know at (support@kloudlite.io).
+If you've found a vulnerability or a potential vulnerability in the Kloudlite server, please let us know at support@kloudlite.io.
 
 ## License
-Unless otherwise noted, the NATS source files are distributed under the Apache Version 2.0 license found in the LICENSE file.
-
-
-
-
+Unless otherwise noted, the Kloudlite source files are distributed under the Apache Version 2.0 license found in the LICENSE file.
