@@ -1,18 +1,55 @@
-# [Kloudlite](https://kloudlite.io) - Development Environment as a Service
-Kloudlite is a platform designed to enhance developers' productivity by providing seamless, secure, and **production-parity development environments**. It connects local systems and remote environments via a WireGuard network, allowing developers to build, test, and deploy distributed applications efficiently. Kloudlite eliminates the need for separate configurations by syncing configurations and secrets across environments, and it supports collaborative coding, real-time testing, and debugging.
+<div align="center">
+  <a href="https://kloudlite.io">
+    <img src="https://github.com/kloudlite/kloudlite/assets/1580519/a31a5f78-2bde-45f1-8141-d23ee8231eb1" style="height:38px" />
+  </a>
+  <h1>
+    Development Environment as a Service
+  </h1>
+  <div>No more waiting for Build & Deploy. Just code & run!</div>
+  <br />
 
-# Objective
-The objective of Kloudlite is to revolutionize the development process for distributed applications by offering development environments that mirror production settings exactly. This includes seamless integration of local and remote environments, enhanced collaboration capabilities, and support for various workflows, including future plans for AI and ML workflows.
+  <a href="https://discord.gg/m5tYzQfcG8">
+    <img src="https://img.shields.io/discord/934762910717194260?label=discord" alt="Discord">
+  </a>
+  <a href="#license">
+    <img src="https://img.shields.io/badge/License-Apache--2.0-blue" alt="License">
+  </a>
+  <a href="https://goreportcard.com/report/github.com/kloudlite/api">
+    <img src="https://goreportcard.com/badge/github.com/kloudlite/api" alt="Go Report Card">
+  </a>
+  <a href="https://github.com/kloudlite/kloudlite/issues">
+    <img src="https://img.shields.io/github/issues/kloudlite/kloudlite" alt="Issues">
+  </a>
+  <a href="https://github.com/kloudlite/kloudlite/releases">
+  <img src="https://img.shields.io/github/v/release/kloudlite/kloudlite" alt="GitHub Release">
+  </a>
+</div>
 
-# Goal
-The goal of Kloudlite is to become the go-to platform for developers to build, test, and deploy distributed applications with maximum efficiency and minimum friction. Kloudlite aims to:
-- Provide a seamless development experience that matches production environments.
-- Build a strong community of developers who actively use and contribute to the platform.
-- Ensure high scalability, reliability, and security for all users.
-- Foster innovation through open source contributions and partnerships with key technology providers.
-- Offer comprehensive educational resources and support to help developers make the most of Kloudlite.
+Kloudlite is a platform designed to enhance developers' productivity by providing seamless, secure, **production-parity development environments**. It connects local systems and remote environments via a WireGuard network, allowing developers to build, test, and deploy distributed applications efficiently. Kloudlite eliminates the need for separate configurations by syncing configurations and secrets across environments. It supports collaborative coding, real-time testing, and debugging.
 
-# Core Components
-- [Platform API](https://github.com/kloudlite/api)
-- [Dashboard](https://github.com/kloudlite/web)
-- [Operators](https://github.com/kloudlite/operator)
+## Documentation
+- [Official Website](https://kloudlite.io)
+- [Official Documentations](https://kloudlite.io/docs)
+- [FAQ]()
+- Watch [a video overview]() of Kloudlite
+
+## Contact
+- [Twitter](https://x.com/kloudlite): Follow us on Twitter!
+- [Discord](https://discord.com/invite/m5tYzQfcG8): Click [here](https://discord.com/invite/m5tYzQfcG8) to join. You can ask question to our maintainers and to the rich and active community.
+
+## Contributing
+If you are interested in contributing to Kloudlite, read about our...
+
+- [Contributing Guide](https://kloudlite.io/docs/contributing/code-of-conduct)
+- [Report an issue and propose Pull Requests](https://github.com/kloudlite)
+
+## Roadmap
+The Kloudlite product roadmap can be found [here](https://github.com/orgs/kloudlite/projects/18).
+
+## Security
+
+### Reporting Security Vulnerabilities
+If you've found a vulnerability or a potential vulnerability in the Kloudlite server, please let us know at support@kloudlite.io.
+
+## License
+Unless otherwise noted, the Kloudlite source files are distributed under the Apache Version 2.0 license found in the LICENSE file.

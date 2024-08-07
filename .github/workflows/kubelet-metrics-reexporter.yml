@@ -29,7 +29,6 @@ jobs:
 
       - name: use nix flakes
         uses: nxtcoder17/actions/.github/actions/setup-nix-cachix@main
-        working-directory: ./kubelet-metrics-reexporter
         with:
           flake_lock: ./flake.lock
           nix_develop_arguments: ".#default"
@@ -39,7 +38,6 @@ jobs:
 
       - name: go cache
         uses: nxtcoder17/actions/.github/actions/setup-cache-go@gh-actions/tricks
-        working-directory: ./kubelet-metrics-reexporter
         with:
           cache_key: "kubelet-metrics-reexporter"
 
@@ -47,14 +45,12 @@ jobs:
         uses: nxtcoder17/actions/.github/actions/generate-image-tag@gh-actions/tricks
 
       - name: Building Binary
-        working-directory: ./kubelet-metrics-reexporter
         env:
           CGO_ENABLED: 0
         run: |
           task build out=kubelet-metrics-reexporter GOARCH=$(go env GOARCH)
 
       - name: Build And Push Image
-        working-directory: ./kubelet-metrics-reexporter
         if: ${{ env.IMAGE_TAG != '' }}
         # if: startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/tags/')
         run: |+
