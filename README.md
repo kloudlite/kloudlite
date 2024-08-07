@@ -31,7 +31,7 @@ Kloudlite is a platform designed to enhance developers' productivity by providin
 ## Documentation
 - [Official Website](https://kloudlite.io)
 - [Official Documentations](https://kloudlite.io/docs)
-- [FAQ]()
+<!-- - [FAQ]() -->
 <!-- - Watch [a video overview]() of Kloudlite -->
 
 ## Contact
