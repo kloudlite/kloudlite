@@ -62,8 +62,6 @@ USER root
 
 RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git  "/usr/share/zsh/plugins/zsh-syntax-highlighting"
 
-USER kl
-
 USER root
 
 # COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
@@ -85,7 +83,6 @@ RUN chsh -s /bin/zsh kl
 
 COPY ./start.sh /start.sh
 COPY ./entrypoint.sh /entrypoint.sh
-
 
 RUN mkdir /kl-tmp && chown -R kl:kl /kl-tmp
 
