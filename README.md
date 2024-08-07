@@ -26,12 +26,8 @@
   <a href="https://github.com/kloudlite/kloudlite/issues">
     <img src="https://img.shields.io/github/issues/kloudlite/kloudlite" alt="Issues">
   </a>
+  <a href="https://github.com/kloudlite/kloudlite/releases">
   <img src="https://img.shields.io/github/v/release/kloudlite/kloudlite" alt="GitHub Release">
-  <a href="https://console.algora.io/org/kloudlite/bounties?status=open">
-    <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fconsole.algora.io%2Fapi%2Fshields%2Fkloudlite%2Fbounties%3Fstatus%3Dopen" alt="Open Bounties">
-  </a>
-  <a href="https://console.algora.io/org/kloudlite/bounties?status=completed">
-    <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fconsole.algora.io%2Fapi%2Fshields%2Fkloudlite%2Fbounties%3Fstatus%3Dcompleted" alt="Rewarded Bounties">
   </a>
 </div>
 
