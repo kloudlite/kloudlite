@@ -1,6 +1,7 @@
 name: Conditional Builds Workflow
 
 on:
+  workflow_dispatch:
   release:
     types: [created]
   push:
@@ -51,8 +52,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/checkout@v4
 
       - name: Build & Push Image
         if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
