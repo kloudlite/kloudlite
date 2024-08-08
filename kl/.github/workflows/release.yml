@@ -1,12 +1,14 @@
-name: Conditional Builds Workflow
+name: Release
 
 on:
   workflow_dispatch:
-  release:
-    types: [created]
-  push:
-    branches:
-      - 'release-*'
+
+  # release:
+  #   types: [created]
+  #
+  # push:
+  #   branches:
+  #     - 'release-*'
 
 jobs:
   docker-build:
@@ -62,12 +64,12 @@ jobs:
           set +e
           image_name="ghcr.io/kloudlite/kl/box"
 
-#          docker manifest inspect $image_name:$IMAGE_TAG
-#          exit_status=$?
-#          if [ $exit_status -eq 0 ]; then
-#            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
-#            echo "image exists, but override pushed image is set to true. proceeding with building image"
-#          fi
+          # docker manifest inspect $image_name:$IMAGE_TAG
+          # exit_status=$?
+          # if [ $exit_status -eq 0 ]; then
+          #   [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+          #   echo "image exists, but override pushed image is set to true. proceeding with building image"
+          # fi
 
           set -e
 
