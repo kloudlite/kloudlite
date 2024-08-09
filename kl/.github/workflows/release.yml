@@ -78,9 +78,9 @@ jobs:
       - name: Build & Push Image
         # if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
         env:
-          #IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
           # IMAGE_TAG: v1.0.7-nightly
-          IMAGE_TAG: ci-testing
+          # IMAGE_TAG: ci-testing
           KL_VERSION_TAG: v1.0.7-nightly
           OVERRIDE_PUSHED_IMAGE: "false"
         run: |
