@@ -19,10 +19,8 @@ jobs:
         include:
           - arch: amd64
             runs-on: warp-ubuntu-2404-x64-8x-spot
-              # runs-on: blacksmith-2vcpu-ubuntu-2204
 
           - arch: arm64
-            # runs-on: warp-ubuntu-2404-arm64-8x-spot
             runs-on: blacksmith-4vcpu-ubuntu-2204-arm
 
     permissions:
@@ -35,29 +33,29 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-         python-version: '3.x'
+          python-version: '3.x'
 
       - name: Create and Set Image Tag
         id: tag_name
         run: |
-         import re
-         import os
-        
-         ref = os.getenv('GITHUB_REF')
-         if ref.startswith('refs/heads/release-'):
-             tag = ref.replace('refs/heads/release-', '')
-             if not re.search('-nightly$', tag):
-                 tag += "-nightly"
-         elif ref.startswith('refs/tags/'):
-             tag = ref.replace('refs/tags/', '')
-         else:
-             tag = 'default-tag'  # Adjust this fallback tag as necessary
-        
-         with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
-             env_file.write(f"TAG={tag}\n")
-        
-         with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
-             env_out.write(f"TAG_NAME={tag}\n")
+          import re
+          import os
+          
+          ref = os.getenv('GITHUB_REF')
+          if ref.startswith('refs/heads/release-'):
+              tag = ref.replace('refs/heads/release-', '')
+              if not re.search('-nightly$', tag):
+                  tag += "-nightly"
+          elif ref.startswith('refs/tags/'):
+              tag = ref.replace('refs/tags/', '')
+          else:
+              tag = 'default-tag'  # Adjust this fallback tag as necessary
+          
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+              env_file.write(f"TAG={tag}\n")
+          
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+              env_out.write(f"TAG_NAME={tag}\n")
         shell: python
 
       - name: Set up QEMU
@@ -79,9 +77,7 @@ jobs:
         # if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
         env:
           IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
-          # IMAGE_TAG: v1.0.7-nightly
-          # IMAGE_TAG: ci-testing
-          KL_VERSION_TAG: v1.0.7-nightly
+          KL_VERSION_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
           OVERRIDE_PUSHED_IMAGE: "false"
         run: |
           set +e
@@ -96,7 +92,6 @@ jobs:
 
           set -e
 
-          # docker buildx build --platform linux/amd64,linux/arm64 -t "$image_name:$IMAGE_TAG" --build-arg VERSION=$IMAGE_TAG --build-context project=. klbox-docker --push
           docker build --build-arg VERSION=$KL_VERSION_TAG -t ghcr.io/kloudlite/kl/box:$IMAGE_TAG-${{ matrix.arch }} --build-context project=. --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true ./klbox-docker 
 
   klbox-docker-multiarch-manifest:
@@ -107,12 +102,36 @@ jobs:
       contents: read
       packages: write
 
-    env:
-      IMAGE_TAG: ci-testing
-      KL_VERSION_TAG: v1.0.7-nightly
-      OVERRIDE_PUSHED_IMAGE: "false"
-
     steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Create and Set Image Tag
+        id: tag_name
+        run: |
+          import re
+          import os
+          
+          ref = os.getenv('GITHUB_REF')
+          if ref.startswith('refs/heads/release-'):
+              tag = ref.replace('refs/heads/release-', '')
+              if not re.search('-nightly$', tag):
+                  tag += "-nightly"
+          elif ref.startswith('refs/tags/'):
+              tag = ref.replace('refs/tags/', '')
+          else:
+              tag = 'default-tag'  # Adjust this fallback tag as necessary
+          
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+              env_file.write(f"TAG={tag}\n")
+          
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+              env_out.write(f"TAG_NAME={tag}\n")
+        shell: python
+
+
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -121,6 +140,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: multiarch manifest build
+        env:
+          IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          KL_VERSION_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
+          OVERRIDE_PUSHED_IMAGE: "false"
         shell: bash
         run: |
           image_name="ghcr.io/kloudlite/kl/box"
@@ -130,82 +153,6 @@ jobs:
           docker manifest annotate ${image_name}:${IMAGE_TAG} ${image_name}:${IMAGE_TAG}-arm64 --os linux --arch arm64
 
           docker manifest push ${image_name}:${IMAGE_TAG}
-
-  # docker-build:
-  #   # runs-on: ubuntu-latest
-  #   runs-on: warp-ubuntu-2404-x64-32x-spot
-  #
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #
-  #   steps:
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v2
-  #       with:
-  #         python-version: '3.x'
-  #
-  #     - name: Create and Set Image Tag
-  #       id: tag_name
-  #       run: |
-  #         import re
-  #         import os
-  #
-  #         ref = os.getenv('GITHUB_REF')
-  #         if ref.startswith('refs/heads/release-'):
-  #             tag = ref.replace('refs/heads/release-', '')
-  #             if not re.search('-nightly$', tag):
-  #                 tag += "-nightly"
-  #         elif ref.startswith('refs/tags/'):
-  #             tag = ref.replace('refs/tags/', '')
-  #         else:
-  #             tag = 'default-tag'  # Adjust this fallback tag as necessary
-  #
-  #         with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
-  #             env_file.write(f"TAG={tag}\n")
-  #
-  #         with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
-  #             env_out.write(f"TAG_NAME={tag}\n")
-  #       shell: python
-  #
-  #     - name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v3
-  #
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v3
-  #
-  #     - name: Log in to the Container registry
-  #       uses: docker/login-action@v3
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.actor }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
-  #
-  #     - uses: actions/checkout@v4
-  #
-  #     - name: Build & Push Image
-  #       # if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
-  #       env:
-  #         #IMAGE_TAG: ${{ steps.tag_name.outputs.TAG_NAME }}
-  #         # IMAGE_TAG: v1.0.7-nightly
-  #         IMAGE_TAG: ci-testing
-  #         KL_VERSION_TAG: v1.0.7-nightly
-  #         OVERRIDE_PUSHED_IMAGE: "false"
-  #       run: |
-  #         set +e
-  #         image_name="ghcr.io/kloudlite/kl/box"
-  #
-  #         # docker manifest inspect $image_name:$IMAGE_TAG
-  #         # exit_status=$?
-  #         # if [ $exit_status -eq 0 ]; then
-  #         #   [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
-  #         #   echo "image exists, but override pushed image is set to true. proceeding with building image"
-  #         # fi
-  #
-  #         set -e
-  #
-  #         # docker buildx build --platform linux/amd64,linux/arm64 -t "$image_name:$IMAGE_TAG" --build-arg VERSION=$IMAGE_TAG --build-context project=. klbox-docker --push
-  #         docker buildx build --platform linux/amd64,linux/arm64 --build-arg VERSION=$KL_VERSION_TAG -t ghcr.io/kloudlite/kl/box:$IMAGE_TAG --build-context project=. --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true ./klbox-docker
 
   build:
     name: Build ${{ matrix.app }}-${{ matrix.platform }}-${{ matrix.arch }}
@@ -327,6 +274,10 @@ jobs:
           path: bin/*
 
   release:
+    permissions:
+      contents: write
+      packages: write
+
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/')
