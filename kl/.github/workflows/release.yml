@@ -32,33 +32,33 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
 
     steps:
-      # - name: Setup Python
-      #   uses: actions/setup-python@v2
-      #   with:
-      #     python-version: '3.x'
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+         python-version: '3.x'
 
-      # - name: Create and Set Image Tag
-      #   id: tag_name
-      #   run: |
-      #     import re
-      #     import os
-      #
-      #     ref = os.getenv('GITHUB_REF')
-      #     if ref.startswith('refs/heads/release-'):
-      #         tag = ref.replace('refs/heads/release-', '')
-      #         if not re.search('-nightly$', tag):
-      #             tag += "-nightly"
-      #     elif ref.startswith('refs/tags/'):
-      #         tag = ref.replace('refs/tags/', '')
-      #     else:
-      #         tag = 'default-tag'  # Adjust this fallback tag as necessary
-      #
-      #     with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
-      #         env_file.write(f"TAG={tag}\n")
-      #
-      #     with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
-      #         env_out.write(f"TAG_NAME={tag}\n")
-      #   shell: python
+      - name: Create and Set Image Tag
+        id: tag_name
+        run: |
+         import re
+         import os
+        
+         ref = os.getenv('GITHUB_REF')
+         if ref.startswith('refs/heads/release-'):
+             tag = ref.replace('refs/heads/release-', '')
+             if not re.search('-nightly$', tag):
+                 tag += "-nightly"
+         elif ref.startswith('refs/tags/'):
+             tag = ref.replace('refs/tags/', '')
+         else:
+             tag = 'default-tag'  # Adjust this fallback tag as necessary
+        
+         with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+             env_file.write(f"TAG={tag}\n")
+        
+         with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+             env_out.write(f"TAG_NAME={tag}\n")
+        shell: python
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
