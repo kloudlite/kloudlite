@@ -141,7 +141,7 @@ const GridView = ({ items = [], onAction, templates }: IResource) => {
 
 const ListView = ({ items = [], onAction, templates }: IResource) => {
   const { cluster } = useOutletContext<IEnvironmentContext>();
-  const { findClusterStatus, clusters } = useClusterStatus();
+  const { findClusterStatus, clusters, loading } = useClusterStatus();
 
   return (
     <ListV2.Root
@@ -229,6 +229,10 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
               },
               status: {
                 render: () => {
+                  if (loading) {
+                    return null;
+                  }
+
                   if (!isClusterOnline) {
                     return <Badge type="warning">Cluster Offline</Badge>;
                   }

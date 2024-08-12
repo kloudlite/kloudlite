@@ -135,7 +135,7 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
         clusterName: clusterList.find((c) => c.ready)?.value || '',
       }));
     }
-  }, [clusterList]);
+  }, [clusterList, show]);
 
   return (
     <Popup.Root

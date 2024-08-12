@@ -240,7 +240,7 @@ const GridView = ({ items = [], onAction: _ }: IResource) => {
 const ListView = ({ items = [], onAction }: IResource) => {
   const { environment, account, cluster } =
     useOutletContext<IEnvironmentContext>();
-  const { findClusterStatus, clusters } = useClusterStatus();
+  const { findClusterStatus, clusters, loading } = useClusterStatus();
 
   return (
     <ListV2.Root
@@ -321,15 +321,16 @@ const ListView = ({ items = [], onAction }: IResource) => {
                 render: () => <AppServiceView service={i.serviceHost || ''} />,
               },
               status: {
-                render: () => (
-                  <div className="inline-block">
-                    {isClusterOnline ? (
-                      <SyncStatusV2 item={i} />
-                    ) : (
-                      <Badge type="warning">Cluster Offline</Badge>
-                    )}
-                  </div>
-                ),
+                render: () => {
+                  if (loading) {
+                    return null;
+                  }
+                  if (!isClusterOnline) {
+                    return <Badge type="warning">Cluster Offline</Badge>;
+                  }
+
+                  return <SyncStatusV2 item={i} />;
+                },
               },
               updated: {
                 render: () => (

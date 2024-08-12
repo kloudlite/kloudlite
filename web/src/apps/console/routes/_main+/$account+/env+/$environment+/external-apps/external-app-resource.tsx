@@ -126,7 +126,7 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
       icon: <GearSix size={iconSize} />,
       type: 'item',
       to: `/${account}/env/${environment}/external-app/${parseName(
-        item,
+        item
       )}/settings/general`,
       key: 'settings',
     },
@@ -311,7 +311,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
                             environment?.spec?.targetNamespace
                           }.svc.${parseName(cluster)}.local`
                         : `${parseName(i)}.${parseName(
-                            environment,
+                            environment
                           )}.svc.${parseName(cluster)}.local`
                     }
                   />
@@ -337,7 +337,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
               },
             },
             to: `/${parseName(account)}/env/${parseName(
-              environment,
+              environment
             )}/external-app/${id}`,
           };
         }),
@@ -357,9 +357,9 @@ const ExternalNameResource = ({ items = [] }: Omit<IResource, 'onAction'>) => {
   useWatchReload(
     items.map((i) => {
       return `account:${parseName(account)}.environment:${parseName(
-        environment,
+        environment
       )}.app:${parseName(i)}`;
-    }),
+    })
   );
 
   const interceptExternalApp = async (item: BaseType, intercept: boolean) => {

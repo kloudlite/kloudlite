@@ -198,7 +198,7 @@ const Root = (props: IDialog) => {
               handleChange('managedServiceName')(dummyEvent(value));
             }}
             error={!!errors.managedServiceName}
-            message={errors.clusterName}
+            message={errors.managedServiceName}
             // loading={msvcIsLoading}
           />
 
