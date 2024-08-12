@@ -41,8 +41,8 @@ const Layout = () => {
   } = useUnsavedChanges();
   const { app, setApp } = useAppState();
 
-  const {  deviceblueprint, account } = useOutletContext<IAppContext>();
-  const [ deviceBlueprintName, appName] = [
+  const { deviceblueprint, account } = useOutletContext<IAppContext>();
+  const [deviceBlueprintName, appName] = [
     project.name,
     deviceblueprint.name,
     parseName(app),
@@ -74,7 +74,6 @@ const Layout = () => {
             ...getAppIn(app),
           },
           deviceBlueprintName,
-          
         });
         if (errors) {
           throw errors[0];

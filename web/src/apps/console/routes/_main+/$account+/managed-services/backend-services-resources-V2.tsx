@@ -162,7 +162,7 @@ const GridView = ({ items, templates, onAction }: IResource) => {
 
 const ListView = ({ items, templates, onAction }: IResource) => {
   const { account, clustersMap } = useOutletContext<IAccountContext>();
-  const { findClusterStatus, clusters } = useClusterStatus();
+  const { findClusterStatus, clusters, loading } = useClusterStatus();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -230,6 +230,10 @@ const ListView = ({ items, templates, onAction }: IResource) => {
                 render: () => {
                   if (i.isArchived) {
                     return <Badge type="neutral">Archived</Badge>;
+                  }
+                  if (loading) {
+                    // return <Badge type="warning">Syncing...</Badge>;
+                    return null;
                   }
                   if (!isClusterOnline) {
                     return <Badge type="warning">Cluster Offline</Badge>;

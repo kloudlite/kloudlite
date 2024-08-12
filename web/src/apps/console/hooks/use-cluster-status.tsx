@@ -25,8 +25,10 @@ const useClusterStatus = () => {
   const api = useConsoleApi();
 
   const [clusters, setClusters] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const listCluster = useCallback(async () => {
+    setLoading(true);
     try {
       const clusters = await api.listAllClusters();
       setClusters(parseNodes(clusters.data) || []);
@@ -34,6 +36,8 @@ const useClusterStatus = () => {
     } catch (err) {
       console.error(err);
       return false;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -41,7 +45,7 @@ const useClusterStatus = () => {
     listCluster();
   }, []);
 
-  return { findClusterStatus, clusters };
+  return { findClusterStatus, clusters, loading };
 };
 
 export default useClusterStatus;
