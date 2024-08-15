@@ -446,6 +446,7 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 	}
 
 	sshPath := path.Join(userHomeDir, ".ssh", "id_rsa.pub")
+	rsaPath := path.Join(userHomeDir, ".ssh", "id_rsa")
 
 	akByte, err := os.ReadFile(sshPath)
 	if err != nil {
@@ -455,6 +456,8 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 	ak := string(akByte)
 
 	akTmpPath := path.Join(td, "authorized_keys")
+
+	gitConfigPath := path.Join(userHomeDir, ".gitconfig")
 
 	akByte, err = os.ReadFile(path.Join(userHomeDir, ".ssh", "authorized_keys"))
 	if err == nil {
@@ -508,9 +511,16 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 
 	volumes := []mount.Mount{
 		{Type: mount.TypeBind, Source: akTmpPath, Target: "/tmp/ssh2/authorized_keys", ReadOnly: true},
+		{Type: mount.TypeBind, Source: sshPath, Target: "/tmp/ssh2/id_rsa.pub", ReadOnly: true},
+		{Type: mount.TypeBind, Source: rsaPath, Target: "/tmp/ssh2/id_rsa", ReadOnly: true},
 		{Type: mount.TypeVolume, Source: "kl-home-cache", Target: "/home"},
+		//{Type: mount.TypeBind, Source: gitConfigPath, Target: "/tmp/gitconfig/.gitconfig", ReadOnly: true},
 		{Type: mount.TypeVolume, Source: "kl-nix-store", Target: "/nix"},
 		{Type: mount.TypeBind, Source: configFolder, Target: "/.cache/kl"},
+	}
+	_, err = os.Stat(gitConfigPath)
+	if err == nil {
+		volumes = append(volumes, mount.Mount{Type: mount.TypeBind, Source: gitConfigPath, Target: "/tmp/gitconfig/.gitconfig", ReadOnly: true})
 	}
 
 	dockerSock := "/var/run/docker.sock"

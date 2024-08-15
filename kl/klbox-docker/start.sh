@@ -34,7 +34,7 @@ if [ ! -f "$entrypoint_executed" ]; then
     ln -sf /home/kl/.profile /home/kl/.zprofile
     cp /tmp/aliasrc /home/kl/.config/aliasrc
     echo "successfully initialized .profile and .bashrc" >> $entrypoint_executed
-    ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" <<<y >/dev/null 2>&1
+    # ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" <<<y >/dev/null 2>&1
 fi
 
 mkdir -p ~/.config/nix
@@ -96,9 +96,15 @@ sudo sh -c "echo \"search $KL_SEARCH_DOMAIN\" >> $RESOLV_FILE"
 if [ -d "/tmp/ssh2" ]; then
     mkdir -p /home/kl/.ssh
     cp /tmp/ssh2/authorized_keys /home/kl/.ssh/authorized_keys
+    cp /tmp/ssh2/id_rsa /home/kl/.ssh/id_rsa
+    cp /tmp/ssh2/id_rsa.pub /home/kl/.ssh/id_rsa.pub
     chmod 600 /home/kl/.ssh/authorized_keys
     echo "successfully copied ssh credentials"
-fi 
+fi
+
+if [ -f "/tmp/gitconfig/.gitconfig" ]; then
+    cp /tmp/gitconfig/.gitconfig /home/kl/.gitconfig
+fi
 
 trap - EXIT SIGTERM SIGINT
 echo "kloudlite-entrypoint:SETUP_COMPLETE"
