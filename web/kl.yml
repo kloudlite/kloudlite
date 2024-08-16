@@ -3,6 +3,9 @@ defaultEnv: master
 packages:
 - neovim
 - git
+- pnpm
+- nodejs
+- gnumake
 envVars: []
 mounts: []
 ports: []
