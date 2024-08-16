@@ -102,9 +102,9 @@ if [ -d "/tmp/ssh2" ]; then
     echo "successfully copied ssh credentials"
 fi
 
-if [ -f "/tmp/gitconfig/.gitconfig" ]; then
-    cp /tmp/gitconfig/.gitconfig /home/kl/.gitconfig
-fi
+# if [ -f "/tmp/gitconfig/.gitconfig" ]; then
+#     cp /tmp/gitconfig/.gitconfig /home/kl/.gitconfig
+# fi
 
 trap - EXIT SIGTERM SIGINT
 echo "kloudlite-entrypoint:SETUP_COMPLETE"

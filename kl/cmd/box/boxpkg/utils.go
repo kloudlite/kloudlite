@@ -457,7 +457,7 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 
 	akTmpPath := path.Join(td, "authorized_keys")
 
-	gitConfigPath := path.Join(userHomeDir, ".gitconfig")
+	//gitConfigPath := path.Join(userHomeDir, ".gitconfig")
 
 	akByte, err = os.ReadFile(path.Join(userHomeDir, ".ssh", "authorized_keys"))
 	if err == nil {
@@ -518,10 +518,10 @@ func (c *client) generateMounts() ([]mount.Mount, error) {
 		{Type: mount.TypeVolume, Source: "kl-nix-store", Target: "/nix"},
 		{Type: mount.TypeBind, Source: configFolder, Target: "/.cache/kl"},
 	}
-	_, err = os.Stat(gitConfigPath)
-	if err == nil {
-		volumes = append(volumes, mount.Mount{Type: mount.TypeBind, Source: gitConfigPath, Target: "/tmp/gitconfig/.gitconfig", ReadOnly: true})
-	}
+	//_, err = os.Stat(gitConfigPath)
+	//if err == nil {
+	//	volumes = append(volumes, mount.Mount{Type: mount.TypeBind, Source: gitConfigPath, Target: "/tmp/gitconfig/.gitconfig", ReadOnly: true})
+	//}
 
 	dockerSock := "/var/run/docker.sock"
 	// if runtime.GOOS == constants.RuntimeWindows {
