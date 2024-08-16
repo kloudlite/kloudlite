@@ -6,6 +6,7 @@ packages:
 - pnpm
 - nodejs
 - gnumake
+- nodePackages.node-gyp
 envVars: []
 mounts: []
 ports: []
