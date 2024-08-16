@@ -24,6 +24,13 @@ tasks:
           out: "{{.binary}}-{{.GOARCH}}"
           GOARCH: "{{.GOARCH}}"
 
+  webhook:run:
+    dotenv:
+      - .secrets/env
+    cmds:
+      - go build -o bin/webhook .
+      - ./bin/webhook --dev
+
   container:build-and-push:
     requires:
       vars:
