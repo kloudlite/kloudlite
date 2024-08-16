@@ -19,7 +19,6 @@ require (
 	github.com/kloudlite/operator v0.0.0-20240725140628-a3dbbc898710
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
-	github.com/rs/zerolog v1.29.1
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/vektah/gqlparser/v2 v2.5.16
 	github.com/xanzy/go-gitlab v0.63.0
