@@ -1,13 +1,13 @@
 version: v1
-defaultEnv: test-env
+defaultEnv: master
 packages:
-- nodejs@latest
-- nodePackages.pnpm@latest
-- git@latest
-- vim@latest
-initScripts:
-- pnpm config set store-dir ~/.pnpm-store
+- neovim
+- git
+- pnpm
+- nodejs
+- gnumake
+- nodePackages.node-gyp
+envVars: []
 mounts: []
-envVars:
-- key: HI
-  configRef: piy-config/hi
+ports: []
+accountName: demoaccount
