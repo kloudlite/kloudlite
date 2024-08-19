@@ -13,13 +13,20 @@ spec:
   
   topologySpreadConstraints:
     {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
-    {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
-  replicas: {{.Values.apps.consoleApi.configuration.replicas}}
+  replicas: {{.Values.apps.infraApi.configuration.replicas}}
 
   services:
     - port: 3000
     - port: 3001
+
+  hpa:
+    enabled: true
+    minReplicas: {{.Values.apps.infraApi.minReplicas}}
+    maxReplicas: {{.Values.apps.infraApi.maxReplicas}}
+    thresholdCpu: 70
+    thresholdMemory: 80
+
   containers:
     - name: main
       image: {{.Values.apps.infraApi.image.repository}}:{{.Values.apps.infraApi.image.tag | default (include "image-tag" .) }}
@@ -31,12 +38,15 @@ spec:
       
       resourceCpu:
         min: "50m"
-        max: "100m"
+        max: "200m"
       resourceMemory:
         min: "50Mi"
-        max: "100Mi"
+        max: "200Mi"
 
       env:
+        - key: CLICOLOR_FORCE
+          value: "1"
+
         - key: ACCOUNTS_GRPC_ADDR
           value: "accounts-api:3001"
 
@@ -120,7 +130,7 @@ spec:
           value: /infra.d/templates/managed-svc-templates.yml
 
         - key: GLOBAL_VPN_KUBE_REVERSE_PROXY_IMAGE
-          value: ghcr.io/kloudlite/api/cmds/global-vpn-kube-proxy:v1.0.7-nightly
+          value: {{.Values.apps.infraApi.configuration.imageGatewayKubeProxy.repository}}:{{.Values.apps.infraApi.configuration.imageGatewayKubeProxy.tag | default (include "image-tag" .)}}
 
         - key: GLOBAL_VPN_KUBE_REVERSE_PROXY_AUTHZ_TOKEN
           value: {{.Values.apps.infraApi.configuration.globalVpnKubeReverseProxyAuthzToken}}
@@ -150,7 +160,7 @@ spec:
         httpGet:
           path: /_healthy
           port: {{.Values.apps.infraApi.configuration.httpPort}}
-        initialDelay: 5
+        initialDelay: 10
         interval: 10
 
       readinessProbe:
@@ -158,5 +168,5 @@ spec:
         httpGet:
           path: /_healthy
           port: {{.Values.apps.infraApi.configuration.httpPort}}
-        initialDelay: 5
+        initialDelay: 10
         interval: 10

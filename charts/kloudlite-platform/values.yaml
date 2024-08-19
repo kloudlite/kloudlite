@@ -7,10 +7,10 @@ global:
 
   nodeSelector: &nodeSelector { }
   # -- tolerations for pods belonging to this release
-  tolerations: &tolerations [ ]
+  tolerations: &tolerations []
 
   # -- podlabels for pods belonging to this release
-  podLabels: &podLabels { }
+  podLabels: &podLabels {}
 
   # -- cookie domain dictates at what domain, the cookies should be set for auth or other purposes
   cookieDomain: '.kloudlite.io'
@@ -361,21 +361,25 @@ apps:
   websocketApi:
     # -- image (with tag) for websocket-server api
     image: 
-      # repository: ghcr.io/kloudlite/api/websocket-server
       repository: ghcr.io/kloudlite/kloudlite/api/websocket-server
       tag: ""
     configuration:
       replicas: 1
+    minReplicas: 2
+    maxReplicas: 4
 
   authApi:
     # -- image (with tag) for auth api
     image: 
       repository: ghcr.io/kloudlite/kloudlite/api/auth
       tag: ""
+
     configuration:
       replicas: 1
       httpPort: 3000
       grpcPort: 3001
+    minReplicas: 2
+    maxReplicas: 4
 
   klInstaller:
     image:
@@ -383,6 +387,9 @@ apps:
       tag: ""
     configuration:
       replicas: 1
+
+    minReplicas: 2
+    maxReplicas: 4
 
   commsApi:
     # -- image (with tag) for comms api
@@ -392,6 +399,8 @@ apps:
     configuration:
       replicas: 1
       grpcPort: 3001
+    minReplicas: 2
+    maxReplicas: 4
 
   healthApi:
     # -- image (with tag) for console api
@@ -401,6 +410,9 @@ apps:
     configuration:
       replicas: 2
       httpPort: 3000
+
+    minReplicas: 2
+    maxReplicas: 4
 
   consoleApi:
     # -- image (with tag) for console api
@@ -414,16 +426,22 @@ apps:
 
       httpPort: 3000
       grpcPort: 3001
+    minReplicas: 2
+    maxReplicas: 4
         
   accountsApi:
     # -- image (with tag) for accounts api
     image: 
       repository: ghcr.io/kloudlite/kloudlite/api/accounts
-      tag: ""
+      4ag: ""
+
     configuration:
       replicas: 1
       httpPort: 3000
       grpcPort: 3001
+
+    minReplicas: 2
+    maxReplicas: 4
 
   iamApi:
     image:
@@ -433,6 +451,9 @@ apps:
       replicas: 1
       httpPort: 3000
       grpcPort: 3001
+
+    minReplicas: 2
+    maxReplicas: 4
 
   infraApi:
     # -- image (with tag) for infra api
@@ -444,7 +465,15 @@ apps:
       kloudliteRelease: ""
       httpPort: 3000
       grpcPort: 3001
+
       globalVpnKubeReverseProxyAuthzToken: ""
+
+      imageGatewayKubeProxy: 
+        repository: "ghcr.io/kloudlite/kloudlite/api/cmd/gateway-kube-proxy"
+        tag: ""
+
+    minReplicas: 2
+    maxReplicas: 4
 
   gatewayApi:
     image:
@@ -454,6 +483,8 @@ apps:
       replicas: 1
       httpPort: 3000
 
+    minReplicas: 2
+    maxReplicas: 4
 
   containerRegistryApi:
     # -- image (with tag) for container registry api
@@ -477,12 +508,18 @@ apps:
       httpPort: 3000
       grpcPort: 3001
 
+    minReplicas: 2
+    maxReplicas: 4
+
   auditLoggingWorker:
     image: 
       repository: ghcr.io/kloudlite/kloudlite/api/worker-audit-logging
       tag: ""
     configuration:
       replicas: 1
+
+    minReplicas: 2
+    maxReplicas: 4
 
   webhooksApi:
     # -- image (with tag) for webhooks api
@@ -491,6 +528,9 @@ apps:
       tag: ""
     configuration:
       replicas: 1
+
+    minReplicas: 2
+    maxReplicas: 4
 
   messageOfficeApi:
     # -- image (with tag) for message office api
@@ -512,6 +552,9 @@ apps:
       tokenHashingSecret: ""
       platformAccessToken: "sample"
 
+    minReplicas: 2
+    maxReplicas: 4
+
   observabilityApi:
     image:
       repository: "ghcr.io/kloudlite/kloudlite/api/observability"
@@ -519,6 +562,9 @@ apps:
     configuration:
       replicas: 1
       httpPort: "3000"
+
+    minReplicas: 2
+    maxReplicas: 4
 
   consoleWeb:
     enabled: true
@@ -533,6 +579,8 @@ apps:
       artifactHubKeySecret: ""
 
       httpPort: 3000
+    minReplicas: 2
+    maxReplicas: 4
 
   authWeb:
     enabled: true
@@ -543,6 +591,8 @@ apps:
     configuration:
       replicas: 1
       httpPort: 3000
+    minReplicas: 2
+    maxReplicas: 4
 
 operators:
   preferOperatorsOnMasterNodes: true
@@ -601,6 +651,27 @@ operators:
           zoneId: ""
           # -- cloudflare base domain, on top of which CNAMES and wildcard names will be created
           baseDomain: ""
+
+      gateway:
+        imageWebhookServer:
+          repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/webhook
+          tag: ""
+
+        imageIPManager:
+          repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-manager
+          tag: ""
+
+        imageIPBindingController:
+          repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/ip-binding-controller
+          tag: ""
+
+        imageDNS:
+          repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/dns
+          tag: ""
+
+        imageLogsProxy:
+          repository: ghcr.io/kloudlite/kloudlite/operator/networking/cmd/logs-proxy
+          tag: ""
 
 envVars:
   db:
@@ -674,6 +745,7 @@ crons:
       numBackups: 5
       schedule: "0 */2 * * *" # Runs every 2 hours
       encryptionPassword: ""
+      storageSize: "10Gi"
   natsBackup:
     name: nats-backup
     configuration:
@@ -683,3 +755,4 @@ crons:
       schedule: "0 */2 * * *" # Runs every 2 hours
       # bucket: ""
       encryptionPassword: ""
+      storageSize: "50Gi"

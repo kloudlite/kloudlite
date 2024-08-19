@@ -13,12 +13,18 @@ spec:
   
   topologySpreadConstraints:
     {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
-    {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
   replicas: {{.Values.apps.websocketApi.configuration.replicas}}
 
   services:
     - port: 3000
+
+  hpa:
+    enabled: true
+    minReplicas: {{.Values.apps.websocketApi.minReplicas}}
+    maxReplicas: {{.Values.apps.websocketApi.maxReplicas}}
+    thresholdCpu: 70
+    thresholdMemory: 80
 
   containers:
     - name: main
@@ -31,6 +37,9 @@ spec:
         min: "80Mi"
         max: "120Mi"
       env:
+        - key: CLICOLOR_FORCE
+          value: "1"
+
         - key: SOCKET_PORT
           value: "3000"
 

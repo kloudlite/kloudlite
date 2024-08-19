@@ -13,13 +13,19 @@ spec:
   
   topologySpreadConstraints:
     {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
-    {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
   replicas: {{.Values.apps.consoleApi.configuration.replicas}}
 
   services:
     - port: {{.Values.apps.consoleApi.configuration.httpPort | int }}
     - port: {{.Values.apps.consoleApi.configuration.grpcPort | int }}
+
+  hpa:
+    enabled: true
+    minReplicas: {{.Values.apps.consoleApi.minReplicas}}
+    maxReplicas: {{.Values.apps.consoleApi.maxReplicas}}
+    thresholdCpu: 70
+    thresholdMemory: 80
 
   containers:
     - name: main
@@ -31,11 +37,14 @@ spec:
       {{end}}
       resourceCpu:
         min: "80m"
-        max: "150m"
+        max: "200m"
       resourceMemory:
         min: "80Mi"
         max: "150Mi"
       env:
+        - key: CLICOLOR_FORCE
+          value: "1"
+
         - key: HTTP_PORT
           value: {{.Values.apps.consoleApi.configuration.httpPort | squote}}
 
@@ -112,7 +121,7 @@ spec:
         httpGet:
           path: /_healthy
           port: {{.Values.apps.consoleApi.configuration.httpPort}}
-        initialDelay: 5
+        initialDelay: 10
         interval: 10
 
       readinessProbe:
@@ -120,5 +129,5 @@ spec:
         httpGet:
           path: /_healthy
           port: {{.Values.apps.consoleApi.configuration.httpPort}}
-        initialDelay: 5
+        initialDelay: 10
         interval: 10

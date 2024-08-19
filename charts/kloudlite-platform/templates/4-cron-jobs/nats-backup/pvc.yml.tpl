@@ -8,5 +8,6 @@ spec:
   - ReadWriteMany
   resources:
     requests:
-      storage: 50Gi
+      {{- /* storage: 50Gi */}}
+      storage: {{.Values.crons.natsBackup.configuration.storageSize}}
   storageClassName: {{.Values.csiS3.storageClass}}
