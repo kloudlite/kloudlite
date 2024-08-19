@@ -1,6 +1,7 @@
 {{- if .Values.victoriaMetrics.enabled }}
 
 {{- $chartVersion := "0.18.11" }}
+{{- /* {{- $chartVersion := "0.24.3" }} */}}
 
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
@@ -18,12 +19,16 @@ spec:
     nodeSelector: {{.Values.nodepools.stateful.labels | toYaml | nindent 6}}
 
   preInstall: |+
-    curl -L0 'https://raw.githubusercontent.com/VictoriaMetrics/helm-charts/victoria-metrics-k8s-stack-{{$chartVersion}}/charts/victoria-metrics-k8s-stack/charts/crds/crds/crd.yaml' | kubectl apply -f -
+    curl -L0 'https://raw.githubusercontent.com/VictoriaMetrics/helm-charts/victoria-metrics-k8s-stack-{{$chartVersion}}/charts/victoria-metrics-k8s-stack/charts/crds/crds/crd.yaml' > /tmp/crds.yml
+    {{- /* cat /tmp/crds.yml */}}
+    kubectl apply -f /tmp/crds.yml
+    kubectl get crds
+    echo "CRDs applied"
 
-  postInstall: |+
-    kubectl apply -f - <<EOF
-    {{ include "vector-vm-scrape" .  | nindent 6 }}
-    EOF
+  {{- /* postInstall: |+ */}}
+  {{- /*   kubectl apply -f - <<EOF */}}
+  {{- /*   {{ include "vector-vm-scrape" . | nindent 6 }} */}}
+  {{- /*   EOF */}}
 
   values:
     fullnameOverride: {{.Values.victoriaMetrics.name}}

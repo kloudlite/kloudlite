@@ -13,9 +13,8 @@ spec:
   
   topologySpreadConstraints:
     {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
-    {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
-  replicas: {{.Values.apps.consoleApi.configuration.replicas}}
+  replicas: {{.Values.apps.containerRegistryApi.configuration.replicas}}
 
   services:
     - port: {{.Values.apps.containerRegistryApi.configuration.httpPort}}

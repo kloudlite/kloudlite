@@ -15,12 +15,18 @@ spec:
   
   topologySpreadConstraints:
     {{- include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
-    {{- include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
   replicas: {{.Values.apps.authApi.configuration.replicas }}
   services:
     - port: 3000
     - port: 3001
+
+  hpa:
+    enabled: true
+    minReplicas: {{.Values.apps.authApi.minReplicas}}
+    maxReplicas: {{.Values.apps.authApi.maxReplicas}}
+    thresholdCpu: 70
+    thresholdMemory: 80
 
   containers:
     - name: main
@@ -98,7 +104,7 @@ spec:
         httpGet:
           path: /_healthy
           port: {{.Values.apps.consoleApi.configuration.httpPort}}
-        initialDelay: 5
+        initialDelay: 10
         interval: 10
 
       readinessProbe:
@@ -106,6 +112,6 @@ spec:
         httpGet:
           path: /_healthy
           port: {{.Values.apps.consoleApi.configuration.httpPort}}
-        initialDelay: 5
+        initialDelay: 10
         interval: 10
 

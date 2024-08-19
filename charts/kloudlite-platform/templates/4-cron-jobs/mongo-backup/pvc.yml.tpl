@@ -8,5 +8,5 @@ spec:
   - ReadWriteMany
   resources:
     requests:
-      storage: 10Gi
+      storage: "{{.Values.crons.mongoBackup.configuration.storageSize}}"
   storageClassName: {{.Values.csiS3.storageClass}}

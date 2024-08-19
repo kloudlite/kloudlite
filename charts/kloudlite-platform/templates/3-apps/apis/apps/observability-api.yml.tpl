@@ -13,12 +13,18 @@ spec:
   
   topologySpreadConstraints:
     {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
-    {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
   replicas: {{.Values.apps.observabilityApi.configuration.replicas}}
 
   services:
     - port: 3000
+
+  hpa:
+    enabled: true
+    minReplicas: {{.Values.apps.observabilityApi.minReplicas}}
+    maxReplicas: {{.Values.apps.observabilityApi.maxReplicas}}
+    thresholdCpu: 70
+    thresholdMemory: 80
 
   containers:
     - name: main
@@ -26,11 +32,14 @@ spec:
       imagePullPolicy: {{ include "image-pull-policy" .}}
       resourceCpu:
         min: "50m"
-        max: "80m"
+        max: "200m"
       resourceMemory:
         min: "80Mi"
         max: "120Mi"
       env:
+        - key: CLICOLOR_FORCE
+          value: "1"
+
         - key: HTTP_PORT
           value: "3000"
 
@@ -59,7 +68,7 @@ spec:
         type: httpGet
         httpGet:
           path: /_healthy
-          port: {{.Values.apps.observabilityApi.configuration.httpPort}}
+          port: 3000
         initialDelay: 5
         interval: 10
 
@@ -67,7 +76,7 @@ spec:
         type: httpGet
         httpGet:
           path: /_healthy
-          port: {{.Values.apps.observabilityApi.configuration.httpPort}}
+          port: 3000
         initialDelay: 5
         interval: 10
 

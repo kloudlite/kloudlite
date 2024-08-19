@@ -8,18 +8,24 @@ metadata:
 spec:
   serviceAccount: {{.Values.global.normalSvcAccount}}
 
-
   nodeSelector: {{include "stateless-node-selector" . | nindent 4 }}
   tolerations: {{include "stateless-tolerations" . | nindent 4 }}
   
   topologySpreadConstraints:
     {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
-    {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
   replicas: {{.Values.apps.webhooksApi.configuration.replicas}}
 
   services:
     - port: 3001
+
+  hpa:
+    enabled: true
+    minReplicas: {{.Values.apps.webhooksApi.minReplicas}}
+    maxReplicas: {{.Values.apps.webhooksApi.maxReplicas}}
+    thresholdCpu: 70
+    thresholdMemory: 80
+
   containers:
     - name: main
       image: {{.Values.apps.webhooksApi.image.repository}}:{{.Values.apps.webhooksApi.image.tag | default (include "image-tag" .) }}
@@ -36,6 +42,9 @@ spec:
         min: "50Mi"
         max: "100Mi"
       env:
+        - key: CLICOLOR_FORCE
+          value: "1"
+
         - key: HTTP_PORT
           value: "3001"
 
@@ -55,10 +64,7 @@ spec:
           refKey: GITLAB_AUTHZ_SECRET
 
         - key: NATS_URL
-          value: "nats://nats:4222"
-
-        - key: NATS_STREAM
-          value: "nats://nats:4222"
+          value: {{.Values.envVars.nats.url}}
 
         - key: GIT_WEBHOOKS_TOPIC
           value: "{{.Values.global.cookieDomain}}"

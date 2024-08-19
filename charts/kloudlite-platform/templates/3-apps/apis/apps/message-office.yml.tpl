@@ -13,12 +13,20 @@ spec:
   
   topologySpreadConstraints:
     {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
-    {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
+
+  replicas: {{.Values.apps.messageOfficeApi.configuration.replicas}}
 
   services:
     - port: 3000 # http
     - port: 3001 #external-grpc
     - port: 3002 #internal-grpc
+
+  hpa:
+    enabled: true
+    minReplicas: {{.Values.apps.messageOfficeApi.minReplicas}}
+    maxReplicas: {{.Values.apps.messageOfficeApi.maxReplicas}}
+    thresholdCpu: 70
+    thresholdMemory: 80
 
   containers:
     - name: main
@@ -35,6 +43,9 @@ spec:
         min: "100Mi"
         max: "150Mi"
       env:
+        - key: CLICOLOR_FORCE
+          value: "1"
+
         - key: HTTP_PORT
           value: "3000"
 
@@ -79,7 +90,7 @@ spec:
         type: httpGet
         httpGet:
           path: /_healthy
-          port: {{.Values.apps.messageOfficeApi.configuration.httpPort}}
+          port: 3000
         initialDelay: 5
         interval: 10
 
@@ -87,7 +98,7 @@ spec:
         type: httpGet
         httpGet:
           path: /_healthy
-          port: {{.Values.apps.messageOfficeApi.configuration.httpPort}}
+          port: 3000
         initialDelay: 5
         interval: 10
 

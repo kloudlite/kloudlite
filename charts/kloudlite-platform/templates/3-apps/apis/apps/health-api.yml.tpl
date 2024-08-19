@@ -13,9 +13,16 @@ spec:
   
   topologySpreadConstraints:
     {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
-    {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
   replicas: {{.Values.apps.healthApi.configuration.replicas}}
+
+  hpa:
+    enabled: true
+    minReplicas: {{.Values.apps.healthApi.minReplicas}}
+    maxReplicas: {{.Values.apps.healthApi.maxReplicas}}
+    thresholdCpu: 70
+    thresholdMemory: 80
+
 
   services:
     - port: {{.Values.apps.healthApi.configuration.httpPort | int }}

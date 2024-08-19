@@ -13,12 +13,19 @@ spec:
   
   topologySpreadConstraints:
     {{ include "tsc-hostname" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
-    {{ include "tsc-nodepool" (dict "kloudlite.io/app.name" $appName) | nindent 4 }}
 
   replicas: {{.Values.apps.iamApi.configuration.replicas}}
 
   services:
     - port: 3001 #grpc
+
+  hpa:
+    enabled: true
+    minReplicas: {{.Values.apps.iamApi.minReplicas}}
+    maxReplicas: {{.Values.apps.iamApi.maxReplicas}}
+    thresholdCpu: 70
+    thresholdMemory: 80
+
   containers:
     - name: main
       image: {{.Values.apps.iamApi.image.repository}}:{{.Values.apps.iamApi.image.tag | default (include "image-tag" .) }}
