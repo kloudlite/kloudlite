@@ -37,8 +37,8 @@ import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import { NN } from '~/root/lib/types/common';
-import { getClusterStatus } from '~/console/utils/commons';
 import TooltipV2 from '~/components/atoms/tooltipV2';
+import useClusterStatus from '~/console/hooks/use-cluster-status';
 import HandleIntercept from './handle-intercept';
 import { IEnvironmentContext } from '../_layout';
 
@@ -240,6 +240,7 @@ const GridView = ({ items = [], onAction: _ }: IResource) => {
 const ListView = ({ items = [], onAction }: IResource) => {
   const { environment, account, cluster } =
     useOutletContext<IEnvironmentContext>();
+  const { findClusterStatus, clusters, loading } = useClusterStatus();
 
   return (
     <ListV2.Root
@@ -293,7 +294,11 @@ const ListView = ({ items = [], onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const isClusterOnline = getClusterStatus(cluster);
+          const isClusterOnline = findClusterStatus(
+            clusters.length > 0
+              ? clusters.find((c) => parseName(c) === parseName(cluster))
+              : cluster
+          );
 
           const { name, id, updateInfo } = parseItem(i);
           return {
@@ -316,15 +321,16 @@ const ListView = ({ items = [], onAction }: IResource) => {
                 render: () => <AppServiceView service={i.serviceHost || ''} />,
               },
               status: {
-                render: () => (
-                  <div className="inline-block">
-                    {isClusterOnline ? (
-                      <SyncStatusV2 item={i} />
-                    ) : (
-                      <Badge type="warning">Cluster Offline</Badge>
-                    )}
-                  </div>
-                ),
+                render: () => {
+                  if (loading) {
+                    return null;
+                  }
+                  if (!isClusterOnline) {
+                    return <Badge type="warning">Cluster Offline</Badge>;
+                  }
+
+                  return <SyncStatusV2 item={i} />;
+                },
               },
               updated: {
                 render: () => (

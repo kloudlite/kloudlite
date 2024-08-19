@@ -30,7 +30,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { Badge } from '~/components/atoms/badge';
-import { getClusterStatus } from '~/console/utils/commons';
+import useClusterStatus from '~/console/hooks/use-cluster-status';
 import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'environment';
@@ -113,7 +113,7 @@ const ExtraButton = ({ item, onAction }: IExtraButton) => {
 };
 
 interface IResource {
-  items: BaseType[];
+  items: (BaseType & { isClusterOnline: boolean })[];
   onAction: OnAction;
 }
 
@@ -161,6 +161,7 @@ const GridView = ({ items = [], onAction }: IResource) => {
 
 const ListView = ({ items, onAction }: IResource) => {
   const { account } = useParams();
+  const { findClusterStatus, clusters, loading } = useClusterStatus();
   const { clustersMap } = useOutletContext<IAccountContext>();
 
   return (
@@ -200,9 +201,12 @@ const ListView = ({ items, onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const isClusterOnline = getClusterStatus(clustersMap[i.clusterName]);
-
           const { name, id, updateInfo } = parseItem(i);
+          const isClusterOnline = findClusterStatus(
+            clusters.length > 0
+              ? clusters.find((c) => parseName(c) === i.clusterName)
+              : clustersMap[i.clusterName]
+          );
           return {
             columns: {
               name: {
@@ -223,6 +227,9 @@ const ListView = ({ items, onAction }: IResource) => {
                 render: () => {
                   if (i.isArchived) {
                     return <Badge type="neutral">Archived</Badge>;
+                  }
+                  if (loading) {
+                    return null;
                   }
                   if (!isClusterOnline) {
                     return <Badge type="warning">Cluster Offline</Badge>;
@@ -267,6 +274,7 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const reloadPage = useReload();
 
   const props: IResource = {
+    // @ts-ignore
     items,
     onAction: ({ action, item }) => {
       switch (action) {

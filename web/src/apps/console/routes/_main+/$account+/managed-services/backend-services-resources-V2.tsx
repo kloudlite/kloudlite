@@ -16,7 +16,7 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
-import { getClusterStatus, getManagedTemplate } from '~/console/utils/commons';
+import { getManagedTemplate } from '~/console/utils/commons';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { SyncStatusV2 } from '~/console/components/sync-status';
@@ -30,6 +30,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { Badge } from '~/components/atoms/badge';
+import useClusterStatus from '~/console/hooks/use-cluster-status';
 import { IAccountContext } from '../_layout';
 import { IClusterContext } from '../infra+/$cluster+/_layout';
 import CloneManagedService from './clone-managed-service';
@@ -161,6 +162,7 @@ const GridView = ({ items, templates, onAction }: IResource) => {
 
 const ListView = ({ items, templates, onAction }: IResource) => {
   const { account, clustersMap } = useOutletContext<IAccountContext>();
+  const { findClusterStatus, clusters, loading } = useClusterStatus();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -198,7 +200,11 @@ const ListView = ({ items, templates, onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const isClusterOnline = getClusterStatus(clustersMap[i.clusterName]);
+          const isClusterOnline = findClusterStatus(
+            clusters.length > 0
+              ? clusters.find((c) => parseName(c) === i.clusterName)
+              : clustersMap[i.clusterName]
+          );
           const { name, id, logo, updateInfo } = parseItem(i, templates);
           return {
             columns: {
@@ -225,6 +231,10 @@ const ListView = ({ items, templates, onAction }: IResource) => {
                   if (i.isArchived) {
                     return <Badge type="neutral">Archived</Badge>;
                   }
+                  if (loading) {
+                    // return <Badge type="warning">Syncing...</Badge>;
+                    return null;
+                  }
                   if (!isClusterOnline) {
                     return <Badge type="warning">Cluster Offline</Badge>;
                   }
@@ -244,7 +254,6 @@ const ListView = ({ items, templates, onAction }: IResource) => {
                 render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
-            // to: `/${parseName(account)}/msvc/${id}/managed-resources`,
             ...(i.isArchived
               ? {}
               : { to: `/${parseName(account)}/msvc/${id}/managed-resources` }),

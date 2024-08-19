@@ -69,7 +69,7 @@ const Root = (props: IDialog) => {
           reloadPage();
           resetValues();
           toast.success(
-            `byoc cluster ${isUpdate ? 'updated' : 'created'} successfully`
+            `cluster ${isUpdate ? 'updated' : 'created'} successfully`
           );
           setVisible(false);
         } catch (err) {
