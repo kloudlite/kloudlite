@@ -152,7 +152,7 @@ const ClusterManagedServiceSettingGeneral = () => {
               <TextInput
                 label="Integrated service URL"
                 value={`${consoleBaseUrl}/${parseName(account)}/${parseName(
-                  managedService
+                  managedService,
                 )}`}
                 message="This is your URL namespace within Kloudlite"
                 disabled
@@ -166,8 +166,8 @@ const ClusterManagedServiceSettingGeneral = () => {
                       onClick={() =>
                         copy(
                           `${consoleBaseUrl}/${parseName(account)}/${parseName(
-                            managedService
-                          )}`
+                            managedService,
+                          )}`,
                         )
                       }
                       className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
@@ -216,6 +216,7 @@ const ClusterManagedServiceSettingGeneral = () => {
               errors,
               handleChange,
             }}
+            size="md"
           />
         </Box>
 

@@ -69,13 +69,14 @@ const RenderField = ({
         label={`${field.label}${field.required ? ' *' : ''}`}
         placeholder={field.label}
         value={parseFloat(value) / (field.multiplier || 1) || ''}
+        size="lg"
         onChange={({ target }) => {
           onChange(`res.${field.name}`)(
             dummyEvent(
               `${parseFloat(target.value) * (field.multiplier || 1)}${
                 field.unit
-              }`
-            )
+              }`,
+            ),
           );
         }}
         suffix={field.displayUnit}
@@ -92,6 +93,7 @@ const RenderField = ({
         suffix={field.displayUnit}
         error={!!errors[fieldKey]}
         message={errors[fieldKey]}
+        size="lg"
       />
     );
   }
@@ -105,6 +107,7 @@ const RenderField = ({
           <div className="flex flex-row gap-xl items-end flex-1 ">
             <div className="flex-1">
               <NumberInput
+                size="lg"
                 error={!!errors[`${fieldKey}.min`]}
                 message={errors[`${fieldKey}.min`]}
                 placeholder={qos ? field.label : `${field.label} min`}
@@ -114,16 +117,16 @@ const RenderField = ({
                     dummyEvent(
                       `${parseFloat(target.value) * (field.multiplier || 1)}${
                         field.unit
-                      }`
-                    )
+                      }`,
+                    ),
                   );
                   if (qos) {
                     onChange(`res.${field.name}.max`)(
                       dummyEvent(
                         `${parseFloat(target.value) * (field.multiplier || 1)}${
                           field.unit
-                        }`
-                      )
+                        }`,
+                      ),
                     );
                   }
                 }}
@@ -133,6 +136,7 @@ const RenderField = ({
             {!qos && (
               <div className="flex-1">
                 <NumberInput
+                  size="lg"
                   error={!!errors[`${fieldKey}.max`]}
                   message={errors[`${fieldKey}.max`]}
                   placeholder={`${field.label} max`}
@@ -142,8 +146,8 @@ const RenderField = ({
                       dummyEvent(
                         `${parseFloat(target.value) * (field.multiplier || 1)}${
                           field.unit
-                        }`
-                      )
+                        }`,
+                      ),
                     );
                   }}
                   suffix={field.displayUnit}
@@ -383,7 +387,7 @@ const ReviewView = ({
 }) => {
   const renderFieldView = () => {
     const fields = Object.entries(values.res).filter(
-      ([k, _v]) => !['resources'].includes(k)
+      ([k, _v]) => !['resources'].includes(k),
     );
     if (fields.length > 0) {
       return (
@@ -584,7 +588,7 @@ const ManagedServiceLayout = () => {
           'Cluster name is required',
           (v) => {
             return !(currentStep === 2 && !v);
-          }
+          },
         ),
         selectedTemplate: Yup.object({}).required('Template is required.'),
         // @ts-ignore
@@ -604,9 +608,9 @@ const ManagedServiceLayout = () => {
                     (acc: any, curr: any) => {
                       return { ...acc, [curr.name]: curr };
                     },
-                    {}
-                  )
-                )
+                    {},
+                  ),
+                ),
               );
             }
 
@@ -689,7 +693,7 @@ const ManagedServiceLayout = () => {
           ...flatM(
             selectedTemplate?.template?.fields.reduce((acc, curr) => {
               return { ...acc, [curr.name]: curr };
-            }, {})
+            }, {}),
           ),
         },
       }));

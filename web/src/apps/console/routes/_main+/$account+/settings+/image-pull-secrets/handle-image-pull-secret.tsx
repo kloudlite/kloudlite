@@ -226,6 +226,7 @@ const Root = (props: IDialog) => {
           message={errors.format}
           value={values.format}
           label="Format"
+          size="lg"
           onChange={(_, value) => {
             handleChange('format')(dummyEvent(value));
           }}
