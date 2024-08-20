@@ -1,7 +1,11 @@
 /* eslint-disable guard-for-in */
 /* eslint-disable react/destructuring-assignment */
 import { useEffect, useRef, useState } from 'react';
-import { NumberInput, TextInput } from '~/components/atoms/input';
+import {
+  ITextInputBase,
+  NumberInput,
+  TextInput,
+} from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -66,8 +70,8 @@ const RenderField = ({
             dummyEvent(
               `${parseFloat(target.value) * (field.multiplier || 1)}${
                 field.unit
-              }`
-            )
+              }`,
+            ),
           );
         }}
         suffix={field.displayUnit}
@@ -106,16 +110,16 @@ const RenderField = ({
                     dummyEvent(
                       `${parseFloat(target.value) * (field.multiplier || 1)}${
                         field.unit
-                      }`
-                    )
+                      }`,
+                    ),
                   );
                   if (qos) {
                     onChange(`res.${field.name}.max`)(
                       dummyEvent(
                         `${parseFloat(target.value) * (field.multiplier || 1)}${
                           field.unit
-                        }`
-                      )
+                        }`,
+                      ),
                     );
                   }
                 }}
@@ -134,8 +138,8 @@ const RenderField = ({
                       dummyEvent(
                         `${parseFloat(target.value) * (field.multiplier || 1)}${
                           field.unit
-                        }`
-                      )
+                        }`,
+                      ),
                     );
                   }}
                   suffix={field.displayUnit}
@@ -167,6 +171,7 @@ export const Fill = ({
   values,
   handleChange,
   errors,
+  size = 'lg',
 }: {
   selectedService: ISelectedService;
   values: { [key: string]: any };
@@ -174,6 +179,7 @@ export const Fill = ({
   errors: {
     [key: string]: string | undefined;
   };
+  size?: ITextInputBase['size'];
 }) => {
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -183,6 +189,7 @@ export const Fill = ({
     <div className="flex flex-col gap-3xl min-h-[30vh]">
       <NameIdView
         isUpdate
+        size={size}
         ref={nameRef}
         placeholder="Enter managed service name"
         label="Name"

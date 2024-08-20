@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import { CircleNotch } from '~/console/components/icons';
 import { ReactNode, forwardRef, useEffect, useState } from 'react';
-import { TextInput } from '~/components/atoms/input';
+import { ITextInputBase, TextInput } from '~/components/atoms/input';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
@@ -36,6 +36,7 @@ interface INameIdView {
     };
   }) => void;
   nameErrorLabel: string;
+  size?: ITextInputBase['size'];
 }
 
 export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
@@ -53,8 +54,9 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
       isUpdate,
       handleChange,
       nameErrorLabel,
+      size = 'lg',
     },
-    ref
+    ref,
   ) => {
     const [nameValid, setNameValid] = useState(false);
     const [nameLoading, setNameLoading] = useState(true);
@@ -212,7 +214,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
           }
       },
       500,
-      [displayName, name, isUpdate]
+      [displayName, name, isUpdate],
     );
 
     return (
@@ -242,7 +244,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
           }
         }}
         placeholder={placeholder}
-        size="lg"
+        size={size}
         error={
           (!nameLoading || !isUpdate) &&
           ((!nameValid && !!name && !nameLoading) || !!errors)
@@ -254,5 +256,5 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
         focusRing
       />
     );
-  }
+  },
 );

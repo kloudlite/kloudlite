@@ -46,7 +46,7 @@ export const SearchBox = ({ InputElement = Toolbar.TextInput }) => {
       }
     },
     300,
-    [search]
+    [search],
   );
 
   return (
