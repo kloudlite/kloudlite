@@ -44,6 +44,7 @@ func (opt *result) Continue(val bool) Result {
 
 func (opt *result) RequeueAfter(d time.Duration) Result {
 	opt.requeue = ctrl.Result{RequeueAfter: d}
+	// opt.err = nil
 	return opt
 }
 

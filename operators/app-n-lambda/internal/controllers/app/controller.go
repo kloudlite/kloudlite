@@ -96,13 +96,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.EnsureCheckList([]rApi.CheckMeta{
-		// {Name: DeploymentSvcCreated, Title: "Deployment And Service Created"},
 		{Name: DeploymentSvcCreated, Title: func() string {
 			if len(req.Object.Spec.Services) > 0 {
 				return "Deployment And Service Created"
 			}
 			return "Deployment Created"
-		}()},
+		}(), Hide: req.Object.IsInterceptEnabled()},
 		{Name: DeploymentReady, Title: "Deployment Ready", Hide: req.Object.IsInterceptEnabled()},
 		{Name: HPAConfigured, Title: "Horizontal pod autoscaling configured", Hide: req.Object.IsInterceptEnabled() || req.Object.IsHPAEnabled()},
 		{Name: AppInterceptCreated, Title: "App Intercept Created", Hide: !req.Object.IsInterceptEnabled()},
