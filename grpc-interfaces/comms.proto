@@ -50,7 +50,7 @@ message SendContactUsEmailInput{
   string name = 2;
   string companyName = 3;
   string country = 4;
-  int64 mobileNumber = 5;
+  string mobileNumber = 5;
   string message = 6;
 }
 
