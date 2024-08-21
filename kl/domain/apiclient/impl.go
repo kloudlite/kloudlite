@@ -29,7 +29,11 @@ type ApiClient interface {
 	ListEnvs(accountName string) ([]Env, error)
 	GetEnvironment(accountName, envName string) (*Env, error)
 	EnsureEnv() (*fileclient.Env, error)
+	CloneEnv(accountName, envName, newEnvName, clusterName string) (*Env, error)
+	CheckEnvName(accountName, envName string) (bool, error)
 	GetLoadMaps() (map[string]string, MountMap, error)
+
+	ListBYOKClusters(accountName string) ([]BYOKCluster, error)
 
 	ListMreses(accountName string, envName string) ([]Mres, error)
 	ListMresKeys(accountName, envName, importedManagedResource string) ([]string, error)

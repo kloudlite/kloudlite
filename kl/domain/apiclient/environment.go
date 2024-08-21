@@ -20,6 +20,11 @@ type EnvList struct {
 	Edges Edges[Env] `json:"edges"`
 }
 
+const (
+	PublicEnvRoutingMode = "public"
+	EnvironmentType      = "environment"
+)
+
 // func GetEnvironment(envName string) (*Env, error) {
 // 	var err error
 // 	projectName, err := EnsureProject()
@@ -162,3 +167,47 @@ func (apic *apiClient) EnsureEnv() (*fileclient.Env, error) {
 // 		TargetNs: selectedEnv.Metadata.Namespace,
 // 	}, nil
 // }
+
+func (apic *apiClient) CloneEnv(accountName, envName, newEnvName, clusterName string) (*Env, error) {
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+	respData, err := klFetch("cli_cloneEnvironment", map[string]any{
+		"clusterName":            clusterName,
+		"sourceEnvName":          envName,
+		"destinationEnvName":     newEnvName,
+		"displayName":            newEnvName,
+		"environmentRoutingMode": PublicEnvRoutingMode,
+	}, &cookie)
+
+	if err != nil {
+		return nil, functions.NewE(err)
+	}
+
+	if fromResp, err := GetFromResp[Env](respData); err != nil {
+		return nil, functions.NewE(err)
+	} else {
+		return fromResp, functions.NewE(err)
+	}
+}
+
+func (apic *apiClient) CheckEnvName(accountName, envName string) (bool, error) {
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
+	if err != nil {
+		return false, functions.NewE(err)
+	}
+	respData, err := klFetch("cli_coreCheckNameAvailability", map[string]any{
+		"resType": EnvironmentType,
+		"name":    envName,
+	}, &cookie)
+	if err != nil {
+		return false, functions.NewE(err)
+	}
+
+	if fromResp, err := GetFromResp[CheckName](respData); err != nil {
+		return false, functions.NewE(err)
+	} else {
+		return fromResp.Result, nil
+	}
+}
