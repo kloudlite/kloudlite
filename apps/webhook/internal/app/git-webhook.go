@@ -123,30 +123,32 @@ func LoadGitWebhook() fx.Option {
 					return errors.NewE(err)
 				}
 
-				discordMessage := fmt.Sprintf(
-					""+
-						"🚨 **NEW CONTACT US SUBMISSION** 🚨\n**Name:** %s\n**Email:** %s\n**Mobile:** %d\n**Company:** %s\n**Country:** %s\n**Message:** %s\n",
-					data.Name, data.Email, data.MobileNumber, data.CompanyName, data.Country, data.Message,
-				)
-
-				payload := map[string]string{
-					"content": discordMessage,
-				}
-
-				payloadBytes, err := json.Marshal(payload)
-				if err != nil {
-					return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to marshal Discord payload"})
-				}
-
 				discordWebhookURL := envVars.DiscordWebhookUrl
-				resp, err := http.Post(discordWebhookURL, "application/json", bytes.NewBuffer(payloadBytes))
-				if err != nil {
-					return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to send message to Discord"})
-				}
-				defer resp.Body.Close()
+				if discordWebhookURL != "" {
+					discordMessage := fmt.Sprintf(
+						""+
+							"🚨 **NEW CONTACT US SUBMISSION** 🚨\n**Name:** %s\n**Email:** %s\n**Mobile:** %s\n**Company:** %s\n**Country:** %s\n**Message:** %s\n",
+						data.Name, data.Email, data.MobileNumber, data.CompanyName, data.Country, data.Message,
+					)
 
-				if resp.StatusCode != http.StatusNoContent {
-					return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Discord API returned an error"})
+					payload := map[string]string{
+						"content": discordMessage,
+					}
+
+					payloadBytes, err := json.Marshal(payload)
+					if err != nil {
+						return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to marshal Discord payload"})
+					}
+
+					resp, err := http.Post(discordWebhookURL, "application/json", bytes.NewBuffer(payloadBytes))
+					if err != nil {
+						return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to send message to Discord"})
+					}
+					defer resp.Body.Close()
+
+					if resp.StatusCode != http.StatusNoContent {
+						return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Discord API returned an error"})
+					}
 				}
 
 				return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true})
