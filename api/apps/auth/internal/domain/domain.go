@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"github.com/kloudlite/api/apps/auth/internal/entities"
-
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 )

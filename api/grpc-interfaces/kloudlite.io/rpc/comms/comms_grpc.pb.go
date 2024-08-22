@@ -25,6 +25,7 @@ const (
 	Comms_SendProjectMemberInviteEmail_FullMethodName = "/Comms/SendProjectMemberInviteEmail"
 	Comms_SendWelcomeEmail_FullMethodName             = "/Comms/SendWelcomeEmail"
 	Comms_SendWaitingEmail_FullMethodName             = "/Comms/SendWaitingEmail"
+	Comms_SendContactUsEmail_FullMethodName           = "/Comms/SendContactUsEmail"
 )
 
 // CommsClient is the client API for Comms service.
@@ -37,6 +38,7 @@ type CommsClient interface {
 	SendProjectMemberInviteEmail(ctx context.Context, in *ProjectMemberInviteEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendWelcomeEmail(ctx context.Context, in *WelcomeEmailInput, opts ...grpc.CallOption) (*Void, error)
 	SendWaitingEmail(ctx context.Context, in *WelcomeEmailInput, opts ...grpc.CallOption) (*Void, error)
+	SendContactUsEmail(ctx context.Context, in *SendContactUsEmailInput, opts ...grpc.CallOption) (*Void, error)
 }
 
 type commsClient struct {
@@ -101,6 +103,15 @@ func (c *commsClient) SendWaitingEmail(ctx context.Context, in *WelcomeEmailInpu
 	return out, nil
 }
 
+func (c *commsClient) SendContactUsEmail(ctx context.Context, in *SendContactUsEmailInput, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, Comms_SendContactUsEmail_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CommsServer is the server API for Comms service.
 // All implementations must embed UnimplementedCommsServer
 // for forward compatibility
@@ -111,6 +122,7 @@ type CommsServer interface {
 	SendProjectMemberInviteEmail(context.Context, *ProjectMemberInviteEmailInput) (*Void, error)
 	SendWelcomeEmail(context.Context, *WelcomeEmailInput) (*Void, error)
 	SendWaitingEmail(context.Context, *WelcomeEmailInput) (*Void, error)
+	SendContactUsEmail(context.Context, *SendContactUsEmailInput) (*Void, error)
 	mustEmbedUnimplementedCommsServer()
 }
 
@@ -135,6 +147,9 @@ func (UnimplementedCommsServer) SendWelcomeEmail(context.Context, *WelcomeEmailI
 }
 func (UnimplementedCommsServer) SendWaitingEmail(context.Context, *WelcomeEmailInput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendWaitingEmail not implemented")
+}
+func (UnimplementedCommsServer) SendContactUsEmail(context.Context, *SendContactUsEmailInput) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendContactUsEmail not implemented")
 }
 func (UnimplementedCommsServer) mustEmbedUnimplementedCommsServer() {}
 
@@ -257,6 +272,24 @@ func _Comms_SendWaitingEmail_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Comms_SendContactUsEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendContactUsEmailInput)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommsServer).SendContactUsEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Comms_SendContactUsEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommsServer).SendContactUsEmail(ctx, req.(*SendContactUsEmailInput))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Comms_ServiceDesc is the grpc.ServiceDesc for Comms service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -287,6 +320,10 @@ var Comms_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendWaitingEmail",
 			Handler:    _Comms_SendWaitingEmail_Handler,
+		},
+		{
+			MethodName: "SendContactUsEmail",
+			Handler:    _Comms_SendContactUsEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
