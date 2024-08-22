@@ -9,4 +9,7 @@ type Env struct {
 	GithubAuthzSecret string `env:"GITHUB_AUTHZ_SECRET" required:"false"`
 	GitlabAuthzSecret string `env:"GITLAB_AUTHZ_SECRET" required:"false"`
 	NatsURL           string `env:"NATS_URL" required:"false"`
+
+	CommsService      string `env:"COMMS_SERVICE" required:"true"`
+	DiscordWebhookUrl string `env:"DISCORD_WEBHOOK_URL" required:"false"`
 }
