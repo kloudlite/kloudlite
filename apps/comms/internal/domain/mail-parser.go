@@ -26,6 +26,7 @@ type EmailTemplates struct {
 	WelcomeEmail          *EmailTemplate
 	WaitingEmail          *EmailTemplate
 	AlertEmail            *EmailTemplate
+	ContactUsEmail        *EmailTemplate
 }
 
 func parseMailTemplate(et EmailTemplatesDir, templateName string, subject string) (*EmailTemplate, error) {
@@ -85,6 +86,11 @@ func GetEmailTemplates(et EmailTemplatesDir) (*EmailTemplates, error) {
 		return nil, err
 	}
 
+	contactUs, err := parseMailTemplate(et, "contact-us", "[Kloudlite] Contact Us")
+	if err != nil {
+		return nil, err
+	}
+
 	alert, err := parseMailTemplate(et, "alert", "[Kloudlite] Console Notification")
 
 	return &EmailTemplates{
@@ -94,6 +100,7 @@ func GetEmailTemplates(et EmailTemplatesDir) (*EmailTemplates, error) {
 		UserVerificationEmail: userVerification,
 		WelcomeEmail:          welcome,
 		WaitingEmail:          waiting,
+		ContactUsEmail:        contactUs,
 		AlertEmail:            alert,
 	}, nil
 }

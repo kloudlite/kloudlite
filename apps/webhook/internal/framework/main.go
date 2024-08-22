@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/grpc"
 	"log/slog"
 
 	"github.com/kloudlite/api/apps/webhook/internal/app"
@@ -61,5 +62,10 @@ var Module = fx.Module(
 			},
 		})
 	}),
+
+	fx.Provide(func(ev *env.Env) (app.CommsGrpcClient, error) {
+		return grpc.NewGrpcClient(ev.CommsService)
+	}),
+
 	app.Module,
 )

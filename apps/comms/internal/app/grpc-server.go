@@ -206,6 +206,36 @@ func (r *commsSvc) SendVerificationEmail(ctx context.Context, input *comms.Verif
 	}
 	return &comms.Void{}, nil
 }
+
+func (r *commsSvc) SendContactUsEmail(ctx context.Context, input *comms.SendContactUsEmailInput) (*comms.Void, error) {
+	plainText := new(bytes.Buffer)
+	args := map[string]any{
+		"Name": func() string {
+			if input.Name != "" {
+				return input.Name
+			}
+			return "there"
+		}(),
+		"CompanyName": input.CompanyName,
+		"Country":     input.Country,
+		"Message":     input.Message,
+	}
+
+	if err := r.eTemplattes.ContactUsEmail.PlainText.Execute(plainText, args); err != nil {
+		return nil, errors.NewEf(err, "failed to execute plain text template")
+	}
+
+	html := new(bytes.Buffer)
+	if err := r.eTemplattes.ContactUsEmail.Html.Execute(html, args); err != nil {
+		return nil, errors.NewEf(err, "failed to execute html template")
+	}
+
+	if err := r.sendSupportEmail(ctx, r.eTemplattes.ContactUsEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return &comms.Void{}, nil
+}
+
 func newCommsSvc(mailer mail.Mailer, ev *env.Env, et *domain.EmailTemplates) comms.CommsServer {
 	return &commsSvc{
 		mailer:       mailer,
