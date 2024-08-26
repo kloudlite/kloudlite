@@ -16,6 +16,7 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -48,6 +49,7 @@ const (
 	ensureNamespaceRBACs string = "ensure-namespace-rbac"
 	setupEnvIngress      string = "setup-env-ingress"
 	updateRouterIngress  string = "update-router-ingress"
+	suspendEnvironment   string = "suspend-environment"
 
 	envFinalizing string = "env-finalizing"
 )
@@ -57,8 +59,6 @@ var (
 		{Name: patchDefaults, Title: "Patching Defaults"},
 		{Name: ensureNamespace, Title: "Ensuring Namespace"},
 		{Name: ensureNamespaceRBACs, Title: "Ensuring Namespace RBACs"},
-		// {Name: setupEnvIngress, Title: "Setting up Environment Ingress"},
-		// {Name: updateRouterIngress, Title: "Updating Router Ingress"},
 	}
 
 	DestroyChecklist = []rApi.CheckMeta{
@@ -77,6 +77,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.PreReconcile()
+	if step := req.EnsureChecks(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	defer req.PostReconcile()
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -90,11 +94,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureCheckList(ApplyChecklist); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.EnsureChecks(); !step.ShouldProceed() {
+	if step := req.EnsureCheckList([]rApi.CheckMeta{
+		{Name: patchDefaults, Title: "Patching Defaults"},
+		{Name: ensureNamespace, Title: "Ensuring Namespace"},
+		{Name: ensureNamespaceRBACs, Title: "Ensuring Namespace RBACs"},
+		{Name: suspendEnvironment, Title: "Suspending Environment", Hide: !req.Object.Spec.Suspend},
+	}); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -125,6 +130,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	// if step := r.updateRouterIngressClasses(req); !step.ShouldProceed() {
 	// 	return step.ReconcilerResponse()
 	// }
+
+	if req.Object.Spec.Suspend {
+		if step := r.suspendEnvironment(req); !step.ShouldProceed() {
+			return step.ReconcilerResponse()
+		}
+	}
 
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
@@ -396,6 +407,37 @@ func (r *Reconciler) updateRouterIngressClasses(req *rApi.Request[*crdsv1.Enviro
 		ingressList.Items[i].Spec.IngressClassName = fn.New(obj.GetIngressClassName())
 		if err := r.Update(ctx, &ingressList.Items[i]); err != nil {
 			return stepResult.New().RequeueAfter(1 * time.Second)
+		}
+	}
+
+	return check.Completed()
+}
+
+func (r *Reconciler) suspendEnvironment(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.NewRunningCheck(suspendEnvironment, req)
+
+	// creating resource quota for the environment namespace
+	nsQuota := &corev1.ResourceQuota{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-quota", obj.Name), Namespace: obj.Spec.TargetNamespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nsQuota, func() error {
+		nsQuota.Spec.Hard = corev1.ResourceList{
+			corev1.ResourceMemory: resource.MustParse("0Mi"),
+			corev1.ResourceCPU:    resource.MustParse("0m"),
+		}
+		return nil
+	}); err != nil {
+		return check.Failed(err)
+	}
+
+	// evicting all pods from the environment namespace, to make them honour created resource quota
+	var podsList corev1.PodList
+	if err := r.List(ctx, &podsList, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
+		return check.Failed(err)
+	}
+
+	for i := range podsList.Items {
+		if err := r.Delete(ctx, &podsList.Items[i]); err != nil {
+			return check.Failed(err)
 		}
 	}
 

@@ -26,6 +26,8 @@ type EnvironmentSpec struct {
 	TargetNamespace string `json:"targetNamespace,omitempty"`
 
 	Routing *EnvironmentRouting `json:"routing,omitempty"`
+
+	Suspend bool `json:"suspend,omitempty"`
 }
 
 //+kubebuilder:object:root=true

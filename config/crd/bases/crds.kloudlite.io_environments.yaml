@@ -63,6 +63,8 @@ spec:
                   publicIngressClass:
                     type: string
                 type: object
+              suspend:
+                type: boolean
               targetNamespace:
                 type: string
             type: object
