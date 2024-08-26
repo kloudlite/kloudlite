@@ -6130,6 +6130,33 @@ query authCli_getEnvironment($name: String!) {
   }
 }
 
+mutation authCli_cloneEnvironment($clusterName: String!, $sourceEnvName: String!, $destinationEnvName: String!, $displayName: String!, $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!) {
+  core_cloneEnvironment(
+    clusterName: $clusterName
+    sourceEnvName: $sourceEnvName
+    destinationEnvName: $destinationEnvName
+    displayName: $displayName
+    environmentRoutingMode: $environmentRoutingMode
+  ) {
+    id
+    displayName
+    clusterName
+    metadata {
+      name
+      namespace
+    }
+    status {
+      isReady
+      message {
+        RawMessage
+      }
+    }
+    spec {
+      targetNamespace
+    }
+  }
+}
+
 query authCli_getSecret($envName: String!, $name: String!) {
   core_getSecret(envName: $envName, name: $name) {
     displayName
@@ -6481,6 +6508,24 @@ query authCli_listImportedManagedResources($envName: String!, $search: SearchImp
       hasNextPage
       hasPrevPage
       startCursor
+    }
+    totalCount
+  }
+}
+
+query authCli_listByokClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
+  infra_listBYOKClusters(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        displayName
+        id
+        metadata {
+          name
+          namespace
+        }
+        updateTime
+      }
     }
     totalCount
   }

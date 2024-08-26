@@ -1,9 +1,4 @@
 import { useNavigate, useOutletContext } from '@remix-run/react';
-import Select from '~/components/atoms/select';
-import { NameIdView } from '~/console/components/name-id-view';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
 import {
   FormEventHandler,
   ReactNode,
@@ -12,26 +7,31 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  IMSvTemplate,
-  IMSvTemplates,
-} from '~/console/server/gql/queries/managed-templates-queries';
-import { Switch } from '~/components/atoms/switch';
+import { toast } from 'react-toastify';
 import { NumberInput, TextInput } from '~/components/atoms/input';
-import { handleError } from '~/root/lib/utils/common';
+import Select from '~/components/atoms/select';
+import { Switch } from '~/components/atoms/switch';
 import { titleCase } from '~/components/utils';
-import { flatMapValidations, flatM } from '~/console/utils/commons';
-import MultiStepProgress, {
-  useMultiStepProgress,
-} from '~/console/components/multi-step-progress';
-import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
 import {
   BottomNavigation,
   ReviewComponent,
 } from '~/console/components/commons';
+import MultiStepProgress, {
+  useMultiStepProgress,
+} from '~/console/components/multi-step-progress';
+import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
+import { NameIdView } from '~/console/components/name-id-view';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import {
+  IMSvTemplate,
+  IMSvTemplates,
+} from '~/console/server/gql/queries/managed-templates-queries';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { toast } from 'react-toastify';
+import { flatM, flatMapValidations } from '~/console/utils/commons';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+import { handleError } from '~/root/lib/utils/common';
 import { IAccountContext } from '../_layout';
 
 const valueRender = ({ label, icon }: { label: string; icon: string }) => {
@@ -75,8 +75,8 @@ const RenderField = ({
             dummyEvent(
               `${parseFloat(target.value) * (field.multiplier || 1)}${
                 field.unit
-              }`,
-            ),
+              }`
+            )
           );
         }}
         suffix={field.displayUnit}
@@ -117,16 +117,16 @@ const RenderField = ({
                     dummyEvent(
                       `${parseFloat(target.value) * (field.multiplier || 1)}${
                         field.unit
-                      }`,
-                    ),
+                      }`
+                    )
                   );
                   if (qos) {
                     onChange(`res.${field.name}.max`)(
                       dummyEvent(
                         `${parseFloat(target.value) * (field.multiplier || 1)}${
                           field.unit
-                        }`,
-                      ),
+                        }`
+                      )
                     );
                   }
                 }}
@@ -146,8 +146,8 @@ const RenderField = ({
                       dummyEvent(
                         `${parseFloat(target.value) * (field.multiplier || 1)}${
                           field.unit
-                        }`,
-                      ),
+                        }`
+                      )
                     );
                   }}
                   suffix={field.displayUnit}
@@ -387,7 +387,7 @@ const ReviewView = ({
 }) => {
   const renderFieldView = () => {
     const fields = Object.entries(values.res).filter(
-      ([k, _v]) => !['resources'].includes(k),
+      ([k, _v]) => !['resources'].includes(k)
     );
     if (fields.length > 0) {
       return (
@@ -563,7 +563,7 @@ const ManagedServiceLayout = () => {
 
   useEffect(() => {
     getClusters();
-  }, []);
+  }, [clusterList]);
 
   const { values, errors, handleSubmit, handleChange, isLoading, setValues } =
     useForm({
@@ -588,7 +588,7 @@ const ManagedServiceLayout = () => {
           'Cluster name is required',
           (v) => {
             return !(currentStep === 2 && !v);
-          },
+          }
         ),
         selectedTemplate: Yup.object({}).required('Template is required.'),
         // @ts-ignore
@@ -608,9 +608,9 @@ const ManagedServiceLayout = () => {
                     (acc: any, curr: any) => {
                       return { ...acc, [curr.name]: curr };
                     },
-                    {},
-                  ),
-                ),
+                    {}
+                  )
+                )
               );
             }
 
@@ -693,7 +693,7 @@ const ManagedServiceLayout = () => {
           ...flatM(
             selectedTemplate?.template?.fields.reduce((acc, curr) => {
               return { ...acc, [curr.name]: curr };
-            }, {}),
+            }, {})
           ),
         },
       }));
@@ -701,12 +701,13 @@ const ManagedServiceLayout = () => {
   }, [values.selectedTemplate]);
 
   useEffect(() => {
-    if (clusterList.length > 0) {
-      setValues((v) => ({
-        ...v,
-        clusterName: clusterList.find((c) => c.ready)?.value || '',
-      }));
-    }
+    setValues((v) => ({
+      ...v,
+      clusterName:
+        clusterList.length > 0
+          ? clusterList.find((c) => c.ready)?.value || ''
+          : '',
+    }));
   }, [clusterList]);
 
   return (
