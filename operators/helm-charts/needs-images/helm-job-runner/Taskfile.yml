@@ -9,11 +9,4 @@ tasks:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
-      - docker buildx build -f ./Containerfile --platform linux/arm64,linux/amd64 --output=type=image,compression=zstd,force-compression=true,compression-level=14,push=true   --tag {{.Image}} .
-
-  nerdctl:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: "var Image must have a value, of format 'image_repository:image_tag'"
-    cmds:
-      - nerdctl build -f ./Containerfile --platform linux/arm64,linux/amd64 --tag {{.Image}} .
+      - docker buildx build --platform linux/arm64,linux/amd64 --output=type=image,compression=zstd,force-compression=true,compression-level=14,push=true   --tag {{.Image}} .
