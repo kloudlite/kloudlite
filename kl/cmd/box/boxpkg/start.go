@@ -70,13 +70,9 @@ func (c *client) Start() error {
 		return fn.NewE(err)
 	}
 
-	vpnCfg, err := c.apic.GetAccVPNConfig(c.klfile.AccountName)
+	err = c.StartWgContainer()
 	if err != nil {
-		return functions.NewE(err)
-	}
-
-	if err = c.SyncVpn(vpnCfg.WGconf); err != nil {
-		return functions.NewE(err)
+		return fn.NewE(err)
 	}
 
 	if c.env.SSHPort == 0 {
@@ -117,5 +113,18 @@ func (c *client) Start() error {
 
 	fn.Logf("%s %s %s\n", text.Bold("command:"), text.Blue("ssh"), text.Blue(strings.Join([]string{fmt.Sprintf("kl@%s", getDomainFromPath(c.cwd)), "-p", fmt.Sprint(c.env.SSHPort), "-oStrictHostKeyChecking=no"}, " ")))
 
+	return nil
+}
+
+func (c *client) StartWgContainer() error {
+	defer spinner.Client.UpdateMessage("starting wireguard")()
+	vpnCfg, err := c.apic.GetAccVPNConfig(c.klfile.AccountName)
+	if err != nil {
+		return fn.NewE(err)
+	}
+
+	if err = c.SyncVpn(vpnCfg.WGconf); err != nil {
+		return fn.NewE(err)
+	}
 	return nil
 }

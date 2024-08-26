@@ -47,6 +47,7 @@ type BoxClient interface {
 	Exec([]string, io.Writer) error
 
 	ConfirmBoxRestart() error
+	StartWgContainer() error
 }
 
 func (c *client) Context() context.Context {
