@@ -305,6 +305,8 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 					Labels: selectorLabels,
 				},
 				Spec: corev1.PodSpec{
+					NodeSelector: obj.Spec.NodeSelector,
+					Tolerations:  obj.Spec.Tolerations,
 					Volumes: []corev1.Volume{
 						{
 							Name: pvcName,
