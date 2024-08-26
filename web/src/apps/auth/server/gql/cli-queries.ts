@@ -354,6 +354,46 @@ export const cliQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
+  cli_cloneEnvironment: executor(
+    gql`
+      mutation Core_cloneEnvironment(
+        $clusterName: String!
+        $sourceEnvName: String!
+        $destinationEnvName: String!
+        $displayName: String!
+        $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!
+      ) {
+        core_cloneEnvironment(
+          clusterName: $clusterName
+          sourceEnvName: $sourceEnvName
+          destinationEnvName: $destinationEnvName
+          displayName: $displayName
+          environmentRoutingMode: $environmentRoutingMode
+        ) {
+          id
+          displayName
+          clusterName
+          metadata {
+            name
+            namespace
+          }
+          status {
+            isReady
+            message {
+              RawMessage
+            }
+          }
+          spec {
+            targetNamespace
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_cloneEnvironment,
+      vars(_: any) {},
+    }
+  ),
   cli_getSecret: executor(
     gql`
       query Core_getSecret($envName: String!, $name: String!) {
@@ -860,6 +900,36 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listImportedManagedResources,
+      vars(_: any) {},
+    }
+  ),
+  cli_listByokClusters: executor(
+    gql`
+      query Infra_listBYOKClusters(
+        $search: SearchCluster
+        $pagination: CursorPaginationIn
+      ) {
+        infra_listBYOKClusters(search: $search, pagination: $pagination) {
+          edges {
+            cursor
+            node {
+              displayName
+              id
+              metadata {
+                name
+                namespace
+              }
+              updateTime
+            }
+          }
+          totalCount
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => {
+        return data.infra_listBYOKClusters;
+      },
       vars(_: any) {},
     }
   ),

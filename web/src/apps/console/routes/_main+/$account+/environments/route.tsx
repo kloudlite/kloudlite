@@ -1,23 +1,23 @@
-import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
+import { Plus } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
 import HandleScope from '~/console/page-components/handle-environment';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
+import { IRemixCtx } from '~/root/lib/types/common';
 
-import { ensureAccountSet } from '~/console/server/utils/auth-utils';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
 import { EmptyEnvironmentImage } from '~/console/components/empty-resource-images';
-import Tools from './tools';
+import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import EnvironmentResourcesV2 from './environment-resources-v2';
+import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);

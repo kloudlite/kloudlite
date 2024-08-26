@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
+import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import Select from '~/components/atoms/select';
+import { NameIdView } from '../components/name-id-view';
 import { IDialog } from '../components/types.d';
 import { useConsoleApi } from '../server/gql/api-provider';
-import { DIALOG_TYPE } from '../utils/commons';
 import { IEnvironment } from '../server/gql/queries/environment-queries';
-import { NameIdView } from '../components/name-id-view';
 import { parseName, parseNodes } from '../server/r-utils/common';
+import { DIALOG_TYPE } from '../utils/commons';
 
 const ClusterSelectItem = ({
   label,
@@ -55,7 +55,7 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
 
   useEffect(() => {
     getClusters();
-  }, []);
+  }, [show]);
 
   const [validationSchema] = useState<any>(
     Yup.object({
@@ -127,14 +127,14 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
       }
     },
   });
-
   useEffect(() => {
-    if (clusterList.length > 0) {
-      setValues((v) => ({
-        ...v,
-        clusterName: clusterList.find((c) => c.ready)?.value || '',
-      }));
-    }
+    setValues((v) => ({
+      ...v,
+      clusterName:
+        clusterList.length > 0
+          ? clusterList.find((c) => c.ready)?.value || ''
+          : '',
+    }));
   }, [clusterList, show]);
 
   return (
