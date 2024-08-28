@@ -294,7 +294,7 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 
 		sts.Spec.Replicas = fn.New(int32(1))
 
-		sts.Spec = appsv1.StatefulSetSpec{
+		spec := appsv1.StatefulSetSpec{
 			Replicas: fn.New(int32(1)),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: selectorLabels,
@@ -357,9 +357,19 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 				},
 			},
 		}
+
+		if obj.GetGeneration() > 0 {
+			// resource exists, and is being updated now
+			// INFO: k8s statefulsets forbids update to spec fields, other than "replicas", "template", "ordinals", "updateStrategy", "persistentVolumeClaimRetentionPolicy" and "minReadySeconds",
+
+			sts.Spec.Replicas = spec.Replicas
+			sts.Spec.Template = spec.Template
+		} else {
+			sts.Spec = spec
+		}
+
 		return nil
 	}); err != nil {
-		r.logger.Infof("Failed to create statefulset: err=%v, resource:\n%+v\n", err, sts)
 		return check.Failed(err)
 	}
 

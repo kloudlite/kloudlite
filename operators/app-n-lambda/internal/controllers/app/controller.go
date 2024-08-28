@@ -13,7 +13,6 @@ import (
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/app-n-lambda/internal/env"
 	"github.com/kloudlite/operator/operators/app-n-lambda/internal/templates"
-	"github.com/kloudlite/operator/pkg/conditions"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -24,7 +23,6 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -373,30 +371,34 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 		return check.Failed(err)
 	}
 
-	cds, err := conditions.FromObject(deployment)
-	if err != nil {
-		return check.StillRunning(err)
-	}
+	for _, c := range deployment.Status.Conditions {
+		switch c.Type {
+		case appsv1.DeploymentAvailable:
+			if c.Status != corev1.ConditionTrue {
+				var podList corev1.PodList
+				if err := r.List(
+					ctx, &podList, &client.ListOptions{
+						LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{"app": obj.Name}),
+						Namespace:     obj.Namespace,
+					},
+				); err != nil {
+					return check.StillRunning(err)
+				}
 
-	isReady := meta.IsStatusConditionTrue(cds, "Available")
-
-	if !isReady {
-		var podList corev1.PodList
-		if err := r.List(
-			ctx, &podList, &client.ListOptions{
-				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{"app": obj.Name}),
-				Namespace:     obj.Namespace,
-			},
-		); err != nil {
-			return check.StillRunning(err)
+				if len(podList.Items) > 0 {
+					pMessages := rApi.GetMessagesFromPods(podList.Items...)
+					bMsg, err := json.Marshal(pMessages)
+					if err != nil {
+						return check.StillRunning(err)
+					}
+					return check.StillRunning(fmt.Errorf(string(bMsg)))
+				}
+			}
+		case appsv1.DeploymentReplicaFailure:
+			if c.Status == corev1.ConditionTrue {
+				return check.Failed(fmt.Errorf(c.Message))
+			}
 		}
-
-		pMessages := rApi.GetMessagesFromPods(podList.Items...)
-		bMsg, err := json.Marshal(pMessages)
-		if err != nil {
-			return check.StillRunning(err)
-		}
-		return check.StillRunning(fmt.Errorf(string(bMsg)))
 	}
 
 	if deployment.Status.ReadyReplicas != deployment.Status.Replicas {
