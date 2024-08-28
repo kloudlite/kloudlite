@@ -342,11 +342,13 @@ type GithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingIn struct {
 
 type GithubComKloudliteOperatorApisCrdsV1EnvironmentSpec struct {
 	Routing         *GithubComKloudliteOperatorApisCrdsV1EnvironmentRouting `json:"routing,omitempty"`
+	Suspend         *bool                                                   `json:"suspend,omitempty"`
 	TargetNamespace *string                                                 `json:"targetNamespace,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1EnvironmentSpecIn struct {
 	Routing         *GithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingIn `json:"routing,omitempty"`
+	Suspend         *bool                                                     `json:"suspend,omitempty"`
 	TargetNamespace *string                                                   `json:"targetNamespace,omitempty"`
 }
 
@@ -613,11 +615,11 @@ type GithubComKloudliteOperatorPkgOperatorStatusIn struct {
 }
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
-	RawMessage interface{} `json:"RawMessage,omitempty"`
+	RawMessage any `json:"RawMessage,omitempty"`
 }
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSONIn struct {
-	RawMessage interface{} `json:"RawMessage,omitempty"`
+	RawMessage any `json:"RawMessage,omitempty"`
 }
 
 type ImagePullSecretEdge struct {

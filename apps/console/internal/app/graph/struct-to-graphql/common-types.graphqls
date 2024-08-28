@@ -147,6 +147,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting @
 
 type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec @shareable {
   routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting
+  suspend: Boolean
   targetNamespace: String
 }
 
@@ -480,6 +481,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingI
 
 input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
   routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn
+  suspend: Boolean
   targetNamespace: String
 }
 

@@ -110,6 +110,7 @@ const (
 	EnvironmentSpecRoutingMode                = "spec.routing.mode"
 	EnvironmentSpecRoutingPrivateIngressClass = "spec.routing.privateIngressClass"
 	EnvironmentSpecRoutingPublicIngressClass  = "spec.routing.publicIngressClass"
+	EnvironmentSpecSuspend                    = "spec.suspend"
 	EnvironmentSpecTargetNamespace            = "spec.targetNamespace"
 )
 

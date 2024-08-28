@@ -58,11 +58,12 @@ func NewGrpcServer(opts ServerOpts) (Server, error) {
 		grpc.StreamInterceptor(func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 			p, ok := peer.FromContext(stream.Context())
 			if ok {
-				if opts.Slogger != nil {
-					opts.Slogger.Debug("new grpc connection", "from", p.Addr.String())
-				} else {
-					opts.Logger.Debugf("[Stream] New connection from %s", p.Addr.String())
-				}
+				_ = p.Addr.String()
+				// if opts.Slogger != nil {
+				// 	opts.Slogger.Debug("new grpc connection", "from", p.Addr.String())
+				// } else {
+				// 	opts.Logger.Debugf("[Stream] New connection from %s", p.Addr.String())
+				// }
 			}
 			return handler(srv, stream)
 		}),

@@ -11,7 +11,19 @@ import (
 
 // OnServiceBindingDeleteMessage implements Domain.
 func (d *domain) OnServiceBindingDeleteMessage(ctx ConsoleContext, svcb *networkingv1.ServiceBinding) error {
-	panic("unimplemented")
+	if svcb == nil {
+		return errors.Newf("no service binding found")
+	}
+
+	if svcb.Spec.Hostname == "" {
+		return nil
+	}
+
+	if err := d.serviceBindingRepo.DeleteOne(ctx, repos.Filter{fc.AccountName: ctx.AccountName, fc.ServiceBindingSpecHostname: svcb.Spec.Hostname}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // OnServiceBindingUpdateMessage implements Domain.
@@ -24,9 +36,13 @@ func (d *domain) OnServiceBindingUpdateMessage(ctx ConsoleContext, svcb *network
 		return nil
 	}
 
+	if svcb.Spec.ServiceIP == nil {
+		return nil
+	}
+
 	if _, err := d.serviceBindingRepo.Upsert(ctx, repos.Filter{
 		fc.AccountName: ctx.AccountName,
-		// fc.ClusterName:                opts.ClusterName,
+		// fc.ClusterName: opts.ClusterName,
 		// fc.MetadataName:               svcb.Name,
 		fc.ServiceBindingSpecHostname: svcb.Spec.Hostname,
 	}, &entities.ServiceBinding{
