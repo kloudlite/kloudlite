@@ -534,6 +534,7 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, env entities.Environment)
 		common.PatchOpts{
 			XPatch: repos.Document{
 				fc.EnvironmentSpecRouting: env.Spec.Routing,
+				fc.EnvironmentSpecSuspend: env.Spec.Suspend,
 			},
 		},
 	)
