@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/domain"
-	"github.com/kloudlite/operator/pkg/errors"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/miekg/dns"
 )
 
@@ -37,7 +37,9 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	for _, question := range r.Question {
 		answers, err := h.resolver(ctx, question.Name, question.Qtype)
 		if err != nil {
-			logger.Error("FAILED to resolve dns record, got", "err", err, "question", question.Name)
+			if !errors.Is(err, errNoServiceBinding) && !errors.Is(err, errInvalidDNSQuery) {
+				logger.Error("FAILED to resolve dns record, got", "err", err, "question", question.Name)
+			}
 			msg.Rcode = dns.RcodeNameError
 			continue
 		}
@@ -58,7 +60,10 @@ func (h *dnsHandler) newRR(domain string, ttl int, ip string) ([]dns.RR, error) 
 	return []dns.RR{r}, nil
 }
 
-var errNoServiceBinding = errors.Newf("no service binding found")
+var (
+	errNoServiceBinding = errors.Newf("no service binding found")
+	errInvalidDNSQuery  = errors.Newf("invalid dns query")
+)
 
 func (h *dnsHandler) resolver(ctx context.Context, domain string, qtype uint16) ([]dns.RR, error) {
 	m := new(dns.Msg)
@@ -68,7 +73,7 @@ func (h *dnsHandler) resolver(ctx context.Context, domain string, qtype uint16) 
 	question := m.Question[0]
 	sp := strings.SplitN(strings.ToLower(question.Name), fmt.Sprintf(".%s", h.kloudliteDNSSuffix), 2)
 	if len(sp) < 2 {
-		return nil, fmt.Errorf("failed to split into 2 over .%s", h.kloudliteDNSSuffix)
+		return nil, errInvalidDNSQuery
 	}
 
 	if strings.HasSuffix(sp[0], ".local") {
