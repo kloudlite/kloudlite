@@ -51,6 +51,7 @@ import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import TooltipV2 from '~/components/atoms/tooltipV2';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
+import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
 type ByokBaseType = ExtractNodeType<IByocClusters> & { type: 'byok' };
@@ -120,7 +121,7 @@ const ByokInstructionsPopup = ({
       return api.getBYOKClusterInstructions({
         name: item.metadata.name,
       });
-    }
+    },
   );
 
   return (
@@ -415,6 +416,7 @@ const GridView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
 };
 const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
   const { account } = useParams();
+  const { clusters } = useClusterStatusV2();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -485,7 +487,9 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
                   ),
               },
               status: {
-                render: () => <GetSyncStatus lastOnlineAt={i.lastOnlineAt} />,
+                render: () => (
+                  <GetSyncStatus lastOnlineAt={clusters[id]?.lastOnlineAt} />
+                ),
               },
               updated: {
                 render: () => (
@@ -530,7 +534,7 @@ const ClusterResourcesV2 = ({
   useWatchReload(
     bItems.map((i) => {
       return `account:${parseName(account)}.cluster:${parseName(i)}`;
-    })
+    }),
   );
 
   const [showDeleteDialog, setShowDeleteDialog] =

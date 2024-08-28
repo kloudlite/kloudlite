@@ -20,7 +20,9 @@ import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import useClusterStatus from '~/console/hooks/use-cluster-status';
+import useClusterStatus, {
+  findClusterStatus,
+} from '~/console/hooks/use-cluster-status';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IEnvironments } from '~/console/server/gql/queries/environment-queries';
@@ -34,6 +36,7 @@ import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import CloneEnvironment from './clone-environment';
+import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 
 const RESOURCE_NAME = 'environment';
 type BaseType = ExtractNodeType<IEnvironments>;
@@ -192,18 +195,19 @@ const GridView = ({ items = [], onAction }: IResource) => {
 
 const ListView = ({ items, onAction }: IResource) => {
   const { account } = useParams();
-  const { findClusterStatus, clusters, loading } = useClusterStatus();
+  // const { findClusterStatus } = useClusterStatus();
+  const { clusters } = useClusterStatusV2();
 
-  const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
-    Record<string, boolean>
-  >({});
-  useEffect(() => {
-    const states: Record<string, boolean> = {};
-    clusters.forEach((c) => {
-      states[c.metadata.name] = findClusterStatus(c);
-    });
-    setClusterOnlineStatus(states);
-  }, [clusters]);
+  // const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
+  //   Record<string, boolean>
+  // >({});
+  // useEffect(() => {
+  //   const states: Record<string, boolean> = {};
+  //   clusters.forEach((c) => {
+  //     states[c.metadata.name] = findClusterStatus(c);
+  //   });
+  //   setClusterOnlineStatus(states);
+  // }, [clusters]);
 
   return (
     <ListV2.Root
@@ -243,7 +247,8 @@ const ListView = ({ items, onAction }: IResource) => {
         ],
         rows: items.map((i) => {
           const { name, id, updateInfo } = parseItem(i);
-          const isClusterOnline = clusterOnlineStatus[i.clusterName];
+          // const isClusterOnline = clusterOnlineStatus[i.clusterName];=
+          const isClusterOnline = findClusterStatus(clusters[i.clusterName]);
 
           return {
             columns: {
@@ -266,9 +271,9 @@ const ListView = ({ items, onAction }: IResource) => {
                   if (i.isArchived) {
                     return <Badge type="neutral">Archived</Badge>;
                   }
-                  if (loading) {
-                    return null;
-                  }
+                  // if (loading) {
+                  //   return null;
+                  // }
 
                   if (!isClusterOnline) {
                     return <Badge type="warning">Cluster Offline</Badge>;
@@ -314,7 +319,7 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   useWatchReload(
     items.map((i) => {
       return `account:${parseName(account)}.environment:${parseName(i)}`;
-    })
+    }),
   );
 
   const suspendEnvironment = async (item: BaseType, suspend: boolean) => {
@@ -340,7 +345,7 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
           suspend
             ? 'Environment suspended successfully'
             : 'Environment resumed successfully'
-        }`
+        }`,
       );
       reloadPage();
     } catch (err) {
@@ -349,7 +354,7 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   };
 
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
+    null,
   );
   const [visible, setVisible] = useState<BaseType | null>(null);
 

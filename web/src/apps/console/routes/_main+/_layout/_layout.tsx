@@ -49,6 +49,7 @@ import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
 import { ICommsNotifications } from '~/console/server/gql/queries/comms-queries';
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import logger from '~/root/lib/client/helpers/log';
+import ClusterStatusProvider from '~/console/hooks/use-cluster-status-v2';
 
 const restActions = (ctx: IExtRemixCtx) => {
   return withContext(ctx, {});
@@ -304,7 +305,7 @@ const NotificationMenu = () => {
             first: 100,
           },
         }),
-      true
+      true,
     );
 
   const notifications = parseNodes(notificationsData);
@@ -477,7 +478,7 @@ const Console = () => {
               {breadcrum.map((bc: any, index) =>
                 cloneElement(bc.handle.breadcrum(bc), {
                   key: generateKey(index),
-                })
+                }),
               )}
             </Breadcrum.Root>
           )
@@ -494,19 +495,21 @@ const Console = () => {
           </div>
         }
       />
-      <ViewModeProvider>
-        <SubNavDataProvider>
-          <UnsavedChangesProvider>
-            <Container className="pb-5xl">
-              <Outlet
-                context={{
-                  ...loaderData,
-                }}
-              />
-            </Container>
-          </UnsavedChangesProvider>
-        </SubNavDataProvider>
-      </ViewModeProvider>
+      <ClusterStatusProvider>
+        <ViewModeProvider>
+          <SubNavDataProvider>
+            <UnsavedChangesProvider>
+              <Container className="pb-5xl">
+                <Outlet
+                  context={{
+                    ...loaderData,
+                  }}
+                />
+              </Container>
+            </UnsavedChangesProvider>
+          </SubNavDataProvider>
+        </ViewModeProvider>
+      </ClusterStatusProvider>
     </div>
   );
 };

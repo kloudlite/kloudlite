@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { parseNodes } from '../server/r-utils/common';
 
-const findClusterStatus = (item?: { lastOnlineAt?: string }): boolean => {
+export const findClusterStatus = (item?: {
+  lastOnlineAt?: string;
+}): boolean => {
   if (!item || !item.lastOnlineAt) {
     return false;
   }
