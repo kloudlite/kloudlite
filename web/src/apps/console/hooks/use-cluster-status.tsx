@@ -13,12 +13,7 @@ const findClusterStatus = (item?: { lastOnlineAt?: string }): boolean => {
   const timeDifference =
     (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
 
-  switch (true) {
-    case timeDifference <= 2:
-      return true;
-    default:
-      return false;
-  }
+  return timeDifference <= 2;
 };
 
 const useClusterStatus = () => {

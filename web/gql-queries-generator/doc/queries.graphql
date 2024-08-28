@@ -739,6 +739,7 @@ query consoleGetEnvironment($name: String!) {
         privateIngressClass
         publicIngressClass
       }
+      suspend
       targetNamespace
     }
     status {
@@ -814,6 +815,7 @@ query consoleListEnvironments($search: SearchEnvironments, $pq: CursorPagination
             privateIngressClass
             publicIngressClass
           }
+          suspend
           targetNamespace
         }
         status {

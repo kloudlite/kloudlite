@@ -1,4 +1,7 @@
-import { LockSimple, Trash } from '~/console/components/icons';
+import { useOutletContext, useParams } from '@remix-run/react';
+import { useEffect, useState } from 'react';
+import { Badge } from '~/components/atoms/badge';
+import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -7,31 +10,28 @@ import {
   ListTitleV2,
   listClass,
 } from '~/console/components/console-list-components';
+import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
+import { LockSimple, Trash } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
+import ListV2 from '~/console/components/listV2';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
+import useClusterStatus from '~/console/hooks/use-cluster-status';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
+import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import DeleteDialog from '~/console/components/delete-dialog';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useReload } from '~/lib/client/helpers/reloader';
-import { useState } from 'react';
-import { handleError } from '~/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
-import { useOutletContext, useParams } from '@remix-run/react';
-import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import ListV2 from '~/console/components/listV2';
-import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { getManagedTemplateLogo } from '~/console/utils/commons';
-import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
-import { Badge } from '~/components/atoms/badge';
-import useClusterStatus from '~/console/hooks/use-cluster-status';
-import { ViewSecret } from './handle-managed-resource-v2';
+import { useReload } from '~/lib/client/helpers/reloader';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import { handleError } from '~/lib/utils/common';
 import { IEnvironmentContext } from '../_layout';
+import { ViewSecret } from './handle-managed-resource-v2';
 
 const RESOURCE_NAME = 'integrated resource';
 type BaseType = ExtractNodeType<IImportedManagedResources>;
@@ -143,6 +143,17 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
   const { cluster } = useOutletContext<IEnvironmentContext>();
   const { findClusterStatus, clusters, loading } = useClusterStatus();
 
+  const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
+    Record<string, boolean>
+  >({});
+  useEffect(() => {
+    const states: Record<string, boolean> = {};
+    clusters.forEach((c) => {
+      states[c.metadata.name] = findClusterStatus(c);
+    });
+    setClusterOnlineStatus(states);
+  }, [clusters]);
+
   return (
     <ListV2.Root
       data={{
@@ -190,11 +201,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
         ],
         rows: items.map((i) => {
           const { name, id, logo, updateInfo } = parseItem(i, templates);
-          const isClusterOnline = findClusterStatus(
-            clusters.length > 0
-              ? clusters.find((c) => parseName(c) === parseName(cluster))
-              : cluster
-          );
+          const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
 
           return {
             columns: {

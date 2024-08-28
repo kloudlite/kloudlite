@@ -1,6 +1,7 @@
-import { Copy, GearSix, Trash } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Badge } from '~/components/atoms/badge';
+import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -10,9 +11,18 @@ import {
   ListTitleV2,
   listClass,
 } from '~/console/components/console-list-components';
+import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
+import { Copy, GearSix, Pause, Play, Trash } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
+import ListV2 from '~/console/components/listV2';
+import ResourceExtraAction, {
+  IResourceExtraItem,
+} from '~/console/components/resource-extra-action';
+import { SyncStatusV2 } from '~/console/components/sync-status';
+import useClusterStatus from '~/console/hooks/use-cluster-status';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IEnvironments } from '~/console/server/gql/queries/environment-queries';
 import {
   ExtractNodeType,
@@ -20,17 +30,9 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { SyncStatusV2 } from '~/console/components/sync-status';
-import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import ListV2 from '~/console/components/listV2';
-import DeleteDialog from '~/console/components/delete-dialog';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
-import { Badge } from '~/components/atoms/badge';
-import useClusterStatus from '~/console/hooks/use-cluster-status';
 import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'environment';
@@ -51,7 +53,7 @@ type OnAction = ({
   action,
   item,
 }: {
-  action: 'clone' | 'delete';
+  action: 'clone' | 'delete' | 'suspend' | 'resumed';
   item: BaseType;
 }) => void;
 
@@ -60,46 +62,73 @@ type IExtraButton = {
   item: BaseType;
 };
 
-const ExtraButton = ({ item, onAction }: IExtraButton) => {
+const ExtraButton = ({
+  item,
+  onAction,
+  isClusterOnline,
+}: IExtraButton & { isClusterOnline?: boolean }) => {
   const { account } = useParams();
-  return item.isArchived ? (
-    <ResourceExtraAction
-      options={[
-        {
-          label: 'Clone',
-          icon: <Copy size={16} />,
-          type: 'item',
-          key: 'clone',
-          onClick: () => onAction({ action: 'clone', item }),
-        },
-        {
-          label: 'Delete',
-          icon: <Trash size={16} />,
-          type: 'item',
-          onClick: () => onAction({ action: 'delete', item }),
-          key: 'delete',
-          className: '!text-text-critical',
-        },
-      ]}
-    />
-  ) : (
-    <ResourceExtraAction
-      options={[
-        {
-          label: 'Clone',
-          icon: <Copy size={16} />,
-          type: 'item',
-          key: 'clone',
-          onClick: () => onAction({ action: 'clone', item }),
-        },
-        {
-          label: 'Delete',
-          icon: <Trash size={16} />,
-          type: 'item',
-          onClick: () => onAction({ action: 'delete', item }),
-          key: 'delete',
-          className: '!text-text-critical',
-        },
+  const iconSize = 16;
+  let options: IResourceExtraItem[] = [
+    {
+      label: 'Clone',
+      icon: <Copy size={iconSize} />,
+      type: 'item',
+      key: 'clone',
+      onClick: () => onAction({ action: 'clone', item }),
+    },
+    {
+      label: 'Delete',
+      icon: <Trash size={iconSize} />,
+      type: 'item',
+      onClick: () => onAction({ action: 'delete', item }),
+      key: 'delete',
+      className: '!text-text-critical',
+    },
+  ];
+
+  if (!item.isArchived) {
+    if (isClusterOnline) {
+      if (item.spec?.suspend) {
+        options = [
+          ...options,
+          {
+            label: 'Resumed',
+            icon: <Play size={iconSize} />,
+            type: 'item',
+            key: 'resumed',
+            onClick: () => onAction({ action: 'resumed', item }),
+          },
+          {
+            label: 'Settings',
+            icon: <GearSix size={16} />,
+            type: 'item',
+            to: `/${account}/env/${parseName(item)}/settings/general`,
+            key: 'settings',
+          },
+        ];
+      } else {
+        options = [
+          ...options,
+          {
+            label: 'Suspend',
+            icon: <Pause size={iconSize} />,
+            type: 'item',
+            key: 'suspend',
+            onClick: () => onAction({ action: 'suspend', item }),
+          },
+          {
+            label: 'Settings',
+            icon: <GearSix size={16} />,
+            type: 'item',
+            to: `/${account}/env/${parseName(item)}/settings/general`,
+            key: 'settings',
+          },
+        ];
+      }
+    } else {
+      options = [
+        ...options,
         {
           label: 'Settings',
           icon: <GearSix size={16} />,
@@ -107,9 +136,11 @@ const ExtraButton = ({ item, onAction }: IExtraButton) => {
           to: `/${account}/env/${parseName(item)}/settings/general`,
           key: 'settings',
         },
-      ]}
-    />
-  );
+      ];
+    }
+  }
+
+  return <ResourceExtraAction options={options} />;
 };
 
 interface IResource {
@@ -162,7 +193,17 @@ const GridView = ({ items = [], onAction }: IResource) => {
 const ListView = ({ items, onAction }: IResource) => {
   const { account } = useParams();
   const { findClusterStatus, clusters, loading } = useClusterStatus();
-  const { clustersMap } = useOutletContext<IAccountContext>();
+
+  const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
+    Record<string, boolean>
+  >({});
+  useEffect(() => {
+    const states: Record<string, boolean> = {};
+    clusters.forEach((c) => {
+      states[c.metadata.name] = findClusterStatus(c);
+    });
+    setClusterOnlineStatus(states);
+  }, [clusters]);
 
   return (
     <ListV2.Root
@@ -202,11 +243,8 @@ const ListView = ({ items, onAction }: IResource) => {
         ],
         rows: items.map((i) => {
           const { name, id, updateInfo } = parseItem(i);
-          const isClusterOnline = findClusterStatus(
-            clusters.length > 0
-              ? clusters.find((c) => parseName(c) === i.clusterName)
-              : clustersMap[i.clusterName]
-          );
+          const isClusterOnline = clusterOnlineStatus[i.clusterName];
+
           return {
             columns: {
               name: {
@@ -231,8 +269,13 @@ const ListView = ({ items, onAction }: IResource) => {
                   if (loading) {
                     return null;
                   }
+
                   if (!isClusterOnline) {
                     return <Badge type="warning">Cluster Offline</Badge>;
+                  }
+
+                  if (i.spec?.suspend) {
+                    return <Badge type="neutral">Suspended</Badge>;
                   }
 
                   return <SyncStatusV2 item={i} />;
@@ -247,7 +290,13 @@ const ListView = ({ items, onAction }: IResource) => {
                 ),
               },
               action: {
-                render: () => <ExtraButton item={i} onAction={onAction} />,
+                render: () => (
+                  <ExtraButton
+                    item={i}
+                    onAction={onAction}
+                    isClusterOnline={isClusterOnline}
+                  />
+                ),
               },
             },
             ...(i.isArchived ? {} : { to: `/${account}/env/${id}` }),
@@ -260,18 +309,49 @@ const ListView = ({ items, onAction }: IResource) => {
 
 const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const { account } = useOutletContext<IAccountContext>();
+  const api = useConsoleApi();
+  const reloadPage = useReload();
   useWatchReload(
     items.map((i) => {
       return `account:${parseName(account)}.environment:${parseName(i)}`;
     })
   );
 
+  const suspendEnvironment = async (item: BaseType, suspend: boolean) => {
+    try {
+      const { errors } = await api.updateEnvironment({
+        env: {
+          displayName: item.displayName,
+          clusterName: item.clusterName,
+          metadata: {
+            name: parseName(item),
+          },
+          spec: {
+            suspend,
+          },
+        },
+      });
+
+      if (errors) {
+        throw errors[0];
+      }
+      toast.success(
+        `${
+          suspend
+            ? 'Environment suspended successfully'
+            : 'Environment resumed successfully'
+        }`
+      );
+      reloadPage();
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
   const [visible, setVisible] = useState<BaseType | null>(null);
-  const api = useConsoleApi();
-  const reloadPage = useReload();
 
   const props: IResource = {
     // @ts-ignore
@@ -280,6 +360,12 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
       switch (action) {
         case 'clone':
           setVisible(item);
+          break;
+        case 'suspend':
+          suspendEnvironment(item, true);
+          break;
+        case 'resumed':
+          suspendEnvironment(item, false);
           break;
         case 'delete':
           setShowDeleteDialog(item);

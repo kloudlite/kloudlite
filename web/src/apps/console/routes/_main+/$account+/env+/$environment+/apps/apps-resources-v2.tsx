@@ -1,11 +1,10 @@
-import {
-  GearSix,
-  LinkBreak,
-  Link as LinkIcon,
-  Repeat,
-} from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
+import { useEffect, useState } from 'react';
+import { Badge } from '~/components/atoms/badge';
+import TooltipV2 from '~/components/atoms/tooltipV2';
+import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
+import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import {
   ListItem,
   ListItemV2,
@@ -14,33 +13,34 @@ import {
   listClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
+import {
+  GearSix,
+  LinkBreak,
+  Link as LinkIcon,
+  Repeat,
+} from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
+import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
+import { SyncStatusV2 } from '~/console/components/sync-status';
+import useClusterStatus from '~/console/hooks/use-cluster-status';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IApps } from '~/console/server/gql/queries/app-queries';
 import {
   ExtractNodeType,
   parseName,
-  parseName as pn,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
+  parseName as pn,
 } from '~/console/server/r-utils/common';
-import { handleError } from '~/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/lib/client/helpers/reloader';
-import { SyncStatusV2 } from '~/console/components/sync-status';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import ListV2 from '~/console/components/listV2';
-import { useState } from 'react';
-import { Badge } from '~/components/atoms/badge';
-import { CopyContentToClipboard } from '~/console/components/common-console-components';
+import { handleError } from '~/lib/utils/common';
 import { NN } from '~/root/lib/types/common';
-import TooltipV2 from '~/components/atoms/tooltipV2';
-import useClusterStatus from '~/console/hooks/use-cluster-status';
-import HandleIntercept from './handle-intercept';
 import { IEnvironmentContext } from '../_layout';
+import HandleIntercept from './handle-intercept';
 
 const RESOURCE_NAME = 'app';
 type BaseType = ExtractNodeType<IApps>;
@@ -242,6 +242,17 @@ const ListView = ({ items = [], onAction }: IResource) => {
     useOutletContext<IEnvironmentContext>();
   const { findClusterStatus, clusters, loading } = useClusterStatus();
 
+  const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
+    Record<string, boolean>
+  >({});
+  useEffect(() => {
+    const states: Record<string, boolean> = {};
+    clusters.forEach((c) => {
+      states[c.metadata.name] = findClusterStatus(c);
+    });
+    setClusterOnlineStatus(states);
+  }, [clusters]);
+
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -294,11 +305,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const isClusterOnline = findClusterStatus(
-            clusters.length > 0
-              ? clusters.find((c) => parseName(c) === parseName(cluster))
-              : cluster
-          );
+          const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
 
           const { name, id, updateInfo } = parseItem(i);
           return {
@@ -325,6 +332,11 @@ const ListView = ({ items = [], onAction }: IResource) => {
                   if (loading) {
                     return null;
                   }
+
+                  if (environment.spec?.suspend) {
+                    return null;
+                  }
+
                   if (!isClusterOnline) {
                     return <Badge type="warning">Cluster Offline</Badge>;
                   }

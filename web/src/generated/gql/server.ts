@@ -716,6 +716,7 @@ export type EnvironmentIn = {
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentSpecIn =
   {
     routing?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingIn>;
+    suspend?: InputMaybe<Scalars['Boolean']['input']>;
     targetNamespace?: InputMaybe<Scalars['String']['input']>;
   };
 
@@ -2470,6 +2471,7 @@ export type ConsoleGetEnvironmentQuery = {
       namespace?: string;
     };
     spec?: {
+      suspend?: boolean;
       targetNamespace?: string;
       routing?: {
         mode?: Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingMode;
@@ -2545,6 +2547,7 @@ export type ConsoleListEnvironmentsQuery = {
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata?: { generation: number; name: string; namespace?: string };
         spec?: {
+          suspend?: boolean;
           targetNamespace?: string;
           routing?: {
             mode?: Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingMode;
