@@ -16,6 +16,7 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
@@ -414,14 +415,20 @@ func (r *Reconciler) suspendEnvironment(req *rApi.Request[*crdsv1.Environment]) 
 	ctx, obj := req.Context(), req.Object
 	check := rApi.NewRunningCheck(suspendEnvironment, req)
 
+	rquota := &corev1.ResourceQuota{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-quota", obj.Name), Namespace: obj.Spec.TargetNamespace}}
+
 	if !obj.Spec.Suspend {
+		if err := r.Delete(ctx, rquota); err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return check.Failed(err)
+			}
+		}
 		return check.Completed()
 	}
 
 	// creating resource quota for the environment namespace
-	nsQuota := &corev1.ResourceQuota{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-quota", obj.Name), Namespace: obj.Spec.TargetNamespace}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nsQuota, func() error {
-		nsQuota.Spec.Hard = corev1.ResourceList{
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, rquota, func() error {
+		rquota.Spec.Hard = corev1.ResourceList{
 			corev1.ResourceMemory: resource.MustParse("0Mi"),
 			corev1.ResourceCPU:    resource.MustParse("0m"),
 		}
