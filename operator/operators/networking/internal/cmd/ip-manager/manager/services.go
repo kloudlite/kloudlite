@@ -188,18 +188,14 @@ func (m *Manager) DeregisterService(ctx context.Context, namespace, name string)
 		return nil
 	}
 
-	// delete(m.svcBindingsMap, fmt.Sprintf("%s/%s", svcBinding.Spec.ServiceRef.Namespace, svcBinding.Spec.ServiceRef.Name))
-
 	sb.Spec.ServiceIP = nil
 	sb.Spec.ServiceRef = nil
 	sb.Spec.Ports = nil
+	sb.Spec.Hostname = ""
 
-	lb := sb.Labels
-	if lb == nil {
-		lb = make(map[string]string, 1)
-	}
-	lb[svcReservationLabel] = "false"
-	sb.SetLabels(lb)
+	sb.SetLabels(map[string]string{
+		svcReservationLabel: "false",
+	})
 
 	delete(sb.Annotations, "kloudlite.io/global.hostname")
 	sb.SetAnnotations(sb.GetEnsuredAnnotations())

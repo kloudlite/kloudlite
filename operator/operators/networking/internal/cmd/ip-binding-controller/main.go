@@ -13,7 +13,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	mgr := operator.New("service-binding")
+	mgr := operator.New("ip-binding")
 	mgr.AddToSchemes(networkingv1.AddToScheme)
 	mgr.RegisterControllers(
 		&service_binding.Reconciler{Env: ev, Name: "svc-binding"},
