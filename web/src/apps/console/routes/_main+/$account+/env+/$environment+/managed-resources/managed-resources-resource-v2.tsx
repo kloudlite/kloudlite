@@ -16,7 +16,8 @@ import { LockSimple, Trash } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
 import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import useClusterStatus from '~/console/hooks/use-cluster-status';
+import { findClusterStatus } from '~/console/hooks/use-cluster-status';
+import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
@@ -33,7 +34,7 @@ import { handleError } from '~/lib/utils/common';
 import { IEnvironmentContext } from '../_layout';
 import { ViewSecret } from './handle-managed-resource-v2';
 
-const RESOURCE_NAME = 'integrated resource';
+const RESOURCE_NAME = 'managed resource';
 type BaseType = ExtractNodeType<IImportedManagedResources>;
 
 const parseItem = (item: BaseType, templates: IMSvTemplates) => {
@@ -69,13 +70,6 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
-        // {
-        //   label: 'Edit',
-        //   icon: <PencilSimple size={16} />,
-        //   type: 'item',
-        //   onClick: () => onAction({ action: 'edit', item }),
-        //   key: 'edit',
-        // },
         {
           label: 'View Secret',
           icon: <LockSimple size={16} />,
@@ -141,15 +135,15 @@ const GridView = ({ items = [], onAction, templates }: IResource) => {
 
 const ListView = ({ items = [], onAction, templates }: IResource) => {
   const { cluster } = useOutletContext<IEnvironmentContext>();
-  const { findClusterStatus, clusters, loading } = useClusterStatus();
+  const { clusters } = useClusterStatusV2();
 
   const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
     Record<string, boolean>
   >({});
   useEffect(() => {
     const states: Record<string, boolean> = {};
-    clusters.forEach((c) => {
-      states[c.metadata.name] = findClusterStatus(c);
+    Object.entries(clusters).forEach(([key, value]) => {
+      states[key] = findClusterStatus(value);
     });
     setClusterOnlineStatus(states);
   }, [clusters]);
@@ -236,10 +230,6 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
               },
               status: {
                 render: () => {
-                  if (loading) {
-                    return null;
-                  }
-
                   if (!isClusterOnline) {
                     return <Badge type="warning">Cluster Offline</Badge>;
                   }

@@ -1,3 +1,4 @@
+import { useParams } from '@remix-run/react';
 import {
   Dispatch,
   ReactNode,
@@ -8,12 +9,11 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { ExtractNodeType, parseNodes } from '../server/r-utils/common';
-import { IByocClusters } from '../server/gql/queries/byok-cluster-queries';
-import { useParams } from '@remix-run/react';
 import { useSocketWatch } from '~/root/lib/client/helpers/socket/useWatch';
-import { useConsoleApi } from '../server/gql/api-provider';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
+import { useConsoleApi } from '../server/gql/api-provider';
+import { IByocClusters } from '../server/gql/queries/byok-cluster-queries';
+import { ExtractNodeType, parseNodes } from '../server/r-utils/common';
 
 type IClusterMap = { [key: string]: ExtractNodeType<IByocClusters> };
 
@@ -36,13 +36,10 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
   const listCluster = useCallback(async () => {
     try {
       const cl = await api.listAllClusters();
-      const parsed = parseNodes(cl.data).reduce(
-        (acc, c) => {
-          acc[c.metadata.name] = c;
-          return acc;
-        },
-        {} as { [key: string]: ExtractNodeType<IByocClusters> },
-      );
+      const parsed = parseNodes(cl.data).reduce((acc, c) => {
+        acc[c.metadata.name] = c;
+        return acc;
+      }, {} as { [key: string]: ExtractNodeType<IByocClusters> });
       setClusters(parsed);
       return clusters;
     } catch (err) {
@@ -56,7 +53,7 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
       listCluster();
     },
     3000,
-    [update],
+    [update]
   );
 
   useSocketWatch(() => {
@@ -67,7 +64,7 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
     <ClusterStatusContext.Provider
       value={useMemo(
         () => ({ clusters, setClusters }),
-        [clusters, setClusters],
+        [clusters, setClusters]
       )}
     >
       {children}

@@ -25,7 +25,8 @@ import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import useClusterStatus from '~/console/hooks/use-cluster-status';
+import { findClusterStatus } from '~/console/hooks/use-cluster-status';
+import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IApps } from '~/console/server/gql/queries/app-queries';
 import {
@@ -240,15 +241,15 @@ const GridView = ({ items = [], onAction: _ }: IResource) => {
 const ListView = ({ items = [], onAction }: IResource) => {
   const { environment, account, cluster } =
     useOutletContext<IEnvironmentContext>();
-  const { findClusterStatus, clusters, loading } = useClusterStatus();
+  const { clusters } = useClusterStatusV2();
 
   const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
     Record<string, boolean>
   >({});
   useEffect(() => {
     const states: Record<string, boolean> = {};
-    clusters.forEach((c) => {
-      states[c.metadata.name] = findClusterStatus(c);
+    Object.entries(clusters).forEach(([key, value]) => {
+      states[key] = findClusterStatus(value);
     });
     setClusterOnlineStatus(states);
   }, [clusters]);
@@ -329,10 +330,6 @@ const ListView = ({ items = [], onAction }: IResource) => {
               },
               status: {
                 render: () => {
-                  if (loading) {
-                    return null;
-                  }
-
                   if (environment.spec?.suspend) {
                     return null;
                   }

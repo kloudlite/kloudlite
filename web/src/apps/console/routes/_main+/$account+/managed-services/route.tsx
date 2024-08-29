@@ -1,20 +1,20 @@
-import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
+import { useEffect } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
+import { EmptyStorageImage } from '~/console/components/empty-resource-images';
+import { Plus } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
-import { IRemixCtx } from '~/root/lib/types/common';
-import fake from '~/root/fake-data-generator/fake';
-import { useEffect } from 'react';
-import { getPagination, getSearch } from '~/console/server/utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
-import { EmptyStorageImage } from '~/console/components/empty-resource-images';
+import { getPagination, getSearch } from '~/console/server/utils/common';
+import fake from '~/root/fake-data-generator/fake';
 import logger from '~/root/lib/client/helpers/log';
-import Tools from './tools';
+import { IRemixCtx } from '~/root/lib/types/common';
 import BackendServicesResourcesV2 from './backend-services-resources-V2';
+import Tools from './tools';
 
 export const loader = (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -66,11 +66,11 @@ const KlOperatorServices = () => {
         return (
           <Wrapper
             header={{
-              title: 'Integrated services',
+              title: 'Managed services',
               action: backendServices.length > 0 && (
                 <Button
                   variant="primary"
-                  content="Create integrated service"
+                  content="Create managed service"
                   prefix={<Plus />}
                   to="../new-managed-service"
                   linkComponent={Link}
@@ -80,15 +80,15 @@ const KlOperatorServices = () => {
             empty={{
               image: <EmptyStorageImage />,
               is: backendServices.length === 0,
-              title: 'This is where you’ll manage your Integrated services.',
+              title: 'This is where you’ll manage your managed services.',
               content: (
                 <p>
-                  You can create a new integrated service and manage the listed
-                  integrated service.
+                  You can create a new managed service and manage the listed
+                  Managed service.
                 </p>
               ),
               action: {
-                content: 'Create new integrated service',
+                content: 'Create new Managed service',
                 prefix: <Plus />,
                 to: '../new-managed-service',
                 linkComponent: Link,

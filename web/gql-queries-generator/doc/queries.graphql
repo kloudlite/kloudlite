@@ -3992,6 +3992,51 @@ mutation consoleDeleteImagePullSecrets($name: String!) {
   core_deleteImagePullSecret(name: $name)
 }
 
+query consoleGetImagePullSecret($name: String!) {
+  core_getImagePullSecret(name: $name) {
+    accountName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    dockerConfigJson
+    environments
+    format
+    id
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    recordVersion
+    registryPassword
+    registryURL
+    registryUsername
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
+  }
+}
+
 query consoleListImagePullSecrets($search: SearchImagePullSecrets, $pq: CursorPaginationIn) {
   core_listImagePullSecrets(search: $search, pq: $pq) {
     edges {

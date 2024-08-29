@@ -14,42 +14,41 @@ import {
   GearSix,
 } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { IClusterMSv } from '~/console/server/gql/queries/cluster-managed-services-queries';
+import { IImagePullSecret } from '~/console/server/gql/queries/image-pull-secrets-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseName } from '~/console/server/r-utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
 import logger from '~/lib/client/helpers/log';
 import { IRemixCtx } from '~/lib/types/common';
-import fake from '~/root/fake-data-generator/fake';
-import { IAccountContext } from '../../_layout';
+import { IAccountContext } from '../../../_layout';
 
-const ManagedServiceTabs = () => {
-  const { account, msv } = useParams();
+const ImagePullSecretsTabs = () => {
+  const { account, imagepullsecret } = useParams();
   const iconSize = tabIconSize;
   return (
     <CommonTabs
-      baseurl={`/${account}/msvc/${msv}`}
+      baseurl={`/${account}/settings/ips/${imagepullsecret}`}
       backButton={{
         to: `/${account}/managed-services`,
-        label: 'Managed Services',
+        label: 'Integrated Services',
       }}
       tabs={[
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
               <BackingServices size={tabIconSize} />
-              Managed resources
+              Images
             </span>
           ),
-          to: '/managed-resources',
-          value: '/managed-resources',
+          to: '/images',
+          value: '/images',
         },
-        {
-          label: 'Logs & Metrics',
-          to: '/logs-n-metrics',
-          value: '/logs-n-metrics',
-        },
+        // {
+        //   label: 'Logs & Metrics',
+        //   to: '/logs-n-metrics',
+        //   value: '/logs-n-metrics',
+        // },
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
@@ -65,7 +64,7 @@ const ManagedServiceTabs = () => {
   );
 };
 
-const LocalBreadcrum = ({ data }: { data: IClusterMSv }) => {
+const LocalBreadcrum = ({ data }: { data: IImagePullSecret }) => {
   const { displayName } = data;
   const { account } = useParams();
   return (
@@ -73,16 +72,16 @@ const LocalBreadcrum = ({ data }: { data: IClusterMSv }) => {
       <BreadcrumSlash />
       <span className="mx-md" />
       <Breadcrum.Button
-        to={`/${account}/managed-services`}
+        to={`/${account}/settings/image-pull-secrets`}
         linkComponent={Link}
         content={
           <div className="flex flex-row gap-md items-center">
-            Managed Services <ChevronRight size={14} />{' '}
+            Image Pull Secrets <ChevronRight size={14} />{' '}
           </div>
         }
       />
       <Breadcrum.Button
-        to={`/${account}/msvc/${parseName(data)}/logs-n-metrics`}
+        to={`/${account}/settings/${parseName(data)}/ips/images`}
         linkComponent={Link}
         content={<span>{displayName}</span>}
       />
@@ -91,7 +90,7 @@ const LocalBreadcrum = ({ data }: { data: IClusterMSv }) => {
 };
 
 export const handle = ({
-  promise: { managedService, error },
+  promise: { imagePullSecret, error },
 }: {
   promise: any;
 }) => {
@@ -100,69 +99,71 @@ export const handle = ({
   }
 
   return {
-    navbar: <ManagedServiceTabs />,
-    breadcrum: () => <LocalBreadcrum data={managedService} />,
+    navbar: <ImagePullSecretsTabs />,
+    breadcrum: () => <LocalBreadcrum data={imagePullSecret} />,
   };
 };
 
-export interface IManagedServiceContext extends IAccountContext {
-  managedService: IClusterMSv;
+export interface IImagePullSecretContext extends IAccountContext {
+  imagepullsecret: IImagePullSecret;
 }
 
-const MSOutlet = ({
-  managedService: OClustMSv,
+const IPSOutlet = ({
+  imagePullSecret: OImagePullSecret,
 }: {
-  managedService: IClusterMSv;
+  imagePullSecret: IImagePullSecret;
 }) => {
-  const rootContext = useOutletContext<IManagedServiceContext>();
+  const rootContext = useOutletContext<IImagePullSecretContext>();
 
-  return <Outlet context={{ ...rootContext, managedService: OClustMSv }} />;
+  return (
+    <Outlet context={{ ...rootContext, imagePullSecret: OImagePullSecret }} />
+  );
 };
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { msv } = ctx.params;
+    const { imagepullsecret } = ctx.params;
     try {
       const { data, errors } = await GQLServerHandler(
         ctx.request
-      ).getClusterMSv({
-        name: msv,
+      ).getImagePullSecret({
+        name: imagepullsecret,
       });
       if (errors) {
         throw errors[0];
       }
 
       return {
-        managedService: data,
+        imagePullSecret: data,
       };
     } catch (err) {
       logger.log(err);
 
       return {
-        managedService: {} as IClusterMSv,
-        redirect: `../managed-services`,
+        imagePullSecret: {} as IImagePullSecret,
+        redirect: `../image-pull-secrets`,
       };
     }
   });
   return defer({ promise: await promise });
 };
 
-const ManagedService = () => {
+const ImagePullSecret = () => {
   const { promise } = useLoaderData<typeof loader>();
   return (
     <LoadingComp
-      skeletonData={{
-        managedService: fake.ConsoleListClusterMSvsQuery
-          .infra_listClusterManagedServices as any,
-      }}
+      // skeletonData={{
+      //   managedService: fake.ConsoleListClusterMSvsQuery
+      //     .infra_listClusterManagedServices as any,
+      // }}
       data={promise}
     >
-      {({ managedService }) => {
-        return <MSOutlet managedService={managedService} />;
+      {({ imagePullSecret }) => {
+        return <IPSOutlet imagePullSecret={imagePullSecret} />;
       }}
     </LoadingComp>
   );
 };
 
-export default ManagedService;
+export default ImagePullSecret;

@@ -1,6 +1,5 @@
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { useEffect, useState } from 'react';
-import { Badge } from '~/components/atoms/badge';
+import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
@@ -13,15 +12,12 @@ import {
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
-import { Copy, GearSix, Pause, Play, Trash } from '~/console/components/icons';
+import { Copy, Trash } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
 import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
-import { SyncStatusV2 } from '~/console/components/sync-status';
-import { findClusterStatus } from '~/console/hooks/use-cluster-status';
-import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IEnvironments } from '~/console/server/gql/queries/environment-queries';
@@ -34,7 +30,6 @@ import {
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'environment';
 type BaseType = ExtractNodeType<IEnvironments>;
@@ -63,14 +58,9 @@ type IExtraButton = {
   item: BaseType;
 };
 
-const ExtraButton = ({
-  item,
-  onAction,
-  isClusterOnline,
-}: IExtraButton & { isClusterOnline?: boolean }) => {
-  const { account } = useParams();
+const ExtraButton = ({ item, onAction }: IExtraButton) => {
   const iconSize = 16;
-  let options: IResourceExtraItem[] = [
+  const options: IResourceExtraItem[] = [
     {
       label: 'Clone',
       icon: <Copy size={iconSize} />,
@@ -87,59 +77,6 @@ const ExtraButton = ({
       className: '!text-text-critical',
     },
   ];
-
-  if (!item.isArchived) {
-    if (isClusterOnline) {
-      if (item.spec?.suspend) {
-        options = [
-          ...options,
-          {
-            label: 'Resumed',
-            icon: <Play size={iconSize} />,
-            type: 'item',
-            key: 'resumed',
-            onClick: () => onAction({ action: 'resumed', item }),
-          },
-          {
-            label: 'Settings',
-            icon: <GearSix size={16} />,
-            type: 'item',
-            to: `/${account}/env/${parseName(item)}/settings/general`,
-            key: 'settings',
-          },
-        ];
-      } else {
-        options = [
-          ...options,
-          {
-            label: 'Suspend',
-            icon: <Pause size={iconSize} />,
-            type: 'item',
-            key: 'suspend',
-            onClick: () => onAction({ action: 'suspend', item }),
-          },
-          {
-            label: 'Settings',
-            icon: <GearSix size={16} />,
-            type: 'item',
-            to: `/${account}/env/${parseName(item)}/settings/general`,
-            key: 'settings',
-          },
-        ];
-      }
-    } else {
-      options = [
-        ...options,
-        {
-          label: 'Settings',
-          icon: <GearSix size={16} />,
-          type: 'item',
-          to: `/${account}/env/${parseName(item)}/settings/general`,
-          key: 'settings',
-        },
-      ];
-    }
-  }
 
   return <ResourceExtraAction options={options} />;
 };
@@ -193,18 +130,18 @@ const GridView = ({ items = [], onAction }: IResource) => {
 
 const ListView = ({ items, onAction }: IResource) => {
   const { account } = useParams();
-  const { clusters } = useClusterStatusV2();
+  //   const { clusters } = useClusterStatusV2();
 
-  const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
-    Record<string, boolean>
-  >({});
-  useEffect(() => {
-    const states: Record<string, boolean> = {};
-    Object.entries(clusters).forEach(([key, value]) => {
-      states[key] = findClusterStatus(value);
-    });
-    setClusterOnlineStatus(states);
-  }, [clusters]);
+  //   const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
+  //     Record<string, boolean>
+  //   >({});
+  //   useEffect(() => {
+  //     const states: Record<string, boolean> = {};
+  //     Object.entries(clusters).forEach(([key, value]) => {
+  //       states[key] = findClusterStatus(value);
+  //     });
+  //     setClusterOnlineStatus(states);
+  //   }, [clusters]);
 
   return (
     <ListV2.Root
@@ -226,11 +163,11 @@ const ListView = ({ items, onAction }: IResource) => {
             name: 'flex-post',
             className: listClass.flex,
           },
-          {
-            render: () => 'Status',
-            name: 'status',
-            className: listClass.status,
-          },
+          //   {
+          //     render: () => 'Status',
+          //     name: 'status',
+          //     className: listClass.status,
+          //   },
           {
             render: () => 'Updated',
             name: 'updated',
@@ -244,7 +181,7 @@ const ListView = ({ items, onAction }: IResource) => {
         ],
         rows: items.map((i) => {
           const { name, id, updateInfo } = parseItem(i);
-          const isClusterOnline = clusterOnlineStatus[i.clusterName];
+          //   const isClusterOnline = clusterOnlineStatus[i.clusterName];
 
           return {
             columns: {
@@ -262,23 +199,23 @@ const ListView = ({ items, onAction }: IResource) => {
                   <ListItemV2 data={i.isArchived ? '' : i.clusterName} />
                 ),
               },
-              status: {
-                render: () => {
-                  if (i.isArchived) {
-                    return <Badge type="neutral">Archived</Badge>;
-                  }
+              //   status: {
+              //     render: () => {
+              //       if (i.isArchived) {
+              //         return <Badge type="neutral">Archived</Badge>;
+              //       }
 
-                  if (!isClusterOnline) {
-                    return <Badge type="warning">Cluster Offline</Badge>;
-                  }
+              //       if (!isClusterOnline) {
+              //         return <Badge type="warning">Cluster Offline</Badge>;
+              //       }
 
-                  if (i.spec?.suspend) {
-                    return <Badge type="neutral">Suspended</Badge>;
-                  }
+              //       if (i.spec?.suspend) {
+              //         return <Badge type="neutral">Suspended</Badge>;
+              //       }
 
-                  return <SyncStatusV2 item={i} />;
-                },
-              },
+              //       return <SyncStatusV2 item={i} />;
+              //     },
+              //   },
               updated: {
                 render: () => (
                   <ListItemV2
@@ -288,13 +225,7 @@ const ListView = ({ items, onAction }: IResource) => {
                 ),
               },
               action: {
-                render: () => (
-                  <ExtraButton
-                    item={i}
-                    onAction={onAction}
-                    isClusterOnline={isClusterOnline}
-                  />
-                ),
+                render: () => <ExtraButton item={i} onAction={onAction} />,
               },
             },
             ...(i.isArchived ? {} : { to: `/${account}/env/${id}` }),
@@ -305,7 +236,7 @@ const ListView = ({ items, onAction }: IResource) => {
   );
 };
 
-const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
+const ImagesResource = ({ items = [] }: { items: BaseType[] }) => {
   const { account } = useOutletContext<IAccountContext>();
   const api = useConsoleApi();
   const reloadPage = useReload();
@@ -402,18 +333,8 @@ const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
           }
         }}
       />
-      <CloneEnvironment
-        {...{
-          isUpdate: true,
-          visible: !!visible,
-          setVisible: () => {
-            setVisible(null);
-          },
-          data: visible!,
-        }}
-      />
     </>
   );
 };
 
-export default EnvironmentResourcesV2;
+export default ImagesResource;

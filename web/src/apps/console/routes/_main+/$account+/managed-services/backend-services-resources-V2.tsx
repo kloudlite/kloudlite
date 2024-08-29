@@ -17,7 +17,8 @@ import ListGridView from '~/console/components/list-grid-view';
 import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import useClusterStatus from '~/console/hooks/use-cluster-status';
+import { findClusterStatus } from '~/console/hooks/use-cluster-status';
+import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
@@ -162,15 +163,15 @@ const GridView = ({ items, templates, onAction }: IResource) => {
 
 const ListView = ({ items, templates, onAction }: IResource) => {
   const { account } = useOutletContext<IAccountContext>();
-  const { findClusterStatus, clusters, loading } = useClusterStatus();
+  const { clusters } = useClusterStatusV2();
 
   const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
     Record<string, boolean>
   >({});
   useEffect(() => {
     const states: Record<string, boolean> = {};
-    clusters.forEach((c) => {
-      states[c.metadata.name] = findClusterStatus(c);
+    Object.entries(clusters).forEach(([key, value]) => {
+      states[key] = findClusterStatus(value);
     });
     setClusterOnlineStatus(states);
   }, [clusters]);
@@ -238,10 +239,6 @@ const ListView = ({ items, templates, onAction }: IResource) => {
                 render: () => {
                   if (i.isArchived) {
                     return <Badge type="neutral">Archived</Badge>;
-                  }
-                  if (loading) {
-                    // return <Badge type="warning">Syncing...</Badge>;
-                    return null;
                   }
                   if (!isClusterOnline) {
                     return <Badge type="warning">Cluster Offline</Badge>;

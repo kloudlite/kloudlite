@@ -197,11 +197,9 @@ const TemplateView = ({
 }) => {
   return (
     <form className="flex flex-col gap-3xl" onSubmit={handleSubmit}>
-      <div className="bodyMd text-text-soft">
-        Create your integrated services.
-      </div>
+      <div className="bodyMd text-text-soft">Create your managed services.</div>
       <Select
-        label="Template"
+        label="Managed service templates"
         size="lg"
         placeholder="Select templates"
         value={values.selectedTemplate?.template.name}
@@ -660,7 +658,7 @@ const ManagedServiceLayout = () => {
             if (e) {
               throw e[0];
             }
-            toast.success('Integrated service created successfully');
+            toast.success('Managed service created successfully');
             navigate(rootUrl);
           } catch (err) {
             handleError(err);
@@ -712,15 +710,15 @@ const ManagedServiceLayout = () => {
 
   return (
     <MultiStepProgressWrapper
-      title="Let’s create new integrated service."
+      title="Let’s create new managed service."
       subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
       backButton={{
-        content: 'Back to integrated services',
+        content: 'Back to Managed services',
         to: rootUrl,
       }}
     >
       <MultiStepProgress.Root currentStep={currentStep} jumpStep={jumpStep}>
-        <MultiStepProgress.Step label="Select template" step={1}>
+        <MultiStepProgress.Step label="Select Managed Service" step={1}>
           <TemplateView
             isLoading={isLoading}
             templates={msvtemplates}

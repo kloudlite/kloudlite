@@ -7,6 +7,8 @@ import {
   useParams,
 } from '@remix-run/react';
 import { cloneElement, useCallback } from 'react';
+import { Avatar } from '~/components/atoms/avatar';
+import { Button, IconButton } from '~/components/atoms/button';
 import Container from '~/components/atoms/container';
 import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -15,41 +17,39 @@ import { TopBar } from '~/components/organisms/top-bar';
 import { generateKey, titleCase } from '~/components/utils';
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
+import {
+  BackingServices,
+  BellFill,
+  GearSix,
+  InfraAsCode,
+  Project,
+  Sliders,
+} from '~/console/components/icons';
+import { LoadingPlaceHolder } from '~/console/components/loading';
 import LogoWrapper from '~/console/components/logo-wrapper';
 import { ViewModeProvider } from '~/console/components/view-mode';
+import ClusterStatusProvider from '~/console/hooks/use-cluster-status-v2';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IAccounts } from '~/console/server/gql/queries/account-queries';
+import { ICommsNotifications } from '~/console/server/gql/queries/comms-queries';
+import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
 import { setupAccountContext } from '~/console/server/utils/auth-utils';
 import { constants } from '~/console/server/utils/constants';
 import { LightTitlebarColor } from '~/design-system/tailwind-base';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
+import logger from '~/root/lib/client/helpers/log';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import useMatches, {
   useHandleFromMatches,
 } from '~/root/lib/client/hooks/use-custom-matches';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { UnsavedChangesProvider } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
-import {
-  InfraAsCode,
-  GearSix,
-  Project,
-  BackingServices,
-  BellFill,
-  Sliders,
-} from '~/console/components/icons';
-import { Button, IconButton } from '~/components/atoms/button';
-import { Avatar } from '~/components/atoms/avatar';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
-import { ICommsNotifications } from '~/console/server/gql/queries/comms-queries';
-import { LoadingPlaceHolder } from '~/console/components/loading';
-import logger from '~/root/lib/client/helpers/log';
-import ClusterStatusProvider from '~/console/hooks/use-cluster-status-v2';
 
 const restActions = (ctx: IExtRemixCtx) => {
   return withContext(ctx, {});
@@ -92,7 +92,7 @@ const AccountTabs = () => {
           label: (
             <span className="flex flex-row items-center gap-lg">
               <BackingServices size={iconSize} />
-              Integrated Services
+              Managed Services
             </span>
           ),
           to: '/managed-services',
@@ -305,7 +305,7 @@ const NotificationMenu = () => {
             first: 100,
           },
         }),
-      true,
+      true
     );
 
   const notifications = parseNodes(notificationsData);
@@ -478,7 +478,7 @@ const Console = () => {
               {breadcrum.map((bc: any, index) =>
                 cloneElement(bc.handle.breadcrum(bc), {
                   key: generateKey(index),
-                }),
+                })
               )}
             </Breadcrum.Root>
           )

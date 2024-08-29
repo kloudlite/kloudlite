@@ -5623,6 +5623,47 @@ export type ConsoleDeleteImagePullSecretsMutation = {
   core_deleteImagePullSecret: boolean;
 };
 
+export type ConsoleGetImagePullSecretQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetImagePullSecretQuery = {
+  core_getImagePullSecret?: {
+    accountName: string;
+    creationTime: any;
+    displayName: string;
+    dockerConfigJson?: string;
+    environments?: Array<string>;
+    format: Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__PullSecretFormat;
+    id: string;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    registryPassword?: string;
+    registryURL?: string;
+    registryUsername?: string;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    syncStatus: {
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+      syncScheduledAt?: any;
+    };
+  };
+};
+
 export type ConsoleListImagePullSecretsQueryVariables = Exact<{
   search?: InputMaybe<SearchImagePullSecrets>;
   pq?: InputMaybe<CursorPaginationIn>;

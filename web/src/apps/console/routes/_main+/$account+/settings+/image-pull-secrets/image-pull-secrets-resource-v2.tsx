@@ -1,6 +1,9 @@
-import { Trash, PencilLine } from '~/console/components/icons';
+import { Link, useParams } from '@remix-run/react';
 import { useState } from 'react';
+import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
+import { CopyContentToClipboard } from '~/console/components/common-console-components';
+import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,
   ListItemV2,
@@ -10,9 +13,12 @@ import {
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
+import { PencilLine, Trash } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
+import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IImagePullSecrets } from '~/console/server/gql/queries/image-pull-secrets-queries';
 import {
   ExtractNodeType,
   parseName,
@@ -21,12 +27,6 @@ import {
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/lib/client/helpers/reloader';
 import { handleError } from '~/lib/utils/common';
-import { Link, useParams } from '@remix-run/react';
-import { IImagePullSecrets } from '~/console/server/gql/queries/image-pull-secrets-queries';
-import { toast } from '~/components/molecule/toast';
-import ConsoleAvatar from '~/console/components/console-avatar';
-import ListV2 from '~/console/components/listV2';
-import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import HandleImagePullSecret from './handle-image-pull-secret';
 
 const RESOURCE_NAME = 'image pull secret';
@@ -133,6 +133,8 @@ const GridView = ({ items, onAction }: IResource) => {
 };
 
 const ListView = ({ items, onAction }: IResource) => {
+  // const { account } = useParams();
+
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -151,7 +153,7 @@ const ListView = ({ items, onAction }: IResource) => {
           {
             render: () => 'Registry Url',
             name: 'registryUrl',
-            className: listClass.item + ' flex-1',
+            className: `${listClass.item} flex-1`,
           },
           {
             render: () => 'Username',
@@ -206,7 +208,7 @@ const ListView = ({ items, onAction }: IResource) => {
                 render: () => <ExtraButton onAction={onAction} item={i} />,
               },
             },
-            // to: `/${account}/deployment/${id}`,
+            // to: `/${account}/settings/ips/${id}`,
           };
         }),
       }}
@@ -216,7 +218,7 @@ const ListView = ({ items, onAction }: IResource) => {
 
 const ImagePullSecretsResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null,
+    null
   );
   const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
