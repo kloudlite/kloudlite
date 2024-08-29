@@ -261,10 +261,6 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, logger logging.Logger, o
 
 	case ServiceBindingGVK.String():
 		{
-			if obj.GetLabels()[constants.KloudliteServiceBindingReservation] == "false" {
-				return nil
-			}
-
 			return r.MsgSender.DispatchConsoleResourceUpdates(MessageSenderContext{mctx, logger}, t.ResourceUpdate{
 				Object: obj,
 			})
