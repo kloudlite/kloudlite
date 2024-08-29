@@ -1,29 +1,29 @@
 import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { toast } from '~/components/molecule/toast';
-import { useAppState } from '~/console/page-components/app-states';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import useForm from '~/lib/client/hooks/use-form';
-import Yup from '~/lib/server/helpers/yup';
-import { handleError, sleep } from '~/lib/utils/common';
-import { validateType } from '~/root/src/generated/gql/validator';
-import { parseName } from '~/console/server/r-utils/common';
-import { FadeIn, parseValue } from '~/console/page-components/util';
 import {
   BottomNavigation,
   GitDetailRaw,
   ReviewComponent,
 } from '~/console/components/commons';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
 import {
   CheckCircleFill,
   CircleFill,
   CircleNotch,
 } from '~/console/components/icons';
+import { useAppState } from '~/console/page-components/app-states';
+import { FadeIn, parseValue } from '~/console/page-components/util';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { parseName } from '~/console/server/r-utils/common';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { constants } from '~/console/server/utils/constants';
+import useForm from '~/lib/client/hooks/use-form';
+import Yup from '~/lib/server/helpers/yup';
+import { handleError, sleep } from '~/lib/utils/common';
 import { registryHost } from '~/root/lib/configs/base-url.cjs';
-import appFun from './app-pre-submit';
+import { validateType } from '~/root/src/generated/gql/validator';
 import { IEnvironmentContext } from '../_layout';
+import appFun from './app-pre-submit';
 import { getImageTag } from './app-utils';
 
 const AppState = ({ message, state }: { message: string; state: string }) => {
@@ -334,7 +334,7 @@ const AppReview = () => {
         )}
 
         <ReviewComponent
-          title="Environment"
+          title="Config"
           onEdit={() => {
             setPage(3);
           }}
