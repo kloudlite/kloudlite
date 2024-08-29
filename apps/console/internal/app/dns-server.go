@@ -73,11 +73,13 @@ func (h *dnsHandler) resolver(ctx context.Context, domain string, qtype uint16) 
 	question := m.Question[0]
 	sp := strings.SplitN(strings.ToLower(question.Name), fmt.Sprintf(".%s", h.kloudliteDNSSuffix), 2)
 	if len(sp) < 2 {
+		h.logger.Debug("INVALID DNS QUERY", "domain", domain, "qtype", qtype)
 		return nil, errInvalidDNSQuery
 	}
 
 	if strings.HasSuffix(sp[0], ".local") {
 		// INFO: domains ending with .local are supposed to be reserved for local machine only
+		h.logger.Debug("LOCAL DOMAIN", "domain", domain, "qtype", qtype)
 		return h.newRR(question.Name, 7*24*60*60, "127.0.0.1")
 	}
 
@@ -87,6 +89,7 @@ func (h *dnsHandler) resolver(ctx context.Context, domain string, qtype uint16) 
 
 	sb, err := h.serviceBindingDomain.FindServiceBindingByHostname(ctx, accountName, hostname)
 	if err != nil {
+		h.logger.Debug("failed to find service binding, got", "err", err, "domain", domain, "qtype", qtype)
 		return nil, errors.NewEf(err, "failed to find service binding")
 	}
 

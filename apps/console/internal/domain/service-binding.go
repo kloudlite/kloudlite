@@ -32,20 +32,22 @@ func (d *domain) OnServiceBindingUpdateMessage(ctx ConsoleContext, svcb *network
 		return errors.Newf("no service binding found")
 	}
 
-	if svcb.Spec.Hostname == "" {
-		return nil
-	}
-
-	if svcb.Spec.ServiceIP == nil {
-		return nil
-	}
-
-	if _, err := d.serviceBindingRepo.Upsert(ctx, repos.Filter{
-		fc.AccountName: ctx.AccountName,
-		// fc.ClusterName: opts.ClusterName,
-		// fc.MetadataName:               svcb.Name,
+	filter := repos.Filter{
+		fc.AccountName:                ctx.AccountName,
 		fc.ServiceBindingSpecHostname: svcb.Spec.Hostname,
-	}, &entities.ServiceBinding{
+	}
+
+	if svcb.Spec.ServiceIP == nil || svcb.Spec.Hostname == "" {
+		// INFO: it means that service binding has been de-allocated
+		if err := d.serviceBindingRepo.DeleteOne(ctx, filter); err != nil {
+			if !errors.Is(err, repos.ErrNoDocuments) {
+				return err
+			}
+		}
+		return nil
+	}
+
+	if _, err := d.serviceBindingRepo.Upsert(ctx, filter, &entities.ServiceBinding{
 		ServiceBinding: *svcb,
 		AccountName:    ctx.AccountName,
 		ClusterName:    opts.ClusterName,
