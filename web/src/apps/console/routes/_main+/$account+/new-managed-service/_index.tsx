@@ -1,4 +1,4 @@
-import { useNavigate, useOutletContext } from '@remix-run/react';
+import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import {
   FormEventHandler,
   ReactNode,
@@ -21,6 +21,7 @@ import MultiStepProgress, {
 } from '~/console/components/multi-step-progress';
 import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
 import { NameIdView } from '~/console/components/name-id-view';
+import { findClusterStatus } from '~/console/hooks/use-cluster-status';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   IMSvTemplate,
@@ -28,6 +29,7 @@ import {
 } from '~/console/server/gql/queries/managed-templates-queries';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { flatM, flatMapValidations } from '~/console/utils/commons';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -541,14 +543,16 @@ const ManagedServiceLayout = () => {
   });
 
   const [clusterList, setClusterList] = useState<any[]>([]);
+  const params = useParams();
 
   const getClusters = useCallback(async () => {
+    ensureAccountClientSide(params);
     try {
       const byokClusters = await api.listByokClusters({});
       const data = parseNodes(byokClusters.data).map((c) => ({
         label: c.displayName,
         value: parseName(c),
-        ready: true,
+        ready: findClusterStatus(c),
         render: () => (
           <ClusterSelectItem label={c.displayName} value={parseName(c)} />
         ),
@@ -561,7 +565,7 @@ const ManagedServiceLayout = () => {
 
   useEffect(() => {
     getClusters();
-  }, [clusterList]);
+  }, []);
 
   const { values, errors, handleSubmit, handleChange, isLoading, setValues } =
     useForm({

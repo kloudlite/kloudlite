@@ -1,39 +1,39 @@
 import { Outlet, useOutletContext } from '@remix-run/react';
-import SidebarLayout from '~/console/components/sidebar-layout';
-import {
-  UnsavedChangesProvider,
-  useUnsavedChanges,
-} from '~/lib/client/hooks/use-unsaved-changes';
-import Popup from '~/components/molecule/popup';
-import { handleError } from '~/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
-import { getAppIn } from '~/console/server/r-utils/resource-getter';
-import useForm from '~/lib/client/hooks/use-form';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useEffect, useState } from 'react';
+import { Button } from '~/components/atoms/button';
+import Popup from '~/components/molecule/popup';
+import { toast } from '~/components/molecule/toast';
+import { cn } from '~/components/utils';
+import { DiffViewer, yamlDump } from '~/console/components/diff-viewer';
+import SidebarLayout from '~/console/components/sidebar-layout';
 import {
   AppContextProvider,
   useAppState,
 } from '~/console/page-components/app-states';
-import Yup from '~/lib/server/helpers/yup';
-import { DiffViewer, yamlDump } from '~/console/components/diff-viewer';
-import { useReload } from '~/lib/client/helpers/reloader';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseName } from '~/console/server/r-utils/common';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { getAppIn } from '~/console/server/r-utils/resource-getter';
 import { constants } from '~/console/server/utils/constants';
+import { useReload } from '~/lib/client/helpers/reloader';
+import useForm from '~/lib/client/hooks/use-form';
+import {
+  UnsavedChangesProvider,
+  useUnsavedChanges,
+} from '~/lib/client/hooks/use-unsaved-changes';
+import Yup from '~/lib/server/helpers/yup';
+import { handleError } from '~/lib/utils/common';
 import { registryHost } from '~/root/lib/configs/base-url.cjs';
-import { Button } from '~/components/atoms/button';
-import { cn } from '~/components/utils';
-import { IAppContext } from '../_layout';
-import { getImageTag } from '../../../new-app/app-utils';
 import appFun from '../../../new-app/app-pre-submit';
+import { getImageTag } from '../../../new-app/app-utils';
+import { IAppContext } from '../_layout';
 
 const navItems = [
   { label: 'General', value: 'general' },
   { label: 'Compute', value: 'compute' },
   { label: 'Environment', value: 'environment' },
   { label: 'Network', value: 'network' },
-  { label: 'Advance', value: 'advance' },
+  { label: 'Advanced', value: 'advance' },
 ];
 
 const Layout = () => {

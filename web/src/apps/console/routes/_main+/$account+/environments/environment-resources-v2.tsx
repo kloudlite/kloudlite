@@ -94,7 +94,7 @@ const ExtraButton = ({
         options = [
           ...options,
           {
-            label: 'Resumed',
+            label: 'Resume',
             icon: <Play size={iconSize} />,
             type: 'item',
             key: 'resumed',

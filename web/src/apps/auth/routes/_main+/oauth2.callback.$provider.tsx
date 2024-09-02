@@ -1,11 +1,12 @@
-import { useNavigate, useLoaderData } from '@remix-run/react';
-import getQueries from '~/root/lib/server/helpers/get-queries';
+import { useLoaderData, useNavigate, useSearchParams } from '@remix-run/react';
+import { useAuthApi } from '~/auth/server/gql/api-provider';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { toast } from '~/components/molecule/toast';
-import { handleError } from '~/root/lib/utils/common';
-import { IRemixCtx } from '~/root/lib/types/common';
+import { base64Encrypt } from '~/console/server/utils/common';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import { useAuthApi } from '~/auth/server/gql/api-provider';
+import getQueries from '~/root/lib/server/helpers/get-queries';
+import { IRemixCtx } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 
 export const decodeState = (str: string) =>
   Buffer.from(str, 'base64url').toString('utf8');
@@ -14,6 +15,8 @@ const CallBack = () => {
   const { query, state, provider, setupAction } = useLoaderData();
   const api = useAuthApi();
   const navigate = useNavigate();
+  const [searchParams, _setSearchParams] = useSearchParams();
+
   useDebounce(
     () => {
       (async () => {
@@ -69,6 +72,15 @@ const CallBack = () => {
             navigate('/');
           } else {
             toast.success('Login Successful');
+            const callback = searchParams.get('callback');
+            if (callback) {
+              const {
+                data: { email, name },
+              } = await api.whoAmI({});
+              const encodedData = base64Encrypt(`email=${email}&name=${name}`);
+              window.location.href = `${callback}?${encodedData}`;
+              return;
+            }
             navigate('/');
           }
         } catch (err) {

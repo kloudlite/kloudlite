@@ -30,8 +30,8 @@ const ImagePullSecretsTabs = () => {
     <CommonTabs
       baseurl={`/${account}/settings/ips/${imagepullsecret}`}
       backButton={{
-        to: `/${account}/managed-services`,
-        label: 'Integrated Services',
+        to: `/${account}/settings/image-pull-secrets`,
+        label: 'Image Pull Secrets',
       }}
       tabs={[
         {
@@ -101,6 +101,7 @@ export const handle = ({
   return {
     navbar: <ImagePullSecretsTabs />,
     breadcrum: () => <LocalBreadcrum data={imagePullSecret} />,
+    noLayout: true,
   };
 };
 
