@@ -46,19 +46,20 @@ func getImageNameTag(image string) (string, string) {
 	return parts[0], "latest"
 }
 
-func (d *domain) GetRegistryImageURL(ctx ConsoleContext, image string, meta map[string]any) (string, error) {
+func (d *domain) GetRegistryImageURL(ctx ConsoleContext, image string, meta map[string]any) (*entities.RegistryImageURL, error) {
 	encodedToken := encodeAccessToken(ctx.AccountName, d.envVars.WebhookTokenHashingSecret)
 
 	imageName, imageTag := getImageNameTag(image)
 
 	metaJSON, err := json.Marshal(meta)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	url := fmt.Sprintf(`curl -X POST "https://webhook.dev.kloudlite.io/image" -H "Authorization: %s" -H "Content-Type: application/json" -d '{"image": "%s:%s", "meta": %s}'`, encodedToken, imageName, imageTag, metaJSON)
-
-	return url, nil
+	return &entities.RegistryImageURL{
+		URL:       fmt.Sprintf(`curl -X POST "%s" -H "Authorization: %s" -H "Content-Type: application/json" -d '{"image": "%s:%s", "meta": %s}'`, d.envVars.WebhookURL, encodedToken, imageName, imageTag, metaJSON),
+		ScriptURL: "",
+	}, nil
 }
 
 func (d *domain) CreateRegistryImage(ctx context.Context, accountName string, image string, meta map[string]any) (*entities.RegistryImage, error) {

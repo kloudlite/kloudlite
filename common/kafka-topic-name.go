@@ -8,10 +8,10 @@ import (
 type topicName string
 
 const (
-	GitWebhookTopicName    topicName = "events.webhooks.git"
-	AuditEventLogTopicName topicName = "events.audit.event-log"
-	NotificationTopicName  topicName = "events.notification"
-	RegistryHookTopicName  topicName = "events.webhooks.registry"
+	GitWebhookTopicName        topicName = "events.webhooks.git"
+	AuditEventLogTopicName     topicName = "events.audit.event-log"
+	NotificationTopicName      topicName = "events.notification"
+	ImageRegistryHookTopicName topicName = "events.webhooks.image"
 )
 
 const (

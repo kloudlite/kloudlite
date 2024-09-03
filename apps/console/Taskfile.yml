@@ -37,6 +37,7 @@ tasks:
         --struct github.com/kloudlite/api/apps/console/internal/entities.ImportedManagedResource
         --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
         --struct github.com/kloudlite/api/apps/console/internal/entities.RegistryImage
+        --struct github.com/kloudlite/api/apps/console/internal/entities.RegistryImageURL
         --struct github.com/kloudlite/api/pkg/repos.MatchFilter
         --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
