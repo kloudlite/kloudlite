@@ -792,6 +792,16 @@ type RegistryImagePaginatedRecords struct {
 	TotalCount int                  `json:"totalCount"`
 }
 
+type RegistryImageURL struct {
+	ScriptURL string `json:"scriptUrl"`
+	URL       string `json:"url"`
+}
+
+type RegistryImageURLIn struct {
+	ScriptURL string `json:"scriptUrl"`
+	URL       string `json:"url"`
+}
+
 type RouterEdge struct {
 	Cursor string           `json:"cursor"`
 	Node   *entities.Router `json:"node"`

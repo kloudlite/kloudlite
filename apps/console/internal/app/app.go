@@ -192,7 +192,7 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (WebhookConsumer, error) {
-		topic := string(common.RegistryHookTopicName)
+		topic := string(common.ImageRegistryHookTopicName)
 		consumerName := "console:webhook"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
 			Stream: ev.EventsNatsStream,

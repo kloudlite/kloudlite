@@ -14,6 +14,11 @@ type RegistryImage struct {
 	Meta             map[string]any `json:"meta"`
 }
 
+type RegistryImageURL struct {
+	URL       string `json:"url"`
+	ScriptURL string `json:"scriptUrl"`
+}
+
 var RegistryImageIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
