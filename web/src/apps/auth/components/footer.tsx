@@ -1,14 +1,13 @@
-import { BrandLogo } from '~/components/branding/brand-logo';
 import {
   GithubLogoFill,
   LinkedinLogoFill,
   TwitterNewLogoFill,
 } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button';
 import { Link } from '@remix-run/react';
-import Wrapper from './wrapper';
+import { Button } from '~/components/atoms/button';
+import { BrandLogo } from '~/components/branding/brand-logo';
 import { mainUrl } from '../consts';
-import ThemeSwitcher from './theme-switcher';
+import Wrapper from './wrapper';
 
 const linkedinUrl = 'https://linkedin.com/company/kloudlite-io';
 const gitUrl = 'https://github.com/kloudlite/kloudlite';

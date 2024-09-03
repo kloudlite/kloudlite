@@ -2,7 +2,6 @@ import { useLoaderData, useNavigate, useSearchParams } from '@remix-run/react';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { toast } from '~/components/molecule/toast';
-import { base64Encrypt } from '~/console/server/utils/common';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
@@ -77,7 +76,7 @@ const CallBack = () => {
               const {
                 data: { email, name },
               } = await api.whoAmI({});
-              const encodedData = base64Encrypt(`email=${email}&name=${name}`);
+              const encodedData = btoa(`email=${email}&name=${name}`);
               window.location.href = `${callback}?${encodedData}`;
               return;
             }

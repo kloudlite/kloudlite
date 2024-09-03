@@ -12,7 +12,6 @@ import { PasswordInput, TextInput } from '~/components/atoms/input';
 import { ArrowLeft, ArrowRight } from '~/components/icons';
 import { toast } from '~/components/molecule/toast';
 import { cn } from '~/components/utils';
-import { base64Encrypt } from '~/console/server/utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -54,8 +53,8 @@ const LoginWithEmail = () => {
           const {
             data: { email, name },
           } = await api.whoAmI({});
-          const encodedData = base64Encrypt(`email=${email}&name=${name}`);
-          window.location.href = `${callback}?${encodedData}`;
+          const encodedData = btoa(`email=${email}&name=${name}`);
+          window.location.href = `${callback}?userData=${encodedData}`;
           return;
         }
         reloadPage();
