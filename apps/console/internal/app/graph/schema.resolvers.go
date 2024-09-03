@@ -122,6 +122,18 @@ func (r *mutationResolver) CoreDeleteImagePullSecret(ctx context.Context, name s
 	return true, nil
 }
 
+// CoreDeleteRegistryImage is the resolver for the core_deleteRegistryImage field.
+func (r *mutationResolver) CoreDeleteRegistryImage(ctx context.Context, image string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.DeleteRegistryImage(cc, image); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
 // CoreCreateApp is the resolver for the core_createApp field.
 func (r *mutationResolver) CoreCreateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error) {
 	cc, err := toConsoleContext(ctx)
@@ -511,6 +523,39 @@ func (r *queryResolver) CoreResyncImagePullSecret(ctx context.Context, name stri
 		return false, errors.NewE(err)
 	}
 	return true, nil
+}
+
+// CoreGetRegistryImageURL is the resolver for the core_getRegistryImageURL field.
+func (r *queryResolver) CoreGetRegistryImageURL(ctx context.Context, image string, meta map[string]interface{}) (string, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return "", errors.NewE(err)
+	}
+	return r.Domain.GetRegistryImageURL(cc, image, meta)
+}
+
+// CoreGetRegistryImage is the resolver for the core_getRegistryImage field.
+func (r *queryResolver) CoreGetRegistryImage(ctx context.Context, image string) (*entities.RegistryImage, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GetRegistryImage(cc, image)
+}
+
+// CoreListRegistryImages is the resolver for the core_listRegistryImages field.
+func (r *queryResolver) CoreListRegistryImages(ctx context.Context, pq *repos.CursorPagination) (*model.RegistryImagePaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	pImages, err := r.Domain.ListRegistryImages(cc, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return fn.JsonConvertP[model.RegistryImagePaginatedRecords](pImages)
 }
 
 // CoreListApps is the resolver for the core_listApps field.
