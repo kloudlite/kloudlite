@@ -67,12 +67,6 @@ type ReceiveFromAgentArgs struct {
 	Name      string
 }
 
-//type ReceiveFromWebhookArgs struct {
-//	AccountName string
-//	ImageName   string
-//	ImageTag    string
-//}
-
 func ReceiveFromAgentSubjectName(args ReceiveFromAgentArgs, receiver MessageReceiver, ev platformEvent) string {
 	if args.AccountName == "*" && args.ClusterName == "*" {
 		slug := "*"
@@ -82,16 +76,6 @@ func ReceiveFromAgentSubjectName(args ReceiveFromAgentArgs, receiver MessageRece
 	slug := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%s.%s/%s", args.GVK, args.Namespace, args.Name)))
 	return fmt.Sprintf("%s.%s.%s.%s.%s.%s", receiveFromAgentSubjectPrefix, args.AccountName, args.ClusterName, slug, receiver, ev)
 }
-
-//func ReceiveFromWebhookSubjectName(args ReceiveFromWebhookArgs, receiver MessageReceiver) string {
-//	if args.AccountName == "*" {
-//		slug := "*"
-//		return fmt.Sprintf("%s.%s.%s.%s.%s", receiveFromWebhookSubjectPrefix, args.AccountName, args.ImageName, slug, receiver)
-//	}
-//
-//	slug := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%s.%s/%s", args.AccountName, args.ImageName, args.ImageTag)))
-//	return fmt.Sprintf("%s.%s.%s.%s.%s", receiveFromWebhookSubjectPrefix, args.AccountName, args.ImageName, slug, receiver)
-//}
 
 // func GetPlatformClusterMessagingTopic(accountName string, clusterName string, controller messageReceiver, ev platformEvent) string {
 // 	if accountName == "*" && clusterName == "*" {
