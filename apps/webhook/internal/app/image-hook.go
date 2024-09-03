@@ -100,6 +100,7 @@ func LoadImageHook() fx.Option {
 				if err != nil {
 					return err
 				}
+
 				err = producer.Produce(ctx.Context(), types2.ProduceMsg{
 					Subject: string(common.ImageRegistryHookTopicName),
 					Payload: jsonPayload,
@@ -115,6 +116,24 @@ func LoadImageHook() fx.Option {
 				}
 				logger.WithKV(
 					"produced.subject", string(common.ImageRegistryHookTopicName),
+					"produced.timestamp", time.Now(),
+				).Infof("queued webhook")
+
+				err = producer.Produce(ctx.Context(), types2.ProduceMsg{
+					Subject: string(common.ImageUpdateRegistryHookTopicName),
+					Payload: jsonPayload,
+				})
+				if err != nil {
+					return err
+				}
+
+				if err != nil {
+					errMsg := fmt.Sprintf("failed to produce message: %s", "webhook-provider")
+					logger.Errorf(err, errMsg)
+					return ctx.Status(http.StatusInternalServerError).JSON(errMsg)
+				}
+				logger.WithKV(
+					"produced.subject", string(common.ImageUpdateRegistryHookTopicName),
 					"produced.timestamp", time.Now(),
 				).Infof("queued webhook")
 				return ctx.Status(http.StatusAccepted).JSON(map[string]string{"status": "ok"})
