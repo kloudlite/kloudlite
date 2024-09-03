@@ -5,17 +5,17 @@ import {
   GitlabLogoFill,
   GoogleLogo,
 } from '@jengaicons/react';
-import { useSearchParams, Link, useOutletContext } from '@remix-run/react';
+import { Link, useOutletContext, useSearchParams } from '@remix-run/react';
+import { useAuthApi } from '~/auth/server/gql/api-provider';
+import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
+import { ArrowLeft, ArrowRight } from '~/components/icons';
+import { toast } from '~/components/molecule/toast';
+import { cn } from '~/components/utils';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
-import { Button } from '~/components/atoms/button';
-import { cn } from '~/components/utils';
-import { useAuthApi } from '~/auth/server/gql/api-provider';
-import { ArrowLeft, ArrowRight } from '~/components/icons';
 import Container from '../../components/container';
 import { IProviderContext } from './_layout';
 
@@ -25,6 +25,7 @@ const CustomGoogleIcon = (props: any) => {
 
 const LoginWithEmail = () => {
   const api = useAuthApi();
+  const [searchParams, _setSearchParams] = useSearchParams();
 
   const reloadPage = useReload();
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
@@ -46,6 +47,16 @@ const LoginWithEmail = () => {
           throw _errors[0];
         }
         toast.success('logged in success fully');
+
+        const callback = searchParams.get('callback');
+        if (callback) {
+          const {
+            data: { email, name },
+          } = await api.whoAmI({});
+          const encodedData = btoa(`email=${email}&name=${name}`);
+          window.location.href = `${callback}?userData=${encodedData}`;
+          return;
+        }
         reloadPage();
       } catch (err) {
         handleError(err);

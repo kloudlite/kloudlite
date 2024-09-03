@@ -1,19 +1,19 @@
-import {
-  AppContextProvider,
-  useAppState,
-} from '~/iotconsole/page-components/app-states';
+import { ReactNode, useCallback, useEffect } from 'react';
+import { cn } from '~/components/utils';
+import FillerAppCompute from '~/iotconsole/assets/app/filler-compute';
+import FillerAppDetail from '~/iotconsole/assets/app/filler-details';
+import FillerAppEnv from '~/iotconsole/assets/app/filler-env';
+import FillerAppNetwork from '~/iotconsole/assets/app/filler-network';
+import FillerAppReview from '~/iotconsole/assets/app/filler-review';
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/iotconsole/components/multi-step-progress';
 import MultiStepProgressWrapper from '~/iotconsole/components/multi-step-progress-wrapper';
-import { ReactNode, useCallback, useEffect } from 'react';
-import FillerAppDetail from '~/iotconsole/assets/app/filler-details';
-import FillerAppCompute from '~/iotconsole/assets/app/filler-compute';
-import FillerAppEnv from '~/iotconsole/assets/app/filler-env';
-import FillerAppNetwork from '~/iotconsole/assets/app/filler-network';
-import FillerAppReview from '~/iotconsole/assets/app/filler-review';
+import {
+  AppContextProvider,
+  useAppState,
+} from '~/iotconsole/page-components/app-states';
 import AppCompute from '~/iotconsole/page-components/app/compute';
-import { cn } from '~/components/utils';
 import AppDetail from './app-detail';
 import AppEnvironment from './app-environment';
 import AppNetwork from './app-network';

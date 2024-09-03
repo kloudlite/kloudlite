@@ -4,16 +4,16 @@ import { NN } from '~/root/lib/types/common';
 import {
   ConsoleCreateByokClusterMutation,
   ConsoleCreateByokClusterMutationVariables,
-  ConsoleGetByokClusterQuery,
-  ConsoleGetByokClusterQueryVariables,
+  ConsoleDeleteByokClusterMutation,
+  ConsoleDeleteByokClusterMutationVariables,
   ConsoleGetByokClusterInstructionsQuery,
   ConsoleGetByokClusterInstructionsQueryVariables,
+  ConsoleGetByokClusterQuery,
+  ConsoleGetByokClusterQueryVariables,
   ConsoleListByokClustersQuery,
   ConsoleListByokClustersQueryVariables,
   ConsoleUpdateByokClusterMutation,
   ConsoleUpdateByokClusterMutationVariables,
-  ConsoleDeleteByokClusterMutation,
-  ConsoleDeleteByokClusterMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IByocClusters = NN<

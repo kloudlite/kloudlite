@@ -1,19 +1,19 @@
 import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { toast } from '~/components/molecule/toast';
-import { useAppState } from '~/iotconsole/page-components/app-states';
-import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
-import useForm from '~/lib/client/hooks/use-form';
-import Yup from '~/lib/server/helpers/yup';
-import { handleError } from '~/lib/utils/common';
-import { validateType } from '~/root/src/generated/gql/validator';
-import { parseName } from '~/iotconsole/server/r-utils/common';
-import { FadeIn } from '~/iotconsole/page-components/util';
 import {
   BottomNavigation,
   ReviewComponent,
 } from '~/iotconsole/components/commons';
+import { useAppState } from '~/iotconsole/page-components/app-states';
+import { FadeIn } from '~/iotconsole/page-components/util';
+import { useIotConsoleApi } from '~/iotconsole/server/gql/api-provider';
+import { parseName } from '~/iotconsole/server/r-utils/common';
 import { keyconstants } from '~/iotconsole/server/r-utils/key-constants';
+import useForm from '~/lib/client/hooks/use-form';
+import Yup from '~/lib/server/helpers/yup';
+import { handleError } from '~/lib/utils/common';
+import { validateType } from '~/root/src/generated/gql/validator';
 import { IDeviceBlueprintContext } from '../_layout';
 
 const AppReview = () => {
@@ -21,9 +21,8 @@ const AppReview = () => {
 
   const api = useIotConsoleApi();
   const navigate = useNavigate();
-  const {  deviceblueprint } =
-    useOutletContext<IDeviceBlueprintContext>();
-  const [ deviceblueprintName] = [
+  const { deviceblueprint } = useOutletContext<IDeviceBlueprintContext>();
+  const [deviceblueprintName] = [
     project.name,
     deviceblueprint.name,
     // parseName(account),
@@ -33,13 +32,12 @@ const AppReview = () => {
     initialValues: app,
     validationSchema: Yup.object({}),
     onSubmit: async () => {
-      if ( !deviceblueprint) {
+      if (!deviceblueprint) {
         throw new Error('Project and deviceblueprint is required!.');
       }
 
       try {
         const { errors } = await api.createIotApp({
-          
           deviceBlueprintName: deviceblueprintName,
           app: {
             ...app,
@@ -143,7 +141,7 @@ const AppReview = () => {
         )}
 
         <ReviewComponent
-          title="Environment"
+          title="Config"
           onEdit={() => {
             setPage(3);
           }}

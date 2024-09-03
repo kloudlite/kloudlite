@@ -1,41 +1,41 @@
+import { defer } from '@remix-run/node';
 import {
   useLoaderData,
   useNavigate,
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import Select from '~/components/atoms/select';
-import { NameIdView } from '~/console/components/name-id-view';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import useForm, { dummyEvent } from '~/lib/client/hooks/use-form';
-import Yup from '~/lib/server/helpers/yup';
 import { FormEventHandler, useCallback, useEffect, useState } from 'react';
-import { IMSvTemplate } from '~/console/server/gql/queries/managed-templates-queries';
-import { Switch } from '~/components/atoms/switch';
 import { NumberInput, TextInput } from '~/components/atoms/input';
-import { handleError } from '~/lib/utils/common';
+import Select from '~/components/atoms/select';
+import { Switch } from '~/components/atoms/switch';
 import { titleCase, useMapper } from '~/components/utils';
-import { IRemixCtx } from '~/lib/types/common';
+import {
+  BottomNavigation,
+  ReviewComponent,
+} from '~/console/components/commons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import MultiStepProgress, {
+  useMultiStepProgress,
+} from '~/console/components/multi-step-progress';
+import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
+import { NameIdView } from '~/console/components/name-id-view';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { IManagedServiceContext } from '~/console/routes/_main+/$account+/msvc+/$msv+/_layout';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
+import { IMSvTemplate } from '~/console/server/gql/queries/managed-templates-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { defer } from '@remix-run/node';
 import {
   ExtractNodeType,
   parseName,
   parseNodes,
 } from '~/console/server/r-utils/common';
 import { getManagedTemplate } from '~/console/utils/commons';
-import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
-import MultiStepProgress, {
-  useMultiStepProgress,
-} from '~/console/components/multi-step-progress';
-import {
-  BottomNavigation,
-  ReviewComponent,
-} from '~/console/components/commons';
-import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
-import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
-import { IManagedServiceContext } from '~/console/routes/_main+/$account+/msvc+/$msv+/_layout';
+import useForm, { dummyEvent } from '~/lib/client/hooks/use-form';
+import Yup from '~/lib/server/helpers/yup';
+import { IRemixCtx } from '~/lib/types/common';
+import { handleError } from '~/lib/utils/common';
 
 export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -243,9 +243,7 @@ const TemplateView = ({
 }: ITemplateView) => {
   return (
     <form className="flex flex-col gap-3xl" onSubmit={handleSubmit}>
-      <div className="bodyMd text-text-soft">
-        Create your integrated services.
-      </div>
+      <div className="bodyMd text-text-soft">Create your managed resource.</div>
       <Select
         label="Resource type"
         size="lg"
@@ -296,7 +294,7 @@ const FieldView = ({
       }}
     >
       <NameIdView
-        placeholder="Enter integrated service name"
+        placeholder="Enter managed resource name"
         label="Name"
         resType="managed_resource"
         name={values.name}
@@ -591,10 +589,10 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
 
   return (
     <MultiStepProgressWrapper
-      title="Let’s create new integrated resource."
+      title="Let’s create new managed resource."
       subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
       backButton={{
-        content: 'Back to integrated resources',
+        content: 'Back to managed resources',
         to: rootUrl,
       }}
     >
@@ -610,7 +608,7 @@ const App = ({ services }: { services: ExtractNodeType<IClusterMSvs>[] }) => {
             resources={resources}
           />
         </MultiStepProgress.Step>
-        <MultiStepProgress.Step label="Configure integrated resource" step={2}>
+        <MultiStepProgress.Step label="Configure managed resource" step={2}>
           <FieldView
             selectedResource={values.selectedResource}
             values={values}

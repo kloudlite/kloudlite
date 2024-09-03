@@ -716,6 +716,7 @@ export type EnvironmentIn = {
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentSpecIn =
   {
     routing?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingIn>;
+    suspend?: InputMaybe<Scalars['Boolean']['input']>;
     targetNamespace?: InputMaybe<Scalars['String']['input']>;
   };
 
@@ -2470,6 +2471,7 @@ export type ConsoleGetEnvironmentQuery = {
       namespace?: string;
     };
     spec?: {
+      suspend?: boolean;
       targetNamespace?: string;
       routing?: {
         mode?: Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingMode;
@@ -2545,6 +2547,7 @@ export type ConsoleListEnvironmentsQuery = {
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata?: { generation: number; name: string; namespace?: string };
         spec?: {
+          suspend?: boolean;
           targetNamespace?: string;
           routing?: {
             mode?: Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingMode;
@@ -5618,6 +5621,47 @@ export type ConsoleDeleteImagePullSecretsMutationVariables = Exact<{
 
 export type ConsoleDeleteImagePullSecretsMutation = {
   core_deleteImagePullSecret: boolean;
+};
+
+export type ConsoleGetImagePullSecretQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetImagePullSecretQuery = {
+  core_getImagePullSecret?: {
+    accountName: string;
+    creationTime: any;
+    displayName: string;
+    dockerConfigJson?: string;
+    environments?: Array<string>;
+    format: Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__PullSecretFormat;
+    id: string;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    registryPassword?: string;
+    registryURL?: string;
+    registryUsername?: string;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    syncStatus: {
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+      syncScheduledAt?: any;
+    };
+  };
 };
 
 export type ConsoleListImagePullSecretsQueryVariables = Exact<{

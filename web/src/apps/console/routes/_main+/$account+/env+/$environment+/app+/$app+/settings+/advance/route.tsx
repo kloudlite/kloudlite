@@ -1,21 +1,21 @@
 import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
+import { toast } from '~/components/molecule/toast';
 import {
   Box,
   DeleteContainer,
 } from '~/console/components/common-console-components';
-import { useAppState } from '~/console/page-components/app-states';
-import { parseName } from '~/console/server/r-utils/common';
 import DeleteDialog from '~/console/components/delete-dialog';
-import { useReload } from '~/lib/client/helpers/reloader';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { toast } from '~/components/molecule/toast';
-import { handleError } from '~/lib/utils/common';
 import Wrapper from '~/console/components/wrapper';
-import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
 import YamlEditorOverlay from '~/console/components/yaml-editor-overlay';
+import { useAppState } from '~/console/page-components/app-states';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { parseName } from '~/console/server/r-utils/common';
 import { getAppIn } from '~/console/server/r-utils/resource-getter';
+import { useReload } from '~/lib/client/helpers/reloader';
+import { useUnsavedChanges } from '~/lib/client/hooks/use-unsaved-changes';
+import { handleError } from '~/lib/utils/common';
 import { IAppContext } from '../../_layout';
 
 const SettingAdvance = () => {
@@ -56,7 +56,7 @@ const SettingAdvance = () => {
     <div>
       <Wrapper
         secondaryHeader={{
-          title: 'Advance',
+          title: 'Advanced',
           action: hasChanges && (
             <div className="flex flex-row items-center gap-lg">
               <Button

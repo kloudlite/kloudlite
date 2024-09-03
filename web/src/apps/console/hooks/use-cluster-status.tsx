@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { parseNodes } from '../server/r-utils/common';
 
-const findClusterStatus = (item?: { lastOnlineAt?: string }): boolean => {
+export const findClusterStatus = (item?: {
+  lastOnlineAt?: string;
+}): boolean => {
   if (!item || !item.lastOnlineAt) {
     return false;
   }
@@ -13,12 +15,7 @@ const findClusterStatus = (item?: { lastOnlineAt?: string }): boolean => {
   const timeDifference =
     (currentTime.getTime() - lastTime.getTime()) / (1000 * 60);
 
-  switch (true) {
-    case timeDifference <= 2:
-      return true;
-    default:
-      return false;
-  }
+  return timeDifference <= 2;
 };
 
 const useClusterStatus = () => {

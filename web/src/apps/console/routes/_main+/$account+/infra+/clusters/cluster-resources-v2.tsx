@@ -1,9 +1,3 @@
-import {
-  GearSix,
-  ListDashes,
-  PencilLine,
-  Trash,
-} from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { generateKey, titleCase, useMapper } from '~/components/utils';
 import { listRender } from '~/console/components/commons';
@@ -17,8 +11,16 @@ import {
   listClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
+import {
+  GearSix,
+  ListDashes,
+  PencilLine,
+  Trash,
+} from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
+import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import {
   ExtractNodeType,
@@ -27,29 +29,28 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { renderCloudProvider } from '~/console/utils/commons';
-import logger from '~/root/lib/client/helpers/log';
-import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import ListV2 from '~/console/components/listV2';
+import logger from '~/root/lib/client/helpers/log';
 
 import { useState } from 'react';
 // import { SyncStatusV2 } from '~/console/components/sync-status';
-import { Button } from '~/components/atoms/button';
-import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
-import DeleteDialog from '~/console/components/delete-dialog';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { toast } from '~/components/molecule/toast';
-import { handleError } from '~/root/lib/utils/common';
-import Popup from '~/components/molecule/popup';
-import CodeView from '~/console/components/code-view';
-import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import { LoadingPlaceHolder } from '~/console/components/loading';
 import { Badge } from '~/components/atoms/badge';
+import { Button } from '~/components/atoms/button';
+import Popup from '~/components/molecule/popup';
+import { toast } from '~/components/molecule/toast';
+import CodeView from '~/console/components/code-view';
+import DeleteDialog from '~/console/components/delete-dialog';
+import { LoadingPlaceHolder } from '~/console/components/loading';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IByocClusters } from '~/console/server/gql/queries/byok-cluster-queries';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import { handleError } from '~/root/lib/utils/common';
 // import { Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncStatusState } from '~/root/src/generated/gql/server';
-import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
-import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import TooltipV2 from '~/components/atoms/tooltipV2';
+import { ViewClusterLogs } from '~/console/components/cluster-logs-popop';
+import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
+import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import HandleByokCluster from '../byok-cluster/handle-byok-cluster';
 
 type BaseType = ExtractNodeType<IClusters> & { type: 'normal' };
@@ -415,6 +416,7 @@ const GridView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
 };
 const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
   const { account } = useParams();
+  const { clusters } = useClusterStatusV2();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -485,7 +487,9 @@ const ListView = ({ items = [], onEdit, onDelete, onShowLogs }: IResource) => {
                   ),
               },
               status: {
-                render: () => <GetSyncStatus lastOnlineAt={i.lastOnlineAt} />,
+                render: () => (
+                  <GetSyncStatus lastOnlineAt={clusters[id]?.lastOnlineAt} />
+                ),
               },
               updated: {
                 render: () => (

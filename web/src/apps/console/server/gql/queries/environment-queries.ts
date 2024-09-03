@@ -60,6 +60,7 @@ export const environmentQueries = (executor: IExecutor) => ({
               privateIngressClass
               publicIngressClass
             }
+            suspend
             targetNamespace
           }
           status {
@@ -172,6 +173,7 @@ export const environmentQueries = (executor: IExecutor) => ({
                   privateIngressClass
                   publicIngressClass
                 }
+                suspend
                 targetNamespace
               }
               status {

@@ -6,20 +6,20 @@ import {
   NumberInput,
   TextInput,
 } from '~/components/atoms/input';
+import { Switch } from '~/components/atoms/switch';
 import Popup from '~/components/molecule/popup';
+import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
+import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
+import { getManagedTemplate } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NN } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
-import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
-import { Switch } from '~/components/atoms/switch';
-import { getManagedTemplate } from '~/console/utils/commons';
-import { NameIdView } from '~/console/components/name-id-view';
-import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
 
 type IDialog = IDialogBase<ExtractNodeType<IClusterMSvs>> & {
   templates: IMSvTemplates;
@@ -70,8 +70,8 @@ const RenderField = ({
             dummyEvent(
               `${parseFloat(target.value) * (field.multiplier || 1)}${
                 field.unit
-              }`,
-            ),
+              }`
+            )
           );
         }}
         suffix={field.displayUnit}
@@ -110,16 +110,16 @@ const RenderField = ({
                     dummyEvent(
                       `${parseFloat(target.value) * (field.multiplier || 1)}${
                         field.unit
-                      }`,
-                    ),
+                      }`
+                    )
                   );
                   if (qos) {
                     onChange(`res.${field.name}.max`)(
                       dummyEvent(
                         `${parseFloat(target.value) * (field.multiplier || 1)}${
                           field.unit
-                        }`,
-                      ),
+                        }`
+                      )
                     );
                   }
                 }}
@@ -138,8 +138,8 @@ const RenderField = ({
                       dummyEvent(
                         `${parseFloat(target.value) * (field.multiplier || 1)}${
                           field.unit
-                        }`,
-                      ),
+                        }`
+                      )
                     );
                   }}
                   suffix={field.displayUnit}

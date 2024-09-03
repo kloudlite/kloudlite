@@ -1540,11 +1540,13 @@ enum Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMo
 
 type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec {
   routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting
+  suspend: Boolean
   targetNamespace: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
   routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn
+  suspend: Boolean
   targetNamespace: String
 }
 

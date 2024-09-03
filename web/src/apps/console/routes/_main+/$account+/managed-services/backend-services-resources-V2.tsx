@@ -1,4 +1,7 @@
-import { GearSix, Trash } from '~/console/components/icons';
+import { Link, useOutletContext, useParams } from '@remix-run/react';
+import { useEffect, useState } from 'react';
+import { Badge } from '~/components/atoms/badge';
+import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
@@ -7,30 +10,28 @@ import {
   ListTitleV2,
   listClass,
 } from '~/console/components/console-list-components';
+import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
+import { GearSix, Trash } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
+import ListV2 from '~/console/components/listV2';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { SyncStatusV2 } from '~/console/components/sync-status';
+import { findClusterStatus } from '~/console/hooks/use-cluster-status';
+import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
+import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { getManagedTemplate } from '~/console/utils/commons';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { SyncStatusV2 } from '~/console/components/sync-status';
-import ListV2 from '~/console/components/listV2';
-import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
-import { useWatchReload } from '~/root/lib/client/helpers/socket/useWatch';
-import { useState } from 'react';
-import DeleteDialog from '~/console/components/delete-dialog';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { toast } from '~/components/molecule/toast';
+import { useWatchReload } from '~/root/lib/client/helpers/socket/useWatch';
 import { handleError } from '~/root/lib/utils/common';
-import { Badge } from '~/components/atoms/badge';
-import useClusterStatus from '~/console/hooks/use-cluster-status';
 import { IAccountContext } from '../_layout';
 import { IClusterContext } from '../infra+/$cluster+/_layout';
 import CloneManagedService from './clone-managed-service';
@@ -161,8 +162,20 @@ const GridView = ({ items, templates, onAction }: IResource) => {
 };
 
 const ListView = ({ items, templates, onAction }: IResource) => {
-  const { account, clustersMap } = useOutletContext<IAccountContext>();
-  const { findClusterStatus, clusters, loading } = useClusterStatus();
+  const { account } = useOutletContext<IAccountContext>();
+  const { clusters } = useClusterStatusV2();
+
+  const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
+    Record<string, boolean>
+  >({});
+  useEffect(() => {
+    const states: Record<string, boolean> = {};
+    Object.entries(clusters).forEach(([key, value]) => {
+      states[key] = findClusterStatus(value);
+    });
+    setClusterOnlineStatus(states);
+  }, [clusters]);
+
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -200,11 +213,7 @@ const ListView = ({ items, templates, onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const isClusterOnline = findClusterStatus(
-            clusters.length > 0
-              ? clusters.find((c) => parseName(c) === i.clusterName)
-              : clustersMap[i.clusterName]
-          );
+          const isClusterOnline = clusterOnlineStatus[i.clusterName];
           const { name, id, logo, updateInfo } = parseItem(i, templates);
           return {
             columns: {
@@ -230,10 +239,6 @@ const ListView = ({ items, templates, onAction }: IResource) => {
                 render: () => {
                   if (i.isArchived) {
                     return <Badge type="neutral">Archived</Badge>;
-                  }
-                  if (loading) {
-                    // return <Badge type="warning">Syncing...</Badge>;
-                    return null;
                   }
                   if (!isClusterOnline) {
                     return <Badge type="warning">Cluster Offline</Badge>;

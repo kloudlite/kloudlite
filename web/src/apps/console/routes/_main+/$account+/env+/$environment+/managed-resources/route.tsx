@@ -1,21 +1,21 @@
-import { Plus } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
+import { useState } from 'react';
+import { Button } from '~/components/atoms/button';
+import { EmptyManagedResourceImage } from '~/console/components/empty-resource-images';
+import { Plus } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
-import { Button } from '~/components/atoms/button';
-import { useState } from 'react';
-import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
-import { EmptyManagedResourceImage } from '~/console/components/empty-resource-images';
-import { getPagination, getSearch } from '~/console/server/utils/common';
-import { ensureAccountSet } from '~/console/server/utils/auth-utils';
-import Tools from './tools';
-import ManagedResourceResourcesV2 from './managed-resources-resource-v2';
 import HandleManagedResourceV2 from './handle-managed-resource-v2';
+import ManagedResourceResourcesV2 from './managed-resources-resource-v2';
+import Tools from './tools';
 
 export const loader = (ctx: IRemixCtx) => {
   const { environment } = ctx.params;
@@ -59,11 +59,11 @@ const KlOperatorServices = () => {
           return (
             <Wrapper
               header={{
-                title: 'Imported Integrated Resources',
+                title: 'Imported Managed Resources',
                 action: managedResources.length > 0 && (
                   <Button
                     variant="primary"
-                    content="Import Integrated Resource"
+                    content="Import Managed Resource"
                     prefix={<Plus />}
                     onClick={() => {
                       setVisible(true);
@@ -74,15 +74,15 @@ const KlOperatorServices = () => {
               empty={{
                 image: <EmptyManagedResourceImage />,
                 is: managedResources.length === 0,
-                title: 'This is where you’ll manage your Integrated resources.',
+                title: 'This is where you’ll manage your Managed resources.',
                 content: (
                   <p>
-                    You can import a new integrated resource and manage the
-                    listed integrated resource.
+                    You can import a new managed resource and manage the listed
+                    managed resource.
                   </p>
                 ),
                 action: {
-                  content: 'Import Integrated Resource',
+                  content: 'Import Managed Resource',
                   prefix: <Plus />,
                   onClick: () => {
                     setVisible(true);

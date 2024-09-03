@@ -1,3 +1,4 @@
+import { defer } from '@remix-run/node';
 import {
   Link,
   Outlet,
@@ -5,23 +6,22 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { CommonTabs } from '~/console/components/common-navbar-tabs';
-import { IRemixCtx } from '~/lib/types/common';
-import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { ensureAccountSet } from '~/console/server/utils/auth-utils';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import logger from '~/lib/client/helpers/log';
-import { defer } from '@remix-run/node';
 import Breadcrum from '~/console/components/breadcrum';
-import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
-import { IClusterMSv } from '~/console/server/gql/queries/cluster-managed-services-queries';
-import fake from '~/root/fake-data-generator/fake';
+import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import {
   BackingServices,
   ChevronRight,
   GearSix,
 } from '~/console/components/icons';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import { IClusterMSv } from '~/console/server/gql/queries/cluster-managed-services-queries';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseName } from '~/console/server/r-utils/common';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
+import logger from '~/lib/client/helpers/log';
+import { IRemixCtx } from '~/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import { IAccountContext } from '../../_layout';
 
 const ManagedServiceTabs = () => {
@@ -32,14 +32,14 @@ const ManagedServiceTabs = () => {
       baseurl={`/${account}/msvc/${msv}`}
       backButton={{
         to: `/${account}/managed-services`,
-        label: 'Integrated Services',
+        label: 'Managed Services',
       }}
       tabs={[
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
               <BackingServices size={tabIconSize} />
-              Integrated resources
+              Managed resources
             </span>
           ),
           to: '/managed-resources',

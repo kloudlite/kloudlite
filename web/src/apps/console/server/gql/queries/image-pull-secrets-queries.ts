@@ -4,16 +4,21 @@ import { NN } from '~/root/lib/types/common';
 import {
   ConsoleCreateImagePullSecretMutation,
   ConsoleCreateImagePullSecretMutationVariables,
-  ConsoleUpdateImagePullSecretMutation,
-  ConsoleUpdateImagePullSecretMutationVariables,
-  ConsoleListImagePullSecretsQuery,
-  ConsoleListImagePullSecretsQueryVariables,
   ConsoleDeleteImagePullSecretsMutation,
   ConsoleDeleteImagePullSecretsMutationVariables,
+  ConsoleGetImagePullSecretQuery,
+  ConsoleGetImagePullSecretQueryVariables,
+  ConsoleListImagePullSecretsQuery,
+  ConsoleListImagePullSecretsQueryVariables,
+  ConsoleUpdateImagePullSecretMutation,
+  ConsoleUpdateImagePullSecretMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IImagePullSecrets = NN<
   ConsoleListImagePullSecretsQuery['core_listImagePullSecrets']
+>;
+export type IImagePullSecret = NN<
+  ConsoleGetImagePullSecretQuery['core_getImagePullSecret']
 >;
 
 export const imagePullSecretsQueries = (executor: IExecutor) => ({
@@ -55,6 +60,59 @@ export const imagePullSecretsQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleDeleteImagePullSecretsMutation) =>
         data.core_deleteImagePullSecret,
       vars(_: ConsoleDeleteImagePullSecretsMutationVariables) {},
+    }
+  ),
+  getImagePullSecret: executor(
+    gql`
+      query Core_getImagePullSecret($name: String!) {
+        core_getImagePullSecret(name: $name) {
+          accountName
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          creationTime
+          displayName
+          dockerConfigJson
+          environments
+          format
+          id
+          lastUpdatedBy {
+            userEmail
+            userId
+            userName
+          }
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          recordVersion
+          registryPassword
+          registryURL
+          registryUsername
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
+          }
+          updateTime
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleGetImagePullSecretQuery) =>
+        data.core_getImagePullSecret,
+      vars(_: ConsoleGetImagePullSecretQueryVariables) {},
     }
   ),
   listImagePullSecrets: executor(

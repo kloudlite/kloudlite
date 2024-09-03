@@ -135,4 +135,6 @@ export {
   Sliders,
   FileLock,
   StackSimple,
+  Play,
+  Pause,
 } from '@jengaicons/react';

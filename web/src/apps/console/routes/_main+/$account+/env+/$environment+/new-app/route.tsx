@@ -1,19 +1,19 @@
-import {
-  AppContextProvider,
-  useAppState,
-} from '~/console/page-components/app-states';
+import { ReactNode, useCallback, useEffect } from 'react';
+import { cn } from '~/components/utils';
+import FillerAppCompute from '~/console/assets/app/filler-compute';
+import FillerAppDetail from '~/console/assets/app/filler-details';
+import FillerAppEnv from '~/console/assets/app/filler-env';
+import FillerAppNetwork from '~/console/assets/app/filler-network';
+import FillerAppReview from '~/console/assets/app/filler-review';
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
 import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
-import { ReactNode, useCallback, useEffect } from 'react';
-import FillerAppDetail from '~/console/assets/app/filler-details';
-import FillerAppCompute from '~/console/assets/app/filler-compute';
-import FillerAppEnv from '~/console/assets/app/filler-env';
-import FillerAppNetwork from '~/console/assets/app/filler-network';
-import FillerAppReview from '~/console/assets/app/filler-review';
+import {
+  AppContextProvider,
+  useAppState,
+} from '~/console/page-components/app-states';
 import AppCompute from '~/console/page-components/app/compute';
-import { cn } from '~/components/utils';
 import AppDetail from './app-detail';
 import AppEnvironment from './app-environment';
 import AppNetwork from './app-network';
@@ -70,7 +70,7 @@ const AppComp = () => {
         <MultiStepProgress.Step step={2} label="Compute">
           <AppCompute mode="new" />
         </MultiStepProgress.Step>
-        <MultiStepProgress.Step step={3} label="Environment">
+        <MultiStepProgress.Step step={3} label="Config">
           <AppEnvironment />
         </MultiStepProgress.Step>
         <MultiStepProgress.Step step={4} label="Network">

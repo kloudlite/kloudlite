@@ -1,30 +1,30 @@
 /* eslint-disable react/destructuring-assignment */
+import { useOutletContext, useParams } from '@remix-run/react';
+import { useCallback, useEffect, useState } from 'react';
+import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import { handleError } from '~/root/lib/utils/common';
+import { toast } from '~/components/molecule/toast';
+import { useMapper } from '~/components/utils';
+import { CopyContentToClipboard } from '~/console/components/common-console-components';
+import { ListItem } from '~/console/components/console-list-components';
+import ListV2 from '~/console/components/listV2';
+import { LoadingPlaceHolder } from '~/console/components/loading';
+import MultiStep, { useMultiStep } from '~/console/components/multi-step';
+import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
 import {
   ExtractNodeType,
   parseName,
   parseNodes,
 } from '~/console/server/r-utils/common';
-import Select from '~/components/atoms/select';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useOutletContext, useParams } from '@remix-run/react';
-import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import { useMapper } from '~/components/utils';
-import MultiStep, { useMultiStep } from '~/console/components/multi-step';
-import { LoadingPlaceHolder } from '~/console/components/loading';
-import ListV2 from '~/console/components/listV2';
-import { ListItem } from '~/console/components/console-list-components';
-import { CopyContentToClipboard } from '~/console/components/common-console-components';
-import { useCallback, useEffect, useState } from 'react';
-import { toast } from '~/components/molecule/toast';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
-import { NameIdView } from '~/console/components/name-id-view';
-import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+import { handleError } from '~/root/lib/utils/common';
 import { IEnvironmentContext } from '../_layout';
 
 type BaseType = ExtractNodeType<IImportedManagedResources>;
@@ -90,11 +90,9 @@ const Root = (props: IDialog) => {
           managedResourceName: '',
         },
     validationSchema: Yup.object({
-      managedServiceName: Yup.string().required(
-        'integrated service is required'
-      ),
+      managedServiceName: Yup.string().required('Managed service is required'),
       managedResourceName: Yup.string().required(
-        'integrated resource name is required'
+        'Managed resource name is required'
       ),
     }),
     onSubmit: async (val) => {
@@ -113,9 +111,7 @@ const Root = (props: IDialog) => {
         reloadPage();
         resetValues();
         toast.success(
-          `integrated resource ${
-            isUpdate ? 'updated' : 'imported'
-          } successfully`
+          `Managed resource ${isUpdate ? 'updated' : 'imported'} successfully`
         );
         setVisible(false);
       } catch (err) {
@@ -171,7 +167,7 @@ const Root = (props: IDialog) => {
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
           <NameIdView
-            placeholder="Enter integrated service name"
+            placeholder="Enter managed resource name"
             label="Name"
             resType="imported_managed_resource"
             name={values.name || ''}
@@ -182,11 +178,11 @@ const Root = (props: IDialog) => {
           />
 
           <Select
-            label="Integrated Services"
+            label="Managed Services"
             size="lg"
             value={values.managedServiceName}
             // disabled={msvcIsLoading}
-            placeholder="Select a Integrated Service"
+            placeholder="Select a Managed Service"
             options={async () => [
               ...((msvcList &&
                 msvcList.filter((msvc) => {
@@ -203,11 +199,11 @@ const Root = (props: IDialog) => {
           />
 
           <Select
-            label="Integrated Resource"
+            label="Managed Resource"
             size="lg"
             value={values.managedResourceName}
             disabled={mresIsLoading}
-            placeholder="Select a Integrated Resource"
+            placeholder="Select a Managed Resource"
             options={async () => [
               ...((mresList &&
                 mresList.filter((mres) => {
@@ -243,7 +239,7 @@ const HandleManagedResourceV2 = (props: IDialog) => {
   return (
     <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
       <Popup.Header>
-        {isUpdate ? 'Edit External Name' : 'Import Integrated Resource'}
+        {isUpdate ? 'Edit External Name' : 'Import Managed Resource'}
       </Popup.Header>
       {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>

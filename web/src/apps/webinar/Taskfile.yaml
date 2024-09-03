@@ -1,0 +1,36 @@
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - task: build
+      - task: start
+
+  dev:
+    cmds:
+      - npm run dev
+      
+  build:
+    cmds:
+      - npm run build
+
+  container:build:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
+    vars:
+      Image: ghcr.io/kloudlite/webinar:{{.tag}}
+    cmds:
+      - docker build -t {{.Image}} .
+
+  container:push:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
+    vars:
+      Image: ghcr.io/kloudlite/webinar:{{.tag}}
+    cmds:
+      - docker buildx build -t {{.Image}} --platform linux/amd64 --push .
+      # - docker buildx build . -t {{.Image}} --platform linux/amd64,linux/arm64 --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true
+      # - docker build -t {{.Image}} .
+      # - docker push {{.Image}}

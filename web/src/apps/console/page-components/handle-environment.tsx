@@ -8,6 +8,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { NameIdView } from '../components/name-id-view';
 import { IDialog } from '../components/types.d';
+import { findClusterStatus } from '../hooks/use-cluster-status';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { IEnvironment } from '../server/gql/queries/environment-queries';
 import { parseName, parseNodes } from '../server/r-utils/common';
@@ -42,7 +43,7 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
       const data = parseNodes(byokClusters.data).map((c) => ({
         label: c.displayName,
         value: parseName(c),
-        ready: true,
+        ready: findClusterStatus(c),
         render: () => (
           <ClusterSelectItem label={c.displayName} value={parseName(c)} />
         ),
