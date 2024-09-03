@@ -873,6 +873,11 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	RegistryImageURL struct {
+		ScriptURL func(childComplexity int) int
+		URL       func(childComplexity int) int
+	}
+
 	Router struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
@@ -1095,7 +1100,7 @@ type QueryResolver interface {
 	CoreListImagePullSecrets(ctx context.Context, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error)
 	CoreGetImagePullSecret(ctx context.Context, name string) (*entities.ImagePullSecret, error)
 	CoreResyncImagePullSecret(ctx context.Context, name string) (bool, error)
-	CoreGetRegistryImageURL(ctx context.Context, image string, meta map[string]interface{}) (string, error)
+	CoreGetRegistryImageURL(ctx context.Context, image string, meta map[string]interface{}) (*model.RegistryImageURL, error)
 	CoreGetRegistryImage(ctx context.Context, image string) (*entities.RegistryImage, error)
 	CoreListRegistryImages(ctx context.Context, pq *repos.CursorPagination) (*model.RegistryImagePaginatedRecords, error)
 	CoreListApps(ctx context.Context, envName string, search *model.SearchApps, pq *repos.CursorPagination) (*model.AppPaginatedRecords, error)
@@ -5189,6 +5194,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RegistryImagePaginatedRecords.TotalCount(childComplexity), true
 
+	case "RegistryImageURL.scriptUrl":
+		if e.complexity.RegistryImageURL.ScriptURL == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageURL.ScriptURL(childComplexity), true
+
+	case "RegistryImageURL.url":
+		if e.complexity.RegistryImageURL.URL == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageURL.URL(childComplexity), true
+
 	case "Router.apiVersion":
 		if e.complexity.Router.APIVersion == nil {
 			break
@@ -5630,6 +5649,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPortIn,
 		ec.unmarshalInputRegistryImageCredentialsIn,
 		ec.unmarshalInputRegistryImageIn,
+		ec.unmarshalInputRegistryImageURLIn,
 		ec.unmarshalInputRouterIn,
 		ec.unmarshalInputSearchApps,
 		ec.unmarshalInputSearchClusterManagedService,
@@ -5862,7 +5882,7 @@ type Query {
 	core_getImagePullSecret(name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccount
 	core_resyncImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-	core_getRegistryImageURL(image: String!, meta: Map!): String! @isLoggedInAndVerified @hasAccount
+	core_getRegistryImageURL(image: String!, meta: Map!): RegistryImageURL! @isLoggedInAndVerified @hasAccount
 	core_getRegistryImage(image: String!,): RegistryImage @isLoggedInAndVerified @hasAccount
 	core_listRegistryImages(pq: CursorPaginationIn): RegistryImagePaginatedRecords @isLoggedInAndVerified @hasAccount
 
@@ -7223,6 +7243,17 @@ type RegistryImageCredentialsPaginatedRecords @shareable {
 input RegistryImageCredentialsIn {
   accountName: String!
   password: String!
+}
+
+`, BuiltIn: false},
+	{Name: "../struct-to-graphql/registryimageurl.graphqls", Input: `type RegistryImageURL @shareable {
+  scriptUrl: String!
+  url: String!
+}
+
+input RegistryImageURLIn {
+  scriptUrl: String!
+  url: String!
 }
 
 `, BuiltIn: false},
@@ -32582,10 +32613,10 @@ func (ec *executionContext) _Query_core_getRegistryImageURL(ctx context.Context,
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(string); ok {
+		if data, ok := tmp.(*model.RegistryImageURL); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/app/graph/model.RegistryImageURL`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -32597,9 +32628,9 @@ func (ec *executionContext) _Query_core_getRegistryImageURL(ctx context.Context,
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*model.RegistryImageURL)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNRegistryImageURL2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageURL(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_core_getRegistryImageURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -32609,7 +32640,13 @@ func (ec *executionContext) fieldContext_Query_core_getRegistryImageURL(ctx cont
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "scriptUrl":
+				return ec.fieldContext_RegistryImageURL_scriptUrl(ctx, field)
+			case "url":
+				return ec.fieldContext_RegistryImageURL_url(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RegistryImageURL", field.Name)
 		},
 	}
 	defer func() {
@@ -36712,6 +36749,94 @@ func (ec *executionContext) fieldContext_RegistryImagePaginatedRecords_totalCoun
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageURL_scriptUrl(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageURL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageURL_scriptUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScriptURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageURL_scriptUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageURL_url(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageURL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageURL_url(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageURL_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -44169,6 +44294,40 @@ func (ec *executionContext) unmarshalInputRegistryImageIn(ctx context.Context, o
 				return it, err
 			}
 			it.Meta = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRegistryImageURLIn(ctx context.Context, obj interface{}) (model.RegistryImageURLIn, error) {
+	var it model.RegistryImageURLIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"scriptUrl", "url"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "scriptUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scriptUrl"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ScriptURL = data
+		case "url":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.URL = data
 		}
 	}
 
@@ -52071,6 +52230,50 @@ func (ec *executionContext) _RegistryImagePaginatedRecords(ctx context.Context, 
 	return out
 }
 
+var registryImageURLImplementors = []string{"RegistryImageURL"}
+
+func (ec *executionContext) _RegistryImageURL(ctx context.Context, sel ast.SelectionSet, obj *model.RegistryImageURL) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, registryImageURLImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RegistryImageURL")
+		case "scriptUrl":
+			out.Values[i] = ec._RegistryImageURL_scriptUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "url":
+			out.Values[i] = ec._RegistryImageURL_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var routerImplementors = []string{"Router"}
 
 func (ec *executionContext) _Router(ctx context.Context, sel ast.SelectionSet, obj *entities.Router) graphql.Marshaler {
@@ -54741,6 +54944,20 @@ func (ec *executionContext) marshalNRegistryImageEdge2ᚖgithubᚗcomᚋkloudlit
 		return graphql.Null
 	}
 	return ec._RegistryImageEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRegistryImageURL2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageURL(ctx context.Context, sel ast.SelectionSet, v model.RegistryImageURL) graphql.Marshaler {
+	return ec._RegistryImageURL(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRegistryImageURL2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageURL(ctx context.Context, sel ast.SelectionSet, v *model.RegistryImageURL) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RegistryImageURL(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRouter2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx context.Context, sel ast.SelectionSet, v *entities.Router) graphql.Marshaler {

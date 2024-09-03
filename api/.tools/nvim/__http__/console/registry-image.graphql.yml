@@ -57,7 +57,10 @@ variables:
 label: Get Registry Image URL
 query: |+
   query Core_getRegistryImageURL($image: String!, $meta: Map!) {
-    core_getRegistryImageURL(image: $image, meta: $meta)
+    core_getRegistryImageURL(image: $image, meta: $meta) {
+      url
+      scriptUrl
+    }
   }
 variables:
   image: "{{.image}}"
