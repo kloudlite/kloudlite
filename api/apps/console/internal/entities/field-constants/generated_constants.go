@@ -200,6 +200,13 @@ const (
 	ManagedResourceRefNamespace = "namespace"
 )
 
+// constant vars generated for struct RegistryImage
+const (
+	RegistryImageImageName = "imageName"
+	RegistryImageImageTag  = "imageTag"
+	RegistryImageMeta      = "meta"
+)
+
 // constant vars generated for struct ResourceMapping
 const (
 	ResourceMappingBaseEntity                  = "BaseEntity"
