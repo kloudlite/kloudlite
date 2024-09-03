@@ -31,8 +31,8 @@ func processWebhooks(consumer WebhookConsumer, d domain.Domain, logger logging.L
 			AccountName: webhook.AccountName,
 			Meta:        webhook.Meta,
 		}
-		ctx := context.TODO()
-		_, err := d.CreateRegistryImage(ctx, hook.AccountName, hook.Image, hook.Meta)
+
+		_, err := d.CreateRegistryImage(context.TODO(), hook.AccountName, hook.Image, hook.Meta)
 		if err != nil {
 			logger.Errorf(err, "could not process image hook")
 			return errors.NewE(err)
