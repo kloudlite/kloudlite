@@ -1,0 +1,72 @@
+---
+global:
+  image: "test-image:t1.0.0"
+---
+
+label: List Registry Images
+query: |+ #graphql
+  query Core_listRegistryImages {
+    core_listRegistryImages {
+      edges {
+        cursor
+        node {
+          id
+          accountName
+          imageName
+          imageTag
+          meta
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPrevPage
+        startCursor
+      }
+      totalCount
+    }
+  }
+
+---
+
+label: Get Registry Image
+query: |+
+  query Core_getRegistryImage($image: String!) {
+    core_getRegistryImage(image: $image) {
+      accountName
+      imageName
+      imageTag
+      meta
+    }
+  }
+variables:
+  image: "{{.image}}"
+
+---
+
+label: Delete Registry Image
+query: |+
+  mutation Core_deleteRegistryImage($image: String!) {
+    core_deleteRegistryImage(image: $image)
+  }
+variables:
+  image: "{{.image}}"
+
+---
+
+label: Get Registry Image URL
+query: |+
+  query Core_getRegistryImageURL($image: String!, $meta: Map!) {
+    core_getRegistryImageURL(image: $image, meta: $meta) {
+      url
+      scriptUrl
+    }
+  }
+variables:
+  image: "{{.image}}"
+  meta:
+    registry: "github"
+    repository: "kloudlite/kloudlite-console"
+    tag: "latest"
+
+---

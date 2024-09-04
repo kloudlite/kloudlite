@@ -57,6 +57,8 @@ type domain struct {
 	importedMresRepo repos.DbRepo[*entities.ImportedManagedResource]
 	pullSecretsRepo  repos.DbRepo[*entities.ImagePullSecret]
 
+	registryImageRepo repos.DbRepo[*entities.RegistryImage]
+
 	serviceBindingRepo        repos.DbRepo[*entities.ServiceBinding]
 	clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService]
 
@@ -555,6 +557,7 @@ var Module = fx.Module("domain",
 		infraClient infra.InfraClient,
 
 		environmentRepo repos.DbRepo[*entities.Environment],
+		registryImageRepo repos.DbRepo[*entities.RegistryImage],
 
 		appRepo repos.DbRepo[*entities.App],
 		externalAppRepo repos.DbRepo[*entities.ExternalApp],
@@ -596,6 +599,7 @@ var Module = fx.Module("domain",
 			resourceMappingRepo:       resourceMappingRepo,
 			serviceBindingRepo:        serviceBindingRepo,
 			clusterManagedServiceRepo: clusterManagedServiceRepo,
+			registryImageRepo:         registryImageRepo,
 
 			envVars: ev,
 

@@ -8,14 +8,17 @@ import (
 type topicName string
 
 const (
-	GitWebhookTopicName    topicName = "events.webhooks.git"
-	AuditEventLogTopicName topicName = "events.audit.event-log"
-	NotificationTopicName  topicName = "events.notification"
+	GitWebhookTopicName              topicName = "events.webhooks.git"
+	AuditEventLogTopicName           topicName = "events.audit.event-log"
+	NotificationTopicName            topicName = "events.notification"
+	ImageRegistryHookTopicName       topicName = "events.webhooks.image"
+	ImageUpdateRegistryHookTopicName topicName = "events.webhooks.image-update"
 )
 
 const (
 	sendToAgentSubjectPrefix      = "send-to-agent"
 	receiveFromAgentSubjectPrefix = "receive-from-agent"
+	//receiveFromWebhookSubjectPrefix = "receive-from-webhook"
 )
 
 func SendToAgentSubjectPrefix(accountName string, clusterName string) string {
