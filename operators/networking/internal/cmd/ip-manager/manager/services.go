@@ -185,7 +185,7 @@ func (m *Manager) DeregisterService(ctx context.Context, namespace, name string)
 			m.logger.Info("service binding not found, already deleted", "svc", fmt.Sprintf("%s/%s", namespace, name))
 			return nil
 		}
-		return nil
+		return err
 	}
 
 	sb.Spec.ServiceIP = nil
