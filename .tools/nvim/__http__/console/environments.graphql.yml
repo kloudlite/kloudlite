@@ -76,7 +76,7 @@ query: |+ #graphql
 variables:
   env:
     displayName: Display Name of a sample environment
-    clusterName: "{{.gcpClusterName}}"
+    clusterName: "__kloudlite_enabled_cluster"
     metadata:
       name: "{{.envName}}"
     # spec:
@@ -121,12 +121,11 @@ variables:
 
 label: "delete environment"
 query: |+
-  mutation Core_deleteEnvironment($projectName: String!, $envName: String!) {
-    core_deleteEnvironment(projectName: $projectName, envName: $envName)
+  mutation Core_deleteEnvironment($envName: String!) {
+    core_deleteEnvironment(envName: $envName)
   }
 variables:
-  projectName: "{{.projectName}}"
-  envName: "{{.clonedEnvName}}"
+  envName: "{{.envName}}"
 ---
 
 ---

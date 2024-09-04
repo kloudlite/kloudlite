@@ -106,13 +106,6 @@ func (g *grpcHandler) handleMessage(gctx context.Context, msg t.AgentMessage) er
 	switch msg.Action {
 	case t.ActionApply:
 		{
-			ann := obj.GetAnnotations()
-			if ann == nil {
-				ann = make(map[string]string, 2)
-			}
-
-			obj.SetAnnotations(ann)
-
 			b, err := yaml.Marshal(msg.Object)
 			if err != nil {
 				return g.handleErrorOnApply(ctx, err, msg)

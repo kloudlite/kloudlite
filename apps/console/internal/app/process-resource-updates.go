@@ -12,6 +12,7 @@ import (
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	msgOfficeT "github.com/kloudlite/api/apps/message-office/types"
+	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/messaging"
@@ -141,6 +142,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		switch gvkStr {
 		case environmentGVK.String():
 			{
+				dctx.AccountName = rwu.Object.GetLabels()[constants.AccountNameKey]
 				var ws entities.Environment
 				if err := fn.JsonConversion(rwu.Object, &ws); err != nil {
 					return errors.NewE(err)
@@ -153,10 +155,17 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			}
 		case appsGVK.String():
 			{
+				if ru.AccountName == "nxt-multi-tenancy" {
+				}
+
+				dctx.AccountName = rwu.Object.GetLabels()[constants.AccountNameKey]
+
 				var app entities.App
 				if err := fn.JsonConversion(rwu.Object, &app); err != nil {
 					return errors.NewE(err)
 				}
+
+				// rctx := domain.ResourceContext{ConsoleContext: dctx, EnvironmentName: rwu.Object.GetLabels()[constants.EnvNameKey]}
 
 				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, ru.ClusterName, obj)
 				if err != nil {

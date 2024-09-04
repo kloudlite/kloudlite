@@ -1,6 +1,7 @@
 ---
 global:
   name: sample-app
+  envName: "test-env"
 ---
 
 label: List Apps
@@ -117,9 +118,7 @@ variables:
       name: '{{.name}}'
     spec:
       services:
-        - type: tcp
-          port: 80
-          targetPort: 80
+        - port: 80
       containers:
         - name: main
           image: kong/httpbin

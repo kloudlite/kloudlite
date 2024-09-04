@@ -11,9 +11,8 @@ type Env struct {
 
 	DNSAddr            string `env:"DNS_ADDR" required:"true"`
 	KloudliteDNSSuffix string `env:"KLOUDLITE_DNS_SUFFIX" required:"true"`
-
-	ConsoleDBUri  string `env:"MONGO_URI" required:"true"`
-	ConsoleDBName string `env:"MONGO_DB_NAME" required:"true"`
+	ConsoleDBUri       string `env:"MONGO_URI" required:"true"`
+	ConsoleDBName      string `env:"MONGO_DB_NAME" required:"true"`
 
 	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
 	ClusterCookieName string `env:"CLUSTER_COOKIE_NAME" required:"true"`
@@ -24,14 +23,17 @@ type Env struct {
 	WebhookTokenHashingSecret  string `env:"WEBHOOK_TOKEN_HASHING_SECRET" required:"true"`
 	WebhookURL                 string `env:"WEBHOOK_URL" required:"true"`
 
-	IAMGrpcAddr   string `env:"IAM_GRPC_ADDR" required:"true"`
-	InfraGrpcAddr string `env:"INFRA_GRPC_ADDR" required:"true"`
+	IAMGrpcAddr                   string `env:"IAM_GRPC_ADDR" required:"true"`
+	InfraGrpcAddr                 string `env:"INFRA_GRPC_ADDR" required:"true"`
+	MessageOfficeInternalGRPCAddr string `env:"MESSAGE_OFFICE_INTERNAL_GRPC_ADDR" required:"true"`
+	AccountGRPCAddr               string `env:"ACCOUNT_GRPC_ADDR" required:"true"`
 
 	PromHttpAddr         string `env:"PROM_HTTP_ADDR" required:"true"`
 	SessionKVBucket      string `env:"SESSION_KV_BUCKET" required:"true"`
 	ConsoleCacheKVBucket string `env:"CONSOLE_CACHE_KV_BUCKET" required:"true"`
 	IsDev                bool
-	KubernetesApiProxy   string `env:"KUBERNETES_API_PROXY"`
+
+	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY" default:"localhost:8080"`
 
 	DeviceNamespace string `env:"DEVICE_NAMESPACE" required:"true"`
 }
