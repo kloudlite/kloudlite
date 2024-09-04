@@ -696,6 +696,46 @@ func (repo *dbRepo[T]) MergeMatchFilters(filter Filter, matchFilters ...map[stri
 	return filter
 }
 
+type GroupByAndCountOptions struct {
+	Limit int64
+	Sort  SortDirection
+}
+
+func (repo *dbRepo[T]) GroupByAndCount(ctx context.Context, filter Filter, groupBy string, opts GroupByAndCountOptions) (map[string]int64, error) {
+	agg := make([]bson.M, 0, 4)
+	if filter != nil {
+		agg = append(agg, bson.M{"$match": filter})
+	}
+
+	agg = append(agg,
+		bson.M{
+			"$group": bson.M{
+				"_id":   "$" + groupBy,
+				"count": bson.M{"$sum": 1},
+			},
+		},
+		bson.M{"$sort": bson.M{"count": opts.Sort.Int()}},
+		bson.M{"$limit": opts.Limit},
+	)
+
+	records, err := repo.db.Collection(repo.collectionName).Aggregate(ctx, agg)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	var data []bson.M
+	if err := records.Decode(&data); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	result := make(map[string]int64, len(data))
+	for _, v := range data {
+		result[v["_id"].(string)] = v["count"].(int64)
+	}
+
+	return result, nil
+}
+
 type MongoRepoOptions struct {
 	IndexFields []string
 }

@@ -3,8 +3,9 @@ package app
 import (
 	"context"
 	"errors"
-	errors2 "github.com/kloudlite/operator/pkg/errors"
 	"time"
+
+	errors2 "github.com/kloudlite/operator/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"

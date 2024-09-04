@@ -10,6 +10,7 @@ import (
 
 	"github.com/kloudlite/api/pkg/logging"
 
+	mo_errors "github.com/kloudlite/api/apps/message-office/errors"
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/common"
@@ -20,6 +21,7 @@ import (
 
 	"github.com/kloudlite/api/constants"
 
+	platform_edge "github.com/kloudlite/api/apps/message-office/protobufs/platform-edge"
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"go.uber.org/fx"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -43,8 +45,10 @@ type domain struct {
 
 	producer MessageDispatcher
 
-	iamClient   iam.IAMClient
-	infraClient infra.InfraClient
+	iamClient          iam.IAMClient
+	infraClient        infra.InfraClient
+	platformEdgeClient platform_edge.PlatformEdgeClient
+	AccountsSvc
 
 	environmentRepo repos.DbRepo[*entities.Environment]
 
@@ -99,6 +103,7 @@ func addTrackingId(obj client.Object, id repos.ID) {
 
 type K8sContext interface {
 	context.Context
+	GetUserId() repos.ID
 	GetAccountName() string
 }
 
@@ -142,9 +147,12 @@ func (d *domain) applyK8sResourceOnCluster(ctx K8sContext, clusterName string, o
 	return errors.NewE(err)
 }
 
-// func (d *domain) applyK8sResource(ctx K8sContext, clusterName string, obj client.Object, recordVersion int) error {|}
-
 func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Object, recordVersion int) error {
+	var dispatchAddr struct {
+		AccountName string
+		ClusterName string
+	}
+
 	clusterName, err := d.getClusterAttachedToEnvironment(ctx, envName)
 	if err != nil {
 		return errors.NewE(err)
@@ -155,9 +163,54 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 		return nil
 	}
 
+	switch *clusterName {
+	case "__kloudlite_enabled_cluster":
+		{
+			// dispatchAddr.AccountName = "kloudlite-edge-platform"
+			// dispatchAddr.ClusterName = "kl-edge-1"
+
+			allocatedEdge, err := d.platformEdgeClient.GetAllocatedPlatformEdgeCluster(ctx, &platform_edge.GetAllocatedPlatformEdgeClusterIn{AccountName: ctx.GetAccountName()})
+			if err != nil {
+				if !errors.Is(err, mo_errors.ErrEdgeClusterNotAllocated) {
+					return errors.NewEf(err, "failed to get allocated edge cluster")
+				}
+
+				// INFO: not allocated, allocating a new one
+				accountRegion, err := d.GetAccountRegion(ctx, string(ctx.GetUserId()), ctx.GetAccountName())
+				if err != nil {
+					return errors.NewEf(err, "failed to get account region")
+				}
+
+				allocatedEdge, err = d.platformEdgeClient.AllocatePlatformEdgeCluster(ctx, &platform_edge.AllocatePlatformEdgeClusterIn{
+					Region:      accountRegion,
+					AccountName: ctx.GetAccountName(),
+				})
+				if err != nil {
+					return errors.NewEf(err, "failed to allocate platform edge cluster")
+				}
+			}
+
+			dispatchAddr.AccountName = allocatedEdge.OwnedByAccount
+			dispatchAddr.ClusterName = allocatedEdge.ClusterName
+		}
+	default:
+		{
+			dispatchAddr.AccountName = ctx.GetAccountName()
+			dispatchAddr.ClusterName = *clusterName
+		}
+	}
+
 	if obj.GetObjectKind().GroupVersionKind().Empty() {
 		return errors.Newf("object GVK is not set, can not apply")
 	}
+
+	labels := obj.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string, 2)
+	}
+	labels[constants.AccountNameKey] = ctx.GetAccountName()
+	labels[constants.EnvNameKey] = envName
+	obj.SetLabels(labels)
 
 	ann := obj.GetAnnotations()
 	if ann == nil {
@@ -170,9 +223,10 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	b, err := json.Marshal(t.AgentMessage{
-		AccountName: ctx.GetAccountName(),
-		ClusterName: *clusterName,
+		AccountName: dispatchAddr.AccountName,
+		ClusterName: dispatchAddr.ClusterName,
 		Action:      t.ActionApply,
 		Object:      m,
 	})
@@ -180,7 +234,7 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 		return errors.NewE(err)
 	}
 
-	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), *clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
+	subject := common.SendToAgentSubjectName(dispatchAddr.AccountName, dispatchAddr.ClusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: subject,
@@ -311,6 +365,28 @@ func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj c
 		return ErrNoClusterAttached
 	}
 
+	var dispatchAddr struct {
+		AccountName string
+		ClusterName string
+	}
+
+	switch *clusterName {
+	case "__kloudlite_enabled_cluster":
+		{
+			// dispatchAddr.AccountName = "kloudlite-edge-platform"
+			// dispatchAddr.ClusterName = "kl-edge-1"
+
+			dispatchAddr.AccountName = "nxt-multi-tenancy"
+			dispatchAddr.ClusterName = "sample"
+		}
+	default:
+		{
+
+			dispatchAddr.AccountName = ctx.GetAccountName()
+			dispatchAddr.ClusterName = *clusterName
+		}
+	}
+
 	if obj.GetObjectKind().GroupVersionKind().Empty() {
 		return errors.Newf("object GVK is not set, can not apply")
 	}
@@ -320,8 +396,8 @@ func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj c
 		return errors.NewE(err)
 	}
 	b, err := json.Marshal(t.AgentMessage{
-		AccountName: ctx.GetAccountName(),
-		ClusterName: *clusterName,
+		AccountName: dispatchAddr.AccountName,
+		ClusterName: dispatchAddr.ClusterName,
 		Action:      t.ActionDelete,
 		Object:      m,
 	})
@@ -329,7 +405,7 @@ func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj c
 		return errors.NewE(err)
 	}
 
-	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), *clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
+	subject := common.SendToAgentSubjectName(dispatchAddr.AccountName, dispatchAddr.ClusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: subject,
@@ -555,6 +631,8 @@ var Module = fx.Module("domain",
 
 		iamClient iam.IAMClient,
 		infraClient infra.InfraClient,
+		platformEdgeClient platform_edge.PlatformEdgeClient,
+		accountsSvc AccountsSvc,
 
 		environmentRepo repos.DbRepo[*entities.Environment],
 		registryImageRepo repos.DbRepo[*entities.RegistryImage],
@@ -583,9 +661,12 @@ var Module = fx.Module("domain",
 
 			producer: producer,
 
-			iamClient:   iamClient,
-			infraClient: infraClient,
-			logger:      logger,
+			iamClient:          iamClient,
+			infraClient:        infraClient,
+			platformEdgeClient: platformEdgeClient,
+			AccountsSvc:        accountsSvc,
+
+			logger: logger,
 
 			environmentRepo:           environmentRepo,
 			appRepo:                   appRepo,
@@ -606,5 +687,4 @@ var Module = fx.Module("domain",
 			resourceEventPublisher: resourceEventPublisher,
 			consoleCacheStore:      consoleCacheStore,
 		}
-	}),
-)
+	}))
