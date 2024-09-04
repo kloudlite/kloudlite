@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/apis/crds/v1"
@@ -753,6 +754,54 @@ type Port struct {
 type Query struct {
 }
 
+type RegistryImageCredentials struct {
+	AccountName       string                     `json:"accountName"`
+	CreatedBy         *common.CreatedOrUpdatedBy `json:"createdBy"`
+	CreationTime      string                     `json:"creationTime"`
+	ID                repos.ID                   `json:"id"`
+	MarkedForDeletion *bool                      `json:"markedForDeletion,omitempty"`
+	Password          string                     `json:"password"`
+	RecordVersion     int                        `json:"recordVersion"`
+	UpdateTime        string                     `json:"updateTime"`
+}
+
+type RegistryImageCredentialsEdge struct {
+	Cursor string                    `json:"cursor"`
+	Node   *RegistryImageCredentials `json:"node"`
+}
+
+type RegistryImageCredentialsIn struct {
+	AccountName string `json:"accountName"`
+	Password    string `json:"password"`
+}
+
+type RegistryImageCredentialsPaginatedRecords struct {
+	Edges      []*RegistryImageCredentialsEdge `json:"edges"`
+	PageInfo   *PageInfo                       `json:"pageInfo"`
+	TotalCount int                             `json:"totalCount"`
+}
+
+type RegistryImageEdge struct {
+	Cursor string                  `json:"cursor"`
+	Node   *entities.RegistryImage `json:"node"`
+}
+
+type RegistryImagePaginatedRecords struct {
+	Edges      []*RegistryImageEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount int                  `json:"totalCount"`
+}
+
+type RegistryImageURL struct {
+	ScriptURL string `json:"scriptUrl"`
+	URL       string `json:"url"`
+}
+
+type RegistryImageURLIn struct {
+	ScriptURL string `json:"scriptUrl"`
+	URL       string `json:"url"`
+}
+
 type RouterEdge struct {
 	Cursor string           `json:"cursor"`
 	Node   *entities.Router `json:"node"`
@@ -824,6 +873,10 @@ type SearchProjects struct {
 	Text              *repos.MatchFilter `json:"text,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
 	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
+}
+
+type SearchRegistryImages struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type SearchRouters struct {

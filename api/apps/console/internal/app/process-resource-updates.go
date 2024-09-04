@@ -23,7 +23,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type ResourceUpdateConsumer messaging.Consumer
+type (
+	ResourceUpdateConsumer messaging.Consumer
+	WebhookConsumer        messaging.Consumer
+)
 
 func newResourceContext(ctx domain.ConsoleContext, environmentName string) domain.ResourceContext {
 	return domain.ResourceContext{

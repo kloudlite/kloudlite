@@ -91,6 +91,7 @@ var (
 	errNilConfig                  = errors.Newf("config obj is nil")
 	errNilSecret                  = errors.Newf("secret obj is nil")
 	errNilEnvironment             = errors.Newf("environment obj is nil")
+	errNilRegistryImage           = errors.Newf("registry image obj is nil")
 	errNilVPNDevice               = errors.Newf("vpn device obj is nil")
 	errNilImagePullSecret         = errors.Newf("imagePullSecret obj is nil")
 	errNilManagedResource         = errors.Newf("managed resource obj is nil")

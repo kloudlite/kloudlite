@@ -1,0 +1,10 @@
+type RegistryImageURL @shareable {
+  scriptUrl: String!
+  url: String!
+}
+
+input RegistryImageURLIn {
+  scriptUrl: String!
+  url: String!
+}
+
