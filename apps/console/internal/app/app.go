@@ -73,6 +73,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.ResourceMapping]("resource_mappings", "rmap", entities.ResourceMappingIndices),
 	repos.NewFxMongoRepo[*entities.ServiceBinding]("service_bindings", "svcb", entities.ServiceBindingIndexes),
 	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cluster_managed_services", "cmsvc", entities.ClusterManagedServiceIndices),
+	repos.NewFxMongoRepo[*entities.RegistryImage]("registry_images", "reg_img", entities.RegistryImageIndexes),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -182,6 +183,37 @@ var Module = fx.Module("app",
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go ProcessErrorOnApply(consumer, d, logger)
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.Stop(ctx)
+			},
+		})
+	}),
+
+	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (WebhookConsumer, error) {
+		topic := string(common.ImageRegistryHookTopicName)
+		consumerName := "console:webhook"
+		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
+			Stream: ev.EventsNatsStream,
+			ConsumerConfig: msg_nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer reads message from a subject dedicated to console registry webhooks",
+				FilterSubjects: []string{topic},
+			},
+		})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, consumer WebhookConsumer, d domain.Domain, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go func() {
+					err := processWebhooks(consumer, d, logger)
+					if err != nil {
+						logger.Errorf(err, "could not process webhooks")
+					}
+				}()
 				return nil
 			},
 			OnStop: func(ctx context.Context) error {
