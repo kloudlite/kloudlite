@@ -27,4 +27,6 @@ var Module = fx.Module(
 	domain.Module,
 
 	LoadGitWebhook(),
+
+	LoadImageHook(),
 )
