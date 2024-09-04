@@ -23,8 +23,9 @@ type DbRepo[T repos.Entity] struct {
 	MockFindById               func(ctx context.Context, id repos.ID) (T, error)
 	MockFindOne                func(ctx context.Context, filter repos.Filter) (T, error)
 	MockFindPaginated          func(ctx context.Context, filter repos.Filter, pagination repos.CursorPagination) (*repos.PaginatedRecord[T], error)
+	MockGroupByAndCount        func(ctx context.Context, filter repos.Filter, groupBy string, opts repos.GroupByAndCountOptions) (map[string]int64, error)
 	MockIndexFields            func(ctx context.Context, indices []repos.IndexField) error
-	MockMergeMatchFilters      func(filter repos.Filter, matchFilters map[string]repos.MatchFilter) repos.Filter
+	MockMergeMatchFilters      func(filter repos.Filter, matchFilters ...map[string]repos.MatchFilter) repos.Filter
 	MockNewId                  func() repos.ID
 	MockPatch                  func(ctx context.Context, filter repos.Filter, patch repos.Document, opts ...repos.UpdateOpts) (T, error)
 	MockPatchById              func(ctx context.Context, id repos.ID, patch repos.Document, opts ...repos.UpdateOpts) (T, error)
@@ -139,6 +140,14 @@ func (dMock *DbRepo[T]) FindPaginated(ctx context.Context, filter repos.Filter, 
 	panic("DbRepo[T]: method 'FindPaginated' not implemented, yet")
 }
 
+func (dMock *DbRepo[T]) GroupByAndCount(ctx context.Context, filter repos.Filter, groupBy string, opts repos.GroupByAndCountOptions) (map[string]int64, error) {
+	if dMock.MockGroupByAndCount != nil {
+		dMock.registerCall("GroupByAndCount", ctx, filter, groupBy, opts)
+		return dMock.MockGroupByAndCount(ctx, filter, groupBy, opts)
+	}
+	panic("DbRepo[T]: method 'GroupByAndCount' not implemented, yet")
+}
+
 func (dMock *DbRepo[T]) IndexFields(ctx context.Context, indices []repos.IndexField) error {
 	if dMock.MockIndexFields != nil {
 		dMock.registerCall("IndexFields", ctx, indices)
@@ -147,10 +156,10 @@ func (dMock *DbRepo[T]) IndexFields(ctx context.Context, indices []repos.IndexFi
 	panic("DbRepo[T]: method 'IndexFields' not implemented, yet")
 }
 
-func (dMock *DbRepo[T]) MergeMatchFilters(filter repos.Filter, matchFilters map[string]repos.MatchFilter) repos.Filter {
+func (dMock *DbRepo[T]) MergeMatchFilters(filter repos.Filter, matchFilters ...map[string]repos.MatchFilter) repos.Filter {
 	if dMock.MockMergeMatchFilters != nil {
 		dMock.registerCall("MergeMatchFilters", filter, matchFilters)
-		return dMock.MockMergeMatchFilters(filter, matchFilters)
+		return dMock.MockMergeMatchFilters(filter, matchFilters...)
 	}
 	panic("DbRepo[T]: method 'MergeMatchFilters' not implemented, yet")
 }

@@ -2,39 +2,45 @@ package domain
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/kloudlite/api/pkg/errors"
 	"go.uber.org/fx"
 
+	platform_edge "github.com/kloudlite/api/apps/message-office/internal/domain/platform-edge"
 	"github.com/kloudlite/api/apps/message-office/internal/env"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
+type PlatformEdgeDomain struct {
+	*platform_edge.Repo
+}
+
 type domain struct {
-	moRepo          repos.DbRepo[*MessageOfficeToken]
-	env             *env.Env
-	accessTokenRepo repos.DbRepo[*AccessToken]
-	logger          logging.Logger
+	moRepo repos.DbRepo[*MessageOfficeToken]
+	env    *env.Env
+	logger *slog.Logger
+
+	PlatformEdgeDomain
 }
 
-func (d *domain) ValidateAccessToken(ctx context.Context, accessToken string, accountName string, clusterName string) error {
-	r, err := d.accessTokenRepo.FindOne(ctx, repos.Filter{
-		"accessToken": accessToken,
-		"accountName": accountName,
-		"clusterName": clusterName,
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	if r == nil {
-		return errors.Newf("invalid access token")
-	}
-
-	return nil
-}
+// func (d *domain) ValidateAccessToken(ctx context.Context, accessToken string, accountName string, clusterName string) error {
+// 	r, err := d.accessTokenRepo.FindOne(ctx, repos.Filter{
+// 		"accessToken": accessToken,
+// 		"accountName": accountName,
+// 		"clusterName": clusterName,
+// 	})
+// 	if err != nil {
+// 		return errors.NewE(err)
+// 	}
+//
+// 	if r == nil {
+// 		return errors.Newf("invalid access token")
+// 	}
+//
+// 	return nil
+// }
 
 func (d *domain) getClusterToken(ctx context.Context, accountName string, clusterName string) (string, error) {
 	if accountName == "" || clusterName == "" {
@@ -84,55 +90,56 @@ func (d *domain) GenClusterToken(ctx context.Context, accountName, clusterName s
 	return record.Token, nil
 }
 
-func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (*AccessToken, error) {
-	mot, err := d.moRepo.FindOne(ctx, repos.Filter{"token": clusterToken})
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if mot == nil {
-		return nil, errors.Newf("no such cluster token found")
-	}
-
-	if mot.Granted != nil && *mot.Granted {
-		d.logger.Infof("a valid access-token has already been issued for this cluster token, granting a new one, and removing the old one")
-	}
-
-	record, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{
-		"accountName": mot.AccountName,
-		"clusterName": mot.ClusterName,
-	}, &AccessToken{
-		AccountName: mot.AccountName,
-		ClusterName: mot.ClusterName,
-		AccessToken: fn.CleanerNanoidOrDie(40),
-	})
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if record == nil {
-		return nil, errors.Newf("failed to upsert into accessToken collection")
-	}
-
-	mot.Granted = fn.New(true)
-	if _, err := d.moRepo.UpdateById(ctx, mot.Id, mot); err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return record, nil
-}
+// func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (*AccessToken, error) {
+// 	mot, err := d.moRepo.FindOne(ctx, repos.Filter{"token": clusterToken})
+// 	if err != nil {
+// 		return nil, errors.NewE(err)
+// 	}
+//
+// 	if mot == nil {
+// 		return nil, errors.Newf("no such cluster token found")
+// 	}
+//
+// 	if mot.Granted != nil && *mot.Granted {
+// 		d.logger.Infof("a valid access-token has already been issued for this cluster token, granting a new one, and removing the old one")
+// 	}
+//
+// 	record, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{
+// 		"accountName": mot.AccountName,
+// 		"clusterName": mot.ClusterName,
+// 	}, &AccessToken{
+// 		AccountName: mot.AccountName,
+// 		ClusterName: mot.ClusterName,
+// 		AccessToken: fn.CleanerNanoidOrDie(40),
+// 	})
+// 	if err != nil {
+// 		return nil, errors.NewE(err)
+// 	}
+//
+// 	if record == nil {
+// 		return nil, errors.Newf("failed to upsert into accessToken collection")
+// 	}
+//
+// 	mot.Granted = fn.New(true)
+// 	if _, err := d.moRepo.UpdateById(ctx, mot.Id, mot); err != nil {
+// 		return nil, errors.NewE(err)
+// 	}
+//
+// 	return record, nil
+// }
 
 var Module = fx.Module(
 	"domain",
 	fx.Provide(func(
 		moRepo repos.DbRepo[*MessageOfficeToken],
-		accessTokenRepo repos.DbRepo[*AccessToken],
-		logger logging.Logger,
+		// accessTokenRepo repos.DbRepo[*AccessToken],
+		logger *slog.Logger,
 	) Domain {
 		return &domain{
-			moRepo:          moRepo,
-			accessTokenRepo: accessTokenRepo,
-			logger:          logger,
+			moRepo: moRepo,
+			// accessTokenRepo: accessTokenRepo,
+			logger:             logger,
+			PlatformEdgeDomain: PlatformEdgeDomain{Repo: &platform_edge.Repo{}},
 		}
 	}),
 )
