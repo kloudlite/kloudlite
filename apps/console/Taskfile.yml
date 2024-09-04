@@ -55,6 +55,7 @@ tasks:
     cmds:
       - go build -o bin/console ./main.go
       - ./bin/console --dev
+      # - go run . --dev
 
   gen:constants:
     cmds:
