@@ -10,7 +10,7 @@ require (
 	github.com/charmbracelet/bubbles v0.17.1
 	github.com/charmbracelet/bubbletea v0.25.0
 	github.com/charmbracelet/gum v0.13.0
-	github.com/docker/docker v27.0.0+incompatible
+	github.com/docker/docker v27.2.0+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/jedib0t/go-pretty/v6 v6.4.9
 	github.com/koki-develop/go-fzf v0.15.0
