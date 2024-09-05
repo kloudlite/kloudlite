@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/kloudlite/api/pkg/grpc"
 	"github.com/kloudlite/api/pkg/kv"
 
 	"github.com/kloudlite/api/pkg/logging"
@@ -171,7 +172,12 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 
 			allocatedEdge, err := d.platformEdgeClient.GetAllocatedPlatformEdgeCluster(ctx, &platform_edge.GetAllocatedPlatformEdgeClusterIn{AccountName: ctx.GetAccountName()})
 			if err != nil {
-				if !errors.Is(err, mo_errors.ErrEdgeClusterNotAllocated) {
+				gErr := grpc.ParseErr(err)
+				if gErr == nil {
+					return errors.NewEf(err, "failed to get allocated edge cluster")
+				}
+
+				if gErr.GetMessage() != mo_errors.ErrEdgeClusterNotAllocated.Error() {
 					return errors.NewEf(err, "failed to get allocated edge cluster")
 				}
 
@@ -289,6 +295,11 @@ func applyK8sResource(ctx K8sContext, args ApplyK8sResourceArgs) error {
 }
 
 func (d *domain) restartK8sResource(ctx K8sContext, projectName string, namespace string, labels map[string]string) error {
+	var dispatchAddr struct {
+		AccountName string
+		ClusterName string
+	}
+
 	clusterName, err := d.getClusterAttachedToEnvironment(ctx, projectName)
 	if err != nil {
 		return errors.NewE(err)
@@ -296,6 +307,25 @@ func (d *domain) restartK8sResource(ctx K8sContext, projectName string, namespac
 
 	if clusterName == nil || *clusterName == "" {
 		return nil
+	}
+
+	switch *clusterName {
+	case "__kloudlite_enabled_cluster":
+		{
+			allocatedEdge, err := d.platformEdgeClient.GetAllocatedPlatformEdgeCluster(ctx, &platform_edge.GetAllocatedPlatformEdgeClusterIn{AccountName: ctx.GetAccountName()})
+			if err != nil {
+				return errors.NewEf(err, "failed to get allocated edge cluster")
+			}
+
+			dispatchAddr.AccountName = allocatedEdge.OwnedByAccount
+			dispatchAddr.ClusterName = allocatedEdge.ClusterName
+		}
+	default:
+		{
+
+			dispatchAddr.AccountName = ctx.GetAccountName()
+			dispatchAddr.ClusterName = *clusterName
+		}
 	}
 
 	obj := unstructured.Unstructured{
@@ -317,7 +347,7 @@ func (d *domain) restartK8sResource(ctx K8sContext, projectName string, namespac
 		return errors.NewE(err)
 	}
 
-	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), *clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
+	subject := common.SendToAgentSubjectName(dispatchAddr.AccountName, dispatchAddr.ClusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: subject,
@@ -355,6 +385,11 @@ func (d *domain) deleteK8sResourceOfCluster(ctx K8sContext, clusterName string, 
 }
 
 func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj client.Object) error {
+	var dispatchAddr struct {
+		AccountName string
+		ClusterName string
+	}
+
 	clusterName, err := d.getClusterAttachedToEnvironment(ctx, environmentName)
 	if err != nil {
 		return ErrNoClusterAttached
@@ -365,19 +400,16 @@ func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj c
 		return ErrNoClusterAttached
 	}
 
-	var dispatchAddr struct {
-		AccountName string
-		ClusterName string
-	}
-
 	switch *clusterName {
 	case "__kloudlite_enabled_cluster":
 		{
-			// dispatchAddr.AccountName = "kloudlite-edge-platform"
-			// dispatchAddr.ClusterName = "kl-edge-1"
+			allocatedEdge, err := d.platformEdgeClient.GetAllocatedPlatformEdgeCluster(ctx, &platform_edge.GetAllocatedPlatformEdgeClusterIn{AccountName: ctx.GetAccountName()})
+			if err != nil {
+				return errors.NewEf(err, "failed to get allocated edge cluster")
+			}
 
-			dispatchAddr.AccountName = "nxt-multi-tenancy"
-			dispatchAddr.ClusterName = "sample"
+			dispatchAddr.AccountName = allocatedEdge.OwnedByAccount
+			dispatchAddr.ClusterName = allocatedEdge.ClusterName
 		}
 	default:
 		{

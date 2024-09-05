@@ -47,27 +47,40 @@ tasks:
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
-  run:
-    dotenv:
-      - .secrets/env
-    env:
-      CGO_ENABLED: 0
-    cmds:
-      - go build -o bin/console ./main.go
-      - ./bin/console --dev
-      # - go run . --dev
-
   gen:constants:
     cmds:
       - go generate ./internal/entities/field-constants/gen.go
 
   build:
+    vars:
+      platform_GOARCH:
+        sh: go env GOARCH
+      GOARCH: "{{ .GOARCH | default .platform_GOARCH }}"
     cmds:
       - task: gen:constants
       - task: go:build
         vars:
           out: "{{.binary}}-{{.GOARCH}}"
           GOARCH: "{{.GOARCH}}"
+
+  run:
+    dotenv:
+      - .secrets/env
+    vars:
+      binary: '{{.binary | default "false"}}'
+    env:
+      CGO_ENABLED: 0
+    silent: false
+    cmds:
+      - |+
+        if [ "{{.binary}}" = "true" ]; then
+          task build
+          ./bin/console-$(go env GOARCH) --debug
+        else
+        echo "running go run"
+          go run ./main.go --dev
+        fi
+
 
   container:build-and-push:
     requires:
