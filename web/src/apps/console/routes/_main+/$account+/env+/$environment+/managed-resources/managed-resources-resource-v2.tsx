@@ -1,5 +1,5 @@
 import { useOutletContext, useParams } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
@@ -137,16 +137,16 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
   const { cluster } = useOutletContext<IEnvironmentContext>();
   const { clusters } = useClusterStatusV2();
 
-  const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
-    Record<string, boolean>
-  >({});
-  useEffect(() => {
-    const states: Record<string, boolean> = {};
-    Object.entries(clusters).forEach(([key, value]) => {
-      states[key] = findClusterStatus(value);
-    });
-    setClusterOnlineStatus(states);
-  }, [clusters]);
+  // const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
+  //   Record<string, boolean>
+  // >({});
+  // useEffect(() => {
+  //   const states: Record<string, boolean> = {};
+  //   Object.entries(clusters).forEach(([key, value]) => {
+  //     states[key] = findClusterStatus(value);
+  //   });
+  //   setClusterOnlineStatus(states);
+  // }, [clusters]);
 
   return (
     <ListV2.Root
@@ -195,7 +195,10 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
         ],
         rows: items.map((i) => {
           const { name, id, logo, updateInfo } = parseItem(i, templates);
-          const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
+          // const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
+          const isClusterOnline = findClusterStatus(
+            clusters[parseName(cluster)]
+          );
 
           return {
             columns: {

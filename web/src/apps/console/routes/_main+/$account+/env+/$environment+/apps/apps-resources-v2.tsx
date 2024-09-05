@@ -1,5 +1,5 @@
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import TooltipV2 from '~/components/atoms/tooltipV2';
 import { toast } from '~/components/molecule/toast';
@@ -34,7 +34,7 @@ import {
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
-  parseName as pn,
+  parseName as pn
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/lib/client/helpers/reloader';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
@@ -243,16 +243,16 @@ const ListView = ({ items = [], onAction }: IResource) => {
     useOutletContext<IEnvironmentContext>();
   const { clusters } = useClusterStatusV2();
 
-  const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
-    Record<string, boolean>
-  >({});
-  useEffect(() => {
-    const states: Record<string, boolean> = {};
-    Object.entries(clusters).forEach(([key, value]) => {
-      states[key] = findClusterStatus(value);
-    });
-    setClusterOnlineStatus(states);
-  }, [clusters]);
+  // const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
+  //   Record<string, boolean>
+  // >({});
+  // useEffect(() => {
+  //   const states: Record<string, boolean> = {};
+  //   Object.entries(clusters).forEach(([key, value]) => {
+  //     states[key] = findClusterStatus(value);
+  //   });
+  //   setClusterOnlineStatus(states);
+  // }, [clusters]);
 
   return (
     <ListV2.Root
@@ -306,7 +306,10 @@ const ListView = ({ items = [], onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
+          // const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
+          const isClusterOnline = findClusterStatus(
+            clusters[parseName(cluster)]
+          );
 
           const { name, id, updateInfo } = parseItem(i);
           return {
@@ -399,10 +402,9 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
       }
       // toast.success('app intercepted successfully');
       toast.success(
-        `${
-          intercept
-            ? 'App Intercepted successfully'
-            : 'App Intercept removed successfully'
+        `${intercept
+          ? 'App Intercepted successfully'
+          : 'App Intercept removed successfully'
         }`
       );
       reload();
