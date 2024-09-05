@@ -12,8 +12,8 @@ import (
 )
 
 type Repo struct {
-	edge_clusters      repos.DbRepo[*entities.PlatformEdgeCluster]
-	allocated_clusters repos.DbRepo[*entities.ClusterAllocation]
+	EdgeClusters      repos.DbRepo[*entities.PlatformEdgeCluster]
+	AllocatedClusters repos.DbRepo[*entities.ClusterAllocation]
 }
 
 func (r *Repo) ListPlatformEdgeClusters(ctx context.Context, region *string) ([]*entities.PlatformEdgeCluster, error) {
@@ -23,11 +23,11 @@ func (r *Repo) ListPlatformEdgeClusters(ctx context.Context, region *string) ([]
 			fc.PlatformEdgeClusterRegion: region,
 		}
 	}
-	return r.edge_clusters.Find(ctx, q)
+	return r.EdgeClusters.Find(ctx, q)
 }
 
 func (r *Repo) AllocatePlatformEdgeCluster(ctx context.Context, region string, account string) (*entities.PlatformEdgeCluster, error) {
-	m, err := r.allocated_clusters.GroupByAndCount(ctx, repos.Filter{fc.ClusterAllocationClusterRegion: region}, fc.ClusterAllocationClusterName, repos.GroupByAndCountOptions{
+	m, err := r.AllocatedClusters.GroupByAndCount(ctx, repos.Filter{fc.ClusterAllocationClusterRegion: region}, fc.ClusterAllocationClusterName, repos.GroupByAndCountOptions{
 		Limit: 1,
 		Sort:  repos.SortDirectionAsc,
 	})
@@ -44,7 +44,7 @@ func (r *Repo) AllocatePlatformEdgeCluster(ctx context.Context, region string, a
 	switch len(m) {
 	case 0:
 		{
-			x, err := r.edge_clusters.FindOne(ctx, repos.Filter{fc.PlatformEdgeClusterRegion: region})
+			x, err := r.EdgeClusters.FindOne(ctx, repos.Filter{fc.PlatformEdgeClusterRegion: region})
 			if err != nil {
 				return nil, err
 			}
@@ -54,7 +54,7 @@ func (r *Repo) AllocatePlatformEdgeCluster(ctx context.Context, region string, a
 
 			clusterName = x.Name
 
-			if _, err := r.allocated_clusters.Create(ctx, &entities.ClusterAllocation{
+			if _, err := r.AllocatedClusters.Create(ctx, &entities.ClusterAllocation{
 				To: account,
 				Cluster: entities.ClusterAllocationCluster{
 					Name:           clusterName,
@@ -74,7 +74,7 @@ func (r *Repo) AllocatePlatformEdgeCluster(ctx context.Context, region string, a
 		}
 	}
 
-	pec, err := r.edge_clusters.FindOne(ctx, repos.Filter{
+	pec, err := r.EdgeClusters.FindOne(ctx, repos.Filter{
 		fc.PlatformEdgeClusterName:   clusterName,
 		fc.PlatformEdgeClusterRegion: region,
 	})
@@ -90,7 +90,7 @@ func (r *Repo) AllocatePlatformEdgeCluster(ctx context.Context, region string, a
 }
 
 func (r *Repo) GetPlatformEdgeCluster(ctx context.Context, clusterName string) (*entities.PlatformEdgeCluster, error) {
-	pec, err := r.edge_clusters.FindOne(ctx, repos.Filter{
+	pec, err := r.EdgeClusters.FindOne(ctx, repos.Filter{
 		fc.PlatformEdgeClusterName: clusterName,
 	})
 	if err != nil {
@@ -105,7 +105,7 @@ func (r *Repo) GetPlatformEdgeCluster(ctx context.Context, clusterName string) (
 }
 
 func (r *Repo) GetAllocatedPlatformEdgeCluster(ctx context.Context, account string) (*entities.ClusterAllocation, error) {
-	rec, err := r.allocated_clusters.FindOne(ctx, repos.Filter{
+	rec, err := r.AllocatedClusters.FindOne(ctx, repos.Filter{
 		fc.ClusterAllocationTo: account,
 	})
 	if err != nil {

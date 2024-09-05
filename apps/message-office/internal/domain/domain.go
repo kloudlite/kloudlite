@@ -8,6 +8,7 @@ import (
 	"go.uber.org/fx"
 
 	platform_edge "github.com/kloudlite/api/apps/message-office/internal/domain/platform-edge"
+	"github.com/kloudlite/api/apps/message-office/internal/entities"
 	"github.com/kloudlite/api/apps/message-office/internal/env"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
@@ -131,15 +132,21 @@ func (d *domain) GenClusterToken(ctx context.Context, accountName, clusterName s
 var Module = fx.Module(
 	"domain",
 	fx.Provide(func(
+		ev *env.Env,
 		moRepo repos.DbRepo[*MessageOfficeToken],
+		edgeClustersRepo repos.DbRepo[*entities.PlatformEdgeCluster],
+		allocatedClustersRepo repos.DbRepo[*entities.ClusterAllocation],
 		// accessTokenRepo repos.DbRepo[*AccessToken],
 		logger *slog.Logger,
 	) Domain {
 		return &domain{
 			moRepo: moRepo,
-			// accessTokenRepo: accessTokenRepo,
-			logger:             logger,
-			PlatformEdgeDomain: PlatformEdgeDomain{Repo: &platform_edge.Repo{}},
+			env:    ev,
+			logger: logger,
+			PlatformEdgeDomain: PlatformEdgeDomain{Repo: &platform_edge.Repo{
+				EdgeClusters:      edgeClustersRepo,
+				AllocatedClusters: allocatedClustersRepo,
+			}},
 		}
 	}),
 )
