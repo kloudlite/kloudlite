@@ -213,7 +213,7 @@ const ListView = ({ items, templates, onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const isClusterOnline = clusters[i.clusterName];
+          const isClusterOnline = findClusterStatus(clusters[i.clusterName]);
           const { name, id, logo, updateInfo } = parseItem(i, templates);
           return {
             columns: {
