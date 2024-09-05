@@ -1,28 +1,27 @@
 /* eslint-disable react/destructuring-assignment */
-import { useOutletContext, useParams } from '@remix-run/react';
+import { useParams } from '@remix-run/react';
 import { useEffect, useRef } from 'react';
+import { Checkbox } from '~/components/atoms/checkbox';
+import Select from '~/components/atoms/select';
+import Banner from '~/components/molecule/banner';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
+import { useAppend, useMapper } from '~/components/utils';
+import CommonPopupHandle from '~/console/components/common-popup-handle';
+import { NameIdView } from '~/console/components/name-id-view';
+import { IDialogBase } from '~/console/components/types.d';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IRouters } from '~/console/server/gql/queries/router-queries';
 import {
   ExtractNodeType,
   parseName,
   parseNodes,
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/lib/client/helpers/reloader';
+import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import useForm, { dummyEvent } from '~/lib/client/hooks/use-form';
 import Yup from '~/lib/server/helpers/yup';
 import { handleError } from '~/lib/utils/common';
-import CommonPopupHandle from '~/console/components/common-popup-handle';
-import { IDialogBase } from '~/console/components/types.d';
-import { IRouters } from '~/console/server/gql/queries/router-queries';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { NameIdView } from '~/console/components/name-id-view';
-import Select from '~/components/atoms/select';
-import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
-import { useAppend, useMapper } from '~/components/utils';
-import { Checkbox } from '~/components/atoms/checkbox';
-import Banner from '~/components/molecule/banner';
-import { IAppContext } from '../app+/$app+/_layout';
 
 type IDialog = IDialogBase<ExtractNodeType<IRouters>>;
 
@@ -33,7 +32,7 @@ const Root = (props: IDialog) => {
 
   const { environment: envName } = useParams();
 
-  const { cluster } = useOutletContext<IAppContext>();
+  // const { cluster } = useOutletContext<IAppContext>();
 
   const {
     data,
@@ -44,7 +43,8 @@ const Root = (props: IDialog) => {
       search: {
         clusterName: {
           matchType: 'exact',
-          exact: parseName(cluster),
+          // exact: parseName(cluster),
+          exact: 'localhost',
         },
       },
     });
@@ -54,19 +54,19 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
-            name: parseName(props.data),
-            displayName: props.data.displayName,
-            domains: [],
-            isNameError: false,
-            isTlsEnabled: props.data.spec.https?.enabled || false,
-          }
+          name: parseName(props.data),
+          displayName: props.data.displayName,
+          domains: [],
+          isNameError: false,
+          isTlsEnabled: props.data.spec.https?.enabled || false,
+        }
         : {
-            name: '',
-            displayName: '',
-            domains: [],
-            isNameError: false,
-            isTlsEnabled: false,
-          },
+          name: '',
+          displayName: '',
+          domains: [],
+          isNameError: false,
+          isTlsEnabled: false,
+        },
       validationSchema: Yup.object({
         displayName: Yup.string().required(),
         name: Yup.string().required(),
@@ -83,7 +83,7 @@ const Root = (props: IDialog) => {
           if (!isUpdate) {
             const { errors: e } = await api.createRouter({
               envName,
-              
+
               router: {
                 displayName: val.displayName,
                 metadata: {
@@ -104,7 +104,7 @@ const Root = (props: IDialog) => {
           } else {
             const { errors: e } = await api.updateRouter({
               envName,
-              
+
               router: {
                 displayName: val.displayName,
                 metadata: {
@@ -142,8 +142,8 @@ const Root = (props: IDialog) => {
     domains,
     isUpdate
       ? props.data.spec.domains
-          .filter((d) => !domains.find((f) => f.value === d))
-          .map((d) => ({ label: d, value: d }))
+        .filter((d) => !domains.find((f) => f.value === d))
+        .map((d) => ({ label: d, value: d }))
       : []
   );
 
@@ -216,7 +216,8 @@ const Root = (props: IDialog) => {
               All the domain CNames should be pointed to following Cluster DNS
               Name{' '}
               <span className="bodyMd-medium">
-                `{cluster.spec.publicDNSHost}`
+                {/* `{cluster.spec.publicDNSHost}` */}
+                "localhost"
               </span>
             </span>
           }

@@ -239,8 +239,7 @@ const GridView = ({ items = [], onAction: _ }: IResource) => {
 };
 
 const ListView = ({ items = [], onAction }: IResource) => {
-  const { environment, account, cluster } =
-    useOutletContext<IEnvironmentContext>();
+  const { environment, account } = useOutletContext<IEnvironmentContext>();
   const { clusters } = useClusterStatusV2();
 
   const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
@@ -306,7 +305,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
+          // const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
 
           const { name, id, updateInfo } = parseItem(i);
           return {
@@ -334,9 +333,9 @@ const ListView = ({ items = [], onAction }: IResource) => {
                     return null;
                   }
 
-                  if (!isClusterOnline) {
-                    return <Badge type="warning">Cluster Offline</Badge>;
-                  }
+                  // if (!isClusterOnline) {
+                  //   return <Badge type="warning">Cluster Offline</Badge>;
+                  // }
 
                   return <SyncStatusV2 item={i} />;
                 },
@@ -399,10 +398,9 @@ const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
       }
       // toast.success('app intercepted successfully');
       toast.success(
-        `${
-          intercept
-            ? 'App Intercepted successfully'
-            : 'App Intercept removed successfully'
+        `${intercept
+          ? 'App Intercepted successfully'
+          : 'App Intercept removed successfully'
         }`
       );
       reload();

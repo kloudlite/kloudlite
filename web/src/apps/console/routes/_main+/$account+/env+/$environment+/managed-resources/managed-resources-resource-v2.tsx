@@ -1,4 +1,4 @@
-import { useOutletContext, useParams } from '@remix-run/react';
+import { useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
@@ -23,15 +23,13 @@ import { IImportedManagedResources } from '~/console/server/gql/queries/imported
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import {
   ExtractNodeType,
-  parseName,
   parseUpdateOrCreatedBy,
-  parseUpdateOrCreatedOn,
+  parseUpdateOrCreatedOn
 } from '~/console/server/r-utils/common';
 import { getManagedTemplateLogo } from '~/console/utils/commons';
 import { useReload } from '~/lib/client/helpers/reloader';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { handleError } from '~/lib/utils/common';
-import { IEnvironmentContext } from '../_layout';
 import { ViewSecret } from './handle-managed-resource-v2';
 
 const RESOURCE_NAME = 'managed resource';
@@ -134,7 +132,7 @@ const GridView = ({ items = [], onAction, templates }: IResource) => {
 };
 
 const ListView = ({ items = [], onAction, templates }: IResource) => {
-  const { cluster } = useOutletContext<IEnvironmentContext>();
+  // const { cluster } = useOutletContext<IEnvironmentContext>();
   const { clusters } = useClusterStatusV2();
 
   const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
@@ -195,7 +193,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
         ],
         rows: items.map((i) => {
           const { name, id, logo, updateInfo } = parseItem(i, templates);
-          const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
+          // const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
 
           return {
             columns: {
@@ -230,9 +228,9 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
               },
               status: {
                 render: () => {
-                  if (!isClusterOnline) {
-                    return <Badge type="warning">Cluster Offline</Badge>;
-                  }
+                  // if (!isClusterOnline) {
+                  //   return <Badge type="warning">Cluster Offline</Badge>;
+                  // }
 
                   if (i.syncStatus?.state === 'UPDATED_AT_AGENT') {
                     return <Badge type="info">Ready</Badge>;

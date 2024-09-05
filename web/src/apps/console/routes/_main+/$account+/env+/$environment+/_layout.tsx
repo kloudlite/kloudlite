@@ -15,7 +15,6 @@ import {
   GearSix,
 } from '~/console/components/icons';
 import HandleScope from '~/console/page-components/handle-environment';
-import { ICluster } from '~/console/server/gql/queries/cluster-queries';
 import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
 import { ILoginUrls, ILogins } from '~/console/server/gql/queries/git-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -30,8 +29,13 @@ import { IAccountContext } from '../../_layout';
 
 const Environment = () => {
   const rootContext = useOutletContext<IAccountContext>();
-  const { environment, managedTemplates, loginUrls, logins, cluster } =
-    useLoaderData();
+  const {
+    environment,
+    managedTemplates,
+    loginUrls,
+    logins,
+    // cluster
+  } = useLoaderData();
 
   return (
     <SubNavDataProvider>
@@ -42,7 +46,7 @@ const Environment = () => {
           managedTemplates,
           loginUrls,
           logins,
-          cluster,
+          // cluster,
         }}
       />
     </SubNavDataProvider>
@@ -308,15 +312,15 @@ export const loader = async (ctx: IRemixCtx) => {
       throw errors[0];
     }
 
-    const { data: cData, errors: cErrors } = await GQLServerHandler(
-      ctx.request
-    ).getCluster({
-      name: data.clusterName,
-    });
+    // const { data: cData, errors: cErrors } = await GQLServerHandler(
+    //   ctx.request
+    // ).getCluster({
+    //   name: data.clusterName,
+    // });
 
-    if (cErrors) {
-      throw cErrors[0];
-    }
+    // if (cErrors) {
+    //   throw cErrors[0];
+    // }
 
     const { data: logins, errors: loginErrors } = await GQLServerHandler(
       ctx.request
@@ -339,7 +343,7 @@ export const loader = async (ctx: IRemixCtx) => {
       loginUrls,
       logins,
       environment: envData,
-      cluster: cData,
+      // cluster: cData,
     };
   } catch (err) {
     logger.error(err);
@@ -347,7 +351,7 @@ export const loader = async (ctx: IRemixCtx) => {
       logins: ILogins;
       loginUrls: ILoginUrls;
       environment: IEnvironment;
-      cluster: ICluster;
+      // cluster: ICluster;
     };
   }
 };
@@ -356,7 +360,7 @@ export interface IEnvironmentContext extends IAccountContext {
   logins: LoaderResult<typeof loader>['logins'];
   loginUrls: LoaderResult<typeof loader>['loginUrls'];
   environment: LoaderResult<typeof loader>['environment'];
-  cluster: LoaderResult<typeof loader>['cluster'];
+  // cluster: LoaderResult<typeof loader>['cluster'];
 }
 
 export default Environment;
