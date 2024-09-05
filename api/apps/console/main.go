@@ -25,22 +25,28 @@ func main() {
 
 	var debug bool
 	flag.BoolVar(&debug, "debug", false, "--debug")
+
 	flag.Parse()
 
-	logger, err := logging.New(&logging.Options{Name: "console", ShowDebugLog: debug})
-	if err != nil {
-		panic(err)
+	if isDev {
+		debug = true
 	}
 
-	app := fx.New(
-		fx.NopLogger,
+	common.PrintBuildInfo()
 
-		fx.Provide(func() logging.Logger {
-			return logger
+	logger := logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug, SetAsDefaultLogger: true})
+
+	start := time.Now()
+
+	app := fx.New(
+		fx.StartTimeout(5*time.Second),
+		fx.NopLogger,
+		fx.Provide(func() (logging.Logger, error) {
+			return logging.New(&logging.Options{Name: "console", ShowDebugLog: debug})
 		}),
 
 		fx.Provide(func() *slog.Logger {
-			return logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug, SetAsDefaultLogger: true})
+			return logger
 		}),
 
 		fx.Provide(func() (*env.Env, error) {
@@ -65,18 +71,17 @@ func main() {
 
 	ctx, cancelFunc := func() (context.Context, context.CancelFunc) {
 		if isDev {
-			return context.WithTimeout(context.TODO(), 20*time.Second)
+			return context.WithTimeout(context.TODO(), 5*time.Second)
 		}
-		return context.WithTimeout(context.TODO(), 5*time.Second)
+		return context.WithTimeout(context.TODO(), 10*time.Second)
 	}()
 	defer cancelFunc()
 
 	if err := app.Start(ctx); err != nil {
-		logger.Errorf(err, "console startup errors")
-		logger.Infof("EXITING as errors encountered during startup")
+		logger.Error("while starting console, got", "err", err)
 		os.Exit(1)
 	}
 
-	common.PrintReadyBanner()
+	common.PrintReadyBanner2(time.Since(start))
 	<-app.Done()
 }
