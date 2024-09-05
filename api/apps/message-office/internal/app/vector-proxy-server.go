@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
 
@@ -36,7 +37,10 @@ func (v *vectorProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.PushE
 
 	logger.Debug("RECEIVED push-events message")
 
-	per, err := v.realVectorClient.PushEvents(ctx, msg)
+	nctx, cf := context.WithTimeout(ctx, 3*time.Second)
+	defer cf()
+
+	per, err := v.realVectorClient.PushEvents(nctx, msg)
 	if err != nil {
 		logger.Error("FAILED to dispatch push-events message, got", "err", err)
 		return nil, errors.NewE(err)

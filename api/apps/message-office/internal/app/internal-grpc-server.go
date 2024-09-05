@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 
+	mo_errors "github.com/kloudlite/api/apps/message-office/errors"
 	"github.com/kloudlite/api/apps/message-office/internal/domain"
 	cluster_token "github.com/kloudlite/api/apps/message-office/protobufs/cluster-token"
 	platform_edge "github.com/kloudlite/api/apps/message-office/protobufs/platform-edge"
@@ -16,7 +17,6 @@ type (
 
 type internalServer struct {
 	d domain.Domain
-	// message_office_internal.UnimplementedMessageOfficeInternalServer
 	cluster_token.UnimplementedClusterTokenServer
 	platform_edge.UnimplementedPlatformEdgeServer
 }
@@ -47,13 +47,19 @@ func (s *internalServer) AllocatePlatformEdgeCluster(ctx context.Context, in *pl
 		return nil, errors.NewE(err)
 	}
 
-	return &platform_edge.AllocatePlatformEdgeClusterOut{ClusterName: pec.Name}, nil
+	return &platform_edge.AllocatePlatformEdgeClusterOut{
+		ClusterName:    pec.Name,
+		OwnedByAccount: pec.OwnedByAccount,
+	}, nil
 }
 
 // GetAllocatedPlatformEdgeCluster implements platform_edge.PlatformEdgeServer.
 func (s *internalServer) GetAllocatedPlatformEdgeCluster(ctx context.Context, in *platform_edge.GetAllocatedPlatformEdgeClusterIn) (*platform_edge.AllocatePlatformEdgeClusterOut, error) {
 	allocated, err := s.d.GetAllocatedPlatformEdgeCluster(ctx, in.AccountName)
 	if err != nil {
+		if errors.Is(err, mo_errors.ErrEdgeClusterNotAllocated) {
+			return nil, grpc.Err(mo_errors.ErrEdgeClusterNotAllocated)
+		}
 		return nil, errors.NewE(err)
 	}
 
