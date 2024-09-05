@@ -425,6 +425,7 @@ enum ConsoleResType {
   imported_managed_resource
   managed_resource
   managed_service
+  registry_image
   router
   secret
   vpn_device
@@ -3580,6 +3581,7 @@ type Mutation {
   core_deleteImagePullSecret(name: String!): Boolean!
   core_deleteImportedManagedResource(envName: String!, importName: String!): Boolean!
   core_deleteManagedResource(mresName: String!, msvcName: String!): Boolean!
+  core_deleteRegistryImage(image: String!): Boolean!
   core_deleteRouter(envName: String!, routerName: String!): Boolean!
   core_deleteSecret(envName: String!, secretName: String!): Boolean!
   core_importManagedResource(envName: String!, importName: String!, mresName: String!, msvcName: String!): ImportedManagedResource
@@ -3940,6 +3942,8 @@ type Query {
   core_getManagedResouceOutputKeys(envName: String, msvcName: String, name: String!): [String!]!
   core_getManagedResouceOutputKeyValues(envName: String, keyrefs: [ManagedResourceKeyRefIn], msvcName: String): [ManagedResourceKeyValueRef!]!
   core_getManagedResource(envName: String, msvcName: String, name: String!): ManagedResource
+  core_getRegistryImage(image: String!): RegistryImage
+  core_getRegistryImageURL(image: String!, meta: Map!): RegistryImageURL!
   core_getRouter(envName: String!, name: String!): Router
   core_getSecret(envName: String!, name: String!): Secret
   core_getSecretValues(envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!]
@@ -3950,6 +3954,7 @@ type Query {
   core_listImagePullSecrets(pq: CursorPaginationIn, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
   core_listImportedManagedResources(envName: String!, pq: CursorPaginationIn, search: SearchImportedManagedResources): ImportedManagedResourcePaginatedRecords
   core_listManagedResources(pq: CursorPaginationIn, search: SearchManagedResources): ManagedResourcePaginatedRecords
+  core_listRegistryImages(pq: CursorPaginationIn): RegistryImagePaginatedRecords
   core_listRouters(envName: String!, pq: CursorPaginationIn, search: SearchRouters): RouterPaginatedRecords
   core_listSecrets(envName: String!, pq: CursorPaginationIn, search: SearchSecrets): SecretPaginatedRecords
   core_restartApp(appName: String!, envName: String!): Boolean!
@@ -4019,6 +4024,73 @@ type Query {
   iot_listDevices(deploymentName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchIOTDevices): IOTDevicePaginatedRecords
   iot_listProjects(pq: CursorPaginationIn, search: SearchIOTProjects): IOTProjectPaginatedRecords
   oAuth_requestLogin(provider: String!, state: String): URL!
+}
+
+type RegistryImage {
+  accountName: String!
+  creationTime: Date!
+  id: ID!
+  imageName: String!
+  imageTag: String!
+  markedForDeletion: Boolean
+  meta: Map!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type RegistryImageCredentials {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  id: ID!
+  markedForDeletion: Boolean
+  password: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type RegistryImageCredentialsEdge {
+  cursor: String!
+  node: RegistryImageCredentials!
+}
+
+input RegistryImageCredentialsIn {
+  accountName: String!
+  password: String!
+}
+
+type RegistryImageCredentialsPaginatedRecords {
+  edges: [RegistryImageCredentialsEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type RegistryImageEdge {
+  cursor: String!
+  node: RegistryImage!
+}
+
+input RegistryImageIn {
+  accountName: String!
+  imageName: String!
+  imageTag: String!
+  meta: Map!
+}
+
+type RegistryImagePaginatedRecords {
+  edges: [RegistryImageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type RegistryImageURL {
+  scriptUrl: String!
+  url: String!
+}
+
+input RegistryImageURLIn {
+  scriptUrl: String!
+  url: String!
 }
 
 type RemoteLogin {
@@ -4252,6 +4324,10 @@ input SearchProjects {
 
 input SearchProviderSecret {
   cloudProviderName: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchRegistryImages {
   text: MatchFilterIn
 }
 

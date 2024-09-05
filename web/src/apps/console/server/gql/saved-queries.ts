@@ -3,34 +3,35 @@ import { IGQLServerProps } from '~/root/lib/types/common';
 import { accessQueries } from './queries/access-queries';
 import { accountQueries } from './queries/account-queries';
 import { appQueries } from './queries/app-queries';
-import { externalAppQueries } from './queries/external-app-queries';
 import { baseQueries } from './queries/base-queries';
 import { buildQueries } from './queries/build-queries';
 import { buildRunQueries } from './queries/build-run-queries';
+import { byokClusterQueries } from './queries/byok-cluster-queries';
+import { clusterManagedServicesQueries } from './queries/cluster-managed-services-queries';
 import { clusterQueries } from './queries/cluster-queries';
+import { commsNotificationQueries } from './queries/comms-queries';
 import { configQueries } from './queries/config-queries';
 import { crQueries } from './queries/cr-queries';
 import { domainQueries } from './queries/domain-queries';
 import { environmentQueries } from './queries/environment-queries';
+import { externalAppQueries } from './queries/external-app-queries';
 import { gitQueries } from './queries/git-queries';
+import { globalVpnQueries } from './queries/global-vpn-queries';
+import { helmChartQueries } from './queries/helm-chart-queries';
+import { imagePullSecretsQueries } from './queries/image-pull-secrets-queries';
+import { importedManagedResourceQueries } from './queries/imported-managed-resource-queries';
+import { managedResourceQueries } from './queries/managed-resources-queries';
+import { managedTemplateQueries } from './queries/managed-templates-queries';
+import { namespaceQueries } from './queries/namespace-queries';
 import { nodepoolQueries } from './queries/nodepool-queries';
-import { byokClusterQueries } from './queries/byok-cluster-queries';
 import { providerSecretQueries } from './queries/provider-secret-queries';
+import { pvQueries } from './queries/pv-queries';
+import { pvcQueries } from './queries/pvc-queries';
+import { registryImagesQueries } from './queries/registry-image-queries';
 import { repoQueries } from './queries/repo-queries';
 import { routerQueries } from './queries/router-queries';
 import { secretQueries } from './queries/secret-queries';
 import { tagsQueries } from './queries/tags-queries';
-import { pvcQueries } from './queries/pvc-queries';
-import { pvQueries } from './queries/pv-queries';
-import { clusterManagedServicesQueries } from './queries/cluster-managed-services-queries';
-import { managedResourceQueries } from './queries/managed-resources-queries';
-import { managedTemplateQueries } from './queries/managed-templates-queries';
-import { helmChartQueries } from './queries/helm-chart-queries';
-import { namespaceQueries } from './queries/namespace-queries';
-import { imagePullSecretsQueries } from './queries/image-pull-secrets-queries';
-import { globalVpnQueries } from './queries/global-vpn-queries';
-import { commsNotificationQueries } from './queries/comms-queries';
-import { importedManagedResourceQueries } from './queries/imported-managed-resource-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -66,6 +67,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...globalVpnQueries(executor),
     ...commsNotificationQueries(executor),
     ...importedManagedResourceQueries(executor),
+    ...registryImagesQueries(executor),
   };
 };
 

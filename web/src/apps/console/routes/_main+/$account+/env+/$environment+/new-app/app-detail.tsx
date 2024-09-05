@@ -1,30 +1,33 @@
+import { BottomNavigation, GitDetailRaw } from '~/console/components/commons';
+import { NameIdView } from '~/console/components/name-id-view';
 import { useAppState } from '~/console/page-components/app-states';
+import { FadeIn } from '~/console/page-components/util';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { parseName } from '~/console/server/r-utils/common';
-import { FadeIn } from '~/console/page-components/util';
-import { NameIdView } from '~/console/components/name-id-view';
-import { BottomNavigation, GitDetailRaw } from '~/console/components/commons';
 // import { registryHost } from '~/lib/configs/base-url.cjs';
-import { useOutletContext } from '@remix-run/react';
+import { useOutletContext, useParams } from '@remix-run/react';
 // import RepoSelector from '~/console/page-components/app/components';
 import AppBuildIntegration from '~/console/page-components/app/app-build-integration';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 // import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import { constants } from '~/console/server/utils/constants';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { useEffect, useState } from 'react';
+import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
 import {
   ArrowClockwise,
   GitMerge,
   PencilSimple,
 } from '~/console/components/icons';
-import { TextInput } from '~/components/atoms/input';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
+import { constants } from '~/console/server/utils/constants';
+import { handleError } from '~/root/lib/utils/common';
 import { IEnvironmentContext } from '../_layout';
-import { getImageTag } from './app-utils';
 import BuildSelectionDialog from './app-build-selection-dialog';
+import { getImageTag } from './app-utils';
 
 const ExtraButton = ({
   onNew,
@@ -55,6 +58,17 @@ const ExtraButton = ({
   );
 };
 
+const AppSelectItem = ({ label, value }: { label: string; value: string }) => {
+  return (
+    <div>
+      <div className="flex flex-col">
+        <div>{label}</div>
+        <div className="bodySm text-text-soft">{value}</div>
+      </div>
+    </div>
+  );
+};
+
 const AppDetail = () => {
   const {
     app,
@@ -73,6 +87,39 @@ const AppDetail = () => {
   const [envName, accountName] = [parseName(environment), parseName(account)];
 
   const [openBuildSelection, setOpenBuildSelection] = useState(false);
+  const api = useConsoleApi();
+  const params = useParams();
+
+  const [imageList, setImageList] = useState<any[]>([]);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const getRegistryImages = useCallback(async () => {
+    ensureAccountClientSide(params);
+    setImageLoaded(true);
+    try {
+      const registrayImages = await api.listRegistryImages({});
+      const data = parseNodes(registrayImages.data).map((i) => ({
+        label: `${i.imageName}:${i.imageTag}`,
+        value: `${i.imageName}:${i.imageTag}`,
+        ready: true,
+        render: () => (
+          <AppSelectItem
+            label={`${i.imageName}:${i.imageTag}`}
+            value={`${i.imageName}:${i.imageTag}`}
+          />
+        ),
+      }));
+      setImageList(data);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setImageLoaded(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    getRegistryImages();
+  }, []);
 
   const { values, errors, handleChange, handleSubmit, isLoading, setValues } =
     useForm({
@@ -187,15 +234,15 @@ const AppDetail = () => {
               ...{
                 ...(val.advanceOptions
                   ? {
-                      buildOptions: {
-                        buildArgs: val.buildArgs,
-                        buildContexts: val.buildContexts,
-                        contextDir: val.contextDir,
-                        dockerfileContent: val.dockerfileContent,
-                        dockerfilePath: val.dockerfilePath,
-                        targetPlatforms: [],
-                      },
-                    }
+                    buildOptions: {
+                      buildArgs: val.buildArgs,
+                      buildContexts: val.buildContexts,
+                      contextDir: val.contextDir,
+                      dockerfileContent: val.dockerfileContent,
+                      dockerfilePath: val.dockerfilePath,
+                      targetPlatforms: [],
+                    },
+                  }
                   : {}),
               },
               registry: {
@@ -260,7 +307,7 @@ const AppDetail = () => {
             size="sm"
           /> */}
 
-          <TextInput
+          {/* <TextInput
             size="lg"
             label="Image name"
             placeholder="Enter Image name"
@@ -268,6 +315,27 @@ const AppDetail = () => {
             onChange={handleChange('imageUrl')}
             error={!!errors.imageUrl}
             message={errors.imageUrl}
+          /> */}
+
+          <Select
+            label="Select Images"
+            size="lg"
+            value={values.imageUrl}
+            placeholder="Select a image"
+            creatable
+            options={async () => imageList}
+            onChange={({ value }) => {
+              handleChange('imageUrl')(dummyEvent(value));
+            }}
+            showclear
+            noOptionMessage={
+              <div className="p-2xl bodyMd text-center">
+                Search for image or enter image name
+              </div>
+            }
+            error={!!errors.imageUrl}
+            message={errors.imageUrl}
+            loading={imageLoaded}
           />
 
           {/* {values.imageMode === 'default' && (

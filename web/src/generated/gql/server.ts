@@ -62,6 +62,7 @@ export type ConsoleResType =
   | 'imported_managed_resource'
   | 'managed_resource'
   | 'managed_service'
+  | 'registry_image'
   | 'router'
   | 'secret'
   | 'vpn_device';
@@ -1754,6 +1755,23 @@ export type PortIn = {
   targetPort?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type RegistryImageCredentialsIn = {
+  accountName: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+};
+
+export type RegistryImageIn = {
+  accountName: Scalars['String']['input'];
+  imageName: Scalars['String']['input'];
+  imageTag: Scalars['String']['input'];
+  meta: Scalars['Map']['input'];
+};
+
+export type RegistryImageUrlIn = {
+  scriptUrl: Scalars['String']['input'];
+  url: Scalars['String']['input'];
+};
+
 export type SearchProjectManagedService = {
   isReady?: InputMaybe<MatchFilterIn>;
   managedServiceName?: InputMaybe<MatchFilterIn>;
@@ -1764,6 +1782,10 @@ export type SearchProjectManagedService = {
 export type SearchProjects = {
   isReady?: InputMaybe<MatchFilterIn>;
   markedForDeletion?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchRegistryImages = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -6044,6 +6066,62 @@ export type ConsoleListImportedManagedResourcesQuery = {
             type?: K8s__Io___Api___Core___V1__SecretType;
           };
         };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPrevPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleDeleteRegistryImageMutationVariables = Exact<{
+  image: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteRegistryImageMutation = {
+  core_deleteRegistryImage: boolean;
+};
+
+export type ConsoleGetRegistryImageQueryVariables = Exact<{
+  image: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetRegistryImageQuery = {
+  core_getRegistryImage?: {
+    accountName: string;
+    creationTime: any;
+    id: string;
+    imageName: string;
+    imageTag: string;
+    markedForDeletion?: boolean;
+    meta: any;
+    recordVersion: number;
+    updateTime: any;
+  };
+};
+
+export type ConsoleListRegistryImagesQueryVariables = Exact<{
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListRegistryImagesQuery = {
+  core_listRegistryImages?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        creationTime: any;
+        id: string;
+        imageName: string;
+        imageTag: string;
+        markedForDeletion?: boolean;
+        meta: any;
+        recordVersion: number;
+        updateTime: any;
       };
     }>;
     pageInfo: {

@@ -1,17 +1,22 @@
-import { useAppState } from '~/console/page-components/app-states';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import { parseName } from '~/console/server/r-utils/common';
-import { FadeIn } from '~/console/page-components/util';
-import { NameIdView } from '~/console/components/name-id-view';
-import { BottomNavigation } from '~/console/components/commons';
-import { TextInput } from '~/components/atoms/input';
-import { useEffect, useState } from 'react';
-import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
-import { constants } from '~/console/server/utils/constants';
-import HandleBuild from '~/console/routes/_main+/$account+/repo+/$repo+/builds/handle-builds';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { useParams } from '@remix-run/react';
+import { useCallback, useEffect, useState } from 'react';
 import { Checkbox } from '~/components/atoms/checkbox';
+import { TextInput } from '~/components/atoms/input';
+import Select from '~/components/atoms/select';
+import { BottomNavigation } from '~/console/components/commons';
+import { NameIdView } from '~/console/components/name-id-view';
+import { useAppState } from '~/console/page-components/app-states';
+import { FadeIn } from '~/console/page-components/util';
+import HandleBuild from '~/console/routes/_main+/$account+/repo+/$repo+/builds/handle-builds';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
+import { constants } from '~/console/server/utils/constants';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
+import Yup from '~/root/lib/server/helpers/yup';
+import { handleError } from '~/root/lib/utils/common';
 
 // const ExtraButton = ({
 //   onNew,
@@ -59,6 +64,17 @@ import { Checkbox } from '~/components/atoms/checkbox';
 //   return <ResourceExtraAction options={options} />;
 // };
 
+const AppSelectItem = ({ label, value }: { label: string; value: string }) => {
+  return (
+    <div>
+      <div className="flex flex-col">
+        <div>{label}</div>
+        <div className="bodySm text-text-soft">{value}</div>
+      </div>
+    </div>
+  );
+};
+
 const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
   const {
     readOnlyApp,
@@ -76,6 +92,39 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
   // only for edit mode
   // const [isEdited, setIsEdited] = useState(!app.ciBuildId);
   const [showBuildEdit, setShowBuildEdit] = useState(false);
+  const api = useConsoleApi();
+  const params = useParams();
+
+  const [imageList, setImageList] = useState<any[]>([]);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const getRegistryImages = useCallback(async () => {
+    ensureAccountClientSide(params);
+    setImageLoaded(true);
+    try {
+      const registrayImages = await api.listRegistryImages({});
+      const data = parseNodes(registrayImages.data).map((i) => ({
+        label: `${i.imageName}:${i.imageTag}`,
+        value: `${i.imageName}:${i.imageTag}`,
+        ready: true,
+        render: () => (
+          <AppSelectItem
+            label={`${i.imageName}:${i.imageTag}`}
+            value={`${i.imageName}:${i.imageTag}`}
+          />
+        ),
+      }));
+      setImageList(data);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setImageLoaded(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    getRegistryImages();
+  }, []);
 
   // const api = useConsoleApi();
 
@@ -254,7 +303,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           />
         )}
         <div className="flex flex-col gap-xl">
-          <TextInput
+          {/* <TextInput
             size="lg"
             label="Image name"
             placeholder="Enter Image name"
@@ -262,6 +311,26 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             onChange={handleChange('imageUrl')}
             error={!!errors.imageUrl}
             message={errors.imageUrl}
+          /> */}
+          <Select
+            label="Select Images"
+            size="lg"
+            value={values.imageUrl}
+            placeholder="Select a image"
+            creatable
+            options={async () => imageList}
+            onChange={({ value }) => {
+              handleChange('imageUrl')(dummyEvent(value));
+            }}
+            showclear
+            noOptionMessage={
+              <div className="p-2xl bodyMd text-center">
+                Search for image or enter image name
+              </div>
+            }
+            error={!!errors.imageUrl}
+            message={errors.imageUrl}
+            loading={imageLoaded}
           />
         </div>
 
