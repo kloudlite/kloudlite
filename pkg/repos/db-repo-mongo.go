@@ -724,12 +724,20 @@ func (repo *dbRepo[T]) GroupByAndCount(ctx context.Context, filter Filter, group
 	}
 
 	var data []bson.M
-	if err := records.Decode(&data); err != nil {
+	if err := records.All(ctx, &data); err != nil {
 		return nil, errors.NewE(err)
 	}
 
+	// var data bson.D
+	// if err := records.Decode(&data); err != nil {
+	// 	return nil, errors.NewE(err)
+	// }
+
 	result := make(map[string]int64, len(data))
 	for _, v := range data {
+		// m := v.Value.(map[string]any)
+		// result[m["_id"].(string)] = m["count"].(int64)
+		// v.Value.(map[string]interface{})["_id"] = v.Key
 		result[v["_id"].(string)] = v["count"].(int64)
 	}
 
