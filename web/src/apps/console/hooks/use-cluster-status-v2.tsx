@@ -6,6 +6,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -36,10 +37,13 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
   const listCluster = useCallback(async () => {
     try {
       const cl = await api.listAllClusters();
-      const parsed = parseNodes(cl.data).reduce((acc, c) => {
-        acc[c.metadata.name] = c;
-        return acc;
-      }, {} as { [key: string]: ExtractNodeType<IByocClusters> });
+      const parsed = parseNodes(cl.data).reduce(
+        (acc, c) => {
+          acc[c.metadata.name] = c;
+          return acc;
+        },
+        {} as { [key: string]: ExtractNodeType<IByocClusters> },
+      );
       setClusters(parsed);
       return clusters;
     } catch (err) {
@@ -48,23 +52,36 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      listCluster();
+    }, 30 * 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
   useDebounce(
     () => {
       listCluster();
     },
     3000,
-    [update]
+    [update],
   );
 
   useSocketWatch(() => {
     setUpdate((p) => !p);
   }, topic);
 
+  useEffect(() => {
+    console.log('helre', topic);
+  }, [topic]);
+
   return (
     <ClusterStatusContext.Provider
       value={useMemo(
         () => ({ clusters, setClusters }),
-        [clusters, setClusters]
+        [clusters, setClusters],
       )}
     >
       {children}

@@ -165,16 +165,16 @@ const ListView = ({ items, templates, onAction }: IResource) => {
   const { account } = useOutletContext<IAccountContext>();
   const { clusters } = useClusterStatusV2();
 
-  const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
-    Record<string, boolean>
-  >({});
-  useEffect(() => {
-    const states: Record<string, boolean> = {};
-    Object.entries(clusters).forEach(([key, value]) => {
-      states[key] = findClusterStatus(value);
-    });
-    setClusterOnlineStatus(states);
-  }, [clusters]);
+  // const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
+  //   Record<string, boolean>
+  // >({});
+  // useEffect(() => {
+  //   const states: Record<string, boolean> = {};
+  //   Object.entries(clusters).forEach(([key, value]) => {
+  //     states[key] = findClusterStatus(value);
+  //   });
+  //   setClusterOnlineStatus(states);
+  // }, [clusters]);
 
   return (
     <ListV2.Root
@@ -213,7 +213,7 @@ const ListView = ({ items, templates, onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const isClusterOnline = clusterOnlineStatus[i.clusterName];
+          const isClusterOnline = clusters[i.clusterName];
           const { name, id, logo, updateInfo } = parseItem(i, templates);
           return {
             columns: {
@@ -282,11 +282,11 @@ const BackendServicesResourcesV2 = ({
       return `account:${parseName(account)}.cluster:${
         i.clusterName
       }.cluster_managed_service:${parseName(i)}`;
-    })
+    }),
   );
 
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
+    null,
   );
   const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
