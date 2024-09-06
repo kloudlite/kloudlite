@@ -313,9 +313,9 @@ func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result
 
 	check := rApi.NewRunningCheck(HPAConfigured, req)
 
-	if obj.IsInterceptEnabled() {
-		return check.Completed()
-	}
+	// if obj.IsInterceptEnabled() {
+	// 	return check.Completed()
+	// }
 
 	hpaVars := templates.HPATemplateVars{
 		Metadata: metav1.ObjectMeta{
@@ -328,7 +328,17 @@ func (r *Reconciler) ensureHPA(req *rApi.Request[*crdsv1.App]) stepResult.Result
 		HPA: obj.Spec.Hpa,
 	}
 
-	if obj.Spec.Hpa == nil || !obj.Spec.Hpa.Enabled {
+	// if obj.Spec.Intercept != nil && obj.Spec.Intercept.Enabled {
+	// 	if obj.Spec.Hpa != nil && obj.Spec.Hpa.Enabled {
+	// 		hpaVars.HPA.MinReplicas = 0
+	// 		hpaVars.HPA.MaxReplicas = 0
+	// 	}
+	// }
+
+	isInterceptEnabled := obj.Spec.Intercept != nil && obj.Spec.Intercept.Enabled
+	isHPAEnabled := obj.Spec.Hpa != nil && obj.Spec.Hpa.Enabled
+
+	if isInterceptEnabled || !isHPAEnabled {
 		hpa, err := rApi.Get(ctx, r.Client, fn.NN(hpaVars.Metadata.Namespace, hpaVars.Metadata.Name), &autoscalingv2.HorizontalPodAutoscaler{})
 		if err != nil {
 			if apiErrors.IsNotFound(err) {
