@@ -22,9 +22,13 @@ metadata:
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
   labels: {{.Labels | toYAML | nindent 4}}
 spec:
-  {{- if not $isHpaEnabled }}
-  replicas: {{if (or .Spec.Freeze $isIntercepted )}}0{{ else }}{{.Spec.Replicas}}{{end}}
-  {{- end}}
+  {{- if (or .Spec.Freeze $isIntercepted) }}
+  replicas: 0
+  {{- else if $isHpaEnabled }} 
+  {{- /* when hpa-enabled, we don't want to set replicas */}}
+  {{- else }}
+  replicas: {{.Spec.Replicas}}
+  {{- end }}
   selector:
     matchLabels:
       app: {{.Name}}
