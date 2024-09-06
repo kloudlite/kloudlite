@@ -358,10 +358,9 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 			},
 		}
 
-		if obj.GetGeneration() > 0 {
+		if sts.GetGeneration() > 0 {
 			// resource exists, and is being updated now
 			// INFO: k8s statefulsets forbids update to spec fields, other than "replicas", "template", "ordinals", "updateStrategy", "persistentVolumeClaimRetentionPolicy" and "minReadySeconds",
-
 			sts.Spec.Replicas = spec.Replicas
 			sts.Spec.Template = spec.Template
 		} else {
@@ -370,6 +369,7 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 
 		return nil
 	}); err != nil {
+		r.logger.Infof("Failed to create statefulset: err=%v, resource:\n%+v\n", err, sts)
 		return check.Failed(err)
 	}
 
