@@ -345,7 +345,7 @@ func (r *ServiceReconciler) createStatefulSet(req *rApi.Request[*mysqlMsvcv1.Sta
 			},
 		}
 
-		if obj.GetGeneration() > 0 {
+		if sts.GetGeneration() > 0 {
 			// resource exists, and is being updated now
 			// INFO: k8s statefulsets forbids update to spec fields, other than "replicas", "template", "ordinals", "updateStrategy",  "persistentVolumeClaimRetentionPolicy" and "minReadySeconds",
 
