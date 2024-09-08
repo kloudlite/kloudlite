@@ -7,7 +7,7 @@ global:
 label: List Environments
 query: |+ #graphql
   query Core_listEnvironments {
-    core_listEnvironments() {
+    core_listEnvironments {
       edges {
         cursor
         node {
@@ -46,7 +46,7 @@ query: |+ #graphql
       pageInfo {
         endCursor
         hasNextPage
-        hasPreviousPage
+        hasPrevPage
         startCursor
       }
       totalCount

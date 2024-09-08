@@ -110,6 +110,7 @@ const (
 	EnvironmentSpecRoutingMode                = "spec.routing.mode"
 	EnvironmentSpecRoutingPrivateIngressClass = "spec.routing.privateIngressClass"
 	EnvironmentSpecRoutingPublicIngressClass  = "spec.routing.publicIngressClass"
+	EnvironmentSpecSuspend                    = "spec.suspend"
 	EnvironmentSpecTargetNamespace            = "spec.targetNamespace"
 )
 
@@ -197,6 +198,13 @@ const (
 const (
 	ManagedResourceRefName      = "name"
 	ManagedResourceRefNamespace = "namespace"
+)
+
+// constant vars generated for struct RegistryImage
+const (
+	RegistryImageImageName = "imageName"
+	RegistryImageImageTag  = "imageTag"
+	RegistryImageMeta      = "meta"
 )
 
 // constant vars generated for struct ResourceMapping

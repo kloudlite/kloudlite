@@ -73,20 +73,9 @@ label: Create App
 query: |+ #graphql
   mutation Core_createApp($envName: String!, $app: AppIn!) {
     core_createApp(envName: $envName, app: $app) {
+      id
       metadata {
         name
-      }
-      syncStatus {
-        state
-        recordVersion
-        error
-        action
-        lastSyncedAt
-      }
-      createdBy{
-        userId
-        userName
-        userEmail
       }
     }
   }

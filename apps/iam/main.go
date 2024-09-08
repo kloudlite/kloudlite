@@ -28,6 +28,7 @@ func main() {
 		fx.Provide(func() logging.Logger {
 			return logger
 		}),
+
 		fx.Provide(func() (*env.Env, error) {
 			return env.LoadEnv()
 		}),
@@ -45,5 +46,4 @@ func main() {
 
 	common.PrintReadyBanner()
 	<-app.Done()
-
 }

@@ -53,7 +53,6 @@ var ResourceMappingIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: fields.AccountName, Value: repos.IndexAsc},
-			{Key: fields.ProjectName, Value: repos.IndexAsc},
 			{Key: fields.EnvironmentName, Value: repos.IndexAsc},
 			{Key: fc.ResourceMappingResourceType, Value: repos.IndexAsc},
 			{Key: fc.ResourceMappingResourceName, Value: repos.IndexAsc},
