@@ -86,6 +86,10 @@ inputs:
     description: 'build websocket-server api'
     default: false
 
+  gateway-kube-proxy:
+    description: 'build gateway kube proxy'
+    default: false
+
 runs:
   using: 'composite'
   steps:
@@ -103,6 +107,11 @@ runs:
         echo "GOCACHE=$GOCACHE" >> $GITHUB_ENV
         echo "FILES_HASH=${{ hashFiles('**/*.go', '**/go.mod', '**/go.sum')}}" >> $GITHUB_OUTPUT
         echo "PUSH_IMAGE=false" >> $GITHUB_ENV
+        if [ "$(basename ${{ inputs.git_directory }})" != "." ]; then
+          echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}/$(basename ${{inputs.git_directory}})" >> $GITHUB_ENV
+        else
+          echo "IMAGE_REPOSITORY_PREFIX=ghcr.io/${{ github.repository }}" >> $GITHUB_ENV
+        fi
 
     - name: ensures path to setup action exists
       shell: bash
@@ -189,7 +198,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/accounts
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/accounts:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/accounts:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: auth api go build cache
       if: ${{ inputs.auth-api == 'true' }}
@@ -207,7 +216,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/auth
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/auth:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/auth:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: comms api go build cache
       if: ${{ inputs.comms-api == 'true' }}
@@ -225,7 +234,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/comms
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/comms:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/comms:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: console api go build cache
       if: ${{ inputs.console-api == 'true' }}
@@ -243,7 +252,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/console
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/console:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/console:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: container-registry api go build cache
       if: ${{ inputs.container-registry-api == 'true' }}
@@ -261,7 +270,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/container-registry
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/container-registry:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/container-registry:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: gateway api go build cache
       if: ${{ inputs.gateway-api == 'true' }}
@@ -279,7 +288,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/gateway
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/gateway:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/gateway:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: iam api go build cache
       if: ${{ inputs.iam-api == 'true' }}
@@ -297,7 +306,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/iam
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/iam:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/iam:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: infra api go build cache
       if: ${{ inputs.infra-api == 'true' }}
@@ -315,7 +324,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/infra
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/infra:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/infra:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: iot-console api go build cache
       if: ${{ inputs.iot-console-api == 'true' }}
@@ -333,7 +342,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/iot-console
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/iot-console:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/iot-console:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: message-office api go build cache
       if: ${{ inputs.message-office-api == 'true' }}
@@ -351,7 +360,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/message-office
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/message-office:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/message-office:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: observability api go build cache
       if: ${{ inputs.observability-api == 'true' }}
@@ -369,7 +378,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/observability
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/observability:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/observability:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: tenant-agent go build cache
       if: ${{ inputs.tenant-agent == 'true' }}
@@ -387,7 +396,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/tenant-agent
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/tenant-agent:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/tenant-agent:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: webhook api go build cache
       if: ${{ inputs.webhook-api == 'true' }}
@@ -405,7 +414,7 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/webhook
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/webhook:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/webhook:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
     - name: websocket-server api go build cache
       if: ${{ inputs.websocket-server-api == 'true' }}
@@ -423,5 +432,22 @@ runs:
       working-directory: ${{ inputs.git_directory }}/apps/websocket-server
       shell: bash
       run: |
-        task container:build-and-push image=ghcr.io/${{ github.repository }}/websocket-server:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/websocket-server:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}
 
+    - name: gateway kube proxy api build cache
+      if: ${{ inputs.gateway-kube-proxy == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |+
+          ${{ env.GOMODCACHE }}
+          ${{ env.GOCACHE }}
+        key: go-${{ runner.os }}-gateway-kube-proxy-${{ steps.env-vars.outputs.FILES_HASH }}
+        save-always: true
+        restore-keys: go-${{ runner.os }}-gateway-kube-proxy-
+
+    - name: gateway logs proxy
+      if: ${{ inputs.gateway-kube-proxy == 'true' }}
+      working-directory: ${{ inputs.git_directory }}/cmd/gateway-kube-proxy
+      shell: bash
+      run: |
+        task container:build-and-push image=${IMAGE_REPOSITORY_PREFIX}/cmd/gateway-kube-proxy:${IMAGE_TAG:-latest} upx=true override=$OVERRIDE_PUSHED_IMAGE push_image=${PUSH_IMAGE}

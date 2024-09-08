@@ -268,8 +268,12 @@ func (d *domain) RemoveDeviceIntercepts(ctx ResourceContext, deviceName string) 
 			fc.AppSpecInterceptEnabled: false,
 		}
 
-		_, err := d.appRepo.PatchById(ctx, apps[i].Id, patchForUpdate)
+		up, err := d.appRepo.PatchById(ctx, apps[i].Id, patchForUpdate)
 		if err != nil {
+			return errors.NewE(err)
+		}
+
+		if err := d.applyApp(ctx, up); err != nil {
 			return errors.NewE(err)
 		}
 	}
@@ -286,14 +290,13 @@ func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, statu
 	if xApp == nil {
 		return errors.Newf("no apps found")
 	}
+
 	recordVersion, err := d.MatchRecordVersion(app.Annotations, xApp.RecordVersion)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	uapp, err := d.appRepo.PatchById(
-		ctx,
-		xApp.Id,
+	uapp, err := d.appRepo.PatchById(ctx, xApp.Id,
 		common.PatchForSyncFromAgent(&app, recordVersion, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))

@@ -11,6 +11,7 @@ enum ConsoleResType {
 	managed_resource
 	imported_managed_resource
 	environment
+	registry_image
 	vpn_device
 }
 
@@ -35,6 +36,10 @@ input SearchEnvironments {
 	text: MatchFilterIn
 	isReady: MatchFilterIn
 	markedForDeletion: MatchFilterIn
+}
+
+input SearchRegistryImages {
+	text: MatchFilterIn
 }
 
 input SearchApps {
@@ -111,6 +116,10 @@ type Query {
 	core_getImagePullSecret(name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccount
 	core_resyncImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
+	core_getRegistryImageURL(image: String!, meta: Map!): RegistryImageURL! @isLoggedInAndVerified @hasAccount
+	core_getRegistryImage(image: String!,): RegistryImage @isLoggedInAndVerified @hasAccount
+	core_listRegistryImages(pq: CursorPaginationIn): RegistryImagePaginatedRecords @isLoggedInAndVerified @hasAccount
+
 	core_listApps(envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
 	core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -156,6 +165,8 @@ type Mutation {
 	core_createImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
 	core_updateImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
 	core_deleteImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+	core_deleteRegistryImage(image: String!): Boolean!  @isLoggedInAndVerified @hasAccount
 
 	core_createApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount

@@ -57,6 +57,8 @@ type domain struct {
 	importedMresRepo repos.DbRepo[*entities.ImportedManagedResource]
 	pullSecretsRepo  repos.DbRepo[*entities.ImagePullSecret]
 
+	registryImageRepo repos.DbRepo[*entities.RegistryImage]
+
 	serviceBindingRepo        repos.DbRepo[*entities.ServiceBinding]
 	clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService]
 
@@ -131,7 +133,7 @@ func (d *domain) applyK8sResourceOnCluster(ctx K8sContext, clusterName string, o
 		return errors.NewE(err)
 	}
 
-	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), clusterName)
+	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: subject,
@@ -178,7 +180,7 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 		return errors.NewE(err)
 	}
 
-	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName)
+	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), *clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: subject,
@@ -226,7 +228,7 @@ func applyK8sResource(ctx K8sContext, args ApplyK8sResourceArgs) error {
 		return errors.NewE(err)
 	}
 
-	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), args.ClusterName)
+	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), args.ClusterName, args.Object.GetObjectKind().GroupVersionKind().String(), args.Object.GetNamespace(), args.Object.GetName())
 
 	err = args.Dispatcher.Produce(ctx, msgTypes.ProduceMsg{Subject: subject, Payload: b})
 	return errors.NewE(err)
@@ -261,7 +263,7 @@ func (d *domain) restartK8sResource(ctx K8sContext, projectName string, namespac
 		return errors.NewE(err)
 	}
 
-	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName)
+	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), *clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: subject,
@@ -289,8 +291,9 @@ func (d *domain) deleteK8sResourceOfCluster(ctx K8sContext, clusterName string, 
 		return errors.NewE(err)
 	}
 
+	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), clusterName),
+		Subject: subject,
 		Payload: b,
 	})
 
@@ -326,8 +329,10 @@ func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj c
 		return errors.NewE(err)
 	}
 
+	subject := common.SendToAgentSubjectName(ctx.GetAccountName(), *clusterName, obj.GetObjectKind().GroupVersionKind().String(), obj.GetNamespace(), obj.GetName())
+
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName),
+		Subject: subject,
 		Payload: b,
 	})
 
@@ -552,6 +557,7 @@ var Module = fx.Module("domain",
 		infraClient infra.InfraClient,
 
 		environmentRepo repos.DbRepo[*entities.Environment],
+		registryImageRepo repos.DbRepo[*entities.RegistryImage],
 
 		appRepo repos.DbRepo[*entities.App],
 		externalAppRepo repos.DbRepo[*entities.ExternalApp],
@@ -593,6 +599,7 @@ var Module = fx.Module("domain",
 			resourceMappingRepo:       resourceMappingRepo,
 			serviceBindingRepo:        serviceBindingRepo,
 			clusterManagedServiceRepo: clusterManagedServiceRepo,
+			registryImageRepo:         registryImageRepo,
 
 			envVars: ev,
 

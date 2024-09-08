@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"log/slog"
 	"net"
 
 	"github.com/kloudlite/api/pkg/errors"
@@ -16,12 +17,15 @@ type Server interface {
 }
 
 type ServerOpts struct {
-	Logger logging.Logger
+	Logger  logging.Logger
+	Slogger *slog.Logger
 }
 
 type grpcServer struct {
 	*grpc.Server
-	logger logging.Logger
+	// Deprecated: use slogger
+	logger  logging.Logger
+	slogger *slog.Logger
 }
 
 func (g *grpcServer) Listen(addr string) error {
@@ -29,7 +33,11 @@ func (g *grpcServer) Listen(addr string) error {
 	if err != nil {
 		return errors.NewEf(err, "could not listen to net/tcp server")
 	}
-	g.logger.Infof("listening on %s", addr)
+	if g.slogger != nil {
+		g.slogger.Info("grpc server listening", "at", addr)
+	} else {
+		g.logger.Infof("listening on %s", addr)
+	}
 	return g.Serve(listen)
 }
 
@@ -50,13 +58,18 @@ func NewGrpcServer(opts ServerOpts) (Server, error) {
 		grpc.StreamInterceptor(func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 			p, ok := peer.FromContext(stream.Context())
 			if ok {
-				opts.Logger.Debugf("[Stream] New connection from %s", p.Addr.String())
+				_ = p.Addr.String()
+				// if opts.Slogger != nil {
+				// 	opts.Slogger.Debug("new grpc connection", "from", p.Addr.String())
+				// } else {
+				// 	opts.Logger.Debugf("[Stream] New connection from %s", p.Addr.String())
+				// }
 			}
 			return handler(srv, stream)
 		}),
 	)
 
-	return &grpcServer{Server: server, logger: opts.Logger}, nil
+	return &grpcServer{Server: server, logger: opts.Logger, slogger: opts.Slogger}, nil
 }
 
 // Type guard to ensure grpcServer implements Server interface, at compile time

@@ -19,6 +19,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	l "github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/skip"
 	"github.com/kloudlite/api/pkg/logging"
 )
 
@@ -75,20 +76,29 @@ type ServerArgs struct {
 
 func NewServer(args ServerArgs) Server {
 	app := fiber.New(fiber.Config{
+		// Prefork:               true,
+		DisableStartupMessage: true,
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			args.Logger.Errorf(err)
 			return errors.NewE(err)
 		},
 	})
-	app.Use(
-		l.New(
-			l.Config{
-				Format:     "${time} ${status} - ${method} ${latency} \t ${path} \n",
-				TimeFormat: "02-Jan-2006 15:04:05",
-				TimeZone:   "Asia/Kolkata",
-			},
-		),
+
+	loggerMiddleware := l.New(
+		l.Config{
+			CustomTags:    map[string]l.LogFunc{},
+			Format:        "${time} ${status} - ${method} ${latency} \t ${path} \n",
+			TimeFormat:    "02-Jan-2006 15:04:05",
+			TimeZone:      "Asia/Kolkata",
+			TimeInterval:  0,
+			Output:        nil,
+			DisableColors: false,
+		},
 	)
+
+	app.Use(skip.New(loggerMiddleware, func(c *fiber.Ctx) bool {
+		return c.Path() == "/_healthy"
+	}))
 
 	if args.CorsAllowOrigins != nil {
 		app.Use(
