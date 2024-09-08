@@ -91,7 +91,7 @@
     "react-qr-code": "^2.0.12",
     "react-remove-scroll": "^2.5.7",
     "react-router-dom": "^6.21.1",
-    "react-toastify": "^9.1.3",
+    "react-toastify": "10.0.5",
     "react-tooltip": "^5.27.0",
     "react-viewport-list": "^7.1.2",
     "reconnecting-websocket": "^4.4.0",
