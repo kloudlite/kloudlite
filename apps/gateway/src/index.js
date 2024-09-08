@@ -26,10 +26,6 @@ class CustomDataSource extends RemoteGraphQLDataSource {
     return request;
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  shouldBatchRequest({ request }) {
-    return request.http?.headers?.get('x-hasura-admin-secret') !== undefined;
-  }
 }
   didReceiveResponse({ response, context }) {
     const x = response.http.headers.get('set-cookie');
