@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/pkg/k8s"
@@ -72,6 +73,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.ResourceMapping]("resource_mappings", "rmap", entities.ResourceMappingIndices),
 	repos.NewFxMongoRepo[*entities.ServiceBinding]("service_bindings", "svcb", entities.ServiceBindingIndexes),
 	repos.NewFxMongoRepo[*entities.ClusterManagedService]("cluster_managed_services", "cmsvc", entities.ClusterManagedServiceIndices),
+	repos.NewFxMongoRepo[*entities.RegistryImage]("registry_images", "reg_img", entities.RegistryImageIndexes),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -164,10 +166,10 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.ConsoleReceiver, common.EventErrorOnApply)
 		consumerName := "console:error-on-apply"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsResourceSyncStream,
+			Stream: ev.NatsReceiveFromAgentStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -177,7 +179,7 @@ var Module = fx.Module("app",
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go ProcessErrorOnApply(consumer, d, logger)
@@ -189,12 +191,43 @@ var Module = fx.Module("app",
 		})
 	}),
 
+	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (WebhookConsumer, error) {
+		topic := string(common.ImageRegistryHookTopicName)
+		consumerName := "console:webhook"
+		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
+			Stream: ev.EventsNatsStream,
+			ConsumerConfig: msg_nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer reads message from a subject dedicated to console registry webhooks",
+				FilterSubjects: []string{topic},
+			},
+		})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, consumer WebhookConsumer, d domain.Domain, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go func() {
+					err := processWebhooks(consumer, d, logger)
+					if err != nil {
+						logger.Errorf(err, "could not process webhooks")
+					}
+				}()
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.Stop(ctx)
+			},
+		})
+	}),
+
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventResourceUpdate)
+		topic := common.ReceiveFromAgentSubjectName(common.ReceiveFromAgentArgs{AccountName: "*", ClusterName: "*"}, common.ConsoleReceiver, common.EventResourceUpdate)
 
 		consumerName := "console:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsResourceSyncStream,
+			Stream: ev.NatsReceiveFromAgentStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -204,7 +237,7 @@ var Module = fx.Module("app",
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go ProcessResourceUpdates(consumer, d, logger)
@@ -220,7 +253,7 @@ var Module = fx.Module("app",
 		return domain.NewSvcBindingDomain(svcBindingRepo)
 	}),
 
-	fx.Provide(func(logger logging.Logger, sbd domain.ServiceBindingDomain, ev *env.Env) *dnsHandler {
+	fx.Provide(func(logger *slog.Logger, sbd domain.ServiceBindingDomain, ev *env.Env) *dnsHandler {
 		return &dnsHandler{
 			logger:               logger,
 			serviceBindingDomain: sbd,
@@ -228,15 +261,15 @@ var Module = fx.Module("app",
 		}
 	}),
 
-	fx.Invoke(func(server *DNSServer, handler *dnsHandler, lf fx.Lifecycle, logger logging.Logger) {
+	fx.Invoke(func(server *DNSServer, handler *dnsHandler, lf fx.Lifecycle, logger *slog.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
-				logger.Infof("starting dns server at %s", server.Addr)
 				server.Handler = handler
 				go func() {
+					logger.Info("starting dns server", "at", server.Addr)
 					err := server.ListenAndServe()
 					if err != nil {
-						logger.Errorf(err, "failed to start dns server")
+						logger.Error("failed to start dns server, got", "err", err)
 						panic(err)
 					}
 				}()

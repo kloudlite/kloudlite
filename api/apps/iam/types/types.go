@@ -176,6 +176,9 @@ const (
 	UpdateImagePullSecret Action = "update-image-pull-secret"
 	CreateImagePullSecret Action = "create-image-pull-secret"
 	DeleteImagePullSecret Action = "delete-image-pull-secret"
+
+	// registry images
+	ListRegistryImages Action = "list-registry-images"
 )
 
 func NewResourceRef(accountName string, resourceType ResourceType, resourceName string) string {

@@ -80,6 +80,10 @@ models:
     model: github.com/kloudlite/api/apps/console/internal/entities.Environment
   EnvironmentIn: *environment-model
 
+  RegistryImage: &registry-image-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.RegistryImage
+  RegistryImageIn: *registry-image-model
+
   Secret: &secret-model
     model: github.com/kloudlite/api/apps/console/internal/entities.Secret
   SecretIn: *secret-model

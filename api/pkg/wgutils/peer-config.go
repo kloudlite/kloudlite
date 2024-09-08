@@ -28,7 +28,8 @@ type WgConfigParams struct {
 	PrivateKey string
 	ListenPort uint16
 
-	DNS string
+	DNS     string
+	WithDNS bool
 
 	PostUp   []string
 	PostDown []string
@@ -47,9 +48,9 @@ PrivateKey = {{.PrivateKey}}
 ListenPort = {{.ListenPort}}
 {{- end }}
 
-{{- /* {{- if .DNS }} */}}
-{{- /* DNS = {{.DNS}} */}}
-{{- /* {{- end }} */}}
+{{- if (and .DNS .WithDNS) }}
+DNS = {{.DNS}}
+{{- end }}
 
 {{- range .PostUp -}}
 PostUp = {{.}}

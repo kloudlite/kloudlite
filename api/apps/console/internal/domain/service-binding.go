@@ -11,11 +11,6 @@ import (
 
 // OnServiceBindingDeleteMessage implements Domain.
 func (d *domain) OnServiceBindingDeleteMessage(ctx ConsoleContext, svcb *networkingv1.ServiceBinding) error {
-	panic("unimplemented")
-}
-
-// OnServiceBindingUpdateMessage implements Domain.
-func (d *domain) OnServiceBindingUpdateMessage(ctx ConsoleContext, svcb *networkingv1.ServiceBinding, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	if svcb == nil {
 		return errors.Newf("no service binding found")
 	}
@@ -24,12 +19,35 @@ func (d *domain) OnServiceBindingUpdateMessage(ctx ConsoleContext, svcb *network
 		return nil
 	}
 
-	if _, err := d.serviceBindingRepo.Upsert(ctx, repos.Filter{
-		fc.AccountName: ctx.AccountName,
-		// fc.ClusterName:                opts.ClusterName,
-		// fc.MetadataName:               svcb.Name,
+	if err := d.serviceBindingRepo.DeleteOne(ctx, repos.Filter{fc.AccountName: ctx.AccountName, fc.ServiceBindingSpecHostname: svcb.Spec.Hostname}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// OnServiceBindingUpdateMessage implements Domain.
+func (d *domain) OnServiceBindingUpdateMessage(ctx ConsoleContext, svcb *networkingv1.ServiceBinding, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	if svcb == nil {
+		return errors.Newf("no service binding found")
+	}
+
+	filter := repos.Filter{
+		fc.AccountName:                ctx.AccountName,
 		fc.ServiceBindingSpecHostname: svcb.Spec.Hostname,
-	}, &entities.ServiceBinding{
+	}
+
+	if svcb.Spec.ServiceIP == nil || svcb.Spec.Hostname == "" {
+		// INFO: it means that service binding has been de-allocated
+		if err := d.serviceBindingRepo.DeleteOne(ctx, filter); err != nil {
+			if !errors.Is(err, repos.ErrNoDocuments) {
+				return err
+			}
+		}
+		return nil
+	}
+
+	if _, err := d.serviceBindingRepo.Upsert(ctx, filter, &entities.ServiceBinding{
 		ServiceBinding: *svcb,
 		AccountName:    ctx.AccountName,
 		ClusterName:    opts.ClusterName,

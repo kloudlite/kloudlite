@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"log/slog"
 	"os"
 	"time"
 
@@ -33,6 +34,14 @@ func main() {
 
 		fx.Provide(func() logging.Logger {
 			return logger
+		}),
+
+		fx.Provide(func() *slog.Logger {
+			return logging.NewSlogLogger(logging.SlogOptions{
+				ShowCaller:         true,
+				ShowDebugLogs:      isDev,
+				SetAsDefaultLogger: true,
+			})
 		}),
 
 		fx.Provide(func() (*env.Env, error) {

@@ -89,6 +89,9 @@ var roleBindings RoleBindingMap = RoleBindingMap{
 	t.ListImagePullSecrets:  []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
 	t.GetImagePullSecret:    []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
 
+	// registry images
+	t.ListRegistryImages: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
+
 	// for projects
 	t.CreateProject: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember},
 	t.ListProjects:  []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember, t.RoleProjectAdmin, t.RoleProjectMember},

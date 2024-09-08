@@ -80,7 +80,7 @@ func (d *domain) CreateBYOKCluster(ctx InfraContext, cluster entities.BYOKCluste
 
 	cluster.ClusterToken = ctoken
 
-	cluster.MessageQueueTopicName = common.GetTenantClusterMessagingTopic(ctx.AccountName, cluster.Name)
+	cluster.MessageQueueTopicName = common.SendToAgentSubjectPrefix(ctx.AccountName, cluster.Name)
 
 	gvpnConn, err := d.ensureGlobalVPNConnection(ctx, cluster.Name, cluster.GlobalVPN)
 	if err != nil {

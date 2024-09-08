@@ -65,6 +65,7 @@ type ResolverRoot interface {
 	Metadata() MetadataResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	RegistryImage() RegistryImageResolver
 	Router() RouterResolver
 	Secret() SecretResolver
 	AppIn() AppInResolver
@@ -427,6 +428,7 @@ type ComplexityRoot struct {
 
 	Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec struct {
 		Routing         func(childComplexity int) int
+		Suspend         func(childComplexity int) int
 		TargetNamespace func(childComplexity int) int
 	}
 
@@ -752,6 +754,7 @@ type ComplexityRoot struct {
 		CoreDeleteImagePullSecret         func(childComplexity int, name string) int
 		CoreDeleteImportedManagedResource func(childComplexity int, envName string, importName string) int
 		CoreDeleteManagedResource         func(childComplexity int, msvcName string, mresName string) int
+		CoreDeleteRegistryImage           func(childComplexity int, image string) int
 		CoreDeleteRouter                  func(childComplexity int, envName string, routerName string) int
 		CoreDeleteSecret                  func(childComplexity int, envName string, secretName string) int
 		CoreImportManagedResource         func(childComplexity int, envName string, msvcName string, mresName string, importName string) int
@@ -795,6 +798,8 @@ type ComplexityRoot struct {
 		CoreGetManagedResouceOutputKeyValues func(childComplexity int, msvcName *string, envName *string, keyrefs []*domain.ManagedResourceKeyRef) int
 		CoreGetManagedResouceOutputKeys      func(childComplexity int, msvcName *string, envName *string, name string) int
 		CoreGetManagedResource               func(childComplexity int, msvcName *string, envName *string, name string) int
+		CoreGetRegistryImage                 func(childComplexity int, image string) int
+		CoreGetRegistryImageURL              func(childComplexity int, image string, meta map[string]interface{}) int
 		CoreGetRouter                        func(childComplexity int, envName string, name string) int
 		CoreGetSecret                        func(childComplexity int, envName string, name string) int
 		CoreGetSecretValues                  func(childComplexity int, envName string, queries []*domain.SecretKeyRef) int
@@ -805,6 +810,7 @@ type ComplexityRoot struct {
 		CoreListImagePullSecrets             func(childComplexity int, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) int
 		CoreListImportedManagedResources     func(childComplexity int, envName string, search *model.SearchImportedManagedResources, pq *repos.CursorPagination) int
 		CoreListManagedResources             func(childComplexity int, search *model.SearchManagedResources, pq *repos.CursorPagination) int
+		CoreListRegistryImages               func(childComplexity int, pq *repos.CursorPagination) int
 		CoreListRouters                      func(childComplexity int, envName string, search *model.SearchRouters, pq *repos.CursorPagination) int
 		CoreListSecrets                      func(childComplexity int, envName string, search *model.SearchSecrets, pq *repos.CursorPagination) int
 		CoreRestartApp                       func(childComplexity int, envName string, appName string) int
@@ -820,6 +826,56 @@ type ComplexityRoot struct {
 		InfraListClusterManagedServices      func(childComplexity int, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) int
 		__resolve__service                   func(childComplexity int) int
 		__resolve_entities                   func(childComplexity int, representations []map[string]interface{}) int
+	}
+
+	RegistryImage struct {
+		AccountName       func(childComplexity int) int
+		CreationTime      func(childComplexity int) int
+		Id                func(childComplexity int) int
+		ImageName         func(childComplexity int) int
+		ImageTag          func(childComplexity int) int
+		MarkedForDeletion func(childComplexity int) int
+		Meta              func(childComplexity int) int
+		RecordVersion     func(childComplexity int) int
+		UpdateTime        func(childComplexity int) int
+	}
+
+	RegistryImageCredentials struct {
+		AccountName       func(childComplexity int) int
+		CreatedBy         func(childComplexity int) int
+		CreationTime      func(childComplexity int) int
+		ID                func(childComplexity int) int
+		MarkedForDeletion func(childComplexity int) int
+		Password          func(childComplexity int) int
+		RecordVersion     func(childComplexity int) int
+		UpdateTime        func(childComplexity int) int
+	}
+
+	RegistryImageCredentialsEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	RegistryImageCredentialsPaginatedRecords struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	RegistryImageEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	RegistryImagePaginatedRecords struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	RegistryImageURL struct {
+		ScriptURL func(childComplexity int) int
+		URL       func(childComplexity int) int
 	}
 
 	Router struct {
@@ -1007,6 +1063,7 @@ type MutationResolver interface {
 	CoreCreateImagePullSecret(ctx context.Context, pullSecret entities.ImagePullSecret) (*entities.ImagePullSecret, error)
 	CoreUpdateImagePullSecret(ctx context.Context, pullSecret entities.ImagePullSecret) (*entities.ImagePullSecret, error)
 	CoreDeleteImagePullSecret(ctx context.Context, name string) (bool, error)
+	CoreDeleteRegistryImage(ctx context.Context, image string) (bool, error)
 	CoreCreateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
 	CoreUpdateApp(ctx context.Context, envName string, app entities.App) (*entities.App, error)
 	CoreDeleteApp(ctx context.Context, envName string, appName string) (bool, error)
@@ -1043,6 +1100,9 @@ type QueryResolver interface {
 	CoreListImagePullSecrets(ctx context.Context, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error)
 	CoreGetImagePullSecret(ctx context.Context, name string) (*entities.ImagePullSecret, error)
 	CoreResyncImagePullSecret(ctx context.Context, name string) (bool, error)
+	CoreGetRegistryImageURL(ctx context.Context, image string, meta map[string]interface{}) (*model.RegistryImageURL, error)
+	CoreGetRegistryImage(ctx context.Context, image string) (*entities.RegistryImage, error)
+	CoreListRegistryImages(ctx context.Context, pq *repos.CursorPagination) (*model.RegistryImagePaginatedRecords, error)
 	CoreListApps(ctx context.Context, envName string, search *model.SearchApps, pq *repos.CursorPagination) (*model.AppPaginatedRecords, error)
 	CoreGetApp(ctx context.Context, envName string, name string) (*entities.App, error)
 	CoreResyncApp(ctx context.Context, envName string, name string) (bool, error)
@@ -1069,6 +1129,11 @@ type QueryResolver interface {
 	CoreGetManagedResource(ctx context.Context, msvcName *string, envName *string, name string) (*entities.ManagedResource, error)
 	CoreResyncManagedResource(ctx context.Context, msvcName string, name string) (bool, error)
 	CoreListImportedManagedResources(ctx context.Context, envName string, search *model.SearchImportedManagedResources, pq *repos.CursorPagination) (*model.ImportedManagedResourcePaginatedRecords, error)
+}
+type RegistryImageResolver interface {
+	CreationTime(ctx context.Context, obj *entities.RegistryImage) (string, error)
+
+	UpdateTime(ctx context.Context, obj *entities.RegistryImage) (string, error)
 }
 type RouterResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Router) (string, error)
@@ -2676,6 +2741,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec.Routing(childComplexity), true
 
+	case "Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec.suspend":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec.Suspend == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec.Suspend(childComplexity), true
+
 	case "Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec.targetNamespace":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec.TargetNamespace == nil {
 			break
@@ -4212,6 +4284,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CoreDeleteManagedResource(childComplexity, args["msvcName"].(string), args["mresName"].(string)), true
 
+	case "Mutation.core_deleteRegistryImage":
+		if e.complexity.Mutation.CoreDeleteRegistryImage == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_deleteRegistryImage_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreDeleteRegistryImage(childComplexity, args["image"].(string)), true
+
 	case "Mutation.core_deleteRouter":
 		if e.complexity.Mutation.CoreDeleteRouter == nil {
 			break
@@ -4590,6 +4674,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreGetManagedResource(childComplexity, args["msvcName"].(*string), args["envName"].(*string), args["name"].(string)), true
 
+	case "Query.core_getRegistryImage":
+		if e.complexity.Query.CoreGetRegistryImage == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_getRegistryImage_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreGetRegistryImage(childComplexity, args["image"].(string)), true
+
+	case "Query.core_getRegistryImageURL":
+		if e.complexity.Query.CoreGetRegistryImageURL == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_getRegistryImageURL_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreGetRegistryImageURL(childComplexity, args["image"].(string), args["meta"].(map[string]interface{})), true
+
 	case "Query.core_getRouter":
 		if e.complexity.Query.CoreGetRouter == nil {
 			break
@@ -4709,6 +4817,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CoreListManagedResources(childComplexity, args["search"].(*model.SearchManagedResources), args["pq"].(*repos.CursorPagination)), true
+
+	case "Query.core_listRegistryImages":
+		if e.complexity.Query.CoreListRegistryImages == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_listRegistryImages_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreListRegistryImages(childComplexity, args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.core_listRouters":
 		if e.complexity.Query.CoreListRouters == nil {
@@ -4884,6 +5004,209 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.__resolve_entities(childComplexity, args["representations"].([]map[string]interface{})), true
+
+	case "RegistryImage.accountName":
+		if e.complexity.RegistryImage.AccountName == nil {
+			break
+		}
+
+		return e.complexity.RegistryImage.AccountName(childComplexity), true
+
+	case "RegistryImage.creationTime":
+		if e.complexity.RegistryImage.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.RegistryImage.CreationTime(childComplexity), true
+
+	case "RegistryImage.id":
+		if e.complexity.RegistryImage.Id == nil {
+			break
+		}
+
+		return e.complexity.RegistryImage.Id(childComplexity), true
+
+	case "RegistryImage.imageName":
+		if e.complexity.RegistryImage.ImageName == nil {
+			break
+		}
+
+		return e.complexity.RegistryImage.ImageName(childComplexity), true
+
+	case "RegistryImage.imageTag":
+		if e.complexity.RegistryImage.ImageTag == nil {
+			break
+		}
+
+		return e.complexity.RegistryImage.ImageTag(childComplexity), true
+
+	case "RegistryImage.markedForDeletion":
+		if e.complexity.RegistryImage.MarkedForDeletion == nil {
+			break
+		}
+
+		return e.complexity.RegistryImage.MarkedForDeletion(childComplexity), true
+
+	case "RegistryImage.meta":
+		if e.complexity.RegistryImage.Meta == nil {
+			break
+		}
+
+		return e.complexity.RegistryImage.Meta(childComplexity), true
+
+	case "RegistryImage.recordVersion":
+		if e.complexity.RegistryImage.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.RegistryImage.RecordVersion(childComplexity), true
+
+	case "RegistryImage.updateTime":
+		if e.complexity.RegistryImage.UpdateTime == nil {
+			break
+		}
+
+		return e.complexity.RegistryImage.UpdateTime(childComplexity), true
+
+	case "RegistryImageCredentials.accountName":
+		if e.complexity.RegistryImageCredentials.AccountName == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentials.AccountName(childComplexity), true
+
+	case "RegistryImageCredentials.createdBy":
+		if e.complexity.RegistryImageCredentials.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentials.CreatedBy(childComplexity), true
+
+	case "RegistryImageCredentials.creationTime":
+		if e.complexity.RegistryImageCredentials.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentials.CreationTime(childComplexity), true
+
+	case "RegistryImageCredentials.id":
+		if e.complexity.RegistryImageCredentials.ID == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentials.ID(childComplexity), true
+
+	case "RegistryImageCredentials.markedForDeletion":
+		if e.complexity.RegistryImageCredentials.MarkedForDeletion == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentials.MarkedForDeletion(childComplexity), true
+
+	case "RegistryImageCredentials.password":
+		if e.complexity.RegistryImageCredentials.Password == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentials.Password(childComplexity), true
+
+	case "RegistryImageCredentials.recordVersion":
+		if e.complexity.RegistryImageCredentials.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentials.RecordVersion(childComplexity), true
+
+	case "RegistryImageCredentials.updateTime":
+		if e.complexity.RegistryImageCredentials.UpdateTime == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentials.UpdateTime(childComplexity), true
+
+	case "RegistryImageCredentialsEdge.cursor":
+		if e.complexity.RegistryImageCredentialsEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentialsEdge.Cursor(childComplexity), true
+
+	case "RegistryImageCredentialsEdge.node":
+		if e.complexity.RegistryImageCredentialsEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentialsEdge.Node(childComplexity), true
+
+	case "RegistryImageCredentialsPaginatedRecords.edges":
+		if e.complexity.RegistryImageCredentialsPaginatedRecords.Edges == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentialsPaginatedRecords.Edges(childComplexity), true
+
+	case "RegistryImageCredentialsPaginatedRecords.pageInfo":
+		if e.complexity.RegistryImageCredentialsPaginatedRecords.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentialsPaginatedRecords.PageInfo(childComplexity), true
+
+	case "RegistryImageCredentialsPaginatedRecords.totalCount":
+		if e.complexity.RegistryImageCredentialsPaginatedRecords.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageCredentialsPaginatedRecords.TotalCount(childComplexity), true
+
+	case "RegistryImageEdge.cursor":
+		if e.complexity.RegistryImageEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageEdge.Cursor(childComplexity), true
+
+	case "RegistryImageEdge.node":
+		if e.complexity.RegistryImageEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageEdge.Node(childComplexity), true
+
+	case "RegistryImagePaginatedRecords.edges":
+		if e.complexity.RegistryImagePaginatedRecords.Edges == nil {
+			break
+		}
+
+		return e.complexity.RegistryImagePaginatedRecords.Edges(childComplexity), true
+
+	case "RegistryImagePaginatedRecords.pageInfo":
+		if e.complexity.RegistryImagePaginatedRecords.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.RegistryImagePaginatedRecords.PageInfo(childComplexity), true
+
+	case "RegistryImagePaginatedRecords.totalCount":
+		if e.complexity.RegistryImagePaginatedRecords.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.RegistryImagePaginatedRecords.TotalCount(childComplexity), true
+
+	case "RegistryImageURL.scriptUrl":
+		if e.complexity.RegistryImageURL.ScriptURL == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageURL.ScriptURL(childComplexity), true
+
+	case "RegistryImageURL.url":
+		if e.complexity.RegistryImageURL.URL == nil {
+			break
+		}
+
+		return e.complexity.RegistryImageURL.URL(childComplexity), true
 
 	case "Router.apiVersion":
 		if e.complexity.Router.APIVersion == nil {
@@ -5324,6 +5647,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputMatchFilterIn,
 		ec.unmarshalInputMetadataIn,
 		ec.unmarshalInputPortIn,
+		ec.unmarshalInputRegistryImageCredentialsIn,
+		ec.unmarshalInputRegistryImageIn,
+		ec.unmarshalInputRegistryImageURLIn,
 		ec.unmarshalInputRouterIn,
 		ec.unmarshalInputSearchApps,
 		ec.unmarshalInputSearchClusterManagedService,
@@ -5335,6 +5661,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSearchManagedResources,
 		ec.unmarshalInputSearchProjectManagedService,
 		ec.unmarshalInputSearchProjects,
+		ec.unmarshalInputSearchRegistryImages,
 		ec.unmarshalInputSearchRouters,
 		ec.unmarshalInputSearchSecrets,
 		ec.unmarshalInputSecretIn,
@@ -5450,6 +5777,7 @@ enum ConsoleResType {
 	managed_resource
 	imported_managed_resource
 	environment
+	registry_image
 	vpn_device
 }
 
@@ -5474,6 +5802,10 @@ input SearchEnvironments {
 	text: MatchFilterIn
 	isReady: MatchFilterIn
 	markedForDeletion: MatchFilterIn
+}
+
+input SearchRegistryImages {
+	text: MatchFilterIn
 }
 
 input SearchApps {
@@ -5550,6 +5882,10 @@ type Query {
 	core_getImagePullSecret(name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccount
 	core_resyncImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
+	core_getRegistryImageURL(image: String!, meta: Map!): RegistryImageURL! @isLoggedInAndVerified @hasAccount
+	core_getRegistryImage(image: String!,): RegistryImage @isLoggedInAndVerified @hasAccount
+	core_listRegistryImages(pq: CursorPaginationIn): RegistryImagePaginatedRecords @isLoggedInAndVerified @hasAccount
+
 	core_listApps(envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
 	core_getApp(envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
 	core_resyncApp(envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -5595,6 +5931,8 @@ type Mutation {
 	core_createImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
 	core_updateImagePullSecret(pullSecret: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
 	core_deleteImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+	core_deleteRegistryImage(image: String!): Boolean!  @isLoggedInAndVerified @hasAccount
 
 	core_createApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
 	core_updateApp(envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
@@ -5878,6 +6216,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting @
 
 type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec @shareable {
   routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting
+  suspend: Boolean
   targetNamespace: String
 }
 
@@ -6211,6 +6550,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingI
 
 input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
   routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn
+  suspend: Boolean
   targetNamespace: String
 }
 
@@ -6847,6 +7187,76 @@ input PortIn {
 }
 
 `, BuiltIn: false},
+	{Name: "../struct-to-graphql/registryimage.graphqls", Input: `type RegistryImage @shareable {
+  accountName: String!
+  creationTime: Date!
+  id: ID!
+  imageName: String!
+  imageTag: String!
+  markedForDeletion: Boolean
+  meta: Map!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type RegistryImageEdge @shareable {
+  cursor: String!
+  node: RegistryImage!
+}
+
+type RegistryImagePaginatedRecords @shareable {
+  edges: [RegistryImageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input RegistryImageIn {
+  accountName: String!
+  imageName: String!
+  imageTag: String!
+  meta: Map!
+}
+
+`, BuiltIn: false},
+	{Name: "../struct-to-graphql/registryimagecredentials.graphqls", Input: `type RegistryImageCredentials @shareable {
+  accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  id: ID!
+  markedForDeletion: Boolean
+  password: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type RegistryImageCredentialsEdge @shareable {
+  cursor: String!
+  node: RegistryImageCredentials!
+}
+
+type RegistryImageCredentialsPaginatedRecords @shareable {
+  edges: [RegistryImageCredentialsEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input RegistryImageCredentialsIn {
+  accountName: String!
+  password: String!
+}
+
+`, BuiltIn: false},
+	{Name: "../struct-to-graphql/registryimageurl.graphqls", Input: `type RegistryImageURL @shareable {
+  scriptUrl: String!
+  url: String!
+}
+
+input RegistryImageURLIn {
+  scriptUrl: String!
+  url: String!
+}
+
+`, BuiltIn: false},
 	{Name: "../struct-to-graphql/router.graphqls", Input: `type Router @shareable {
   accountName: String!
   apiVersion: String
@@ -7427,6 +7837,21 @@ func (ec *executionContext) field_Mutation_core_deleteManagedResource_args(ctx c
 		}
 	}
 	args["mresName"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_deleteRegistryImage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["image"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["image"] = arg0
 	return args, nil
 }
 
@@ -8204,6 +8629,45 @@ func (ec *executionContext) field_Query_core_getManagedResource_args(ctx context
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_core_getRegistryImageURL_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["image"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["image"] = arg0
+	var arg1 map[string]interface{}
+	if tmp, ok := rawArgs["meta"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("meta"))
+		arg1, err = ec.unmarshalNMap2map(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["meta"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_getRegistryImage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["image"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["image"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_core_getRouter_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -8477,6 +8941,21 @@ func (ec *executionContext) field_Query_core_listManagedResources_args(ctx conte
 		}
 	}
 	args["pq"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_listRegistryImages_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *repos.CursorPagination
+	if tmp, ok := rawArgs["pq"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+		arg0, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pq"] = arg0
 	return args, nil
 }
 
@@ -8852,7 +9331,7 @@ func (ec *executionContext) _App_accountName(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -8893,7 +9372,7 @@ func (ec *executionContext) _App_apiVersion(ctx context.Context, field graphql.C
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -8934,7 +9413,7 @@ func (ec *executionContext) _App_ciBuildId(ctx context.Context, field graphql.Co
 	return ec.marshalOID2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_ciBuildId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_ciBuildId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -8978,7 +9457,7 @@ func (ec *executionContext) _App_createdBy(ctx context.Context, field graphql.Co
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9030,7 +9509,7 @@ func (ec *executionContext) _App_creationTime(ctx context.Context, field graphql
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9074,7 +9553,7 @@ func (ec *executionContext) _App_displayName(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9115,7 +9594,7 @@ func (ec *executionContext) _App_enabled(ctx context.Context, field graphql.Coll
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9159,7 +9638,7 @@ func (ec *executionContext) _App_environmentName(ctx context.Context, field grap
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_environmentName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_environmentName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9203,7 +9682,7 @@ func (ec *executionContext) _App_id(ctx context.Context, field graphql.Collected
 	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9244,7 +9723,7 @@ func (ec *executionContext) _App_kind(ctx context.Context, field graphql.Collect
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9288,7 +9767,7 @@ func (ec *executionContext) _App_lastUpdatedBy(ctx context.Context, field graphq
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_lastUpdatedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9337,7 +9816,7 @@ func (ec *executionContext) _App_markedForDeletion(ctx context.Context, field gr
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9378,7 +9857,7 @@ func (ec *executionContext) _App_metadata(ctx context.Context, field graphql.Col
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9438,7 +9917,7 @@ func (ec *executionContext) _App_recordVersion(ctx context.Context, field graphq
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9482,7 +9961,7 @@ func (ec *executionContext) _App_spec(ctx context.Context, field graphql.Collect
 	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__AppSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppSpec(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_spec(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9551,7 +10030,7 @@ func (ec *executionContext) _App_status(ctx context.Context, field graphql.Colle
 	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9611,7 +10090,7 @@ func (ec *executionContext) _App_syncStatus(ctx context.Context, field graphql.C
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9669,7 +10148,7 @@ func (ec *executionContext) _App_updateTime(ctx context.Context, field graphql.C
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9710,7 +10189,7 @@ func (ec *executionContext) _App_build(ctx context.Context, field graphql.Collec
 	return ec.marshalOBuild2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐBuild(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_build(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_build(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9755,7 +10234,7 @@ func (ec *executionContext) _App_serviceHost(ctx context.Context, field graphql.
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_App_serviceHost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_App_serviceHost(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "App",
 		Field:      field,
@@ -9799,7 +10278,7 @@ func (ec *executionContext) _AppEdge_cursor(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AppEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AppEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AppEdge",
 		Field:      field,
@@ -9843,7 +10322,7 @@ func (ec *executionContext) _AppEdge_node(ctx context.Context, field graphql.Col
 	return ec.marshalNApp2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐApp(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AppEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AppEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AppEdge",
 		Field:      field,
@@ -9929,7 +10408,7 @@ func (ec *executionContext) _AppPaginatedRecords_edges(ctx context.Context, fiel
 	return ec.marshalNAppEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐAppEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AppPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AppPaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AppPaginatedRecords",
 		Field:      field,
@@ -9979,7 +10458,7 @@ func (ec *executionContext) _AppPaginatedRecords_pageInfo(ctx context.Context, f
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AppPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AppPaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AppPaginatedRecords",
 		Field:      field,
@@ -10033,7 +10512,7 @@ func (ec *executionContext) _AppPaginatedRecords_totalCount(ctx context.Context,
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_AppPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_AppPaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AppPaginatedRecords",
 		Field:      field,
@@ -10103,7 +10582,7 @@ func (ec *executionContext) _Build_id(ctx context.Context, field graphql.Collect
 	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Build_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Build_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Build",
 		Field:      field,
@@ -10147,7 +10626,7 @@ func (ec *executionContext) _ClusterManagedService_accountName(ctx context.Conte
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10188,7 +10667,7 @@ func (ec *executionContext) _ClusterManagedService_apiVersion(ctx context.Contex
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10232,7 +10711,7 @@ func (ec *executionContext) _ClusterManagedService_clusterName(ctx context.Conte
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_clusterName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10276,7 +10755,7 @@ func (ec *executionContext) _ClusterManagedService_createdBy(ctx context.Context
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10328,7 +10807,7 @@ func (ec *executionContext) _ClusterManagedService_creationTime(ctx context.Cont
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10372,7 +10851,7 @@ func (ec *executionContext) _ClusterManagedService_displayName(ctx context.Conte
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10416,7 +10895,7 @@ func (ec *executionContext) _ClusterManagedService_id(ctx context.Context, field
 	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10457,7 +10936,7 @@ func (ec *executionContext) _ClusterManagedService_isArchived(ctx context.Contex
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_isArchived(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_isArchived(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10498,7 +10977,7 @@ func (ec *executionContext) _ClusterManagedService_kind(ctx context.Context, fie
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10542,7 +11021,7 @@ func (ec *executionContext) _ClusterManagedService_lastUpdatedBy(ctx context.Con
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_lastUpdatedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10591,7 +11070,7 @@ func (ec *executionContext) _ClusterManagedService_markedForDeletion(ctx context
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10632,7 +11111,7 @@ func (ec *executionContext) _ClusterManagedService_metadata(ctx context.Context,
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10692,7 +11171,7 @@ func (ec *executionContext) _ClusterManagedService_recordVersion(ctx context.Con
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10733,7 +11212,7 @@ func (ec *executionContext) _ClusterManagedService_spec(ctx context.Context, fie
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_spec(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10780,7 +11259,7 @@ func (ec *executionContext) _ClusterManagedService_status(ctx context.Context, f
 	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10840,7 +11319,7 @@ func (ec *executionContext) _ClusterManagedService_syncStatus(ctx context.Contex
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10898,7 +11377,7 @@ func (ec *executionContext) _ClusterManagedService_updateTime(ctx context.Contex
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedService_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedService_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedService",
 		Field:      field,
@@ -10942,7 +11421,7 @@ func (ec *executionContext) _ClusterManagedServiceEdge_cursor(ctx context.Contex
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedServiceEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedServiceEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedServiceEdge",
 		Field:      field,
@@ -10986,7 +11465,7 @@ func (ec *executionContext) _ClusterManagedServiceEdge_node(ctx context.Context,
 	return ec.marshalNClusterManagedService2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐClusterManagedService(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedServiceEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedServiceEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedServiceEdge",
 		Field:      field,
@@ -11066,7 +11545,7 @@ func (ec *executionContext) _ClusterManagedServicePaginatedRecords_edges(ctx con
 	return ec.marshalNClusterManagedServiceEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐClusterManagedServiceEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedServicePaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedServicePaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedServicePaginatedRecords",
 		Field:      field,
@@ -11116,7 +11595,7 @@ func (ec *executionContext) _ClusterManagedServicePaginatedRecords_pageInfo(ctx 
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedServicePaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedServicePaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedServicePaginatedRecords",
 		Field:      field,
@@ -11170,7 +11649,7 @@ func (ec *executionContext) _ClusterManagedServicePaginatedRecords_totalCount(ct
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterManagedServicePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ClusterManagedServicePaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ClusterManagedServicePaginatedRecords",
 		Field:      field,
@@ -11214,7 +11693,7 @@ func (ec *executionContext) _Config_accountName(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11255,7 +11734,7 @@ func (ec *executionContext) _Config_apiVersion(ctx context.Context, field graphq
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11296,7 +11775,7 @@ func (ec *executionContext) _Config_binaryData(ctx context.Context, field graphq
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_binaryData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_binaryData(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11340,7 +11819,7 @@ func (ec *executionContext) _Config_createdBy(ctx context.Context, field graphql
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11392,7 +11871,7 @@ func (ec *executionContext) _Config_creationTime(ctx context.Context, field grap
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11433,7 +11912,7 @@ func (ec *executionContext) _Config_data(ctx context.Context, field graphql.Coll
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11477,7 +11956,7 @@ func (ec *executionContext) _Config_displayName(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11521,7 +12000,7 @@ func (ec *executionContext) _Config_environmentName(ctx context.Context, field g
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_environmentName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_environmentName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11565,7 +12044,7 @@ func (ec *executionContext) _Config_id(ctx context.Context, field graphql.Collec
 	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11606,7 +12085,7 @@ func (ec *executionContext) _Config_immutable(ctx context.Context, field graphql
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_immutable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_immutable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11647,7 +12126,7 @@ func (ec *executionContext) _Config_kind(ctx context.Context, field graphql.Coll
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11691,7 +12170,7 @@ func (ec *executionContext) _Config_lastUpdatedBy(ctx context.Context, field gra
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_lastUpdatedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11740,7 +12219,7 @@ func (ec *executionContext) _Config_markedForDeletion(ctx context.Context, field
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11781,7 +12260,7 @@ func (ec *executionContext) _Config_metadata(ctx context.Context, field graphql.
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11841,7 +12320,7 @@ func (ec *executionContext) _Config_recordVersion(ctx context.Context, field gra
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11885,7 +12364,7 @@ func (ec *executionContext) _Config_syncStatus(ctx context.Context, field graphq
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11943,7 +12422,7 @@ func (ec *executionContext) _Config_updateTime(ctx context.Context, field graphq
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Config_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Config_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Config",
 		Field:      field,
@@ -11987,7 +12466,7 @@ func (ec *executionContext) _ConfigEdge_cursor(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConfigEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConfigEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConfigEdge",
 		Field:      field,
@@ -12031,7 +12510,7 @@ func (ec *executionContext) _ConfigEdge_node(ctx context.Context, field graphql.
 	return ec.marshalNConfig2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐConfig(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConfigEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConfigEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConfigEdge",
 		Field:      field,
@@ -12111,7 +12590,7 @@ func (ec *executionContext) _ConfigKeyRef_configName(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConfigKeyRef_configName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConfigKeyRef_configName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConfigKeyRef",
 		Field:      field,
@@ -12155,7 +12634,7 @@ func (ec *executionContext) _ConfigKeyRef_key(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConfigKeyRef_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConfigKeyRef_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConfigKeyRef",
 		Field:      field,
@@ -12199,7 +12678,7 @@ func (ec *executionContext) _ConfigKeyValueRef_configName(ctx context.Context, f
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConfigKeyValueRef_configName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConfigKeyValueRef_configName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConfigKeyValueRef",
 		Field:      field,
@@ -12243,7 +12722,7 @@ func (ec *executionContext) _ConfigKeyValueRef_key(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConfigKeyValueRef_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConfigKeyValueRef_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConfigKeyValueRef",
 		Field:      field,
@@ -12287,7 +12766,7 @@ func (ec *executionContext) _ConfigKeyValueRef_value(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConfigKeyValueRef_value(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConfigKeyValueRef_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConfigKeyValueRef",
 		Field:      field,
@@ -12331,7 +12810,7 @@ func (ec *executionContext) _ConfigPaginatedRecords_edges(ctx context.Context, f
 	return ec.marshalNConfigEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐConfigEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConfigPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConfigPaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConfigPaginatedRecords",
 		Field:      field,
@@ -12381,7 +12860,7 @@ func (ec *executionContext) _ConfigPaginatedRecords_pageInfo(ctx context.Context
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConfigPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConfigPaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConfigPaginatedRecords",
 		Field:      field,
@@ -12435,7 +12914,7 @@ func (ec *executionContext) _ConfigPaginatedRecords_totalCount(ctx context.Conte
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConfigPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConfigPaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConfigPaginatedRecords",
 		Field:      field,
@@ -12479,7 +12958,7 @@ func (ec *executionContext) _ConsoleCheckNameAvailabilityOutput_result(ctx conte
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConsoleCheckNameAvailabilityOutput_result(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConsoleCheckNameAvailabilityOutput_result(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConsoleCheckNameAvailabilityOutput",
 		Field:      field,
@@ -12520,7 +12999,7 @@ func (ec *executionContext) _ConsoleCheckNameAvailabilityOutput_suggestedNames(c
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ConsoleCheckNameAvailabilityOutput_suggestedNames(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ConsoleCheckNameAvailabilityOutput_suggestedNames(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConsoleCheckNameAvailabilityOutput",
 		Field:      field,
@@ -12561,7 +13040,7 @@ func (ec *executionContext) _CursorPagination_after(ctx context.Context, field g
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CursorPagination_after(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CursorPagination_after(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CursorPagination",
 		Field:      field,
@@ -12602,7 +13081,7 @@ func (ec *executionContext) _CursorPagination_before(ctx context.Context, field 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CursorPagination_before(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CursorPagination_before(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CursorPagination",
 		Field:      field,
@@ -12643,7 +13122,7 @@ func (ec *executionContext) _CursorPagination_first(ctx context.Context, field g
 	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CursorPagination_first(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CursorPagination_first(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CursorPagination",
 		Field:      field,
@@ -12684,7 +13163,7 @@ func (ec *executionContext) _CursorPagination_last(ctx context.Context, field gr
 	return ec.marshalOInt2ᚖint64(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CursorPagination_last(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CursorPagination_last(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CursorPagination",
 		Field:      field,
@@ -12725,7 +13204,7 @@ func (ec *executionContext) _CursorPagination_orderBy(ctx context.Context, field
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CursorPagination_orderBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CursorPagination_orderBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CursorPagination",
 		Field:      field,
@@ -12766,7 +13245,7 @@ func (ec *executionContext) _CursorPagination_sortDirection(ctx context.Context,
 	return ec.marshalOCursorPaginationSortDirection2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐSortDirection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CursorPagination_sortDirection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CursorPagination_sortDirection(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CursorPagination",
 		Field:      field,
@@ -12869,7 +13348,7 @@ func (ec *executionContext) _Environment_accountName(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -12910,7 +13389,7 @@ func (ec *executionContext) _Environment_apiVersion(ctx context.Context, field g
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -12954,7 +13433,7 @@ func (ec *executionContext) _Environment_clusterName(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_clusterName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -12998,7 +13477,7 @@ func (ec *executionContext) _Environment_createdBy(ctx context.Context, field gr
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13050,7 +13529,7 @@ func (ec *executionContext) _Environment_creationTime(ctx context.Context, field
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13094,7 +13573,7 @@ func (ec *executionContext) _Environment_displayName(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13138,7 +13617,7 @@ func (ec *executionContext) _Environment_id(ctx context.Context, field graphql.C
 	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13179,7 +13658,7 @@ func (ec *executionContext) _Environment_isArchived(ctx context.Context, field g
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_isArchived(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_isArchived(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13220,7 +13699,7 @@ func (ec *executionContext) _Environment_kind(ctx context.Context, field graphql
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13264,7 +13743,7 @@ func (ec *executionContext) _Environment_lastUpdatedBy(ctx context.Context, fiel
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_lastUpdatedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13313,7 +13792,7 @@ func (ec *executionContext) _Environment_markedForDeletion(ctx context.Context, 
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13354,7 +13833,7 @@ func (ec *executionContext) _Environment_metadata(ctx context.Context, field gra
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13414,7 +13893,7 @@ func (ec *executionContext) _Environment_recordVersion(ctx context.Context, fiel
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13455,7 +13934,7 @@ func (ec *executionContext) _Environment_spec(ctx context.Context, field graphql
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1EnvironmentSpec(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_spec(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13465,6 +13944,8 @@ func (ec *executionContext) fieldContext_Environment_spec(ctx context.Context, f
 			switch field.Name {
 			case "routing":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_routing(ctx, field)
+			case "suspend":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_suspend(ctx, field)
 			case "targetNamespace":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_targetNamespace(ctx, field)
 			}
@@ -13502,7 +13983,7 @@ func (ec *executionContext) _Environment_status(ctx context.Context, field graph
 	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13562,7 +14043,7 @@ func (ec *executionContext) _Environment_syncStatus(ctx context.Context, field g
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13620,7 +14101,7 @@ func (ec *executionContext) _Environment_updateTime(ctx context.Context, field g
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Environment_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Environment_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Environment",
 		Field:      field,
@@ -13664,7 +14145,7 @@ func (ec *executionContext) _EnvironmentEdge_cursor(ctx context.Context, field g
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EnvironmentEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EnvironmentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EnvironmentEdge",
 		Field:      field,
@@ -13708,7 +14189,7 @@ func (ec *executionContext) _EnvironmentEdge_node(ctx context.Context, field gra
 	return ec.marshalNEnvironment2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐEnvironment(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EnvironmentEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EnvironmentEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EnvironmentEdge",
 		Field:      field,
@@ -13788,7 +14269,7 @@ func (ec *executionContext) _EnvironmentPaginatedRecords_edges(ctx context.Conte
 	return ec.marshalNEnvironmentEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐEnvironmentEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EnvironmentPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EnvironmentPaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EnvironmentPaginatedRecords",
 		Field:      field,
@@ -13838,7 +14319,7 @@ func (ec *executionContext) _EnvironmentPaginatedRecords_pageInfo(ctx context.Co
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EnvironmentPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EnvironmentPaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EnvironmentPaginatedRecords",
 		Field:      field,
@@ -13892,7 +14373,7 @@ func (ec *executionContext) _EnvironmentPaginatedRecords_totalCount(ctx context.
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EnvironmentPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EnvironmentPaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EnvironmentPaginatedRecords",
 		Field:      field,
@@ -13936,7 +14417,7 @@ func (ec *executionContext) _ExternalApp_accountName(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -13977,7 +14458,7 @@ func (ec *executionContext) _ExternalApp_apiVersion(ctx context.Context, field g
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14021,7 +14502,7 @@ func (ec *executionContext) _ExternalApp_createdBy(ctx context.Context, field gr
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14073,7 +14554,7 @@ func (ec *executionContext) _ExternalApp_creationTime(ctx context.Context, field
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14117,7 +14598,7 @@ func (ec *executionContext) _ExternalApp_displayName(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14161,7 +14642,7 @@ func (ec *executionContext) _ExternalApp_environmentName(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_environmentName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_environmentName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14205,7 +14686,7 @@ func (ec *executionContext) _ExternalApp_id(ctx context.Context, field graphql.C
 	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14246,7 +14727,7 @@ func (ec *executionContext) _ExternalApp_kind(ctx context.Context, field graphql
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14290,7 +14771,7 @@ func (ec *executionContext) _ExternalApp_lastUpdatedBy(ctx context.Context, fiel
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_lastUpdatedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14339,7 +14820,7 @@ func (ec *executionContext) _ExternalApp_markedForDeletion(ctx context.Context, 
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14380,7 +14861,7 @@ func (ec *executionContext) _ExternalApp_metadata(ctx context.Context, field gra
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14440,7 +14921,7 @@ func (ec *executionContext) _ExternalApp_recordVersion(ctx context.Context, fiel
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14481,7 +14962,7 @@ func (ec *executionContext) _ExternalApp_spec(ctx context.Context, field graphql
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ExternalAppSpec(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_spec(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14530,7 +15011,7 @@ func (ec *executionContext) _ExternalApp_status(ctx context.Context, field graph
 	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14590,7 +15071,7 @@ func (ec *executionContext) _ExternalApp_syncStatus(ctx context.Context, field g
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14648,7 +15129,7 @@ func (ec *executionContext) _ExternalApp_updateTime(ctx context.Context, field g
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalApp_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalApp_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalApp",
 		Field:      field,
@@ -14692,7 +15173,7 @@ func (ec *executionContext) _ExternalAppEdge_cursor(ctx context.Context, field g
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalAppEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalAppEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalAppEdge",
 		Field:      field,
@@ -14736,7 +15217,7 @@ func (ec *executionContext) _ExternalAppEdge_node(ctx context.Context, field gra
 	return ec.marshalNExternalApp2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐExternalApp(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalAppEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalAppEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalAppEdge",
 		Field:      field,
@@ -14814,7 +15295,7 @@ func (ec *executionContext) _ExternalAppPaginatedRecords_edges(ctx context.Conte
 	return ec.marshalNExternalAppEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐExternalAppEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalAppPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalAppPaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalAppPaginatedRecords",
 		Field:      field,
@@ -14864,7 +15345,7 @@ func (ec *executionContext) _ExternalAppPaginatedRecords_pageInfo(ctx context.Co
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalAppPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalAppPaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalAppPaginatedRecords",
 		Field:      field,
@@ -14918,7 +15399,7 @@ func (ec *executionContext) _ExternalAppPaginatedRecords_totalCount(ctx context.
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ExternalAppPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ExternalAppPaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExternalAppPaginatedRecords",
 		Field:      field,
@@ -14962,7 +15443,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___console___in
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef",
 		Field:      field,
@@ -15006,7 +15487,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___console___in
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef",
 		Field:      field,
@@ -15050,7 +15531,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___console___in
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef_namespace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef",
 		Field:      field,
@@ -15094,7 +15575,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___console___in
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor",
 		Field:      field,
@@ -15138,7 +15619,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___console___in
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor_namespace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor",
 		Field:      field,
@@ -15182,7 +15663,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___console___in
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor_refId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor_refId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor",
 		Field:      field,
@@ -15226,7 +15707,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___console___in
 	return ec.marshalNGithub__com___kloudlite___api___apps___console___internal___entities__ResourceType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesResourceType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor_resourceType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor_resourceType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor",
 		Field:      field,
@@ -15270,7 +15751,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUp
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___common__CreatedOrUpdatedBy",
 		Field:      field,
@@ -15314,7 +15795,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUp
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___common__CreatedOrUpdatedBy",
 		Field:      field,
@@ -15358,7 +15839,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUp
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___common__CreatedOrUpdatedBy",
 		Field:      field,
@@ -15402,7 +15883,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncAction2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncAction(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_action(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___pkg___types__SyncStatus",
 		Field:      field,
@@ -15443,7 +15924,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_error(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___pkg___types__SyncStatus",
 		Field:      field,
@@ -15484,7 +15965,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_lastSyncedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_lastSyncedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___pkg___types__SyncStatus",
 		Field:      field,
@@ -15528,7 +16009,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___pkg___types__SyncStatus",
 		Field:      field,
@@ -15572,7 +16053,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncState2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncState(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___pkg___types__SyncStatus",
 		Field:      field,
@@ -15613,7 +16094,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_syncScheduledAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_syncScheduledAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___pkg___types__SyncStatus",
 		Field:      field,
@@ -15654,7 +16135,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___common_
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___common____types__MsvcRef",
 		Field:      field,
@@ -15695,7 +16176,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___common_
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___common____types__MsvcRef",
 		Field:      field,
@@ -15739,7 +16220,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___common_
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___common____types__MsvcRef",
 		Field:      field,
@@ -15783,7 +16264,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___common_
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MsvcRef_namespace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___common____types__MsvcRef",
 		Field:      field,
@@ -15827,7 +16308,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___common_
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___common____types__SecretRef",
 		Field:      field,
@@ -15868,7 +16349,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___common_
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___common____types__SecretRef",
 		Field:      field,
@@ -15909,7 +16390,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_args(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_args(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -15950,7 +16431,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_command(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_command(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -15991,7 +16472,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__ContainerEnv2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ContainerEnvᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_env(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_env(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -16046,7 +16527,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvFrom2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1EnvFromᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_envFrom(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_envFrom(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -16096,7 +16577,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_image(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_image(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -16137,7 +16618,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_imagePullPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_imagePullPolicy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -16178,7 +16659,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Probe2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1Probe(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_livenessProbe(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_livenessProbe(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -16238,7 +16719,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -16279,7 +16760,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Probe2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1Probe(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_readinessProbe(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_readinessProbe(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -16336,7 +16817,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__ContainerResource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ContainerResource(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_resourceCpu(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_resourceCpu(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -16383,7 +16864,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__ContainerResource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ContainerResource(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_resourceMemory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_resourceMemory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -16430,7 +16911,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__ContainerVolume2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ContainerVolumeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_volumes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppContainer_volumes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppContainer",
 		Field:      field,
@@ -16484,7 +16965,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings_appPort(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings_appPort(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings",
 		Field:      field,
@@ -16528,7 +17009,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings_devicePort(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings_devicePort(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings",
 		Field:      field,
@@ -16569,7 +17050,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_backendProtocol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_backendProtocol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
 		Field:      field,
@@ -16610,7 +17091,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__BasicAuth2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1BasicAuth(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_basicAuth(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_basicAuth(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
 		Field:      field,
@@ -16659,7 +17140,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Cors2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1Cors(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_cors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_cors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
 		Field:      field,
@@ -16711,7 +17192,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_domains(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_domains(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
 		Field:      field,
@@ -16752,7 +17233,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Https2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HTTPS(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_https(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_https(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
 		Field:      field,
@@ -16801,7 +17282,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_ingressClass(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_ingressClass(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
 		Field:      field,
@@ -16842,7 +17323,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_maxBodySizeInMB(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_maxBodySizeInMB(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
 		Field:      field,
@@ -16883,7 +17364,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__RateLimit2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RateLimit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_rateLimit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_rateLimit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
 		Field:      field,
@@ -16934,7 +17415,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Route2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1Routeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_routes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppRouter_routes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppRouter",
 		Field:      field,
@@ -16988,7 +17469,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__AppContainer2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppContainerᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_containers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_containers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17055,7 +17536,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17096,7 +17577,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_freeze(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_freeze(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17137,7 +17618,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__HPA2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1Hpa(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_hpa(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_hpa(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17190,7 +17671,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Intercept2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1Intercept(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_intercept(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_intercept(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17239,7 +17720,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_nodeSelector(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_nodeSelector(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17280,7 +17761,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_region(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_region(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17321,7 +17802,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_replicas(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_replicas(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17362,7 +17843,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__AppRouter2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppRouter(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_router(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_router(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17423,7 +17904,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_serviceAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_serviceAccount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17464,7 +17945,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__AppSvc2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppSvcᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_services(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_services(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17511,7 +17992,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOK8s__io___api___core___v1__Toleration2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1Tolerationᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_tolerations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_tolerations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17564,7 +18045,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOK8s__io___api___core___v1__TopologySpreadConstraint2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TopologySpreadConstraintᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_topologySpreadConstraints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSpec_topologySpreadConstraints(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSpec",
 		Field:      field,
@@ -17626,7 +18107,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_port(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_port(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSvc",
 		Field:      field,
@@ -17667,7 +18148,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__AppSvc_protocol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__AppSvc",
 		Field:      field,
@@ -17711,7 +18192,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__BasicAuth_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__BasicAuth_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__BasicAuth",
 		Field:      field,
@@ -17752,7 +18233,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__BasicAuth_secretName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__BasicAuth_secretName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__BasicAuth",
 		Field:      field,
@@ -17793,7 +18274,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__BasicAuth_username(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__BasicAuth_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__BasicAuth",
 		Field:      field,
@@ -17837,7 +18318,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_msvcSpec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_msvcSpec(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec",
 		Field:      field,
@@ -17889,7 +18370,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_targetNamespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_targetNamespace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec",
 		Field:      field,
@@ -17933,7 +18414,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv",
 		Field:      field,
@@ -17974,7 +18455,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_optional(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_optional(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv",
 		Field:      field,
@@ -18015,7 +18496,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_refKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_refKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv",
 		Field:      field,
@@ -18056,7 +18537,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_refName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_refName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv",
 		Field:      field,
@@ -18097,7 +18578,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ConfigOrSecret(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv",
 		Field:      field,
@@ -18138,7 +18619,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_value(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv",
 		Field:      field,
@@ -18179,7 +18660,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerResource_max(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerResource_max(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerResource",
 		Field:      field,
@@ -18220,7 +18701,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerResource_min(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerResource_min(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerResource",
 		Field:      field,
@@ -18261,7 +18742,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ContainerVolumeItemᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume_items(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume",
 		Field:      field,
@@ -18311,7 +18792,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume_mountPath(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume_mountPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume",
 		Field:      field,
@@ -18355,7 +18836,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume_refName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume_refName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume",
 		Field:      field,
@@ -18399,7 +18880,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ConfigOrSecret(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume",
 		Field:      field,
@@ -18440,7 +18921,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem_fileName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem_fileName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem",
 		Field:      field,
@@ -18484,7 +18965,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem",
 		Field:      field,
@@ -18525,7 +19006,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Cors_allowCredentials(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Cors_allowCredentials(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Cors",
 		Field:      field,
@@ -18566,7 +19047,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Cors_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Cors_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Cors",
 		Field:      field,
@@ -18607,7 +19088,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Cors_origins(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Cors_origins(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Cors",
 		Field:      field,
@@ -18651,7 +19132,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvFrom_refName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvFrom_refName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__EnvFrom",
 		Field:      field,
@@ -18695,7 +19176,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ConfigOrSecret(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvFrom_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvFrom_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__EnvFrom",
 		Field:      field,
@@ -18736,7 +19217,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting_mode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting_mode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting",
 		Field:      field,
@@ -18777,7 +19258,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting_privateIngressClass(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting_privateIngressClass(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting",
 		Field:      field,
@@ -18818,7 +19299,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting_publicIngressClass(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting_publicIngressClass(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting",
 		Field:      field,
@@ -18859,7 +19340,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1EnvironmentRouting(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_routing(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_routing(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec",
 		Field:      field,
@@ -18875,6 +19356,47 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting_publicIngressClass(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_suspend(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1EnvironmentSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_suspend(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Suspend, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_suspend(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -18908,7 +19430,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_targetNamespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_targetNamespace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec",
 		Field:      field,
@@ -18949,7 +19471,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Intercept2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1Intercept(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec_intercept(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec_intercept(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec",
 		Field:      field,
@@ -19001,7 +19523,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec_record(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec_record(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec",
 		Field:      field,
@@ -19045,7 +19567,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__ExternalAppRecordType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ExternalAppRecordType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec_recordType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec_recordType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ExternalAppSpec",
 		Field:      field,
@@ -19089,7 +19611,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HPA_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HPA_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HPA",
 		Field:      field,
@@ -19130,7 +19652,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HPA_maxReplicas(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HPA_maxReplicas(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HPA",
 		Field:      field,
@@ -19171,7 +19693,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HPA_minReplicas(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HPA_minReplicas(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HPA",
 		Field:      field,
@@ -19212,7 +19734,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HPA_thresholdCpu(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HPA_thresholdCpu(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HPA",
 		Field:      field,
@@ -19253,7 +19775,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HPA_thresholdMemory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HPA_thresholdMemory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HPA",
 		Field:      field,
@@ -19294,7 +19816,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe_httpHeaders(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe_httpHeaders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe",
 		Field:      field,
@@ -19338,7 +19860,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe_path(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe",
 		Field:      field,
@@ -19382,7 +19904,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe_port(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe_port(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe",
 		Field:      field,
@@ -19423,7 +19945,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Https_clusterIssuer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Https_clusterIssuer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Https",
 		Field:      field,
@@ -19467,7 +19989,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Https_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Https_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Https",
 		Field:      field,
@@ -19508,7 +20030,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Https_forceRedirect(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Https_forceRedirect(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Https",
 		Field:      field,
@@ -19552,7 +20074,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Intercept",
 		Field:      field,
@@ -19593,7 +20115,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__AppInterceptPortMappings2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AppInterceptPortMappingsᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_portMappings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_portMappings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Intercept",
 		Field:      field,
@@ -19643,7 +20165,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_toDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Intercept_toDevice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Intercept",
 		Field:      field,
@@ -19684,7 +20206,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceNamePrefix(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceNamePrefix(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec",
 		Field:      field,
@@ -19728,7 +20250,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1MresResourceTemplate(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec_resourceTemplate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec",
 		Field:      field,
@@ -19779,7 +20301,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec_nodeSelector(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec_nodeSelector(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec",
 		Field:      field,
@@ -19823,7 +20345,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__ServiceTemplate2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ServiceTemplate(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec_serviceTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec_serviceTemplate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec",
 		Field:      field,
@@ -19872,7 +20394,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOK8s__io___api___core___v1__Toleration2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1Tolerationᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec_tolerations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec_tolerations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec",
 		Field:      field,
@@ -19928,7 +20450,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate",
 		Field:      field,
@@ -19972,7 +20494,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate",
 		Field:      field,
@@ -20016,7 +20538,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNGithub__com___kloudlite___operator___apis___common____types__MsvcRef2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMsvcRef(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate_msvcRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate_msvcRef(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate",
 		Field:      field,
@@ -20067,7 +20589,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate_spec(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate",
 		Field:      field,
@@ -20108,7 +20630,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_failureThreshold(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_failureThreshold(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Probe",
 		Field:      field,
@@ -20149,7 +20671,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__HttpGetProbe2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HTTPGetProbe(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_httpGet(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_httpGet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Probe",
 		Field:      field,
@@ -20198,7 +20720,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_initialDelay(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_initialDelay(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Probe",
 		Field:      field,
@@ -20239,7 +20761,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_interval(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_interval(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Probe",
 		Field:      field,
@@ -20280,7 +20802,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__ShellProbe2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ShellProbe(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_shell(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_shell(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Probe",
 		Field:      field,
@@ -20325,7 +20847,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__TcpProbe2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1TCPProbe(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_tcp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_tcp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Probe",
 		Field:      field,
@@ -20373,7 +20895,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Probe_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Probe",
 		Field:      field,
@@ -20414,7 +20936,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_connections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_connections(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RateLimit",
 		Field:      field,
@@ -20455,7 +20977,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RateLimit",
 		Field:      field,
@@ -20496,7 +21018,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_rpm(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_rpm(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RateLimit",
 		Field:      field,
@@ -20537,7 +21059,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_rps(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RateLimit_rps(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RateLimit",
 		Field:      field,
@@ -20581,7 +21103,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_app(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_app(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Route",
 		Field:      field,
@@ -20625,7 +21147,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_path(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Route",
 		Field:      field,
@@ -20669,7 +21191,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_port(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_port(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Route",
 		Field:      field,
@@ -20710,7 +21232,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_rewrite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__Route_rewrite(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__Route",
 		Field:      field,
@@ -20751,7 +21273,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_backendProtocol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_backendProtocol(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec",
 		Field:      field,
@@ -20792,7 +21314,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__BasicAuth2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1BasicAuth(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_basicAuth(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_basicAuth(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec",
 		Field:      field,
@@ -20841,7 +21363,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Cors2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1Cors(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_cors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_cors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec",
 		Field:      field,
@@ -20893,7 +21415,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_domains(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_domains(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec",
 		Field:      field,
@@ -20934,7 +21456,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Https2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1HTTPS(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_https(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_https(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec",
 		Field:      field,
@@ -20983,7 +21505,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_ingressClass(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_ingressClass(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec",
 		Field:      field,
@@ -21024,7 +21546,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_maxBodySizeInMB(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_maxBodySizeInMB(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec",
 		Field:      field,
@@ -21065,7 +21587,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__RateLimit2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RateLimit(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_rateLimit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_rateLimit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec",
 		Field:      field,
@@ -21116,7 +21638,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__Route2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1Routeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_routes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__RouterSpec_routes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__RouterSpec",
 		Field:      field,
@@ -21170,7 +21692,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate",
 		Field:      field,
@@ -21214,7 +21736,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate",
 		Field:      field,
@@ -21255,7 +21777,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate_spec(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate",
 		Field:      field,
@@ -21296,7 +21818,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ShellProbe_command(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ShellProbe_command(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ShellProbe",
 		Field:      field,
@@ -21340,7 +21862,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__TcpProbe_port(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__TcpProbe_port(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__TcpProbe",
 		Field:      field,
@@ -21381,7 +21903,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_debug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_debug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Check",
 		Field:      field,
@@ -21422,7 +21944,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_error(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Check",
 		Field:      field,
@@ -21463,7 +21985,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_generation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_generation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Check",
 		Field:      field,
@@ -21504,7 +22026,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_info(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_info(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Check",
 		Field:      field,
@@ -21545,7 +22067,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Check",
 		Field:      field,
@@ -21586,7 +22108,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_startedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_startedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Check",
 		Field:      field,
@@ -21627,7 +22149,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__State2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgOperatorState(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Check",
 		Field:      field,
@@ -21671,7 +22193,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Check",
 		Field:      field,
@@ -21712,7 +22234,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_debug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__CheckMeta",
 		Field:      field,
@@ -21753,7 +22275,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__CheckMeta",
 		Field:      field,
@@ -21794,7 +22316,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_hide(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__CheckMeta",
 		Field:      field,
@@ -21838,7 +22360,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__CheckMeta",
 		Field:      field,
@@ -21882,7 +22404,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__CheckMeta",
 		Field:      field,
@@ -21926,7 +22448,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__ResourceRef",
 		Field:      field,
@@ -21970,7 +22492,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__ResourceRef",
 		Field:      field,
@@ -22014,7 +22536,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__ResourceRef",
 		Field:      field,
@@ -22058,7 +22580,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_namespace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__ResourceRef",
 		Field:      field,
@@ -22099,7 +22621,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__CheckMeta2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgOperatorCheckMetaᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_checkList(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_checkList(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
@@ -22152,7 +22674,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_checks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_checks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
@@ -22196,7 +22718,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_isReady(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_isReady(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
@@ -22237,7 +22759,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOInt2int64(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
@@ -22278,7 +22800,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReconcileTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReconcileTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
@@ -22319,7 +22841,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOGithub__com___kloudlite___operator___pkg___raw____json__RawJson2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgRawJSONRawJSON(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
@@ -22364,7 +22886,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__ResourceRef2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgOperatorResourceRefᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_resources(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
@@ -22410,12 +22932,12 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___raw____j
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(interface{})
+	res := resTmp.(any)
 	fc.Result = res
 	return ec.marshalOAny2interface(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___raw____json__RawJson_RawMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___raw____json__RawJson_RawMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___raw____json__RawJson",
 		Field:      field,
@@ -22459,7 +22981,7 @@ func (ec *executionContext) _ImagePullSecret_accountName(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -22503,7 +23025,7 @@ func (ec *executionContext) _ImagePullSecret_createdBy(ctx context.Context, fiel
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -22555,7 +23077,7 @@ func (ec *executionContext) _ImagePullSecret_creationTime(ctx context.Context, f
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -22599,7 +23121,7 @@ func (ec *executionContext) _ImagePullSecret_displayName(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -22640,7 +23162,7 @@ func (ec *executionContext) _ImagePullSecret_dockerConfigJson(ctx context.Contex
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_dockerConfigJson(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_dockerConfigJson(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -22681,7 +23203,7 @@ func (ec *executionContext) _ImagePullSecret_environments(ctx context.Context, f
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_environments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_environments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -22725,7 +23247,7 @@ func (ec *executionContext) _ImagePullSecret_format(ctx context.Context, field g
 	return ec.marshalNGithub__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_format(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_format(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -22769,7 +23291,7 @@ func (ec *executionContext) _ImagePullSecret_id(ctx context.Context, field graph
 	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -22813,7 +23335,7 @@ func (ec *executionContext) _ImagePullSecret_lastUpdatedBy(ctx context.Context, 
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_lastUpdatedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -22862,7 +23384,7 @@ func (ec *executionContext) _ImagePullSecret_markedForDeletion(ctx context.Conte
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -22906,7 +23428,7 @@ func (ec *executionContext) _ImagePullSecret_metadata(ctx context.Context, field
 	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -22966,7 +23488,7 @@ func (ec *executionContext) _ImagePullSecret_recordVersion(ctx context.Context, 
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -23007,7 +23529,7 @@ func (ec *executionContext) _ImagePullSecret_registryPassword(ctx context.Contex
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_registryPassword(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_registryPassword(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -23048,7 +23570,7 @@ func (ec *executionContext) _ImagePullSecret_registryURL(ctx context.Context, fi
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_registryURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_registryURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -23089,7 +23611,7 @@ func (ec *executionContext) _ImagePullSecret_registryUsername(ctx context.Contex
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_registryUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_registryUsername(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -23133,7 +23655,7 @@ func (ec *executionContext) _ImagePullSecret_syncStatus(ctx context.Context, fie
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -23191,7 +23713,7 @@ func (ec *executionContext) _ImagePullSecret_updateTime(ctx context.Context, fie
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecret_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecret_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecret",
 		Field:      field,
@@ -23235,7 +23757,7 @@ func (ec *executionContext) _ImagePullSecretEdge_cursor(ctx context.Context, fie
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecretEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecretEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecretEdge",
 		Field:      field,
@@ -23279,7 +23801,7 @@ func (ec *executionContext) _ImagePullSecretEdge_node(ctx context.Context, field
 	return ec.marshalNImagePullSecret2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImagePullSecret(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecretEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecretEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecretEdge",
 		Field:      field,
@@ -23359,7 +23881,7 @@ func (ec *executionContext) _ImagePullSecretPaginatedRecords_edges(ctx context.C
 	return ec.marshalNImagePullSecretEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐImagePullSecretEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecretPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecretPaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecretPaginatedRecords",
 		Field:      field,
@@ -23409,7 +23931,7 @@ func (ec *executionContext) _ImagePullSecretPaginatedRecords_pageInfo(ctx contex
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecretPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecretPaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecretPaginatedRecords",
 		Field:      field,
@@ -23463,7 +23985,7 @@ func (ec *executionContext) _ImagePullSecretPaginatedRecords_totalCount(ctx cont
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImagePullSecretPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImagePullSecretPaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImagePullSecretPaginatedRecords",
 		Field:      field,
@@ -23507,7 +24029,7 @@ func (ec *executionContext) _ImportedManagedResource_accountName(ctx context.Con
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -23551,7 +24073,7 @@ func (ec *executionContext) _ImportedManagedResource_createdBy(ctx context.Conte
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -23603,7 +24125,7 @@ func (ec *executionContext) _ImportedManagedResource_creationTime(ctx context.Co
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -23647,7 +24169,7 @@ func (ec *executionContext) _ImportedManagedResource_displayName(ctx context.Con
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -23691,7 +24213,7 @@ func (ec *executionContext) _ImportedManagedResource_environmentName(ctx context
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_environmentName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_environmentName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -23735,7 +24257,7 @@ func (ec *executionContext) _ImportedManagedResource_id(ctx context.Context, fie
 	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -23779,7 +24301,7 @@ func (ec *executionContext) _ImportedManagedResource_lastUpdatedBy(ctx context.C
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_lastUpdatedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -23831,7 +24353,7 @@ func (ec *executionContext) _ImportedManagedResource_managedResourceRef(ctx cont
 	return ec.marshalNGithub__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesManagedResourceRef(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_managedResourceRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_managedResourceRef(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -23880,7 +24402,7 @@ func (ec *executionContext) _ImportedManagedResource_markedForDeletion(ctx conte
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -23924,7 +24446,7 @@ func (ec *executionContext) _ImportedManagedResource_name(ctx context.Context, f
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -23968,7 +24490,7 @@ func (ec *executionContext) _ImportedManagedResource_recordVersion(ctx context.C
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -24012,7 +24534,7 @@ func (ec *executionContext) _ImportedManagedResource_secretRef(ctx context.Conte
 	return ec.marshalNGithub__com___kloudlite___operator___apis___common____types__SecretRef2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRef(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_secretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_secretRef(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -24062,7 +24584,7 @@ func (ec *executionContext) _ImportedManagedResource_syncStatus(ctx context.Cont
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -24120,7 +24642,7 @@ func (ec *executionContext) _ImportedManagedResource_updateTime(ctx context.Cont
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -24161,7 +24683,7 @@ func (ec *executionContext) _ImportedManagedResource_managedResource(ctx context
 	return ec.marshalOManagedResource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResource_managedResource(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResource_managedResource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResource",
 		Field:      field,
@@ -24251,7 +24773,7 @@ func (ec *executionContext) _ImportedManagedResourceEdge_cursor(ctx context.Cont
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResourceEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResourceEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResourceEdge",
 		Field:      field,
@@ -24295,7 +24817,7 @@ func (ec *executionContext) _ImportedManagedResourceEdge_node(ctx context.Contex
 	return ec.marshalNImportedManagedResource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐImportedManagedResource(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResourceEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResourceEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResourceEdge",
 		Field:      field,
@@ -24371,7 +24893,7 @@ func (ec *executionContext) _ImportedManagedResourcePaginatedRecords_edges(ctx c
 	return ec.marshalNImportedManagedResourceEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐImportedManagedResourceEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResourcePaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResourcePaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResourcePaginatedRecords",
 		Field:      field,
@@ -24421,7 +24943,7 @@ func (ec *executionContext) _ImportedManagedResourcePaginatedRecords_pageInfo(ct
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResourcePaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResourcePaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResourcePaginatedRecords",
 		Field:      field,
@@ -24475,7 +24997,7 @@ func (ec *executionContext) _ImportedManagedResourcePaginatedRecords_totalCount(
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportedManagedResourcePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportedManagedResourcePaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ImportedManagedResourcePaginatedRecords",
 		Field:      field,
@@ -24516,7 +25038,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Secret_apiVersion(ctx co
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Secret",
 		Field:      field,
@@ -24557,7 +25079,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Secret_data(ctx context.
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Secret",
 		Field:      field,
@@ -24598,7 +25120,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Secret_immutable(ctx con
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_immutable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_immutable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Secret",
 		Field:      field,
@@ -24639,7 +25161,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Secret_kind(ctx context.
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Secret",
 		Field:      field,
@@ -24680,7 +25202,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Secret_metadata(ctx cont
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Secret",
 		Field:      field,
@@ -24737,7 +25259,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Secret_stringData(ctx co
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_stringData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_stringData(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Secret",
 		Field:      field,
@@ -24778,7 +25300,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Secret_type(ctx context.
 	return ec.marshalOK8s__io___api___core___v1__SecretType2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Secret_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Secret",
 		Field:      field,
@@ -24819,7 +25341,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Toleration_effect(ctx co
 	return ec.marshalOK8s__io___api___core___v1__TaintEffect2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TaintEffect(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Toleration_effect(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Toleration_effect(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Toleration",
 		Field:      field,
@@ -24860,7 +25382,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Toleration_key(ctx conte
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Toleration_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Toleration_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Toleration",
 		Field:      field,
@@ -24901,7 +25423,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Toleration_operator(ctx 
 	return ec.marshalOK8s__io___api___core___v1__TolerationOperator2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1TolerationOperator(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Toleration_operator(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Toleration_operator(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Toleration",
 		Field:      field,
@@ -24942,7 +25464,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Toleration_tolerationSec
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Toleration_tolerationSeconds(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Toleration_tolerationSeconds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Toleration",
 		Field:      field,
@@ -24983,7 +25505,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Toleration_value(ctx con
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Toleration_value(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Toleration_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__Toleration",
 		Field:      field,
@@ -25024,7 +25546,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__TopologySpreadConstraint
 	return ec.marshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelector(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_labelSelector(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_labelSelector(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__TopologySpreadConstraint",
 		Field:      field,
@@ -25071,7 +25593,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__TopologySpreadConstraint
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_matchLabelKeys(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_matchLabelKeys(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__TopologySpreadConstraint",
 		Field:      field,
@@ -25115,7 +25637,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__TopologySpreadConstraint
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_maxSkew(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_maxSkew(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__TopologySpreadConstraint",
 		Field:      field,
@@ -25156,7 +25678,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__TopologySpreadConstraint
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_minDomains(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_minDomains(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__TopologySpreadConstraint",
 		Field:      field,
@@ -25197,7 +25719,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__TopologySpreadConstraint
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_nodeAffinityPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_nodeAffinityPolicy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__TopologySpreadConstraint",
 		Field:      field,
@@ -25238,7 +25760,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__TopologySpreadConstraint
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_nodeTaintsPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_nodeTaintsPolicy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__TopologySpreadConstraint",
 		Field:      field,
@@ -25282,7 +25804,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__TopologySpreadConstraint
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_topologyKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_topologyKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__TopologySpreadConstraint",
 		Field:      field,
@@ -25326,7 +25848,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__TopologySpreadConstraint
 	return ec.marshalNK8s__io___api___core___v1__UnsatisfiableConstraintAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1UnsatisfiableConstraintAction(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_whenUnsatisfiable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TopologySpreadConstraint_whenUnsatisfiable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___api___core___v1__TopologySpreadConstraint",
 		Field:      field,
@@ -25367,7 +25889,7 @@ func (ec *executionContext) _K8s__io___apimachinery___pkg___apis___meta___v1__La
 	return ec.marshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector_matchExpressions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector_matchExpressions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector",
 		Field:      field,
@@ -25416,7 +25938,7 @@ func (ec *executionContext) _K8s__io___apimachinery___pkg___apis___meta___v1__La
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector_matchLabels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector_matchLabels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector",
 		Field:      field,
@@ -25460,7 +25982,7 @@ func (ec *executionContext) _K8s__io___apimachinery___pkg___apis___meta___v1__La
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement",
 		Field:      field,
@@ -25504,7 +26026,7 @@ func (ec *executionContext) _K8s__io___apimachinery___pkg___apis___meta___v1__La
 	return ec.marshalNK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelectorOperator(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement_operator(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement_operator(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement",
 		Field:      field,
@@ -25545,7 +26067,7 @@ func (ec *executionContext) _K8s__io___apimachinery___pkg___apis___meta___v1__La
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement_values(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement_values(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement",
 		Field:      field,
@@ -25589,7 +26111,7 @@ func (ec *executionContext) _ManagedResource_accountName(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -25630,7 +26152,7 @@ func (ec *executionContext) _ManagedResource_apiVersion(ctx context.Context, fie
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -25674,7 +26196,7 @@ func (ec *executionContext) _ManagedResource_clusterName(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_clusterName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -25718,7 +26240,7 @@ func (ec *executionContext) _ManagedResource_createdBy(ctx context.Context, fiel
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -25770,7 +26292,7 @@ func (ec *executionContext) _ManagedResource_creationTime(ctx context.Context, f
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -25814,7 +26336,7 @@ func (ec *executionContext) _ManagedResource_displayName(ctx context.Context, fi
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -25855,7 +26377,7 @@ func (ec *executionContext) _ManagedResource_enabled(ctx context.Context, field 
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -25899,7 +26421,7 @@ func (ec *executionContext) _ManagedResource_environmentName(ctx context.Context
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_environmentName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_environmentName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -25943,7 +26465,7 @@ func (ec *executionContext) _ManagedResource_id(ctx context.Context, field graph
 	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -25987,7 +26509,7 @@ func (ec *executionContext) _ManagedResource_isImported(ctx context.Context, fie
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_isImported(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_isImported(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26028,7 +26550,7 @@ func (ec *executionContext) _ManagedResource_kind(ctx context.Context, field gra
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26072,7 +26594,7 @@ func (ec *executionContext) _ManagedResource_lastUpdatedBy(ctx context.Context, 
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_lastUpdatedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26124,7 +26646,7 @@ func (ec *executionContext) _ManagedResource_managedServiceName(ctx context.Cont
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_managedServiceName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_managedServiceName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26165,7 +26687,7 @@ func (ec *executionContext) _ManagedResource_markedForDeletion(ctx context.Conte
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26206,7 +26728,7 @@ func (ec *executionContext) _ManagedResource_metadata(ctx context.Context, field
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26266,7 +26788,7 @@ func (ec *executionContext) _ManagedResource_mresRef(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_mresRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_mresRef(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26310,7 +26832,7 @@ func (ec *executionContext) _ManagedResource_recordVersion(ctx context.Context, 
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26354,7 +26876,7 @@ func (ec *executionContext) _ManagedResource_spec(ctx context.Context, field gra
 	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_spec(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26401,7 +26923,7 @@ func (ec *executionContext) _ManagedResource_status(ctx context.Context, field g
 	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26458,7 +26980,7 @@ func (ec *executionContext) _ManagedResource_syncedOutputSecretRef(ctx context.C
 	return ec.marshalOK8s__io___api___core___v1__Secret2ᚖk8sᚗioᚋapiᚋcoreᚋv1ᚐSecret(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_syncedOutputSecretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_syncedOutputSecretRef(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26518,7 +27040,7 @@ func (ec *executionContext) _ManagedResource_syncStatus(ctx context.Context, fie
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26576,7 +27098,7 @@ func (ec *executionContext) _ManagedResource_updateTime(ctx context.Context, fie
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResource_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResource_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResource",
 		Field:      field,
@@ -26620,7 +27142,7 @@ func (ec *executionContext) _ManagedResourceEdge_cursor(ctx context.Context, fie
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResourceEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResourceEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResourceEdge",
 		Field:      field,
@@ -26664,7 +27186,7 @@ func (ec *executionContext) _ManagedResourceEdge_node(ctx context.Context, field
 	return ec.marshalNManagedResource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐManagedResource(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResourceEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResourceEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResourceEdge",
 		Field:      field,
@@ -26754,7 +27276,7 @@ func (ec *executionContext) _ManagedResourceKeyRef_key(ctx context.Context, fiel
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResourceKeyRef_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResourceKeyRef_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResourceKeyRef",
 		Field:      field,
@@ -26798,7 +27320,7 @@ func (ec *executionContext) _ManagedResourceKeyRef_mresName(ctx context.Context,
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResourceKeyRef_mresName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResourceKeyRef_mresName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResourceKeyRef",
 		Field:      field,
@@ -26842,7 +27364,7 @@ func (ec *executionContext) _ManagedResourceKeyValueRef_key(ctx context.Context,
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResourceKeyValueRef_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResourceKeyValueRef_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResourceKeyValueRef",
 		Field:      field,
@@ -26886,7 +27408,7 @@ func (ec *executionContext) _ManagedResourceKeyValueRef_mresName(ctx context.Con
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResourceKeyValueRef_mresName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResourceKeyValueRef_mresName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResourceKeyValueRef",
 		Field:      field,
@@ -26930,7 +27452,7 @@ func (ec *executionContext) _ManagedResourceKeyValueRef_value(ctx context.Contex
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResourceKeyValueRef_value(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResourceKeyValueRef_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResourceKeyValueRef",
 		Field:      field,
@@ -26974,7 +27496,7 @@ func (ec *executionContext) _ManagedResourcePaginatedRecords_edges(ctx context.C
 	return ec.marshalNManagedResourceEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐManagedResourceEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResourcePaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResourcePaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResourcePaginatedRecords",
 		Field:      field,
@@ -27024,7 +27546,7 @@ func (ec *executionContext) _ManagedResourcePaginatedRecords_pageInfo(ctx contex
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResourcePaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResourcePaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResourcePaginatedRecords",
 		Field:      field,
@@ -27078,7 +27600,7 @@ func (ec *executionContext) _ManagedResourcePaginatedRecords_totalCount(ctx cont
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ManagedResourcePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ManagedResourcePaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ManagedResourcePaginatedRecords",
 		Field:      field,
@@ -27119,7 +27641,7 @@ func (ec *executionContext) _MatchFilter_array(ctx context.Context, field graphq
 	return ec.marshalOAny2ᚕinterfaceᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MatchFilter_array(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MatchFilter_array(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MatchFilter",
 		Field:      field,
@@ -27160,7 +27682,7 @@ func (ec *executionContext) _MatchFilter_exact(ctx context.Context, field graphq
 	return ec.marshalOAny2interface(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MatchFilter_exact(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MatchFilter_exact(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MatchFilter",
 		Field:      field,
@@ -27204,7 +27726,7 @@ func (ec *executionContext) _MatchFilter_matchType(ctx context.Context, field gr
 	return ec.marshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MatchFilter_matchType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MatchFilter_matchType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MatchFilter",
 		Field:      field,
@@ -27245,7 +27767,7 @@ func (ec *executionContext) _MatchFilter_notInArray(ctx context.Context, field g
 	return ec.marshalOAny2ᚕinterfaceᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MatchFilter_notInArray(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MatchFilter_notInArray(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MatchFilter",
 		Field:      field,
@@ -27286,7 +27808,7 @@ func (ec *executionContext) _MatchFilter_regex(ctx context.Context, field graphq
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MatchFilter_regex(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MatchFilter_regex(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MatchFilter",
 		Field:      field,
@@ -27327,7 +27849,7 @@ func (ec *executionContext) _Metadata_annotations(ctx context.Context, field gra
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Metadata_annotations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Metadata_annotations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Metadata",
 		Field:      field,
@@ -27371,7 +27893,7 @@ func (ec *executionContext) _Metadata_creationTimestamp(ctx context.Context, fie
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Metadata_creationTimestamp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Metadata_creationTimestamp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Metadata",
 		Field:      field,
@@ -27412,7 +27934,7 @@ func (ec *executionContext) _Metadata_deletionTimestamp(ctx context.Context, fie
 	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Metadata_deletionTimestamp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Metadata_deletionTimestamp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Metadata",
 		Field:      field,
@@ -27456,7 +27978,7 @@ func (ec *executionContext) _Metadata_generation(ctx context.Context, field grap
 	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Metadata_generation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Metadata_generation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Metadata",
 		Field:      field,
@@ -27497,7 +28019,7 @@ func (ec *executionContext) _Metadata_labels(ctx context.Context, field graphql.
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Metadata_labels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Metadata_labels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Metadata",
 		Field:      field,
@@ -27541,7 +28063,7 @@ func (ec *executionContext) _Metadata_name(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Metadata_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Metadata_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Metadata",
 		Field:      field,
@@ -27582,7 +28104,7 @@ func (ec *executionContext) _Metadata_namespace(ctx context.Context, field graph
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Metadata_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Metadata_namespace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Metadata",
 		Field:      field,
@@ -28321,6 +28843,87 @@ func (ec *executionContext) fieldContext_Mutation_core_deleteImagePullSecret(ctx
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_core_deleteImagePullSecret_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_core_deleteRegistryImage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_deleteRegistryImage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreDeleteRegistryImage(rctx, fc.Args["image"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_deleteRegistryImage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_core_deleteRegistryImage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -31106,7 +31709,7 @@ func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graph
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_endCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -31147,7 +31750,7 @@ func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field gra
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_hasNextPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -31188,7 +31791,7 @@ func (ec *executionContext) _PageInfo_hasPrevPage(ctx context.Context, field gra
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_hasPrevPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_hasPrevPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -31229,7 +31832,7 @@ func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field gra
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PageInfo_startCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PageInfo_startCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PageInfo",
 		Field:      field,
@@ -31270,7 +31873,7 @@ func (ec *executionContext) _Port_port(ctx context.Context, field graphql.Collec
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Port_port(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Port_port(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Port",
 		Field:      field,
@@ -31311,7 +31914,7 @@ func (ec *executionContext) _Port_targetPort(ctx context.Context, field graphql.
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Port_targetPort(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Port_targetPort(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Port",
 		Field:      field,
@@ -31967,6 +32570,277 @@ func (ec *executionContext) fieldContext_Query_core_resyncImagePullSecret(ctx co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_core_resyncImagePullSecret_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_core_getRegistryImageURL(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_core_getRegistryImageURL(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().CoreGetRegistryImageURL(rctx, fc.Args["image"].(string), fc.Args["meta"].(map[string]interface{}))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.RegistryImageURL); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/app/graph/model.RegistryImageURL`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.RegistryImageURL)
+	fc.Result = res
+	return ec.marshalNRegistryImageURL2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageURL(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_core_getRegistryImageURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "scriptUrl":
+				return ec.fieldContext_RegistryImageURL_scriptUrl(ctx, field)
+			case "url":
+				return ec.fieldContext_RegistryImageURL_url(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RegistryImageURL", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_core_getRegistryImageURL_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_core_getRegistryImage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_core_getRegistryImage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().CoreGetRegistryImage(rctx, fc.Args["image"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.RegistryImage); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/entities.RegistryImage`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.RegistryImage)
+	fc.Result = res
+	return ec.marshalORegistryImage2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRegistryImage(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_core_getRegistryImage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_RegistryImage_accountName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_RegistryImage_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_RegistryImage_id(ctx, field)
+			case "imageName":
+				return ec.fieldContext_RegistryImage_imageName(ctx, field)
+			case "imageTag":
+				return ec.fieldContext_RegistryImage_imageTag(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_RegistryImage_markedForDeletion(ctx, field)
+			case "meta":
+				return ec.fieldContext_RegistryImage_meta(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_RegistryImage_recordVersion(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_RegistryImage_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RegistryImage", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_core_getRegistryImage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_core_listRegistryImages(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_core_listRegistryImages(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().CoreListRegistryImages(rctx, fc.Args["pq"].(*repos.CursorPagination))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.RegistryImagePaginatedRecords); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/app/graph/model.RegistryImagePaginatedRecords`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.RegistryImagePaginatedRecords)
+	fc.Result = res
+	return ec.marshalORegistryImagePaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImagePaginatedRecords(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_core_listRegistryImages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_RegistryImagePaginatedRecords_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_RegistryImagePaginatedRecords_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_RegistryImagePaginatedRecords_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RegistryImagePaginatedRecords", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_core_listRegistryImages_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -34474,7 +35348,7 @@ func (ec *executionContext) _Query__service(ctx context.Context, field graphql.C
 	return ec.marshalN_Service2githubᚗcomᚋ99designsᚋgqlgenᚋpluginᚋfederationᚋfedruntimeᚐService(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query__service(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query__service(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -34593,7 +35467,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -34615,6 +35489,1354 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImage_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.RegistryImage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImage_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImage_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImage_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.RegistryImage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImage_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.RegistryImage().CreationTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImage_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImage",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImage_id(ctx context.Context, field graphql.CollectedField, obj *entities.RegistryImage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImage_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Id, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImage_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImage_imageName(ctx context.Context, field graphql.CollectedField, obj *entities.RegistryImage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImage_imageName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ImageName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImage_imageName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImage_imageTag(ctx context.Context, field graphql.CollectedField, obj *entities.RegistryImage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImage_imageTag(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ImageTag, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImage_imageTag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImage_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities.RegistryImage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImage_markedForDeletion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarkedForDeletion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImage_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImage_meta(ctx context.Context, field graphql.CollectedField, obj *entities.RegistryImage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImage_meta(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Meta, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(map[string]any)
+	fc.Result = res
+	return ec.marshalNMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImage_meta(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImage_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.RegistryImage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImage_recordVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecordVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImage_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImage_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.RegistryImage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImage_updateTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.RegistryImage().UpdateTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImage_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImage",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentials_accountName(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentials_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentials_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentials_createdBy(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentials_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentials_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentials_creationTime(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentials_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreationTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentials_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentials_id(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentials_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(repos.ID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentials_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentials_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentials_markedForDeletion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarkedForDeletion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentials_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentials_password(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentials_password(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Password, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentials_password(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentials_recordVersion(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentials_recordVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecordVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentials_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentials_updateTime(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentials_updateTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdateTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentials_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentialsEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentialsEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentialsEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentialsEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentialsEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentialsEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentialsEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentialsEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.RegistryImageCredentials)
+	fc.Result = res
+	return ec.marshalNRegistryImageCredentials2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageCredentials(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentialsEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentialsEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_RegistryImageCredentials_accountName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_RegistryImageCredentials_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_RegistryImageCredentials_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_RegistryImageCredentials_id(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_RegistryImageCredentials_markedForDeletion(ctx, field)
+			case "password":
+				return ec.fieldContext_RegistryImageCredentials_password(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_RegistryImageCredentials_recordVersion(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_RegistryImageCredentials_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RegistryImageCredentials", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentialsPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentialsPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentialsPaginatedRecords_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.RegistryImageCredentialsEdge)
+	fc.Result = res
+	return ec.marshalNRegistryImageCredentialsEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageCredentialsEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentialsPaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentialsPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_RegistryImageCredentialsEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_RegistryImageCredentialsEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RegistryImageCredentialsEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentialsPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentialsPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentialsPaginatedRecords_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentialsPaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentialsPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageCredentialsPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageCredentialsPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageCredentialsPaginatedRecords_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageCredentialsPaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageCredentialsPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entities.RegistryImage)
+	fc.Result = res
+	return ec.marshalNRegistryImage2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRegistryImage(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_RegistryImage_accountName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_RegistryImage_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_RegistryImage_id(ctx, field)
+			case "imageName":
+				return ec.fieldContext_RegistryImage_imageName(ctx, field)
+			case "imageTag":
+				return ec.fieldContext_RegistryImage_imageTag(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_RegistryImage_markedForDeletion(ctx, field)
+			case "meta":
+				return ec.fieldContext_RegistryImage_meta(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_RegistryImage_recordVersion(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_RegistryImage_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RegistryImage", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImagePaginatedRecords_edges(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImagePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImagePaginatedRecords_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.RegistryImageEdge)
+	fc.Result = res
+	return ec.marshalNRegistryImageEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImagePaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImagePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_RegistryImageEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_RegistryImageEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RegistryImageEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImagePaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImagePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImagePaginatedRecords_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImagePaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImagePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPrevPage":
+				return ec.fieldContext_PageInfo_hasPrevPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImagePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImagePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImagePaginatedRecords_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImagePaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImagePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageURL_scriptUrl(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageURL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageURL_scriptUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScriptURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageURL_scriptUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegistryImageURL_url(ctx context.Context, field graphql.CollectedField, obj *model.RegistryImageURL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RegistryImageURL_url(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RegistryImageURL_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegistryImageURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -34651,7 +36873,7 @@ func (ec *executionContext) _Router_accountName(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -34692,7 +36914,7 @@ func (ec *executionContext) _Router_apiVersion(ctx context.Context, field graphq
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -34736,7 +36958,7 @@ func (ec *executionContext) _Router_createdBy(ctx context.Context, field graphql
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -34788,7 +37010,7 @@ func (ec *executionContext) _Router_creationTime(ctx context.Context, field grap
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -34832,7 +37054,7 @@ func (ec *executionContext) _Router_displayName(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -34873,7 +37095,7 @@ func (ec *executionContext) _Router_enabled(ctx context.Context, field graphql.C
 	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -34917,7 +37139,7 @@ func (ec *executionContext) _Router_environmentName(ctx context.Context, field g
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_environmentName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_environmentName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -34961,7 +37183,7 @@ func (ec *executionContext) _Router_id(ctx context.Context, field graphql.Collec
 	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -35002,7 +37224,7 @@ func (ec *executionContext) _Router_kind(ctx context.Context, field graphql.Coll
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -35046,7 +37268,7 @@ func (ec *executionContext) _Router_lastUpdatedBy(ctx context.Context, field gra
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_lastUpdatedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -35095,7 +37317,7 @@ func (ec *executionContext) _Router_markedForDeletion(ctx context.Context, field
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -35136,7 +37358,7 @@ func (ec *executionContext) _Router_metadata(ctx context.Context, field graphql.
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -35196,7 +37418,7 @@ func (ec *executionContext) _Router_recordVersion(ctx context.Context, field gra
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -35240,7 +37462,7 @@ func (ec *executionContext) _Router_spec(ctx context.Context, field graphql.Coll
 	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__RouterSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1RouterSpec(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_spec(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -35301,7 +37523,7 @@ func (ec *executionContext) _Router_status(ctx context.Context, field graphql.Co
 	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -35361,7 +37583,7 @@ func (ec *executionContext) _Router_syncStatus(ctx context.Context, field graphq
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -35419,7 +37641,7 @@ func (ec *executionContext) _Router_updateTime(ctx context.Context, field graphq
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Router_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Router_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Router",
 		Field:      field,
@@ -35463,7 +37685,7 @@ func (ec *executionContext) _RouterEdge_cursor(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_RouterEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RouterEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RouterEdge",
 		Field:      field,
@@ -35507,7 +37729,7 @@ func (ec *executionContext) _RouterEdge_node(ctx context.Context, field graphql.
 	return ec.marshalNRouter2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_RouterEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RouterEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RouterEdge",
 		Field:      field,
@@ -35587,7 +37809,7 @@ func (ec *executionContext) _RouterPaginatedRecords_edges(ctx context.Context, f
 	return ec.marshalNRouterEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRouterEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_RouterPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RouterPaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RouterPaginatedRecords",
 		Field:      field,
@@ -35637,7 +37859,7 @@ func (ec *executionContext) _RouterPaginatedRecords_pageInfo(ctx context.Context
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_RouterPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RouterPaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RouterPaginatedRecords",
 		Field:      field,
@@ -35691,7 +37913,7 @@ func (ec *executionContext) _RouterPaginatedRecords_totalCount(ctx context.Conte
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_RouterPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RouterPaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RouterPaginatedRecords",
 		Field:      field,
@@ -35735,7 +37957,7 @@ func (ec *executionContext) _Secret_accountName(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_accountName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -35776,7 +37998,7 @@ func (ec *executionContext) _Secret_apiVersion(ctx context.Context, field graphq
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_apiVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -35820,7 +38042,7 @@ func (ec *executionContext) _Secret_createdBy(ctx context.Context, field graphql
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -35872,7 +38094,7 @@ func (ec *executionContext) _Secret_creationTime(ctx context.Context, field grap
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -35913,7 +38135,7 @@ func (ec *executionContext) _Secret_data(ctx context.Context, field graphql.Coll
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -35957,7 +38179,7 @@ func (ec *executionContext) _Secret_displayName(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36001,7 +38223,7 @@ func (ec *executionContext) _Secret_environmentName(ctx context.Context, field g
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_environmentName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_environmentName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36042,7 +38264,7 @@ func (ec *executionContext) _Secret_for(ctx context.Context, field graphql.Colle
 	return ec.marshalOGithub__com___kloudlite___api___apps___console___internal___entities__SecretCreatedFor2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesSecretCreatedFor(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_for(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_for(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36096,7 +38318,7 @@ func (ec *executionContext) _Secret_id(ctx context.Context, field graphql.Collec
 	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36137,7 +38359,7 @@ func (ec *executionContext) _Secret_immutable(ctx context.Context, field graphql
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_immutable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_immutable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36181,7 +38403,7 @@ func (ec *executionContext) _Secret_isReadyOnly(ctx context.Context, field graph
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_isReadyOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_isReadyOnly(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36222,7 +38444,7 @@ func (ec *executionContext) _Secret_kind(ctx context.Context, field graphql.Coll
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36266,7 +38488,7 @@ func (ec *executionContext) _Secret_lastUpdatedBy(ctx context.Context, field gra
 	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_lastUpdatedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36315,7 +38537,7 @@ func (ec *executionContext) _Secret_markedForDeletion(ctx context.Context, field
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_markedForDeletion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36356,7 +38578,7 @@ func (ec *executionContext) _Secret_metadata(ctx context.Context, field graphql.
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36416,7 +38638,7 @@ func (ec *executionContext) _Secret_recordVersion(ctx context.Context, field gra
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_recordVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36457,7 +38679,7 @@ func (ec *executionContext) _Secret_stringData(ctx context.Context, field graphq
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_stringData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_stringData(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36501,7 +38723,7 @@ func (ec *executionContext) _Secret_syncStatus(ctx context.Context, field graphq
 	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36556,7 +38778,7 @@ func (ec *executionContext) _Secret_type(ctx context.Context, field graphql.Coll
 	return ec.marshalOK8s__io___api___core___v1__SecretType2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36600,7 +38822,7 @@ func (ec *executionContext) _Secret_updateTime(ctx context.Context, field graphq
 	return ec.marshalNDate2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Secret_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Secret_updateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Secret",
 		Field:      field,
@@ -36644,7 +38866,7 @@ func (ec *executionContext) _SecretEdge_cursor(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SecretEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SecretEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SecretEdge",
 		Field:      field,
@@ -36688,7 +38910,7 @@ func (ec *executionContext) _SecretEdge_node(ctx context.Context, field graphql.
 	return ec.marshalNSecret2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐSecret(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SecretEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SecretEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SecretEdge",
 		Field:      field,
@@ -36774,7 +38996,7 @@ func (ec *executionContext) _SecretKeyRef_key(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SecretKeyRef_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SecretKeyRef_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SecretKeyRef",
 		Field:      field,
@@ -36818,7 +39040,7 @@ func (ec *executionContext) _SecretKeyRef_secretName(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SecretKeyRef_secretName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SecretKeyRef_secretName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SecretKeyRef",
 		Field:      field,
@@ -36862,7 +39084,7 @@ func (ec *executionContext) _SecretKeyValueRef_key(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SecretKeyValueRef_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SecretKeyValueRef_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SecretKeyValueRef",
 		Field:      field,
@@ -36906,7 +39128,7 @@ func (ec *executionContext) _SecretKeyValueRef_secretName(ctx context.Context, f
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SecretKeyValueRef_secretName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SecretKeyValueRef_secretName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SecretKeyValueRef",
 		Field:      field,
@@ -36950,7 +39172,7 @@ func (ec *executionContext) _SecretKeyValueRef_value(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SecretKeyValueRef_value(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SecretKeyValueRef_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SecretKeyValueRef",
 		Field:      field,
@@ -36994,7 +39216,7 @@ func (ec *executionContext) _SecretPaginatedRecords_edges(ctx context.Context, f
 	return ec.marshalNSecretEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSecretEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SecretPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SecretPaginatedRecords_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SecretPaginatedRecords",
 		Field:      field,
@@ -37044,7 +39266,7 @@ func (ec *executionContext) _SecretPaginatedRecords_pageInfo(ctx context.Context
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SecretPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SecretPaginatedRecords_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SecretPaginatedRecords",
 		Field:      field,
@@ -37098,7 +39320,7 @@ func (ec *executionContext) _SecretPaginatedRecords_totalCount(ctx context.Conte
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_SecretPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SecretPaginatedRecords_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SecretPaginatedRecords",
 		Field:      field,
@@ -37139,7 +39361,7 @@ func (ec *executionContext) __Service_sdl(ctx context.Context, field graphql.Col
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext__Service_sdl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext__Service_sdl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "_Service",
 		Field:      field,
@@ -37183,7 +39405,7 @@ func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -37224,7 +39446,7 @@ func (ec *executionContext) ___Directive_description(ctx context.Context, field 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -37268,7 +39490,7 @@ func (ec *executionContext) ___Directive_locations(ctx context.Context, field gr
 	return ec.marshalN__DirectiveLocation2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_locations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_locations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -37312,7 +39534,7 @@ func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql
 	return ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_args(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_args(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -37366,7 +39588,7 @@ func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Directive_isRepeatable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Directive_isRepeatable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
@@ -37410,7 +39632,7 @@ func (ec *executionContext) ___EnumValue_name(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -37451,7 +39673,7 @@ func (ec *executionContext) ___EnumValue_description(ctx context.Context, field 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -37495,7 +39717,7 @@ func (ec *executionContext) ___EnumValue_isDeprecated(ctx context.Context, field
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_isDeprecated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_isDeprecated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -37536,7 +39758,7 @@ func (ec *executionContext) ___EnumValue_deprecationReason(ctx context.Context, 
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___EnumValue_deprecationReason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___EnumValue_deprecationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__EnumValue",
 		Field:      field,
@@ -37580,7 +39802,7 @@ func (ec *executionContext) ___Field_name(ctx context.Context, field graphql.Col
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -37621,7 +39843,7 @@ func (ec *executionContext) ___Field_description(ctx context.Context, field grap
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -37665,7 +39887,7 @@ func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.Col
 	return ec.marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_args(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_args(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -37719,7 +39941,7 @@ func (ec *executionContext) ___Field_type(ctx context.Context, field graphql.Col
 	return ec.marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -37785,7 +40007,7 @@ func (ec *executionContext) ___Field_isDeprecated(ctx context.Context, field gra
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_isDeprecated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_isDeprecated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -37826,7 +40048,7 @@ func (ec *executionContext) ___Field_deprecationReason(ctx context.Context, fiel
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Field_deprecationReason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Field_deprecationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
@@ -37870,7 +40092,7 @@ func (ec *executionContext) ___InputValue_name(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -37911,7 +40133,7 @@ func (ec *executionContext) ___InputValue_description(ctx context.Context, field
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -37955,7 +40177,7 @@ func (ec *executionContext) ___InputValue_type(ctx context.Context, field graphq
 	return ec.marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -38018,7 +40240,7 @@ func (ec *executionContext) ___InputValue_defaultValue(ctx context.Context, fiel
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___InputValue_defaultValue(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___InputValue_defaultValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__InputValue",
 		Field:      field,
@@ -38059,7 +40281,7 @@ func (ec *executionContext) ___Schema_description(ctx context.Context, field gra
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -38103,7 +40325,7 @@ func (ec *executionContext) ___Schema_types(ctx context.Context, field graphql.C
 	return ec.marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_types(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_types(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -38169,7 +40391,7 @@ func (ec *executionContext) ___Schema_queryType(ctx context.Context, field graph
 	return ec.marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_queryType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_queryType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -38232,7 +40454,7 @@ func (ec *executionContext) ___Schema_mutationType(ctx context.Context, field gr
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_mutationType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_mutationType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -38295,7 +40517,7 @@ func (ec *executionContext) ___Schema_subscriptionType(ctx context.Context, fiel
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_subscriptionType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_subscriptionType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -38361,7 +40583,7 @@ func (ec *executionContext) ___Schema_directives(ctx context.Context, field grap
 	return ec.marshalN__Directive2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirectiveᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Schema_directives(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Schema_directives(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Schema",
 		Field:      field,
@@ -38417,7 +40639,7 @@ func (ec *executionContext) ___Type_kind(ctx context.Context, field graphql.Coll
 	return ec.marshalN__TypeKind2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -38458,7 +40680,7 @@ func (ec *executionContext) ___Type_name(ctx context.Context, field graphql.Coll
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -38499,7 +40721,7 @@ func (ec *executionContext) ___Type_description(ctx context.Context, field graph
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -38606,7 +40828,7 @@ func (ec *executionContext) ___Type_interfaces(ctx context.Context, field graphq
 	return ec.marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_interfaces(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_interfaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -38669,7 +40891,7 @@ func (ec *executionContext) ___Type_possibleTypes(ctx context.Context, field gra
 	return ec.marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_possibleTypes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_possibleTypes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -38794,7 +41016,7 @@ func (ec *executionContext) ___Type_inputFields(ctx context.Context, field graph
 	return ec.marshalO__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_inputFields(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_inputFields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -38845,7 +41067,7 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_ofType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_ofType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -38908,7 +41130,7 @@ func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field gr
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -40372,7 +42594,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"routing", "targetNamespace"}
+	fieldsInOrder := [...]string{"routing", "suspend", "targetNamespace"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -40386,6 +42608,13 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 				return it, err
 			}
 			it.Routing = data
+		case "suspend":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("suspend"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Suspend = data
 		case "targetNamespace":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetNamespace"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -41989,6 +44218,122 @@ func (ec *executionContext) unmarshalInputPortIn(ctx context.Context, obj interf
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputRegistryImageCredentialsIn(ctx context.Context, obj interface{}) (model.RegistryImageCredentialsIn, error) {
+	var it model.RegistryImageCredentialsIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accountName", "password"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accountName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccountName = data
+		case "password":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Password = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRegistryImageIn(ctx context.Context, obj interface{}) (entities.RegistryImage, error) {
+	var it entities.RegistryImage
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accountName", "imageName", "imageTag", "meta"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accountName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccountName = data
+		case "imageName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ImageName = data
+		case "imageTag":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageTag"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ImageTag = data
+		case "meta":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("meta"))
+			data, err := ec.unmarshalNMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Meta = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRegistryImageURLIn(ctx context.Context, obj interface{}) (model.RegistryImageURLIn, error) {
+	var it model.RegistryImageURLIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"scriptUrl", "url"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "scriptUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scriptUrl"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ScriptURL = data
+		case "url":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.URL = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputRouterIn(ctx context.Context, obj interface{}) (entities.Router, error) {
 	var it entities.Router
 	asMap := map[string]interface{}{}
@@ -42479,6 +44824,33 @@ func (ec *executionContext) unmarshalInputSearchProjects(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSearchRegistryImages(ctx context.Context, obj interface{}) (model.SearchRegistryImages, error) {
+	var it model.SearchRegistryImages
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"text"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "text":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			data, err := ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Text = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSearchRouters(ctx context.Context, obj interface{}) (model.SearchRouters, error) {
 	var it model.SearchRouters
 	asMap := map[string]interface{}{}
@@ -42920,7 +45292,7 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 		case "build":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -42953,7 +45325,7 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 		case "serviceHost":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -43233,7 +45605,7 @@ func (ec *executionContext) _ClusterManagedService(ctx context.Context, sel ast.
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -43443,7 +45815,7 @@ func (ec *executionContext) _Config(ctx context.Context, sel ast.SelectionSet, o
 		case "binaryData":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -43517,7 +45889,7 @@ func (ec *executionContext) _Config(ctx context.Context, sel ast.SelectionSet, o
 		case "data":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -44076,7 +46448,7 @@ func (ec *executionContext) _Environment(ctx context.Context, sel ast.SelectionS
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -44358,7 +46730,7 @@ func (ec *executionContext) _ExternalApp(ctx context.Context, sel ast.SelectionS
 		case "spec":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -44751,7 +47123,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 		case "lastSyncedAt":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -44794,7 +47166,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 		case "syncScheduledAt":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -45606,6 +47978,8 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec")
 		case "routing":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_routing(ctx, field, obj)
+		case "suspend":
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_suspend(ctx, field, obj)
 		case "targetNamespace":
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec_targetNamespace(ctx, field, obj)
 		default:
@@ -46485,7 +48859,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 		case "checkList":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -46518,7 +48892,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 		case "checks":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -46558,7 +48932,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 		case "lastReconcileTime":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -46591,7 +48965,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 		case "message":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -46624,7 +48998,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 		case "resources":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -47236,7 +49610,7 @@ func (ec *executionContext) _ImportedManagedResource(ctx context.Context, sel as
 		case "managedResource":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -47398,7 +49772,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Secret(ctx context.Conte
 		case "data":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -47437,7 +49811,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Secret(ctx context.Conte
 		case "stringData":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -47470,7 +49844,7 @@ func (ec *executionContext) _K8s__io___api___core___v1__Secret(ctx context.Conte
 		case "type":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48173,7 +50547,7 @@ func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet,
 		case "annotations":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48242,7 +50616,7 @@ func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet,
 		case "deletionTimestamp":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48280,7 +50654,7 @@ func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet,
 		case "labels":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48389,6 +50763,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "core_deleteImagePullSecret":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_deleteImagePullSecret(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "core_deleteRegistryImage":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_deleteRegistryImage(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -48681,7 +51062,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_listEnvironments":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48700,7 +51081,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_getEnvironment":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48741,7 +51122,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_listImagePullSecrets":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48760,7 +51141,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_getImagePullSecret":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48798,10 +51179,70 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "core_listApps":
+		case "core_getRegistryImageURL":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_getRegistryImageURL(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "core_getRegistryImage":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_getRegistryImage(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "core_listRegistryImages":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_listRegistryImages(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "core_listApps":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48820,7 +51261,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_getApp":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48883,7 +51324,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_listExternalApps":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48902,7 +51343,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_getExternalApp":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48943,7 +51384,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_getConfigValues":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48962,7 +51403,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_listConfigs":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -48981,7 +51422,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_getConfig":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49022,7 +51463,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_getSecretValues":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49041,7 +51482,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_listSecrets":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49060,7 +51501,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_getSecret":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49101,7 +51542,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_listRouters":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49120,7 +51561,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_getRouter":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49205,7 +51646,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "infra_listClusterManagedServices":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49224,7 +51665,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "infra_getClusterManagedService":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49243,7 +51684,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_listManagedResources":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49262,7 +51703,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_getManagedResource":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49303,7 +51744,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "core_listImportedManagedResources":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49371,6 +51812,445 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var registryImageImplementors = []string{"RegistryImage"}
+
+func (ec *executionContext) _RegistryImage(ctx context.Context, sel ast.SelectionSet, obj *entities.RegistryImage) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, registryImageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RegistryImage")
+		case "accountName":
+			out.Values[i] = ec._RegistryImage_accountName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "creationTime":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._RegistryImage_creationTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "id":
+			out.Values[i] = ec._RegistryImage_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "imageName":
+			out.Values[i] = ec._RegistryImage_imageName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "imageTag":
+			out.Values[i] = ec._RegistryImage_imageTag(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "markedForDeletion":
+			out.Values[i] = ec._RegistryImage_markedForDeletion(ctx, field, obj)
+		case "meta":
+			out.Values[i] = ec._RegistryImage_meta(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "recordVersion":
+			out.Values[i] = ec._RegistryImage_recordVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updateTime":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._RegistryImage_updateTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var registryImageCredentialsImplementors = []string{"RegistryImageCredentials"}
+
+func (ec *executionContext) _RegistryImageCredentials(ctx context.Context, sel ast.SelectionSet, obj *model.RegistryImageCredentials) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, registryImageCredentialsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RegistryImageCredentials")
+		case "accountName":
+			out.Values[i] = ec._RegistryImageCredentials_accountName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdBy":
+			out.Values[i] = ec._RegistryImageCredentials_createdBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "creationTime":
+			out.Values[i] = ec._RegistryImageCredentials_creationTime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "id":
+			out.Values[i] = ec._RegistryImageCredentials_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "markedForDeletion":
+			out.Values[i] = ec._RegistryImageCredentials_markedForDeletion(ctx, field, obj)
+		case "password":
+			out.Values[i] = ec._RegistryImageCredentials_password(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "recordVersion":
+			out.Values[i] = ec._RegistryImageCredentials_recordVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateTime":
+			out.Values[i] = ec._RegistryImageCredentials_updateTime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var registryImageCredentialsEdgeImplementors = []string{"RegistryImageCredentialsEdge"}
+
+func (ec *executionContext) _RegistryImageCredentialsEdge(ctx context.Context, sel ast.SelectionSet, obj *model.RegistryImageCredentialsEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, registryImageCredentialsEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RegistryImageCredentialsEdge")
+		case "cursor":
+			out.Values[i] = ec._RegistryImageCredentialsEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._RegistryImageCredentialsEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var registryImageCredentialsPaginatedRecordsImplementors = []string{"RegistryImageCredentialsPaginatedRecords"}
+
+func (ec *executionContext) _RegistryImageCredentialsPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.RegistryImageCredentialsPaginatedRecords) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, registryImageCredentialsPaginatedRecordsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RegistryImageCredentialsPaginatedRecords")
+		case "edges":
+			out.Values[i] = ec._RegistryImageCredentialsPaginatedRecords_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._RegistryImageCredentialsPaginatedRecords_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._RegistryImageCredentialsPaginatedRecords_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var registryImageEdgeImplementors = []string{"RegistryImageEdge"}
+
+func (ec *executionContext) _RegistryImageEdge(ctx context.Context, sel ast.SelectionSet, obj *model.RegistryImageEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, registryImageEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RegistryImageEdge")
+		case "cursor":
+			out.Values[i] = ec._RegistryImageEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._RegistryImageEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var registryImagePaginatedRecordsImplementors = []string{"RegistryImagePaginatedRecords"}
+
+func (ec *executionContext) _RegistryImagePaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.RegistryImagePaginatedRecords) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, registryImagePaginatedRecordsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RegistryImagePaginatedRecords")
+		case "edges":
+			out.Values[i] = ec._RegistryImagePaginatedRecords_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._RegistryImagePaginatedRecords_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._RegistryImagePaginatedRecords_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var registryImageURLImplementors = []string{"RegistryImageURL"}
+
+func (ec *executionContext) _RegistryImageURL(ctx context.Context, sel ast.SelectionSet, obj *model.RegistryImageURL) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, registryImageURLImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RegistryImageURL")
+		case "scriptUrl":
+			out.Values[i] = ec._RegistryImageURL_scriptUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "url":
+			out.Values[i] = ec._RegistryImageURL_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -49743,7 +52623,7 @@ func (ec *executionContext) _Secret(ctx context.Context, sel ast.SelectionSet, o
 		case "data":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49786,7 +52666,7 @@ func (ec *executionContext) _Secret(ctx context.Context, sel ast.SelectionSet, o
 		case "for":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49878,7 +52758,7 @@ func (ec *executionContext) _Secret(ctx context.Context, sel ast.SelectionSet, o
 		case "stringData":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -49916,7 +52796,7 @@ func (ec *executionContext) _Secret(ctx context.Context, sel ast.SelectionSet, o
 		case "type":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
@@ -51061,6 +53941,16 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___api___common__Crea
 	return ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, v *common.CreatedOrUpdatedBy) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___repos__MatchType2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchType(ctx context.Context, v interface{}) (repos.MatchType, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := repos.MatchType(tmp)
@@ -51883,6 +54773,27 @@ func (ec *executionContext) marshalNManagedResourceKeyValueRef2ᚖgithubᚗcom�
 	return ec._ManagedResourceKeyValueRef(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNMap2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.SelectionSet, v map[string]interface{}) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalMap(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v12.ObjectMeta) graphql.Marshaler {
 	return ec._Metadata(ctx, sel, &v)
 }
@@ -51905,6 +54816,148 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapi�
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRegistryImage2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRegistryImage(ctx context.Context, sel ast.SelectionSet, v *entities.RegistryImage) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RegistryImage(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRegistryImageCredentials2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageCredentials(ctx context.Context, sel ast.SelectionSet, v *model.RegistryImageCredentials) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RegistryImageCredentials(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRegistryImageCredentialsEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageCredentialsEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RegistryImageCredentialsEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRegistryImageCredentialsEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageCredentialsEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRegistryImageCredentialsEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageCredentialsEdge(ctx context.Context, sel ast.SelectionSet, v *model.RegistryImageCredentialsEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RegistryImageCredentialsEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRegistryImageEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RegistryImageEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRegistryImageEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRegistryImageEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageEdge(ctx context.Context, sel ast.SelectionSet, v *model.RegistryImageEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RegistryImageEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRegistryImageURL2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageURL(ctx context.Context, sel ast.SelectionSet, v model.RegistryImageURL) graphql.Marshaler {
+	return ec._RegistryImageURL(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRegistryImageURL2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageURL(ctx context.Context, sel ast.SelectionSet, v *model.RegistryImageURL) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RegistryImageURL(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRouter2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx context.Context, sel ast.SelectionSet, v *entities.Router) graphql.Marshaler {
@@ -54250,6 +57303,20 @@ func (ec *executionContext) unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpk
 	}
 	res, err := ec.unmarshalInputMetadataIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalORegistryImage2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRegistryImage(ctx context.Context, sel ast.SelectionSet, v *entities.RegistryImage) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RegistryImage(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalORegistryImagePaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImagePaginatedRecords(ctx context.Context, sel ast.SelectionSet, v *model.RegistryImagePaginatedRecords) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RegistryImagePaginatedRecords(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalORouter2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐRouter(ctx context.Context, sel ast.SelectionSet, v *entities.Router) graphql.Marshaler {
