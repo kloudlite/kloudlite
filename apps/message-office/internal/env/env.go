@@ -5,8 +5,9 @@ import (
 )
 
 type Env struct {
-	NatsUrl    string `env:"NATS_URL" required:"true"`
-	NatsStream string `env:"NATS_STREAM" required:"true"`
+	NatsUrl                    string `env:"NATS_URL" required:"true"`
+	NatsSendToAgentStream      string `env:"NATS_SEND_TO_AGENT_STREAM" required:"true"`
+	NatsReceiveFromAgentStream string `env:"NATS_RECEIVE_FROM_AGENT_STREAM" required:"true"`
 
 	PlatformAccessToken string `env:"PLATFORM_ACCESS_TOKEN" required:"true"`
 

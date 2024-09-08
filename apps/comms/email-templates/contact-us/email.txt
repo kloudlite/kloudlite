@@ -1,0 +1,8 @@
+Hello {{.Name}},
+
+I’m Karthik, the founder of Kloudlite Inc and I’d like to personally thank you for contacting us.
+
+We have received your details and our team will get back to you shortly.
+
+Best Regards,
+Karthik

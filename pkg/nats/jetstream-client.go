@@ -2,15 +2,16 @@ package nats
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/kloudlite/api/pkg/errors"
 
-	"github.com/kloudlite/api/pkg/logging"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
 type JetstreamClient struct {
 	Jetstream jetstream.JetStream
-	Logger    logging.Logger
+	Logger    *slog.Logger
 }
 
 type ConsumerManager interface {
