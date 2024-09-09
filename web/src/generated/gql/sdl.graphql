@@ -65,6 +65,7 @@ type App {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
+  onlineStatus: OnlineStatus
   recordVersion: Int!
   serviceHost: String
   spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpec!
@@ -578,6 +579,7 @@ type Environment {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
+  onlineStatus: OnlineStatus
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -2215,6 +2217,7 @@ type ImportedManagedResource {
   managedResourceRef: Github__com___kloudlite___api___apps___console___internal___entities__ManagedResourceRef!
   markedForDeletion: Boolean
   name: String!
+  onlineStatus: OnlineStatus
   recordVersion: Int!
   secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
@@ -3813,6 +3816,11 @@ type NotificationPaginatedRecords {
 type OAuthProviderStatus {
   enabled: Boolean!
   provider: String!
+}
+
+type OnlineStatus {
+  lastOnlineAt: Date!
+  willBeOfflineAt: Date!
 }
 
 type PageInfo {

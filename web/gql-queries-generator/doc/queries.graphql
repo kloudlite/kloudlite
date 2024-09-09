@@ -6465,6 +6465,7 @@ query authCli_getRemoteLogin($loginId: String!, $secret: String!) {
 mutation authCli_createClusterReference($cluster: BYOKClusterIn!) {
   infra_createBYOKCluster(cluster: $cluster) {
     id
+    clusterToken
     metadata {
       name
     }

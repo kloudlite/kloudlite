@@ -8119,7 +8119,11 @@ export type AuthCli_CreateClusterReferenceMutationVariables = Exact<{
 }>;
 
 export type AuthCli_CreateClusterReferenceMutation = {
-  infra_createBYOKCluster?: { id: string; metadata: { name: string } };
+  infra_createBYOKCluster?: {
+    id: string;
+    clusterToken: string;
+    metadata: { name: string };
+  };
 };
 
 export type AuthCli_DeleteClusterReferenceMutationVariables = Exact<{
