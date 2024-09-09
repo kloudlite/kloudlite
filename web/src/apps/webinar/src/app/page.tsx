@@ -44,7 +44,6 @@ export default async function Home() {
                   </div>
                 </div>
                 <JoinWebinar userData={data} />
-                {data.email}
               </div>
             </div>
           </div>

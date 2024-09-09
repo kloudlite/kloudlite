@@ -199,3 +199,21 @@ tasks:
     cmds:
       # - cd ./src/design-system && mkdir -p out && pnpm local:release
       - docker buildx build  . -t {{.tag}} -f Dockerfile.website
+
+  container-build-webinar:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
+    vars:
+      Image: ghcr.io/kloudlite/web/events:{{.tag}}
+    cmds:
+      - docker buildx build  . -t {{.Image}} -f Dockerfile.webinar
+
+  container-push-webinar:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
+    vars:
+      Image: ghcr.io/kloudlite/web/events:{{.tag}}
+    cmds:
+      - docker buildx build -t {{.Image}} --platform linux/amd64 -f Dockerfile.webinar --push .

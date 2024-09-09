@@ -1,0 +1,25 @@
+FROM node:20.8.1-alpine as base
+RUN npm i -g pnpm
+WORKDIR /app
+
+# design system
+COPY ./src/design-system/ ./src/design-system/
+WORKDIR /app/src/design-system
+RUN pnpm i -p
+RUN pnpm local:release
+
+# webinar
+WORKDIR /app
+COPY ./src/apps/webinar ./src/apps/webinar
+WORKDIR /app/src/apps/webinar
+RUN pnpm i -p
+RUN pnpm build
+
+FROM node:20.8.1-alpine
+WORKDIR /app
+COPY --from=base /app/src/apps/webinar/.next ./.next
+COPY --from=base /app/src/apps/webinar/public ./public
+COPY --from=base /app/src/apps/webinar/package.json ./package.json
+COPY --from=base /app/src/apps/webinar/node_modules ./node_modules
+
+ENTRYPOINT npm run start

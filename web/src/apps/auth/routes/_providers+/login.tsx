@@ -50,11 +50,7 @@ const LoginWithEmail = () => {
 
         const callback = searchParams.get('callback');
         if (callback) {
-          const {
-            data: { email, name },
-          } = await api.whoAmI({});
-          const encodedData = btoa(`email=${email}&name=${name}`);
-          window.location.href = `${callback}?userData=${encodedData}`;
+          window.location.href = callback;
           return;
         }
         reloadPage();
@@ -119,6 +115,9 @@ const Login = () => {
   const loginUrl = callback
     ? `/login?mode=email&callback=${callback}`
     : `/login?mode=email`;
+  const githubLoginHref = callback
+    ? `${githubLoginUrl}&callback=${callback}`
+    : githubLoginUrl;
 
   return (
     <Container
@@ -152,7 +151,8 @@ const Login = () => {
                   <span className="bodyLg-medium">Continue with GitHub</span>
                 }
                 prefix={<GithubLogoFill />}
-                to={githubLoginUrl}
+                // to={githubLoginUrl}
+                to={githubLoginHref}
                 disabled={!githubLoginUrl}
                 block
                 linkComponent={Link}
