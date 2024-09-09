@@ -115,6 +115,10 @@ const Login = () => {
   const { githubLoginUrl, gitlabLoginUrl, googleLoginUrl } =
     useOutletContext<IProviderContext>();
   const [searchParams, _setSearchParams] = useSearchParams();
+  const callback = searchParams.get('callback');
+  const loginUrl = callback
+    ? `/login?mode=email&callback=${callback}`
+    : `/login?mode=email`;
 
   return (
     <Container
@@ -198,7 +202,8 @@ const Login = () => {
             variant="outline"
             content={<span className="bodyLg-medium">Continue with email</span>}
             prefix={<Envelope />}
-            to="/login/?mode=email"
+            // to="/login/?mode=email"
+            to={loginUrl}
             block
             linkComponent={Link}
           />

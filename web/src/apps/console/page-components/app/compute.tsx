@@ -1,23 +1,17 @@
-import { NumberInput } from '~/components/atoms/input';
-import Slider from '~/components/atoms/slider';
-import { useAppState } from '~/console/page-components/app-states';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import { FadeIn, parseValue } from '~/console/page-components/util';
-import Select from '~/components/atoms/select';
-import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
-import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useMapper } from '~/components/utils';
-import { BottomNavigation } from '~/console/components/commons';
-import { useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { IEnvironmentContext } from '~/console/routes/_main+/$account+/env+/$environment+/_layout';
+import { NumberInput } from '~/components/atoms/input';
+import Select from '~/components/atoms/select';
+import Slider from '~/components/atoms/slider';
+import { BottomNavigation } from '~/console/components/commons';
+import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import { useAppState } from '~/console/page-components/app-states';
+import { FadeIn, parseValue } from '~/console/page-components/util';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
-import { plans } from './datas';
+import Yup from '~/root/lib/server/helpers/yup';
 import appInitialFormValues, { mapFormValuesToApp } from './app-utils';
+import { plans } from './datas';
 
 const valueRender = ({
   label,
@@ -50,25 +44,25 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
     getReadOnlyContainer,
     getContainer,
   } = useAppState();
-  const api = useConsoleApi();
-  const { cluster } = useOutletContext<IEnvironmentContext>();
+  // const api = useConsoleApi();
+  // const { cluster } = useOutletContext<IEnvironmentContext>();
   const [advancedOptions, setAdvancedOptions] = useState(false);
   const { performAction } = useUnsavedChanges();
 
-  const {
-    data: nodepoolData,
-    isLoading: nodepoolLoading,
-    error: nodepoolLoadingError,
-  } = useCustomSwr('/nodepools', async () => {
-    return api.listNodePools({
-      clusterName: parseName(cluster),
-      pagination: {
-        first: 100,
-        orderBy: 'updateTime',
-        sortDirection: 'DESC',
-      },
-    });
-  });
+  // const {
+  //   data: nodepoolData,
+  //   isLoading: nodepoolLoading,
+  //   error: nodepoolLoadingError,
+  // } = useCustomSwr('/nodepools', async () => {
+  //   return api.listNodePools({
+  //     clusterName: parseName(cluster),
+  //     pagination: {
+  //       first: 100,
+  //       orderBy: 'updateTime',
+  //       sortDirection: 'DESC',
+  //     },
+  //   });
+  // });
 
   const { values, errors, handleChange, isLoading, submit, resetValues } =
     useForm({
@@ -91,10 +85,10 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
       },
     });
 
-  const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
-    label: val.metadata?.name || '',
-    value: val.metadata?.name || '',
-  }));
+  // const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
+  //   label: val.metadata?.name || '',
+  //   value: val.metadata?.name || '',
+  // }));
 
   /** ---- Only for edit mode in settings ----* */
   useEffect(() => {
@@ -275,7 +269,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             }}
           />
 
-          {advancedOptions && (
+          {/* {advancedOptions && (
             <Select
               label="Nodepool Name"
               size="lg"
@@ -293,7 +287,7 @@ const AppCompute = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
               loading={nodepoolLoading}
               showclear
             />
-          )}
+          )} */}
         </div>
       </div>
       {mode === 'new' && (

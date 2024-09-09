@@ -25,7 +25,6 @@ import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
 import { SyncStatusV2 } from '~/console/components/sync-status';
-import { findClusterStatus } from '~/console/hooks/use-cluster-status';
 import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IApps } from '~/console/server/gql/queries/app-queries';
@@ -34,7 +33,7 @@ import {
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
-  parseName as pn
+  parseName as pn,
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/lib/client/helpers/reloader';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
@@ -239,8 +238,7 @@ const GridView = ({ items = [], onAction: _ }: IResource) => {
 };
 
 const ListView = ({ items = [], onAction }: IResource) => {
-  const { environment, account, cluster } =
-    useOutletContext<IEnvironmentContext>();
+  const { environment, account } = useOutletContext<IEnvironmentContext>();
   const { clusters } = useClusterStatusV2();
 
   // const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
@@ -307,9 +305,6 @@ const ListView = ({ items = [], onAction }: IResource) => {
         ],
         rows: items.map((i) => {
           // const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
-          const isClusterOnline = findClusterStatus(
-            clusters[parseName(cluster)]
-          );
 
           const { name, id, updateInfo } = parseItem(i);
           return {
@@ -337,9 +332,9 @@ const ListView = ({ items = [], onAction }: IResource) => {
                     return null;
                   }
 
-                  if (!isClusterOnline) {
-                    return <Badge type="warning">Cluster Offline</Badge>;
-                  }
+                  // if (!isClusterOnline) {
+                  //   return <Badge type="warning">Cluster Offline</Badge>;
+                  // }
 
                   return <SyncStatusV2 item={i} />;
                 },
