@@ -722,6 +722,7 @@ export const cliQueries = (executor: IExecutor) => ({
       mutation Infra_createBYOKCluster($cluster: BYOKClusterIn!) {
         infra_createBYOKCluster(cluster: $cluster) {
           id
+          clusterToken
           metadata {
             name
           }

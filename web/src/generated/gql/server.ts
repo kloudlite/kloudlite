@@ -62,6 +62,7 @@ export type ConsoleResType =
   | 'imported_managed_resource'
   | 'managed_resource'
   | 'managed_service'
+  | 'registry_image'
   | 'router'
   | 'secret'
   | 'vpn_device';
@@ -1754,6 +1755,23 @@ export type PortIn = {
   targetPort?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type RegistryImageCredentialsIn = {
+  accountName: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+};
+
+export type RegistryImageIn = {
+  accountName: Scalars['String']['input'];
+  imageName: Scalars['String']['input'];
+  imageTag: Scalars['String']['input'];
+  meta: Scalars['Map']['input'];
+};
+
+export type RegistryImageUrlIn = {
+  scriptUrl: Scalars['String']['input'];
+  url: Scalars['String']['input'];
+};
+
 export type SearchProjectManagedService = {
   isReady?: InputMaybe<MatchFilterIn>;
   managedServiceName?: InputMaybe<MatchFilterIn>;
@@ -1764,6 +1782,10 @@ export type SearchProjectManagedService = {
 export type SearchProjects = {
   isReady?: InputMaybe<MatchFilterIn>;
   markedForDeletion?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchRegistryImages = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -8041,7 +8063,11 @@ export type AuthCli_CreateClusterReferenceMutationVariables = Exact<{
 }>;
 
 export type AuthCli_CreateClusterReferenceMutation = {
-  infra_createBYOKCluster?: { id: string; metadata: { name: string } };
+  infra_createBYOKCluster?: {
+    id: string;
+    clusterToken: string;
+    metadata: { name: string };
+  };
 };
 
 export type AuthCli_DeleteClusterReferenceMutationVariables = Exact<{
