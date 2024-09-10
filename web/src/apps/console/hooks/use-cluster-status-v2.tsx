@@ -13,10 +13,10 @@ import {
 import { useSocketWatch } from '~/root/lib/client/helpers/socket/useWatch';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useConsoleApi } from '../server/gql/api-provider';
-import { IByocClusters } from '../server/gql/queries/byok-cluster-queries';
 import { ExtractNodeType, parseNodes } from '../server/r-utils/common';
+import { IClustersStatus } from '../server/gql/queries/cluster-queries';
 
-type IClusterMap = { [key: string]: ExtractNodeType<IByocClusters> };
+type IClusterMap = { [key: string]: ExtractNodeType<IClustersStatus> };
 
 const ClusterStatusContext = createContext<{
   clusters: IClusterMap;
@@ -36,16 +36,17 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
 
   const listCluster = useCallback(async () => {
     try {
-      const cl = await api.listAllClusters();
-      const parsed = parseNodes(cl.data).reduce(
-        (acc, c) => {
-          acc[c.metadata.name] = c;
-          return acc;
+      const { data } = await api.listClusterStatus({
+        pagination: {
+          first: 500,
         },
-        {} as { [key: string]: ExtractNodeType<IByocClusters> },
-      );
+      });
+      const parsed = parseNodes(data).reduce((acc, c) => {
+        acc[c.metadata.name] = c;
+        return acc;
+      }, {} as IClusterMap);
       setClusters(parsed);
-      return clusters;
+      return parsed;
     } catch (err) {
       console.error(err);
       return false;
@@ -56,8 +57,18 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
     const interval = setInterval(() => {
       listCluster();
     }, 30 * 1000);
+
+    const onlineEvent = () => {
+      setTimeout(() => {
+        listCluster();
+      }, 3000);
+    };
+
+    window.addEventListener('online', onlineEvent);
+
     return () => {
       clearInterval(interval);
+      window.removeEventListener('online', onlineEvent);
     };
   }, []);
 
@@ -72,10 +83,6 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
   useSocketWatch(() => {
     setUpdate((p) => !p);
   }, topic);
-
-  useEffect(() => {
-    console.log('helre', topic);
-  }, [topic]);
 
   return (
     <ClusterStatusContext.Provider

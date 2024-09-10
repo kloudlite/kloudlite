@@ -394,6 +394,19 @@ query consoleGetCluster($name: String!) {
   }
 }
 
+query consoleListClusterStatus($pagination: CursorPaginationIn) {
+  infra_listBYOKClusters(pagination: $pagination) {
+    edges {
+      node {
+        lastOnlineAt
+        metadata {
+          name
+        }
+      }
+    }
+  }
+}
+
 query consoleGetKubeConfig($name: String!) {
   infra_getCluster(name: $name) {
     adminKubeconfig {
