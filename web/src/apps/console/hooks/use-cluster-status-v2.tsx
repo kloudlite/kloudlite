@@ -38,7 +38,7 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
     try {
       const cl = await api.listClusterStatus({
         pagination: {
-          first: 5,
+          first: 500,
         },
       });
       const parsed = parseNodes(cl.data).reduce((acc, c) => {
