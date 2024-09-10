@@ -2192,6 +2192,16 @@ export type ConsoleGetClusterQuery = {
   };
 };
 
+export type ConsoleListClusterStatusQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListClusterStatusQuery = {
+  infra_listBYOKClusters?: {
+    edges: Array<{ node: { lastOnlineAt?: any; metadata: { name: string } } }>;
+  };
+};
+
 export type ConsoleGetKubeConfigQueryVariables = Exact<{
   name: Scalars['String']['input'];
 }>;
