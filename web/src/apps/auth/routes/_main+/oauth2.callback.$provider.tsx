@@ -73,11 +73,6 @@ const CallBack = () => {
             toast.success('Login Successfull');
             const callback = searchParams.get('callback');
             if (callback) {
-              // const {
-              //   data: { email, name },
-              // } = await api.whoAmI({});
-              // const encodedData = btoa(`email=${email}&name=${name}`);
-              // window.location.href = `${callback}?${encodedData}`;
               window.location.href = callback;
               return;
             }

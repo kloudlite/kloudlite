@@ -112,12 +112,22 @@ const Login = () => {
     useOutletContext<IProviderContext>();
   const [searchParams, _setSearchParams] = useSearchParams();
   const callback = searchParams.get('callback');
+
   const loginUrl = callback
     ? `/login?mode=email&callback=${callback}`
     : `/login?mode=email`;
+
   const githubLoginHref = callback
     ? `${githubLoginUrl}&callback=${callback}`
     : githubLoginUrl;
+
+  const gitlabLoginHref = callback
+    ? `${gitlabLoginUrl}&callback=${callback}`
+    : gitlabLoginUrl;
+
+  const googleLoginHref = callback
+    ? `${googleLoginUrl}&callback=${callback}`
+    : googleLoginUrl;
 
   return (
     <Container
@@ -164,7 +174,8 @@ const Login = () => {
                   <span className="bodyLg-medium">Continue with GitLab</span>
                 }
                 prefix={<GitlabLogoFill />}
-                to={gitlabLoginUrl}
+                // to={gitlabLoginUrl}
+                to={gitlabLoginHref}
                 disabled={!gitlabLoginUrl}
                 block
                 linkComponent={Link}
@@ -176,7 +187,8 @@ const Login = () => {
                   <span className="bodyLg-medium">Continue with Google</span>
                 }
                 prefix={<CustomGoogleIcon />}
-                to={googleLoginUrl}
+                // to={googleLoginUrl}
+                to={googleLoginHref}
                 disabled={!googleLoginUrl}
                 block
                 linkComponent={Link}

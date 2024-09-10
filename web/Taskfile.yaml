@@ -207,7 +207,8 @@ tasks:
     vars:
       Image: ghcr.io/kloudlite/web/events:{{.tag}}
     cmds:
-      - docker buildx build  . -t {{.Image}} -f Dockerfile.webinar
+      # - docker buildx build  . -t {{.Image}} -f Dockerfile.webinar
+      - docker build  -t {{.Image}} -f Dockerfile.webinar . 
 
   container-push-webinar:
     preconditions:
@@ -216,4 +217,5 @@ tasks:
     vars:
       Image: ghcr.io/kloudlite/web/events:{{.tag}}
     cmds:
-      - docker buildx build -t {{.Image}} --platform linux/amd64 -f Dockerfile.webinar --push .
+      # - docker buildx build -t {{.Image}} --platform linux/amd64 -f Dockerfile.webinar --push .
+      - docker buildx build . -t {{.Image}} --platform linux/amd64 -f Dockerfile.webinar --output=type=image,compression=zstd,force-compression=true,compression-level=12,push=true

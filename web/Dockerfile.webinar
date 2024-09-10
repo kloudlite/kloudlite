@@ -1,6 +1,15 @@
 FROM node:20.8.1-alpine as base
+RUN apk add g++ make py3-pip
 RUN npm i -g pnpm
 WORKDIR /app
+COPY ./package.json ./package.json
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
+
+COPY ./src/generated/package.json ./src/generated/package.json
+COPY ./src/generated/plugin/package.json ./src/generated/plugin/package.json
+
+RUN pnpm i
+
 
 # design system
 COPY ./src/design-system/ ./src/design-system/
