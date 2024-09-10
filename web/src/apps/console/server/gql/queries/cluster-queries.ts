@@ -26,7 +26,7 @@ import {
 export type ICluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
 export type IClusters = NN<ConsoleListClustersQuery['infra_listClusters']>;
 export type IClustersStatus = NN<
-  ConsoleListClusterStatusQuery['infra_listClusters']
+  ConsoleListClusterStatusQuery['infra_listBYOKClusters']
 >;
 
 export type IDnsHosts = NN<ConsoleListDnsHostsQuery>['infra_listClusters'];
