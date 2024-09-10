@@ -36,17 +36,17 @@ const ClusterStatusProvider = ({ children }: { children: ReactNode }) => {
 
   const listCluster = useCallback(async () => {
     try {
-      const cl = await api.listClusterStatus({
+      const { data } = await api.listClusterStatus({
         pagination: {
           first: 500,
         },
       });
-      const parsed = parseNodes(cl.data).reduce((acc, c) => {
+      const parsed = parseNodes(data).reduce((acc, c) => {
         acc[c.metadata.name] = c;
         return acc;
       }, {} as IClusterMap);
       setClusters(parsed);
-      return clusters;
+      return parsed;
     } catch (err) {
       console.error(err);
       return false;
