@@ -1,6 +1,6 @@
 ---
 global:
-  image: "test-image:t1.0.0"
+  image: "imageName1:imageTag1"
 ---
 
 label: List Registry Images
@@ -56,8 +56,8 @@ variables:
 
 label: Get Registry Image URL
 query: |+
-  query Core_getRegistryImageURL($image: String!, $meta: Map!) {
-    core_getRegistryImageURL(image: $image, meta: $meta) {
+  query Core_getRegistryImageURL {
+    core_getRegistryImageURL {
       url
       scriptUrl
     }

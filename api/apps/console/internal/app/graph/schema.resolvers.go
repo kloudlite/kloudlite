@@ -526,12 +526,12 @@ func (r *queryResolver) CoreResyncImagePullSecret(ctx context.Context, name stri
 }
 
 // CoreGetRegistryImageURL is the resolver for the core_getRegistryImageURL field.
-func (r *queryResolver) CoreGetRegistryImageURL(ctx context.Context, image string, meta map[string]interface{}) (*model.RegistryImageURL, error) {
+func (r *queryResolver) CoreGetRegistryImageURL(ctx context.Context) (*model.RegistryImageURL, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	imageURL, err := r.Domain.GetRegistryImageURL(cc, image, meta)
+	imageURL, err := r.Domain.GetRegistryImageURL(cc)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
