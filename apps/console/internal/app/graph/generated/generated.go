@@ -799,7 +799,7 @@ type ComplexityRoot struct {
 		CoreGetManagedResouceOutputKeys      func(childComplexity int, msvcName *string, envName *string, name string) int
 		CoreGetManagedResource               func(childComplexity int, msvcName *string, envName *string, name string) int
 		CoreGetRegistryImage                 func(childComplexity int, image string) int
-		CoreGetRegistryImageURL              func(childComplexity int, image string, meta map[string]interface{}) int
+		CoreGetRegistryImageURL              func(childComplexity int) int
 		CoreGetRouter                        func(childComplexity int, envName string, name string) int
 		CoreGetSecret                        func(childComplexity int, envName string, name string) int
 		CoreGetSecretValues                  func(childComplexity int, envName string, queries []*domain.SecretKeyRef) int
@@ -1100,7 +1100,7 @@ type QueryResolver interface {
 	CoreListImagePullSecrets(ctx context.Context, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error)
 	CoreGetImagePullSecret(ctx context.Context, name string) (*entities.ImagePullSecret, error)
 	CoreResyncImagePullSecret(ctx context.Context, name string) (bool, error)
-	CoreGetRegistryImageURL(ctx context.Context, image string, meta map[string]interface{}) (*model.RegistryImageURL, error)
+	CoreGetRegistryImageURL(ctx context.Context) (*model.RegistryImageURL, error)
 	CoreGetRegistryImage(ctx context.Context, image string) (*entities.RegistryImage, error)
 	CoreListRegistryImages(ctx context.Context, pq *repos.CursorPagination) (*model.RegistryImagePaginatedRecords, error)
 	CoreListApps(ctx context.Context, envName string, search *model.SearchApps, pq *repos.CursorPagination) (*model.AppPaginatedRecords, error)
@@ -4691,12 +4691,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_core_getRegistryImageURL_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.CoreGetRegistryImageURL(childComplexity, args["image"].(string), args["meta"].(map[string]interface{})), true
+		return e.complexity.Query.CoreGetRegistryImageURL(childComplexity), true
 
 	case "Query.core_getRouter":
 		if e.complexity.Query.CoreGetRouter == nil {
@@ -5882,7 +5877,7 @@ type Query {
 	core_getImagePullSecret(name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccount
 	core_resyncImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-	core_getRegistryImageURL(image: String!, meta: Map!): RegistryImageURL! @isLoggedInAndVerified @hasAccount
+	core_getRegistryImageURL: RegistryImageURL! @isLoggedInAndVerified @hasAccount
 	core_getRegistryImage(image: String!,): RegistryImage @isLoggedInAndVerified @hasAccount
 	core_listRegistryImages(pq: CursorPaginationIn): RegistryImagePaginatedRecords @isLoggedInAndVerified @hasAccount
 
@@ -8626,30 +8621,6 @@ func (ec *executionContext) field_Query_core_getManagedResource_args(ctx context
 		}
 	}
 	args["name"] = arg2
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_core_getRegistryImageURL_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["image"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["image"] = arg0
-	var arg1 map[string]interface{}
-	if tmp, ok := rawArgs["meta"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("meta"))
-		arg1, err = ec.unmarshalNMap2map(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["meta"] = arg1
 	return args, nil
 }
 
@@ -32591,7 +32562,7 @@ func (ec *executionContext) _Query_core_getRegistryImageURL(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetRegistryImageURL(rctx, fc.Args["image"].(string), fc.Args["meta"].(map[string]interface{}))
+			return ec.resolvers.Query().CoreGetRegistryImageURL(rctx)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -32633,7 +32604,7 @@ func (ec *executionContext) _Query_core_getRegistryImageURL(ctx context.Context,
 	return ec.marshalNRegistryImageURL2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐRegistryImageURL(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_core_getRegistryImageURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_core_getRegistryImageURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -32648,17 +32619,6 @@ func (ec *executionContext) fieldContext_Query_core_getRegistryImageURL(ctx cont
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RegistryImageURL", field.Name)
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_core_getRegistryImageURL_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -54773,12 +54733,12 @@ func (ec *executionContext) marshalNManagedResourceKeyValueRef2ᚖgithubᚗcom�
 	return ec._ManagedResourceKeyValueRef(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNMap2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) unmarshalNMap2map(ctx context.Context, v interface{}) (map[string]any, error) {
 	res, err := graphql.UnmarshalMap(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.SelectionSet, v map[string]interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.SelectionSet, v map[string]any) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

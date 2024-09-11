@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
@@ -46,19 +45,12 @@ func getImageNameTag(image string) (string, string) {
 	return parts[0], "latest"
 }
 
-func (d *domain) GetRegistryImageURL(ctx ConsoleContext, image string, meta map[string]any) (*entities.RegistryImageURL, error) {
+func (d *domain) GetRegistryImageURL(ctx ConsoleContext) (*entities.RegistryImageURL, error) {
 	encodedToken := encodeAccessToken(ctx.AccountName, d.envVars.WebhookTokenHashingSecret)
 
-	imageName, imageTag := getImageNameTag(image)
-
-	metaJSON, err := json.Marshal(meta)
-	if err != nil {
-		return nil, err
-	}
-
 	return &entities.RegistryImageURL{
-		URL:       fmt.Sprintf(`curl -X POST "%s" -H "Authorization: %s" -H "Content-Type: application/json" -d '{"image": "%s:%s", "meta": %s}'`, d.envVars.WebhookURL, encodedToken, imageName, imageTag, metaJSON),
-		ScriptURL: "",
+		URL:       fmt.Sprintf(`curl -X POST "%s" -H "Authorization: %s" -H "Content-Type: application/json" -d '{"image": "imageName:imageTag", "meta": {"repository": "github", "registry": "docker", "author":"kloudlite"}}'`, d.envVars.WebhookURL, encodedToken),
+		ScriptURL: fmt.Sprintf(`curl "%s" | authorization=%s image=imageName:imageTag meta="repository=github,registry=docker,author=kloudlite" sh`, d.envVars.WebhookURL, encodedToken),
 	}, nil
 }
 

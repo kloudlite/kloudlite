@@ -12,6 +12,7 @@ type Env struct {
 
 	CommsService      string `env:"COMMS_SERVICE" required:"true"`
 	DiscordWebhookUrl string `env:"DISCORD_WEBHOOK_URL" required:"false"`
+	WebhookURL        string `env:"WEBHOOK_URL" required:"true"`
 
 	WebhookTokenHashingSecret string `env:"WEBHOOK_TOKEN_HASHING_SECRET" required:"true"`
 }

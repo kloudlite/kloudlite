@@ -15,7 +15,9 @@ import (
 	types2 "github.com/kloudlite/api/pkg/messaging/types"
 	"github.com/pkg/errors"
 	"go.uber.org/fx"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -67,7 +69,7 @@ func LoadImageHook() fx.Option {
 
 			app := server.Raw()
 
-			app.Post("/image", func(ctx *fiber.Ctx) error {
+			app.Post("/image-metadata", func(ctx *fiber.Ctx) error {
 				logger := logr.WithName("image-hook")
 
 				headers := ctx.GetReqHeaders()
@@ -138,6 +140,22 @@ func LoadImageHook() fx.Option {
 				).Infof("queued webhook")
 				return ctx.Status(http.StatusAccepted).JSON(map[string]string{"status": "ok"})
 			})
+
+			app.Get("/image-metadata", func(c *fiber.Ctx) error {
+				f, err := os.Open("kl-image-script.sh")
+				if err != nil {
+					return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Error opening script: %s", err.Error()))
+				}
+				defer f.Close()
+				all, err := io.ReadAll(f)
+				if err != nil {
+					return c.Status(fiber.StatusInternalServerError).SendString(fmt.Sprintf("Error reading script: %s", err.Error()))
+				}
+				script := string(all)
+				script = strings.ReplaceAll(script, "$WEBHOOK_URL", envVars.WebhookURL)
+				return c.SendString(script)
+			})
+
 			return nil
 		})
 }
