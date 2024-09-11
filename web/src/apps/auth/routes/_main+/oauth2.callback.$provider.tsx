@@ -1,7 +1,8 @@
-import { useLoaderData, useNavigate, useSearchParams } from '@remix-run/react';
+import { useLoaderData, useNavigate } from '@remix-run/react';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { toast } from '~/components/molecule/toast';
+import { getCookie } from '~/root/lib/app-setup/cookies';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
@@ -11,10 +12,9 @@ export const decodeState = (str: string) =>
   Buffer.from(str, 'base64url').toString('utf8');
 
 const CallBack = () => {
-  const { query, state, provider, setupAction } = useLoaderData();
+  const { query, state, provider, setupAction, callbackUrl } = useLoaderData();
   const api = useAuthApi();
   const navigate = useNavigate();
-  const [searchParams, _setSearchParams] = useSearchParams();
 
   useDebounce(
     () => {
@@ -71,9 +71,9 @@ const CallBack = () => {
             navigate('/');
           } else {
             toast.success('Login Successfull');
-            const callback = searchParams.get('callback');
-            if (callback) {
-              window.location.href = callback;
+            if (callbackUrl) {
+              getCookie().remove('callback_url');
+              window.location.href = callbackUrl;
               return;
             }
             navigate('/');
@@ -98,6 +98,8 @@ const CallBack = () => {
 
 export const loader = async (ctx: IRemixCtx) => {
   const { provider } = ctx.params;
+  const callbackUrl = getCookie(ctx).get('callback_url');
+
   const queries = getQueries(ctx);
   const {
     state,
@@ -115,6 +117,7 @@ export const loader = async (ctx: IRemixCtx) => {
     query: queries,
     state: queryData?.state || state,
     provider,
+    callbackUrl,
   };
 };
 

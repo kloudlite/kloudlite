@@ -6113,6 +6113,15 @@ export type ConsoleGetRegistryImageQuery = {
   };
 };
 
+export type ConsoleGetRegistryImageUrlQueryVariables = Exact<{
+  image: Scalars['String']['input'];
+  meta: Scalars['Map']['input'];
+}>;
+
+export type ConsoleGetRegistryImageUrlQuery = {
+  core_getRegistryImageURL: { scriptUrl: string; url: string };
+};
+
 export type ConsoleListRegistryImagesQueryVariables = Exact<{
   pq?: InputMaybe<CursorPaginationIn>;
 }>;

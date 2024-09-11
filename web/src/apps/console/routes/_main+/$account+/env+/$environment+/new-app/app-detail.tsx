@@ -58,12 +58,22 @@ const ExtraButton = ({
   );
 };
 
-const AppSelectItem = ({ label, value }: { label: string; value: string }) => {
+const AppSelectItem = ({
+  label,
+  value,
+  registry,
+  repository,
+}: {
+  label: string;
+  value: string;
+  registry: string;
+  repository: string;
+}) => {
   return (
     <div>
       <div className="flex flex-col">
         <div>{label}</div>
-        <div className="bodySm text-text-soft">{value}</div>
+        <div className="bodySm text-text-soft">{`${registry}/${repository}`}</div>
       </div>
     </div>
   );
@@ -106,6 +116,8 @@ const AppDetail = () => {
           <AppSelectItem
             label={`${i.imageName}:${i.imageTag}`}
             value={`${i.imageName}:${i.imageTag}`}
+            registry={i.meta.registry}
+            repository={i.meta.repository}
           />
         ),
       }));
@@ -336,6 +348,7 @@ const AppDetail = () => {
             error={!!errors.imageUrl}
             message={errors.imageUrl}
             loading={imageLoaded}
+            createLabel="Select"
           />
 
           {/* {values.imageMode === 'default' && (

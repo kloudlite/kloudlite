@@ -6,6 +6,8 @@ import {
   ConsoleDeleteRegistryImageMutationVariables,
   ConsoleGetRegistryImageQuery,
   ConsoleGetRegistryImageQueryVariables,
+  ConsoleGetRegistryImageUrlQuery,
+  ConsoleGetRegistryImageUrlQueryVariables,
   ConsoleListRegistryImagesQuery,
   ConsoleListRegistryImagesQueryVariables,
 } from '~/root/src/generated/gql/server';
@@ -50,6 +52,21 @@ export const registryImagesQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleGetRegistryImageQuery) =>
         data.core_getRegistryImage,
       vars(_: ConsoleGetRegistryImageQueryVariables) { },
+    }
+  ),
+  getRegistryImageUrl: executor(
+    gql`
+      query Core_getRegistryImageURL($image: String!, $meta: Map!) {
+        core_getRegistryImageURL(image: $image, meta: $meta) {
+          scriptUrl
+          url
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleGetRegistryImageUrlQuery) =>
+        data.core_getRegistryImageURL,
+      vars(_: ConsoleGetRegistryImageUrlQueryVariables) { },
     }
   ),
   listRegistryImages: executor(

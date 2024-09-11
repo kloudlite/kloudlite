@@ -4482,6 +4482,13 @@ query consoleGetRegistryImage($image: String!) {
   }
 }
 
+query consoleGetRegistryImageUrl($image: String!, $meta: Map!) {
+  core_getRegistryImageURL(image: $image, meta: $meta) {
+    scriptUrl
+    url
+  }
+}
+
 query consoleListRegistryImages($pq: CursorPaginationIn) {
   core_listRegistryImages(pq: $pq) {
     edges {

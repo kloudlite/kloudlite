@@ -82,15 +82,15 @@ const ListView = ({ items, onAction }: IResource) => {
             render: () => (
               <div className="flex flex-row">
                 <span className="w-[48px]" />
-                Image Name
+                Image Details
               </div>
             ),
             name: 'name',
             className: listClass.title,
           },
           {
-            render: () => 'Image Tag',
-            name: 'tag',
+            render: () => 'Registry',
+            name: 'registry',
             className: `${listClass.item} flex-1`,
           },
           // {
@@ -128,8 +128,8 @@ const ListView = ({ items, onAction }: IResource) => {
                   />
                 ),
               },
-              tag: {
-                render: () => <ListItemV2 data={i.imageTag} />,
+              registry: {
+                render: () => <ListItemV2 data={i.meta.registry} />,
               },
               repository: {
                 render: () => <ListItemV2 data={i.meta.repository} />,

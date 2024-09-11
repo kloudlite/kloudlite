@@ -6,12 +6,14 @@ import {
   GoogleLogo,
 } from '@jengaicons/react';
 import { Link, useOutletContext, useSearchParams } from '@remix-run/react';
+import { useEffect } from 'react';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
 import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
 import { ArrowLeft, ArrowRight } from '~/components/icons';
 import { toast } from '~/components/molecule/toast';
 import { cn } from '~/components/utils';
+import { getCookie } from '~/root/lib/app-setup/cookies';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -117,17 +119,13 @@ const Login = () => {
     ? `/login?mode=email&callback=${callback}`
     : `/login?mode=email`;
 
-  const githubLoginHref = callback
-    ? `${githubLoginUrl}&callback=${callback}`
-    : githubLoginUrl;
-
-  const gitlabLoginHref = callback
-    ? `${gitlabLoginUrl}&callback=${callback}`
-    : gitlabLoginUrl;
-
-  const googleLoginHref = callback
-    ? `${googleLoginUrl}&callback=${callback}`
-    : googleLoginUrl;
+  useEffect(() => {
+    if (callback) {
+      getCookie().set('callback_url', callback, {
+        expires: new Date(Date.now() + 1000 * 60),
+      });
+    }
+  }, [callback]);
 
   return (
     <Container
@@ -161,8 +159,7 @@ const Login = () => {
                   <span className="bodyLg-medium">Continue with GitHub</span>
                 }
                 prefix={<GithubLogoFill />}
-                // to={githubLoginUrl}
-                to={githubLoginHref}
+                to={githubLoginUrl}
                 disabled={!githubLoginUrl}
                 block
                 linkComponent={Link}
@@ -174,8 +171,7 @@ const Login = () => {
                   <span className="bodyLg-medium">Continue with GitLab</span>
                 }
                 prefix={<GitlabLogoFill />}
-                // to={gitlabLoginUrl}
-                to={gitlabLoginHref}
+                to={gitlabLoginUrl}
                 disabled={!gitlabLoginUrl}
                 block
                 linkComponent={Link}
@@ -187,8 +183,7 @@ const Login = () => {
                   <span className="bodyLg-medium">Continue with Google</span>
                 }
                 prefix={<CustomGoogleIcon />}
-                // to={googleLoginUrl}
-                to={googleLoginHref}
+                to={googleLoginUrl}
                 disabled={!googleLoginUrl}
                 block
                 linkComponent={Link}
