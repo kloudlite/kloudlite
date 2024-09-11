@@ -168,7 +168,7 @@ type Domain interface {
 
 	ResyncEnvironment(ctx ConsoleContext, name string) error
 
-	GetRegistryImageURL(ctx ConsoleContext, image string, meta map[string]any) (*entities.RegistryImageURL, error)
+	GetRegistryImageURL(ctx ConsoleContext) (*entities.RegistryImageURL, error)
 	GetRegistryImage(ctx ConsoleContext, image string) (*entities.RegistryImage, error)
 	DeleteRegistryImage(ctx ConsoleContext, image string) error
 	CreateRegistryImage(ctx context.Context, accountName string, image string, meta map[string]any) (*entities.RegistryImage, error)

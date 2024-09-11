@@ -116,7 +116,7 @@ type Query {
 	core_getImagePullSecret(name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccount
 	core_resyncImagePullSecret(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-	core_getRegistryImageURL(image: String!, meta: Map!): RegistryImageURL! @isLoggedInAndVerified @hasAccount
+	core_getRegistryImageURL: RegistryImageURL! @isLoggedInAndVerified @hasAccount
 	core_getRegistryImage(image: String!,): RegistryImage @isLoggedInAndVerified @hasAccount
 	core_listRegistryImages(pq: CursorPaginationIn): RegistryImagePaginatedRecords @isLoggedInAndVerified @hasAccount
 

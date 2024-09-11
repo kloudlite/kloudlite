@@ -207,6 +207,12 @@ const (
 	RegistryImageMeta      = "meta"
 )
 
+// constant vars generated for struct RegistryImageURL
+const (
+	RegistryImageURLScriptUrl = "scriptUrl"
+	RegistryImageURLUrl       = "url"
+)
+
 // constant vars generated for struct ResourceMapping
 const (
 	ResourceMappingBaseEntity                  = "BaseEntity"
