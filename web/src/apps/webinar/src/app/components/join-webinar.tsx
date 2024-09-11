@@ -1,17 +1,17 @@
 'use client';
 import { ArrowRightLg } from '@jengaicons/react';
+//@ts-ignore
 import { Button } from 'kl-design-system/atoms/button';
-import { useSearchParams } from 'next/navigation';
 
+type UesrData = {
+    id: string,
+    email: string,
+    verified: boolean,
+    name: string,
+    approved: boolean,
+}
 
-export const JoinWebinar = () => {
-
-    const params = useSearchParams();
-    const userData = params.get('userData');
-    const decodedUserData = atob(userData || '');
-    const searchParams = new URLSearchParams(decodedUserData);
-    const name = searchParams.get('name');
-    const email = searchParams.get('email');
+export const JoinWebinar = ({ userData, meetingStatus }: { userData: UesrData, meetingStatus: string }) => {
 
     return (
         <div
@@ -21,9 +21,10 @@ export const JoinWebinar = () => {
                 variant="primary"
                 content={<span className="bodyLg-medium">Join</span>}
                 suffix={<ArrowRightLg />}
+                disabled={meetingStatus !== 'ACTIVE'}
                 block
                 onClick={() => {
-                    window.location.href = `/pages/meeting?email=${email}&name=${name}&meetingId=${process.env.NEXT_PUBLIC_DYTE_MEETING_ID}`
+                    window.location.href = `/pages/meeting?email=${userData.email}&name=${userData.name}&meetingId=${process.env.NEXT_PUBLIC_DYTE_MEETING_ID}`
                 }}
             />
         </div>

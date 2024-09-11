@@ -6087,6 +6087,71 @@ export type ConsoleListImportedManagedResourcesQuery = {
   };
 };
 
+export type ConsoleDeleteRegistryImageMutationVariables = Exact<{
+  image: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteRegistryImageMutation = {
+  core_deleteRegistryImage: boolean;
+};
+
+export type ConsoleGetRegistryImageQueryVariables = Exact<{
+  image: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetRegistryImageQuery = {
+  core_getRegistryImage?: {
+    accountName: string;
+    creationTime: any;
+    id: string;
+    imageName: string;
+    imageTag: string;
+    markedForDeletion?: boolean;
+    meta: any;
+    recordVersion: number;
+    updateTime: any;
+  };
+};
+
+export type ConsoleGetRegistryImageUrlQueryVariables = Exact<{
+  image: Scalars['String']['input'];
+  meta: Scalars['Map']['input'];
+}>;
+
+export type ConsoleGetRegistryImageUrlQuery = {
+  core_getRegistryImageURL: { scriptUrl: string; url: string };
+};
+
+export type ConsoleListRegistryImagesQueryVariables = Exact<{
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListRegistryImagesQuery = {
+  core_listRegistryImages?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        creationTime: any;
+        id: string;
+        imageName: string;
+        imageTag: string;
+        markedForDeletion?: boolean;
+        meta: any;
+        recordVersion: number;
+        updateTime: any;
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPrevPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
 export type IotconsoleAccountCheckNameAvailabilityQueryVariables = Exact<{
   name: Scalars['String']['input'];
 }>;

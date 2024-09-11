@@ -1,5 +1,5 @@
-import { useOutletContext, useParams } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useParams } from '@remix-run/react';
+import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
@@ -16,14 +16,12 @@ import { LockSimple, Trash } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
 import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { findClusterStatus } from '~/console/hooks/use-cluster-status';
 import { useClusterStatusV2 } from '~/console/hooks/use-cluster-status-v2';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IImportedManagedResources } from '~/console/server/gql/queries/imported-managed-resource-queries';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import {
   ExtractNodeType,
-  parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
@@ -31,7 +29,6 @@ import { getManagedTemplateLogo } from '~/console/utils/commons';
 import { useReload } from '~/lib/client/helpers/reloader';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { handleError } from '~/lib/utils/common';
-import { IEnvironmentContext } from '../_layout';
 import { ViewSecret } from './handle-managed-resource-v2';
 
 const RESOURCE_NAME = 'managed resource';
@@ -134,19 +131,19 @@ const GridView = ({ items = [], onAction, templates }: IResource) => {
 };
 
 const ListView = ({ items = [], onAction, templates }: IResource) => {
-  const { cluster } = useOutletContext<IEnvironmentContext>();
+  // const { cluster } = useOutletContext<IEnvironmentContext>();
   const { clusters } = useClusterStatusV2();
 
-  const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
-    Record<string, boolean>
-  >({});
-  useEffect(() => {
-    const states: Record<string, boolean> = {};
-    Object.entries(clusters).forEach(([key, value]) => {
-      states[key] = findClusterStatus(value);
-    });
-    setClusterOnlineStatus(states);
-  }, [clusters]);
+  // const [clusterOnlineStatus, setClusterOnlineStatus] = useState<
+  //   Record<string, boolean>
+  // >({});
+  // useEffect(() => {
+  //   const states: Record<string, boolean> = {};
+  //   Object.entries(clusters).forEach(([key, value]) => {
+  //     states[key] = findClusterStatus(value);
+  //   });
+  //   setClusterOnlineStatus(states);
+  // }, [clusters]);
 
   return (
     <ListV2.Root
@@ -195,7 +192,7 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
         ],
         rows: items.map((i) => {
           const { name, id, logo, updateInfo } = parseItem(i, templates);
-          const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
+          // const isClusterOnline = clusterOnlineStatus[parseName(cluster)];
 
           return {
             columns: {
@@ -230,9 +227,9 @@ const ListView = ({ items = [], onAction, templates }: IResource) => {
               },
               status: {
                 render: () => {
-                  if (!isClusterOnline) {
-                    return <Badge type="warning">Cluster Offline</Badge>;
-                  }
+                  // if (!isClusterOnline) {
+                  //   return <Badge type="warning">Cluster Offline</Badge>;
+                  // }
 
                   if (i.syncStatus?.state === 'UPDATED_AT_AGENT') {
                     return <Badge type="info">Ready</Badge>;

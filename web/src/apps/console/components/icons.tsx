@@ -137,4 +137,5 @@ export {
   StackSimple,
   Play,
   Pause,
+  Dockerlogo,
 } from '@jengaicons/react';

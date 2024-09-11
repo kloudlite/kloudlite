@@ -1,6 +1,8 @@
-import { Plus, StackSimple } from '~/console/components/icons';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
+import { useState } from 'react';
+import { Button } from '~/components/atoms/button';
+import { Plus, StackSimple } from '~/console/components/icons';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -11,11 +13,10 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/lib/types/common';
-import { useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import Tools from './tools';
+import fake from '~/root/fake-data-generator/fake';
 import HandleImagePullSecret from './handle-image-pull-secret';
 import ImagePullSecretsResourcesV2 from './image-pull-secrets-resource-v2';
+import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -44,7 +45,13 @@ const Routers = () => {
 
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp
+        data={promise}
+        skeletonData={{
+          imagePullSecretsData: fake.ConsoleListImagePullSecretsQuery
+            .core_listImagePullSecrets as any,
+        }}
+      >
         {({ imagePullSecretsData }) => {
           const imagePullSecrets = parseNodes(imagePullSecretsData);
           if (!imagePullSecrets) {

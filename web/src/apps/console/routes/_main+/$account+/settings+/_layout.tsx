@@ -16,11 +16,12 @@ const Settings = () => {
         { label: 'User management', value: 'user-management' },
         // { label: 'Cloud providers', value: 'cloud-providers' },
         { label: 'Image pull secrets', value: 'image-pull-secrets' },
+        { label: 'Image Discovery', value: 'images' },
         // { label: 'VPN', value: 'vpn' },
       ]}
       parentPath="/settings"
-      // headerTitle="Settings"
-      // headerActions={subNavAction.data}
+    // headerTitle="Settings"
+    // headerActions={subNavAction.data}
     >
       <Outlet context={rootContext} />
     </SidebarLayout>

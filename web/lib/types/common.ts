@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 
 export type NonNullableString = string & NonNullable<undefined>;
 
-export type MapType<T = string | number | boolean> = {
+export type MapType<T = string | number | Date | boolean> = {
   [key: string]: T | MapType<T>;
 };
 

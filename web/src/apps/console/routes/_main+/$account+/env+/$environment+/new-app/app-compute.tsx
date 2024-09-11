@@ -1,22 +1,17 @@
-import { useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { NumberInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Slider from '~/components/atoms/slider';
-import { useMapper } from '~/components/utils';
 import { BottomNavigation } from '~/console/components/commons';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn, parseValue } from '~/console/page-components/util';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
-import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useLog } from '~/lib/client/hooks/use-log';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { IEnvironmentContext } from '../_layout';
 import appInitialFormValues, { mapFormValuesToApp } from './app-utils';
 import { plans } from './datas';
 
@@ -45,23 +40,23 @@ const AppCompute = () => {
   const { app, setApp, setPage, markPageAsCompleted, getContainer } =
     useAppState();
   const api = useConsoleApi();
-  const { cluster } = useOutletContext<IEnvironmentContext>();
+  // const { cluster } = useOutletContext<IEnvironmentContext>();
   const [advancedOptions, setAdvancedOptions] = useState(false);
 
-  const {
-    data: nodepoolData,
-    isLoading: nodepoolLoading,
-    error: nodepoolLoadingError,
-  } = useCustomSwr('/nodepools', async () => {
-    return api.listNodePools({
-      clusterName: parseName(cluster),
-      pagination: {
-        first: 100,
-        orderBy: 'updateTime',
-        sortDirection: 'DESC',
-      },
-    });
-  });
+  // const {
+  //   data: nodepoolData,
+  //   isLoading: nodepoolLoading,
+  //   error: nodepoolLoadingError,
+  // } = useCustomSwr('/nodepools', async () => {
+  //   return api.listNodePools({
+  //     clusterName: parseName(cluster),
+  //     pagination: {
+  //       first: 100,
+  //       orderBy: 'updateTime',
+  //       sortDirection: 'DESC',
+  //     },
+  //   });
+  // });
 
   const { values, errors, handleChange, isLoading, submit } = useForm({
     initialValues: appInitialFormValues({
@@ -83,10 +78,10 @@ const AppCompute = () => {
     },
   });
 
-  const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
-    label: val.metadata?.name || '',
-    value: val.metadata?.name || '',
-  }));
+  // const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
+  //   label: val.metadata?.name || '',
+  //   value: val.metadata?.name || '',
+  // }));
 
   useLog(values.selectionMode);
 
@@ -253,7 +248,7 @@ const AppCompute = () => {
             }}
           />
 
-          {advancedOptions && (
+          {/* {advancedOptions && (
             <Select
               label="Nodepool Name"
               size="lg"
@@ -271,7 +266,7 @@ const AppCompute = () => {
               loading={nodepoolLoading}
               showclear
             />
-          )}
+          )} */}
 
           {advancedOptions && (
             <Checkbox

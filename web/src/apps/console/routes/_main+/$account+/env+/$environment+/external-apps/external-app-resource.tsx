@@ -1,33 +1,33 @@
-import { GearSix, LinkBreak, Repeat } from '~/console/components/icons';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
+import { useState } from 'react';
+import { Badge } from '~/components/atoms/badge';
+import Tooltip from '~/components/atoms/tooltip';
+import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
+import { CopyContentToClipboard } from '~/console/components/common-console-components';
 import {
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
+import { GearSix, LinkBreak, Repeat } from '~/console/components/icons';
 import ListGridView from '~/console/components/list-grid-view';
+import ListV2 from '~/console/components/listV2';
 import ResourceExtraAction, {
   IResourceExtraItem,
 } from '~/console/components/resource-extra-action';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   ExtractNodeType,
   parseName,
-  parseName as pn,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
+  parseName as pn,
 } from '~/console/server/r-utils/common';
-import { handleError } from '~/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/lib/client/helpers/reloader';
-import { SyncStatusV2 } from '~/console/components/sync-status';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import ListV2 from '~/console/components/listV2';
-import { useState } from 'react';
-import { Badge } from '~/components/atoms/badge';
-import { CopyContentToClipboard } from '~/console/components/common-console-components';
-import Tooltip from '~/components/atoms/tooltip';
+import { handleError } from '~/lib/utils/common';
 import { NN } from '~/root/lib/types/common';
 // import HandleIntercept from './handle-intercept';
 import { IExternalApps } from '~/console/server/gql/queries/external-app-queries';
@@ -236,8 +236,11 @@ const GridView = ({ items = [], onAction: _ }: IResource) => {
 };
 
 const ListView = ({ items = [], onAction }: IResource) => {
-  const { environment, cluster, account } =
-    useOutletContext<IEnvironmentContext>();
+  const {
+    environment,
+    // cluster,
+    account,
+  } = useOutletContext<IEnvironmentContext>();
   return (
     <ListV2.Root
       linkComponent={Link}
@@ -302,21 +305,20 @@ const ListView = ({ items = [], onAction }: IResource) => {
                     </div>
                   ) : null,
               },
-              service: {
-                render: () => (
-                  <AppServiceView
-                    service={
-                      environment?.spec?.targetNamespace
-                        ? `${parseName(i)}.${
-                            environment?.spec?.targetNamespace
-                          }.svc.${parseName(cluster)}.local`
-                        : `${parseName(i)}.${parseName(
-                            environment
-                          )}.svc.${parseName(cluster)}.local`
-                    }
-                  />
-                ),
-              },
+              // service: {
+              //   render: () => (
+              //     <AppServiceView
+              //       service={
+              //         environment?.spec?.targetNamespace
+              //           ? `${parseName(i)}.${environment?.spec?.targetNamespace
+              //           }.svc.${parseName(cluster)}.local`
+              //           : `${parseName(i)}.${parseName(
+              //             environment
+              //           )}.svc.${parseName(cluster)}.local`
+              //       }
+              //     />
+              //   ),
+              // },
               status: {
                 render: () => (
                   <div className="inline-block">

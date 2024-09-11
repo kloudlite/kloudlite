@@ -6,12 +6,14 @@ import {
   GoogleLogo,
 } from '@jengaicons/react';
 import { Link, useOutletContext, useSearchParams } from '@remix-run/react';
+import { useEffect } from 'react';
 import { useAuthApi } from '~/auth/server/gql/api-provider';
 import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
 import { ArrowLeft, ArrowRight } from '~/components/icons';
 import { toast } from '~/components/molecule/toast';
 import { cn } from '~/components/utils';
+import { getCookie } from '~/root/lib/app-setup/cookies';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -50,11 +52,7 @@ const LoginWithEmail = () => {
 
         const callback = searchParams.get('callback');
         if (callback) {
-          const {
-            data: { email, name },
-          } = await api.whoAmI({});
-          const encodedData = btoa(`email=${email}&name=${name}`);
-          window.location.href = `${callback}?userData=${encodedData}`;
+          window.location.href = callback;
           return;
         }
         reloadPage();
@@ -115,6 +113,19 @@ const Login = () => {
   const { githubLoginUrl, gitlabLoginUrl, googleLoginUrl } =
     useOutletContext<IProviderContext>();
   const [searchParams, _setSearchParams] = useSearchParams();
+  const callback = searchParams.get('callback');
+
+  const loginUrl = callback
+    ? `/login?mode=email&callback=${callback}`
+    : `/login?mode=email`;
+
+  useEffect(() => {
+    if (callback) {
+      getCookie().set('callback_url', callback, {
+        expires: new Date(Date.now() + 1000 * 60),
+      });
+    }
+  }, [callback]);
 
   return (
     <Container
@@ -198,7 +209,8 @@ const Login = () => {
             variant="outline"
             content={<span className="bodyLg-medium">Continue with email</span>}
             prefix={<Envelope />}
-            to="/login/?mode=email"
+            // to="/login/?mode=email"
+            to={loginUrl}
             block
             linkComponent={Link}
           />

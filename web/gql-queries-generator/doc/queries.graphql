@@ -4464,6 +4464,57 @@ query consoleListImportedManagedResources($envName: String!, $search: SearchImpo
   }
 }
 
+mutation consoleDeleteRegistryImage($image: String!) {
+  core_deleteRegistryImage(image: $image)
+}
+
+query consoleGetRegistryImage($image: String!) {
+  core_getRegistryImage(image: $image) {
+    accountName
+    creationTime
+    id
+    imageName
+    imageTag
+    markedForDeletion
+    meta
+    recordVersion
+    updateTime
+  }
+}
+
+query consoleGetRegistryImageUrl($image: String!, $meta: Map!) {
+  core_getRegistryImageURL(image: $image, meta: $meta) {
+    scriptUrl
+    url
+  }
+}
+
+query consoleListRegistryImages($pq: CursorPaginationIn) {
+  core_listRegistryImages(pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        creationTime
+        id
+        imageName
+        imageTag
+        markedForDeletion
+        meta
+        recordVersion
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPrevPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
 query iotconsoleAccountCheckNameAvailability($name: String!) {
   accounts_checkNameAvailability(name: $name) {
     result

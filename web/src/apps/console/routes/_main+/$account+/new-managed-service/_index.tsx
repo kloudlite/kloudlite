@@ -75,8 +75,7 @@ const RenderField = ({
         onChange={({ target }) => {
           onChange(`res.${field.name}`)(
             dummyEvent(
-              `${parseFloat(target.value) * (field.multiplier || 1)}${
-                field.unit
+              `${parseFloat(target.value) * (field.multiplier || 1)}${field.unit
               }`
             )
           );
@@ -102,9 +101,8 @@ const RenderField = ({
   if (field.inputType === 'Resource') {
     return (
       <div className="flex flex-col gap-md">
-        <div className="bodyMd-medium text-text-default">{`${field.label}${
-          field.required ? ' *' : ''
-        }`}</div>
+        <div className="bodyMd-medium text-text-default">{`${field.label}${field.required ? ' *' : ''
+          }`}</div>
         <div className="flex flex-row gap-xl items-center">
           <div className="flex flex-row gap-xl items-end flex-1 ">
             <div className="flex-1">
@@ -117,16 +115,14 @@ const RenderField = ({
                 onChange={({ target }) => {
                   onChange(`res.${field.name}.min`)(
                     dummyEvent(
-                      `${parseFloat(target.value) * (field.multiplier || 1)}${
-                        field.unit
+                      `${parseFloat(target.value) * (field.multiplier || 1)}${field.unit
                       }`
                     )
                   );
                   if (qos) {
                     onChange(`res.${field.name}.max`)(
                       dummyEvent(
-                        `${parseFloat(target.value) * (field.multiplier || 1)}${
-                          field.unit
+                        `${parseFloat(target.value) * (field.multiplier || 1)}${field.unit
                         }`
                       )
                     );
@@ -146,8 +142,7 @@ const RenderField = ({
                   onChange={({ target }) => {
                     onChange(`res.${field.name}.max`)(
                       dummyEvent(
-                        `${parseFloat(target.value) * (field.multiplier || 1)}${
-                          field.unit
+                        `${parseFloat(target.value) * (field.multiplier || 1)}${field.unit
                         }`
                       )
                     );
@@ -321,7 +316,7 @@ const FieldView = ({
         showclear
         error={!!errors.clusterName}
         message={errors.clusterName}
-        // loading={cIsLoading || byokCIsLoading}
+      // loading={cIsLoading || byokCIsLoading}
       />
 
       {/* <Select

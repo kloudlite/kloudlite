@@ -2,10 +2,10 @@
 import { DyteProvider, useDyteClient } from '@dytesdk/react-web-core';
 import axios from 'axios';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { MyMeetingUI } from '../../orgs/my-meeting-ui';
 
-export default function App() {
+const Meeting = () => {
     const [meeting, initMeeting] = useDyteClient();
     const [authToken, setAuthToken] = useState('');
 
@@ -65,5 +65,14 @@ export default function App() {
         <DyteProvider value={meeting}>
             <MyMeetingUI />
         </DyteProvider>
+    );
+}
+
+export default function App() {
+
+    return (
+        <Suspense>
+            <Meeting />
+        </Suspense>
     );
 }
