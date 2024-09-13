@@ -20,12 +20,16 @@ import (
 
 func (d *domain) applyNodePool(ctx InfraContext, np *entities.NodePool) error {
 	addTrackingId(&np.NodePool, np.Id)
-	return d.resDispatcher.ApplyToTargetCluster(ctx, np.ClusterName, &np.NodePool, np.RecordVersion)
+	return d.resDispatcher.ApplyToTargetCluster(ctx, np.DispatchAddr, &np.NodePool, np.RecordVersion)
 }
 
 func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool entities.NodePool) (*entities.NodePool, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateNodepool); err != nil {
 		return nil, errors.NewE(err)
+	}
+
+	if nodepool.DispatchAddr == nil {
+		nodepool.DispatchAddr = &entities.DispatchAddr{AccountName: ctx.AccountName, ClusterName: clusterName}
 	}
 
 	nodepool.IncrementRecordVersion()
@@ -98,7 +102,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 			// INFO: because kube-system is omnipresent on k8s
 			k8sSecret.Namespace = "kube-system"
 
-			if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, k8sSecret, nodepool.RecordVersion); err != nil {
+			if err := d.resDispatcher.ApplyToTargetCluster(ctx, nodepool.DispatchAddr, k8sSecret, nodepool.RecordVersion); err != nil {
 				return nil, errors.NewE(err)
 			}
 
@@ -222,7 +226,7 @@ func (d *domain) DeleteNodePool(ctx InfraContext, clusterName string, poolName s
 	}
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeNodePool, unp.Name, PublishUpdate)
-	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &unp.NodePool)
+	return d.resDispatcher.DeleteFromTargetCluster(ctx, unp.DispatchAddr, &unp.NodePool)
 }
 
 func (d *domain) GetNodePool(ctx InfraContext, clusterName string, poolName string) (*entities.NodePool, error) {
@@ -276,7 +280,7 @@ func (d *domain) ResyncNodePool(ctx InfraContext, clusterName string, poolName s
 		return errors.NewE(err)
 	}
 
-	return d.resyncToTargetCluster(ctx, np.SyncStatus.Action, clusterName, &np.NodePool, np.RecordVersion)
+	return d.resyncToTargetCluster(ctx, np.SyncStatus.Action, np.DispatchAddr, &np.NodePool, np.RecordVersion)
 }
 
 // on message events
@@ -308,7 +312,7 @@ func (d *domain) OnNodePoolUpdateMessage(ctx InfraContext, clusterName string, n
 	}
 
 	if _, err := d.matchRecordVersion(nodePool.Annotations, xnp.RecordVersion); err != nil {
-		return d.resyncToTargetCluster(ctx, xnp.SyncStatus.Action, clusterName, &xnp.NodePool, xnp.RecordVersion)
+		return d.resyncToTargetCluster(ctx, xnp.SyncStatus.Action, xnp.DispatchAddr, &xnp.NodePool, xnp.RecordVersion)
 	}
 
 	recordVersion, err := d.matchRecordVersion(nodePool.Annotations, xnp.RecordVersion)

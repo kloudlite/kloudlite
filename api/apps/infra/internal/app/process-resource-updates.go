@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/domain"
@@ -88,8 +89,6 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 			return nil
 		}
 
-		dctx := domain.InfraContext{Context: context.TODO(), UserId: "sys-user-process-infra-updates", AccountName: ru.AccountName}
-
 		obj := su.Object
 		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
 
@@ -108,6 +107,13 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 		if len(strings.TrimSpace(ru.ClusterName)) == 0 {
 			mlogger.Warn("message does not contain 'clusterName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
+		}
+
+		dctx := domain.InfraContext{Context: context.TODO(), UserId: "sys-user-process-infra-updates", AccountName: ru.AccountName}
+
+		if strings.HasPrefix(ru.AccountName, "kl-") {
+			// FIXME: this is a kloudlite account, so we should handle it differently, as it is definitely not a tenant account
+			dctx.AccountName = obj.GetLabels()[constants.AccountNameKey]
 		}
 
 		mlogger.Debug("validated message")
@@ -162,7 +168,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				if resStatus == types.ResourceStatusDeleted {
 					return d.OnGlobalVPNConnectionDeleteMessage(dctx, ru.ClusterName, gvpn)
 				}
-				return d.OnGlobalVPNConnectionUpdateMessage(dctx, ru.ClusterName, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnGlobalVPNConnectionUpdateMessage(dctx, entities.DispatchAddr{AccountName: ru.AccountName, ClusterName: ru.ClusterName}, gvpn, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		case nodepoolGVK.String():

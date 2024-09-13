@@ -87,7 +87,7 @@ func (d *domain) claimNextFreeDeviceIP(ctx InfraContext, deviceName string, gvpn
 			ipAddrFilter.MatchType = repos.MatchTypeNotInArray
 			ipAddrFilter.NotInArray = append(ipAddrFilter.NotInArray, ipAddr)
 
-			d.logger.Warnf("ip addr already claimed (err: %s), retrying again", err.Error())
+			d.logger.Warn("ip addr already claimed, will retry again, got", "err", err)
 			<-time.After(50 * time.Millisecond)
 			continue
 		}

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"log/slog"
 	"os"
 	"time"
 
@@ -25,6 +24,9 @@ import (
 )
 
 func main() {
+	start := time.Now()
+	common.PrintBuildInfo()
+
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 
@@ -33,25 +35,20 @@ func main() {
 
 	flag.Parse()
 
-	logger, err := logging.New(&logging.Options{Name: "infra", Dev: isDev})
-	if err != nil {
-		panic(err)
+	if isDev {
+		debug = true
 	}
+
+	logger := logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug, SetAsDefaultLogger: true})
 
 	app := fx.New(
 		fx.NopLogger,
 
-		fx.Provide(func() logging.Logger {
-			return logger
+		fx.Provide(func() (logging.Logger, error) {
+			return logging.New(&logging.Options{Name: "infra", Dev: isDev})
 		}),
 
-		fx.Provide(func() *slog.Logger {
-			return logging.NewSlogLogger(logging.SlogOptions{
-				ShowCaller:         true,
-				ShowDebugLogs:      debug,
-				SetAsDefaultLogger: true,
-			})
-		}),
+		fx.Supply(logger),
 
 		fx.Provide(func() (*env.Env, error) {
 			e, err := env.LoadEnv()
@@ -93,10 +90,10 @@ func main() {
 	defer cancel()
 
 	if err := app.Start(ctx); err != nil {
-		logger.Errorf(err, "failed to start app")
+		logger.Error("failed to start infra api, got", "err", err)
 		os.Exit(1)
 	}
 
-	common.PrintReadyBanner()
+	common.PrintReadyBanner2(time.Since(start))
 	<-app.Done()
 }
