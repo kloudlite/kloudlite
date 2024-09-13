@@ -10,7 +10,7 @@ const (
 
 type AgentMessage struct {
 	AccountName string `json:"accountName"`
-	ClusterName string `json:"clusterName"`
+	// ClusterName string `json:"clusterName"`
 
 	Action Action         `json:"action"`
 	Object map[string]any `json:"object"`
@@ -18,7 +18,7 @@ type AgentMessage struct {
 
 type AgentErrMessage struct {
 	AccountName string `json:"accountName"`
-	ClusterName string `json:"clusterName"`
+	// ClusterName string `json:"clusterName"`
 
 	Error  string         `json:"error"`
 	Action Action         `json:"action"`

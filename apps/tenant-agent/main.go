@@ -57,7 +57,6 @@ const (
 func (g *grpcHandler) handleErrorOnApply(ctx context.Context, err error, msg t.AgentMessage) error {
 	b, err := json.Marshal(t.AgentErrMessage{
 		AccountName: msg.AccountName,
-		ClusterName: msg.ClusterName,
 		Error:       err.Error(),
 		Action:      msg.Action,
 		Object:      msg.Object,
@@ -80,7 +79,7 @@ func NewAuthorizedGrpcContext(ctx context.Context, accessToken string) context.C
 func (g *grpcHandler) handleMessage(gctx context.Context, msg t.AgentMessage) error {
 	g.incrementCounter()
 	start := time.Now()
-	logger := g.logger.With("counter", g.inMemCounter, "account", msg.AccountName, "cluster", msg.ClusterName, "action", msg.Action)
+	logger := g.logger.With("counter", g.inMemCounter, "account", msg.AccountName, "action", msg.Action)
 	ctx, cf := func() (context.Context, context.CancelFunc) {
 		if g.isDev {
 			return context.WithCancel(gctx)
@@ -95,7 +94,7 @@ func (g *grpcHandler) handleMessage(gctx context.Context, msg t.AgentMessage) er
 	}
 
 	obj := unstructured.Unstructured{Object: msg.Object}
-	mLogger := logger.With("gvk", obj.GetObjectKind().GroupVersionKind().String())
+	mLogger := logger.With("gvk", obj.GetObjectKind().GroupVersionKind().String()).With("NN", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()))
 
 	mLogger.Info("received message")
 
@@ -106,6 +105,13 @@ func (g *grpcHandler) handleMessage(gctx context.Context, msg t.AgentMessage) er
 	switch msg.Action {
 	case t.ActionApply:
 		{
+			// lb := obj.GetLabels()
+			// if lb == nil {
+			// 	lb = make(map[string]string, 1)
+			// }
+			// lb[constants.AccountNameKey] = msg.AccountName
+			// obj.SetLabels(lb)
+
 			b, err := yaml.Marshal(msg.Object)
 			if err != nil {
 				return g.handleErrorOnApply(ctx, err, msg)
@@ -113,11 +119,9 @@ func (g *grpcHandler) handleMessage(gctx context.Context, msg t.AgentMessage) er
 
 			if _, err := g.yamlClient.ApplyYAML(ctx, b); err != nil {
 				// mLogger.Errorf(err, "[%d] [error-on-apply]: yaml: \n%s\n", g.inMemCounter, b)
-				mLogger.Info("failed to process message")
-				fmt.Printf("[error-on-apply] yaml: \n%s\n", b)
+				mLogger.Error("failed to process message, got", "err", err, "error-on-apply:YAML", fmt.Sprintf("\n%s\n", b))
 				return g.handleErrorOnApply(ctx, err, msg)
 			}
-			mLogger.Info("processed message")
 		}
 	case t.ActionDelete:
 		{
@@ -127,9 +131,9 @@ func (g *grpcHandler) handleMessage(gctx context.Context, msg t.AgentMessage) er
 					mLogger.Info("processed message, resource does not exist, might already be deleted")
 					return g.handleErrorOnApply(ctx, err, msg)
 				}
-				mLogger.Info("failed to process message")
+				mLogger.Error("failed to process message, got", "err", err)
+				return g.handleErrorOnApply(ctx, err, msg)
 			}
-			mLogger.Info("processed message")
 		}
 	case t.ActionRestart:
 		{
@@ -280,6 +284,9 @@ func main() {
 
 	flag.Parse()
 
+	start := time.Now()
+	common.PrintBuildInfo()
+
 	ev := env.GetEnvOrDie()
 
 	logger := logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug})
@@ -327,7 +334,7 @@ func main() {
 		}
 	}()
 
-	common.PrintReadyBanner()
+	common.PrintReadyBanner2(time.Since(start))
 
 	for {
 		cc, err := libGrpc.NewGrpcClientV2(ev.GrpcAddr, libGrpc.GrpcConnectOpts{TLSConnect: !isDev, Logger: logger})
