@@ -50,6 +50,7 @@ func (s *internalServer) AllocatePlatformEdgeCluster(ctx context.Context, in *pl
 	return &platform_edge.AllocatePlatformEdgeClusterOut{
 		ClusterName:    pec.Name,
 		OwnedByAccount: pec.OwnedByAccount,
+		PublicDnsHost:  pec.PublicDNSHostname,
 	}, nil
 }
 
@@ -66,6 +67,7 @@ func (s *internalServer) GetAllocatedPlatformEdgeCluster(ctx context.Context, in
 	return &platform_edge.AllocatePlatformEdgeClusterOut{
 		ClusterName:    allocated.Cluster.Name,
 		OwnedByAccount: allocated.Cluster.OwnedByAccount,
+		PublicDnsHost:  allocated.Cluster.PublicDNSHost,
 	}, nil
 }
 
