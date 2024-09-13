@@ -23,9 +23,6 @@ func (as *accountsSvc) GetAccountRegion(ctx context.Context, userId string, acco
 		AccountName: accountName,
 	})
 	if err != nil {
-		// if errors.Is(err, context.DeadlineExceeded) {
-		// 	return nil, domain.ErrGRPCCall{Err: err}
-		// }
 		return "", errors.NewE(err)
 	}
 

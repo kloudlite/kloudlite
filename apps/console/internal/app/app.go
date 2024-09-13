@@ -15,15 +15,17 @@ import (
 	"go.uber.org/fx"
 
 	"github.com/kloudlite/api/apps/console/internal/app/adapters"
+	infra_service "github.com/kloudlite/api/apps/console/internal/app/adapters/infra-service"
 	"github.com/kloudlite/api/apps/console/internal/app/graph"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/domain"
+	"github.com/kloudlite/api/apps/console/internal/domain/ports"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/apps/console/internal/env"
+	"github.com/kloudlite/api/apps/infra/protobufs/infra"
 	platform_edge "github.com/kloudlite/api/apps/message-office/protobufs/platform-edge"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
-	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
@@ -95,6 +97,10 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Provide(adapters.NewAccountsSvc),
+
+	fx.Provide(func(cli infra.InfraClient) ports.InfraService {
+		return infra_service.NewInfraService(cli)
+	}),
 
 	fx.Invoke(
 		func(server httpServer.Server, d domain.Domain, sessionRepo kv.Repo[*common.AuthSession], ev *env.Env) {
