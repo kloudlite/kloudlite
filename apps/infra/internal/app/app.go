@@ -11,16 +11,16 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
+	"github.com/kloudlite/api/apps/infra/internal/app/adapters"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/apps/infra/internal/env"
+	"github.com/kloudlite/api/apps/infra/protobufs/infra"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
-	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
-	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/k8s"
@@ -35,10 +35,9 @@ import (
 type AuthCacheClient kv.Client
 
 type (
-	IAMGrpcClient                   grpc.Client
-	AccountGrpcClient               grpc.Client
-	MessageOfficeInternalGrpcClient grpc.Client
-	ConsoleGrpcClient               grpc.Client
+	IAMGrpcClient     grpc.Client
+	AccountGrpcClient grpc.Client
+	ConsoleGrpcClient grpc.Client
 )
 
 type (
@@ -82,9 +81,7 @@ var Module = fx.Module(
 		return NewAccountsSvc(ac), nil
 	}),
 
-	fx.Provide(func(client MessageOfficeInternalGrpcClient) message_office_internal.MessageOfficeInternalClient {
-		return message_office_internal.NewMessageOfficeInternalClient(client)
-	}),
+	adapters.FxNewMessageOfficeService(),
 
 	fx.Provide(
 		func(conn ConsoleGrpcClient) console.ConsoleClient {
@@ -114,8 +111,8 @@ var Module = fx.Module(
 
 	domain.Module,
 
-	fx.Provide(func(d domain.Domain, kcli k8s.Client) infra.InfraServer {
-		return newGrpcServer(d, kcli)
+	fx.Provide(func(d domain.Domain, kcli k8s.Client, logger *slog.Logger) infra.InfraServer {
+		return newGrpcServer(d, kcli, logger)
 	}),
 
 	fx.Invoke(func(gserver InfraGrpcServer, srv infra.InfraServer) {
