@@ -11,12 +11,20 @@ const (
 	ClusterAllocationTo                    = "to"
 )
 
+// constant vars generated for struct ClusterAllocationClusterRef
+const (
+	ClusterAllocationClusterRefName           = "name"
+	ClusterAllocationClusterRefOwnedByAccount = "owned_by_account"
+	ClusterAllocationClusterRefRegion         = "region"
+)
+
 // constant vars generated for struct PlatformEdgeCluster
 const (
-	PlatformEdgeClusterCloudProvider  = "cloud_provider"
-	PlatformEdgeClusterName           = "name"
-	PlatformEdgeClusterOwnedByAccount = "owned_by_account"
-	PlatformEdgeClusterRegion         = "region"
+	PlatformEdgeClusterCloudProvider     = "cloud_provider"
+	PlatformEdgeClusterName              = "name"
+	PlatformEdgeClusterOwnedByAccount    = "owned_by_account"
+	PlatformEdgeClusterPublicDnsHostname = "public_dns_hostname"
+	PlatformEdgeClusterRegion            = "region"
 )
 
 // constant vars generated for struct

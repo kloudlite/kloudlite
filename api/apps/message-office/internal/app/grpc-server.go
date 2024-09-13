@@ -319,7 +319,7 @@ func processError(ctx context.Context, args ProcessErrorArgs) (err error) {
 
 // GetAccessToken implements messages.MessageDispatchServiceServer
 func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetAccessTokenIn) (*messages.GetAccessTokenOut, error) {
-	g.logger.Debug("request received for cluster-token exchange")
+	g.logger.Debug("request received for cluster-token exchange", "cluster-token", msg.ClusterToken)
 
 	ct, err := g.domain.FindClusterToken(ctx, msg.ClusterToken)
 	if err != nil {
@@ -363,6 +363,7 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 
 	logger.Info("READY to transmit messages to agent")
 
+	// FIXME: online/offline status should be stored somewhere else other than the resource itself
 	if _, err := g.infraClient.MarkClusterOnlineAt(server.Context(), &infra.MarkClusterOnlineAtIn{
 		AccountName: accountName,
 		ClusterName: clusterName,

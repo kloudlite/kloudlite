@@ -6,11 +6,12 @@ import (
 )
 
 type PlatformEdgeCluster struct {
-	repos.BaseEntity `json:",inline"`
-	OwnedByAccount   string `json:"owned_by_account"`
-	Name             string `json:"name"`
-	Region           string `json:"region"`
-	CloudProvider    string `json:"cloud_provider"`
+	repos.BaseEntity  `json:",inline"`
+	OwnedByAccount    string `json:"owned_by_account"`
+	Name              string `json:"name"`
+	Region            string `json:"region"`
+	CloudProvider     string `json:"cloud_provider"`
+	PublicDNSHostname string `json:"public_dns_hostname"`
 }
 
 var PlatformEdgeClusterIndexes = []repos.IndexField{
