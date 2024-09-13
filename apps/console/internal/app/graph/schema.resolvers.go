@@ -7,6 +7,8 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -35,6 +37,22 @@ func (r *appResolver) ServiceHost(ctx context.Context, obj *entities.App) (*stri
 	return fn.New(fmt.Sprintf("%s.%s.%s.%s", obj.Name, obj.EnvironmentName, obj.AccountName, r.EnvVars.KloudliteDNSSuffix)), nil
 }
 
+// OnlineStatus is the resolver for the onlineStatus field.
+func (r *appResolver) OnlineStatus(ctx context.Context, obj *entities.App) (*model.OnlineStatus, error) {
+	return &model.OnlineStatus{
+		LastOnlineAt:    time.Now().Format(time.RFC3339),
+		WillBeOfflineAt: time.Now().Add(2 * time.Minute).Format(time.RFC3339),
+	}, nil
+}
+
+// OnlineStatus is the resolver for the onlineStatus field.
+func (r *environmentResolver) OnlineStatus(ctx context.Context, obj *entities.Environment) (*model.OnlineStatus, error) {
+	return &model.OnlineStatus{
+		LastOnlineAt:    time.Now().Format(time.RFC3339),
+		WillBeOfflineAt: time.Now().Add(2 * time.Minute).Format(time.RFC3339),
+	}, nil
+}
+
 // ManagedResource is the resolver for the ManagedResource field.
 func (r *importedManagedResourceResolver) ManagedResource(ctx context.Context, obj *entities.ImportedManagedResource) (*entities.ManagedResource, error) {
 	cc, err := toConsoleContext(ctx)
@@ -42,6 +60,14 @@ func (r *importedManagedResourceResolver) ManagedResource(ctx context.Context, o
 		return nil, errors.NewE(err)
 	}
 	return r.Domain.GetManagedResourceByID(cc, obj.ManagedResourceRef.ID)
+}
+
+// OnlineStatus is the resolver for the onlineStatus field.
+func (r *importedManagedResourceResolver) OnlineStatus(ctx context.Context, obj *entities.ImportedManagedResource) (*model.OnlineStatus, error) {
+	return &model.OnlineStatus{
+		LastOnlineAt:    time.Now().Format(time.RFC3339),
+		WillBeOfflineAt: time.Now().Add(2 * time.Minute).Format(time.RFC3339),
+	}, nil
 }
 
 // CoreCreateEnvironment is the resolver for the core_createEnvironment field.
@@ -1034,5 +1060,7 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

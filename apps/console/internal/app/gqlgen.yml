@@ -78,6 +78,9 @@ models:
 
   Environment: &environment-model
     model: github.com/kloudlite/api/apps/console/internal/entities.Environment
+    fields:
+      onlineStatus:
+        resolver: true
   EnvironmentIn: *environment-model
 
   RegistryImage: &registry-image-model
@@ -117,6 +120,8 @@ models:
         resolver: true
       serviceHost:
         resolver: true
+      onlineStatus:
+        resolver: true
     model: github.com/kloudlite/api/apps/console/internal/entities.App
   AppIn: *app-model
 
@@ -151,6 +156,8 @@ models:
     model: github.com/kloudlite/api/apps/console/internal/entities.ImportedManagedResource
     fields:
       managedResource:
+        resolver: true
+      onlineStatus:
         resolver: true
 
   ClusterManagedService: &custer-managed-service-model

@@ -140,6 +140,12 @@ type AccountsSvc interface {
 	GetAccountRegion(ctx context.Context, userId string, accountName string) (string, error)
 }
 
+type ResourceDispatcher interface {
+	ApplyResource()
+	DeleteResource()
+	RestartResource()
+}
+
 type Domain interface {
 	AccountsSvc
 

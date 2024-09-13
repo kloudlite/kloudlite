@@ -70,17 +70,15 @@ tasks:
       binary: '{{.binary | default "false"}}'
     env:
       CGO_ENABLED: 0
-    silent: false
+    silent: true
     cmds:
       - |+
         if [ "{{.binary}}" = "true" ]; then
           task build
           ./bin/console-$(go env GOARCH) --debug
         else
-        echo "running go run"
           go run ./main.go --dev
         fi
-
 
   container:build-and-push:
     requires:
