@@ -122,9 +122,10 @@ type Domain interface {
 	OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
 
 	// ListGlobalVPNs(ctx InfraContext, clusterName string) (*entities.GlobalVPNConnection, error)
+	EnsureGlobalVPNConnection(ctx InfraContext, clusterName string, groupName string, dispatchAddr *entities.DispatchAddr) (*entities.GlobalVPNConnection, error)
 
 	OnGlobalVPNConnectionDeleteMessage(ctx InfraContext, clusterName string, clusterConn entities.GlobalVPNConnection) error
-	OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, clusterName string, clusterConn entities.GlobalVPNConnection, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnGlobalVPNConnectionUpdateMessage(ctx InfraContext, dispatchAddr entities.DispatchAddr, clusterConn entities.GlobalVPNConnection, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	OnGlobalVPNConnectionApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
 
 	ListNodes(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Node], error)

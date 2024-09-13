@@ -203,7 +203,7 @@ func (d *domain) findGlobalVPN(ctx InfraContext, gvpnName string) (*entities.Glo
 	}
 
 	if cg == nil {
-		return nil, ErrClusterNotFound
+		return nil, errors.ErrNotFound{Message: fmt.Sprintf("no global vpn with name=%s", gvpnName)}
 	}
 	return cg, nil
 }
