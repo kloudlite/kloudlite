@@ -175,8 +175,8 @@ func TestRepo_AllocatePlatformEdgeCluster(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Repo{
-				edge_clusters:      tt.fields.edge_clusters(t),
-				allocated_clusters: tt.fields.allocated_clusters(t),
+				EdgeClusters:      tt.fields.edge_clusters(t),
+				AllocatedClusters: tt.fields.allocated_clusters(t),
 			}
 			got, err := r.AllocatePlatformEdgeCluster(tt.args.ctx, tt.args.region, tt.args.account)
 			if (err != nil) && !errors.Is(err, tt.wantErr) {

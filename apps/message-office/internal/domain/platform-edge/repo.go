@@ -56,10 +56,11 @@ func (r *Repo) AllocatePlatformEdgeCluster(ctx context.Context, region string, a
 
 			if _, err := r.AllocatedClusters.Create(ctx, &entities.ClusterAllocation{
 				To: account,
-				Cluster: entities.ClusterAllocationCluster{
+				Cluster: entities.ClusterAllocationClusterRef{
 					Name:           clusterName,
 					Region:         region,
 					OwnedByAccount: x.OwnedByAccount,
+					PublicDNSHost:  x.PublicDNSHostname,
 				},
 			}); err != nil {
 				return nil, err
