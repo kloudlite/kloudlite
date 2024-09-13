@@ -52,6 +52,9 @@ var (
 
 func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger *slog.Logger) {
 	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, clusterName string, obj *unstructured.Unstructured) (domain.ResourceContext, error) {
+		if v, ok := obj.GetLabels()[constants.EnvNameKey]; ok {
+			return domain.ResourceContext{ConsoleContext: ctx, EnvironmentName: v}, nil
+		}
 		mapping, err := d.GetEnvironmentResourceMapping(ctx, rt, clusterName, obj.GetNamespace(), obj.GetName())
 		if err != nil {
 			return domain.ResourceContext{}, err
@@ -119,7 +122,12 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			mlogger.Info("PROCESSED message", "took", fmt.Sprintf("%dms", time.Since(start).Milliseconds()))
 		}()
 
-		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:console-resource-updater", ru.AccountName)
+		accountName := ru.AccountName
+		if v, ok := rwu.Object.GetLabels()[constants.AccountNameKey]; ok && len(v) > 0 {
+			accountName = v
+		}
+
+		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:console-resource-updater", accountName)
 
 		resStatus, err := func() (types.ResourceStatus, error) {
 			v, ok := obj.Object[types.ResourceStatusKey]
@@ -142,7 +150,6 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		switch gvkStr {
 		case environmentGVK.String():
 			{
-				dctx.AccountName = rwu.Object.GetLabels()[constants.AccountNameKey]
 				var ws entities.Environment
 				if err := fn.JsonConversion(rwu.Object, &ws); err != nil {
 					return errors.NewE(err)
@@ -155,17 +162,10 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			}
 		case appsGVK.String():
 			{
-				if ru.AccountName == "nxt-multi-tenancy" {
-				}
-
-				dctx.AccountName = rwu.Object.GetLabels()[constants.AccountNameKey]
-
 				var app entities.App
 				if err := fn.JsonConversion(rwu.Object, &app); err != nil {
 					return errors.NewE(err)
 				}
-
-				// rctx := domain.ResourceContext{ConsoleContext: dctx, EnvironmentName: rwu.Object.GetLabels()[constants.EnvNameKey]}
 
 				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, ru.ClusterName, obj)
 				if err != nil {

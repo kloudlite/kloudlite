@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"log/slog"
 	"os"
 	"time"
 
@@ -20,6 +19,9 @@ import (
 )
 
 func main() {
+	start := time.Now()
+	common.PrintBuildInfo()
+
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 
@@ -32,22 +34,15 @@ func main() {
 		debug = true
 	}
 
-	common.PrintBuildInfo()
-
 	logger := logging.NewSlogLogger(logging.SlogOptions{ShowCaller: true, ShowDebugLogs: debug, SetAsDefaultLogger: true})
 
-	start := time.Now()
-
 	app := fx.New(
-		fx.StartTimeout(5*time.Second),
 		fx.NopLogger,
 		fx.Provide(func() (logging.Logger, error) {
 			return logging.New(&logging.Options{Name: "console", ShowDebugLog: debug})
 		}),
 
-		fx.Provide(func() *slog.Logger {
-			return logger
-		}),
+		fx.Supply(logger),
 
 		fx.Provide(func() (*env.Env, error) {
 			if e, err := env.LoadEnv(); err != nil {
@@ -59,7 +54,7 @@ func main() {
 		}),
 
 		fx.Provide(func(e *env.Env) (*rest.Config, error) {
-			if e.KubernetesApiProxy != "" {
+			if isDev && e.KubernetesApiProxy != "" {
 				return &rest.Config{
 					Host: e.KubernetesApiProxy,
 				}, nil
@@ -71,9 +66,9 @@ func main() {
 
 	ctx, cancelFunc := func() (context.Context, context.CancelFunc) {
 		if isDev {
-			return context.WithTimeout(context.TODO(), 5*time.Second)
+			return context.WithTimeout(context.TODO(), 10*time.Second)
 		}
-		return context.WithTimeout(context.TODO(), 10*time.Second)
+		return context.WithTimeout(context.TODO(), 5*time.Second)
 	}()
 	defer cancelFunc()
 
