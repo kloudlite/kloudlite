@@ -29,8 +29,10 @@ message AllocatePlatformEdgeClusterIn {
 message AllocatePlatformEdgeClusterOut {
   string cluster_name = 1;
   string owned_by_account = 2;
+  string public_dns_host = 3;
 }
 
 message GetAllocatedPlatformEdgeClusterIn {
   string account_name = 1;
+  string cluster_name = 2;
 }
