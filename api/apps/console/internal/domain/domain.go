@@ -27,10 +27,10 @@ import (
 	"go.uber.org/fx"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/kloudlite/api/apps/console/internal/domain/ports"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/apps/console/internal/env"
 	iamT "github.com/kloudlite/api/apps/iam/types"
-	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/k8s"
@@ -47,7 +47,7 @@ type domain struct {
 	producer MessageDispatcher
 
 	iamClient          iam.IAMClient
-	infraClient        infra.InfraClient
+	infraSvc           ports.InfraService
 	platformEdgeClient platform_edge.PlatformEdgeClient
 	AccountsSvc
 
@@ -105,6 +105,8 @@ func addTrackingId(obj client.Object, id repos.ID) {
 type K8sContext interface {
 	context.Context
 	GetUserId() repos.ID
+	GetUserEmail() string
+	GetUserName() string
 	GetAccountName() string
 }
 
@@ -131,9 +133,9 @@ func (d *domain) applyK8sResourceOnCluster(ctx K8sContext, clusterName string, o
 	}
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.GetAccountName(),
-		ClusterName: clusterName,
-		Action:      t.ActionApply,
-		Object:      m,
+		// ClusterName: clusterName,
+		Action: t.ActionApply,
+		Object: m,
 	})
 	if err != nil {
 		return errors.NewE(err)
@@ -167,9 +169,6 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 	switch *clusterName {
 	case "__kloudlite_enabled_cluster":
 		{
-			// dispatchAddr.AccountName = "kloudlite-edge-platform"
-			// dispatchAddr.ClusterName = "kl-edge-1"
-
 			allocatedEdge, err := d.platformEdgeClient.GetAllocatedPlatformEdgeCluster(ctx, &platform_edge.GetAllocatedPlatformEdgeClusterIn{AccountName: ctx.GetAccountName()})
 			if err != nil {
 				gErr := grpc.ParseErr(err)
@@ -193,6 +192,20 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 				})
 				if err != nil {
 					return errors.NewEf(err, "failed to allocate platform edge cluster")
+				}
+
+				if err := d.infraSvc.EnsureGlobalVPNConnection(ctx, ports.EnsureGlobalVPNConnectionIn{
+					UserId:        string(ctx.GetUserId()),
+					UserEmail:     ctx.GetUserEmail(),
+					UserName:      ctx.GetUserName(),
+					AccountName:   ctx.GetAccountName(),
+					ClusterName:   allocatedEdge.ClusterName,
+					GlobalVPNName: "default",
+
+					DispatchAddrAccountName: allocatedEdge.OwnedByAccount,
+					DispatchAddrClusterName: allocatedEdge.ClusterName,
+				}); err != nil {
+					return errors.NewEf(err, "failed to ensure global vpn connection")
 				}
 			}
 
@@ -231,8 +244,7 @@ func (d *domain) applyK8sResource(ctx K8sContext, envName string, obj client.Obj
 	}
 
 	b, err := json.Marshal(t.AgentMessage{
-		AccountName: dispatchAddr.AccountName,
-		ClusterName: dispatchAddr.ClusterName,
+		AccountName: ctx.GetAccountName(),
 		Action:      t.ActionApply,
 		Object:      m,
 	})
@@ -280,7 +292,6 @@ func applyK8sResource(ctx K8sContext, args ApplyK8sResourceArgs) error {
 	}
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.GetAccountName(),
-		ClusterName: args.ClusterName,
 		Action:      t.ActionApply,
 		Object:      m,
 	})
@@ -339,7 +350,6 @@ func (d *domain) restartK8sResource(ctx K8sContext, projectName string, namespac
 
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.GetAccountName(),
-		ClusterName: *clusterName,
 		Action:      t.ActionRestart,
 		Object:      obj.Object,
 	})
@@ -367,7 +377,6 @@ func (d *domain) deleteK8sResourceOfCluster(ctx K8sContext, clusterName string, 
 	}
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.GetAccountName(),
-		ClusterName: clusterName,
 		Action:      t.ActionDelete,
 		Object:      m,
 	})
@@ -429,7 +438,6 @@ func (d *domain) deleteK8sResource(ctx K8sContext, environmentName string, obj c
 	}
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: dispatchAddr.AccountName,
-		ClusterName: dispatchAddr.ClusterName,
 		Action:      t.ActionDelete,
 		Object:      m,
 	})
@@ -662,7 +670,7 @@ var Module = fx.Module("domain",
 		producer MessageDispatcher,
 
 		iamClient iam.IAMClient,
-		infraClient infra.InfraClient,
+		infraSvc ports.InfraService,
 		platformEdgeClient platform_edge.PlatformEdgeClient,
 		accountsSvc AccountsSvc,
 
@@ -694,7 +702,7 @@ var Module = fx.Module("domain",
 			producer: producer,
 
 			iamClient:          iamClient,
-			infraClient:        infraClient,
+			infraSvc:           infraSvc,
 			platformEdgeClient: platformEdgeClient,
 			AccountsSvc:        accountsSvc,
 
