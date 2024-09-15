@@ -34,7 +34,7 @@ locals {
         "--agent-token", random_password.k3s_agent_token.result,
         "--disable-helm-controller",
         "--disable", "traefik",
-        "--disable", "servicelb",
+        # "--disable", "servicelb",
         "--node-external-ip", v.public_ip,
         "--tls-san-security",
         "--flannel-external-ip",
