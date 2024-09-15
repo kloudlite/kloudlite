@@ -33,7 +33,7 @@
           paths = with pkgs; [
             bash
             envsubst
-            jq 
+            jq
             zstd
             kubectl
             terraform
@@ -88,40 +88,10 @@
           '';
         };
 
-        # packages.container = pkgs.stdenv.mkDerivation {
-        #   name = "hello";
-        #   buildInputs = binaries;
-        #   buildCommand = let
-        #     copyBinaries = builtins.concatStringsSep "\n" (builtins.map(input: 
-        #     ''
-        #       if [ -e "${input}/bin" ]; then
-        #         cp ${input}/bin/* $out/bin/
-        #       fi
-        #     ''
-        #     ) binaries);
-        #   in ''
-        #     mkdir -p $out/bin
-        #     ${copyBinaries}
-        #   '';
-        # };
-
         packages.container = pkgs.stdenv.mkDerivation {
           name = "container";
           src = container;
           installPhase = "cp -r $src $out/";
-          # buildInputs = binaries;
-          # buildCommand = let
-          #   copyBinaries = builtins.concatStringsSep "\n" (builtins.map(input: 
-          #   ''
-          #     if [ -e "${input}/bin" ]; then
-          #       cp ${input}/bin/* $out/bin/
-          #     fi
-          #   ''
-          #   ) binaries);
-          # in ''
-          #   mkdir -p $out/bin
-          #   ${copyBinaries}
-          # '';
         };
       }
     );

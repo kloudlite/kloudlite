@@ -1,58 +1,47 @@
-#syntax=docker/dockerfile:1.4
-FROM alpine:3.16
-RUN apk add bash curl gettext jq lz4 helm kubectl zstd --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community --no-cache 
-RUN curl -L0 https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip > tf.zip && unzip tf.zip && mv terraform /usr/local/bin && rm tf.zip
+# vim: set ft=dockerfile:
+FROM nixos/nix:latest AS nix
 WORKDIR /app
-COPY --chown=nonroot ./terraform ./terraform
-RUN mkdir -p infrastructure-templates
-COPY --chown=nonroot ./infrastructure-templates ./infrastructure-templates
-ENV TF_PLUGIN_CACHE_DIR="/app/.terraform.d/plugin-cache"
-# COPY .terraform.d.zip /app/terraform.zip
-RUN mkdir -p $TF_PLUGIN_CACHE_DIR
-SHELL ["/bin/bash", "-c"]
-RUN <<'EOF'
-  for dir in $(ls -d ./infrastructure-templates/{aws,gcp}/*); do
-    pushd $dir
-    terraform init -backend=false &
-    popd
-  done
+COPY . ./
 
-  wait
+RUN cat > /tmp/script.sh <<EOF
+  nix build .#container -o result
+  mkdir -p /tmp/nix-store-closure
+  cp -R $(nix-store -qR result/) /tmp/nix-store-closure
 
-  tdir=$(basename $(dirname $TF_PLUGIN_CACHE_DIR))
-  tar cf - $tdir | zstd --compress > tf.zst && rm -rf $tdir
-EOF
+  export TF_PLUGIN_CACHE_DIR="$PWD/.terraform.d/plugin-cache"
 
-# ENV DECOMPRESS_CMD="lz4 -d tf.lz4 | tar xf -"
-ENV DECOMPRESS_CMD="zstd --decompress tf.zst --stdout | tar xf -"
-ENV TEMPLATES_DIR="/app/infrastructure-templates"
-#
-WORKDIR /app
-ENV TF_PLUGIN_CACHE_DIR="/app/.terraform.d/plugin-cache"
-RUN mkdir -p $TF_PLUGIN_CACHE_DIR
-RUN cat > script.sh <<EOF
-COPY --chown=nonroot ./terraform ./terraform
-COPY --chown=nonroot ./infrastructure-templates ./infrastructure-templates
-RUN --mount=type=cache,id=sample,target=$TF_PLUGIN_CACHE_DIR <<EOF
-  #!/usr/bin/env bash
-  echo "hi" >> log.file
-  # ls -d ./infrastructure-templates/{gcp,aws}/* | tee log.file | xargs -I{} bash -c "echo name is {}; $(terraform init chdir={} -backend=false &)"
   for dir in $(ls -d ./infrastructure-templates/{gcp,aws}/*); do
-    echo $dir >> log.file
-    pushd $dir
-    terraform init -backend=false &
-    popd
+    terraform -chdir=$dir init -backend=false -upgrade &
   done
 
-  wait
-
+  echo "compressing"
   tdir=$(basename $(dirname $TF_PLUGIN_CACHE_DIR))
-  echo "hello" >> log.file
-  # tar cf - $tdir | lz4 -v -5 > tf.lz4 && rm -rf $tdir
-  tar cf - $tdir | zstd --compress > tf.zst && rm -rf $tdir
+  # tar cf - $tdir | zstd -12 --compress > tf.zst
+  tar cf - $tdir | zstd --compress > tf.zst
 EOF
+RUN nix --experimental-features "nix-command flakes" develop --command bash /tmp/script.sh
+
+FROM busybox:latest
+
+RUN mkdir -p /etc/ssl/certs
+COPY --from=nix /nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
+
+WORKDIR /app
+
+# RUN --mount=type=bind,source=context.tar,target=context.tar \
+#   tar xf context.tar && \
+#   mkdir -p /nix && mv nixstore /nix/store && \
+#   mkdir -p /usr/local/bin && mv result/bin/* /usr/local/bin/ && rm -rf result && \
+#   mv tf.zst /app/tf.zst
+
+RUN mkdir -p /nix
+COPY --from=nix /tmp/nix-store-closure /nix/store
+COPY --from=nix /tmp/tf.zst /app/tf.zst
+COPY --from=nix /app/result/bin/* /usr/local/bin/
+
 RUN adduser --disabled-password --home="/app" --uid 1717 nonroot
-USER nonroot
-# ENV DECOMPRESS_CMD="lz4 -d tf.lz4 | tar xf -"
+COPY --chown=nonroot ./terraform ./terraform
+COPY --chown=nonroot ./infrastructure-templates ./infrastructure-templates
+ENV TF_PLUGIN_CACHE_DIR="/app/.terraform.d/plugin-cache"
 ENV DECOMPRESS_CMD="zstd --decompress tf.zst --stdout | tar xf -"
 ENV TEMPLATES_DIR="/app/infrastructure-templates"

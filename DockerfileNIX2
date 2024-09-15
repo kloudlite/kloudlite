@@ -14,26 +14,8 @@ RUN --mount=type=bind,source=context.tar,target=context.tar \
   mv tf.zst /app/tf.zst
 
 RUN adduser --disabled-password --home="/app" --uid 1717 nonroot
-# RUN chown -R nonroot:nonroot output
-
-# FROM scratch
-# COPY --from=base /app/output/ /
-# RUN mkdir -p /etc
-# WORKDIR /app
-# COPY --from=base /etc/passwd /etc/passwd
 COPY --chown=nonroot ./terraform ./terraform
 COPY --chown=nonroot ./infrastructure-templates ./infrastructure-templates
-# COPY --from=nixstore ./ /nix/store
-# RUN mkdir -p /usr/local/bin
-# COPY --from=builder ./bin/* /usr/local/bin
-# RUN --mount=type=bind,source=result,target=/result cp -r /result/bin/* /usr/local/bin
-# COPY ./bin/* /usr/local/bin
-# WORKDIR /app
-# COPY ./terraform ./terraform
-# ARG CLOUD_PROVIDER
-# COPY ./infrastructure-templates/${CLOUD_PROVIDER} ./infrastructure-templates/${CLOUD_PROVIDER}
-# USER nonroot
 ENV TF_PLUGIN_CACHE_DIR="/app/.terraform.d/plugin-cache"
-# # COPY ./tf.zst ./tf.zst
 ENV DECOMPRESS_CMD="zstd --decompress tf.zst --stdout | tar xf -"
 ENV TEMPLATES_DIR="/app/infrastructure-templates"
