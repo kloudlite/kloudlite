@@ -73,7 +73,10 @@ const AppSelectItem = ({
     <div>
       <div className="flex flex-col">
         <div>{label}</div>
-        <div className="bodySm text-text-soft">{`${registry}/${repository}`}</div>
+        {registry !== '' && repository !== '' && (
+          <div className="bodySm text-text-soft">{`${registry}/${repository}`}</div>
+        )}
+        {/* <div className="bodySm text-text-soft">{`${registry}/${repository}`}</div> */}
       </div>
     </div>
   );
@@ -116,8 +119,8 @@ const AppDetail = () => {
           <AppSelectItem
             label={`${i.imageName}:${i.imageTag}`}
             value={`${i.imageName}:${i.imageTag}`}
-            registry={i.meta.registry}
-            repository={i.meta.repository}
+            registry={i.meta.registry || ''}
+            repository={i.meta.repository || ''}
           />
         ),
       }));

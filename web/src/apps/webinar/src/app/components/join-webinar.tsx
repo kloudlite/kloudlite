@@ -19,8 +19,8 @@ export const JoinWebinar = ({ userData, meetingStatus }: { userData: UesrData, m
             <Button
                 size="lg"
                 variant="primary"
-                content={<span className="bodyLg-medium">Join</span>}
-                suffix={<ArrowRightLg />}
+                content={<span className="bodyLg-medium">{meetingStatus === 'ACTIVE' ? 'Join' : 'Meeting is not active'}</span>} 
+                suffix={meetingStatus === 'ACTIVE' ? <ArrowRightLg /> : null}
                 disabled={meetingStatus !== 'ACTIVE'}
                 block
                 onClick={() => {

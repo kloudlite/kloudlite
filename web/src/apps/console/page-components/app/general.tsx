@@ -64,12 +64,25 @@ import { handleError } from '~/root/lib/utils/common';
 //   return <ResourceExtraAction options={options} />;
 // };
 
-const AppSelectItem = ({ label, value }: { label: string; value: string }) => {
+const AppSelectItem = ({
+  label,
+  value,
+  registry,
+  repository,
+}: {
+  label: string;
+  value: string;
+  registry: string;
+  repository: string;
+}) => {
   return (
     <div>
       <div className="flex flex-col">
         <div>{label}</div>
-        <div className="bodySm text-text-soft">{value}</div>
+        {registry !== '' && repository !== '' && (
+          <div className="bodySm text-text-soft">{`${registry}/${repository}`}</div>
+        )}
+        {/* <div className="bodySm text-text-soft">{value}</div> */}
       </div>
     </div>
   );
@@ -111,6 +124,8 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           <AppSelectItem
             label={`${i.imageName}:${i.imageTag}`}
             value={`${i.imageName}:${i.imageTag}`}
+            registry={i.meta.registry || ''}
+            repository={i.meta.repository || ''}
           />
         ),
       }));
@@ -331,6 +346,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             error={!!errors.imageUrl}
             message={errors.imageUrl}
             loading={imageLoaded}
+            createLabel="Select"
           />
         </div>
 
