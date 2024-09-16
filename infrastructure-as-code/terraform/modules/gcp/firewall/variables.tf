@@ -46,3 +46,9 @@ variable "allow_ssh" {
   type        = bool
   description = "should allow node ports ?"
 }
+
+variable "allow_dns_traffic" {
+  type        = bool
+  description = "should allow dns traffic ?"
+  default     = false
+}
