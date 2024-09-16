@@ -14,5 +14,5 @@ spec:
   routes:
     - app: webhooks-api
       path: /
-      port: 80
+      port: 3000
 ---

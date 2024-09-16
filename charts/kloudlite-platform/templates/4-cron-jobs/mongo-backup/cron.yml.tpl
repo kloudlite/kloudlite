@@ -4,56 +4,23 @@ metadata:
   name: {{.Values.crons.mongoBackup.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  schedule: "{{.Values.crons.mongoBackup.configuration.schedule}}"
+  schedule: "{{.Values.crons.mongoBackup.schedule}}"
   jobTemplate:
     spec:
       template:
         metadata:
           labels:
-            app: {{.Values.crons.mongoBackup.name}}
+            kloudlite.io/cron.for: "{{.Values.crons.mongoBackup.name}}"
         spec:
+          nodeSelector: {{.Values.crons.mongoBackup.nodeSelector | toYaml | nindent 12}}
+          tolerations: {{.Values.crons.mongoBackup.tolerations | toYaml | nindent 12}}
           containers:
             - name: {{.Values.crons.mongoBackup.name}}
-              image: {{.Values.crons.mongoBackup.configuration.image}}
-              command: 
-                - bash
-                - -c
-                - |
-                  set -o errexit
-                  set -o pipefail
-
-                  apt update && apt install zip -y
-
-                  trap 'echo "Backup failed"; exit 1' ERR
-
-                  BACKUP_DEST="/mongo-backups"
-
-                  TIMESTAMP=$(date +"%Y_%m_%d_%H_%M_%S")
-                  FILENAME="mongo_backup_${TIMESTAMP}"
-                  BACKUP_DIR="${BACKUP_DEST}/${FILENAME}.zip"
-
-                  BACKUP_TEMP_DIR="/tmp/${FILENAME}"
-
-                  mkdir -p "$BACKUP_DEST"
-                  mongodump --uri="${MONGODB_URI}" --archive=${BACKUP_TEMP_DIR} --dumpDbUsersAndRoles --gzip
-                  zip -r -P "$ENCRYPTION_PASSWORD" "${BACKUP_TEMP_DIR}.zip" "$BACKUP_TEMP_DIR"
-
-                  cp "${BACKUP_TEMP_DIR}.zip" "$BACKUP_DIR"
-
-                  cd "$BACKUP_DEST" || exit
-                  BACKUPS=$(ls -1t)
-
-                  COUNT=0
-                  for BACKUP in $BACKUPS; do
-                    echo "Processing backup $BACKUP"
-                    COUNT=$((COUNT + 1))
-                    if [ "$COUNT" -gt "$NUM_BACKUPS" ]; then
-                      rm -rf "$BACKUP"
-                    fi
-                  done
-
-                  echo "Backup completed"
+              image: {{.Values.crons.mongoBackup.image}}
               env:
+                - name: BACKUP_DIR
+                  value: &backup-dir "/backup"
+
                 - name: MONGODB_URI
                   valueFrom:
                     secretKeyRef:
@@ -61,16 +28,16 @@ spec:
                       key: .CLUSTER_LOCAL_URI
 
                 - name: NUM_BACKUPS
-                  value: {{.Values.crons.mongoBackup.configuration.numBackups | default 5 | squote}}
+                  value: {{.Values.crons.mongoBackup.numBackups | default 5 | squote}}
 
                 - name: ENCRYPTION_PASSWORD
-                  value: {{.Values.crons.mongoBackup.configuration.encryptionPassword}}
+                  value: {{required ".values.crons.mongoBackup.encryptionPassword is required" .Values.crons.mongoBackup.encryptionPassword | squote}}
               volumeMounts:
-                - mountPath: /mongo-backups
-                  name: mongo-backups
+                - mountPath: *backup-dir
+                  name: backup
+                  readOnly: false
           restartPolicy: OnFailure
           volumes:
-            - name: mongo-backups
+            - name: backup
               persistentVolumeClaim:
                 claimName: {{.Values.crons.mongoBackup.name}}
-                readOnly: false

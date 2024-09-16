@@ -9,13 +9,14 @@ spec:
   {{- /* find versions with `helm search repo yandex-s3/csi-s3 --versions` */}}
   chartVersion: "0.41.1"
   values:
+    tolerations:
+      all: true
     secret:
       create: true
-
-      accessKey: {{ .Values.csiS3.s3.accessKey }}
-      secretKey: {{.Values.csiS3.s3.secretKey}}
-      endpoint: {{.Values.csiS3.s3.endpoint}}
-    
+      name: {{.Values.csiS3.storageClass}}-secret
+      accessKey: "{{ .Values.csiS3.s3.accessKey }}"
+      secretKey: "{{.Values.csiS3.s3.secretKey}}"
+      endpoint: "{{.Values.csiS3.s3.endpoint}}"
     storageClass:
       create: true
       name: {{.Values.csiS3.storageClass}}

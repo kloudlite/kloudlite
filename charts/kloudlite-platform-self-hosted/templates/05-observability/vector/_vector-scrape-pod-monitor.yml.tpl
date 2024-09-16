@@ -1,5 +1,5 @@
 {{- define "vector-vm-scrape" -}}
-apiVersion: operator.victoriametrics.com/v1beta1
+apiVersion: "operator.victoriametrics.com/v1beta1"
 kind: VMPodScrape
 metadata:
   name: vector-aggregator-scrape

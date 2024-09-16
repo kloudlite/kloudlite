@@ -25,10 +25,13 @@ spec:
     kubectl get crds
     echo "CRDs applied"
 
-  {{- /* postInstall: |+ */}}
-  {{- /*   kubectl apply -f - <<EOF */}}
-  {{- /*   {{ include "vector-vm-scrape" . | nindent 6 }} */}}
-  {{- /*   EOF */}}
+  postInstall: |-
+    cat > /tmp/vm-scrape.yml <<EOF
+    {{- include "vector-vm-scrape" . | nindent 4 }}
+    EOF
+
+    kubectl apply -f /tmp/vm-scrape.yml
+    echo "VMScrape installed"
 
   values:
     fullnameOverride: {{.Values.victoriaMetrics.name}}

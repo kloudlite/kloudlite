@@ -33,7 +33,7 @@ spec:
       imagePullPolicy: {{ include "image-pull-policy" .}}
       {{if .Values.global.isDev}}
       args:
-       - --dev
+       - --debug
       {{end}}
       resourceCpu:
         min: "80m"
@@ -42,9 +42,6 @@ spec:
         min: "80Mi"
         max: "150Mi"
       env:
-        - key: CLICOLOR_FORCE
-          value: "1"
-
         - key: HTTP_PORT
           value: {{.Values.apps.consoleApi.configuration.httpPort | squote}}
 
@@ -58,7 +55,7 @@ spec:
           value: :5353
 
         - key: KLOUDLITE_DNS_SUFFIX
-          value: "{{.Values.global.kloudliteDNSSuffix}}"
+          value: {{required "global.kloudliteDNSSuffix is required" .Values.global.kloudliteDNSSuffix | squote}}
 
         - key: MONGO_URI
           type: secret
@@ -82,6 +79,9 @@ spec:
         - key: NATS_RECEIVE_FROM_AGENT_STREAM
           value: {{.Values.envVars.nats.streams.receiveFromAgent.name}}
 
+        - key: EVENTS_NATS_STREAM
+          value: {{.Values.envVars.nats.streams.events.name}}
+
         - key: SESSION_KV_BUCKET
           value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}
 
@@ -90,6 +90,12 @@ spec:
 
         - key: INFRA_GRPC_ADDR
           value: "infra-api:3001"
+
+        - key: ACCOUNT_GRPC_ADDR
+          value: "accounts-api:3001"
+
+        - key: MESSAGE_OFFICE_INTERNAL_GRPC_ADDR
+          value: "message-office:3002"
 
         - key: DEFAULT_PROJECT_WORKSPACE_NAME
           value: {{.Values.global.defaultProjectWorkspaceName}}
@@ -108,6 +114,12 @@ spec:
 
         - key: DEVICE_NAMESPACE
           value: {{.Values.apps.consoleApi.configuration.vpnDeviceNamespace}}
+
+        - key: WEBHOOK_TOKEN_HASHING_SECRET
+          value: {{.Values.apps.webhooksApi.webhookAuthzTokenHashingSecret | squote}}
+
+        - key: WEBHOOK_URL
+          value: "https://webhooks.{{include "router-domain" .}}"
 
       volumes:
         - mountPath: /console.d/templates

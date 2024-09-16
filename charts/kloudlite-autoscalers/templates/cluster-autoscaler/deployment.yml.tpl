@@ -40,7 +40,7 @@ spec:
             - {{.Values.clusterAutoscaler.configuration.scaleDownUnneededTime | squote}}
             - --enforce-node-group-min-size 
             - "true"
-          image: {{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default (include "image-tag" .) }}
+          image: '{{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default (include "image-tag" .) }}'
           imagePullPolicy: {{ include "image-pull-policy" . }}
           name: main
           securityContext:
@@ -62,8 +62,8 @@ spec:
               cpu: 500m
               memory: 500Mi
             requests:
-              cpu: 200m
-              memory: 200Mi
-      serviceAccountName: {{ include "service-account-name" . }}
+              cpu: 100m
+              memory: 100Mi
+      serviceAccountName: {{ .Values.serviceAccount.name }}
       terminationGracePeriodSeconds: 10
 {{- end }}

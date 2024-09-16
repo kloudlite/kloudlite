@@ -257,6 +257,7 @@ mongo:
 # setting up csi-s3 driver
 csiS3:
   storageClass: "csi-s3"
+  driver: "ru.yandex.s3.csi"
   s3:
     accessKey: ""
     secretKey: ""
@@ -433,7 +434,7 @@ apps:
     # -- image (with tag) for accounts api
     image: 
       repository: ghcr.io/kloudlite/kloudlite/api/accounts
-      4ag: ""
+      tag: ""
 
     configuration:
       replicas: 1
@@ -531,6 +532,9 @@ apps:
 
     minReplicas: 2
     maxReplicas: 4
+
+    discordWebhookUrl: ""
+    webhookAuthzTokenHashingSecret: ""
 
   messageOfficeApi:
     # -- image (with tag) for message office api
@@ -739,20 +743,31 @@ envVars:
 crons:
   mongoBackup:
     name: mongo-backup
-    configuration:
-      image: mongo:latest
-      # mongodbUri: ""
-      numBackups: 5
-      schedule: "0 */2 * * *" # Runs every 2 hours
-      encryptionPassword: ""
-      storageSize: "10Gi"
+
+    image: mongo:latest
+    numBackups: 5
+    schedule: "0 */2 * * *" # Runs every 2 hours
+    encryptionPassword: ""
+    storageSize: "10Gi"
+
+  etcdBackup:
+    name: etcd-backup
+    image: "ghcr.io/kloudlite/backup-scripts/etcd:latest"
+    numBackups: 10
+    schedule: "0 */2 * * *" # Runs every 2 hours
+    encryptionPassword: ""
+    storageSize: "10Gi"
+
+    nodeSelector: {}
+    tolerations: []
+
   natsBackup:
     name: nats-backup
-    configuration:
-      image: natsio/nats-box:latest
-      # server: ""
-      numBackups: 5
-      schedule: "0 */2 * * *" # Runs every 2 hours
-      # bucket: ""
-      encryptionPassword: ""
-      storageSize: "50Gi"
+
+    image: natsio/nats-box:latest
+    # server: ""
+    numBackups: 5
+    schedule: "0 */2 * * *" # Runs every 2 hours
+    # bucket: ""
+    encryptionPassword: ""
+    storageSize: "50Gi"
