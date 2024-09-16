@@ -34,7 +34,7 @@ spec:
       imagePullPolicy: {{ include "image-pull-policy" .}}
       {{if .Values.global.isDev}}
       args:
-       - --dev
+       - --debug
       {{end}}
       resourceCpu:
         min: "100m"
@@ -43,9 +43,6 @@ spec:
         min: "100Mi"
         max: "150Mi"
       env:
-        - key: CLICOLOR_FORCE
-          value: "1"
-
         - key: HTTP_PORT
           value: "3000"
 

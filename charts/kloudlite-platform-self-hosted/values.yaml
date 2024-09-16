@@ -1,0 +1,438 @@
+# -- kloudlite release version, defaults to `Chart.AppVersion`
+kloudliteRelease: ""
+
+# -- base domain
+baseDomain: "a-client.kloudlite.io"
+
+# -- kloudlite DNS suffix
+kloudliteDNSSuffix: "khost.dev"
+
+# -- pod labels, added to all kloudlite pods
+# -- @ignored
+podLabels: {}
+
+podAnnotations: {}
+
+# -- pod labels, added to all kloudlite pods
+# -- @ignored
+podLabels: {}
+
+# podAnnotations: {}
+
+# -- cluster internal DNS name
+# -- @ignored
+clusterInternalDNS: "cluster.local"
+
+# -- @ignored
+certManager:
+  # -- whether to install cert-manager, when false, you must already have cert-manager installed
+  install: true
+  clusterIssuer:
+    create: true
+
+    name: kloudlite-cluster-issuer
+    # -- email that should be used for communicating with CA
+    acmeEmail: sample@example.com
+
+  # -- solvers to use for the cluster issuer
+  # -- [http01 solvers](https://cert-manager.io/docs/configuration/acme/http01/)
+  # -- [dns01 solvers](https://cert-manager.io/docs/configuration/acme/dns01/)
+  solvers: []
+
+# -- @ignored
+nginxIngress:
+  # -- whether to install nginx ingress controller, when false, you must already have nginx ingress controller installed
+  install: true
+  ingressClass:
+    name: nginx
+
+  wildcardCert:
+    # -- when enabled, secretName and secretNamespace must be provided
+    enabled: false
+    secretName: ""
+    secretNamespace: ""
+
+# -- victoria metrics for metrics aggregation and querying
+# -- @ignored
+victoriaMetrics:
+  install: true
+  # -- in go's time.Duration string format
+  retentionPeriod: "1d"
+  vmselect:
+    volumeSize: 2Gi
+  vmcluster:
+    volumeSize: 10Gi
+
+# -- vector for logs and metrics collection
+# -- @ignored
+vector:
+  install: true
+  replicas: 1
+
+# -- @ignored
+serviceAccounts:
+  clusterAdmin:
+    create: true
+    # -- name of the cluster admin service account
+    name: kloudlite-admin-sa
+
+  normal:
+    create: true
+    # -- name of the normal user service account
+    name: kloudlite-normal-sa
+
+# -- @ignored
+persistence:
+  storageClasses:
+    # -- ext4 storage class name
+    ext4: sc-ext4
+    # -- xfs storage class name
+    xfs: sc-xfs
+
+# -- if you want to be able to send emails, you need to provide a sendgrid api key
+# -- @ignored
+sendgrid:
+  # -- sendgrid api key
+  apiKey: ""
+
+  # -- sender email address from which the emails will be sent
+  sender: ""
+
+# -- edge gateways configuration, **secretKeyRef.key** must be serializable into [[]AvailableKloudliteRegion](https://github.com/kloudlite/api/blob/7e90c2f3a47c43ad9026ebfe99dfdbb8327f72ce/apps/accounts/internal/env/env.go#L38C1-L38C39)
+# -- @ignored
+edgeGateways: 
+  - id: "self"
+    region: "kloudlite-platform"
+    displayName: "KloudLite Platform"
+    cloudprovider: "self"
+
+# -- @ignored
+scheduling:
+  stateful:
+    nodeSelector: {}
+    tolerations: []
+    topologySpreadConstraints: []
+  stateless:
+    nodeSelector: {}
+    tolerations:
+      - key: "kloudlite.io/nodepool.role"
+        operator: "Equal"
+        value: "stateless"
+        effect: "NoExecute"
+    topologySpreadConstraints: []
+
+# -- mongodb configuration
+# -- @ignored
+mongo:
+  runAsCluster: false
+  replicas: 1
+  volumeSize: 10Gi
+  nodeSelector: {}
+  tolerations: []
+
+# -- nats configuration
+# -- @ignored
+nats:
+  runAsCluster: false
+  replicas: 1
+  volumeSize: 20Gi
+
+  # user: "sample"
+  # password: "sample"
+
+  nodeSelector: {}
+  tolerations: []
+
+  streams:
+    events:
+      name: events
+      subjects: "events.>"
+      maxMsgBytes: 500kB
+      maxMsgsPerSubject: 2
+
+    resourceSync:
+      name: resource-sync
+      subjects: "resource-sync.>"
+      maxMsgBytes: 500kB
+      # maxMsgsPerSubject: 2
+
+    sendToAgent:
+      name: send-to-agent
+      subjects: "send-to-agent.>"
+      maxMsgBytes: 500kB
+
+      workQueue: true
+      # maxMsgsPerSubject: 2
+
+    receiveFromAgent:
+      name: receive-from-agent
+      subjects: "receive-from-agent.>"
+      maxMsgBytes: 500kB
+      maxMsgsPerSubject: 1  # apiVersion.namespace.name in subject
+      workQueue: true
+
+  buckets:
+    sessionKVBucket:
+      name: auth-session
+      storage: file
+    verifyTokenBucket:
+      name: verify-token
+      storage: file
+    consoleCacheBucket:
+      name: console-cache
+      storage: file
+    resetTokenBucket:
+      name: reset-token
+      storage: file
+
+# -- @ignored
+operators:
+  # -- platform operator configuration
+  platformOperator:
+    # -- image (with tag) for platform operator
+    # -- @ignored
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/operator/platform
+      tag: ""
+      pullPolicy: ""
+
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+
+    serviceAccountName: kloudlite-svc-account
+
+    configuration:
+      # -- @ignored
+      helmCharts:
+        jobImage:
+          repository: ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner
+          tag: ""
+
+      # -- ingress class name to use while creating ingress resources
+      ingressClassName: "nginx"
+
+# -- @ignored
+apps:
+  accountsApi:
+    # -- image (with tag) for accounts api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/accounts
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+  consoleApi:
+    # -- image (with tag) for console api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/console
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+  authApi:
+    # -- image (with tag) for auth api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/auth
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+    oAuth2:
+      enabled: false
+      providers:
+        google:
+          enabled: false
+          callbackURL: ""
+          clientID: ""
+          clientSecret: ""
+
+        gitlab:
+          enabled: false
+          callbackURL: ""
+          clientID: ""
+          clientSecret: ""
+
+        github:
+          enabled: true
+          callbackURL: ""
+          clientID: ""
+          clientSecret: ""
+
+          githubAppID: ""
+          appPrivateKey: ""
+          githubAppName: "" 
+
+  commsApi:
+    # -- image (with tag) for comms api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/comms
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+  gatewayApi:
+    # -- image (with tag) for gateway api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/gateway
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+    exposeWithIngress: false
+
+  iamApi:
+    # -- image (with tag) for gateway api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/iam
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+  infraApi:
+    # -- image (with tag) for infra api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/infra
+      tag: ""
+
+    imageGatewayKubeProxy:
+      # -- image (with tag) for gateway kube reverse proxy
+      image: 
+        repository: ghcr.io/kloudlite/kloudlite/api/gateway/kube-reverse-proxy
+        tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+    globalVpnKubeReverseProxyAuthzToken: ""
+
+  messageOfficeApi:
+    # -- image (with tag) for message office api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/message-office
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+  observabilityApi:
+    # -- image (with tag) for observability api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/observability
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+  webhooksApi:
+    # -- image (with tag) for webhooks api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/webhooks
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+    discordWebhookUrl: ""
+    webhookAuthzTokenHashingSecret: ""
+
+    authenticationSecrets:
+      githubAuthzSecret: ""
+      gitlabAuthzSecret: ""
+      kloudliteAuthzSecret: ""
+
+  klInstaller:
+    install: false
+    # -- image (with tag) for kl cli installer
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/kl-installer
+      tag: ""
+
+    replicas: 1
+
+  websocketApi:
+    # -- image (with tag) for websocket api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/webhooks
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+  authWeb:
+    # -- image (with tag) for websocket api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/web/auth
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+  consoleWeb:
+    # -- image (with tag) for websocket api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/web/auth
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+
+    artifactHubKeyID: ""
+    artifactHubKeySecret: ""
+
+  healthApi:
+    install: false
+    # -- image (with tag) for health api
+    image: 
+      repository: ghcr.io/kloudlite/kloudlite/api/health
+      tag: ""
+
+    replicas: 1
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2

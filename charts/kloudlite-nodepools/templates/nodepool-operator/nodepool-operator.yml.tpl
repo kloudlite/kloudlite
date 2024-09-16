@@ -78,9 +78,18 @@ spec:
               value: "{{.Release.Namespace}}"
 
             - name: "IAC_JOB_IMAGE"
-              value: {{.Values.nodepoolJob.image.repository}}:{{.Values.nodepoolJob.image.tag | default (.Values.kloudliteRelease | default .Chart.AppVersion)}}
+              value: '{{.Values.nodepoolJob.image.repository}}:{{.Values.nodepoolJob.image.tag | default (.Values.kloudliteRelease | default .Chart.AppVersion)}}'
 
-          image: {{.Values.nodepoolOperator.image.repository}}:{{.Values.nodepoolOperator.image.tag | default (.Values.kloudliteRelease | default .Chart.AppVersion)}}
+            - name: "IAC_JOB_NODE_SELECTOR"
+              value: {{.Values.nodepoolJob.nodeSelector | toJson | squote}}
+
+            - name: "IAC_JOB_TOLERATIONS"
+              value: {{.Values.nodepoolJob.tolerations | toJson | squote}}
+
+            - name: "HELM_JOB_RUNNER_IMAGE"
+              value: '{{.Values.nodepoolOperator.helmJobRunner.repository}}:{{.Values.nodepoolOperator.helmJobRunner.tag | default (.Values.kloudliteRelease | default .Chart.AppVersion)}}'
+
+          image: '{{.Values.nodepoolOperator.image.repository}}:{{.Values.nodepoolOperator.image.tag | default (.Values.kloudliteRelease | default .Chart.AppVersion)}}'
           imagePullPolicy:  {{.Values.nodepoolOperator.image.pullPolicy | default (.Values.imagePullPolicy | default "IfNotPresent")}}
           name: manager
           securityContext:

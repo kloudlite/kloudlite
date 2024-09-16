@@ -7,7 +7,8 @@ accountName: ""
 # -- (string) required only for labelling cloudprovider VMs
 clusterName: ""
 
-
+# -- nodepool operator setup
+# -- @ignored
 nodepoolOperator:
   image:
     # -- (string) kloudlite agent image repository
@@ -30,6 +31,15 @@ nodepoolOperator:
     requests:
       cpu: 100m
       memory: 100Mi
+
+  helmJobRunner:
+    image:
+      # -- (string) helm job runner image repository
+      repository: ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner
+      # -- (string) image tag for helm job runner, by default uses `.Values.kloudliteRelease`
+      tag: ""
+      # -- (string) image pull policy for helm job runner, default is `Values.imagePullPolicy`
+      pullPolicy: ""
 
 nodepoolJob:
   image:

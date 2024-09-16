@@ -2,11 +2,11 @@
 # This is a YAML-formatted file.
 
 kloudliteRelease: ""
-imagePullPolicy: ""
+imagePullPolicy: "IfNotPresent"
 
 serviceAccount:
   create: true
-  nameSuffix: "sa"
+  name: kloudlite-autoscalers-sa
 
 clusterAutoscaler:
   enabled: true

@@ -17,7 +17,7 @@ spec:
   replicas: {{.Values.apps.webhooksApi.configuration.replicas}}
 
   services:
-    - port: 3001
+    - port: 3000
 
   hpa:
     enabled: true
@@ -46,7 +46,7 @@ spec:
           value: "1"
 
         - key: HTTP_PORT
-          value: "3001"
+          value: "3000"
 
         - key: KL_HOOK_TRIGGER_AUTHZ_SECRET
           type: secret
@@ -68,4 +68,13 @@ spec:
 
         - key: GIT_WEBHOOKS_TOPIC
           value: "{{.Values.global.cookieDomain}}"
+
+        - key: COMMS_SERVICE
+          value: "comms:3001"
+
+        - key: DISCORD_WEBHOOK_URL
+          value: "{{.Values.apps.webhooksApi.discordWebhookUrl}}"
+
+        - key: WEBHOOK_TOKEN_HASHING_SECRET
+          value: "{{.Values.apps.webhooksApi.webhookAuthzTokenHashingSecret}}"
 

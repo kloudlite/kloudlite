@@ -1,21 +1,19 @@
 {{- if .Values.serviceAccount.create }}
 
-{{- $name := include "service-account-name" . }} 
-
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{$name}}
+  name: {{.Values.serviceAccount.name}}
   namespace: {{.Release.Namespace}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{.Release.Namespace}}-{{$name}}-rb
+  name: {{.Release.Namespace}}-{{.Values.serviceAccount.name}}-rb
 subjects:
   - kind: ServiceAccount
-    name: {{$name}}
+    name: {{.Values.serviceAccount.name}}
     namespace: {{.Release.Namespace}}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
