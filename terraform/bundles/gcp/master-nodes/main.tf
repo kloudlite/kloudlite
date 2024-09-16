@@ -33,6 +33,7 @@ module "master-nodes-firewall" {
   network_name                = var.network
   target_tags                 = local.k3s_masters_tags
   allow_ssh                   = true
+  allow_dns_traffic           = true
 }
 
 module "master-nodes" {

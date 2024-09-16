@@ -19,7 +19,6 @@ locals {
       protocol    = "tcp"
       ports       = ["6443"]
     },
-
     {
       description = "k3s masters: flannel wireguard_native communication, source: https://docs.k3s.io/installation/requirements#networking"
       protocol    = "udp"
@@ -54,6 +53,14 @@ locals {
       description = "allows ssh connect"
       protocol    = "tcp"
       ports       = ["22"]
+    },
+  ]
+
+  incoming_dns_traffic = [
+    {
+      description = "allows dns communication"
+      protocol    = "udp"
+      ports       = ["53"]
     },
   ]
 
@@ -132,6 +139,14 @@ resource "google_compute_firewall" "k3s_master_nodes_public" {
 
   dynamic "allow" {
     for_each = { for k, v in local.incoming_ssh_connection : k => v if var.allow_ssh }
+    content {
+      protocol = allow.value.protocol
+      ports    = allow.value.ports
+    }
+  }
+
+  dynamic "allow" {
+    for_each = { for k, v in local.incoming_dns_traffic : k => v if var.allow_dns_traffic }
     content {
       protocol = allow.value.protocol
       ports    = allow.value.ports
