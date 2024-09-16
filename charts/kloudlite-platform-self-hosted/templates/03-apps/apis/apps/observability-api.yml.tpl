@@ -61,7 +61,9 @@ spec:
           value: {{ include "victoria-metrics.prom-url" .}}
 
         - key: GLOBAL_VPN_AUTHZ_SECRET
-          value: {{.Values.apps.infraApi.globalVpnKubeReverseProxyAuthzToken}}
+          type: secret
+          refName: {{ include "apps.gatewayKubeReverseProxy.secret.name" . }}
+          refKey: {{ include "apps.gatewayKubeReverseProxy.secret.key" . }}
 
       livenessProbe:
         type: httpGet

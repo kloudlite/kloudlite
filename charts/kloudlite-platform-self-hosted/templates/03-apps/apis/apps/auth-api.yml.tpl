@@ -40,6 +40,12 @@ spec:
         min: "80Mi"
         max: "120Mi"
       env:
+        - key: PORT
+          value: "3000"
+
+        - key: GRPC_PORT
+          value: "3001"
+
         - key: MONGO_URI
           type: secret
           refName: mres-{{include "mongo.auth-db" .}}-creds
@@ -52,12 +58,6 @@ spec:
 
         - key: COMMS_SERVICE
           value: "comms:3001"
-
-        - key: PORT
-          value: "3000"
-
-        - key: GRPC_PORT
-          value: "3001"
 
         - key: SESSION_KV_BUCKET
           value: {{.Values.nats.buckets.sessionKVBucket.name}}
@@ -77,6 +77,9 @@ spec:
 
         - key: COOKIE_DOMAIN
           value: "{{- include "kloudlite.cookie-domain" . }}"
+
+        - key: USER_EMAIL_VERIFICATION_ENABLED
+          value: {{ (or (not .Values.sendgrid.apiKey) (not .Values.sendgrid.sender)) | ternary false true | squote }}
 
         {{- if .Values.apps.authApi.oAuth2.providers.github.enabled }}
         - key: GITHUB_APP_PK_FILE

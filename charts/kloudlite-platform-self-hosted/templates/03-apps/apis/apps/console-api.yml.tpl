@@ -31,7 +31,7 @@ spec:
 
   containers:
     - name: main
-      image: {{.Values.apps.consoleApi.image.repository}}:{{.Values.apps.consoleApi.image.tag | default (include "image-tag" .) }}
+      image: '{{.Values.apps.consoleApi.image.repository}}:{{.Values.apps.consoleApi.image.tag | default (include "image-tag" .) }}'
       imagePullPolicy: {{ include "image-pull-policy" .}}
       resourceCpu:
         min: "80m"
@@ -50,7 +50,7 @@ spec:
           value: "{{- include "kloudlite.cookie-domain" . }}"
 
         - key: DNS_ADDR
-          value: :{{ include "apps.consoleApi.dnsPort" . }}
+          value: ':{{ include "apps.consoleApi.dnsPort" . }}'
 
         - key: KLOUDLITE_DNS_SUFFIX
           value: {{required ".Values.kloudliteDNSSuffix is required" .Values.kloudliteDNSSuffix | squote}}

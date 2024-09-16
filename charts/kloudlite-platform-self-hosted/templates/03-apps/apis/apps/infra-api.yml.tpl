@@ -105,7 +105,9 @@ spec:
           value: '{{.Values.apps.infraApi.imageGatewayKubeProxy.repository}}:{{.Values.apps.infraApi.imageGatewayKubeProxy.tag | default (include "image-tag" .)}}'
 
         - key: GLOBAL_VPN_KUBE_REVERSE_PROXY_AUTHZ_TOKEN
-          value: {{.Values.apps.infraApi.globalVpnKubeReverseProxyAuthzToken}}
+          type: secret
+          refName: {{ include "apps.gatewayKubeReverseProxy.secret.name" . }}
+          refKey: {{ include "apps.gatewayKubeReverseProxy.secret.key" . }}
 
         - key: KLOUDLITE_GLOBAL_VPN_DEVICE_HOST
           value: wg-gateways.{{.Values.baseDomain}}

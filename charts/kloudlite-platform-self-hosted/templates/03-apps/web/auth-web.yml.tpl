@@ -46,7 +46,7 @@ spec:
         - key: BASE_URL
           value: {{.Values.baseDomain}}
         - key: GATEWAY_URL
-          value: 'http://gateway:{{ include "apps.gatewayApi.httpPort" . }}'
+          value: 'http://{{ include "apps.gatewayApi.name" . }}:{{ include "apps.gatewayApi.httpPort" . }}'
         - key: COOKIE_DOMAIN
           value: "{{- include "kloudlite.cookie-domain" . }}"
         - key: PORT

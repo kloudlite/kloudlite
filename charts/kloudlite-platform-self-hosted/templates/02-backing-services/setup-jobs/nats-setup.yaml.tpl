@@ -1,17 +1,15 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: nats-setup-job
+  name: nats-setup-job-{{ randAlphaNum 5 | lower }}
   namespace: {{ $.Release.Namespace }}
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
 spec:
   template:
     spec:
       tolerations: {{ (.Values.nats.tolerations | default .Values.scheduling.stateful.tolerations)  |toYaml| nindent 8 }}
       nodeSelector: {{ (.Values.nats.nodeSelector | default .Values.scheduling.stateful.nodeSelector) | toYaml | nindent 8}}
       containers:
-      - name: nats-kv-creator
+      - name: nats-manager
         image: natsio/nats-box:0.14.1
         command: ["sh"]
         args:

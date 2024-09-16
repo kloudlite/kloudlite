@@ -5,4 +5,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
 stringData:
   gateways.yml: |+
-    {{- .Values.edgeGateways | toYaml | nindent 4 }}
+    {{- range $k, $v := .Values.edgeGateways }}
+    - {{ merge $v (eq $v.id "self" | ternary (dict "publicDNSHost" (include "self-edge-gateway.public.host" $)) dict ) | toJson }}
+    {{- end }}
