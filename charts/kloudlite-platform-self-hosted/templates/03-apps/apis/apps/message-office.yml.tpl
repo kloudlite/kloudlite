@@ -79,7 +79,7 @@ spec:
           value: {{.Values.apps.messageOfficeApi.tokenHashingSecret | squote}}
 
         - key: INFRA_GRPC_ADDR
-          value: '{{ include "apps.infraApi.name" . }}:{{ include "apps.infraApi.httpPort" . }}'
+          value: '{{ include "apps.infraApi.name" . }}:{{ include "apps.infraApi.grpcPort" . }}'
 
       livenessProbe:
         type: httpGet

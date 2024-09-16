@@ -42,14 +42,14 @@ spec:
         interval: 10
       readinessProbe: *probe
       env:
+        - key: PORT
+          value: {{ include "apps.consoleWeb.httpPort" . | quote }}
         - key: BASE_URL
           value: {{.Values.baseDomain}}
         - key: COOKIE_DOMAIN
           value: "{{- include "kloudlite.cookie-domain" . }}"
         - key: GATEWAY_URL
-          value: 'http://gateway:{{ include "apps.gatewayApi.httpPort" . }}'
-        - key: PORT
-          value: {{ include "apps.consoleWeb.httpPort" . | quote }}
+          value: 'http://{{ include "apps.gatewayApi.name" . }}:{{ include "apps.gatewayApi.httpPort" . }}'
         - key: ARTIFACTHUB_KEY_ID
           value: {{.Values.apps.consoleWeb.artifactHubKeyID}}
         - key: ARTIFACTHUB_KEY_SECRET
@@ -58,4 +58,5 @@ spec:
           type: secret
           refName: {{ include "apps.authApi.oAuth2-secret.name" .}}
           refKey: "GITHUB_APP_NAME"
+          optional: true
 ---

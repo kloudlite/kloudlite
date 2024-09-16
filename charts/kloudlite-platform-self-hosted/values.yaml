@@ -319,11 +319,10 @@ apps:
       repository: ghcr.io/kloudlite/kloudlite/api/infra
       tag: ""
 
+    # -- image for gateway kube reverse proxy
     imageGatewayKubeProxy:
-      # -- image (with tag) for gateway kube reverse proxy
-      image: 
-        repository: ghcr.io/kloudlite/kloudlite/api/gateway/kube-reverse-proxy
-        tag: ""
+      repository: ghcr.io/kloudlite/kloudlite/api/cmd/gateway-kube-proxy
+      tag: ""
 
     replicas: 1
     hpa:
@@ -412,7 +411,7 @@ apps:
   consoleWeb:
     # -- image (with tag) for websocket api
     image: 
-      repository: ghcr.io/kloudlite/kloudlite/web/auth
+      repository: ghcr.io/kloudlite/kloudlite/web/console
       tag: ""
 
     replicas: 1

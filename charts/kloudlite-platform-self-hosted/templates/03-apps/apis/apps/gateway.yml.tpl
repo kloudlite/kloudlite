@@ -20,7 +20,7 @@ spec:
   replicas: {{.Values.apps.gatewayApi.replicas}}
 
   hpa:
-    enabled: true
+    enabled: {{.Values.apps.gatewayApi.hpa.enabled}}
     minReplicas: {{.Values.apps.gatewayApi.minReplicas}}
     maxReplicas: {{.Values.apps.gatewayApi.maxReplicas}}
     thresholdCpu: 70

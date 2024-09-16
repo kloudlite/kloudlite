@@ -66,6 +66,12 @@
 {{- define "apps.healthApi.name" -}} health-api {{- end -}}
 {{- define "apps.healthApi.httpPort" -}} 3000 {{- end -}}
 
+{{- define "apps.gatewayKubeReverseProxy.secret.name" -}} gvpn-gateway-reverse-proxy-authz {{- end -}}
+{{- define "apps.gatewayKubeReverseProxy.secret.key" -}} authz-token {{- end -}}
+
+
+{{- define "self-edge-gateway.public.host" -}} wg-gateways.{{.Values.baseDomain}} {{- end -}}
+
 {{- /* mongodb databases */}}
 
 {{- define "mongo.auth-db" -}} auth-db {{- end -}}
