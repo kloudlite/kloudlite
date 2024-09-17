@@ -48,7 +48,6 @@ resources:
 - bases/clusters.kloudlite.io_virtualmachines.yaml
 - bases/crds.kloudlite.io_refertomanagedresources.yaml
 - bases/crds.kloudlite.io_externalapps.yaml
-- bases/networking.kloudlite.io_ipbinds.yaml
 - bases/networking.kloudlite.io_podbindings.yaml
 - bases/networking.kloudlite.io_servicebindings.yaml
 - bases/networking.kloudlite.io_gateways.yaml
@@ -106,7 +105,6 @@ patchesStrategicMerge:
 #- patches/webhook_in_virtualmachines.yaml
 #- patches/webhook_in_refertomanagedresources.yaml
 #- patches/webhook_in_externalapps.yaml
-#- patches/webhook_in_ipbinds.yaml
 #- patches/webhook_in_podbindings.yaml
 #- patches/webhook_in_servicebindings.yaml
 #- patches/webhook_in_gateways.yaml

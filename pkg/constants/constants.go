@@ -105,8 +105,8 @@ const (
 	RecordVersionKey string = "kloudlite.io/observability.record-version"
 
 	// changes controller behaviour
-	ClearStatusKey string = "kloudlite.io/clear-status"
-	ResetCheckKey  string = "kloudlite.io/reset-check"
+	ClearStatusKey string = "kloudlite.io/operator.clear-status"
+	ResetCheckKey  string = "kloudlite.io/operator.reset-check"
 	RestartKey     string = "kloudlite.io/do-restart"
 	DoHelmUpgrade  string = "kloudlite.io/do-helm-upgrade"
 
@@ -141,7 +141,6 @@ const (
 const (
 	CacheNameKey                      string = "kloudlite.io/cache-key"
 	BuildNameKey                      string = "kloudlite.io/build.name"
-	AnnotationResourceReady           string = "kloudlite.io/resource.ready"
 	AnnotationReconcileScheduledAfter string = "kloudlite.io/reconcile.scheduled-after"
 )
 
@@ -344,6 +343,7 @@ const KloudliteGatewayEnabledLabel = "kloudlite.io/gateway.enabled"
 const (
 	KloudliteNamespaceForEnvironment           = "kloudlite.io/namespace.for.environment"
 	KloudliteNamespaceForClusterManagedService = "kloudlite.io/namespace.for.cmsvc"
+	KloudliteNamespaceForGateway               = "kloudlite.io/namespace.for.gateway"
 )
 
 // ServiceBinding constants
@@ -353,4 +353,9 @@ const (
 
 const (
 	KloudliteDNSHostname = "kloudlite.io/dns.hostname"
+)
+
+const (
+	KloudliteOperatorResourceReadyAnnotation = "kloudlite.io/operator.resource.ready"
+	KloudliteOperatorChecksAnnotation        = "kloudlite.io/operator.checks"
 )

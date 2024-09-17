@@ -14,8 +14,12 @@ type LifecycleAction struct {
 
 // LifecycleSpec defines the desired state of Lifecycle
 type LifecycleSpec struct {
-	OnApply  LifecycleAction  `json:"onApply"`
-	OnDelete *LifecycleAction `json:"onDelete,omitempty"`
+	//+kubebuilder:default=true
+	RetryOnFailure bool `json:"retryOnFailure,omitempty"`
+	//+kubebuilder:default="30s"
+	RetryOnFailureDelay metav1.Duration  `json:"retryOnFailureDelay,omitempty"`
+	OnApply             LifecycleAction  `json:"onApply"`
+	OnDelete            *LifecycleAction `json:"onDelete,omitempty"`
 }
 
 type JobPhase string
@@ -35,9 +39,9 @@ type LifecycleStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.checks",name=Checks,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.phase",name=phase,type=string
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Lifecycle is the Schema for the Lifecycle API
