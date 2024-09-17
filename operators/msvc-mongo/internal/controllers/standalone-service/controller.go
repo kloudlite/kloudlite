@@ -177,7 +177,7 @@ func (r *Reconciler) createService(req *rApi.Request[*mongodbMsvcv1.StandaloneSe
 				Port:     27017,
 			},
 		}
-		svc.Spec.Selector = fn.MapMerge(fn.MapFilter(obj.GetLabels(), "kloudlite.io/"), map[string]string{"kloudlite.io/msvc.component": "statefulset"})
+		svc.Spec.Selector = fn.MapMerge(fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/"), map[string]string{"kloudlite.io/msvc.component": "statefulset"})
 		return nil
 	}); err != nil {
 		return check.Failed(err)
@@ -193,7 +193,7 @@ func (r *Reconciler) createPVC(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 	pvc := &corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, pvc, func() error {
-		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
 			fn.MapSet(&pvc.Labels, k, v)
 		}
 		pvc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
@@ -221,7 +221,7 @@ func (r *Reconciler) createAccessCredentials(req *rApi.Request[*mongodbMsvcv1.St
 
 	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
-		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
 			fn.MapSet(&secret.Labels, k, v)
 		}
 		secret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
@@ -284,7 +284,7 @@ func (r *Reconciler) createStatefulSet(req *rApi.Request[*mongodbMsvcv1.Standalo
 		sts.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 		selectorLabels := fn.MapMerge(
-			fn.MapFilter(obj.GetLabels(), "kloudlite.io/"),
+			fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/"),
 			map[string]string{kloudliteMsvcComponent: "statefulset"},
 		)
 

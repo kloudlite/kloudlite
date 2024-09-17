@@ -5,10 +5,7 @@ import (
 )
 
 type Env struct {
-	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES"`
-
-	MsvcCredsSvcHttpPort    uint16 `env:"MSVC_CREDS_SVC_HTTP_PORT"`
-	MsvcCredsSvcRequestPath string `env:"MSVC_CREDS_SVC_REQUEST_PATH"`
+	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES" default:"5"`
 }
 
 func GetEnvOrDie() *Env {

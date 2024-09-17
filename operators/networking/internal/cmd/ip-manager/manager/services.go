@@ -46,7 +46,7 @@ func (m *Manager) CreateSvcBindings(ctx context.Context, count int) error {
 		}
 
 		sb := &networkingv1.ServiceBinding{
-			ObjectMeta: metav1.ObjectMeta{Name: sanitizeSvcIP(s), Labels: unReservedServiceLabels},
+			ObjectMeta: metav1.ObjectMeta{Name: sanitizeSvcIP(s), Namespace: m.Env.IPManagerConfigNamespace, Labels: unReservedServiceLabels},
 			Spec: networkingv1.ServiceBindingSpec{
 				GlobalIP:   s,
 				ServiceIP:  nil,

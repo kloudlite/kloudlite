@@ -51,8 +51,8 @@ type GlobVPNSpec struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Seen,type=date
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.checks",name=Checks,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/operator\\.resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 // GlobalVPN is the Schema for the connects API
 type GlobalVPN struct {

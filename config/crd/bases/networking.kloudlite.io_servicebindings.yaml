@@ -13,7 +13,7 @@ spec:
     listKind: ServiceBindingList
     plural: servicebindings
     singular: servicebinding
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime

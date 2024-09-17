@@ -179,8 +179,8 @@ func (r *GcpVPCReconciler) createVPCLifecycle(req *rApi.Request[*clustersv1.GcpV
 		JobMetadata: metav1.ObjectMeta{
 			Name:        obj.Name,
 			Namespace:   obj.Namespace,
-			Labels:      fn.MapFilter(obj.Labels, "kloudlite.io/"),
-			Annotations: fn.MapFilter(obj.Annotations, "kloudlite.io/"),
+			Labels:      fn.MapFilterWithPrefix(obj.Labels, "kloudlite.io/"),
+			Annotations: fn.MapFilterWithPrefix(obj.Annotations, "kloudlite.io/"),
 		},
 		JobImage:                 r.Env.IACJobImage,
 		JobImagePullPolicy:       "Always",
