@@ -149,6 +149,15 @@ const (
 	ImportedManagedResourceSecretRefNamespace          = "secretRef.namespace"
 )
 
+// constant vars generated for struct KLoudliteEdgeCluster
+const (
+	KLoudliteEdgeClusterComments       = "comments"
+	KLoudliteEdgeClusterMaxNumAccounts = "max_num_accounts"
+	KLoudliteEdgeClusterName           = "name"
+	KLoudliteEdgeClusterNumAccounts    = "num_accounts"
+	KLoudliteEdgeClusterRegion         = "region"
+)
+
 // constant vars generated for struct ManagedResource
 const (
 	ManagedResourceEnabled                                                 = "enabled"

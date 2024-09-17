@@ -22,7 +22,7 @@ type Environment struct {
 
 	common.ResourceMetadata `json:",inline"`
 
-	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 func (e *Environment) GetDisplayName() string {

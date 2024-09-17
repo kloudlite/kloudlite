@@ -136,7 +136,19 @@ type UpdateAndDeleteOpts struct {
 	ClusterName      string
 }
 
+type AccountsSvc interface {
+	GetAccountRegion(ctx context.Context, userId string, accountName string) (string, error)
+}
+
+type ResourceDispatcher interface {
+	ApplyResource()
+	DeleteResource()
+	RestartResource()
+}
+
 type Domain interface {
+	AccountsSvc
+
 	CheckNameAvailability(ctx context.Context, accountName string, environmentName *string, msvcName *string, resType entities.ResourceType, name string) (*CheckNameAvailabilityOutput, error)
 
 	// INFO: project have been disabled

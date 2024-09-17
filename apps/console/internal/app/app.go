@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/pkg/k8s"
 
@@ -13,14 +14,18 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 
+	"github.com/kloudlite/api/apps/console/internal/app/adapters"
+	infra_service "github.com/kloudlite/api/apps/console/internal/app/adapters/infra-service"
 	"github.com/kloudlite/api/apps/console/internal/app/graph"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/domain"
+	"github.com/kloudlite/api/apps/console/internal/domain/ports"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/apps/console/internal/env"
+	"github.com/kloudlite/api/apps/infra/protobufs/infra"
+	platform_edge "github.com/kloudlite/api/apps/message-office/protobufs/platform-edge"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
-	"github.com/kloudlite/api/grpc-interfaces/infra"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
@@ -34,8 +39,10 @@ import (
 )
 
 type (
-	IAMGrpcClient grpc.Client
-	InfraClient   grpc.Client
+	IAMGrpcClient               grpc.Client
+	InfraClient                 grpc.Client
+	MessageOfficeInternalClient grpc.Client
+	AccountsClient              grpc.Client
 )
 
 type (
@@ -80,6 +87,20 @@ var Module = fx.Module("app",
 			return iam.NewIAMClient(conn)
 		},
 	),
+
+	fx.Provide(func(conn MessageOfficeInternalClient) platform_edge.PlatformEdgeClient {
+		return platform_edge.NewPlatformEdgeClient(conn)
+	}),
+
+	fx.Provide(func(conn AccountsClient) accounts.AccountsClient {
+		return accounts.NewAccountsClient(conn)
+	}),
+
+	fx.Provide(adapters.NewAccountsSvc),
+
+	fx.Provide(func(cli infra.InfraClient) ports.InfraService {
+		return infra_service.NewInfraService(cli)
+	}),
 
 	fx.Invoke(
 		func(server httpServer.Server, d domain.Domain, sessionRepo kv.Repo[*common.AuthSession], ev *env.Env) {

@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option go_package = "./platform-edge";
+
+service PlatformEdge {
+  rpc ListPlatformEdgeClusters(ListPlatformEdgeClustersIn) returns (ListPlatformEdgeClustersOut);
+  rpc AllocatePlatformEdgeCluster(AllocatePlatformEdgeClusterIn) returns (AllocatePlatformEdgeClusterOut);
+  rpc GetAllocatedPlatformEdgeCluster(GetAllocatedPlatformEdgeClusterIn) returns (AllocatePlatformEdgeClusterOut);
+}
+
+message ListPlatformEdgeClustersIn {
+  string region = 1;
+}
+
+message PlatformEdgeCluster {
+  string region = 1;
+  string cluster_name = 2;
+}
+
+message ListPlatformEdgeClustersOut {
+  repeated PlatformEdgeCluster platform_edge_clusters = 1;
+}
+
+message AllocatePlatformEdgeClusterIn {
+  string region = 1;
+  string account_name = 2;
+}
+
+message AllocatePlatformEdgeClusterOut {
+  string cluster_name = 1;
+  string owned_by_account = 2;
+  string public_dns_host = 3;
+}
+
+message GetAllocatedPlatformEdgeClusterIn {
+  string account_name = 1;
+  string cluster_name = 2;
+}

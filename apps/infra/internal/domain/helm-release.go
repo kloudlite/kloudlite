@@ -79,7 +79,7 @@ func (d *domain) GetHelmRelease(ctx InfraContext, clusterName string, hrName str
 
 func (d *domain) applyHelmRelease(ctx InfraContext, hr *entities.HelmRelease) error {
 	addTrackingId(&hr.HelmChart, hr.Id)
-	return d.resDispatcher.ApplyToTargetCluster(ctx, hr.ClusterName, &hr.HelmChart, hr.RecordVersion)
+	return d.resDispatcher.ApplyToTargetCluster(ctx, hr.DispatchAddr, &hr.HelmChart, hr.RecordVersion)
 }
 
 func (d *domain) CreateHelmRelease(ctx InfraContext, clusterName string, hr entities.HelmRelease) (*entities.HelmRelease, error) {
@@ -89,6 +89,10 @@ func (d *domain) CreateHelmRelease(ctx InfraContext, clusterName string, hr enti
 	hr.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &hr.HelmChart); err != nil {
 		return nil, errors.NewE(err)
+	}
+
+	if hr.DispatchAddr == nil {
+		hr.DispatchAddr = &entities.DispatchAddr{AccountName: ctx.AccountName, ClusterName: clusterName}
 	}
 
 	hr.IncrementRecordVersion()
@@ -127,7 +131,7 @@ func (d *domain) CreateHelmRelease(ctx InfraContext, clusterName string, hr enti
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, nhr.ClusterName, ResourceTypeHelmRelease, nhr.Name, PublishAdd)
 
-	if err = d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &corev1.Namespace{
+	if err = d.resDispatcher.ApplyToTargetCluster(ctx, hr.DispatchAddr, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Namespace",
 			APIVersion: "v1",
@@ -206,7 +210,7 @@ func (d *domain) DeleteHelmRelease(ctx InfraContext, clusterName string, name st
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, uphr.ClusterName, ResourceTypeHelmRelease, uphr.Name, PublishUpdate)
 
-	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &uphr.HelmChart)
+	return d.resDispatcher.DeleteFromTargetCluster(ctx, uphr.DispatchAddr, &uphr.HelmChart)
 }
 
 func (d *domain) OnHelmReleaseApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error {
@@ -255,7 +259,7 @@ func (d *domain) OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string
 
 	recordVersion, err := d.matchRecordVersion(hr.Annotations, xhr.RecordVersion)
 	if err != nil {
-		return d.resyncToTargetCluster(ctx, xhr.SyncStatus.Action, clusterName, xhr, xhr.RecordVersion)
+		return d.resyncToTargetCluster(ctx, xhr.SyncStatus.Action, xhr.DispatchAddr, xhr, xhr.RecordVersion)
 	}
 
 	uphr, err := d.helmReleaseRepo.PatchById(

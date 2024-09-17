@@ -53,7 +53,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger *slog.Logger, d d
 			"GVK", gvkStr,
 			"NN", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
 			"account", errObj.AccountName,
-			"cluster", errObj.ClusterName,
+			"cluster", em.ClusterName,
 		)
 
 		if len(strings.TrimSpace(errObj.AccountName)) == 0 {
@@ -61,7 +61,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger *slog.Logger, d d
 			return nil
 		}
 
-		if len(strings.TrimSpace(errObj.ClusterName)) == 0 {
+		if len(strings.TrimSpace(em.ClusterName)) == 0 {
 			mlogger.Warn("message does not contain 'clusterName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}

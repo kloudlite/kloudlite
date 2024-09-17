@@ -87,7 +87,7 @@ func (d *domain) claimNextFreeDeviceIP(ctx InfraContext, deviceName string, gvpn
 			ipAddrFilter.MatchType = repos.MatchTypeNotInArray
 			ipAddrFilter.NotInArray = append(ipAddrFilter.NotInArray, ipAddr)
 
-			d.logger.Warnf("ip addr already claimed (err: %s), retrying again", err.Error())
+			d.logger.Warn("ip addr already claimed, will retry again, got", "err", err)
 			<-time.After(50 * time.Millisecond)
 			continue
 		}
@@ -331,9 +331,26 @@ func (d *domain) buildGlobalVPNDeviceWgBaseParams(ctx InfraContext, gvpnConns []
 		return nil, deviceHosts, err
 	}
 
-	pubPeers = append(gvpnConnPeers, pubPeers...)
+	publicPeers := make([]wgutils.PublicPeer, 0, len(pubPeers)+len(gvpnConnPeers))
 
-	publicPeers := make([]wgutils.PublicPeer, 0, len(pubPeers))
+	for _, peer := range gvpnConnPeers {
+		deviceHosts[peer.DNSHostname] = peer.IP
+		if peer.DNSHostname == fmt.Sprintf("%s.device.local", gvpnDevice.Name) {
+			continue
+		}
+		if peer.PublicEndpoint == nil {
+			privPeers = append(privPeers, peer)
+			continue
+		}
+
+		publicPeers = append(publicPeers, wgutils.PublicPeer{
+			DisplayName: fmt.Sprintf("Global VPN Gateway (%s)", peer.Comments),
+			PublicKey:   peer.PublicKey,
+			AllowedIPs:  peer.AllowedIPs,
+			Endpoint:    *peer.PublicEndpoint,
+		})
+	}
+
 	for _, peer := range pubPeers {
 		deviceHosts[peer.DNSHostname] = peer.IP
 		if peer.DNSHostname == fmt.Sprintf("%s.device.local", gvpnDevice.Name) {
@@ -343,8 +360,10 @@ func (d *domain) buildGlobalVPNDeviceWgBaseParams(ctx InfraContext, gvpnConns []
 			privPeers = append(privPeers, peer)
 			continue
 		}
+
 		publicPeers = append(publicPeers, wgutils.PublicPeer{
-			DisplayName: peer.DNSHostname,
+			// DisplayName: peer.DNSHostname,
+			DisplayName: fmt.Sprintf("Global VPN Device [%s] (%s)", peer.Comments, peer.DNSHostname),
 			PublicKey:   peer.PublicKey,
 			AllowedIPs:  peer.AllowedIPs,
 			Endpoint:    *peer.PublicEndpoint,
@@ -358,9 +377,10 @@ func (d *domain) buildGlobalVPNDeviceWgBaseParams(ctx InfraContext, gvpnConns []
 			continue
 		}
 		privatePeers = append(privatePeers, wgutils.PrivatePeer{
-			DisplayName: peer.DNSHostname,
-			PublicKey:   peer.PublicKey,
-			AllowedIPs:  peer.AllowedIPs,
+			DisplayName: fmt.Sprintf("Global VPN Device [%s] (%s)", peer.Comments, peer.DNSHostname),
+			// DisplayName: peer.DNSHostname,
+			PublicKey:  peer.PublicKey,
+			AllowedIPs: peer.AllowedIPs,
 		})
 	}
 

@@ -17,6 +17,7 @@ func NewMongoDatabase(ctx context.Context, uri string, dbName string) (db *mongo
 	if err != nil {
 		return nil, errors.NewEf(err, "could not connect to mongodb servers")
 	}
+
 	return client.Database(dbName), nil
 }
 
