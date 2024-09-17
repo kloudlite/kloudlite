@@ -79,6 +79,8 @@
             # # custom
             # packages.new-infra
             # new-infra
+
+            zstd
           ];
 
           shellHook = ''
