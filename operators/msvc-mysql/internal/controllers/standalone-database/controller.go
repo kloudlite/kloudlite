@@ -192,7 +192,7 @@ func (r *Reconciler) createDBCreds(req *rApi.Request[*mysqlv1.StandaloneDatabase
 
 	creds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Output.CredentialsRef.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, creds, func() error {
-		for k, v := range fn.MapFilter(obj.GetLabels(), "kloudlite.io/") {
+		for k, v := range fn.MapFilterWithPrefix(obj.GetLabels(), "kloudlite.io/") {
 			fn.MapSet(&creds.Labels, k, v)
 		}
 		if creds.Data == nil {
@@ -248,7 +248,7 @@ func (r *Reconciler) createDBUserLifecycle(req *rApi.Request[*mysqlv1.Standalone
 	lf := &crdsv1.Lifecycle{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, lf, func() error {
-		for k, v := range fn.MapFilter(obj.Labels, "kloudlite.io/") {
+		for k, v := range fn.MapFilterWithPrefix(obj.Labels, "kloudlite.io/") {
 			fn.MapSet(&lf.Labels, k, v)
 		}
 		lf.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
