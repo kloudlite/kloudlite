@@ -12,6 +12,7 @@ type RegistryImage struct {
 	ImageName        string         `json:"imageName"`
 	ImageTag         string         `json:"imageTag"`
 	Meta             map[string]any `json:"meta"`
+	MetaData         string         `json:"metadata" graphql:"ignore"`
 }
 
 type RegistryImageURL struct {
@@ -33,5 +34,11 @@ var RegistryImageIndexes = []repos.IndexField{
 			{Key: fc.RegistryImageImageTag, Value: repos.IndexAsc},
 		},
 		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: fields.AccountName, Value: repos.IndexAsc},
+			{Key: fc.Metadata, Value: repos.IndexAsc, IsText: true},
+		},
 	},
 }
