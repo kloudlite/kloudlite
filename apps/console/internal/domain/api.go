@@ -185,6 +185,7 @@ type Domain interface {
 	DeleteRegistryImage(ctx ConsoleContext, image string) error
 	CreateRegistryImage(ctx context.Context, accountName string, image string, meta map[string]any) (*entities.RegistryImage, error)
 	ListRegistryImages(ctx ConsoleContext, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.RegistryImage], error)
+	SearchRegistryImages(ctx ConsoleContext, query string) ([]*entities.RegistryImage, error)
 
 	ListApps(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.App], error)
 	GetApp(ctx ResourceContext, name string) (*entities.App, error)
