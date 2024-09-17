@@ -2,15 +2,10 @@ import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { Chip, ChipGroup } from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
+import Tooltip from '~/components/atoms/tooltip';
 import { usePagination } from '~/components/molecule/pagination';
 import { cn } from '~/components/utils';
-import List from '~/console/components/list';
-import NoResultsFound from '~/console/components/no-results-found';
-import { IShowDialog } from '~/console/components/types.d';
-import { useAppState } from '~/console/page-components/app-states';
-import useForm from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import { NonNullableString } from '~/root/lib/types/common';
+import { listFlex } from '~/console/components/console-list-components';
 import {
   ArrowRight,
   ChevronLeft,
@@ -21,8 +16,13 @@ import {
   X,
   XCircleFill,
 } from '~/console/components/icons';
-import Tooltip from '~/components/atoms/tooltip';
-import { listFlex } from '~/console/components/console-list-components';
+import List from '~/console/components/list';
+import NoResultsFound from '~/console/components/no-results-found';
+import { IShowDialog } from '~/console/components/types.d';
+import { useAppState } from '~/console/page-components/app-states';
+import useForm from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+import { NonNullableString } from '~/root/lib/types/common';
 import AppDialog from './app-dialogs';
 
 interface IConfigMount {
@@ -395,7 +395,7 @@ export const ConfigMounts = () => {
                       />
                       <Chip
                         item={{ name: 'mres' }}
-                        label="Integrated resources"
+                        label="Managed resources"
                         type="CLICKABLE"
                       />
                     </ChipGroup>

@@ -2,7 +2,6 @@ import { useParams } from '@remix-run/react';
 import { useCallback, useEffect, useState } from 'react';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
 import { BottomNavigation } from '~/console/components/commons';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useAppState } from '~/console/page-components/app-states';
@@ -318,7 +317,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
           />
         )}
         <div className="flex flex-col gap-xl">
-          {/* <TextInput
+          <TextInput
             size="lg"
             label="Image name"
             placeholder="Enter Image name"
@@ -326,8 +325,8 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             onChange={handleChange('imageUrl')}
             error={!!errors.imageUrl}
             message={errors.imageUrl}
-          /> */}
-          <Select
+          />
+          {/* <Select
             label="Select Images"
             size="lg"
             value={values.imageUrl}
@@ -347,7 +346,7 @@ const AppGeneral = ({ mode = 'new' }: { mode: 'edit' | 'new' }) => {
             message={errors.imageUrl}
             loading={imageLoaded}
             createLabel="Select"
-          />
+          /> */}
         </div>
 
         <Checkbox

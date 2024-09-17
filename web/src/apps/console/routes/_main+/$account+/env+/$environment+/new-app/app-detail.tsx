@@ -3,7 +3,7 @@ import { NameIdView } from '~/console/components/name-id-view';
 import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn } from '~/console/page-components/util';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 // import { registryHost } from '~/lib/configs/base-url.cjs';
 import { useOutletContext, useParams } from '@remix-run/react';
@@ -13,7 +13,7 @@ import { keyconstants } from '~/console/server/r-utils/key-constants';
 // import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import Select from '~/components/atoms/select';
+import { TextInput } from '~/components/atoms/input';
 import { toast } from '~/components/molecule/toast';
 import {
   ArrowClockwise,
@@ -322,7 +322,7 @@ const AppDetail = () => {
             size="sm"
           /> */}
 
-          {/* <TextInput
+          <TextInput
             size="lg"
             label="Image name"
             placeholder="Enter Image name"
@@ -330,9 +330,9 @@ const AppDetail = () => {
             onChange={handleChange('imageUrl')}
             error={!!errors.imageUrl}
             message={errors.imageUrl}
-          /> */}
+          />
 
-          <Select
+          {/* <Select
             label="Select Images"
             size="lg"
             value={values.imageUrl}
@@ -352,7 +352,7 @@ const AppDetail = () => {
             message={errors.imageUrl}
             loading={imageLoaded}
             createLabel="Select"
-          />
+          /> */}
 
           {/* {values.imageMode === 'default' && (
             <RepoSelector
