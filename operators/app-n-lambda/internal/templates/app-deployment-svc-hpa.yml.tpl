@@ -20,7 +20,8 @@ metadata:
   name: {{.Name}}
   namespace: {{.Namespace}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
-  labels: {{.Labels | toYAML | nindent 4}}
+  labels: {{ $podLabels | toYAML | nindent 4}}
+  annotations: {{ $podAnnotations | toYAML | nindent 4}}
 spec:
   {{- if (or .Spec.Freeze $isIntercepted) }}
   replicas: 0

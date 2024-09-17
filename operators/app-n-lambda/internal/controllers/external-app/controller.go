@@ -116,7 +116,7 @@ func (r *ExternalAppReconciler) createExternalService(req *rApi.Request[*crdsv1.
 			}
 			return corev1.ServiceSpec{
 				Ports:    ports,
-				Selector: fn.MapFilter(obj.Labels, "kloudlite.io/"),
+				Selector: fn.MapFilterWithPrefix(obj.Labels, "kloudlite.io/"),
 			}
 		}
 
@@ -184,7 +184,7 @@ func (r *ExternalAppReconciler) checkAppIntercept(req *rApi.Request[*crdsv1.Exte
 			b, err := templates.ParseBytes(r.appInterceptTemplate, map[string]any{
 				"name":             podname,
 				"namespace":        podns,
-				"labels":           fn.MapMerge(fn.MapFilter(obj.Labels, "kloudlite.io/"), map[string]string{appGenerationLabel: fmt.Sprintf("%d", obj.Generation)}),
+				"labels":           fn.MapMerge(fn.MapFilterWithPrefix(obj.Labels, "kloudlite.io/"), map[string]string{appGenerationLabel: fmt.Sprintf("%d", obj.Generation)}),
 				"owner-references": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"device-host":      fmt.Sprintf("%s.%s", obj.Spec.Intercept.ToDevice, deviceHostSuffix),
 				"port-mappings":    portMappings,
