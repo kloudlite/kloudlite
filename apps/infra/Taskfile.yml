@@ -53,7 +53,8 @@ tasks:
       - .secrets/env
     cmds:
       - go build -o bin/infra .
-      - ./bin/infra --dev
+      # - ./bin/infra --dev
+      - ./bin/infra
 
   gen:constants:
     cmds:
