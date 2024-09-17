@@ -45,9 +45,10 @@ export const WebinarUI = ({ userDetails, meetingStatus }: { userDetails: any, me
                             </div>
                         </div>
                         <JoinWebinar userData={userDetails} meetingStatus={meetingStatus} />
+                        {visible && <HandleRegisterForm visible={visible} setVisible={setVisible} />}
                     </div>
                 </div>
-                {visible && <HandleRegisterForm visible={visible} setVisible={setVisible} />}
+                {/* {visible && <HandleRegisterForm visible={visible} setVisible={setVisible} />} */}
             </div>
         </Container>
     )
@@ -124,88 +125,47 @@ const HandleRegisterForm = ({ visible, setVisible }: { visible: boolean, setVisi
     //     });
 
     return (
-        <Popup.Form
-        // onSubmit={(e) => {
-        //     if (!values.isNameError) {
-        //         handleSubmit(e);
-        //     } else {
-        //         e.preventDefault();
-        //     }
-        // }}
-        >
-            <Popup.Content>
-                <div className="flex flex-col gap-2xl">
-                    {/* <NameIdView
-                        resType="project"
-                        displayName={values.displayName}
-                        name={values.name}
-                        label="Deployment name"
-                        placeholder="Enter deployment name"
-                        errors={errors.name}
-                        handleChange={handleChange}
-                        nameErrorLabel="isNameError"
-                        isUpdate={isUpdate}
-                    /> */}
-                    <TextInput
-                        label="Full name"
-                        size="lg"
-                        placeholder="name"
-                    // value={values.name}
-                    // onChange={handleChange('name')}
+        // visible && (
+        <Popup.Root show={!!visible} className="!w-[600px]">
+            <Popup.Form>
+                <Popup.Content>
+                    <div className="flex flex-col gap-2xl">
+                        <TextInput
+                            label="Full name"
+                            size="lg"
+                            placeholder="name"
+                        />
+
+                        <div className='flex flex-row justify-between gap-2xl'>
+                            <TextInput
+                                label="Company name"
+                                size="lg"
+                                placeholder="company name"
+                            />
+                            <TextInput
+                                label="Email"
+                                size="lg"
+                                placeholder="email"
+                            />
+                        </div>
+                    </div>
+                </Popup.Content>
+                <Popup.Footer>
+                    <Popup.Button
+                        closable
+                        content="Cancel"
+                        variant="basic"
+                        onClick={() => setVisible(false)}
                     />
-
-                    {/* <Select
-                        creatable
-                        size="lg"
-                        label="Exposed ips"
-                        multiple
-                        value={values.exposedIps || []}
-                        options={async () => []}
-                        onChange={(val, v) => {
-                            handleChange('exposedIps')(dummyEvent(v));
-                        }}
-                        error={!!errors.exposedIps}
-                        disableWhileLoading
-                    /> */}
-
-                    {/* <Select
-                        creatable
-                        size="lg"
-                        label="Exposed domains"
-                        multiple
-                        value={values.exposedDomains || []}
-                        options={async () => []}
-                        onChange={(val, v) => {
-                            handleChange('exposedDomains')(dummyEvent(v));
-                        }}
-                        error={!!errors.exposedDomains}
-                        disableWhileLoading
-                    /> */}
-
-                    {/* <KeyValuePair
-                        size="lg"
-                        label="Exposed services"
-                        value={values.exposedServices || []}
-                        onChange={(items, _) => {
-                            handleChange('exposedServices')(dummyEvent(items));
-                        }}
-                        keyLabel="name"
-                        valueLabel="ip"
-                        error={!!errors.exposedServices}
-                        message={errors.exposedServices}
-                    /> */}
-                </div>
-            </Popup.Content>
-            <Popup.Footer>
-                <Popup.Button closable content="Cancel" variant="basic" />
-                <Popup.Button
-                    // loading={isLoading}
-                    type="submit"
-                    // content={isUpdate ? 'Update' : 'Create'}
-                    variant="primary"
-                />
-            </Popup.Footer>
-        </Popup.Form>
+                    <Popup.Button
+                        type="submit"
+                        variant="primary"
+                        content="Register"
+                    />
+                </Popup.Footer>
+            </Popup.Form>
+        </Popup.Root>
+        // )
     )
 
 }

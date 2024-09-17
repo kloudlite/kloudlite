@@ -1,5 +1,6 @@
+//@ts-ignore
 import { cn } from 'kl-design-system/utils';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import Header from './header';
 
 interface IContainer {
