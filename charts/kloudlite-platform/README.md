@@ -8,7 +8,7 @@
 
 ```console
 helm repo add kloudlite https://kloudlite.github.io/helm-charts
-helm repo update
+helm repo update kloudlite
 ```
 
 ## Installation
@@ -16,12 +16,12 @@ helm repo update
 > [!NOTE]
 > only helm3 is supported
 
-#### Installing Kloudlite CRDs
+### Installing Kloudlite CRDs
 ```console
-kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/v1.0.7/crds-all.yml
+kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/v1.0.7/crds-all.yml --server-side
 ```
 
-#### Installing chart
+### Installing chart
 ```console
 helm install kloudlite-platform kloudlite/kloudlite-platform --namespace kloudlite --create-namespace --version v1.0.7 --set baseDomain="<base_domain>"
 ```
@@ -33,19 +33,15 @@ The command deploys kloudlite-platform on your Kubernetes cluster in the default
 
 _See [configuration](#configuration) below._
 
-_See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
-
 ## Upgrading Chart
 
 ```console
 helm upgrade kloudlite-platform kloudlite/kloudlite-platform --namespace kloudlite --version v1.0.7 --set baseDomain="<base_domain>"
 ```
 
-_See [helm upgrade](https://helm.sh/docs/helm/helm_upgrade/) for command documentation._
-
 ## Configuration
 
-See [Customizing the Chart Before Installing](https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing). To see all configurable options with detailed comments, visit the chart's [values.yaml](./values.yaml), or run these commands:
+To see all configurable options with detailed comments, visit the chart's [values.yaml](https://github.com/kloudlite/helm-charts/charts/kloudlite-platform/values.yaml), or run these commands:
 
 ```console
 helm show values kloudlite/kloudlite-platform
@@ -64,6 +60,4 @@ helm uninstall kloudlite-platform -n kloudlite
 ```
 
 This removes all the Kubernetes components associated with the chart and deletes the release.
-
-_See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command documentation._
 
