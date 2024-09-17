@@ -1,3 +1,4 @@
+//@ts-ignore
 import { cn } from 'kl-design-system/utils';
 import React, { ReactNode } from 'react';
 

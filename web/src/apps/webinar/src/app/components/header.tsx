@@ -1,7 +1,8 @@
-import { Link } from '@remix-run/react';
+//@ts-ignore
 import { Button } from 'kl-design-system/atoms/button';
+//@ts-ignore
 import { BrandLogo } from 'kl-design-system/branding/brand-logo';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import Wrapper from './wrapper';
 
 const Header = ({ headerExtra }: { headerExtra?: ReactNode }) => {
@@ -20,7 +21,7 @@ const Header = ({ headerExtra }: { headerExtra?: ReactNode }) => {
                     <Button
                         variant="plain"
                         content="Contact us"
-                        linkComponent={Link}
+                        // linkComponent={Link}
                         to="https://kloudlite.io/contact-us"
                     />
                     {headerExtra}

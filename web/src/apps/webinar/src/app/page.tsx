@@ -1,9 +1,8 @@
 import axios from 'axios';
 //@ts-ignore
-import { cn } from 'kl-design-system/utils';
 import { cookies } from 'next/headers';
 import { redirect } from "next/navigation";
-import { JoinWebinar } from './components/join-webinar';
+import { WebinarUI } from './orgs/webinar-ui';
 
 
 export default async function Home() {
@@ -46,7 +45,7 @@ export default async function Home() {
     if (userDetails) {
       return (
         <main className='flex flex-col h-full'>
-          <div className='flex flex-1 flex-col md:items-center self-stretch justify-center px-3xl py-5xl md:py-9xl'>
+          {/* <div className='flex flex-1 flex-col md:items-center self-stretch justify-center px-3xl py-5xl md:py-9xl'>
             <div className='flex flex-col gap-3xl md:w-[500px] px-3xl py-5xl md:px-9xl'>
               <div className="flex flex-col items-stretch gap-lg">
                 <div className="flex flex-col gap-lg items-center pb-6xl text-center">
@@ -60,7 +59,8 @@ export default async function Home() {
                 <JoinWebinar userData={userDetails} meetingStatus={data.status} />
               </div>
             </div>
-          </div>
+          </div> */}
+          <WebinarUI userDetails={userDetails} meetingStatus={data.status} />
         </main >
       );
     }

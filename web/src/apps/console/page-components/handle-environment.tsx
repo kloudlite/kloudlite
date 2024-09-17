@@ -37,6 +37,15 @@ const HandleEnvironment = ({ show, setShow }: IDialog<IEnvironment | null>) => {
 
   const [clusterList, setClusterList] = useState<any[]>([]);
 
+  // const klCluster = {
+  //   label: 'Kloudlite cluster',
+  //   value: constants.kloudliteClusterName,
+  //   ready: true,
+  //   render: () => (
+  //     <ClusterSelectItem label="Kloudlite cluster" value="kloudlite-cluster" />
+  //   ),
+  // };
+
   const getClusters = useCallback(async () => {
     try {
       const byokClusters = await api.listByokClusters({});
